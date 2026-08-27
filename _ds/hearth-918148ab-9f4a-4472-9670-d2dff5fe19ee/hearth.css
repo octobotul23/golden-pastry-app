@@ -1,0 +1,1538 @@
+/* ==========================================================================
+   HEARTH — Brand fonts, self-hosted
+
+   Both families are SIL Open Font License 1.1, which permits bundling and
+   redistribution. See fonts/OFL.txt.
+
+   Fraunces is served with ALL FOUR axes — opsz, wght, SOFT and WONK. The
+   default Google Fonts URL only carries opsz and wght, which silently makes
+   `font-variation-settings: "SOFT" 40, "WONK" 1"` a no-op: the axes are not
+   in the file, so the browser has nothing to vary. That setting is where the
+   warmth in the display face comes from, so the axes are not optional here.
+
+   fonts/ is rewritten by build.mjs to the correct relative prefix for
+   each output location (pages one level deep get ../fonts/, root gets fonts/).
+   ========================================================================== */
+
+/* -------------------------------------------------- Fraunces — display */
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("fonts/fraunces-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Fraunces";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("fonts/fraunces-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* -------------------------------------------------- Nunito Sans — body/UI */
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("fonts/nunito-sans-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+    U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Nunito Sans";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("fonts/nunito-sans-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF,
+    U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+
+/* ==========================================================================
+   HEARTH — Design tokens
+   A warm soft-depth system: layered translucent surfaces, tinted elevation,
+   springy motion — rebuilt around bakery warmth.
+
+   Two tiers:
+     1. Primitives  --h-<ramp>-<step>   raw values, never referenced by UI
+     2. Semantics   --h-<role>          what components actually use
+   Only the semantic layer changes between light and dark.
+   ========================================================================== */
+
+:root {
+  /* -------------------------------------------------------------- 1. PRIMITIVES */
+
+  /* cream — warm neutral grounds (flour-dusted paper).
+     There is no pure white in this system. cream-50 is the lightest surface
+     that exists, and it is already 12 points of yellow away from #FFF —
+     white next to these grounds reads as a hole punched in the page. */
+  --h-cream-50:  #FFFBF3;
+  --h-cream-100: #FCF6EA;
+  --h-cream-200: #F8F0E2;
+  --h-cream-300: #F1E6D4;
+  --h-cream-400: #E7D9C2;
+  --h-cream-500: #DAC7AC;
+
+  /* cocoa — warm neutral inks (roasted, never grey) */
+  --h-cocoa-300: #B09A85;
+  --h-cocoa-400: #907A67;
+  --h-cocoa-500: #74604A;
+  --h-cocoa-600: #6A5442;
+  --h-cocoa-700: #4A3627;
+  --h-cocoa-800: #2B1D13;
+  --h-cocoa-900: #1B120B;
+  --h-cocoa-950: #191310;
+
+  /* honey — amber. Never carries a light label (white on it is 2.04:1). Ink only. */
+  --h-honey-100: #FDF0DA;
+  --h-honey-200: #FBE7CE;
+  --h-honey-300: #F7C46B;
+  --h-honey-400: #F2A63B;
+  --h-honey-500: #E08B22;
+  --h-honey-600: #C4741A;
+
+  /* crust — burnt orange. The action colour; carries a cream label from 600 down. */
+  --h-crust-100: #FBE3D6;
+  --h-crust-300: #E9814E;
+  --h-crust-500: #C9561B;
+  --h-crust-600: #B34A16;
+  --h-crust-700: #9A3610;
+  --h-crust-800: #7E2A0C;
+
+  /* jam — berry accent for tags, seasonal, secondary emphasis */
+  --h-jam-100: #F9E2E7;
+  --h-jam-400: #C4577A;
+  --h-jam-600: #9B2F52;
+  --h-jam-700: #7A2340;
+
+  /* pistachio — herb green, success */
+  --h-pist-100: #E8F0DF;
+  --h-pist-400: #7FA363;
+  --h-pist-600: #426A32;
+  --h-pist-700: #3C5F2E;
+
+  /* signal */
+  --h-amber-700: #855806;
+  --h-red-600:   #A83A2B;
+  --h-red-100:   #FADFDA;
+
+  /* -------------------------------------------------------------- 2. SEMANTICS (light) */
+
+  /* surfaces — four depths plus glass, walking down the cream ramp */
+  --h-bg-raised:    var(--h-cream-50);    /* highest — modals, secondary buttons */
+  --h-bg-surface:   var(--h-cream-100);   /* cards */
+  --h-bg-page:      var(--h-cream-200);   /* the page itself */
+  --h-bg-sunk:      var(--h-cream-300);   /* recessed bands, badges, stats */
+  --h-bg-glass:     rgba(255, 251, 243, 0.72);
+  --h-bg-glass-2:   rgba(255, 251, 243, 0.88);
+  --h-bg-inverse:   var(--h-cocoa-800);
+
+  /* foreground */
+  --h-fg:           var(--h-cocoa-800);   /* 15.2:1 on page */
+  --h-fg-muted:     var(--h-cocoa-600);   /*  6.6:1 */
+  --h-fg-subtle:    var(--h-cocoa-500);   /*  5.3:1 page / 4.8:1 sunk — AA on both */
+  --h-fg-faint:     var(--h-cocoa-400);   /*  3.3:1 — ICONS AND RULES ONLY, never text */
+  --h-fg-inverse:   var(--h-cream-100);
+  --h-fg-on-accent: var(--h-cream-50);    /* warm off-white, not #FFF */
+  --h-fg-on-honey:  var(--h-cocoa-800);   /* honey never takes a light label */
+  --h-fg-on-danger: var(--h-cream-50);
+  /* foregrounds for surfaces that INVERT between themes */
+  --h-honey-soft-fg: var(--h-cocoa-800);  /* on the honey tint */
+  --h-accent-inverse: var(--h-honey-400); /* accent sitting on --h-bg-inverse */
+
+  /* hairlines */
+  --h-line:         rgba(43, 29, 19, 0.10);
+  --h-line-strong:  rgba(43, 29, 19, 0.18);
+  --h-line-glass:   rgba(255, 251, 243, 0.75);
+
+  /* accents */
+  --h-accent:       var(--h-crust-600);
+  --h-accent-hover: var(--h-crust-700);
+  --h-accent-press: var(--h-crust-800);
+  --h-accent-soft:  var(--h-crust-100);
+  --h-accent-fg:    var(--h-crust-700);
+  --h-honey:        var(--h-honey-400);
+  --h-honey-soft:   var(--h-honey-200);
+  --h-jam:          var(--h-jam-600);
+  --h-jam-soft:     var(--h-jam-100);
+
+  /* status */
+  --h-success:      var(--h-pist-600);
+  --h-success-soft: var(--h-pist-100);
+  --h-warning:      var(--h-amber-700);
+  --h-warning-soft: var(--h-honey-200);
+  --h-danger:       var(--h-red-600);
+  --h-danger-soft:  var(--h-red-100);
+
+  /* gradients — decorative; the action gradient keeps its cream label AA at every stop */
+  --h-grad-crust:  linear-gradient(135deg, var(--h-crust-600), var(--h-crust-700)); /* @kind color */
+  --h-grad-warm:   linear-gradient(135deg, var(--h-honey-400), var(--h-crust-500)); /* @kind color */
+  --h-grad-glaze:  linear-gradient(180deg, rgba(255,251,243,0.60), rgba(255,251,243,0)); /* @kind color */
+  --h-grad-oven:   radial-gradient(120% 90% at 50% 0%, var(--h-honey-200), transparent 70%); /* @kind color */
+
+  /* -------------------------------------------------------------- 3. TYPE
+     Two brand faces, both self-hosted (see fonts.css). There is no brand mono —
+     the preview chrome declares its own system stack, so nothing shipped here
+     asks for a third font file. */
+  --h-font-display: "Fraunces", Georgia, "Times New Roman", serif;
+  --h-font-body:    "Nunito Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Fluid sizes are split into min / fluid / max rather than stored as a whole
+     clamp(). A clamp() lives in a rule (base.css), never in a token: a token
+     value carrying commas gets misread as a font stack by tooling that scans
+     --*-text-* / --*-font-* properties, and reports "+ 4.6vw" as a font name. */
+  --h-text-display-min:   2.75rem;
+  --h-text-display-fluid: calc(1.6rem + 4.6vw);
+  --h-text-display-max:   4.75rem;
+
+  --h-text-h1-min:   2.125rem;
+  --h-text-h1-fluid: calc(1.4rem + 2.6vw);
+  --h-text-h1-max:   3.25rem;
+
+  --h-text-h2-min:   1.625rem;
+  --h-text-h2-fluid: calc(1.25rem + 1.5vw);
+  --h-text-h2-max:   2.25rem;
+
+  /* fixed UI sizes */
+  --h-text-h3:      1.5rem;
+  --h-text-h4:      1.25rem;
+  --h-text-lg:      1.125rem;
+  --h-text-base:    1rem;
+  --h-text-sm:      0.9375rem;
+  --h-text-xs:      0.8125rem;
+  --h-text-2xs:     0.6875rem;
+
+  --h-leading-tight: 1.1;
+  --h-leading-snug:  1.28;
+  --h-leading-body:  1.6;
+  --h-leading-loose: 1.75;
+
+  --h-tracking-tight:  -0.02em;
+  --h-tracking-normal: 0;
+  --h-tracking-wide:   0.04em;
+  --h-tracking-caps:   0.12em;
+
+  --h-weight-regular: 400;
+  --h-weight-medium:  500;
+  --h-weight-semi:    600;
+  --h-weight-bold:    700;
+
+  --h-measure: 68ch; /* @kind spacing */
+
+  /* -------------------------------------------------------------- 4. SPACE — 4px grid */
+  --h-space-0:  0;
+  --h-space-1:  0.25rem;
+  --h-space-2:  0.5rem;
+  --h-space-3:  0.75rem;
+  --h-space-4:  1rem;
+  --h-space-5:  1.25rem;
+  --h-space-6:  1.5rem;
+  --h-space-8:  2rem;
+  --h-space-10: 2.5rem;
+  --h-space-12: 3rem;
+  --h-space-16: 4rem;
+  --h-space-20: 5rem;
+  --h-space-24: 6rem;
+
+  --h-gutter:           clamp(1.25rem, 4vw, 3rem); /* @kind spacing */
+  --h-container:        1160px; /* @kind spacing */
+  --h-container-narrow: 720px; /* @kind spacing */
+
+  /* -------------------------------------------------------------- 5. RADIUS */
+  --h-radius-xs:   6px;
+  --h-radius-sm:   10px;
+  --h-radius-md:   14px;
+  --h-radius-lg:   18px;
+  --h-radius-xl:   24px;
+  --h-radius-2xl:  32px;
+  --h-radius-pill: 999px;
+
+  /* -------------------------------------------------------------- 6. ELEVATION
+     Shadows are tinted with cocoa, never neutral black. A grey shadow on a warm
+     ground is the fastest way to make this system look cold. */
+  --h-shadow-1: 0 1px 2px rgba(74, 48, 30, 0.06),
+                0 2px 6px rgba(74, 48, 30, 0.05);
+  --h-shadow-2: 0 2px 4px rgba(74, 48, 30, 0.06),
+                0 8px 20px rgba(74, 48, 30, 0.08);
+  --h-shadow-3: 0 4px 8px rgba(74, 48, 30, 0.07),
+                0 18px 40px rgba(74, 48, 30, 0.11);
+  --h-shadow-4: 0 8px 16px rgba(74, 48, 30, 0.08),
+                0 32px 64px rgba(74, 48, 30, 0.14);
+  --h-shadow-inset: inset 0 1px 0 rgba(255, 251, 243, 0.70);
+
+  --h-blur-glass: 14px; /* @kind other */
+
+  /* -------------------------------------------------------------- 7. MOTION */
+  --h-dur-fast: 120ms; /* @kind other */
+  --h-dur-base: 180ms; /* @kind other */
+  --h-dur-slow: 260ms; /* @kind other */
+  --h-dur-lazy: 420ms; /* @kind other */
+
+  --h-ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1); /* @kind other */
+  --h-ease-in-out: cubic-bezier(0.65, 0.05, 0.36, 1); /* @kind other */
+  --h-ease-spring: cubic-bezier(0.34, 1.40, 0.64, 1); /* @kind other */
+
+  --h-lift: translateY(-4px); /* @kind other */
+
+  /* -------------------------------------------------------------- 8. LAYERS */
+  --h-z-base:     0; /* @kind other */
+  --h-z-sticky:   100; /* @kind other */
+  --h-z-dropdown: 200; /* @kind other */
+  --h-z-overlay:  300; /* @kind other */
+  --h-z-modal:    400; /* @kind other */
+  --h-z-toast:    500; /* @kind other */
+}
+
+/* ==========================================================================
+   DARK — "after hours". Warm dark, not neutral dark: the ground keeps a cocoa
+   cast, and honey takes over as the accent because crust goes muddy at low
+   luminance. Actions flip to ink-on-honey.
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  /* The semantic layer flips on :root itself so these register as design-system
+     tokens rather than as declarations on a component-style selector. A forced
+     light theme restores the light values in the block below. */
+  :root {
+    color-scheme: dark;
+
+    --h-bg-page:    var(--h-cocoa-950);
+    --h-bg-sunk:    #130E0B;
+    --h-bg-surface: #241A14;
+    --h-bg-raised:  #2E2119;
+    --h-bg-glass:   rgba(46, 33, 25, 0.72);
+    --h-bg-glass-2: rgba(46, 33, 25, 0.90);
+    --h-bg-inverse: var(--h-cream-100);
+
+    --h-fg:           #F6EDE1;
+    --h-fg-muted:     #C9AF99;
+    --h-fg-subtle:    var(--h-cocoa-300);
+    --h-fg-faint:     #8B7561;
+    --h-fg-inverse:   var(--h-cocoa-800);
+    --h-fg-on-accent: var(--h-cocoa-900);
+    --h-fg-on-honey:  var(--h-cocoa-900);
+
+    --h-fg-on-danger: var(--h-cocoa-900);
+    --h-honey-soft-fg: var(--h-honey-300);
+    --h-accent-inverse: var(--h-crust-700);
+
+    --h-line:        rgba(246, 237, 225, 0.12);
+    --h-line-strong: rgba(246, 237, 225, 0.22);
+    --h-line-glass:  rgba(246, 237, 225, 0.10);
+
+    --h-accent:       var(--h-honey-400);
+    --h-accent-hover: var(--h-honey-300);
+    --h-accent-press: var(--h-honey-500);
+    --h-accent-soft:  rgba(242, 166, 59, 0.16);
+    --h-accent-fg:    var(--h-honey-300);
+    --h-honey-soft:   rgba(242, 166, 59, 0.16);
+    --h-jam:          #E8A0AF;
+    --h-jam-soft:     rgba(232, 160, 175, 0.16);
+
+    --h-success:      #A9C98F;
+    --h-success-soft: rgba(169, 201, 143, 0.16);
+    --h-warning:      var(--h-honey-300);
+    --h-warning-soft: rgba(247, 196, 107, 0.16);
+    --h-danger:       #F0A093;
+    --h-danger-soft:  rgba(240, 160, 147, 0.16);
+
+    --h-grad-crust: linear-gradient(135deg, var(--h-honey-400), var(--h-honey-600)); /* @kind color */
+    --h-grad-warm:  linear-gradient(135deg, var(--h-honey-300), var(--h-crust-500)); /* @kind color */
+    --h-grad-glaze: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0)); /* @kind color */
+    --h-grad-oven:  radial-gradient(120% 90% at 50% 0%, rgba(242,166,59,0.18), transparent 70%); /* @kind color */
+
+    --h-shadow-1: 0 1px 2px rgba(0,0,0,0.34), 0 2px 6px rgba(0,0,0,0.28);
+    --h-shadow-2: 0 2px 4px rgba(0,0,0,0.36), 0 8px 20px rgba(0,0,0,0.34);
+    --h-shadow-3: 0 4px 8px rgba(0,0,0,0.38), 0 18px 40px rgba(0,0,0,0.42);
+    --h-shadow-4: 0 8px 16px rgba(0,0,0,0.42), 0 32px 64px rgba(0,0,0,0.50);
+    --h-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  /* explicit light beats the OS preference */
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --h-bg-page: var(--h-cream-200);
+    --h-bg-sunk: var(--h-cream-300);
+    --h-bg-surface: var(--h-cream-100);
+    --h-bg-raised: var(--h-cream-50);
+    --h-bg-glass: rgba(255, 251, 243, 0.72);
+    --h-bg-glass-2: rgba(255, 251, 243, 0.88);
+    --h-bg-inverse: var(--h-cocoa-800);
+    --h-fg: var(--h-cocoa-800);
+    --h-fg-muted: var(--h-cocoa-600);
+    --h-fg-subtle: var(--h-cocoa-500);
+    --h-fg-faint: var(--h-cocoa-400);
+    --h-fg-inverse: var(--h-cream-100);
+    --h-fg-on-accent: var(--h-cream-50);
+    --h-fg-on-honey: var(--h-cocoa-800);
+    --h-fg-on-danger: var(--h-cream-50);
+    --h-honey-soft-fg: var(--h-cocoa-800);
+    --h-accent-inverse: var(--h-honey-400);
+    --h-line: rgba(43, 29, 19, 0.10);
+    --h-line-strong: rgba(43, 29, 19, 0.18);
+    --h-line-glass: rgba(255, 251, 243, 0.75);
+    --h-accent: var(--h-crust-600);
+    --h-accent-hover: var(--h-crust-700);
+    --h-accent-press: var(--h-crust-800);
+    --h-accent-soft: var(--h-crust-100);
+    --h-accent-fg: var(--h-crust-700);
+    --h-honey-soft: var(--h-honey-200);
+    --h-jam: var(--h-jam-600);
+    --h-jam-soft: var(--h-jam-100);
+    --h-success: var(--h-pist-600);
+    --h-success-soft: var(--h-pist-100);
+    --h-warning: var(--h-amber-700);
+    --h-warning-soft: var(--h-honey-200);
+    --h-danger: var(--h-red-600);
+    --h-danger-soft: var(--h-red-100);
+    --h-grad-crust: linear-gradient(135deg, var(--h-crust-600), var(--h-crust-700)); /* @kind color */
+    --h-grad-warm: linear-gradient(135deg, var(--h-honey-400), var(--h-crust-500)); /* @kind color */
+    --h-grad-glaze: linear-gradient(180deg, rgba(255,251,243,0.60), rgba(255,251,243,0)); /* @kind color */
+    --h-grad-oven: radial-gradient(120% 90% at 50% 0%, var(--h-honey-200), transparent 70%); /* @kind color */
+    --h-shadow-1: 0 1px 2px rgba(74, 48, 30, 0.06), 0 2px 6px rgba(74, 48, 30, 0.05);
+    --h-shadow-2: 0 2px 4px rgba(74, 48, 30, 0.06), 0 8px 20px rgba(74, 48, 30, 0.08);
+    --h-shadow-3: 0 4px 8px rgba(74, 48, 30, 0.07), 0 18px 40px rgba(74, 48, 30, 0.11);
+    --h-shadow-4: 0 8px 16px rgba(74, 48, 30, 0.08), 0 32px 64px rgba(74, 48, 30, 0.14);
+    --h-shadow-inset: inset 0 1px 0 rgba(255, 251, 243, 0.70);
+  }
+}
+
+/* explicit toggle wins in both directions */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --h-bg-page:    var(--h-cocoa-950);
+  --h-bg-sunk:    #130E0B;
+  --h-bg-surface: #241A14;
+  --h-bg-raised:  #2E2119;
+  --h-bg-glass:   rgba(46, 33, 25, 0.72);
+  --h-bg-glass-2: rgba(46, 33, 25, 0.90);
+  --h-bg-inverse: var(--h-cream-100);
+
+  --h-fg:           #F6EDE1;
+  --h-fg-muted:     #C9AF99;
+  --h-fg-subtle:    var(--h-cocoa-300);
+  --h-fg-faint:     #8B7561;
+  --h-fg-inverse:   var(--h-cocoa-800);
+  --h-fg-on-accent: var(--h-cocoa-900);
+  --h-fg-on-honey:  var(--h-cocoa-900);
+
+  --h-fg-on-danger: var(--h-cocoa-900);
+  --h-honey-soft-fg: var(--h-honey-300);
+  --h-accent-inverse: var(--h-crust-700);
+
+  --h-line:        rgba(246, 237, 225, 0.12);
+  --h-line-strong: rgba(246, 237, 225, 0.22);
+  --h-line-glass:  rgba(246, 237, 225, 0.10);
+
+  --h-accent:       var(--h-honey-400);
+  --h-accent-hover: var(--h-honey-300);
+  --h-accent-press: var(--h-honey-500);
+  --h-accent-soft:  rgba(242, 166, 59, 0.16);
+  --h-accent-fg:    var(--h-honey-300);
+  --h-honey-soft:   rgba(242, 166, 59, 0.16);
+  --h-jam:          #E8A0AF;
+  --h-jam-soft:     rgba(232, 160, 175, 0.16);
+
+  --h-success:      #A9C98F;
+  --h-success-soft: rgba(169, 201, 143, 0.16);
+  --h-warning:      var(--h-honey-300);
+  --h-warning-soft: rgba(247, 196, 107, 0.16);
+  --h-danger:       #F0A093;
+  --h-danger-soft:  rgba(240, 160, 147, 0.16);
+
+  --h-grad-crust: linear-gradient(135deg, var(--h-honey-400), var(--h-honey-600)); /* @kind color */
+  --h-grad-warm:  linear-gradient(135deg, var(--h-honey-300), var(--h-crust-500)); /* @kind color */
+  --h-grad-glaze: linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0)); /* @kind color */
+  --h-grad-oven:  radial-gradient(120% 90% at 50% 0%, rgba(242,166,59,0.18), transparent 70%); /* @kind color */
+
+  --h-shadow-1: 0 1px 2px rgba(0,0,0,0.34), 0 2px 6px rgba(0,0,0,0.28);
+  --h-shadow-2: 0 2px 4px rgba(0,0,0,0.36), 0 8px 20px rgba(0,0,0,0.34);
+  --h-shadow-3: 0 4px 8px rgba(0,0,0,0.38), 0 18px 40px rgba(0,0,0,0.42);
+  --h-shadow-4: 0 8px 16px rgba(0,0,0,0.42), 0 32px 64px rgba(0,0,0,0.50);
+  --h-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+
+/* ==========================================================================
+   HEARTH — Base
+   Reset, document defaults, typography, and the shared primitives
+   (focus ring, lift, reduced motion) every component inherits.
+   ========================================================================== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--h-bg-page);
+  color: var(--h-fg);
+  font-family: var(--h-font-body);
+  font-size: var(--h-text-base);
+  line-height: var(--h-leading-body);
+  font-weight: var(--h-weight-regular);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, svg, video { display: block; max-width: 100%; }
+
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* -------------------------------------------------------------- typography */
+
+.h-display, .h-h1, .h-h2, .h-h3, .h-h4 {
+  font-family: var(--h-font-display);
+  font-weight: var(--h-weight-semi);
+  color: var(--h-fg);
+  margin: 0;
+  /* Fraunces variable axes: a little optical softness, a little "wonk" —
+     this is where the warmth actually lives. */
+  font-variation-settings: "SOFT" 40, "WONK" 1;
+  font-optical-sizing: auto;
+}
+
+/* clamp() is assembled here, from the comma-free tokens — see the note in
+   tokens.css for why the whole expression is not stored as one token. */
+.h-display {
+  font-size: clamp(var(--h-text-display-min), var(--h-text-display-fluid), var(--h-text-display-max));
+  line-height: var(--h-leading-tight);
+  letter-spacing: var(--h-tracking-tight);
+  font-weight: var(--h-weight-bold);
+}
+.h-h1 {
+  font-size: clamp(var(--h-text-h1-min), var(--h-text-h1-fluid), var(--h-text-h1-max));
+  line-height: var(--h-leading-tight);
+  letter-spacing: var(--h-tracking-tight);
+  font-weight: var(--h-weight-bold);
+}
+.h-h2 {
+  font-size: clamp(var(--h-text-h2-min), var(--h-text-h2-fluid), var(--h-text-h2-max));
+  line-height: var(--h-leading-snug);
+  letter-spacing: var(--h-tracking-tight);
+}
+.h-h3 { font-size: var(--h-text-h3); line-height: var(--h-leading-snug); }
+.h-h4 { font-size: var(--h-text-h4); line-height: var(--h-leading-snug); }
+
+.h-lead {
+  font-size: var(--h-text-lg);
+  line-height: var(--h-leading-loose);
+  color: var(--h-fg-muted);
+  max-width: var(--h-measure);
+  margin: 0;
+}
+
+.h-body   { font-size: var(--h-text-base); line-height: var(--h-leading-body); margin: 0; }
+.h-small  { font-size: var(--h-text-sm); line-height: var(--h-leading-body); margin: 0; }
+.h-caption{
+  font-size: var(--h-text-xs);
+  line-height: var(--h-leading-body);
+  color: var(--h-fg-subtle);
+  margin: 0;
+}
+
+/* the small caps label that sits above section headings */
+.h-eyebrow {
+  font-family: var(--h-font-body);
+  font-size: var(--h-text-2xs);
+  font-weight: var(--h-weight-bold);
+  letter-spacing: var(--h-tracking-caps);
+  text-transform: uppercase;
+  color: var(--h-accent-fg);
+  margin: 0;
+}
+
+.h-muted  { color: var(--h-fg-muted); }
+.h-subtle { color: var(--h-fg-subtle); }
+
+/* prices, counts, timers — always tabular so columns of numbers line up */
+.h-numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.h-link {
+  color: var(--h-accent-fg);
+  text-decoration-color: color-mix(in srgb, var(--h-accent) 40%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--h-dur-base) var(--h-ease-out);
+}
+.h-link:hover { text-decoration-color: currentColor; }
+
+/* -------------------------------------------------------------- primitives */
+
+/* One focus treatment for the whole system. Two-ring so it reads on both
+   the page ground and on top of a filled button. */
+.h-focusable:focus-visible,
+.h-btn:focus-visible,
+.h-input:focus-visible,
+.h-card--interactive:focus-visible,
+.h-tab:focus-visible,
+.h-switch:focus-visible,
+.h-check:focus-visible,
+.h-stepper__btn:focus-visible,
+.h-menu__item:focus-visible {
+  outline: 2px solid var(--h-accent);
+  outline-offset: 2px;
+  border-radius: var(--h-radius-sm);
+}
+
+/* the frosted stack that gives this system its depth */
+.h-glass {
+  background: var(--h-bg-glass);
+  -webkit-backdrop-filter: blur(var(--h-blur-glass)) saturate(1.4);
+  backdrop-filter: blur(var(--h-blur-glass)) saturate(1.4);
+  border: 1px solid var(--h-line-glass);
+  box-shadow: var(--h-shadow-2), var(--h-shadow-inset);
+}
+
+.h-lift {
+  transition:
+    transform var(--h-dur-slow) var(--h-ease-spring),
+    box-shadow var(--h-dur-slow) var(--h-ease-out);
+}
+.h-lift:hover { transform: var(--h-lift); box-shadow: var(--h-shadow-3); }
+
+/* layout helpers used by the patterns */
+.h-container {
+  width: 100%;
+  max-width: var(--h-container);
+  margin-inline: auto;
+  padding-inline: var(--h-gutter);
+}
+.h-stack   { display: flex; flex-direction: column; gap: var(--h-space-4); }
+.h-row     { display: flex; align-items: center; gap: var(--h-space-3); flex-wrap: wrap; }
+.h-divider { height: 1px; background: var(--h-line); border: 0; margin: 0; }
+
+.h-sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------------- reduced motion
+   Soft Depth leans on springs and lift. Honour the preference by removing the
+   travel while keeping the state change visible. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .h-lift:hover,
+  .h-card--interactive:hover,
+  .h-btn:hover { transform: none !important; }
+}
+
+
+/* ==========================================================================
+   HEARTH — Components
+   Every value comes from a token. No raw colours, sizes, or timings below.
+   ========================================================================== */
+
+/* ==========================================================================
+   BUTTON
+   Variants: primary · secondary · ghost · honey · danger
+   Sizes:    sm · md · lg      Modifiers: --icon --block --loading
+   The lift on hover is the system signature; it is removed under
+   prefers-reduced-motion by base.css.
+   ========================================================================== */
+
+.h-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--h-space-2);
+  padding: var(--h-space-3) var(--h-space-5);
+  font-family: var(--h-font-body);
+  font-size: var(--h-text-sm);
+  font-weight: var(--h-weight-bold);
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+  border-radius: var(--h-radius-pill);
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  user-select: none;
+  transition:
+    transform var(--h-dur-slow) var(--h-ease-spring),
+    box-shadow var(--h-dur-slow) var(--h-ease-out),
+    background-color var(--h-dur-base) var(--h-ease-out),
+    border-color var(--h-dur-base) var(--h-ease-out),
+    color var(--h-dur-base) var(--h-ease-out);
+}
+
+.h-btn:disabled,
+.h-btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* --- primary: the crust gradient. White text is AA at every stop. --- */
+.h-btn--primary {
+  background-image: var(--h-grad-crust);
+  background-color: var(--h-accent);
+  color: var(--h-fg-on-accent);
+  box-shadow: var(--h-shadow-2);
+}
+.h-btn--primary:hover:not(:disabled) {
+  transform: var(--h-lift);
+  box-shadow: var(--h-shadow-3);
+}
+.h-btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+  background-image: none;
+  background-color: var(--h-accent-press);
+  box-shadow: var(--h-shadow-1);
+}
+
+/* --- secondary: a raised surface chip --- */
+.h-btn--secondary {
+  background: var(--h-bg-raised);
+  color: var(--h-fg);
+  border-color: var(--h-line-strong);
+  box-shadow: var(--h-shadow-1);
+}
+.h-btn--secondary:hover:not(:disabled) {
+  transform: var(--h-lift);
+  box-shadow: var(--h-shadow-2);
+  border-color: var(--h-accent);
+  color: var(--h-accent-fg);
+}
+.h-btn--secondary:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+  background: var(--h-bg-sunk);
+}
+
+/* --- ghost: no chrome until touched --- */
+.h-btn--ghost {
+  background: transparent;
+  color: var(--h-fg-muted);
+}
+.h-btn--ghost:hover:not(:disabled) {
+  background: var(--h-accent-soft);
+  color: var(--h-accent-fg);
+}
+
+/* --- honey: the warm secondary CTA. Ink on honey, never white. --- */
+.h-btn--honey {
+  background: var(--h-honey);
+  color: var(--h-fg-on-honey);
+  box-shadow: var(--h-shadow-2);
+}
+.h-btn--honey:hover:not(:disabled) {
+  transform: var(--h-lift);
+  box-shadow: var(--h-shadow-3);
+}
+.h-btn--honey:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--h-shadow-1);
+}
+
+/* --- danger --- */
+.h-btn--danger {
+  background: var(--h-danger);
+  color: var(--h-fg-on-danger);
+  box-shadow: var(--h-shadow-1);
+}
+.h-btn--danger:hover:not(:disabled) { transform: var(--h-lift); box-shadow: var(--h-shadow-2); }
+
+/* --- sizes --- */
+.h-btn--sm {
+  padding: var(--h-space-2) var(--h-space-4);
+  font-size: var(--h-text-xs);
+}
+.h-btn--lg {
+  padding: var(--h-space-4) var(--h-space-8);
+  font-size: var(--h-text-base);
+}
+
+.h-btn--icon {
+  padding: var(--h-space-3);
+  aspect-ratio: 1;
+}
+.h-btn--block { display: flex; width: 100%; }
+
+/* --- loading: swap the label for a proving dot --- */
+.h-btn--loading { pointer-events: none; position: relative; color: transparent; }
+.h-btn--loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 1em; height: 1em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  color: var(--h-fg-on-accent);
+  animation: h-spin var(--h-dur-lazy) linear infinite;
+}
+@keyframes h-spin { to { transform: rotate(360deg); } }
+
+/* ==========================================================================
+   FIELD / INPUT
+   ========================================================================== */
+
+.h-field { display: flex; flex-direction: column; gap: var(--h-space-2); }
+
+.h-label {
+  font-size: var(--h-text-sm);
+  font-weight: var(--h-weight-semi);
+  color: var(--h-fg);
+}
+.h-label__req { color: var(--h-danger); margin-inline-start: 2px; }
+
+.h-help  { font-size: var(--h-text-xs); color: var(--h-fg-subtle); }
+.h-error { font-size: var(--h-text-xs); color: var(--h-danger); font-weight: var(--h-weight-semi); }
+
+.h-input,
+.h-textarea,
+.h-select {
+  width: 100%;
+  padding: var(--h-space-3) var(--h-space-4);
+  font-size: var(--h-text-sm);
+  color: var(--h-fg);
+  background: var(--h-bg-surface);
+  border: 1px solid var(--h-line-strong);
+  border-radius: var(--h-radius-md);
+  box-shadow: var(--h-shadow-1);
+  transition:
+    border-color var(--h-dur-base) var(--h-ease-out),
+    box-shadow var(--h-dur-base) var(--h-ease-out),
+    background-color var(--h-dur-base) var(--h-ease-out);
+}
+.h-input::placeholder,
+.h-textarea::placeholder { color: var(--h-fg-subtle); }
+
+.h-input:hover:not(:disabled),
+.h-textarea:hover:not(:disabled),
+.h-select:hover:not(:disabled) { border-color: var(--h-fg-faint); }
+
+.h-input:focus,
+.h-textarea:focus,
+.h-select:focus {
+  outline: none;
+  border-color: var(--h-accent);
+  box-shadow: var(--h-shadow-1), 0 0 0 3px var(--h-accent-soft);
+  background: var(--h-bg-raised);
+}
+
+.h-input:disabled,
+.h-textarea:disabled,
+.h-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--h-bg-sunk);
+  box-shadow: none;
+}
+
+.h-input[aria-invalid="true"],
+.h-textarea[aria-invalid="true"] { border-color: var(--h-danger); }
+.h-input[aria-invalid="true"]:focus { box-shadow: var(--h-shadow-1), 0 0 0 3px var(--h-danger-soft); }
+
+.h-textarea { min-height: 7rem; resize: vertical; line-height: var(--h-leading-body); }
+
+.h-select {
+  appearance: none;
+  padding-inline-end: var(--h-space-10);
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 20px) calc(50% + 2px),
+    calc(100% - 14px) calc(50% + 2px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+}
+
+/* input with a leading adornment (search, currency) */
+.h-input-group { position: relative; display: flex; align-items: center; }
+.h-input-group .h-input { padding-inline-start: var(--h-space-10); }
+.h-input-group__icon {
+  position: absolute;
+  inset-inline-start: var(--h-space-4);
+  color: var(--h-fg-faint);
+  pointer-events: none;
+  display: flex;
+}
+
+/* --- checkbox / radio --- */
+.h-check {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--h-space-3);
+  cursor: pointer;
+  font-size: var(--h-text-sm);
+}
+.h-check input {
+  appearance: none;
+  flex: none;
+  width: 1.25rem; height: 1.25rem;
+  margin: 0.1rem 0 0;
+  background: var(--h-bg-surface);
+  border: 1px solid var(--h-line-strong);
+  border-radius: var(--h-radius-xs);
+  box-shadow: var(--h-shadow-1);
+  cursor: pointer;
+  transition: background-color var(--h-dur-fast) var(--h-ease-out),
+              border-color var(--h-dur-fast) var(--h-ease-out);
+}
+.h-check input[type="radio"] { border-radius: 50%; }
+.h-check input:checked {
+  background: var(--h-accent);
+  border-color: var(--h-accent);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23FFFBF3' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-6'/%3E%3C/svg%3E");
+  background-size: 78%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.h-check input[type="radio"]:checked {
+  background-image: radial-gradient(circle, var(--h-bg-surface) 30%, transparent 32%);
+}
+
+/* --- switch --- */
+.h-switch { display: inline-flex; align-items: center; gap: var(--h-space-3); cursor: pointer; font-size: var(--h-text-sm); }
+.h-switch input {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 2.75rem; height: 1.5rem;
+  margin: 0;
+  background: var(--h-cocoa-400);
+  border-radius: var(--h-radius-pill);
+  cursor: pointer;
+  transition: background-color var(--h-dur-base) var(--h-ease-out);
+}
+.h-switch input::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 1.125rem; height: 1.125rem;
+  background: var(--h-cream-50);
+  border-radius: 50%;
+  box-shadow: var(--h-shadow-1);
+  transition: transform var(--h-dur-slow) var(--h-ease-spring);
+}
+.h-switch input:checked { background: var(--h-accent); }
+.h-switch input:checked::after { transform: translateX(1.25rem); }
+
+/* --- quantity stepper (bakery: how many croissants) --- */
+.h-stepper {
+  display: inline-flex;
+  align-items: center;
+  background: var(--h-bg-surface);
+  border: 1px solid var(--h-line-strong);
+  border-radius: var(--h-radius-pill);
+  box-shadow: var(--h-shadow-1);
+  overflow: hidden;
+}
+.h-stepper__btn {
+  display: grid;
+  place-items: center;
+  width: 2.25rem; height: 2.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--h-fg-muted);
+  font-size: var(--h-text-lg);
+  font-weight: var(--h-weight-bold);
+  cursor: pointer;
+  transition: background-color var(--h-dur-fast) var(--h-ease-out), color var(--h-dur-fast) var(--h-ease-out);
+}
+.h-stepper__btn:hover { background: var(--h-accent-soft); color: var(--h-accent-fg); }
+.h-stepper__value {
+  min-width: 2.25rem;
+  text-align: center;
+  font-size: var(--h-text-sm);
+  font-weight: var(--h-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   CARD
+   ========================================================================== */
+
+.h-card {
+  background: var(--h-bg-surface);
+  border: 1px solid var(--h-line);
+  border-radius: var(--h-radius-xl);
+  box-shadow: var(--h-shadow-1);
+  padding: var(--h-space-6);
+  position: relative;
+}
+
+.h-card--raised { box-shadow: var(--h-shadow-2); background: var(--h-bg-raised); }
+.h-card--flat   { box-shadow: none; background: var(--h-bg-sunk); border-color: transparent; }
+.h-card--glass  {
+  background: var(--h-bg-glass);
+  -webkit-backdrop-filter: blur(var(--h-blur-glass)) saturate(1.4);
+  backdrop-filter: blur(var(--h-blur-glass)) saturate(1.4);
+  border-color: var(--h-line-glass);
+  box-shadow: var(--h-shadow-2), var(--h-shadow-inset);
+}
+
+.h-card--interactive {
+  cursor: pointer;
+  text-align: inherit;
+  width: 100%;
+  transition:
+    transform var(--h-dur-slow) var(--h-ease-spring),
+    box-shadow var(--h-dur-slow) var(--h-ease-out),
+    border-color var(--h-dur-base) var(--h-ease-out);
+}
+.h-card--interactive:hover {
+  transform: var(--h-lift);
+  box-shadow: var(--h-shadow-3);
+  border-color: var(--h-line-strong);
+}
+
+.h-card__media {
+  margin: calc(var(--h-space-6) * -1) calc(var(--h-space-6) * -1) var(--h-space-5);
+  aspect-ratio: 4 / 3;
+  border-radius: var(--h-radius-xl) var(--h-radius-xl) 0 0;
+  overflow: hidden;
+  position: relative;
+  background: var(--h-grad-warm);
+}
+.h-card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--h-grad-glaze);
+}
+.h-card__title { font-family: var(--h-font-display); font-size: var(--h-text-h4); font-weight: var(--h-weight-semi); margin: 0; }
+.h-card__body  { color: var(--h-fg-muted); font-size: var(--h-text-sm); margin: var(--h-space-2) 0 0; }
+.h-card__foot  {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--h-space-4);
+  margin-top: var(--h-space-5);
+}
+
+/* price — display face, tabular */
+.h-price {
+  font-family: var(--h-font-display);
+  font-size: var(--h-text-h4);
+  font-weight: var(--h-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--h-fg);
+}
+.h-price--was {
+  font-size: var(--h-text-sm);
+  color: var(--h-fg-subtle);
+  text-decoration: line-through;
+  font-weight: var(--h-weight-regular);
+  margin-inline-start: var(--h-space-2);
+}
+
+/* ==========================================================================
+   BADGE / TAG
+   ========================================================================== */
+
+.h-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--h-space-1);
+  padding: 0.25rem var(--h-space-3);
+  font-size: var(--h-text-2xs);
+  font-weight: var(--h-weight-bold);
+  letter-spacing: var(--h-tracking-wide);
+  text-transform: uppercase;
+  border-radius: var(--h-radius-pill);
+  background: var(--h-bg-sunk);
+  color: var(--h-fg-muted);
+  white-space: nowrap;
+}
+.h-badge--honey   { background: var(--h-honey-soft);   color: var(--h-honey-soft-fg); }
+.h-badge--accent  { background: var(--h-accent-soft);  color: var(--h-accent-fg); }
+.h-badge--jam     { background: var(--h-jam-soft);     color: var(--h-jam); }
+.h-badge--success { background: var(--h-success-soft); color: var(--h-success); }
+.h-badge--warning { background: var(--h-warning-soft); color: var(--h-warning); }
+.h-badge--danger  { background: var(--h-danger-soft);  color: var(--h-danger); }
+.h-badge--solid   { background: var(--h-accent); color: var(--h-fg-on-accent); }
+
+.h-badge__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+/* floating badge for product cards */
+.h-badge--float {
+  position: absolute;
+  top: var(--h-space-4);
+  inset-inline-start: var(--h-space-4);
+  z-index: 1;
+  box-shadow: var(--h-shadow-1);
+}
+
+/* ==========================================================================
+   ALERT / TOAST
+   ========================================================================== */
+
+.h-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--h-space-3);
+  padding: var(--h-space-4) var(--h-space-5);
+  border-radius: var(--h-radius-lg);
+  border: 1px solid transparent;
+  font-size: var(--h-text-sm);
+  background: var(--h-bg-sunk);
+  color: var(--h-fg);
+}
+.h-alert__icon { flex: none; display: flex; margin-top: 1px; }
+.h-alert__title { font-weight: var(--h-weight-bold); margin: 0 0 2px; }
+.h-alert__body  { margin: 0; color: var(--h-fg-muted); }
+
+.h-alert--success { background: var(--h-success-soft); border-color: color-mix(in srgb, var(--h-success) 26%, transparent); }
+.h-alert--success .h-alert__icon { color: var(--h-success); }
+.h-alert--warning { background: var(--h-warning-soft); border-color: color-mix(in srgb, var(--h-warning) 26%, transparent); }
+.h-alert--warning .h-alert__icon { color: var(--h-warning); }
+.h-alert--danger  { background: var(--h-danger-soft);  border-color: color-mix(in srgb, var(--h-danger) 26%, transparent); }
+.h-alert--danger .h-alert__icon { color: var(--h-danger); }
+.h-alert--accent  { background: var(--h-accent-soft);  border-color: color-mix(in srgb, var(--h-accent) 26%, transparent); }
+.h-alert--accent .h-alert__icon { color: var(--h-accent-fg); }
+
+.h-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--h-space-3);
+  padding: var(--h-space-4) var(--h-space-5);
+  border-radius: var(--h-radius-pill);
+  background: var(--h-bg-inverse);
+  color: var(--h-fg-inverse);
+  box-shadow: var(--h-shadow-3);
+  font-size: var(--h-text-sm);
+  font-weight: var(--h-weight-medium);
+}
+.h-toast__icon { color: var(--h-accent-inverse); display: flex; }
+
+/* ==========================================================================
+   PROGRESS / SKELETON
+   ========================================================================== */
+
+.h-progress {
+  height: 8px;
+  border-radius: var(--h-radius-pill);
+  background: var(--h-bg-sunk);
+  overflow: hidden;
+}
+.h-progress__bar {
+  height: 100%;
+  border-radius: inherit;
+  background-image: var(--h-grad-warm);
+  transition: width var(--h-dur-lazy) var(--h-ease-out);
+}
+
+.h-skeleton {
+  border-radius: var(--h-radius-sm);
+  background: linear-gradient(
+    90deg,
+    var(--h-bg-sunk) 25%,
+    color-mix(in srgb, var(--h-bg-sunk) 60%, var(--h-bg-raised)) 50%,
+    var(--h-bg-sunk) 75%
+  );
+  background-size: 200% 100%;
+  animation: h-shimmer 1.4s var(--h-ease-in-out) infinite;
+}
+@keyframes h-shimmer { to { background-position: -200% 0; } }
+
+/* ==========================================================================
+   AVATAR
+   ========================================================================== */
+
+.h-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.5rem; height: 2.5rem;
+  border-radius: 50%;
+  background: var(--h-honey-soft);
+  color: var(--h-honey-soft-fg);
+  font-size: var(--h-text-xs);
+  font-weight: var(--h-weight-bold);
+  border: 2px solid var(--h-bg-surface);
+  overflow: hidden;
+  flex: none;
+}
+.h-avatar--lg { width: 3.5rem; height: 3.5rem; font-size: var(--h-text-sm); }
+.h-avatar--sm { width: 2rem; height: 2rem; font-size: var(--h-text-2xs); }
+.h-avatar-stack { display: flex; }
+.h-avatar-stack .h-avatar + .h-avatar { margin-inline-start: -0.65rem; }
+
+/* ==========================================================================
+   NAVIGATION
+   ========================================================================== */
+
+.h-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--h-z-sticky);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--h-space-6);
+  padding: var(--h-space-3) var(--h-space-5);
+  border-radius: var(--h-radius-pill);
+  background: var(--h-bg-glass-2);
+  -webkit-backdrop-filter: blur(var(--h-blur-glass)) saturate(1.4);
+  backdrop-filter: blur(var(--h-blur-glass)) saturate(1.4);
+  border: 1px solid var(--h-line-glass);
+  box-shadow: var(--h-shadow-2), var(--h-shadow-inset);
+}
+
+.h-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--h-space-2);
+  font-family: var(--h-font-display);
+  font-size: var(--h-text-lg);
+  font-weight: var(--h-weight-bold);
+  letter-spacing: var(--h-tracking-tight);
+  color: var(--h-fg);
+  text-decoration: none;
+}
+.h-logo__mark {
+  display: grid;
+  place-items: center;
+  width: 2rem; height: 2rem;
+  border-radius: var(--h-radius-sm);
+  background-image: var(--h-grad-warm);
+  color: var(--h-cream-50);
+}
+
+.h-nav { display: flex; align-items: center; gap: var(--h-space-1); }
+.h-nav__link {
+  padding: var(--h-space-2) var(--h-space-4);
+  border-radius: var(--h-radius-pill);
+  font-size: var(--h-text-sm);
+  font-weight: var(--h-weight-semi);
+  color: var(--h-fg-muted);
+  text-decoration: none;
+  transition: background-color var(--h-dur-base) var(--h-ease-out), color var(--h-dur-base) var(--h-ease-out);
+}
+.h-nav__link:hover { background: var(--h-accent-soft); color: var(--h-accent-fg); }
+.h-nav__link[aria-current="page"] { background: var(--h-bg-sunk); color: var(--h-fg); }
+
+/* --- tabs --- */
+.h-tabs {
+  display: inline-flex;
+  gap: var(--h-space-1);
+  padding: var(--h-space-1);
+  background: var(--h-bg-sunk);
+  border-radius: var(--h-radius-pill);
+  /* a long tab set scrolls rather than pushing the page wide */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.h-tabs::-webkit-scrollbar { display: none; }
+.h-tab { flex: none; }
+.h-tab {
+  padding: var(--h-space-2) var(--h-space-5);
+  border: 0;
+  border-radius: var(--h-radius-pill);
+  background: transparent;
+  color: var(--h-fg-muted);
+  font-size: var(--h-text-sm);
+  font-weight: var(--h-weight-semi);
+  cursor: pointer;
+  transition: background-color var(--h-dur-base) var(--h-ease-out),
+              color var(--h-dur-base) var(--h-ease-out),
+              box-shadow var(--h-dur-base) var(--h-ease-out);
+}
+.h-tab:hover { color: var(--h-fg); }
+.h-tab[aria-selected="true"] {
+  background: var(--h-bg-raised);
+  color: var(--h-fg);
+  box-shadow: var(--h-shadow-1);
+}
+
+/* --- breadcrumbs --- */
+.h-crumbs { display: flex; align-items: center; gap: var(--h-space-2); font-size: var(--h-text-xs); color: var(--h-fg-subtle); }
+.h-crumbs a { color: var(--h-fg-subtle); text-decoration: none; }
+.h-crumbs a:hover { color: var(--h-accent-fg); }
+.h-crumbs__sep { color: var(--h-fg-faint); }
+
+/* --- pagination --- */
+.h-page-btn {
+  display: grid;
+  place-items: center;
+  min-width: 2.25rem; height: 2.25rem;
+  padding-inline: var(--h-space-2);
+  border: 1px solid var(--h-line);
+  border-radius: var(--h-radius-sm);
+  background: var(--h-bg-surface);
+  color: var(--h-fg-muted);
+  font-size: var(--h-text-sm);
+  font-weight: var(--h-weight-semi);
+  cursor: pointer;
+}
+.h-page-btn:hover { border-color: var(--h-accent); color: var(--h-accent-fg); }
+.h-page-btn[aria-current="page"] { background: var(--h-accent); border-color: var(--h-accent); color: var(--h-fg-on-accent); }
+
+/* ==========================================================================
+   OVERLAYS — modal · menu · tooltip
+   ========================================================================== */
+
+.h-scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--h-cocoa-900) 45%, transparent);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  border-radius: inherit;
+}
+
+.h-modal {
+  width: min(30rem, 100%);
+  max-width: 100%;
+  background: var(--h-bg-raised);
+  border: 1px solid var(--h-line);
+  border-radius: var(--h-radius-2xl);
+  box-shadow: var(--h-shadow-4);
+  padding: var(--h-space-8);
+}
+.h-modal__title { font-family: var(--h-font-display); font-size: var(--h-text-h3); font-weight: var(--h-weight-bold); margin: 0 0 var(--h-space-2); }
+.h-modal__body  { color: var(--h-fg-muted); font-size: var(--h-text-sm); margin: 0; }
+.h-modal__foot  { display: flex; justify-content: flex-end; gap: var(--h-space-3); margin-top: var(--h-space-8); }
+
+.h-menu {
+  min-width: 13rem;
+  padding: var(--h-space-2);
+  background: var(--h-bg-raised);
+  border: 1px solid var(--h-line);
+  border-radius: var(--h-radius-lg);
+  box-shadow: var(--h-shadow-3);
+}
+.h-menu__item {
+  display: flex;
+  align-items: center;
+  gap: var(--h-space-3);
+  width: 100%;
+  padding: var(--h-space-2) var(--h-space-3);
+  border: 0;
+  border-radius: var(--h-radius-sm);
+  background: transparent;
+  color: var(--h-fg);
+  font-size: var(--h-text-sm);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color var(--h-dur-fast) var(--h-ease-out);
+}
+.h-menu__item:hover { background: var(--h-accent-soft); color: var(--h-accent-fg); }
+.h-menu__item--danger { color: var(--h-danger); }
+.h-menu__item--danger:hover { background: var(--h-danger-soft); color: var(--h-danger); }
+.h-menu__sep { height: 1px; background: var(--h-line); margin: var(--h-space-2) 0; }
+
+.h-tooltip {
+  display: inline-block;
+  padding: var(--h-space-2) var(--h-space-3);
+  background: var(--h-bg-inverse);
+  color: var(--h-fg-inverse);
+  border-radius: var(--h-radius-sm);
+  font-size: var(--h-text-xs);
+  font-weight: var(--h-weight-medium);
+  box-shadow: var(--h-shadow-2);
+  position: relative;
+}
+.h-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  border: 5px solid transparent;
+  border-top-color: var(--h-bg-inverse);
+}
+
+/* ==========================================================================
+   LIST ROWS / ORDER SUMMARY / STATS
+   ========================================================================== */
+
+.h-list { display: flex; flex-direction: column; }
+.h-list__row {
+  display: flex;
+  align-items: center;
+  gap: var(--h-space-4);
+  padding: var(--h-space-4) 0;
+  border-bottom: 1px solid var(--h-line);
+}
+.h-list__row:last-child { border-bottom: 0; }
+.h-list__main  { flex: 1; min-width: 0; }
+.h-list__title { font-weight: var(--h-weight-semi); font-size: var(--h-text-sm); margin: 0; }
+.h-list__meta  { font-size: var(--h-text-xs); color: var(--h-fg-subtle); margin: 2px 0 0; }
+
+.h-thumb {
+  width: 3.25rem; height: 3.25rem;
+  border-radius: var(--h-radius-md);
+  background-image: var(--h-grad-warm);
+  flex: none;
+  position: relative;
+  overflow: hidden;
+}
+.h-thumb::after { content: ""; position: absolute; inset: 0; background: var(--h-grad-glaze); }
+
+.h-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-top: var(--h-space-4);
+  border-top: 1px solid var(--h-line-strong);
+  margin-top: var(--h-space-2);
+}
+.h-total__label { font-weight: var(--h-weight-bold); }
+
+.h-stat {
+  padding: var(--h-space-5);
+  border-radius: var(--h-radius-lg);
+  background: var(--h-bg-sunk);
+}
+.h-stat__value {
+  font-family: var(--h-font-display);
+  font-size: clamp(var(--h-text-h2-min), var(--h-text-h2-fluid), var(--h-text-h2-max));
+  font-weight: var(--h-weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin: 0;
+}
+.h-stat__label {
+  font-size: var(--h-text-2xs);
+  font-weight: var(--h-weight-bold);
+  letter-spacing: var(--h-tracking-caps);
+  text-transform: uppercase;
+  color: var(--h-fg-subtle);
+  margin: var(--h-space-2) 0 0;
+}
+
+/* opening hours — a bakery needs this more than it needs a data grid */
+.h-hours { display: flex; flex-direction: column; gap: var(--h-space-2); }
+.h-hours__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--h-space-4);
+  font-size: var(--h-text-sm);
+}
+.h-hours__row::after {
+  content: "";
+  order: 1;
+  flex: 1;
+  height: 1px;
+  border-bottom: 1px dotted var(--h-line-strong);
+  margin: 0 var(--h-space-2);
+}
+.h-hours__day  { color: var(--h-fg-muted); }
+.h-hours__time { order: 2; font-variant-numeric: tabular-nums; font-weight: var(--h-weight-semi); }
+.h-hours__row--today .h-hours__day,
+.h-hours__row--today .h-hours__time { color: var(--h-accent-fg); font-weight: var(--h-weight-bold); }
+
+/* ==========================================================================
+   EMPTY STATE
+   ========================================================================== */
+
+.h-empty {
+  display: grid;
+  place-items: center;
+  gap: var(--h-space-3);
+  padding: var(--h-space-12) var(--h-space-6);
+  text-align: center;
+  border: 1px dashed var(--h-line-strong);
+  border-radius: var(--h-radius-xl);
+  background: var(--h-bg-sunk);
+}
+.h-empty__icon { color: var(--h-fg-faint); }
+.h-empty__title { font-family: var(--h-font-display); font-size: var(--h-text-h4); font-weight: var(--h-weight-semi); margin: 0; }
+.h-empty__body { font-size: var(--h-text-sm); color: var(--h-fg-subtle); margin: 0; max-width: 34ch; }
+
+/* ==========================================================================
+   SECTION / HERO scaffolding used by the patterns
+   ========================================================================== */
+
+.h-section { padding-block: var(--h-space-20); }
+.h-section--sunk { background: var(--h-bg-sunk); }
+.h-section__head { display: flex; flex-direction: column; gap: var(--h-space-3); margin-bottom: var(--h-space-10); max-width: var(--h-measure); }
+
+.h-hero {
+  position: relative;
+  padding-block: var(--h-space-20) var(--h-space-16);
+  overflow: hidden;
+  border-radius: var(--h-radius-2xl);
+  background: var(--h-bg-surface);
+  isolation: isolate;
+}
+.h-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--h-grad-oven);
+  z-index: -1;
+}
+
+.h-grid { display: grid; gap: var(--h-space-6); }
+/* min() keeps the track from forcing a scrollbar on a narrow phone */
+.h-grid--2 { grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr)); }
+.h-grid--3 { grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr)); }
+.h-grid--4 { grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr)); }
+
+/* Asymmetric page splits. Single column by default, so a pattern never has to
+   opt out of being responsive — the multi-column form is the enhancement. */
+.h-split { display: grid; gap: var(--h-space-8); grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 60rem) {
+  .h-split--21 { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .h-split--3  { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ==========================================================================
+   NARROW SCREENS
+   The header is the only component that cannot simply reflow — the nav has to
+   move to its own row and scroll.
+   ========================================================================== */
+@media (max-width: 40rem) {
+  .h-header {
+    flex-wrap: wrap;
+    row-gap: var(--h-space-3);
+    border-radius: var(--h-radius-xl);
+    padding: var(--h-space-4);
+  }
+  .h-nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .h-nav::-webkit-scrollbar { display: none; }
+  .h-nav__link { flex: none; }
+  .h-section { padding-block: var(--h-space-12); }
+  .h-hero { padding-block: var(--h-space-12) var(--h-space-10); }
+  .h-modal { padding: var(--h-space-6); min-width: 0; }
+  /* two full-length labels ("Keep it" / "Cancel order") outgrow a 320px screen */
+  .h-modal__foot { flex-wrap: wrap; }
+  .h-modal__foot .h-btn { flex: 1 1 auto; }
+  .h-card { padding: var(--h-space-5); }
+
+  /* basket rows: thumb + name on the first line, controls and price wrap below */
+  .h-list__row { flex-wrap: wrap; row-gap: var(--h-space-3); }
+  .h-list__main { flex: 1 1 8rem; }
+}

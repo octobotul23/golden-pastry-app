@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-cream-300);font-family:var(--h-font-body)}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+.dv-turn{padding:40px 44px 32px;border-bottom:1px solid rgba(43,29,19,.10);scroll-margin-top:16px}
+.dv-thd{display:flex;align-items:baseline;gap:10px;margin:0 0 20px}
+.dv-tid{font:700 11px/1 var(--h-font-body);letter-spacing:.08em;padding:5px 8px;background:var(--h-cocoa-800);color:var(--h-cream-100);border-radius:6px;text-decoration:none}
+.dv-tname{font:600 14px/1.2 var(--h-font-body);color:var(--h-cocoa-800)}
+.dv-opts{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start}
+.dv-opt{flex:none;display:flex;flex-direction:column;gap:10px;scroll-margin-top:16px}
+.dv-oid{font:700 11px/1 var(--h-font-body);letter-spacing:.08em;padding:5px 8px;background:rgba(43,29,19,.10);color:var(--h-cocoa-800);border-radius:6px;text-decoration:none}
+.dv-olabel{display:flex;align-items:center;gap:9px;font:400 13px/1.3 var(--h-font-body);color:var(--h-cocoa-600)}
+.dv-card{background:var(--h-cream-50);border:1px solid rgba(43,29,19,.12);border-radius:16px;box-shadow:0 8px 28px rgba(74,48,30,.10);overflow:hidden}
+.dv-opt:target .dv-oid{background:var(--h-crust-600);color:var(--h-cream-50)}
+.dv-next{margin:22px 0 0;font:13px/1.6 var(--h-font-body);color:var(--h-cocoa-500)}
+@keyframes pf-ring{0%,100%{box-shadow:0 0 0 0 rgba(242,166,59,.45)}55%{box-shadow:0 0 0 12px rgba(242,166,59,0)}}
+@keyframes pf-blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes pf-fadein{from{opacity:0}to{opacity:1}}
+@keyframes pf-slidein{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+.pf-new{animation:pf-ring 2.4s var(--h-ease-out) infinite}
+.pf-blink{animation:pf-blink 1.6s var(--h-ease-in-out) infinite}
+</style>
+</helmet>
+
+<div style="padding:40px 44px 28px;max-width:900px">
+<p class="h-eyebrow">Golden Pastry · ecran de producție</p>
+<h1 class="h-h2" style="margin:8px 0 14px">Panoul de comenzi pe perete</h1>
+<p class="h-body h-muted" style="max-width:66ch;text-wrap:pretty">Nu am putut citi pastryfood.eu/v2 (pagina se construiește singură în browser), așa că datele de mai jos sunt o presupunere: o comandă are o referință, un client, un canal, un interval de ridicare și o listă de produse. Trimite-mi o comandă reală sau leagă repo-ul și înlocuiesc câmpurile și numele de produse cu ale tale.</p>
+<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:18px">
+<span class="h-badge h-badge--accent">TV de perete 1920 × 1080</span>
+<span class="h-badge h-badge--honey">Tabletă 1280 × 800 · atingere</span>
+<span class="h-badge">7 zile rulante</span>
+<span class="h-badge">Grupat pe interval, apoi pe comandă</span>
+<span class="h-badge h-badge--honey">Comenzile noi se anunță singure</span>
+<span class="h-badge">~15 comenzi/zi</span>
+</div>
+<p class="h-caption" style="margin-top:16px">Fiecare panou este desenat la 1920 × 1080 real. Nimic nu coboară sub 22px la dimensiune reală, deci se citește de la trei metri.</p>
+</div>
+
+<section class="dv-turn" id="t6">
+<div class="dv-thd"><a class="dv-tid" href="#t6">6</a><span class="dv-tname">Laboratorul pe telefon — același panou, aceleași date, o singură coloană</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="6a">
+<div class="dv-olabel"><a class="dv-oid" href="#6a">6a</a>Telefon 440 × 932, mărime reală — zile, filtre, ordonare, bifat și schimbare de stare</div>
+<div class="dv-card" style="width:440px;height:932px">
+<div data-screen-label="6a Laborator telefon" style="width:440px;height:932px;position:relative;display:flex;flex-direction:column;overflow:hidden;-webkit-tap-highlight-color:transparent;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-line-strong:rgba(246,237,225,.22);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-honey:#F2A63B;--h-honey-soft:rgba(242,166,59,.16);--h-honey-soft-fg:#F7C46B;--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-danger:#E8A0AF;--h-danger-soft:rgba(232,160,175,.16);--h-fg-on-accent:#1B120B;--h-fg-on-honey:#1B120B;--h-shadow-1:none;--h-shadow-2:none;--h-shadow-3:none;background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body)">
+
+<div style="padding:18px 16px 12px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--h-line);background-image:radial-gradient(120% 100% at 0% 0%, rgba(242,166,59,.14), transparent 65%)">
+<div style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:34px;height:34px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column;gap:1px;min-width:0">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Laborator</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">Golden Pastry · producție</span>
+</div>
+<span class="h-numeric" style="margin-left:auto;font-size:20px;font-weight:700">07:12</span>
+</div>
+<div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px">
+<sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="7">
+<button type="button" class="{{ d.cls }}" onClick="{{ d.onClick }}" style="height:48px;min-width:92px;flex:none;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;border-radius:14px">
+<span>{{ d.label }}</span>
+<span class="h-numeric" style="font-weight:700;opacity:.85">{{ d.count }}</span>
+</button>
+</sc-for>
+</div>
+<div style="display:flex;gap:6px;overflow-x:auto">
+<sc-for list="{{ filterTabs }}" as="f" hint-placeholder-count="4">
+<button type="button" class="{{ f.cls }}" onClick="{{ f.onClick }}" style="height:44px;flex:none;min-width:84px;font-size:14px;border-radius:12px">{{ f.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1;overflow-y:auto;padding:14px 16px 0;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:6px;overflow-x:auto">
+<span style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle);flex:none">Ordonare</span>
+<sc-for list="{{ sortBtns }}" as="s" hint-placeholder-count="3">
+<button type="button" class="{{ s.cls }}" onClick="{{ s.onClick }}" style="height:42px;flex:none;font-size:13px;border-radius:11px">{{ s.label }}</button>
+</sc-for>
+</div>
+
+<sc-for list="{{ iLanes }}" as="lane" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px;padding-bottom:6px;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:28px;font-weight:700;color:var(--h-accent-fg)">{{ lane.time }}</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ lane.meta }}</span>
+</div>
+<sc-for list="{{ lane.orders }}" as="o" hint-placeholder-count="2">
+<div class="{{ o.cardCls }}" onClick="{{ o.onSelect }}" style="padding:14px 16px;border-radius:16px;display:flex;flex-direction:column;gap:9px;min-width:0;cursor:pointer;background:{{ o.bg }};border-color:{{ o.bd }};outline:{{ o.outline }};outline-offset:-1px">
+<div style="display:flex;align-items:center;gap:8px">
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ o.ref }}</span>
+<sc-if value="{{ o.urgent }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--jam pf-blink" style="font-size:11px">Urgent</span>
+</sc-if>
+<span class="{{ o.chanCls }}" style="font-size:11px;margin-left:auto">{{ o.chan }}</span>
+<button type="button" class="{{ o.upCls }}" onClick="{{ o.onUp }}" title="Mută mai sus" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↑</button>
+<button type="button" class="{{ o.downCls }}" onClick="{{ o.onDown }}" title="Mută mai jos" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↓</button>
+</div>
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600;line-height:1.15">{{ o.cust }}</span>
+<div style="display:flex;flex-direction:column;gap:4px">
+<sc-for list="{{ o.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;gap:10px;font-size:15px">
+<span class="h-numeric" style="width:30px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<span class="{{ o.statusCls }}" style="font-size:11px">{{ o.status }}</span>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-faint);white-space:nowrap">{{ o.progress }}</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ o.onAdvance }}" style="margin-left:auto;height:44px;padding:0 12px;font-size:14px;border-radius:12px;white-space:nowrap">{{ o.nextLabel }}</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ lane.empty }}" hint-placeholder-val="{{ false }}">
+<div style="padding:14px;border-radius:14px;border:1px dashed var(--h-line-strong);font-size:14px;color:var(--h-fg-faint)">Nimic pe filtrul ales în acest interval.</div>
+</sc-if>
+</div>
+</sc-for>
+<div style="height:10px;flex:none"></div>
+</div>
+
+<sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(19,14,11,.72);display:flex;flex-direction:column;justify-content:flex-end;animation:pf-fadein .2s var(--h-ease-out);z-index:5">
+<div style="background:var(--h-bg-surface);border-top:1px solid var(--h-line-strong);border-radius:24px 24px 0 0;padding:18px 16px 20px;display:flex;flex-direction:column;gap:12px;max-height:88%;animation:pf-slidein .28s var(--h-ease-spring)">
+<div style="display:flex;align-items:flex-start;gap:10px">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ detail.ref }} · interval {{ detail.slot }}</span>
+<span style="font-family:var(--h-font-display);font-size:23px;font-weight:600;line-height:1.15">{{ detail.cust }}</span>
+</div>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px;flex:none">×</button>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<span class="{{ detail.chanCls }}" style="font-size:12px">{{ detail.chan }}</span>
+<span class="{{ detail.statusCls }}" style="font-size:12px">{{ detail.status }}</span>
+</div>
+<sc-if value="{{ detail.note }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="padding:10px 12px;font-size:14px;border-radius:12px">{{ detail.note }}</div>
+</sc-if>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ detail.progress }}</span>
+<div class="h-progress" style="height:8px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:{{ detail.pct }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0">
+<sc-for list="{{ detail.items }}" as="it" hint-placeholder-count="3">
+<button type="button" onClick="{{ it.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 12px;border-radius:14px;border:1px solid var(--h-line);background:{{ it.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;text-align:left;cursor:pointer">
+<span style="width:26px;height:26px;flex:none;border-radius:8px;border:2px solid var(--h-accent);display:grid;place-items:center;font-size:15px;font-weight:700;color:#1B120B;background:{{ it.boxBg }}">{{ it.mark }}</span>
+<span class="h-numeric" style="width:34px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted)">{{ it.n }}</span>
+</button>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ detail.onAllDone }}" style="height:48px;font-size:15px;border-radius:14px">Bifează toate pozițiile</button>
+<button type="button" class="{{ detail.nextCls }}" onClick="{{ detail.onAdvance }}" style="height:54px;font-size:16px;border-radius:16px">{{ detail.nextLabel }}</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Ecranul de perete (<a class="dv-oid" href="#2a">2a</a>), tableta (<a class="dv-oid" href="#3a">3a</a>) și telefonul (<a class="dv-oid" href="#6a">6a</a>) folosesc aceeași stare: dacă bifezi aici, apare bifat și acolo. Administrarea are acum layout separat pentru telefon — deschide-o pe mobil.</p>
+</section>
+
+<section class="dv-turn" id="t5">
+<div class="dv-thd"><a class="dv-tid" href="#t5">5</a><span class="dv-tname">Foaia de rută pe telefon, funcțională</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="5a">
+<div class="dv-olabel"><a class="dv-oid" href="#5a">5a</a>Telefon 440 × 932, mărime reală — apasă pe oprire, bifează ce încarci, marchează livrat</div>
+<div class="dv-card" style="width:440px;height:932px">
+<div data-screen-label="5a Ruta livrare interactiva" style="width:440px;height:932px;display:flex;flex-direction:column;overflow:hidden;-webkit-tap-highlight-color:transparent;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-line-strong:rgba(246,237,225,.22);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-honey:#F2A63B;--h-honey-soft:rgba(242,166,59,.16);--h-honey-soft-fg:#F7C46B;--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-danger:#E8A0AF;--h-danger-soft:rgba(232,160,175,.16);--h-fg-on-accent:#1B120B;--h-fg-on-honey:#1B120B;--h-shadow-1:none;--h-shadow-2:none;--h-shadow-3:none;background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body)">
+
+<div style="padding:20px 20px 16px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--h-line);background-image:radial-gradient(120% 100% at 0% 0%, rgba(242,166,59,.14), transparent 65%)">
+<div style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:36px;height:36px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600">Ruta de dimineață</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ rt.sub }}</span>
+</div>
+<span class="h-numeric" style="margin-left:auto;font-size:18px;color:var(--h-fg-muted)">07:12</span>
+</div>
+<div class="h-progress" style="height:8px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:{{ rt.pct }}"></div></div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
+<span class="h-badge h-badge--success" style="font-size:12px;flex:none">{{ rt.doneLabel }}</span>
+<span class="{{ rt.nextCls }}" style="font-size:12px;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;display:block">{{ rt.nextLabel }}</span>
+</div>
+</div>
+
+<div style="flex:1;padding:14px 20px 0;display:flex;flex-direction:column;gap:12px;overflow-y:auto">
+<sc-for list="{{ rt.stops }}" as="s" hint-placeholder-count="4">
+<div style="border-radius:18px;background:{{ s.bg }};border:{{ s.border }};display:flex;flex-direction:column;overflow:hidden;opacity:{{ s.opacity }}">
+<button type="button" onClick="{{ s.onToggle }}" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border:0;background:transparent;color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer;min-height:64px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:{{ s.timeSize }};font-weight:700;color:{{ s.timeColor }};width:64px;flex:none">{{ s.time }}</span>
+<span style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+<span style="font-size:18px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.cust }}</span>
+<span style="font-size:14px;color:var(--h-fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.addr }}</span>
+</span>
+<span class="{{ s.statusCls }}" style="font-size:12px;flex:none">{{ s.status }}</span>
+</button>
+<sc-if value="{{ s.open }}" hint-placeholder-val="{{ false }}">
+<div style="padding:0 16px 16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ s.items }}" as="it" hint-placeholder-count="2">
+<button type="button" onClick="{{ it.onToggle }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 12px;border-radius:14px;border:1px solid var(--h-line);background:{{ it.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;text-align:left;cursor:pointer">
+<span style="width:26px;height:26px;flex:none;border-radius:8px;border:2px solid var(--h-accent);display:grid;place-items:center;font-size:15px;font-weight:700;color:#1B120B;background:{{ it.boxBg }}">{{ it.mark }}</span>
+<span class="h-numeric" style="width:34px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted)">{{ it.n }}</span>
+</button>
+</sc-for>
+</div>
+<sc-if value="{{ s.note }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="padding:10px 12px;font-size:14px;border-radius:12px">{{ s.note }}</div>
+</sc-if>
+<div style="display:flex;gap:8px">
+<a href="tel:{{ s.phone }}" class="h-btn h-btn--secondary" style="flex:1;height:50px;font-size:15px;border-radius:14px;text-decoration:none">Sună</a>
+<button type="button" class="{{ s.actionCls }}" onClick="{{ s.onDeliver }}" style="flex:1.4;height:50px;font-size:16px;border-radius:14px">{{ s.actionLabel }}</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+<div style="height:8px;flex:none"></div>
+</div>
+
+<div style="padding:14px 20px 20px;border-top:1px solid var(--h-line);background:var(--h-bg-sunk);display:flex;flex-direction:column;gap:10px">
+<sc-if value="{{ rt.allDone }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="padding:12px 14px;border-radius:14px;font-size:15px;align-items:center">Ruta e gata — toate comenzile au fost predate.</div>
+</sc-if>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-size:15px;color:var(--h-fg-muted)">{{ rt.footer }}</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ rt.onReset }}" style="margin-left:auto;height:46px;font-size:14px;border-radius:12px">Resetează ruta</button>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Următorul pas firesc: să citească opririle direct din comenzile de Livrare din <a href="Administrare%20Comenzi.dc.html">Administrare</a>, iar „Livrat" să treacă comanda pe Predată în panoul din laborator.</p>
+</section>
+
+<section class="dv-turn" id="t4">
+<div class="dv-thd"><a class="dv-tid" href="#t4">4</a><span class="dv-tname">Ce ar mai merita construit — trei propuneri, după ce am citit cum lucrează sistemele de producție din patiserii</span></div>
+<div style="max-width:900px;margin:0 0 22px">
+<p class="h-body h-muted" style="margin:0 0 10px;text-wrap:pretty">Trei lucruri apar în toate sistemele serioase de bakery și lipsesc acum din fluxul tău: o listă de copt agregată pe produs (nu pe comandă), o foaie de rută pentru livrări și un control de capacitate care te avertizează înainte să intri în tură. Mai jos sunt propunerile ca ecrane reale, la 68%.</p>
+<p class="h-caption" style="margin:0">Rămân pe listă, dacă le vrei: rutare pe posturi (cuptor / decor / ambalare), timpi medii pe etapă ca să vezi unde se blochează producția, și funcționare offline cu re-sincronizare când revine netul.</p>
+</div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="4a">
+<div class="dv-olabel"><a class="dv-oid" href="#4a">4a</a>Lista de copt — comenzile adunate pe produs și pe șarje, cu ora de intrare la cuptor</div>
+<div class="dv-card" style="width:870px;height:544px">
+<div data-screen-label="4a Lista de copt" style="width:1280px;height:800px;transform:scale(.68);transform-origin:top left;overflow:hidden;display:flex;flex-direction:column;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-fg-on-accent:#1B120B;background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body)">
+
+<div style="display:flex;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--h-line)">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:38px;height:38px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-family:var(--h-font-display);font-size:21px;font-weight:600">Lista de copt · miercuri 26</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">15 comenzi adunate în 9 produse · 336 bucăți</span>
+</div>
+<span class="h-badge h-badge--warning" style="margin-left:auto;font-size:13px">Șarja 2 intră în cuptor peste 12 min</span>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+
+<div style="width:392px;flex:none;padding:18px 20px;border-right:1px solid var(--h-line);display:flex;flex-direction:column;gap:12px">
+<span class="h-eyebrow" style="font-size:13px;color:var(--h-accent-fg)">Program cuptor · 4 vetre</span>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-success-soft);border:1px solid rgba(169,201,143,.35);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700">05:40</span>
+<span class="h-badge h-badge--success" style="font-size:12px;margin-left:auto">Scoasă</span>
+</div>
+<span style="font-size:15px;color:var(--h-fg-muted)">Șarja 1 · 4 tăvi croissant, 3 tăvi pain au chocolat</span>
+<span style="font-size:13px;color:var(--h-fg-faint)">Pentru intervalul 06:30 — Lumina, Belvedere</span>
+</div>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-warning-soft);border:1px solid rgba(247,196,107,.4);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700">07:24</span>
+<span class="h-badge h-badge--warning" style="font-size:12px;margin-left:auto">Urmează</span>
+</div>
+<span style="font-size:15px;color:var(--h-fg-muted)">Șarja 2 · 2 tăvi kouign-amann, 1 tavă eclere</span>
+<span style="font-size:13px;color:var(--h-fg-faint)">Pentru intervalul 08:00 — coacere 26 min</span>
+</div>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-bg-surface);border:1px solid var(--h-line);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700">09:10</span>
+<span class="h-badge" style="font-size:12px;margin-left:auto">Planificată</span>
+</div>
+<span style="font-size:15px;color:var(--h-fg-muted)">Șarja 3 · 3 tăvi pain au chocolat (școala)</span>
+<span style="font-size:13px;color:var(--h-fg-faint)">Pentru intervalul 10:00</span>
+</div>
+
+<div style="margin-top:auto;padding:14px 16px;border-radius:16px;background:var(--h-bg-sunk);display:flex;flex-direction:column;gap:6px">
+<span style="font-size:14px;font-weight:700">Pregătire de aseară</span>
+<span style="font-size:14px;color:var(--h-fg-muted)">Foietaj: 6 kg turat ✓ · Cremă patissier: 4 l ✓ · Ganache: 1,5 kg lipsă</span>
+</div>
+</div>
+
+<div style="flex:1;padding:18px 20px;display:flex;flex-direction:column;gap:10px;min-width:0">
+<div style="display:flex;align-items:center;gap:10px">
+<span class="h-eyebrow" style="font-size:13px;color:var(--h-accent-fg)">Total pe produs</span>
+<span style="font-size:13px;color:var(--h-fg-faint);margin-left:auto">tăvi calculate la randamentul din rețetă</span>
+</div>
+<div style="display:grid;grid-template-columns:1.6fr 78px 96px 1fr;gap:10px;padding:0 12px 8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle);border-bottom:1px solid var(--h-line)">
+<span>Produs</span><span style="text-align:right">Buc.</span><span style="text-align:right">Tăvi</span><span>Făcut</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+<div style="display:grid;grid-template-columns:1.6fr 78px 96px 1fr;gap:10px;align-items:center;padding:11px 12px;border-radius:12px;background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:17px">Croissant cu unt</span><span style="font-size:13px;color:var(--h-fg-faint)">06:30 · 08:00 · 3 comenzi</span></div>
+<span class="h-numeric" style="font-size:19px;font-weight:700;text-align:right">96</span>
+<span class="h-numeric" style="font-size:17px;text-align:right;color:var(--h-fg-muted)">4 ×24</span>
+<div class="h-progress" style="height:9px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:75%"></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1.6fr 78px 96px 1fr;gap:10px;align-items:center;padding:11px 12px;border-radius:12px;background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:17px">Pain au chocolat</span><span style="font-size:13px;color:var(--h-fg-faint)">06:30 · 10:00 · 2 comenzi</span></div>
+<span class="h-numeric" style="font-size:19px;font-weight:700;text-align:right">64</span>
+<span class="h-numeric" style="font-size:17px;text-align:right;color:var(--h-fg-muted)">3 ×24</span>
+<div class="h-progress" style="height:9px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:41%"></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1.6fr 78px 96px 1fr;gap:10px;align-items:center;padding:11px 12px;border-radius:12px;background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:17px">Kouign-amann</span><span style="font-size:13px;color:var(--h-fg-faint)">06:30 · Brutăria din Parc</span></div>
+<span class="h-numeric" style="font-size:19px;font-weight:700;text-align:right">40</span>
+<span class="h-numeric" style="font-size:17px;text-align:right;color:var(--h-fg-muted)">2 ×20</span>
+<div class="h-progress" style="height:9px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:100%"></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1.6fr 78px 96px 1fr;gap:10px;align-items:center;padding:11px 12px;border-radius:12px;background:var(--h-jam-soft);border:1px solid rgba(232,160,175,.35)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:17px">Ecler cu cafea</span><span style="font-size:13px;color:var(--h-jam)">Urgent · Maria Ionescu · fără nuci</span></div>
+<span class="h-numeric" style="font-size:19px;font-weight:700;text-align:right">18</span>
+<span class="h-numeric" style="font-size:17px;text-align:right;color:var(--h-fg-muted)">1 ×18</span>
+<div class="h-progress" style="height:9px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:8%"></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1.6fr 78px 96px 1fr;gap:10px;align-items:center;padding:11px 12px;border-radius:12px;background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:17px">Baghetă tradițională</span><span style="font-size:13px;color:var(--h-fg-faint)">06:30 · 2 comenzi</span></div>
+<span class="h-numeric" style="font-size:19px;font-weight:700;text-align:right">36</span>
+<span class="h-numeric" style="font-size:17px;text-align:right;color:var(--h-fg-muted)">2 ×18</span>
+<div class="h-progress" style="height:9px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:56%"></div></div>
+</div>
+<div style="display:grid;grid-template-columns:1.6fr 78px 96px 1fr;gap:10px;align-items:center;padding:11px 12px;border-radius:12px;background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:17px">Mille-feuille</span><span style="font-size:13px;color:var(--h-fg-faint)">08:00 · Studio Arta</span></div>
+<span class="h-numeric" style="font-size:19px;font-weight:700;text-align:right">12</span>
+<span class="h-numeric" style="font-size:17px;text-align:right;color:var(--h-fg-muted)">1 ×12</span>
+<div class="h-progress" style="height:9px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:4%"></div></div>
+</div>
+</div>
+<p style="margin:auto 0 0;font-size:14px;color:var(--h-fg-faint)">Aceeași listă se poate tipări dimineața ca foaie de lucru, dacă vrei și hârtie de rezervă.</p>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="4b">
+<div class="dv-olabel"><a class="dv-oid" href="#4b">4b</a>Foaie de rută pe telefon — pentru cine duce comenzile</div>
+<div class="dv-card" style="width:299px;height:598px">
+<div data-screen-label="4b Ruta livrare" style="width:440px;height:880px;transform:scale(.68);transform-origin:top left;overflow:hidden;display:flex;flex-direction:column;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-shadow-1:none;--h-shadow-2:none;--h-shadow-3:none;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-jam:#E8A0AF;--h-fg-on-accent:#1B120B;background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body)">
+
+<div style="padding:18px 20px 14px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid var(--h-line)">
+<div style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:34px;height:34px;object-fit:contain">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Ruta de dimineață</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">Miercuri 26 · 4 opriri · 18 km</span>
+</div>
+</div>
+<div style="display:flex;gap:8px">
+<span class="h-badge h-badge--success" style="font-size:12px">1 livrată</span>
+<span class="h-badge h-badge--warning" style="font-size:12px">Următoarea 06:50</span>
+</div>
+</div>
+
+<div style="flex:1;padding:14px 20px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-success-soft);border:1px solid rgba(169,201,143,.3);display:flex;align-items:center;gap:12px;opacity:.8">
+<span class="h-numeric" style="font-size:17px;color:var(--h-fg-muted);width:46px">06:20</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:17px;font-weight:600">Cafeneaua Lumina</span>
+<span style="font-size:14px;color:var(--h-fg-muted)">Str. Mihai Viteazu 12 · 54 buc.</span>
+</div>
+<span class="h-badge h-badge--success" style="font-size:12px;margin-left:auto">Livrat</span>
+</div>
+
+<div style="padding:16px;border-radius:18px;background:var(--h-bg-surface);border:2px solid var(--h-accent);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700;color:var(--h-accent-fg)">06:50</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:19px;font-weight:600">Hotel Belvedere</span>
+<span style="font-size:14px;color:var(--h-fg-muted)">Bd. Independenței 4 · intrare marfă</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;padding:12px;border-radius:12px;background:var(--h-bg-sunk)">
+<div style="display:flex;gap:10px;font-size:16px"><span class="h-numeric" style="width:34px;text-align:right;font-weight:700;color:var(--h-accent-fg)">30</span><span style="color:var(--h-fg-muted)">Mini foietaje</span></div>
+<div style="display:flex;gap:10px;font-size:16px"><span class="h-numeric" style="width:34px;text-align:right;font-weight:700;color:var(--h-accent-fg)">10</span><span style="color:var(--h-fg-muted)">Brioșă cu foietaj</span></div>
+</div>
+<div style="display:flex;gap:8px">
+<button type="button" class="h-btn h-btn--secondary" style="flex:1;height:50px;font-size:15px;border-radius:14px">Sună clientul</button>
+<button type="button" class="h-btn h-btn--primary" style="flex:1.3;height:50px;font-size:16px;border-radius:14px">Marchează livrat</button>
+</div>
+</div>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-bg-surface);border:1px solid var(--h-line);display:flex;align-items:center;gap:12px">
+<span class="h-numeric" style="font-size:17px;color:var(--h-fg-muted);width:46px">07:30</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:17px;font-weight:600">Studio Arta</span>
+<span style="font-size:14px;color:var(--h-fg-muted)">Calea Victoriei 88, et. 4 · 28 buc.</span>
+</div>
+<span class="h-badge" style="font-size:12px;margin-left:auto">În mașină</span>
+</div>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-bg-surface);border:1px solid var(--h-line);display:flex;align-items:center;gap:12px">
+<span class="h-numeric" style="font-size:17px;color:var(--h-fg-muted);width:46px">08:15</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:17px;font-weight:600">Școala Sfânta Ana</span>
+<span style="font-size:14px;color:var(--h-fg-muted)">Str. Plopilor 3 · 36 buc.</span>
+</div>
+<span class="h-badge h-badge--warning" style="font-size:12px;margin-left:auto">Se ambalează</span>
+</div>
+
+<div style="margin-top:auto;padding:14px 16px;border-radius:16px;background:var(--h-accent-soft);border:1px solid rgba(242,166,59,.3)">
+<p style="margin:0;font-size:15px;font-weight:700;color:var(--h-accent-fg)">Semnătura la predare</p>
+<p style="margin:4px 0 0;font-size:14px;color:var(--h-fg-muted)">Clientul semnează pe telefon; dovada intră automat pe comandă în panoul de administrare.</p>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="4c">
+<div class="dv-olabel"><a class="dv-oid" href="#4c">4c</a>Capacitate și întârzieri — avertizează înainte să intri în tură</div>
+<div class="dv-card" style="width:870px;height:544px">
+<div data-screen-label="4c Capacitate si alerte" style="width:1280px;height:800px;transform:scale(.68);transform-origin:top left;overflow:hidden;display:flex;flex-direction:column;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-danger:#E8A0AF;--h-danger-soft:rgba(232,160,175,.16);--h-fg-on-accent:#1B120B;background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body)">
+
+<div style="display:flex;align-items:center;gap:16px;padding:16px 22px;border-bottom:1px solid var(--h-line)">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:38px;height:38px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-family:var(--h-font-display);font-size:21px;font-weight:600">Capacitate și riscuri · următoarele 3 intervale</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">Calculat din comenzile confirmate și timpii din rețete</span>
+</div>
+<span class="h-badge h-badge--jam" style="margin-left:auto;font-size:13px">2 comenzi riscă întârziere</span>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+
+<div style="flex:1;padding:18px 22px;display:flex;flex-direction:column;gap:14px;min-width:0">
+<span class="h-eyebrow" style="font-size:13px;color:var(--h-accent-fg)">Încărcare pe resursă</span>
+
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-bg-surface);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-size:17px;font-weight:600">Cuptor · 4 vetre</span>
+<span class="h-numeric" style="margin-left:auto;font-size:16px;color:var(--h-warning)">92% până la 08:00</span>
+</div>
+<div style="display:flex;gap:6px;height:26px">
+<div style="flex:2.4;border-radius:8px;background:var(--h-success)"></div>
+<div style="flex:1.5;border-radius:8px;background:var(--h-warning)"></div>
+<div style="flex:.6;border-radius:8px;background:rgba(246,237,225,.10)"></div>
+</div>
+<span style="font-size:14px;color:var(--h-fg-faint)">06:30 șarja 1 · 07:24 șarja 2 · liber după 08:10</span>
+</div>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-bg-surface);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-size:17px;font-weight:600">Dospitor</span>
+<span class="h-numeric" style="margin-left:auto;font-size:16px;color:var(--h-success)">61%</span>
+</div>
+<div style="display:flex;gap:6px;height:26px">
+<div style="flex:1.6;border-radius:8px;background:var(--h-success)"></div>
+<div style="flex:1;border-radius:8px;background:rgba(246,237,225,.10)"></div>
+</div>
+<span style="font-size:14px;color:var(--h-fg-faint)">Loc pentru încă 2 tăvi de foietaj</span>
+</div>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-jam-soft);border:1px solid rgba(232,160,175,.35);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-size:17px;font-weight:600">Ambalare · 2 persoane</span>
+<span class="h-numeric" style="margin-left:auto;font-size:16px;color:var(--h-jam)">118% la 07:40</span>
+</div>
+<div style="display:flex;gap:6px;height:26px">
+<div style="flex:2.8;border-radius:8px;background:var(--h-jam)"></div>
+<div style="flex:.4;border-radius:8px;background:rgba(232,160,175,.4)"></div>
+</div>
+<span style="font-size:14px;color:var(--h-fg-muted)">Trei comenzi cad în același sfert de oră — mută una la 07:20 sau mai adaugă un om.</span>
+</div>
+</div>
+
+<div style="margin-top:auto;display:flex;gap:10px">
+<button type="button" class="h-btn h-btn--primary" style="height:48px;font-size:15px">Reașază automat șarjele</button>
+<button type="button" class="h-btn h-btn--secondary" style="height:48px;font-size:15px">Vezi propunerea</button>
+</div>
+</div>
+
+<div style="width:436px;flex:none;padding:18px 22px;background:var(--h-bg-surface);border-left:1px solid var(--h-line);display:flex;flex-direction:column;gap:12px">
+<span class="h-eyebrow" style="font-size:13px;color:var(--h-jam)">Riscă întârziere</span>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-jam-soft);border:1px solid rgba(232,160,175,.35);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:17px;font-weight:600">#1045 Maria Ionescu</span>
+<span class="h-badge h-badge--jam" style="font-size:12px;margin-left:auto">+9 min</span>
+</div>
+<span style="font-size:14px;color:var(--h-fg-muted)">Eclerele intră la cuptor abia la 07:24, ridicarea e la 08:00. Fără nuci — tavă separată.</span>
+</div>
+
+<div style="padding:14px 16px;border-radius:16px;background:var(--h-warning-soft);border:1px solid rgba(247,196,107,.35);display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:17px;font-weight:600">#1047 Studio Arta</span>
+<span class="h-badge h-badge--warning" style="font-size:12px;margin-left:auto">Risc</span>
+</div>
+<span style="font-size:14px;color:var(--h-fg-muted)">Millefeuille-ul nu e început, iar livrarea pleacă la 07:30.</span>
+</div>
+
+<div style="margin-top:6px;display:flex;flex-direction:column;gap:8px">
+<span class="h-eyebrow" style="font-size:13px">Timpi medii pe etapă · ultimele 7 zile</span>
+<div style="display:flex;justify-content:space-between;font-size:15px"><span style="color:var(--h-fg-muted)">Dospit → cuptor</span><span class="h-numeric" style="font-weight:700">42 min</span></div>
+<div style="display:flex;justify-content:space-between;font-size:15px"><span style="color:var(--h-fg-muted)">Cuptor → ambalat</span><span class="h-numeric" style="font-weight:700">31 min</span></div>
+<div style="display:flex;justify-content:space-between;font-size:15px"><span style="color:var(--h-fg-muted)">Comenzi predate la timp</span><span class="h-numeric" style="font-weight:700;color:var(--h-success)">94%</span></div>
+</div>
+
+<div style="margin-top:auto;padding:14px 16px;border-radius:16px;background:var(--h-bg-sunk);display:flex;flex-direction:column;gap:4px">
+<span style="font-size:15px;font-weight:700">Merge și fără internet</span>
+<span style="font-size:14px;color:var(--h-fg-muted)">Ecranul ține comenzile local și se re-sincronizează singur când revine rețeaua.</span>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Spune-mi care îți place și o construiesc funcțional, legată de comenzile din administrare: <a class="dv-oid" href="#4a">4a</a> lista de copt · <a class="dv-oid" href="#4b">4b</a> ruta de livrare · <a class="dv-oid" href="#4c">4c</a> capacitate și alerte.</p>
+</section>
+
+<section class="dv-turn" id="t3">
+<div class="dv-thd"><a class="dv-tid" href="#t3">3</a><span class="dv-tname">Versiune cu atingere — aceeași structură, dar se poate folosi pe tabletă și pe PC</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="3a">
+<div class="dv-olabel"><a class="dv-oid" href="#3a">3a</a>Panou interactiv 1280 × 800 (mărime reală — apasă pe zile, filtre, comenzi și bifează pozițiile)</div>
+<div class="dv-card" style="width:1280px;height:800px">
+<div data-screen-label="3a Panou interactiv" style="width:1280px;height:800px;display:flex;flex-direction:column;overflow:hidden;-webkit-tap-highlight-color:transparent;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-line-strong:rgba(246,237,225,.22);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-honey:#F2A63B;--h-honey-soft:rgba(242,166,59,.16);--h-honey-soft-fg:#F7C46B;--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-fg-on-accent:#1B120B;--h-fg-on-honey:#1B120B;--h-shadow-1:none;--h-shadow-2:none;--h-shadow-3:none;background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body)">
+
+<div style="display:flex;align-items:center;gap:16px;padding:14px 20px;border-bottom:1px solid var(--h-line);background-image:radial-gradient(90% 200% at 0% 0%, rgba(242,166,59,.14), transparent 60%)">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:44px;height:44px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column;gap:2px">
+<span style="font-family:var(--h-font-display);font-size:22px;font-weight:600;line-height:1.1">Panou de producție</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">Golden Pastry · laborator · atingere activată</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+<sc-for list="{{ filterTabs }}" as="f" hint-placeholder-count="4">
+<button type="button" class="{{ f.cls }}" onClick="{{ f.onClick }}" style="height:44px;min-width:88px;font-size:15px;border-radius:12px">{{ f.label }}</button>
+</sc-for>
+</div>
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:30px;font-weight:700;margin-left:8px">07:12</span>
+</div>
+
+<div style="display:flex;gap:8px;padding:12px 20px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line)">
+<sc-for list="{{ dayTabs }}" as="d" hint-placeholder-count="7">
+<button type="button" class="{{ d.cls }}" onClick="{{ d.onClick }}" style="flex:1;height:52px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;border-radius:14px">
+<span>{{ d.label }}</span>
+<span class="h-numeric" style="font-weight:700;opacity:.85">{{ d.count }}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+
+<div style="flex:1;display:flex;flex-direction:column;gap:18px;padding:18px 20px;overflow-y:auto;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Ordonare</span>
+<sc-for list="{{ sortBtns }}" as="s" hint-placeholder-count="3">
+<button type="button" class="{{ s.cls }}" onClick="{{ s.onClick }}" style="height:44px;font-size:14px;border-radius:12px">{{ s.label }}</button>
+</sc-for>
+<sc-if value="{{ hasCustom }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onResetOrder }}" style="margin-left:auto;height:44px;font-size:14px;border-radius:12px">Revino la ordinea automată</button>
+</sc-if>
+</div>
+<sc-for list="{{ iLanes }}" as="lane" hint-placeholder-count="3">
+<div style="display:flex;gap:16px">
+<div style="width:104px;flex:none;display:flex;flex-direction:column;gap:6px;padding-top:4px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:30px;font-weight:700;line-height:1;color:var(--h-accent-fg)">{{ lane.time }}</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ lane.meta }}</span>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;min-width:0">
+<sc-for list="{{ lane.orders }}" as="o" hint-placeholder-count="2">
+<div class="{{ o.cardCls }}" onClick="{{ o.onSelect }}" style="padding:14px 16px;border-radius:16px;display:flex;flex-direction:column;gap:9px;min-width:0;cursor:pointer;background:{{ o.bg }};border-color:{{ o.bd }};outline:{{ o.outline }};outline-offset:-1px">
+<div style="display:flex;align-items:center;gap:8px">
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ o.ref }}</span>
+<sc-if value="{{ o.urgent }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--jam pf-blink" style="font-size:11px">Urgent</span>
+</sc-if>
+<span class="{{ o.chanCls }}" style="font-size:12px;margin-left:auto">{{ o.chan }}</span>
+<button type="button" class="{{ o.upCls }}" onClick="{{ o.onUp }}" title="Mută mai sus" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↑</button>
+<button type="button" class="{{ o.downCls }}" onClick="{{ o.onDown }}" title="Mută mai jos" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↓</button>
+</div>
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600;line-height:1.15">{{ o.cust }}</span>
+<div style="display:flex;flex-direction:column;gap:4px">
+<sc-for list="{{ o.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;gap:10px;font-size:15px">
+<span class="h-numeric" style="width:30px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin-top:2px">
+<span class="{{ o.statusCls }}" style="font-size:12px">{{ o.status }}</span>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-faint);white-space:nowrap">{{ o.progress }}</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ o.onAdvance }}" style="margin-left:auto;height:44px;padding:0 12px;font-size:14px;border-radius:12px;white-space:nowrap">{{ o.nextLabel }}</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ lane.empty }}" hint-placeholder-val="{{ false }}">
+<div style="grid-column:1 / -1;padding:16px;border-radius:16px;border:1px dashed var(--h-line-strong);font-size:15px;color:var(--h-fg-faint)">Nimic pe filtrul ales în acest interval.</div>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="width:372px;flex:none;padding:18px 20px;background:var(--h-bg-surface);border-left:1px solid var(--h-line);display:flex;flex-direction:column;gap:14px;min-height:0">
+
+<sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
+<div style="display:flex;align-items:flex-start;gap:10px">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ detail.ref }} · interval {{ detail.slot }}</span>
+<span style="font-family:var(--h-font-display);font-size:24px;font-weight:600;line-height:1.15">{{ detail.cust }}</span>
+</div>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px">×</button>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<span class="{{ detail.chanCls }}" style="font-size:13px">{{ detail.chan }}</span>
+<span class="{{ detail.statusCls }}" style="font-size:13px">{{ detail.status }}</span>
+</div>
+<sc-if value="{{ detail.note }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="padding:10px 12px;font-size:14px;border-radius:12px">{{ detail.note }}</div>
+</sc-if>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ detail.progress }}</span>
+<div class="h-progress" style="height:8px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:{{ detail.pct }}"></div></div>
+<div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0;flex:1">
+<sc-for list="{{ detail.items }}" as="it" hint-placeholder-count="3">
+<button type="button" onClick="{{ it.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:8px 12px;border-radius:14px;border:1px solid var(--h-line);background:{{ it.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;text-align:left;cursor:pointer">
+<span style="width:28px;height:28px;flex:none;border-radius:8px;border:2px solid var(--h-accent);display:grid;place-items:center;font-size:16px;font-weight:700;color:#1B120B;background:{{ it.boxBg }}">{{ it.mark }}</span>
+<span class="h-numeric" style="width:34px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted)">{{ it.n }}</span>
+</button>
+</sc-for>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:auto">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ detail.onAllDone }}" style="height:48px;font-size:15px;border-radius:14px">Bifează toate pozițiile</button>
+<button type="button" class="{{ detail.nextCls }}" onClick="{{ detail.onAdvance }}" style="height:56px;font-size:17px;border-radius:16px">{{ detail.nextLabel }}</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ noDetail }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:14px;flex:1;min-height:0">
+<p class="h-eyebrow" style="font-size:14px;color:var(--h-accent-fg);margin:0">Total de făcut · {{ dayLabel }}</p>
+<div style="display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ totals }}" as="t" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;gap:5px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-size:15px">{{ t.n }}</span>
+<span class="h-numeric" style="margin-left:auto;font-size:15px;font-weight:700">{{ t.done }}</span>
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ t.of }}</span>
+</div>
+<div class="h-progress" style="height:7px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:{{ t.pct }}"></div></div>
+</div>
+</sc-for>
+</div>
+<p style="margin:0;font-size:14px;color:var(--h-fg-faint)">Apasă pe o comandă ca să bifezi pozițiile și să-i schimbi starea.</p>
+<sc-if value="{{ iToast }}" hint-placeholder-val="{{ true }}">
+<div class="h-alert h-alert--accent pf-new" style="margin-top:auto;border-radius:16px;padding:12px 14px;align-items:center;gap:10px">
+<span class="h-badge__dot pf-blink" style="width:10px;height:10px;background:var(--h-accent)"></span>
+<div style="min-width:0">
+<p class="h-alert__title" style="font-size:15px;color:var(--h-fg);margin:0">2 comenzi noi de la 06:00</p>
+<p class="h-alert__body" style="font-size:14px;margin:2px 0 0">#1047 Studio Arta · #1050 Cafeneaua Lumina</p>
+</div>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onToastClose }}" style="height:44px;width:44px;padding:0;font-size:18px;border-radius:12px;flex:none">×</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Urmează: „adaugă un buton de comandă întârziată / anulată” · „pune și vedere pe telefon pentru șofer” · „ține minte bifele între reîncărcări”</p>
+</section>
+
+<section class="dv-turn" id="t2">
+<div class="dv-thd"><a class="dv-tid" href="#t2">2</a><span class="dv-tname">Aspectul întunecat din <a class="dv-oid" href="#1c">1c</a>, structura pe intervale din <a class="dv-oid" href="#1a">1a</a></span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="2a">
+<div class="dv-olabel"><a class="dv-oid" href="#2a">2a</a>Panou pe intervale — noapte/laborator, cu totalurile de producție pe dreapta</div>
+<div class="dv-card" style="width:1344px;height:756px">
+<div data-screen-label="2a Panou intervale noapte" style="width:1920px;height:1080px;transform:scale(.7);transform-origin:top left;overflow:hidden;display:flex;flex-direction:column;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-line-strong:rgba(246,237,225,.22);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-honey-soft:rgba(242,166,59,.16);--h-honey-soft-fg:#F7C46B;--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-fg-on-accent:#1B120B;--h-fg-on-honey:#1B120B;--h-shadow-1:none;--h-shadow-2:none;background:var(--h-bg-page);color:var(--h-fg)">
+
+<div style="display:flex;align-items:center;gap:24px;padding:20px 40px;background-image:radial-gradient(90% 200% at 0% 0%, rgba(242,166,59,.14), transparent 60%);border-bottom:1px solid var(--h-line)">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span class="h-h3" style="font-size:34px;line-height:1.1;color:var(--h-fg)">Panou de producție</span>
+<span style="font-size:22px;color:var(--h-fg-subtle)">Golden Pastry · laborator</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:baseline;gap:20px">
+<span style="font-size:24px;color:var(--h-fg-muted)">Miercuri, 26 august</span>
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:52px;font-weight:700;line-height:1">07:12</span>
+</div>
+</div>
+
+<div style="display:flex;gap:12px;padding:14px 40px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line)">
+<sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+<div style="flex:1;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:14px;background:var(--h-bg-surface);border:1px solid var(--h-line)">
+<span style="font-size:22px;color:var(--h-fg-subtle)">{{ d.dow }}</span>
+<span style="font-size:24px;font-weight:700">{{ d.date }}</span>
+<span class="h-numeric" style="margin-left:auto;font-size:24px;font-weight:700;color:var(--h-accent-fg)">{{ d.count }}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+<div style="flex:1;display:flex;flex-direction:column;gap:22px;padding:26px 32px">
+<sc-for list="{{ lanes }}" as="lane" hint-placeholder-count="3">
+<div style="display:flex;gap:26px">
+<div style="width:200px;flex:none;display:flex;flex-direction:column;gap:8px;padding-top:6px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:50px;font-weight:700;line-height:1;color:var(--h-accent-fg)">{{ lane.time }}</span>
+<span style="font-size:22px;color:var(--h-fg-subtle)">{{ lane.meta }}</span>
+<span class="{{ lane.stateCls }}" style="font-size:18px;align-self:flex-start">{{ lane.state }}</span>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:18px">
+<sc-for list="{{ lane.orders }}" as="o" hint-placeholder-count="3">
+<div class="{{ o.cardCls }}" style="padding:20px 22px;border-radius:18px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px">
+<span class="h-numeric" style="font-size:22px;color:var(--h-fg-subtle)">{{ o.ref }}</span>
+<span class="{{ o.chanCls }}" style="font-size:17px;margin-left:auto">{{ o.chan }}</span>
+</div>
+<span style="font-family:var(--h-font-display);font-size:30px;font-weight:600;line-height:1.15">{{ o.cust }}</span>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ o.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;gap:14px;font-size:24px">
+<span class="h-numeric" style="width:44px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted)">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ o.note }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="padding:8px 12px;font-size:20px;border-radius:12px">{{ o.note }}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="width:470px;flex:none;padding:26px 32px;background:var(--h-bg-surface);border-left:1px solid var(--h-line);display:flex;flex-direction:column;gap:18px">
+<p class="h-eyebrow" style="font-size:19px;color:var(--h-accent-fg)">Total de făcut · azi</p>
+<div style="display:flex;flex-direction:column;gap:16px">
+<sc-for list="{{ totals }}" as="t" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;align-items:baseline;gap:12px">
+<span style="font-size:24px">{{ t.n }}</span>
+<span class="h-numeric" style="margin-left:auto;font-size:24px;font-weight:700">{{ t.done }}</span>
+<span class="h-numeric" style="font-size:22px;color:var(--h-fg-subtle)">{{ t.of }}</span>
+</div>
+<div class="h-progress" style="height:10px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:{{ t.pct }}"></div></div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:12px">
+<div class="h-alert h-alert--accent pf-new" style="border-radius:16px;padding:16px 18px;align-items:center">
+<span class="h-badge__dot pf-blink" style="width:12px;height:12px;background:var(--h-accent)"></span>
+<div>
+<p class="h-alert__title" style="font-size:22px;color:var(--h-fg)">2 comenzi noi de la 06:00</p>
+<p class="h-alert__body" style="font-size:20px">#1047 Studio Arta · #1050 Cafeneaua Lumina</p>
+</div>
+</div>
+<p class="h-caption" style="font-size:19px;color:var(--h-fg-faint)">Panoul se reîmprospătează la 30 s · ultima sincronizare 07:11</p>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+</div>
+<p class="dv-next">Urmează: „arată-mi cum apare o comandă întârziată” · „adaugă cronometrul mare din <a class="dv-oid" href="#1c">1c</a> peste intervalul următor” · „scoate banda cu săptămâna și fă cardurile mai mari”</p>
+</section>
+
+<section class="dv-turn" id="t1">
+<div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Trei direcții pentru ecranul din laborator</span></div>
+<div class="dv-opts">
+
+<div class="dv-opt" id="1a">
+<div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a>Panou pe intervale — toate comenzile de azi și ce datorează cuptoarele</div>
+<div class="dv-card" style="width:864px;height:486px">
+<div data-screen-label="1a Panou intervale" style="width:1920px;height:1080px;transform:scale(.45);transform-origin:top left;background:var(--h-bg-page);color:var(--h-fg);display:flex;flex-direction:column;overflow:hidden">
+
+<div style="display:flex;align-items:center;gap:24px;padding:20px 40px;background:var(--h-bg-surface);border-bottom:1px solid var(--h-line)">
+<div style="width:58px;height:58px;flex:none;border-radius:16px;background:var(--h-cocoa-800);display:grid;place-items:center"><img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain"></div>
+<div style="display:flex;flex-direction:column">
+<span class="h-h3" style="font-size:34px;line-height:1.1">Panou de producție</span>
+<span style="font-size:22px;color:var(--h-fg-subtle)">Golden Pastry · laborator</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:baseline;gap:20px">
+<span style="font-size:24px;color:var(--h-fg-muted)">Miercuri, 26 august</span>
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:52px;font-weight:700;line-height:1">07:12</span>
+</div>
+</div>
+
+<div style="display:flex;gap:12px;padding:14px 40px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line)">
+<sc-for list="{{ week }}" as="d" hint-placeholder-count="7">
+<div style="flex:1;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:14px;background:var(--h-bg-surface);border:1px solid var(--h-line)">
+<span style="font-size:22px;color:var(--h-fg-subtle)">{{ d.dow }}</span>
+<span style="font-size:24px;font-weight:700">{{ d.date }}</span>
+<span class="h-numeric" style="margin-left:auto;font-size:24px;font-weight:700;color:var(--h-fg-muted)">{{ d.count }}</span>
+</div>
+</sc-for>
+</div>
+
+<div style="flex:1;display:flex;min-height:0">
+<div style="flex:1;display:flex;flex-direction:column;gap:22px;padding:26px 32px">
+<sc-for list="{{ lanes }}" as="lane" hint-placeholder-count="3">
+<div style="display:flex;gap:26px">
+<div style="width:200px;flex:none;display:flex;flex-direction:column;gap:8px;padding-top:6px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:50px;font-weight:700;line-height:1">{{ lane.time }}</span>
+<span style="font-size:22px;color:var(--h-fg-subtle)">{{ lane.meta }}</span>
+<span class="{{ lane.stateCls }}" style="font-size:18px;align-self:flex-start">{{ lane.state }}</span>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:18px">
+<sc-for list="{{ lane.orders }}" as="o" hint-placeholder-count="3">
+<div class="{{ o.cardCls }}" style="padding:20px 22px;border-radius:18px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px">
+<span class="h-numeric" style="font-size:22px;color:var(--h-fg-subtle)">{{ o.ref }}</span>
+<span class="{{ o.chanCls }}" style="font-size:17px;margin-left:auto">{{ o.chan }}</span>
+</div>
+<span style="font-family:var(--h-font-display);font-size:30px;font-weight:600;line-height:1.15">{{ o.cust }}</span>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ o.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;gap:14px;font-size:24px">
+<span class="h-numeric" style="width:44px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted)">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ o.note }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="padding:8px 12px;font-size:20px;border-radius:12px">{{ o.note }}</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="width:470px;flex:none;padding:26px 32px;background:var(--h-bg-surface);border-left:1px solid var(--h-line);display:flex;flex-direction:column;gap:18px">
+<p class="h-eyebrow" style="font-size:19px">Total de făcut · azi</p>
+<div style="display:flex;flex-direction:column;gap:16px">
+<sc-for list="{{ totals }}" as="t" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;gap:7px">
+<div style="display:flex;align-items:baseline;gap:12px">
+<span style="font-size:24px">{{ t.n }}</span>
+<span class="h-numeric" style="margin-left:auto;font-size:24px;font-weight:700">{{ t.done }}</span>
+<span class="h-numeric" style="font-size:22px;color:var(--h-fg-subtle)">{{ t.of }}</span>
+</div>
+<div class="h-progress" style="height:10px"><div class="h-progress__bar" style="width:{{ t.pct }}"></div></div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:auto;display:flex;flex-direction:column;gap:12px">
+<div class="h-alert h-alert--accent pf-new" style="border-radius:16px;padding:16px 18px;align-items:center">
+<span class="h-badge__dot pf-blink" style="width:12px;height:12px;background:var(--h-accent)"></span>
+<div>
+<p class="h-alert__title" style="font-size:22px">2 comenzi noi de la 06:00</p>
+<p class="h-alert__body" style="font-size:20px">#1047 Studio Arta · #1050 Cafeneaua Lumina</p>
+</div>
+</div>
+<p class="h-caption" style="font-size:19px">Panoul se reîmprospătează la 30 s · ultima sincronizare 07:11</p>
+</div>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1b">
+<div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a>Acum / Urmează / Mai târziu — mai calm, citibil de la masa din fund</div>
+<div class="dv-card" style="width:864px;height:486px">
+<div data-screen-label="1b Acum Urmeaza" style="width:1920px;height:1080px;transform:scale(.45);transform-origin:top left;background:var(--h-bg-page);color:var(--h-fg);display:flex;flex-direction:column;overflow:hidden">
+
+<div style="display:flex;align-items:baseline;gap:22px;padding:26px 48px 14px">
+<span class="h-h2" style="font-size:44px">Miercuri</span>
+<span style="font-size:28px;color:var(--h-fg-subtle)">26 august · 15 comenzi · registru pe 7 zile</span>
+<span class="h-numeric" style="margin-left:auto;font-family:var(--h-font-display);font-size:56px;font-weight:700;line-height:1">07:12</span>
+</div>
+
+<div style="flex:1;display:grid;grid-template-columns:1.15fr 1.15fr .9fr;gap:26px;padding:0 48px 30px;min-height:0">
+
+<div style="display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;align-items:center;gap:12px">
+<span class="h-badge__dot pf-blink" style="width:14px;height:14px;background:var(--h-warning)"></span>
+<span class="h-eyebrow" style="font-size:22px;color:var(--h-warning)">Acum în laborator · 06:30</span>
+</div>
+<sc-for list="{{ nowOrders }}" as="o" hint-placeholder-count="3">
+<div class="h-card" style="padding:26px 28px;border-radius:22px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-family:var(--h-font-display);font-size:34px;font-weight:600">{{ o.cust }}</span>
+<span class="{{ o.chanCls }}" style="font-size:18px;margin-left:auto">{{ o.chan }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ o.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;gap:16px;font-size:26px">
+<span class="h-numeric" style="width:52px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted)">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<div class="h-progress" style="height:12px"><div class="h-progress__bar" style="width:{{ o.pct }}"></div></div>
+<div style="display:flex;align-items:center;gap:12px">
+<span class="{{ o.statusCls }}" style="font-size:18px">{{ o.status }}</span>
+<span class="h-numeric" style="margin-left:auto;font-size:22px;color:var(--h-fg-subtle)">{{ o.ref }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:18px">
+<span class="h-eyebrow" style="font-size:22px">Urmează · 08:00 — în 48 min</span>
+<sc-for list="{{ nextOrders }}" as="o" hint-placeholder-count="3">
+<div class="{{ o.cardCls }}" style="padding:26px 28px;border-radius:22px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-family:var(--h-font-display);font-size:34px;font-weight:600">{{ o.cust }}</span>
+<span class="{{ o.chanCls }}" style="font-size:18px;margin-left:auto">{{ o.chan }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ o.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;gap:16px;font-size:26px">
+<span class="h-numeric" style="width:52px;text-align:right;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="color:var(--h-fg-muted)">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<sc-if value="{{ o.note }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="padding:10px 14px;font-size:22px;border-radius:14px">{{ o.note }}</div>
+</sc-if>
+<sc-if value="{{ o.isNew }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--solid" style="font-size:18px;align-self:flex-start">Abia a intrat</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:16px">
+<span class="h-eyebrow" style="font-size:22px">Restul săptămânii</span>
+<sc-for list="{{ weekAhead }}" as="d" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;gap:8px;padding:18px 20px;border-radius:18px;background:var(--h-bg-sunk)">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-size:26px;font-weight:700">{{ d.dow }} {{ d.date }}</span>
+<span class="h-numeric" style="margin-left:auto;font-size:26px;font-weight:700;color:var(--h-accent-fg)">{{ d.count }}</span>
+</div>
+<span style="font-size:22px;color:var(--h-fg-subtle)">{{ d.summary }}</span>
+</div>
+</sc-for>
+<div style="margin-top:auto;padding:18px 20px;border-radius:18px;background:var(--h-honey-soft);color:var(--h-honey-soft-fg)">
+<p style="margin:0;font-size:22px;font-weight:700">Sâmbăta e vârful</p>
+<p style="margin:4px 0 0;font-size:21px">27 de comenzi · începe aluatul foietaj joi</p>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<div class="dv-opt" id="1c">
+<div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a>După program — panou întunecat, cu numărătoare până la intervalul următor</div>
+<div class="dv-card" style="width:864px;height:486px">
+<div data-screen-label="1c Dupa program" style="width:1920px;height:1080px;transform:scale(.45);transform-origin:top left;overflow:hidden;display:flex;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-line-strong:rgba(246,237,225,.22);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-honey-soft:rgba(242,166,59,.16);--h-honey-soft-fg:#F7C46B;--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-fg-on-accent:#1B120B;--h-fg-on-honey:#1B120B;background:var(--h-bg-page);color:var(--h-fg)">
+
+<div style="width:740px;flex:none;padding:44px 44px;display:flex;flex-direction:column;background-image:radial-gradient(120% 80% at 0% 0%, rgba(242,166,59,.16), transparent 65%);border-right:1px solid var(--h-line)">
+<div style="display:flex;align-items:center;gap:16px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:52px;height:52px;object-fit:contain;flex:none">
+<span style="font-size:26px;color:var(--h-fg-subtle);letter-spacing:.1em;text-transform:uppercase;font-weight:700">Laborator</span>
+<span class="h-numeric" style="margin-left:auto;font-size:30px;color:var(--h-fg-muted)">07:12</span>
+</div>
+<p class="h-eyebrow" style="font-size:22px;margin-top:56px;color:var(--h-accent-fg)">Următorul interval de livrare</p>
+<div style="display:flex;align-items:baseline;gap:22px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:170px;font-weight:700;line-height:.95;letter-spacing:-.03em">08:00</span>
+<span style="font-size:34px;color:var(--h-fg-muted)">în 48 min</span>
+</div>
+<div class="h-progress" style="height:14px;margin-top:22px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:62%"></div></div>
+<div style="display:flex;flex-direction:column;gap:14px;margin-top:40px">
+<sc-for list="{{ nextOrders }}" as="o" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:18px;padding:18px 22px;border-radius:18px;background:var(--h-bg-surface);border:1px solid var(--h-line)">
+<span class="h-numeric" style="font-size:24px;color:var(--h-fg-subtle);width:70px">{{ o.ref }}</span>
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<span style="font-family:var(--h-font-display);font-size:30px;font-weight:600">{{ o.cust }}</span>
+<span style="font-size:22px;color:var(--h-fg-muted)">{{ o.line }}</span>
+</div>
+<span class="{{ o.statusCls }}" style="font-size:18px;margin-left:auto">{{ o.status }}</span>
+</div>
+</sc-for>
+</div>
+<p style="margin-top:auto;font-size:22px;color:var(--h-fg-faint)">După 08:00 — intervalul 10:00, 3 comenzi, 44 de bucăți</p>
+</div>
+
+<div style="flex:1;display:flex;flex-direction:column;padding:44px 40px;min-width:0">
+<div style="display:flex;align-items:baseline;gap:18px;margin-bottom:26px">
+<span class="h-h3" style="font-size:34px;color:var(--h-fg)">Săptămâna care vine</span>
+<span style="font-size:24px;color:var(--h-fg-subtle)">114 comenzi rezervate</span>
+</div>
+<div style="flex:1;display:grid;grid-template-columns:repeat(7,1fr);gap:12px;min-height:0">
+<sc-for list="{{ weekCols }}" as="d" hint-placeholder-count="7">
+<div style="display:flex;flex-direction:column;gap:10px;padding:16px 12px;border-radius:16px;background:{{ d.bg }};border:1px solid var(--h-line);min-width:0">
+<span style="font-size:22px;color:var(--h-fg-subtle);text-transform:uppercase;letter-spacing:.08em;font-weight:700">{{ d.dow }}</span>
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:40px;font-weight:700;line-height:1">{{ d.date }}</span>
+<span class="h-numeric" style="font-size:22px;color:var(--h-accent-fg);font-weight:700">{{ d.count }} comenzi</span>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+<sc-for list="{{ d.chips }}" as="c" hint-placeholder-count="4">
+<div style="padding:9px 11px;border-radius:11px;background:rgba(246,237,225,.06);display:flex;flex-direction:column;gap:2px;min-width:0">
+<span class="h-numeric" style="font-size:20px;color:var(--h-fg-subtle)">{{ c.time }}</span>
+<span style="font-size:21px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ c.cust }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:16px;margin-top:24px;padding:18px 24px;border-radius:999px;background:var(--h-accent);color:#1B120B;align-self:flex-end;animation:pf-slidein .5s var(--h-ease-spring)">
+<span style="width:12px;height:12px;border-radius:50%;background:#1B120B" class="pf-blink"></span>
+<span style="font-size:24px;font-weight:700">Comandă nouă · Studio Arta · vin 08:00 · 28 buc.</span>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+</div>
+</section>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { day: 0, filter: "Toate", sel: null, st: {}, done: {}, toast: true, sort: "interval", ord: {}, rOpen: 2, rDone: { 1: true }, rLoad: {} };
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+  renderVals() {
+    const CH = { Ridicare: "h-badge h-badge--honey", Livrare: "h-badge h-badge--accent", Angro: "h-badge h-badge--jam" };
+    const ST = { "La ambalare": "h-badge h-badge--success", "În cuptor": "h-badge h-badge--warning", "La dospit": "h-badge", "În așteptare": "h-badge" };
+    const mk = (o) => Object.assign({
+      chanCls: CH[o.chan], statusCls: ST[o.status] || "h-badge",
+      cardCls: o.isNew ? "h-card pf-new" : "h-card",
+      note: o.note || "", isNew: !!o.isNew,
+      line: o.items.map(i => i.q + " " + i.n).join(" · ")
+    }, o);
+
+    const lane1 = [
+      mk({ ref: "#1042", cust: "Cafeneaua Lumina", chan: "Angro", status: "La ambalare", pct: "88%", items: [{ q: "24", n: "Croissant cu unt" }, { q: "18", n: "Pain au chocolat" }, { q: "12", n: "Baghetă tradițională" }] }),
+      mk({ ref: "#1043", cust: "Hotel Belvedere", chan: "Livrare", status: "La ambalare", pct: "76%", items: [{ q: "30", n: "Mini foietaje" }, { q: "10", n: "Brioșă cu foietaj" }] }),
+      mk({ ref: "#1044", cust: "Brutăria din Parc", chan: "Angro", status: "În cuptor", pct: "54%", items: [{ q: "40", n: "Kouign-amann" }] })
+    ];
+    const lane2 = [
+      mk({ ref: "#1045", cust: "Maria Ionescu", chan: "Ridicare", status: "În cuptor", pct: "40%", note: "Alergie la nuci — tavă separată", items: [{ q: "1", n: "Tartă cu lămâie 8p" }, { q: "6", n: "Ecler cu cafea" }] }),
+      mk({ ref: "#1046", cust: "J. Vasilescu", chan: "Ridicare", status: "La dospit", pct: "22%", items: [{ q: "12", n: "Croissant cu unt" }, { q: "2", n: "Flan de patiserie" }] }),
+      mk({ ref: "#1047", cust: "Studio Arta", chan: "Livrare", status: "În așteptare", pct: "0%", isNew: true, items: [{ q: "20", n: "Financier cu migdale" }, { q: "8", n: "Mille-feuille" }] })
+    ];
+    const lane3 = [
+      mk({ ref: "#1048", cust: "Școala Sfânta Ana", chan: "Livrare", status: "În așteptare", pct: "0%", items: [{ q: "36", n: "Pain au chocolat" }] }),
+      mk({ ref: "#1049", cust: "L. Dumitrescu", chan: "Ridicare", status: "În așteptare", pct: "0%", items: [{ q: "1", n: "Paris-Brest 6p" }, { q: "4", n: "Tartă cu căpșuni" }] }),
+      mk({ ref: "#1050", cust: "Cafeneaua Lumina", chan: "Angro", status: "În așteptare", pct: "0%", isNew: true, items: [{ q: "12", n: "Baghetă tradițională" }] })
+    ];
+
+    const CYCLE = ["În așteptare", "La dospit", "În cuptor", "La ambalare", "Predată"];
+    const ST2 = Object.assign({}, ST, { "Predată": "h-badge h-badge--solid" });
+    const S = this.state;
+    const set = (p) => this.setState(p);
+    const g = (ref, cust, chan, items, note) => mk({ ref, cust, chan, status: "În așteptare", pct: "0%", note, items });
+
+    const dayDefs = [
+      { dow: "Mie", date: "26", lanes: [["06:30", lane1], ["08:00", lane2], ["10:00", lane3]] },
+      { dow: "Joi", date: "27", lanes: [
+        ["06:30", [g("#1051", "Hotel Belvedere", "Livrare", [{ q: "30", n: "Mini foietaje" }, { q: "12", n: "Croissant cu unt" }])]],
+        ["09:00", [g("#1052", "Bistro Central", "Angro", [{ q: "24", n: "Baghetă tradițională" }]), g("#1053", "R. Andrei", "Ridicare", [{ q: "1", n: "Tartă cu căpșuni" }, { q: "6", n: "Ecler cu cafea" }])]]
+      ] },
+      { dow: "Vin", date: "28", lanes: [
+        ["06:00", [g("#1054", "Piața Veche", "Angro", [{ q: "60", n: "Foietaje asortate" }])]],
+        ["08:00", [g("#1055", "Studio Arta", "Livrare", [{ q: "20", n: "Financier cu migdale" }, { q: "8", n: "Mille-feuille" }], "Livrare la etaj 4"), g("#1056", "Cafeneaua Lumina", "Angro", [{ q: "18", n: "Pain au chocolat" }])]],
+        ["15:00", [g("#1057", "N. Petrescu", "Ridicare", [{ q: "1", n: "Paris-Brest 6p" }])]]
+      ] },
+      { dow: "Sâm", date: "29", lanes: [
+        ["07:00", [g("#1058", "Brutăria din Parc", "Angro", [{ q: "40", n: "Kouign-amann" }]), g("#1059", "Cafeneaua Lumina", "Angro", [{ q: "24", n: "Croissant cu unt" }])]],
+        ["09:30", [g("#1060", "Nuntă Dinu", "Ridicare", [{ q: "1", n: "Tort de nuntă 3 etaje" }, { q: "60", n: "Mignon asortat" }], "Se ridică cu mașina proprie")]],
+        ["14:00", [g("#1061", "Nuntă Radu", "Livrare", [{ q: "1", n: "Tort de nuntă 2 etaje" }, { q: "40", n: "Choux vanilie" }])]]
+      ] },
+      { dow: "Dum", date: "30", lanes: [
+        ["07:00", [g("#1062", "Hotel Belvedere", "Livrare", [{ q: "36", n: "Mini foietaje" }])]],
+        ["08:30", [g("#1063", "Brunch Celest", "Livrare", [{ q: "20", n: "Brioșă cu foietaj" }, { q: "12", n: "Flan de patiserie" }])]]
+      ] },
+      { dow: "Lun", date: "31", lanes: [
+        ["06:30", [g("#1064", "Cafeneaua Lumina", "Angro", [{ q: "18", n: "Croissant cu unt" }])]],
+        ["11:00", [g("#1065", "T. Novac", "Ridicare", [{ q: "1", n: "Tartă cu lămâie 8p" }])]]
+      ] },
+      { dow: "Mar", date: "01", lanes: [
+        ["06:30", [g("#1066", "Cafeneaua Lumina", "Angro", [{ q: "24", n: "Croissant cu unt" }, { q: "12", n: "Pain au chocolat" }])]],
+        ["09:00", [g("#1067", "Școala Sfânta Ana", "Livrare", [{ q: "36", n: "Pain au chocolat" }])]],
+        ["13:00", [g("#1068", "P. Marin", "Ridicare", [{ q: "4", n: "Tartă cu căpșuni" }])]]
+      ] }
+    ];
+
+    const URG = { "#1045": true, "#1060": true };
+    const move = (key, refs, i, d) => {
+      const j = i + d;
+      if (j < 0 || j >= refs.length) return;
+      const arr = refs.slice();
+      const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+      set(s => ({ ord: Object.assign({}, s.ord, { [key]: arr }) }));
+    };
+
+    const advance = (ref, cur) => set(s => ({ st: Object.assign({}, s.st, { [ref]: CYCLE[Math.min(CYCLE.indexOf(cur) + 1, CYCLE.length - 1)] }) }));
+    const toggleItem = (ref, i) => set(s => {
+      const d = Object.assign({}, s.done[ref] || {});
+      d[i] = !d[i];
+      return { done: Object.assign({}, s.done, { [ref]: d }) };
+    });
+
+    const dayTabs = dayDefs.map((d, i) => ({
+      label: d.dow + " " + d.date,
+      count: String(d.lanes.reduce((a, l) => a + l[1].length, 0)),
+      cls: i === S.day ? "h-btn h-btn--primary" : "h-btn h-btn--ghost",
+      onClick: () => set({ day: i, sel: null })
+    }));
+    const filterTabs = ["Toate", "Ridicare", "Livrare", "Angro"].map(f => ({
+      label: f,
+      cls: f === S.filter ? "h-btn h-btn--primary" : "h-btn h-btn--ghost",
+      onClick: () => set({ filter: f, sel: null })
+    }));
+
+    const day = dayDefs[S.day];
+    const deco = (o) => {
+      const st = S.st[o.ref] || o.status;
+      const dn = S.done[o.ref] || {};
+      const cnt = o.items.filter((_, i) => dn[i]).length;
+      const urg = !!URG[o.ref];
+      return Object.assign({}, o, {
+        status: st, statusCls: ST2[st] || "h-badge",
+        cardCls: o.isNew && st === "În așteptare" ? "h-card pf-new" : "h-card",
+        urgent: urg,
+        bg: urg ? "rgba(232,160,175,.10)" : "var(--h-bg-surface)",
+        bd: urg ? "var(--h-jam)" : "var(--h-line)",
+        outline: S.sel === o.ref ? "3px solid var(--h-accent)" : "none",
+        progress: cnt + "/" + o.items.length,
+        nextLabel: st === "Predată" ? "Finalizată" : CYCLE[CYCLE.indexOf(st) + 1],
+        onSelect: () => set({ sel: o.ref }),
+        onAdvance: (e) => { if (e && e.stopPropagation) e.stopPropagation(); advance(o.ref, st); }
+      });
+    };
+    const iLanes = day.lanes.map(([time, orders]) => {
+      const key = S.day + "|" + time;
+      let base = orders.filter(o => S.filter === "Toate" || o.chan === S.filter);
+      if (S.sort === "urgent") base = base.slice().sort((x, y) => (URG[y.ref] ? 1 : 0) - (URG[x.ref] ? 1 : 0));
+      else if (S.sort === "client") base = base.slice().sort((x, y) => x.cust.localeCompare(y.cust, "ro"));
+      const custom = S.ord[key];
+      if (custom) {
+        base = base.slice().sort((x, y) => {
+          const ix = custom.indexOf(x.ref), iy = custom.indexOf(y.ref);
+          return (ix < 0 ? 99 : ix) - (iy < 0 ? 99 : iy);
+        });
+      }
+      const refs = base.map(o => o.ref);
+      const list = base.map((o, i) => Object.assign(deco(o), {
+        upCls: i > 0 ? "h-btn h-btn--secondary" : "h-btn h-btn--ghost",
+        downCls: i < base.length - 1 ? "h-btn h-btn--secondary" : "h-btn h-btn--ghost",
+        onUp: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(key, refs, i, -1); },
+        onDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(key, refs, i, 1); }
+      }));
+      return { time, meta: list.length + (list.length === 1 ? " comandă" : " comenzi"), orders: list, empty: list.length === 0 };
+    });
+
+    let detail = { ref: "", cust: "", chan: "", chanCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, onAllDone: () => {}, onClose: () => {} };
+    let hasDetail = false;
+    day.lanes.forEach(([t, orders]) => orders.forEach(o => {
+      if (o.ref !== S.sel) return;
+      hasDetail = true;
+      const st = S.st[o.ref] || o.status;
+      const dn = S.done[o.ref] || {};
+      const cnt = o.items.filter((_, i) => dn[i]).length;
+      detail = {
+        ref: o.ref, cust: o.cust, chan: o.chan, chanCls: o.chanCls, slot: t,
+        status: st, statusCls: ST2[st] || "h-badge", note: o.note || "",
+        pct: Math.round(cnt / o.items.length * 100) + "%",
+        progress: cnt + " din " + o.items.length + " poziții bifate",
+        items: o.items.map((it, i) => ({
+          q: it.q, n: it.n,
+          bg: dn[i] ? "var(--h-success-soft)" : "var(--h-bg-raised)",
+          boxBg: dn[i] ? "var(--h-accent)" : "transparent",
+          mark: dn[i] ? "✓" : "",
+          onClick: () => toggleItem(o.ref, i)
+        })),
+        nextLabel: st === "Predată" ? "Comandă finalizată" : "Trece la: " + CYCLE[CYCLE.indexOf(st) + 1],
+        nextCls: st === "Predată" ? "h-btn h-btn--secondary" : "h-btn h-btn--primary",
+        onAdvance: () => advance(o.ref, st),
+        onAllDone: () => set(s => ({ done: Object.assign({}, s.done, { [o.ref]: o.items.reduce((a, _, i) => (a[i] = true, a), {}) }) })),
+        onClose: () => set({ sel: null })
+      };
+    }));
+
+    const STOPS = [
+      { id: 1, time: "06:20", cust: "Cafeneaua Lumina", addr: "Str. Mihai Viteazu 12", phone: "0722114455", note: "", items: [{ q: "24", n: "Croissant cu unt" }, { q: "18", n: "Pain au chocolat" }, { q: "12", n: "Baghetă tradițională" }] },
+      { id: 2, time: "06:50", cust: "Hotel Belvedere", addr: "Bd. Independenței 4 · intrare marfă", phone: "0722998877", note: "", items: [{ q: "30", n: "Mini foietaje" }, { q: "10", n: "Brioșă cu foietaj" }] },
+      { id: 3, time: "07:30", cust: "Studio Arta", addr: "Calea Victoriei 88, et. 4", phone: "0733445566", note: "Liftul de marfă e în spate, cod 1204.", items: [{ q: "20", n: "Financier cu migdale" }, { q: "8", n: "Mille-feuille" }] },
+      { id: 4, time: "08:15", cust: "Școala Sfânta Ana", addr: "Str. Plopilor 3", phone: "0744332211", note: "Se predă la poartă, doamnei administrator.", items: [{ q: "36", n: "Pain au chocolat" }] }
+    ];
+    const rDone = S.rDone, rLoad = S.rLoad;
+    const doneCount = STOPS.filter(s => rDone[s.id]).length;
+    const nextStop = STOPS.find(s => !rDone[s.id]);
+    const rt = {
+      sub: "Miercuri 26 · " + STOPS.length + " opriri · 18 km",
+      pct: Math.round(doneCount / STOPS.length * 100) + "%",
+      doneLabel: doneCount + " din " + STOPS.length + " livrate",
+      nextLabel: nextStop ? "Următoarea · " + nextStop.time : "Rută încheiată",
+      nextCls: nextStop ? "h-badge h-badge--warning" : "h-badge h-badge--success",
+      allDone: !nextStop,
+      footer: nextStop ? (STOPS.length - doneCount) + " opriri rămase" : "Toate opririle bifate",
+      onReset: () => set({ rDone: {}, rLoad: {}, rOpen: 1 }),
+      stops: STOPS.map(s => {
+        const done = !!rDone[s.id];
+        const open = S.rOpen === s.id;
+        const isNext = !!nextStop && nextStop.id === s.id;
+        const load = rLoad[s.id] || {};
+        return {
+          time: s.time, cust: s.cust, addr: s.addr, phone: s.phone, note: open ? s.note : "",
+          open,
+          bg: done ? "var(--h-success-soft)" : "var(--h-bg-surface)",
+          border: isNext ? "2px solid var(--h-accent)" : "1px solid var(--h-line)",
+          opacity: done ? ".72" : "1",
+          timeSize: isNext ? "24px" : "19px",
+          timeColor: isNext ? "var(--h-accent-fg)" : "var(--h-fg-muted)",
+          status: done ? "Livrat" : isNext ? "Urmează" : "În mașină",
+          statusCls: done ? "h-badge h-badge--success" : isNext ? "h-badge h-badge--warning" : "h-badge",
+          onToggle: () => set({ rOpen: open ? null : s.id }),
+          items: s.items.map((it, i) => ({
+            q: it.q, n: it.n,
+            bg: load[i] ? "var(--h-success-soft)" : "var(--h-bg-raised)",
+            boxBg: load[i] ? "var(--h-accent)" : "transparent",
+            mark: load[i] ? "✓" : "",
+            onToggle: () => set(st2 => {
+              const cur = Object.assign({}, st2.rLoad[s.id] || {});
+              cur[i] = !cur[i];
+              return { rLoad: Object.assign({}, st2.rLoad, { [s.id]: cur }) };
+            })
+          })),
+          actionLabel: done ? "Anulează livrarea" : "Marchează livrat",
+          actionCls: done ? "h-btn h-btn--ghost" : "h-btn h-btn--primary",
+          onDeliver: () => set(st2 => {
+            const nd = Object.assign({}, st2.rDone);
+            if (nd[s.id]) delete nd[s.id]; else nd[s.id] = true;
+            const nxt = STOPS.find(x => !nd[x.id]);
+            return { rDone: nd, rOpen: nd[s.id] ? (nxt ? nxt.id : null) : s.id };
+          })
+        };
+      })
+    };
+
+    return {
+      rt,
+      dayTabs, filterTabs, iLanes, detail, hasDetail,
+      sortBtns: [{ v: "interval", l: "Interval" }, { v: "urgent", l: "Urgente primele" }, { v: "client", l: "Client A–Z" }].map(s => ({
+        label: s.l,
+        cls: S.sort === s.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ sort: s.v })
+      })),
+      hasCustom: Object.keys(S.ord).length > 0,
+      onResetOrder: () => set({ ord: {} }),
+      noDetail: !hasDetail,
+      dayLabel: day.dow + " " + day.date,
+      iToast: S.toast,
+      onToastClose: () => set({ toast: false }),
+      lanes: [
+        { time: "06:30", meta: "3 comenzi · 134 buc.", state: "La ambalare", stateCls: "h-badge h-badge--success", orders: lane1 },
+        { time: "08:00", meta: "3 comenzi · 49 buc.", state: "În cuptor", stateCls: "h-badge h-badge--warning", orders: lane2 },
+        { time: "10:00", meta: "3 comenzi · 53 buc.", state: "În așteptare", stateCls: "h-badge", orders: lane3 }
+      ],
+      nowOrders: lane1,
+      nextOrders: lane2,
+      week: [
+        { dow: "Mie", date: "26", count: "15" }, { dow: "Joi", date: "27", count: "12" },
+        { dow: "Vin", date: "28", count: "18" }, { dow: "Sâm", date: "29", count: "27" },
+        { dow: "Dum", date: "30", count: "22" }, { dow: "Lun", date: "31", count: "9" },
+        { dow: "Mar", date: "01", count: "11" }
+      ],
+      weekAhead: [
+        { dow: "Joi", date: "27", count: "12", summary: "Două curse angro înainte de 07:00" },
+        { dow: "Vin", date: "28", count: "18", summary: "Lăzi pentru piață · 60 de foietaje" },
+        { dow: "Sâm", date: "29", count: "27", summary: "Două torturi de nuntă, ridicare 14:00" },
+        { dow: "Dum", date: "30", count: "22", summary: "Doar hoteluri, pentru brunch" },
+        { dow: "Lun", date: "31", count: "9", summary: "Liniște — zi de pregătire" },
+        { dow: "Mar", date: "01", count: "11", summary: "Comanda fixă Cafeneaua Lumina" }
+      ],
+      weekCols: [
+        { dow: "Mie", date: "26", count: "15", bg: "var(--h-bg-surface)", chips: [{ time: "06:30", cust: "Cafeneaua Lumina" }, { time: "08:00", cust: "Maria Ionescu" }, { time: "10:00", cust: "Sfânta Ana" }, { time: "16:00", cust: "L. Dumitrescu" }] },
+        { dow: "Joi", date: "27", count: "12", bg: "var(--h-bg-sunk)", chips: [{ time: "06:30", cust: "Hotel Belvedere" }, { time: "09:00", cust: "Bistro Central" }, { time: "12:30", cust: "R. Andrei" }] },
+        { dow: "Vin", date: "28", count: "18", bg: "var(--h-bg-sunk)", chips: [{ time: "06:00", cust: "Piața Veche" }, { time: "08:00", cust: "Studio Arta" }, { time: "11:00", cust: "Cafeneaua Lumina" }, { time: "15:00", cust: "N. Petrescu" }] },
+        { dow: "Sâm", date: "29", count: "27", bg: "var(--h-accent-soft)", chips: [{ time: "07:00", cust: "Brutăria din Parc" }, { time: "09:30", cust: "Nuntă Dinu" }, { time: "14:00", cust: "Nuntă Radu" }, { time: "17:00", cust: "S. Ionescu" }] },
+        { dow: "Dum", date: "30", count: "22", bg: "var(--h-bg-sunk)", chips: [{ time: "07:00", cust: "Hotel Belvedere" }, { time: "08:30", cust: "Brunch Celest" }, { time: "10:00", cust: "M. Florescu" }] },
+        { dow: "Lun", date: "31", count: "9", bg: "var(--h-bg-sunk)", chips: [{ time: "06:30", cust: "Cafeneaua Lumina" }, { time: "11:00", cust: "T. Novac" }] },
+        { dow: "Mar", date: "01", count: "11", bg: "var(--h-bg-sunk)", chips: [{ time: "06:30", cust: "Cafeneaua Lumina" }, { time: "09:00", cust: "Școala Sfânta Ana" }, { time: "13:00", cust: "P. Marin" }] }
+      ],
+      totals: [
+        { n: "Croissant cu unt", done: "72", of: "/ 96", pct: "75%" },
+        { n: "Pain au chocolat", done: "26", of: "/ 64", pct: "41%" },
+        { n: "Kouign-amann", done: "40", of: "/ 40", pct: "100%" },
+        { n: "Baghetă tradițională", done: "20", of: "/ 36", pct: "56%" },
+        { n: "Ecler cu cafea", done: "0", of: "/ 18", pct: "3%" },
+        { n: "Mille-feuille", done: "0", of: "/ 12", pct: "3%" }
+      ]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

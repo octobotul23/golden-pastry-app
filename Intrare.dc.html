@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-cocoa-800);font-family:var(--h-font-body);color:var(--h-cream-100);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
+@keyframes in-up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width:900px){[data-in=grid]{grid-template-columns:1fr!important}}
+@media (max-width:560px){
+[data-in=page]{padding:24px 16px 28px!important}
+[data-in=card]{padding:20px 18px!important}
+[data-in=title]{font-size:30px!important}
+}
+</style>
+</helmet>
+
+<div data-in="page" style="min-height:100vh;display:flex;flex-direction:column;gap:30px;padding:44px 28px 34px;background-image:radial-gradient(85% 60% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
+
+<div style="width:100%;max-width:1060px;margin:0 auto;display:flex;align-items:center;gap:16px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<span data-in="title" style="font-family:var(--h-font-display);font-size:34px;font-weight:600;line-height:1.1;letter-spacing:.01em">Golden Pastry</span>
+<span style="font-size:15px;color:rgba(255,255,255,.6)">{{ sub }}</span>
+</div>
+</div>
+
+<div data-in="grid" style="width:100%;max-width:1060px;margin:0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch">
+
+<sc-for list="{{ panels }}" as="p" hint-placeholder-count="3">
+<a data-in="card" href="{{ p.href }}" style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:22px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);color:var(--h-cream-100);text-decoration:none;min-height:250px;animation:in-up .34s var(--h-ease-out) both" style-hover="background:rgba(255,255,255,.1);border-color:var(--h-accent)">
+<div style="display:flex;align-items:center;gap:10px">
+<span class="h-eyebrow" style="font-size:12px;color:var(--h-accent)">{{ p.role }}</span>
+<span class="{{ p.tagCls }}" style="font-size:11px;margin-left:auto">{{ p.tag }}</span>
+</div>
+<span style="font-family:var(--h-font-display);font-size:27px;font-weight:600;line-height:1.15">{{ p.title }}</span>
+<p style="margin:0;font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ p.desc }}</p>
+<div style="margin-top:auto;display:flex;align-items:flex-end;gap:16px">
+<div style="display:flex;flex-direction:column;gap:2px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:34px;font-weight:700;line-height:1">{{ p.stat }}</span>
+<span style="font-size:13px;color:rgba(255,255,255,.55)">{{ p.statLabel }}</span>
+</div>
+<span style="margin-left:auto;font-size:22px;color:var(--h-accent);line-height:1">→</span>
+</div>
+</a>
+</sc-for>
+
+</div>
+
+<div style="width:100%;max-width:1060px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:4px">
+<p style="margin:0;flex:1;min-width:240px;font-size:13px;line-height:1.55;color:rgba(255,255,255,.45);text-wrap:pretty">Toate trei panourile lucrează pe aceleași comenzi, partajate cu toți cei care deschid linkul: ce schimbi în administrare apare imediat în laborator și în telefonul șoferului.</p>
+<sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-radius:12px;background:rgba(255,255,255,.07)">
+<span style="font-size:13px;color:rgba(255,255,255,.72)">{{ authLine }}</span>
+<button type="button" onClick="{{ onLogout }}" style="min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:13px;font-weight:600;cursor:pointer">Ieși</button>
+</div>
+</sc-if>
+</div>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const KEY = "gp-admin-orders-v1";
+const RKEY = "gp-route-order-v1";
+const AKEY = "gp-auth-v1";
+const GP_M = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "noi", "dec"];
+const GP_DOW = ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sâm"];
+const gpPad = (n) => (n < 10 ? "0" : "") + n;
+const gpIso = (d) => d.getFullYear() + "-" + gpPad(d.getMonth() + 1) + "-" + gpPad(d.getDate());
+const gpToday = () => gpIso(new Date());
+const gpParse = (v) => { const p = String(v).split("-"); return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1); };
+const gpDow = (v) => GP_DOW[gpParse(v).getDay()];
+const gpNum = (v) => String(gpParse(v).getDate());
+const gpShort = (v) => gpDow(v) + " " + gpNum(v) + " " + GP_M[gpParse(v).getMonth()];
+const gpLong = (v) => gpShort(v) + " " + gpParse(v).getFullYear();
+const gpWindow = (n) => {
+  const out = [], t = new Date();
+  t.setHours(0, 0, 0, 0);
+  for (let i = 0; i < n; i++) { const d = new Date(t); d.setDate(t.getDate() + i); out.push(gpIso(d)); }
+  return out;
+};
+const gpShift = (days) => { const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + days); return gpIso(d); };
+const GP_LDOW = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
+const GP_MLONG = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+const TODAY = gpToday();
+const TODAY_LABEL = GP_LDOW[gpParse(TODAY).getDay()] + " " + gpNum(TODAY) + " " + GP_MLONG[gpParse(TODAY).getMonth()];
+const HQ = { lat: 44.4306, lng: 26.1010 };
+const ZONES = {
+  "Centru": { lat: 44.4353, lng: 26.1025 }, "Dorobanți": { lat: 44.4550, lng: 26.0900 },
+  "Aviatorilor": { lat: 44.4680, lng: 26.0870 }, "Floreasca": { lat: 44.4650, lng: 26.0980 },
+  "Pipera": { lat: 44.5150, lng: 26.1150 }, "Timpuri Noi": { lat: 44.4200, lng: 26.1150 },
+  "Tineretului": { lat: 44.4100, lng: 26.1050 }, "Berceni": { lat: 44.3900, lng: 26.1250 },
+  "Cotroceni": { lat: 44.4300, lng: 26.0620 }, "Militari": { lat: 44.4360, lng: 26.0100 }
+};
+
+class Component extends DCLogic {
+  state = { orders: [], seq: {}, auth: null, loaded: false };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "dark");
+    const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
+    const o = read(KEY, []);
+    this.setState({
+      orders: Array.isArray(o) ? o : [],
+      seq: read(RKEY, {}) || {},
+      auth: read(AKEY, null),
+      loaded: true
+    });
+  }
+
+  km(a, b) {
+    const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+    const la = a.lat * Math.PI / 180, lb = b.lat * Math.PI / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(la) * Math.cos(lb) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h)) * 1.35;
+  }
+
+  renderVals() {
+    const S = this.state;
+    const live = S.orders.filter(o => !o.archived && String(o.day) >= TODAY);
+    const today = live.filter(o => o.day === TODAY);
+    const open = today.filter(o => o.status !== "Predată");
+    const pieces = open.reduce((a, o) => a + o.items.reduce((x, i) => x + (parseInt(i.q, 10) || 0), 0), 0);
+
+    const deliv = today.filter(o => o.chan === "Livrare");
+    const rank = {};
+    (S.seq[TODAY] || []).forEach((id, i) => { rank[id] = i; });
+    const stops = deliv.slice().sort((a, b) => {
+      const ra = rank[a.id], rb = rank[b.id];
+      if (ra !== undefined && rb !== undefined) return ra - rb;
+      if (ra !== undefined) return -1;
+      if (rb !== undefined) return 1;
+      return a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : 0;
+    });
+    let prev = HQ, total = 0;
+    stops.forEach(o => {
+      const z = ZONES[o.zone] || ZONES["Centru"];
+      const p = { lat: o.lat || z.lat, lng: o.lng || z.lng };
+      total += this.km(prev, p);
+      prev = p;
+    });
+    const left = stops.filter(o => o.status !== "Predată").length;
+
+    return {
+      sub: S.loaded ? TODAY_LABEL + " · alege panoul pentru tura ta" : "Se încarcă comenzile…",
+      panels: [
+        {
+          role: "Laborator", title: "Panoul de producție", href: "Panou%20Laborator.dc.html",
+          desc: "Comenzile pe intervale, urgențele în față, bifat pe produs și schimbat starea direct de pe ecranul din bucătărie.",
+          stat: String(open.length), statLabel: pieces + " bucăți de făcut azi",
+          tag: "fără parolă", tagCls: "h-badge"
+        },
+        {
+          role: "Șofer", title: "Foaia de rută", href: "Ruta%20Sofer.dc.html",
+          desc: "Opririle zilei în ordinea stabilită în administrare, bifat la încărcare, navigație și marcat livrat din telefon.",
+          stat: String(left), statLabel: stops.length + " opriri · " + total.toFixed(1) + " km",
+          tag: "telefon", tagCls: "h-badge h-badge--accent"
+        },
+        {
+          role: "Administrare", title: "Comenzi, rute, produse", href: "Administrare%20Comenzi.dc.html",
+          desc: "Adaugi și editezi comenzi, marchezi urgențe, ordonezi ruta șoferului și cauți în arhiva pe zile trecute.",
+          stat: String(live.length), statLabel: "comenzi în lucru · plus arhiva pe zile trecute",
+          tag: S.auth ? "conectat" : "cu parolă", tagCls: S.auth ? "h-badge h-badge--success" : "h-badge h-badge--honey"
+        }
+      ],
+      signedIn: !!S.auth,
+      authLine: S.auth ? "Administrare: " + S.auth.name : "",
+      onLogout: () => {
+        try { localStorage.removeItem(AKEY); } catch (e) {}
+        this.setState({ auth: null });
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>
