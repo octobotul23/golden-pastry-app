@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+@keyframes pa-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.18), transparent 70%)">
+<div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px;animation:pa-in .22s var(--h-ease-out)">
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:26px;font-weight:600;color:var(--h-cream-100)">Parola mea</span>
+<span style="font-size:15px;color:rgba(255,255,255,.65)">{{ sub }}</span>
+</div>
+</div>
+
+<!-- Nu ești autentificat: nu se poate schimba parola nimănui de aici. -->
+<sc-if value="{{ anonim }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:22px 20px;border-radius:22px;display:flex;flex-direction:column;gap:14px">
+<p style="margin:0;font-size:15px;line-height:1.6;color:var(--h-fg-muted);text-wrap:pretty">Ca să-ți schimbi parola, intră întâi în cont. Dacă ai uitat-o cu totul, folosește „Ți-ai uitat parola?” din pagina de intrare.</p>
+<a href="Intrare.dc.html" class="h-btn h-btn--primary h-btn--block" style="min-height:52px;font-size:16px;text-decoration:none;display:flex;align-items:center;justify-content:center">Mergi la intrare</a>
+</div>
+</sc-if>
+
+<sc-if value="{{ deschis }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:14px">
+
+<!-- Contul are încă parola pusă de administrator. Până acum, steagul acesta se
+     scria în baza de date la fiecare cont creat sau resetat și nu-l citea
+     nimeni: omul primea parola pe WhatsApp, i se scria „schimb-o după prima
+     intrare" și nu avea de unde s-o schimbe. -->
+<sc-if value="{{ provizorie }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:16px;padding:14px 16px">
+<p class="h-alert__title" style="margin:0;font-size:15px">Pe cont e încă parola primită când ți s-a făcut contul</p>
+<p style="margin:6px 0 0;font-size:14px;line-height:1.55;text-wrap:pretty">O știe și cine ți-a trimis-o. Pune una știută doar de tine.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ gata }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="border-radius:16px;padding:14px 16px">
+<p class="h-alert__title" style="margin:0;font-size:15px">Parola a fost schimbată</p>
+<p style="margin:6px 0 0;font-size:14px;line-height:1.55;text-wrap:pretty">Celelalte dispozitive pe care erai conectat au fost deconectate. Data viitoare intri cu parola nouă.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ deFormular }}" hint-placeholder-val="{{ true }}">
+<div class="h-card" style="padding:22px 20px;border-radius:22px;display:flex;flex-direction:column;gap:14px">
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parola de acum
+<input class="h-input" type="password" value="{{ veche }}" onChange="{{ onVeche }}" onKeyDown="{{ onKey }}" autoComplete="current-password" placeholder="cea cu care ai intrat" style="height:50px;font-size:16px">
+</label>
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parola nouă
+<input class="h-input" type="{{ tip }}" value="{{ noua }}" onChange="{{ onNoua }}" onKeyDown="{{ onKey }}" autoComplete="new-password" placeholder="minim {{ minLen }} caractere" style="height:50px;font-size:16px">
+</label>
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Scrie parola nouă încă o dată
+<input class="h-input" type="{{ tip }}" value="{{ inca }}" onChange="{{ onInca }}" onKeyDown="{{ onKey }}" autoComplete="new-password" placeholder="ca să fim siguri că n-ai greșit" style="height:50px;font-size:16px">
+</label>
+
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onVezi }}" style="min-height:44px;font-size:14px">{{ vezLabel }}</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onPropune }}" style="min-height:44px;font-size:14px">Propune o parolă</button>
+</div>
+
+<sc-if value="{{ err }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px">{{ err }}</div>
+</sc-if>
+
+<button type="button" class="h-btn h-btn--primary h-btn--block" onClick="{{ onSave }}" style="min-height:54px;font-size:17px">{{ saveLabel }}</button>
+</div>
+</sc-if>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<a href="{{ inapoiHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.18)">{{ inapoiLabel }}</a>
+</div>
+
+</div>
+</sc-if>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+// Pagina prin care omul își schimbă singur parola.
+//
+// Până acum nu exista niciuna. Serverul avea ruta (`POST /auth/password`) și
+// punea pe fiecare cont nou sau resetat steagul `must_change_password`, dar
+// nicio pagină nu chema ruta și nicio pagină nu citea steagul. Rezultatul:
+// parola dictată la telefon sau trimisă pe WhatsApp rămânea parola contului la
+// nesfârșit, deși mesajul compus de pagina Conturi îi cerea în scris s-o
+// schimbe „după prima intrare".
+//
+// Se publică pe amândouă subdomeniile — clientul și personalul intră pe
+// adrese diferite, dar au aceeași nevoie.
+
+const WORDS = ["croissant", "vanilie", "migdale", "caramel", "foietaj", "brioșă", "zmeură", "cuptor", "tavă", "scorțișoară"];
+// Serverul refuză orice parolă sub 8 caractere (route_change_password).
+// Pragul de aici nu are voie să fie mai mic: altfel caseta promite ceva ce
+// salvarea refuză, iar omul crede că aplicația e stricată.
+const MIN = 8;
+
+class Component extends DCLogic {
+  state = { auth: null, loaded: false, veche: "", noua: "", inca: "", err: "", vezi: false, gata: false, salvez: false };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+    gp.me()
+      .then((user) => this.setState({
+        auth: user ? { u: user.username, name: user.name, role: user.role, temp: user.mustChangePassword === true } : null,
+        loaded: true
+      }))
+      .catch(() => this.setState({ loaded: true }));
+  }
+
+  /** O parolă lizibilă, destul de lungă ca serverul s-o accepte din prima. */
+  propune() {
+    let p = WORDS[Math.floor(Math.random() * WORDS.length)] + "-" + (1000 + Math.floor(Math.random() * 9000));
+    while (p.length < MIN) p += Math.floor(Math.random() * 10);
+    return p;
+  }
+
+  renderVals() {
+    const S = this.state;
+    const set = (x) => this.setState(x);
+    const a = S.auth;
+
+    const salveaza = () => {
+      const veche = String(S.veche);
+      const noua = String(S.noua).trim();
+      const inca = String(S.inca).trim();
+      if (S.salvez) return;
+      if (!veche) return set({ err: "Scrie parola cu care ai intrat." });
+      if (noua.length < MIN) return set({ err: "Parola nouă trebuie să aibă cel puțin " + MIN + " caractere." });
+      if (noua !== inca) return set({ err: "Cele două parole nu sunt identice." });
+      if (noua === veche) return set({ err: "Parola nouă e aceeași cu cea veche. Alege alta." });
+
+      set({ salvez: true, err: "" });
+      gp.changePassword(veche, noua)
+        .then(() => set({ gata: true, salvez: false, veche: "", noua: "", inca: "", err: "" }))
+        .catch((e) => set({ salvez: false, err: e.message || "Parola nu a putut fi schimbată." }));
+    };
+
+    // Clientul se întoarce în magazin, personalul în administrare — de acolo
+    // au venit.
+    const client = a && a.role === "client";
+
+    return {
+      anonim: S.loaded && !a,
+      deschis: !S.loaded || !!a,
+      deFormular: !S.gata,
+      gata: S.gata,
+      provizorie: !!(a && a.temp) && !S.gata,
+      sub: a ? "Contul „" + a.name + "”" : "Intră în cont ca să-ți poți schimba parola",
+
+      veche: S.veche, noua: S.noua, inca: S.inca, err: S.err,
+      minLen: String(MIN),
+      tip: S.vezi ? "text" : "password",
+      vezLabel: S.vezi ? "Ascunde parola" : "Arată parola",
+      saveLabel: S.salvez ? "Se salvează…" : "Schimbă parola",
+      onVeche: (e) => set({ veche: e.target.value, err: "" }),
+      onNoua: (e) => set({ noua: e.target.value, err: "" }),
+      onInca: (e) => set({ inca: e.target.value, err: "" }),
+      onVezi: () => set({ vezi: !S.vezi }),
+      onPropune: () => { const p = this.propune(); set({ noua: p, inca: p, vezi: true, err: "" }); },
+      onKey: (e) => { if (e.key === "Enter") salveaza(); },
+      onSave: () => salveaza(),
+
+      inapoiHref: client ? "Site%20Public.dc.html" : "Administrare%20Comenzi.dc.html",
+      inapoiLabel: client ? "← Înapoi la magazin" : "← Înapoi la administrare"
+    };
+  }
+}
+</script>
+</body>
+</html>

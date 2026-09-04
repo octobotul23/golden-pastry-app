@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+@keyframes pr-fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+[data-pr=mini]{display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;padding:0;font-size:14px;border-radius:9px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);cursor:pointer}
+[data-pr=mini]:hover{border-color:var(--h-accent);color:var(--h-fg)}
+[data-pr=thumb]{width:64px;height:64px;flex:none;border-radius:12px;object-fit:cover;background:var(--h-bg-sunk);border:1px solid var(--h-line)}
+[data-pr=scrim]{position:fixed;inset:0;background:rgba(20,12,6,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;z-index:50}
+@media (max-width:760px){
+[data-pr=shell]{flex-direction:column!important}
+[data-pr=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-pr=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-pr=nav]{display:none!important}
+[data-pr=sidefoot]{display:none!important}
+[data-pr=phoneback]{display:flex!important}
+[data-pr=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-pr=topbar] h1{font-size:20px!important}
+[data-pr=body]{padding:14px 14px 26px!important;gap:12px!important}
+[data-pr=grid2]{grid-template-columns:1fr!important}
+[data-pr=row]{flex-wrap:wrap!important}
+[data-pr=tabs]{width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
+[data-pr=tabs]::-webkit-scrollbar{display:none}
+[data-pr=tabs]>button{flex:none!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
+<div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Catalog de produse</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
+</div>
+<div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">Comenzi</a>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">← Alege panoul</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
+<div data-pr="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-pr="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-pr="sidehead" style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Catalog</span>
+</div>
+<a data-pr="phoneback" href="Administrare%20Comenzi.dc.html" title="Comenzi" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+</div>
+<div data-pr="nav" style="display:flex;flex-direction:column;gap:6px">
+<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
+<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
+<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
+<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Catalog</span>
+<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
+<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
+<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
+<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+</div>
+<div data-pr="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">administrator</span>
+</div>
+</div>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Ce salvezi aici se vede imediat pe goldenpastry.ro și în formularul de comandă.</p>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-pr="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">Catalog de produse</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<input class="h-input" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Caută produs" style="width:220px;max-width:100%;height:44px;font-size:15px">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" style="height:44px;font-size:15px;font-weight:700">+ Produs nou</button>
+</div>
+</div>
+
+<sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pr-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+<sc-if value="{{ err }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pr-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ err }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onErrClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<div data-pr="body" style="flex:1;display:flex;flex-direction:column;gap:18px;padding:20px 28px 40px;min-width:0">
+
+<div data-pr="tabs" style="display:flex;gap:6px;flex-wrap:wrap">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+<button type="button" class="{{ t.cls }}" onClick="{{ t.onClick }}" style="height:44px;font-size:14px;border-radius:12px;display:flex;align-items:center;gap:8px">
+<span>{{ t.label }}</span>
+<span class="h-numeric" style="font-weight:700;opacity:.8">{{ t.count }}</span>
+</button>
+</sc-for>
+</div>
+
+<!-- ─────────────────────────────────────────────── produse ── -->
+<sc-if value="{{ isProducts }}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600">{{ g.name }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ g.meta }}</span>
+</div>
+<div class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
+<sc-for list="{{ g.rows }}" as="p" hint-placeholder-count="3">
+<div data-pr="row" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--h-line)">
+<!-- „loading=lazy” nu e aici pentru viteză, ci ca browserul să nu ceară
+     adresa înainte ca runtime-ul să înlocuiască legătura. Marcajul stă în
+     document, în <x-dc>, până la randare: parserul îl citea înainte și cerea
+     de la server chiar textul cu acolade al legăturii: un 404 în jurnalul
+     găzduirii și o eroare roșie în consolă la fiecare deschidere a paginii.
+     Imaginile din <x-dc> nu ajung niciodată aproape de ecran (x-dc e ascuns),
+     deci o imagine leneșă nu se încarcă deloc până când o randează runtime-ul. -->
+<img data-pr="thumb" loading="lazy" src="{{ p.photo }}" alt="{{ p.name }}">
+<div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:2px">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:16px;font-weight:600">{{ p.name }}</span>
+<sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--accent" style="font-size:10px">nou</span>
+</sc-if>
+<sc-if value="{{ p.hidden }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge" style="font-size:10px">scos din catalog</span>
+</sc-if>
+</div>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ p.sub }}</span>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;min-width:110px">
+<span class="h-numeric" style="font-size:15px;font-weight:700">{{ p.priceMain }}</span>
+<span style="font-size:12px;color:var(--h-fg-faint)">{{ p.priceAlt }}</span>
+</div>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ p.onEdit }}" style="height:40px;font-size:14px;flex:none">Editează</button>
+<button type="button" data-pr="mini" onClick="{{ p.onToggle }}" title="{{ p.toggleTitle }}">{{ p.toggleIcon }}</button>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">{{ emptyLine }}</p>
+</div>
+</sc-if>
+</sc-if>
+
+<!-- ─────────────────────────────────────────────── grupe ── -->
+<sc-if value="{{ isCategories }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Grupele din catalog</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Ordinea de aici e ordinea în care apar pe site. O grupă care are produse în ea nu poate fi ștearsă — nici dacă produsele sunt doar scoase din catalog.</span>
+</div>
+<sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+<div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<div data-pr="row" style="display:flex;align-items:center;gap:8px">
+<span class="h-numeric" style="width:22px;flex:none;font-size:13px;color:var(--h-fg-faint)">{{ c.n }}</span>
+<input class="h-input" value="{{ c.name }}" onChange="{{ c.onName }}" onBlur="{{ c.onNameBlur }}" placeholder="Nume (RO)" style="flex:1;min-width:120px;height:40px;font-size:14px">
+<input class="h-input" value="{{ c.nameEn }}" onChange="{{ c.onNameEn }}" onBlur="{{ c.onNameEnBlur }}" placeholder="Name (EN)" style="flex:1;min-width:120px;height:40px;font-size:14px">
+<span class="h-badge" style="font-size:10px;flex:none">{{ c.count }}</span>
+<button type="button" data-pr="mini" onClick="{{ c.onUp }}" title="Mai sus">↑</button>
+<button type="button" data-pr="mini" onClick="{{ c.onDown }}" title="Mai jos">↓</button>
+<button type="button" data-pr="mini" onClick="{{ c.onDel }}" title="Șterge">×</button>
+</div>
+<div data-pr="row" style="display:flex;align-items:center;gap:8px">
+<span style="width:22px;flex:none"></span>
+<input class="h-input" value="{{ c.note }}" onChange="{{ c.onNote }}" onBlur="{{ c.onNoteBlur }}" placeholder="Subtitlu (RO)" style="flex:1;min-width:120px;height:38px;font-size:13px">
+<input class="h-input" value="{{ c.noteEn }}" onChange="{{ c.onNoteEn }}" onBlur="{{ c.onNoteEnBlur }}" placeholder="Subtitle (EN)" style="flex:1;min-width:120px;height:38px;font-size:13px">
+</div>
+</div>
+</sc-for>
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px">
+<input class="h-input" value="{{ catDraft }}" onChange="{{ onCatDraft }}" placeholder="Grupă nouă (RO)" style="height:46px;font-size:15px">
+<input class="h-input" value="{{ catDraftEn }}" onChange="{{ onCatDraftEn }}" placeholder="New group (EN)" style="height:46px;font-size:15px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCatAdd }}" style="height:46px;font-size:14px">Adaugă</button>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+</div>
+</sc-if>
+
+<!-- ─────────────────────────────────────────────── formular ── -->
+<sc-if value="{{ form }}" hint-placeholder-val="{{ false }}">
+<div data-pr="scrim" onClick="{{ onBackdrop }}">
+<div class="h-card" onClick="{{ stop }}" style="width:100%;max-width:720px;padding:22px;border-radius:20px;display:flex;flex-direction:column;gap:16px;animation:pr-fade .2s var(--h-ease-out)">
+
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-family:var(--h-font-display);font-size:21px;font-weight:600;flex:1">{{ formTitle }}</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="height:40px;width:40px;padding:0;font-size:20px">×</button>
+</div>
+
+<sc-if value="{{ formErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:12px;padding:10px 14px">
+<p class="h-alert__title" style="margin:0;font-size:14px">{{ formErr }}</p>
+</div>
+</sc-if>
+
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+<!-- Leneșă din același motiv ca miniatura din listă: altfel parserul cere
+     de la server textul cu acolade al legăturii, la fiecare deschidere. -->
+<img data-pr="thumb" loading="lazy" src="{{ f.photo }}" alt="" style="width:88px;height:88px">
+<div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px">
+<span class="h-label">Fotografie</span>
+<input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ onPhoto }}" style="font-size:13px">
+<span class="h-help">{{ photoHelp }}</span>
+</div>
+</div>
+
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label class="h-field">
+<span class="h-label">Nume (RO)</span>
+<input class="h-input" value="{{ f.name }}" onChange="{{ onName }}" placeholder="Ex.: Ștrudel cu mac" style="height:46px;font-size:15px">
+</label>
+<label class="h-field">
+<span class="h-label">Name (EN)</span>
+<input class="h-input" value="{{ f.nameEn }}" onChange="{{ onNameEn }}" placeholder="Ex.: Poppy seed strudel" style="height:46px;font-size:15px">
+</label>
+</div>
+
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label class="h-field">
+<span class="h-label">Descriere (RO)</span>
+<textarea class="h-textarea" value="{{ f.desc }}" onChange="{{ onDesc }}" rows="3" placeholder="Cum arată și ce gust are." style="font-size:14px"></textarea>
+</label>
+<label class="h-field">
+<span class="h-label">Description (EN)</span>
+<textarea class="h-textarea" value="{{ f.descEn }}" onChange="{{ onDescEn }}" rows="3" placeholder="What it looks and tastes like." style="font-size:14px"></textarea>
+</label>
+</div>
+
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+<label class="h-field">
+<span class="h-label">Grupa</span>
+<select class="h-select" value="{{ f.category }}" onChange="{{ onCategory }}" style="height:46px;font-size:15px">
+<sc-for list="{{ catOpts }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+<label class="h-field">
+<span class="h-label">Gramaj</span>
+<input class="h-input h-numeric" value="{{ f.grams }}" onChange="{{ onGrams }}" placeholder="140" style="height:46px;font-size:15px">
+</label>
+<label class="h-field">
+<span class="h-label">Preț HoReCa</span>
+<input class="h-input h-numeric" value="{{ f.horeca }}" onChange="{{ onHoreca }}" placeholder="2.85" style="height:46px;font-size:15px">
+</label>
+<label class="h-field">
+<span class="h-label">Preț raft</span>
+<input class="h-input h-numeric" value="{{ f.retail }}" onChange="{{ onRetail }}" placeholder="3.49" style="height:46px;font-size:15px">
+</label>
+</div>
+
+<label class="h-switch"><input type="checkbox" checked="{{ f.isNew }}" onChange="{{ onIsNew }}"><span>Marchează ca noutate</span></label>
+
+
+<!-- Rețeta: din ce materii prime e făcută O SINGURĂ bucată.
+     Stă aici, în formularul produsului, și nu în Depozit, fiindcă aici îi e
+     locul: „din ce e făcut un croissant" e o însușire a croissantului. E și o
+     chestiune de drepturi — pagina asta e a adminului, Depozitul e al oricărui
+     angajat, iar rețeta hotărăște cât se scade din stoc. -->
+<div style="display:flex;flex-direction:column;gap:10px;padding-top:14px;border-top:1px solid var(--h-line)">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+<span class="h-label" style="flex:1">Rețetă — pentru o bucată</span>
+<span class="h-help">{{ recCount }}</span>
+</div>
+
+<sc-if value="{{ recWarn }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:12px;padding:10px 14px">
+<p class="h-alert__title" style="margin:0;font-size:13px;line-height:1.5">{{ recWarn }}</p>
+</div>
+</sc-if>
+
+<sc-for list="{{ recRows }}" as="r" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="flex:1;min-width:150px;font-size:14px">{{ r.nameLine }}</span>
+<input class="h-input h-numeric" value="{{ r.qty }}" onChange="{{ r.onQty }}" placeholder="0,005" style="height:42px;width:110px;font-size:14px">
+<span style="width:46px;font-size:13px;color:var(--h-fg-faint)">{{ r.unit }}</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onDel }}" style="height:42px;width:42px;padding:0;font-size:18px">×</button>
+</div>
+</sc-for>
+
+<sc-if value="{{ recEmpty }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;color:var(--h-fg-faint)">Fără rețetă: la producție nu se scade nimic din depozit pentru acest produs.</p>
+</sc-if>
+
+<sc-if value="{{ recPick }}" hint-placeholder-val="{{ true }}">
+<select class="h-select" value="{{ recAdd }}" onChange="{{ onRecAdd }}" style="height:42px;font-size:14px">
+<sc-for list="{{ recAddOpts }}" as="o" hint-placeholder-count="3">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</sc-if>
+
+<p style="margin:0;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ recHint }}</p>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:6px;border-top:1px solid var(--h-line)">
+<button type="button" class="{{ saveCls }}" onClick="{{ onSave }}" style="height:48px;font-size:15px;font-weight:700;margin-top:14px;flex:1;min-width:160px">{{ saveLabel }}</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCancel }}" style="height:48px;font-size:15px;margin-top:14px">Renunță</button>
+</div>
+
+<p style="margin:0;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ formHint }}</p>
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+/**
+ * Catalogul de produse — lab.goldenpastry.ro/produse
+ *
+ * Aceleași produse pe care le vede clientul pe goldenpastry.ro și din care se
+ * calculează totalul comenzii. Până acum catalogul era scris în două locuri:
+ * o listă în pagina site-ului și un tabel în baza de date. Coincideau, fiindcă
+ * din listă am generat tabelul — dar la prima modificare clientul ar fi văzut
+ * un preț și ar fi fost taxat cu altul.
+ *
+ * Produsul care a intrat vreodată într-o comandă sau într-o mișcare de depozit
+ * nu se șterge, ci se scoate din catalog: dispare de pe site și din formulare,
+ * dar comenzile vechi și mișcările de depozit rămân întregi. Cel adăugat din
+ * greșeală, pe care nu-l ține niciun istoric, dispare de tot — altfel lista se
+ * umple cu rânduri care nu se mai pot scoate de nicăieri, iar fotografia urcată
+ * din greșeală rămâne pe disc pentru totdeauna. Care dintre cele două se
+ * întâmplă alege serverul, la DELETE /products/{id}.
+ */
+
+const FOTO_LIPSA = "assets/logo-auriu.png";
+const lei = (v) => (v === null || v === undefined || v === "" ? "—" : Number(v).toFixed(2).replace(".", ",") + " lei");
+
+class Component extends DCLogic {
+  state = {
+    auth: null, loaded: false, tab: "produse",
+    products: [], cats: [], search: "",
+    form: null, formErr: "", saving: false, pendingPhoto: null,
+    // Articolele de depozit se citesc o singură dată, la prima deschidere a
+    // formularului: rețeta are nevoie de ele, restul catalogului nu.
+    stockItems: [], stockLoaded: false, stockErr: "",
+    msg: "", err: ""
+  };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+
+    gp.me()
+      .then((user) => {
+        if (!user) { gp.toLogin(); return; }
+        this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
+        if (user.role !== "admin") { this.setState({ loaded: true }); return; }
+        return this.pull();
+      })
+      .catch(() => this.setState({ loaded: true }));
+  }
+
+  /** Catalogul complet, inclusiv produsele scoase — pe acelea le poți repune. */
+  pull() {
+    return gp.get("/products?all=1")
+      .then((r) => this.setState({
+        products: r.products || [],
+        cats: r.categories || [],
+        loaded: true
+      }))
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ err: e.message, loaded: true });
+      });
+  }
+
+  /** Formularul, gol sau completat cu un produs existent. */
+  openForm(p) {
+    this.setState({
+      pendingPhoto: null,
+      formErr: "",
+      form: p
+        ? {
+            id: p.id, name: p.name, nameEn: p.nameEn || "",
+            desc: p.description || "", descEn: p.descriptionEn || "",
+            category: p.category, grams: p.grams === null ? "" : String(p.grams),
+            horeca: p.priceFrozen === null ? "" : String(p.priceFrozen),
+            retail: p.priceBaked === null ? "" : String(p.priceBaked),
+            isNew: !!p.isNew, photo: p.photo || "",
+            // Rețeta vine cu o a doua cerere. Până se întoarce, `recipeReady`
+            // e fals și salvarea NU o trimite: o listă goală, trimisă în locul
+            // uneia necitite, ar șterge rețeta produsului fără ca cineva să fi
+            // cerut asta.
+            recipe: [], finished: null, recipeReady: false, recipeErr: ""
+          }
+        : {
+            id: null, name: "", nameEn: "", desc: "", descEn: "",
+            category: (this.state.cats[0] || {}).slug || "",
+            grams: "", horeca: "", retail: "", isNew: false, photo: "",
+            // Produsul nou n-are ce să citească: rețeta lui e goală și e gata.
+            recipe: [], finished: null, recipeReady: true, recipeErr: ""
+          }
+    });
+    this.incarcaArticole();
+    if (p) this.incarcaReteta(p.id);
+  }
+
+  /** Articolele din depozit, pentru lista din care se aleg materiile prime. */
+  incarcaArticole() {
+    if (this.state.stockLoaded) return Promise.resolve();
+    return gp.get("/stock/items")
+      .then((r) => this.setState({ stockItems: r.items || [], stockLoaded: true, stockErr: "" }))
+      // Depozitul nu e obligatoriu ca să schimbi un preț. Dacă lista nu vine,
+      // restul formularului rămâne folosibil, iar secțiunea rețetei spune de ce
+      // e goală — în loc să pară că produsul n-are materii prime.
+      .catch((e) => this.setState({ stockItems: [], stockLoaded: true, stockErr: e.message }));
+  }
+
+  /** Rețeta produsului deschis în formular. */
+  incarcaReteta(id) {
+    return gp.get("/products/" + id + "/recipe")
+      .then((r) => {
+        // Formularul se poate închide sau muta pe alt produs cât e cererea pe
+        // drum. Fără verificarea asta, rețeta unui croissant ar cădea peste
+        // formularul altui produs — și ar fi salvată acolo.
+        const f = this.state.form;
+        if (!f || f.id !== id) return;
+        this.setState({
+          form: Object.assign({}, f, {
+            recipe: (r.recipe || []).map((l) => ({
+              itemId: l.itemId,
+              // Cantitatea e text cât stă în casetă: omul scrie „0,005", nu un
+              // număr, iar conversia se face o singură dată, la trimitere. Cu virgulă,
+              // ca peste tot în aplicație: serverul trimite „0.045", caseta arată
+              // „0,045" — n-are rost să vadă cineva punctul zecimal englezesc
+              // într-un panou scris în română.
+              qty: String(l.qty).replace(".", ","),
+              name: l.name, unit: l.unit,
+              active: l.active !== false
+            })),
+            finished: r.finished || null,
+            recipeReady: true, recipeErr: ""
+          })
+        });
+      })
+      .catch((e) => {
+        const f = this.state.form;
+        if (!f || f.id !== id) return;
+        // `recipeReady` rămâne fals: nu știm ce e în rețetă, deci n-o atingem.
+        this.setState({ form: Object.assign({}, f, { recipeErr: e.message }) });
+      });
+  }
+
+  /**
+   * Rețeta pleacă după produs, fiindcă are nevoie de numărul lui — la un produs
+   * nou, numărul se află abia din răspunsul la creare.
+   *
+   * Erorile de aici se marchează cu `reteta`, ca mesajul din formular să nu-l
+   * mintă pe om: produsul și fotografia sunt deja salvate când ajungem aici.
+   */
+  salveazaReteta(id) {
+    const f = this.state.form;
+    if (!f || !id || !f.recipeReady) return Promise.resolve();
+
+    const linii = [];
+    for (let i = 0; i < f.recipe.length; i++) {
+      const l = f.recipe[i];
+      const n = Number(String(l.qty).replace(",", "."));
+      if (!isFinite(n) || n <= 0) {
+        const err = new Error(
+          "Cantitatea pentru „" + l.name + "” trebuie să fie un număr mai mare decât zero. "
+          + "O materie primă care nu se consumă se scoate din rețetă, nu se pune pe zero."
+        );
+        err.reteta = true;
+        return Promise.reject(err);
+      }
+      linii.push({ itemId: l.itemId, qty: n });
+    }
+
+    return gp.put("/products/" + id + "/recipe", { recipe: linii })
+      .catch((e) => { e.reteta = true; throw e; });
+  }
+
+  save() {
+    const f = this.state.form;
+    if (!f) return;
+
+    // Verificăm aici ce poate fi verificat aici, ca să nu plece o cerere doar
+    // ca să se întoarcă cu aceeași eroare. Serverul verifică oricum din nou.
+    const lipsa = [];
+    if (!f.name.trim())    lipsa.push("numele în română");
+    if (!f.nameEn.trim())  lipsa.push("numele în engleză");
+    if (!f.desc.trim())    lipsa.push("descrierea în română");
+    if (!f.descEn.trim())  lipsa.push("descrierea în engleză");
+    if (!f.category)       lipsa.push("grupa");
+    if (lipsa.length) {
+      this.setState({ formErr: "Lipsește " + lipsa.join(", ") + "." });
+      return;
+    }
+
+    const payload = {
+      name: f.name.trim(), nameEn: f.nameEn.trim(),
+      description: f.desc.trim(), descriptionEn: f.descEn.trim(),
+      category: f.category,
+      grams: f.grams === "" ? null : f.grams,
+      priceFrozen: f.horeca === "" ? null : f.horeca,
+      priceBaked: f.retail === "" ? null : f.retail,
+      isNew: f.isNew
+    };
+
+    this.setState({ saving: true, formErr: "" });
+    const eNou = !f.id;
+    const req = f.id ? gp.patch("/products/" + f.id, payload) : gp.post("/products", payload);
+
+    req
+      .then((r) => {
+        // Din clipa asta produsul e în catalog și e viu pe site, chiar dacă
+        // fotografia mai are de urcat. Îi trecem numărul în formular înainte de
+        // poză: altfel, dacă poza e refuzată, formularul rămâne deschis crezând
+        // că n-a creat nimic, iar a doua apăsare pe „Adaugă în catalog” mai
+        // trimite un produs cu același nume — pe care serverul îl refuză cu
+        // „există deja un produs cu adresa …”, așa că omul nu mai poate nici
+        // salva poza, nici scăpa de produsul pe jumătate făcut.
+        const id = f.id || r.id;
+        if (eNou) this.setState({ form: Object.assign({}, this.state.form, { id }) });
+        // Rețeta merge ultima: e singura care are nevoie de numărul produsului
+        // și, dacă pică, celelalte două sunt deja salvate — omul poate repara
+        // doar cantitatea, fără să reia tot.
+        return this.uploadPhoto(id).then(() => this.salveazaReteta(id));
+      })
+      .then(() => this.pull())
+      .then(() => this.setState({
+        saving: false, form: null, pendingPhoto: null,
+        msg: eNou ? "Produsul a fost adăugat în catalog." : "Produsul a fost salvat."
+      }))
+      .catch((e) => {
+        // Rețeta pleacă ultima, deci produsul și fotografia sunt deja salvate.
+        // Mesajul de mai jos — „adăugat, dar fără fotografie" — ar fi aici o
+        // minciună, așa că îi ieșim înainte.
+        if (e && e.reteta) {
+          this.setState({ saving: false, formErr: "Produsul a fost salvat, dar rețeta nu: " + e.message });
+          this.pull();
+          return;
+        }
+        // Când produsul s-a creat și doar poza a căzut, spunem asta pe față și
+        // reîmprospătăm lista din spate: altfel omul citește doar plângerea
+        // despre fotografie și pleacă convins că n-a salvat nimic.
+        const creat = eNou && this.state.form && this.state.form.id;
+        this.setState({
+          saving: false,
+          formErr: creat
+            ? "Produsul a fost adăugat în catalog, dar fără fotografie: " + e.message
+              + " Alege altă fotografie și apasă „Salvează”, ori renunță — produsul rămâne, cu poza lipsă."
+            : e.message
+        });
+        if (creat) this.pull();
+      });
+  }
+
+  /** Fotografia pleacă separat: e fișier, nu JSON. */
+  uploadPhoto(id) {
+    const file = this.state.pendingPhoto;
+    if (!file || !id) return Promise.resolve();
+
+    const fd = new FormData();
+    fd.append("photo", file);
+    return fetch(gp.base + "/products/" + id + "/photo", {
+      method: "POST",
+      credentials: "include",
+      headers: { "X-CSRF-Token": (() => { try { return sessionStorage.getItem("gp-csrf") || ""; } catch (e) { return ""; } })() },
+      body: fd
+    }).then(async (res) => {
+      if (res.ok) return;
+      const d = await res.json().catch(() => null);
+      throw new Error((d && d.error && d.error.message) || "Fotografia nu a putut fi încărcată.");
+    });
+  }
+
+  /**
+   * Încheie scrierea într-un câmp din fila „Grupe”: cererea pleacă o singură
+   * dată, la ieșirea din câmp, iar rândul revine apoi pe textul serverului.
+   *
+   * Câmpurile erau legate direct de server, cu un PATCH la fiecare tastă. Cum
+   * valoarea afișată vine din „S.cats”, adică din ultimul răspuns primit,
+   * caracterul tastat dispărea din câmp până se întorcea răspunsul, iar
+   * cererile pornite una peste alta se întorceau în altă ordine: în baza de
+   * date rămânea ce ajungea ultimul, adică un nume ciuntit — „Covrigii” în
+   * loc de „Covrigi calzi” — nume care apoi apărea pe site. Pe deasupra,
+   * fiecare tastă lăsa o linie în Jurnal.
+   *
+   * Un nume golit nu pleacă spre server: serverul îl refuză oricum, iar
+   * refuzul ar opri tocmai omul care golește câmpul ca să rescrie numele. Un
+   * text neschimbat nu pleacă nici el, ca simpla trecere prin câmp să nu umple
+   * Jurnalul și să nu reîncarce catalogul degeaba.
+   */
+  incheieGrupa(catId, key, vechi) {
+    const S = this.state;
+    const gata = () => this.setState({ catEdit: null, catText: "" });
+    if (S.catEdit !== catId + ":" + key) return gata();
+    const v = String(S.catText).trim();
+    if (v === String(vechi || "").trim()) return gata();
+    if (v === "" && (key === "name" || key === "nameEn")) {
+      this.setState({ err: "Numele grupei nu poate rămâne gol." });
+      return gata();
+    }
+    return gp.patch("/categories/" + catId, { [key]: v })
+      .then(() => this.pull())
+      .then(gata)
+      .catch((e) => { this.setState({ err: e.message }); gata(); });
+  }
+
+  patchProduct(p, patch, msg) {
+    gp.patch("/products/" + p.id, patch)
+      .then(() => this.pull())
+      .then(() => this.setState({ msg }))
+      .catch((e) => this.setState({ err: e.message }));
+  }
+
+  /**
+   * × pe rândul unui produs — cere ștergerea, nu dezactivarea.
+   *
+   * Pagina nu știe dacă produsul a apucat să intre într-o comandă sau într-un
+   * articol de depozit; serverul știe, și tot el alege între ștergerea de tot
+   * (cu fotografie cu tot) și simpla scoatere din catalog. De aceea mesajul
+   * afișat e al lui: dacă l-ar scrie pagina, i-ar spune omului „a fost scos din
+   * catalog” exact atunci când produsul a dispărut definitiv — sau invers, iar
+   * el ar căuta zadarnic rândul în listă ca să-l repună.
+   */
+  removeProduct(p) {
+    gp.del("/products/" + p.id)
+      .then((r) => this.pull().then(() => this.setState({
+        msg: (r && r.message) || "„" + p.name + "” a fost scos din catalog."
+      })))
+      .catch((e) => this.setState({ err: e.message }));
+  }
+
+  renderVals() {
+    const S = this.state, self = this;
+    const set = (x) => this.setState(x);
+    const isAdmin = S.auth && S.auth.role === "admin";
+
+    const q = S.search.trim().toLowerCase();
+    const visible = S.products.filter((p) =>
+      !q || (p.name + " " + (p.nameEn || "")).toLowerCase().indexOf(q) >= 0);
+
+    const groups = S.cats.map((c) => {
+      const rows = visible.filter((p) => p.category === c.slug);
+      return {
+        name: c.name,
+        meta: rows.length + (rows.length === 1 ? " produs" : " produse")
+          + (c.noteEn || c.note ? " · " + (c.note || "") : ""),
+        rows: rows.map((p) => ({
+          name: p.name,
+          sub: [p.nameEn, p.grams ? p.grams + " g" : ""].filter(Boolean).join(" · "),
+          photo: p.photo || FOTO_LIPSA,
+          isNew: !!p.isNew,
+          hidden: !p.active,
+          priceMain: lei(p.priceFrozen),
+          priceAlt: p.priceBaked === null ? "" : "raft " + lei(p.priceBaked),
+          onEdit: () => self.openForm(p),
+          toggleIcon: p.active ? "×" : "↩",
+          toggleTitle: p.active
+            ? "Șterge produsul — dacă apare în comenzi sau în depozit, rămâne doar scos din catalog"
+            : "Repune în catalog",
+          onToggle: () => (p.active
+            ? self.removeProduct(p)
+            : self.patchProduct(p, { active: true }, "„" + p.name + "” e din nou în catalog."))
+        }))
+      };
+    }).filter((g) => g.rows.length > 0 || !q);
+
+    const cats = S.cats.map((c, i) => {
+      const move = (d) => () => {
+        const j = i + d;
+        if (j < 0 || j >= S.cats.length) return;
+        // Ordinea se ține în `sort`; schimbăm valorile între cele două grupe.
+        const a = S.cats[i], b = S.cats[j];
+        Promise.all([
+          gp.patch("/categories/" + a.id, { sort: b.sort }),
+          gp.patch("/categories/" + b.id, { sort: a.sort })
+        ]).then(() => self.pull()).catch((e) => set({ err: e.message }));
+      };
+      // Tastarea nu mai scrie pe server: ține minte doar textul, iar cererea
+      // pleacă o singură dată, la ieșirea din câmp (vezi incheieGrupa).
+      const cheie = (key) => c.id + ":" + key;
+      const text = (key, val) => (S.catEdit === cheie(key) ? S.catText : (val || ""));
+      const field = (key) => (e) => set({ catEdit: cheie(key), catText: e.target.value });
+      const incheie = (key, val) => () => self.incheieGrupa(c.id, key, val);
+      // Câte produse scoase din catalog stau în grupă. Insigna trebuie să le
+      // arate: ștergerea grupei le numără și pe ele, iar altfel adminul citește
+      // „0 produse", apasă × și primește „grupa are 3 produse în ea" fără să
+      // aibă de unde ști de unde ies cele 3.
+      const scoase = Math.max(0, (c.productsAll || 0) - c.products);
+      return {
+        n: String(i + 1),
+        name: text("name", c.name), nameEn: text("nameEn", c.nameEn),
+        note: text("note", c.note), noteEn: text("noteEn", c.noteEn),
+        count: scoase === 0
+          ? c.products + (c.products === 1 ? " produs" : " produse")
+          : c.products + " în catalog · " + scoase + (scoase === 1 ? " scos" : " scoase"),
+        onName: field("name"), onNameEn: field("nameEn"),
+        onNote: field("note"), onNoteEn: field("noteEn"),
+        onNameBlur: incheie("name", c.name), onNameEnBlur: incheie("nameEn", c.nameEn),
+        onNoteBlur: incheie("note", c.note), onNoteEnBlur: incheie("noteEn", c.noteEn),
+        onUp: move(-1), onDown: move(1),
+        onDel: () => {
+          gp.del("/categories/" + c.id)
+            .then(() => self.pull())
+            .then(() => set({ msg: "Grupa „" + c.name + "” a fost ștearsă." }))
+            .catch((e) => set({ err: e.message }));
+        }
+      };
+    });
+
+    const f = S.form || {
+      name: "", nameEn: "", desc: "", descEn: "", category: "",
+      grams: "", horeca: "", retail: "", isNew: false, photo: ""
+    };
+    const ff = (key) => (e) => set({ form: Object.assign({}, S.form, { [key]: e.target.value }) });
+
+    /* --- rețeta produsului deschis în formular --- */
+    const rec = (S.form && S.form.recipe) || [];
+    const puneRec = (linii) => set({ form: Object.assign({}, S.form, { recipe: linii }) });
+    // Articolul finit al produsului nu poate fi propria lui materie primă:
+    // producția l-ar scădea și l-ar adăuga în aceeași mișcare. Serverul refuză
+    // oricum, dar un articol scos din listă e mai bun decât un refuz explicat.
+    const finitId = S.form && S.form.finished ? S.form.finished.id : 0;
+    const folosite = {};
+    rec.forEach((l) => { folosite[l.itemId] = 1; });
+    const libere = S.stockItems.filter((it) => !folosite[it.id] && it.id !== finitId);
+
+    const recRows = rec.map((l, i) => ({
+      nameLine: l.name + (l.active === false ? " · scos din depozit" : ""),
+      unit: l.unit || "buc",
+      qty: l.qty,
+      onQty: (e) => {
+        const v = e.target.value;
+        puneRec(rec.map((x, k) => (k === i ? Object.assign({}, x, { qty: v }) : x)));
+      },
+      onDel: () => puneRec(rec.filter((x, k) => k !== i))
+    }));
+
+    const active = S.products.filter((p) => p.active).length;
+
+    return {
+      blocked: S.loaded && !isAdmin,
+      allowed: !S.loaded || isAdmin,
+      blockedLine: S.auth
+        ? "Contul „" + S.auth.name + "” nu are acces la catalog. Prețurile și produsele le schimbă doar administratorii."
+        : "Intră cu un cont de administrator ca să editezi catalogul.",
+      authName: S.auth ? S.auth.name : "",
+
+      sub: active + (active === 1 ? " produs în catalog" : " produse în catalog")
+        + " · " + S.cats.length + (S.cats.length === 1 ? " grupă" : " grupe"),
+      search: S.search,
+      onSearch: (e) => set({ search: e.target.value }),
+      onNew: () => self.openForm(null),
+
+      msg: S.msg, onMsgClose: () => set({ msg: "" }),
+      err: S.err, onErrClose: () => set({ err: "" }),
+
+      tabs: [
+        { k: "produse", l: "Produse", c: String(S.products.length) },
+        { k: "grupe", l: "Grupe", c: String(S.cats.length) }
+      ].map((t) => ({
+        label: t.l, count: t.c,
+        cls: S.tab === t.k ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ tab: t.k })
+      })),
+      isProducts: S.tab === "produse",
+      isCategories: S.tab === "grupe",
+
+      groups,
+      empty: S.loaded && visible.length === 0,
+      emptyLine: S.products.length === 0
+        ? "Catalogul e gol. Apasă „+ Produs nou”."
+        : "Niciun produs nu se potrivește căutării.",
+
+      cats,
+      catDraft: S.catDraft || "",
+      catDraftEn: S.catDraftEn || "",
+      onCatDraft: (e) => set({ catDraft: e.target.value }),
+      onCatDraftEn: (e) => set({ catDraftEn: e.target.value }),
+      onCatAdd: () => {
+        const ro = (S.catDraft || "").trim(), en = (S.catDraftEn || "").trim();
+        if (!ro || !en) { set({ err: "Grupa are nevoie de nume în ambele limbi." }); return; }
+        gp.post("/categories", { name: ro, nameEn: en })
+          .then(() => self.pull())
+          .then(() => set({ catDraft: "", catDraftEn: "", err: "", msg: "Grupa „" + ro + "” a fost adăugată." }))
+          .catch((e) => set({ err: e.message }));
+      },
+
+      /* --- formular --- */
+      form: !!S.form,
+      formTitle: S.form && S.form.id ? "Editează produsul" : "Produs nou",
+      formErr: S.formErr,
+      f: {
+        name: f.name, nameEn: f.nameEn, desc: f.desc, descEn: f.descEn,
+        category: f.category, grams: f.grams, horeca: f.horeca, retail: f.retail,
+        isNew: f.isNew, photo: (S.pendingPhoto && S.pendingPhotoUrl) || f.photo || FOTO_LIPSA
+      },
+      catOpts: S.cats.map((c) => ({ v: c.slug, l: c.name })),
+      onName: ff("name"), onNameEn: ff("nameEn"),
+      onDesc: ff("desc"), onDescEn: ff("descEn"),
+      onCategory: ff("category"), onGrams: ff("grams"),
+      onHoreca: ff("horeca"), onRetail: ff("retail"),
+      onIsNew: () => set({ form: Object.assign({}, S.form, { isNew: !S.form.isNew }) }),
+      onPhoto: (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        // Previzualizare locală: fișierul pleacă spre server abia la salvare,
+        // ca o poză aleasă din greșeală să nu rămână urcată degeaba.
+        let url = "";
+        try { url = URL.createObjectURL(file); } catch (err) {}
+        set({ pendingPhoto: file, pendingPhotoUrl: url });
+      },
+      photoHelp: S.pendingPhoto
+        ? "Se încarcă la salvare: " + S.pendingPhoto.name
+        : "JPEG, PNG sau WebP, maximum 5 MB. Se verifică după conținut, nu după extensie.",
+
+      saveCls: S.saving ? "h-btn h-btn--primary h-btn--loading" : "h-btn h-btn--primary",
+      saveLabel: S.saving ? "Se salvează…" : (S.form && S.form.id ? "Salvează" : "Adaugă în catalog"),
+      onSave: () => self.save(),
+      onCancel: () => set({ form: null, formErr: "", pendingPhoto: null }),
+      onBackdrop: () => set({ form: null, formErr: "", pendingPhoto: null }),
+      stop: (e) => { e.stopPropagation(); },
+
+      /* --- rețeta --- */
+      recCount: rec.length === 0
+        ? "fără materii prime"
+        : rec.length + (rec.length === 1 ? " materie primă" : " materii prime"),
+      recRows,
+      recEmpty: !!(S.form && S.form.recipeReady && rec.length === 0),
+      recPick: !!(S.form && S.form.recipeReady && S.stockLoaded),
+      // Lista de alegere se golește singură după fiecare adăugare: valoarea ei
+      // e mereu "", iar randarea o readuce acolo. Așa se poate adăuga a doua
+      // materie primă fără să mai treci prin altă apăsare.
+      recAdd: "",
+      recAddOpts: [{
+        v: "",
+        l: libere.length ? "+ Adaugă o materie primă…" : "Nu mai e ce adăuga din depozit"
+      }].concat(libere.map((it) => ({ v: String(it.id), l: it.name + " · " + it.unit }))),
+      onRecAdd: (e) => {
+        const id = Number(e.target.value);
+        if (!id) return;
+        const it = S.stockItems.filter((x) => x.id === id)[0];
+        if (!it) return;
+        puneRec(rec.concat([{ itemId: it.id, qty: "", name: it.name, unit: it.unit, active: true }]));
+      },
+      recWarn: S.form && S.form.id && S.form.recipeReady && rec.length > 0 && !S.form.finished
+        ? "Produsul n-are articol finit în depozit. Adaugă unul din Depozit, legat de acest produs: fără el, bucățile făcute n-au unde să se adune, iar comanda rămâne nescăzută la „Predată”."
+        : "",
+      recHint: !S.form
+        ? ""
+        : S.form.recipeErr
+          ? "Rețeta nu a putut fi citită: " + S.form.recipeErr + " Salvarea o lasă neatinsă."
+          : !S.form.recipeReady
+            ? "Se citește rețeta…"
+            : S.stockErr
+              ? "Articolele din depozit nu au putut fi citite: " + S.stockErr
+              : "Cantitățile sunt pentru o singură bucată. Se scad din depozit când laboratorul raportează câte bucăți a făcut, nu la acceptarea comenzii.",
+      formHint: "Numele și descrierea sunt obligatorii în ambele limbi: catalogul de pe site are versiune în engleză, iar un câmp gol acolo ar arăta ca o scăpare."
+    };
+  }
+}
+
+</script>
+</body>
+</html>

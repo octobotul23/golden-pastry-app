@@ -1,0 +1,33 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "golden-pastry",
+      "runtimeExecutable": "C:/laragon/bin/php/php-8.3.33-Win32-vs16-x64/php.exe",
+      "runtimeArgs": [
+        "-S",
+        "127.0.0.1:8100",
+        "-t",
+        ".",
+        ".claude/dev-server.php"
+      ],
+      "port": 8100,
+      "url": "http://127.0.0.1:8100",
+      "autoPort": false
+    },
+    {
+      "name": "golden-pastry-pachet",
+      "runtimeExecutable": "C:/laragon/bin/php/php-8.3.33-Win32-vs16-x64/php.exe",
+      "runtimeArgs": [
+        "-S",
+        "127.0.0.1:8101",
+        "-t",
+        "deploy",
+        ".claude/deploy-server.php"
+      ],
+      "port": 8101,
+      "url": "http://127.0.0.1:8101",
+      "autoPort": false
+    }
+  ]
+}

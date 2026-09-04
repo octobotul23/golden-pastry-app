@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+@keyframes st-fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+[data-st=chip]{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--h-bg-sunk);border:1px solid var(--h-line)}
+[data-st=mini]{display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;padding:0;font-size:14px;border-radius:9px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);cursor:pointer}
+[data-st=mini]:hover{border-color:var(--h-accent);color:var(--h-fg)}
+@media (max-width:760px){
+[data-st=shell]{flex-direction:column!important}
+[data-st=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-st=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-st=nav]{display:none!important}
+[data-st=sidefoot]{display:none!important}
+[data-st=phoneback]{display:flex!important}
+[data-st=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-st=topbar] h1{font-size:20px!important}
+[data-st=body]{padding:14px 14px 26px!important;gap:12px!important}
+[data-st=tabs]{width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
+[data-st=tabs]::-webkit-scrollbar{display:none}
+[data-st=tabs]>button{flex:none!important}
+[data-st=grid2]{grid-template-columns:1fr!important}
+[data-st=savebar]{flex-wrap:wrap!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
+<div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Setări</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
+</div>
+<div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">Comenzi</a>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">← Alege panoul</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
+<div data-st="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-st="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-st="sidehead" style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Setări</span>
+</div>
+<a data-st="phoneback" href="Administrare%20Comenzi.dc.html" title="Comenzi" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+</div>
+<div data-st="nav" style="display:flex;flex-direction:column;gap:6px">
+<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
+<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
+<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
+<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
+<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
+<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
+<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Setări</span>
+<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+</div>
+<div data-st="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">administrator</span>
+</div>
+</div>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Modificările se aplică pe toate dispozitivele, nu doar pe acesta. Fiecare salvare intră în jurnal.</p>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-st="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">Setări</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+</div>
+<div data-st="savebar" style="margin-left:auto;display:flex;align-items:center;gap:10px">
+<sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:var(--h-warning-fg);font-weight:600">Modificări nesalvate</span>
+</sc-if>
+<button type="button" class="{{ resetCls }}" onClick="{{ onReset }}" style="height:44px;font-size:14px">Renunță</button>
+<button type="button" class="{{ saveCls }}" onClick="{{ onSave }}" style="height:44px;font-size:15px;font-weight:700">{{ saveLabel }}</button>
+</div>
+</div>
+
+<sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:st-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ err }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:st-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ err }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onErrClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<!-- Stă deasupra filelor, nu în fila „Notificări”, fiindcă un anunț care nu a
+     plecat trebuie văzut și de cine a intrat aici pentru cu totul altceva. -->
+<sc-if value="{{ hasFailed }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;flex-direction:column;align-items:stretch;gap:8px;animation:st-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ failedTitle }}</p>
+<sc-for list="{{ failedList }}" as="f" hint-placeholder-count="2">
+<p style="margin:0;font-size:13px;line-height:1.5;text-wrap:pretty">{{ f.line }}</p>
+</sc-for>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onFailedSeen }}" style="align-self:flex-start;height:40px;font-size:14px">Am văzut</button>
+</div>
+</sc-if>
+
+<div data-st="body" style="flex:1;display:flex;flex-direction:column;gap:18px;padding:20px 28px 40px;min-width:0">
+
+<div data-st="tabs" style="display:flex;gap:6px;flex-wrap:wrap">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<button type="button" class="{{ t.cls }}" onClick="{{ t.onClick }}" style="height:44px;font-size:14px;border-radius:12px">{{ t.label }}</button>
+</sc-for>
+</div>
+
+<!-- ───────────────────────────────────────────────── general ── -->
+<sc-if value="{{ isGeneral }}" hint-placeholder-val="{{ true }}">
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Date despre firmă</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">Apar pe site, în mesajele către clienți și pe bonuri.</span>
+</div>
+<div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<sc-for list="{{ generalFields }}" as="f" hint-placeholder-count="4">
+<label class="h-field">
+<span class="h-label">{{ f.label }}</span>
+<input class="h-input" value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.hint }}" style="height:46px;font-size:15px">
+<span class="h-help">{{ f.help }}</span>
+</label>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<!-- ──────────────────────────────────────────── notificări ── -->
+<sc-if value="{{ isNotify }}" hint-placeholder-val="{{ false }}">
+
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:220px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">WhatsApp</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Îți trimite un mesaj de îndată ce intră o comandă nouă de pe site.</span>
+</div>
+<span class="{{ waStatusCls }}" style="font-size:12px">{{ waStatus }}</span>
+<label class="h-switch"><input type="checkbox" checked="{{ waOn }}" onChange="{{ onWaOn }}"><span>{{ waOnLabel }}</span></label>
+</div>
+
+<sc-if value="{{ waError }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:12px;padding:10px 14px">
+<p class="h-alert__title" style="margin:0;font-size:14px">Ultima eroare: {{ waError }}</p>
+</div>
+</sc-if>
+
+<div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label class="h-field">
+<span class="h-label">Furnizor</span>
+<select class="h-select" value="{{ waProvider }}" onChange="{{ onWaProvider }}" style="height:46px;font-size:15px">
+<sc-for list="{{ waProviders }}" as="o" hint-placeholder-count="2">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<span class="h-help">{{ waProviderHelp }}</span>
+</label>
+<label class="h-field">
+<span class="h-label">Numărul tău de WhatsApp</span>
+<input class="h-input" value="{{ waTo }}" onChange="{{ onWaTo }}" placeholder="+40 7xx xxx xxx" style="height:46px;font-size:15px">
+<span class="h-help">Aici primești anunțul. Cu prefix de țară.</span>
+</label>
+<label class="h-field">
+<span class="h-label">{{ waIdLabel }}</span>
+<input class="h-input" value="{{ waPhoneId }}" onChange="{{ onWaPhoneId }}" placeholder="{{ waIdHint }}" style="height:46px;font-size:15px">
+<span class="h-help">{{ waIdHelp }}</span>
+</label>
+<sc-if value="{{ waIsTwilio }}" hint-placeholder-val="{{ false }}">
+<label class="h-field">
+<span class="h-label">Număr expeditor (Twilio)</span>
+<input class="h-input" value="{{ waFrom }}" onChange="{{ onWaFrom }}" placeholder="+1 415 xxx xxxx" style="height:46px;font-size:15px">
+<span class="h-help">Numărul de WhatsApp cumpărat de la Twilio.</span>
+</label>
+</sc-if>
+<sc-if value="{{ waIsMeta }}" hint-placeholder-val="{{ true }}">
+<label class="h-field">
+<span class="h-label">Nume șablon</span>
+<input class="h-input" value="{{ waTemplate }}" onChange="{{ onWaTemplate }}" placeholder="comanda_noua" style="height:46px;font-size:15px">
+<span class="h-help">Șablonul aprobat de Meta, cu un singur parametru în corp.</span>
+</label>
+</sc-if>
+</div>
+
+<label class="h-field">
+<span class="h-label">{{ waTokenLabel }}</span>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<input class="h-input" value="{{ waToken }}" onChange="{{ onWaToken }}" placeholder="{{ waTokenHint }}" style="flex:1;min-width:220px;height:46px;font-size:15px">
+<sc-if value="{{ waTokenSet }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onWaTokenClear }}" style="height:46px;font-size:14px;color:var(--h-danger)">Șterge tokenul</button>
+</sc-if>
+</div>
+<span class="h-help">{{ waTokenHelp }}</span>
+</label>
+
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--h-line)">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestWa }}" style="height:46px;font-size:14px;margin-top:14px">{{ testWaLabel }}</button>
+<p style="margin:14px 0 0;flex:1;min-width:220px;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ waFootnote }}</p>
+</div>
+</div>
+
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:220px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">E-mail</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">Funcționează fără niciun cont extern. Bun ca rezervă.</span>
+</div>
+<label class="h-switch"><input type="checkbox" checked="{{ mailOn }}" onChange="{{ onMailOn }}"><span>{{ mailOnLabel }}</span></label>
+</div>
+<div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label class="h-field">
+<span class="h-label">Adresa care primește anunțul</span>
+<input class="h-input" value="{{ mailTo }}" onChange="{{ onMailTo }}" placeholder="comenzi@goldenpastry.ro" style="height:46px;font-size:15px">
+<span class="h-help">Aici ajung comenzile noi.</span>
+</label>
+<label class="h-field">
+<span class="h-label">Adresa expeditor</span>
+<input class="h-input" value="{{ mailFrom }}" onChange="{{ onMailFrom }}" placeholder="noreply@goldenpastry.ro" style="height:46px;font-size:15px">
+<span class="h-help">Trebuie să fie pe domeniul tău, altfel mesajul ajunge în spam.</span>
+</label>
+</div>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestMail }}" style="height:46px;font-size:14px;align-self:flex-start">{{ testMailLabel }}</button>
+</div>
+
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:220px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Telegram</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Gratuit și instant. Util cât timp se aprobă numărul de WhatsApp.</span>
+</div>
+<label class="h-switch"><input type="checkbox" checked="{{ tgOn }}" onChange="{{ onTgOn }}"><span>{{ tgOnLabel }}</span></label>
+</div>
+<div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label class="h-field">
+<span class="h-label">Token bot</span>
+<input class="h-input" type="password" value="{{ tgToken }}" onChange="{{ onTgToken }}" placeholder="{{ tgTokenHint }}" style="height:46px;font-size:15px">
+<span class="h-help">Îl primești de la @BotFather, în Telegram.</span>
+</label>
+<label class="h-field">
+<span class="h-label">Chat ID</span>
+<input class="h-input" value="{{ tgChat }}" onChange="{{ onTgChat }}" placeholder="123456789" style="height:46px;font-size:15px">
+<span class="h-help">Scrie-i botului un mesaj, apoi ia id-ul de la @userinfobot.</span>
+</label>
+</div>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestTg }}" style="height:46px;font-size:14px;align-self:flex-start">{{ testTgLabel }}</button>
+</div>
+
+</sc-if>
+
+<!-- ──────────────────────────────────────────────── liste ── -->
+<sc-if value="{{ isLists }}" hint-placeholder-val="{{ false }}">
+
+<div class="h-alert h-alert--accent" style="border-radius:14px;padding:12px 16px">
+<p class="h-alert__title" style="margin:0;font-size:14px;line-height:1.55">Listele de mai jos se folosesc în toate panourile. O etapă în care se află comenzi nu poate fi ștearsă — serverul te oprește și îți spune câte comenzi sunt în ea.</p>
+</div>
+
+<sc-for list="{{ lists }}" as="L" hint-placeholder-count="3">
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">{{ L.title }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">{{ L.help }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ L.items }}" as="it" hint-placeholder-count="4">
+<div data-st="chip">
+<span class="h-numeric" style="width:22px;flex:none;font-size:13px;color:var(--h-fg-faint)">{{ it.n }}</span>
+<span style="flex:1;min-width:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ it.name }}</span>
+<sc-if value="{{ it.badge }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--honey" style="font-size:10px;flex:none">{{ it.badge }}</span>
+</sc-if>
+<button type="button" data-st="mini" onClick="{{ it.onUp }}" title="Mai sus">↑</button>
+<button type="button" data-st="mini" onClick="{{ it.onDown }}" title="Mai jos">↓</button>
+<button type="button" data-st="mini" onClick="{{ it.onDel }}" title="Șterge">×</button>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<input class="h-input" value="{{ L.draft }}" onChange="{{ L.onDraft }}" onKeyDown="{{ L.onKey }}" placeholder="{{ L.placeholder }}" style="flex:1;min-width:200px;height:46px;font-size:15px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ L.onAdd }}" style="height:46px;font-size:14px">Adaugă</button>
+</div>
+</div>
+</sc-for>
+
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Zone de livrare</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Fiecare zonă are un punct pe hartă, folosit ca să estimăm kilometrii și să ordonăm opririle. O zonă fără coordonate cade pe depozit, deci distanța iese zero.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ zones }}" as="z" hint-placeholder-count="4">
+<div data-st="chip" style="flex-wrap:wrap">
+<span class="h-numeric" style="width:22px;flex:none;font-size:13px;color:var(--h-fg-faint)">{{ z.n }}</span>
+<input class="h-input" value="{{ z.name }}" onChange="{{ z.onName }}" placeholder="Nume zonă" style="flex:2;min-width:130px;height:40px;font-size:14px">
+<input class="h-input h-numeric" value="{{ z.lat }}" onChange="{{ z.onLat }}" placeholder="lat" style="flex:1;min-width:90px;height:40px;font-size:14px">
+<input class="h-input h-numeric" value="{{ z.lng }}" onChange="{{ z.onLng }}" placeholder="lng" style="flex:1;min-width:90px;height:40px;font-size:14px">
+<button type="button" data-st="mini" onClick="{{ z.onUp }}" title="Mai sus">↑</button>
+<button type="button" data-st="mini" onClick="{{ z.onDown }}" title="Mai jos">↓</button>
+<button type="button" data-st="mini" onClick="{{ z.onDel }}" title="Șterge">×</button>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<input class="h-input" value="{{ zoneDraft }}" onChange="{{ onZoneDraft }}" onKeyDown="{{ onZoneKey }}" placeholder="Ex.: Voluntari" style="flex:1;min-width:200px;height:46px;font-size:15px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onZoneAdd }}" style="height:46px;font-size:14px">Adaugă zonă</button>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">Coordonatele le iei din Google Maps: clic dreapta pe mijlocul zonei → primul număr e latitudinea, al doilea longitudinea. O zonă în care se află comenzi care urmează nu poate fi ștearsă.</p>
+</div>
+
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Etapele cu rol special</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Poți redenumi etapele cum vrei, dar aplicația trebuie să știe care încheie comanda și care o anulează. De asta depind pagina clientului, ruta șoferului și scăderea din depozit.</span>
+</div>
+<div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label class="h-field">
+<span class="h-label">Comanda este gata când ajunge la</span>
+<select class="h-select" value="{{ doneStatus }}" onChange="{{ onDoneStatus }}" style="height:46px;font-size:15px">
+<sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<span class="h-help">Ultima etapă din fluxul de producție.</span>
+</label>
+<label class="h-field">
+<span class="h-label">Comanda este anulată când ajunge la</span>
+<select class="h-select" value="{{ cancelStatus }}" onChange="{{ onCancelStatus }}" style="height:46px;font-size:15px">
+<sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<span class="h-help">Comenzile de aici nu apar pe ruta șoferului.</span>
+</label>
+</div>
+</div>
+
+</sc-if>
+
+<!-- ──────────────────────────────────────────────── acces ── -->
+<sc-if value="{{ isAccess }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:220px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Codul tabletelor din laborator</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Tableta din laborator e folosită de mai mulți oameni, deci nu are cont propriu. Codul deschide doar panoul de comenzi — nu ajunge la conturi, setări sau jurnal.</span>
+</div>
+<label class="h-switch"><input type="checkbox" checked="{{ panelOn }}" onChange="{{ onPanelOn }}"><span>{{ panelOnLabel }}</span></label>
+</div>
+<label class="h-field" style="max-width:420px">
+<span class="h-label">{{ panelCodeLabel }}</span>
+<input class="h-input" value="{{ panelCode }}" onChange="{{ onPanelCode }}" placeholder="{{ panelCodeHint }}" style="height:46px;font-size:15px">
+<span class="h-help">{{ panelCodeHelp }}</span>
+</label>
+<div class="h-alert h-alert--warning" style="border-radius:12px;padding:10px 14px">
+<p class="h-alert__title" style="margin:0;font-size:14px;line-height:1.55">Codul se verifică pe server și se păstrează criptat. Cine îl are vede fluxul de comenzi al zilei, deci schimbă-l când pleacă cineva din echipă.</p>
+</div>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+/**
+ * Panoul de Setări — lab.goldenpastry.ro/setari
+ *
+ * Tot ce se schimbă aici stă pe server, în tabelul `settings`, și se aplică pe
+ * toate dispozitivele. Secretele (tokenuri) sunt criptate în baza de date și
+ * NU se întorc niciodată în clar: câmpul arată o formă mascată, iar dacă îl
+ * lași neatins valoarea salvată rămâne neschimbată.
+ *
+ * De aceea nu am nevoie să introduc eu vreo cheie de API nicăieri: o introduci
+ * tu aici, o dată, și nu mai părăsește serverul.
+ */
+
+// Listele editabile, cu explicația fiecăreia. Ordinea contează la etape.
+const LISTS = [
+  {
+    k: "order_statuses",
+    t: "Etape în laborator",
+    h: "Ordinea în care avansează o comandă. Butonul „etapa următoare” din panoul laboratorului merge exact pe lista asta.",
+    ph: "Ex.: La glazurat"
+  },
+  {
+    k: "delivery_slots",
+    t: "Intervale de livrare",
+    h: "Orele propuse clientului când plasează comanda.",
+    ph: "Ex.: 07:30"
+  },
+  {
+    k: "fulfillment_types",
+    t: "Moduri de onorare",
+    h: "Cum ajunge marfa la client: ridicare din magazin, livrare cu mașina, angro.",
+    ph: "Ex.: Curier"
+  },
+  {
+    k: "fulfillment_pickup",
+    t: "Moduri fără mașină",
+    h: "Modurile din lista de sus în care marfa nu pleacă cu mașina noastră. Restul devin opriri pe ruta șoferului, deci un mod nou intră pe rută până când îl treci aici.",
+    ph: "Ex.: Ridicare"
+  },
+  {
+    k: "stock_categories",
+    t: "Categorii de depozit",
+    h: "Grupele după care se împart articolele în pagina Depozit.",
+    ph: "Ex.: Consumabile"
+  },
+  {
+    k: "stock_units",
+    t: "Unități de măsură",
+    h: "Unitățile disponibile la articolele din depozit.",
+    ph: "Ex.: g"
+  }
+];
+
+const TABS = [
+  { k: "general", l: "General" },
+  { k: "notify", l: "Notificări" },
+  { k: "lists", l: "Liste" },
+  { k: "access", l: "Acces" }
+];
+
+const GENERAL = [
+  { k: "company_name", l: "Numele firmei", hint: "Golden Pastry", help: "Apare în antetul mesajelor." },
+  { k: "company_phone", l: "Telefon public", hint: "+40 7xx xxx xxx", help: "Numărul afișat pe site." },
+  { k: "company_email", l: "E-mail public", hint: "contact@goldenpastry.ro", help: "Adresa de contact de pe site." },
+  { k: "stock_min_default", l: "Prag minim implicit", hint: "10", help: "Cantitatea sub care un articol nou de depozit e considerat pe terminate." },
+  // De aici pleacă mașina. Coordonatele intră în calculul kilometrilor și în
+  // ordonarea opririlor, deci greșite mută toată ruta în alt cartier.
+  { k: "hq_label", l: "Punctul de plecare al livrărilor", hint: "Depozit · Șos. Olteniței 103", help: "Numele afișat ca prima oprire pe ruta șoferului." },
+  { k: "hq_lat", l: "Latitudine depozit", hint: "44.39235", help: "Din Google Maps: clic dreapta pe depozit, primul număr." },
+  { k: "hq_lng", l: "Longitudine depozit", hint: "26.12385", help: "Al doilea număr. De el depind kilometrii de pe rută." }
+];
+
+const isMasked = (v) => typeof v === "string" && v.indexOf("•") === 0;
+
+class Component extends DCLogic {
+  state = {
+    auth: null, loaded: false, tab: "general",
+    s: {}, orig: {}, drafts: {},
+    // Anunțurile care nu au plecat. Comanda e salvată, dar laboratorul nu știe
+    // de ea: până nu apar aici, singurul care află este clientul, la telefon.
+    failed: [],
+    msg: "", err: "", saving: false, testing: "", tested: {}
+  };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+
+    // Listele aduc punctul depozitului, propus ca punct de plecare la o zonă nouă.
+    gp.lists().catch(() => {});
+
+    gp.me()
+      .then((user) => {
+        if (!user) { gp.toLogin(); return; }
+        this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
+        if (user.role !== "admin") { this.setState({ loaded: true }); return; }
+        return this.pull();
+      })
+      .catch(() => this.setState({ loaded: true }));
+  }
+
+  /** Setările de pe server. Secretele vin mascate, niciodată în clar. */
+  pull() {
+    return gp.get("/settings")
+      .then((r) => {
+        const s = r.settings || {};
+        this.setState({
+          s: Object.assign({}, s), orig: Object.assign({}, s),
+          failed: r.failed || [], loaded: true
+        });
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ err: e.message, loaded: true });
+      });
+  }
+
+  /** Schimbă o valoare din formular. */
+  put(key, value) {
+    this.setState({ s: Object.assign({}, this.state.s, { [key]: value }), msg: "" });
+  }
+
+  /** O listă, ca tablou de valori. */
+  list(key) {
+    const raw = this.state.s[key];
+    if (Array.isArray(raw)) return raw;
+    try {
+      const v = JSON.parse(raw || "[]");
+      return Array.isArray(v) ? v : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  putList(key, arr) {
+    this.put(key, JSON.stringify(arr));
+  }
+
+  /**
+   * Ce s-a schimbat față de ce a venit de la server.
+   *
+   * Trimitem doar diferențele: altfel am retrimite la fiecare salvare și
+   * valorile mascate ale secretelor, iar o greșeală de comparație acolo ar
+   * putea șterge un token bun.
+   */
+  changes() {
+    const S = this.state, out = {};
+    Object.keys(S.s).forEach((k) => {
+      if (k.slice(-4) === "_set") return;              // indicatori, nu valori
+      if (S.s[k] === S.orig[k]) return;
+      if (isMasked(S.s[k])) return;                    // token neatins
+      out[k] = S.s[k];
+    });
+    return out;
+  }
+
+  save() {
+    const diff = this.changes();
+    if (!Object.keys(diff).length) {
+      this.setState({ msg: "Nu e nimic de salvat.", err: "" });
+      return;
+    }
+    this.setState({ saving: true, err: "", msg: "" });
+    gp.put("/settings", { settings: diff })
+      .then((r) => {
+        const s = r.settings || {};
+        // Listele configurabile s-au putut schimba: le recitim în client, ca
+        // celelalte pagini deschise în aceeași filă să nu rămână pe cele vechi.
+        gp.__lists = null;
+        gp.lists().catch(() => {});
+        this.setState({
+          s: Object.assign({}, s), orig: Object.assign({}, s),
+          saving: false, msg: "Setările au fost salvate.", drafts: {}
+        });
+      })
+      .catch((e) => this.setState({ saving: false, err: e.message }));
+  }
+
+  test(channel) {
+    // Testul se trimite cu datele salvate pe server, iar după el reîmprospătăm
+    // starea canalului — adică înlocuim tot formularul cu ce vine de acolo.
+    // Cine apăsa butonul după ce adăugase un interval în listă sau scrisese un
+    // număr nou rămânea fără ele, cu mesajul verde în față și fără niciun semn
+    // că a pierdut ceva. De aceea ne oprim înainte să plece cererea și îi
+    // cerem să salveze întâi — oricum testul nu ar fi folosit ce e pe ecran.
+    if (Object.keys(this.changes()).length) {
+      this.setState({
+        msg: "",
+        err: "Ai modificări nesalvate. Testul folosește datele salvate pe server, nu pe cele de pe ecran — salvează întâi, apoi trimite testul."
+      });
+      return;
+    }
+    this.setState({ testing: channel, err: "", msg: "" });
+    gp.post("/settings/test/" + channel, {})
+      .then(() => this.setState({
+        testing: "",
+        tested: Object.assign({}, this.state.tested, { [channel]: true }),
+        msg: "Mesajul de test a plecat. Verifică pe " + channel + "."
+      }))
+      // Reîmprospătarea aduce starea WhatsApp scrisă de server chiar în timpul
+      // trimiterii, dar rescrie tot formularul. Dacă între timp s-a tastat
+      // ceva — trimiterea ține câteva secunde — o sărim: starea canalului se
+      // vede la următoarea încărcare, textul omului nu s-ar mai întoarce.
+      .then(() => (Object.keys(this.changes()).length ? null : this.pull()))
+      .catch((e) => this.setState({
+        testing: "",
+        tested: Object.assign({}, this.state.tested, { [channel]: false }),
+        err: "Testul a eșuat: " + e.message
+      }));
+  }
+
+  /**
+   * Golește lista de anunțuri eșuate, după ce administratorul a citit-o.
+   *
+   * Rândurile rămân în baza de date; doar nu mai sunt arătate. Fără pasul ăsta
+   * o defecțiune reparată demult ar sta permanent pe ecran, iar un eșec nou ar
+   * trece neobservat printre cele vechi.
+   */
+  markFailedSeen() {
+    gp.post("/settings/notifications/seen", {})
+      .then((r) => this.setState({ failed: r.failed || [] }))
+      .catch((e) => this.setState({ err: e.message }));
+  }
+
+  renderVals() {
+    const S = this.state, self = this;
+    const set = (x) => this.setState(x);
+    const v = (k, d) => (S.s[k] === undefined ? (d || "") : S.s[k]);
+    const on = (k) => v(k) === "1";
+    const toggle = (k) => () => this.put(k, on(k) ? "0" : "1");
+    const field = (k) => (e) => this.put(k, e.target.value);
+
+    const isAdmin = S.auth && S.auth.role === "admin";
+    const dirty = Object.keys(this.changes()).length > 0;
+
+    const provider = v("notify_whatsapp_provider", "meta");
+    const isTwilio = provider === "twilio";
+    const waSet = !!S.s.notify_whatsapp_token_set;
+    const tgSet = !!S.s.notify_telegram_token_set;
+    const panelSet = !!S.s.panel_code_set;
+    const waState = v("notify_whatsapp_status", "neconfigurat");
+    // „Gata de trimis”: are token, destinatar și identificatorul furnizorului.
+    const waReady = waSet && v("notify_whatsapp_to") !== "" && v("notify_whatsapp_phone_id") !== "";
+
+    // Etapele, ca opțiuni pentru cele două roluri speciale.
+    const statuses = this.list("order_statuses");
+
+    const lists = LISTS.map((L) => {
+      const items = self.list(L.k);
+      const done = v("order_status_done");
+      const cancelled = v("order_status_cancelled");
+      const move = (i, d) => () => {
+        const a = items.slice();
+        const j = i + d;
+        if (j < 0 || j >= a.length) return;
+        const t = a[i]; a[i] = a[j]; a[j] = t;
+        self.putList(L.k, a);
+      };
+      const add = () => {
+        const t = (S.drafts[L.k] || "").trim();
+        if (!t) return;
+        if (items.indexOf(t) >= 0) {
+          set({ err: "„" + t + "” există deja în listă." });
+          return;
+        }
+        self.putList(L.k, items.concat([t]));
+        set({ drafts: Object.assign({}, S.drafts, { [L.k]: "" }), err: "" });
+      };
+      return {
+        title: L.t,
+        help: L.h,
+        placeholder: L.ph,
+        draft: S.drafts[L.k] || "",
+        onDraft: (e) => set({ drafts: Object.assign({}, S.drafts, { [L.k]: e.target.value }) }),
+        onKey: (e) => { if (e.key === "Enter") { e.preventDefault(); add(); } },
+        onAdd: add,
+        items: items.map((name, i) => ({
+          n: String(i + 1),
+          name,
+          badge: L.k === "order_statuses"
+            ? (name === done ? "gata" : name === cancelled ? "anulare" : "")
+            : "",
+          onUp: move(i, -1),
+          onDown: move(i, 1),
+          onDel: () => {
+            if (items.length <= 1) {
+              set({ err: "Lista nu poate rămâne goală." });
+              return;
+            }
+            self.putList(L.k, items.filter((_, j) => j !== i));
+          }
+        }))
+      };
+    });
+
+    // Zonele și punctele lor sunt două setări care trebuie să rămână potrivite:
+    // lista dă opțiunile din formulare, harta dă distanțele de pe rută.
+    const zoneList = this.list("delivery_zones");
+    let zoneMap = {};
+    try {
+      const raw = S.s.delivery_zone_coords;
+      const parsed = typeof raw === "string" ? JSON.parse(raw || "{}") : (raw || {});
+      if (parsed && typeof parsed === "object") zoneMap = parsed;
+    } catch (e) { /* setare stricată: pornim de la gol, salvarea o repară */ }
+
+    const saveZones = (list, map) => {
+      this.setState({
+        s: Object.assign({}, S.s, {
+          delivery_zones: JSON.stringify(list),
+          delivery_zone_coords: JSON.stringify(map)
+        }),
+        msg: ""
+      });
+    };
+
+    const addZone = () => {
+      const t = (S.drafts.__zone || "").trim();
+      if (!t) return;
+      if (zoneList.indexOf(t) >= 0) { set({ err: "„" + t + "” există deja." }); return; }
+      // Zona nouă primește coordonatele depozitului, ca punct de plecare
+      // vizibil de corectat — nu zero, care ar trimite oprirea în ocean.
+      const hq = (gp.__lists && gp.__lists.hq) || { lat: "", lng: "" };
+      saveZones(zoneList.concat([t]), Object.assign({}, zoneMap, { [t]: { lat: hq.lat, lng: hq.lng } }));
+      set({ drafts: Object.assign({}, S.drafts, { __zone: "" }), err: "" });
+    };
+
+    const testLabel = (ch, txt) => S.testing === ch ? "Se trimite…" : txt;
+
+    return {
+      blocked: S.loaded && !isAdmin,
+      allowed: !S.loaded || isAdmin,
+      blockedLine: S.auth
+        ? "Contul „" + S.auth.name + "” nu are acces la setări. Doar administratorii pot schimba configurarea aplicației."
+        : "Intră cu un cont de administrator ca să vezi setările.",
+      authName: S.auth ? S.auth.name : "",
+
+      sub: dirty ? "Ai modificări nesalvate" : "Se aplică pe toate dispozitivele",
+      dirty,
+      saveCls: S.saving ? "h-btn h-btn--primary h-btn--loading" : dirty ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+      saveLabel: S.saving ? "Se salvează…" : "Salvează",
+      onSave: () => this.save(),
+      resetCls: dirty ? "h-btn h-btn--ghost" : "h-btn h-btn--ghost",
+      onReset: () => set({ s: Object.assign({}, S.orig), drafts: {}, msg: "", err: "" }),
+
+      msg: S.msg, onMsgClose: () => set({ msg: "" }),
+      err: S.err, onErrClose: () => set({ err: "" }),
+
+      /* --- anunțurile care nu au plecat --- */
+      hasFailed: S.failed.length > 0,
+      failedTitle: S.failed.length === 1
+        ? "Un anunț nu a plecat. Comanda este salvată, dar nu a fost anunțată."
+        : S.failed.length + " anunțuri nu au plecat. Comenzile sunt salvate, dar nu au fost anunțate.",
+      failedList: S.failed.map((f) => {
+        // Ora vine de la server în UTC, ca în Jurnal, și se arată în ora locală.
+        const d = new Date(Date.parse(String(f.createdAt || "").replace(" ", "T") + "Z") || 0);
+        const z = (n) => (n < 10 ? "0" + n : "" + n);
+        const canal = f.channel === "email" ? "e-mail"
+          : f.channel === "whatsapp" ? "WhatsApp"
+          : f.channel === "telegram" ? "Telegram" : f.channel;
+        return {
+          line: z(d.getDate()) + "." + z(d.getMonth() + 1) + ", "
+            + z(d.getHours()) + ":" + z(d.getMinutes())
+            + " · " + canal
+            + (f.orderId ? " · comanda #" + f.orderId : "")
+            + " · " + (f.error || "cauză necunoscută")
+        };
+      }),
+      onFailedSeen: () => this.markFailedSeen(),
+
+      tabs: TABS.map((t) => ({
+        label: t.l,
+        cls: S.tab === t.k ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ tab: t.k })
+      })),
+      isGeneral: S.tab === "general",
+      isNotify: S.tab === "notify",
+      isLists: S.tab === "lists",
+      isAccess: S.tab === "access",
+
+      /* --- general --- */
+      generalFields: GENERAL.map((f) => ({
+        label: f.l, hint: f.hint, help: f.help,
+        value: v(f.k), onChange: field(f.k)
+      })),
+
+      /* --- WhatsApp --- */
+      waOn: on("notify_whatsapp_enabled"),
+      onWaOn: toggle("notify_whatsapp_enabled"),
+      waOnLabel: on("notify_whatsapp_enabled") ? "Pornit" : "Oprit",
+      // Starea reală, nu doar ce a rămas scris după ultima încercare. Un token
+      // salvat, dar netrimis niciodată, arăta „neconfigurat” — adică exact
+      // invers decât adevărul.
+      waStatus: waReady && waState === "neconfigurat" ? "netestat" : waState,
+      waStatusCls: waState === "conectat" ? "h-badge h-badge--success"
+        : waState === "eroare" ? "h-badge h-badge--danger"
+        : waReady ? "h-badge h-badge--warning" : "h-badge",
+      waError: v("notify_whatsapp_last_error"),
+      waProvider: provider,
+      onWaProvider: field("notify_whatsapp_provider"),
+      waProviders: [{ v: "meta", l: "Meta Cloud API (oficial)" }, { v: "twilio", l: "Twilio" }],
+      waProviderHelp: isTwilio
+        ? "Twilio e mai simplu de pornit, dar costă per mesaj."
+        : "Calea oficială. Cere cont Meta Business și un șablon aprobat.",
+      waIsMeta: !isTwilio,
+      waIsTwilio: isTwilio,
+      waTo: v("notify_whatsapp_to"),
+      onWaTo: field("notify_whatsapp_to"),
+      waIdLabel: isTwilio ? "Account SID" : "Phone Number ID",
+      waIdHint: isTwilio ? "ACxxxxxxxx" : "1234567890",
+      waIdHelp: isTwilio
+        ? "Din consola Twilio, pagina principală."
+        : "Din Meta for Developers → WhatsApp → API Setup.",
+      waPhoneId: v("notify_whatsapp_phone_id"),
+      onWaPhoneId: field("notify_whatsapp_phone_id"),
+      waFrom: v("notify_whatsapp_from"),
+      onWaFrom: field("notify_whatsapp_from"),
+      waTemplate: v("notify_whatsapp_template", "comanda_noua"),
+      onWaTemplate: field("notify_whatsapp_template"),
+      waTokenLabel: isTwilio ? "Auth Token" : "Access Token",
+      waToken: v("notify_whatsapp_token"),
+      onWaToken: field("notify_whatsapp_token"),
+      waTokenSet: waSet,
+      waTokenHint: waSet ? "Token salvat — lasă gol ca să-l păstrezi" : "Lipește tokenul aici",
+      waTokenHelp: waSet
+        ? "Tokenul este salvat criptat. Serverul nu îl mai trimite înapoi, de aceea vezi doar ultimele caractere. Scrie altul doar dacă vrei să-l înlocuiești."
+        : "Se salvează criptat și nu mai poate fi citit din interfață. Introdu-l tu — eu nu ating credențiale.",
+      onWaTokenClear: () => this.put("notify_whatsapp_token", "__clear__"),
+      onTestWa: () => this.test("whatsapp"),
+      testWaLabel: testLabel("whatsapp", "Trimite mesaj de test"),
+      waFootnote: isTwilio
+        ? "Testul folosește datele salvate, nu pe cele din formular — salvează întâi."
+        : "Meta permite mesaje inițiate de firmă doar prin șablon aprobat. Testul folosește datele salvate, deci salvează întâi.",
+
+      /* --- e-mail --- */
+      mailOn: on("notify_email_enabled"),
+      onMailOn: toggle("notify_email_enabled"),
+      mailOnLabel: on("notify_email_enabled") ? "Pornit" : "Oprit",
+      mailTo: v("notify_email_to"),
+      onMailTo: field("notify_email_to"),
+      mailFrom: v("notify_email_from"),
+      onMailFrom: field("notify_email_from"),
+      onTestMail: () => this.test("email"),
+      testMailLabel: testLabel("email", "Trimite e-mail de test"),
+
+      /* --- Telegram --- */
+      tgOn: on("notify_telegram_enabled"),
+      onTgOn: toggle("notify_telegram_enabled"),
+      tgOnLabel: on("notify_telegram_enabled") ? "Pornit" : "Oprit",
+      tgToken: v("notify_telegram_token"),
+      onTgToken: field("notify_telegram_token"),
+      tgTokenHint: tgSet ? "Token salvat — lasă gol ca să-l păstrezi" : "123456:ABC-DEF…",
+      tgChat: v("notify_telegram_chat_id"),
+      onTgChat: field("notify_telegram_chat_id"),
+      onTestTg: () => this.test("telegram"),
+      testTgLabel: testLabel("telegram", "Trimite mesaj de test"),
+
+      /* --- liste --- */
+      lists,
+      /* --- zone, cu punctul lor de pe hartă --- */
+      zones: zoneList.map((name, i) => {
+        const pt = zoneMap[name] || {};
+        // Redenumirea trebuie să mute și coordonatele: altfel zona nouă rămâne
+        // fără punct, iar cea veche păstrează unul de care nu mai are nimeni
+        // nevoie — și ruta iese greșită fără să spună nimeni de ce.
+        const rename = (to) => {
+          const list = zoneList.slice();
+          list[i] = to;
+          const map = Object.assign({}, zoneMap);
+          if (name !== to) {
+            if (map[name]) map[to] = map[name];
+            delete map[name];
+          }
+          saveZones(list, map);
+        };
+        const move = (d) => () => {
+          const j = i + d;
+          if (j < 0 || j >= zoneList.length) return;
+          const list = zoneList.slice();
+          const t = list[i]; list[i] = list[j]; list[j] = t;
+          saveZones(list, zoneMap);
+        };
+        const setPoint = (key) => (e) => {
+          const map = Object.assign({}, zoneMap);
+          const cur = Object.assign({ lat: '', lng: '' }, map[name] || {});
+          cur[key] = e.target.value;
+          map[name] = cur;
+          saveZones(zoneList, map);
+        };
+        return {
+          n: String(i + 1),
+          name,
+          lat: pt.lat === undefined ? "" : String(pt.lat),
+          lng: pt.lng === undefined ? "" : String(pt.lng),
+          onName: (e) => rename(e.target.value),
+          onLat: setPoint("lat"),
+          onLng: setPoint("lng"),
+          onUp: move(-1),
+          onDown: move(1),
+          onDel: () => {
+            if (zoneList.length <= 1) { set({ err: "Trebuie să rămână cel puțin o zonă." }); return; }
+            const map = Object.assign({}, zoneMap);
+            delete map[name];
+            saveZones(zoneList.filter((_, j) => j !== i), map);
+          }
+        };
+      }),
+      zoneDraft: S.drafts.__zone || "",
+      onZoneDraft: (e) => set({ drafts: Object.assign({}, S.drafts, { __zone: e.target.value }) }),
+      onZoneKey: (e) => { if (e.key === "Enter") { e.preventDefault(); addZone(); } },
+      onZoneAdd: addZone,
+
+      statusOpts: statuses.map((x) => ({ v: x, l: x })),
+      doneStatus: v("order_status_done"),
+      onDoneStatus: field("order_status_done"),
+      cancelStatus: v("order_status_cancelled"),
+      onCancelStatus: field("order_status_cancelled"),
+
+      /* --- acces --- */
+      panelOn: on("panel_enabled"),
+      onPanelOn: toggle("panel_enabled"),
+      panelOnLabel: on("panel_enabled") ? "Activ" : "Dezactivat",
+      panelCode: v("panel_code"),
+      onPanelCode: field("panel_code"),
+      panelCodeLabel: panelSet ? "Cod nou" : "Cod de acces",
+      // Aici era un exemplu — chiar codul implicit pe care îl punea
+      // instalatorul. Un exemplu dintr-un câmp de acces se tastează ca atare,
+      // iar pagina asta se publică pe lab.goldenpastry.ro ca fișier static:
+      // sugestia ajungea la oricine îi citea sursa. Acum spunem doar regula.
+      panelCodeHint: panelSet ? "Cod salvat — lasă gol ca să-l păstrezi" : "Minim 6 caractere, greu de ghicit",
+      panelCodeHelp: panelSet
+        ? "Codul este salvat criptat, de aceea nu se poate afișa. Scrie altul doar dacă vrei să-l schimbi."
+        : "Fără cod configurat, tabletele nu pot deschide panoul."
+    };
+  }
+}
+
+</script>
+</body>
+</html>

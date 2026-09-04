@@ -1,0 +1,25 @@
+# Configurarea locală: parola bazei de date și cheia de criptare.
+# NU se urcă niciodată. Modelul este api/config.example.php.
+api/config.php
+
+# Pachetul de publicare: generat cu `node .claude/build-deploy.mjs`,
+# nu se editează și nu se versionează.
+deploy/
+
+# Setări personale Claude Code (permisiuni locale)
+.claude/settings.local.json
+.claude/*.local.*
+
+# Dependențe și jurnale
+node_modules/
+*.log
+npm-debug.log*
+
+# Fișiere de sistem și de editor
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*~

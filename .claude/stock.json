@@ -1,0 +1,198 @@
+[
+ {
+  "name": "Croissant cu unt",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 80,
+  "open": 96
+ },
+ {
+  "name": "Pain au chocolat",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 60,
+  "open": 42
+ },
+ {
+  "name": "Baghetă tradițională",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 40,
+  "open": 58
+ },
+ {
+  "name": "Mini foietaje",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 100,
+  "open": 140
+ },
+ {
+  "name": "Brioșă cu foietaj",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 30,
+  "open": 26
+ },
+ {
+  "name": "Kouign-amann",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 40,
+  "open": 64
+ },
+ {
+  "name": "Ecler cu cafea",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 24,
+  "open": 30
+ },
+ {
+  "name": "Financier cu migdale",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 30,
+  "open": 48
+ },
+ {
+  "name": "Mille-feuille",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 12,
+  "open": 14
+ },
+ {
+  "name": "Flan de patiserie",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 10,
+  "open": 12
+ },
+ {
+  "name": "Tartă cu căpșuni",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 8,
+  "open": 9
+ },
+ {
+  "name": "Choux vanilie",
+  "category": "Produse finite",
+  "unit": "buc",
+  "min": 40,
+  "open": 52
+ },
+ {
+  "name": "Făină 650",
+  "category": "Materii prime",
+  "unit": "kg",
+  "min": 80,
+  "open": 245
+ },
+ {
+  "name": "Făină integrală",
+  "category": "Materii prime",
+  "unit": "kg",
+  "min": 30,
+  "open": 42
+ },
+ {
+  "name": "Unt 82%",
+  "category": "Materii prime",
+  "unit": "kg",
+  "min": 40,
+  "open": 58
+ },
+ {
+  "name": "Ciocolată neagră 55%",
+  "category": "Materii prime",
+  "unit": "kg",
+  "min": 15,
+  "open": 11
+ },
+ {
+  "name": "Zahăr alb",
+  "category": "Materii prime",
+  "unit": "kg",
+  "min": 40,
+  "open": 85
+ },
+ {
+  "name": "Drojdie proaspătă",
+  "category": "Materii prime",
+  "unit": "kg",
+  "min": 4,
+  "open": 6.5
+ },
+ {
+  "name": "Ouă",
+  "category": "Materii prime",
+  "unit": "buc",
+  "min": 300,
+  "open": 480
+ },
+ {
+  "name": "Lapte integral",
+  "category": "Materii prime",
+  "unit": "L",
+  "min": 30,
+  "open": 44
+ },
+ {
+  "name": "Smântână 32%",
+  "category": "Materii prime",
+  "unit": "L",
+  "min": 20,
+  "open": 15
+ },
+ {
+  "name": "Migdale măcinate",
+  "category": "Materii prime",
+  "unit": "kg",
+  "min": 8,
+  "open": 12
+ },
+ {
+  "name": "Căpșuni proaspete",
+  "category": "Materii prime",
+  "unit": "kg",
+  "min": 5,
+  "open": 3
+ },
+ {
+  "name": "Vanilie Bourbon",
+  "category": "Materii prime",
+  "unit": "buc",
+  "min": 20,
+  "open": 34
+ },
+ {
+  "name": "Cutie tort 6p",
+  "category": "Ambalaje",
+  "unit": "buc",
+  "min": 50,
+  "open": 120
+ },
+ {
+  "name": "Cutie foietaje 12p",
+  "category": "Ambalaje",
+  "unit": "buc",
+  "min": 60,
+  "open": 45
+ },
+ {
+  "name": "Pungă hârtie mică",
+  "category": "Ambalaje",
+  "unit": "buc",
+  "min": 200,
+  "open": 640
+ },
+ {
+  "name": "Etichete Golden Pastry",
+  "category": "Ambalaje",
+  "unit": "buc",
+  "min": 300,
+  "open": 1200
+ }
+]

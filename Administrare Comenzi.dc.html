@@ -1,0 +1,1939 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics="">
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg)}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+@keyframes pf-pop{from{transform:translateY(10px) scale(.985);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes pf-fade{from{opacity:0}to{opacity:1}}
+@keyframes pf-shake{10%,90%{transform:translateX(-2px)}30%,70%{transform:translateX(4px)}50%{transform:translateX(-6px)}100%{transform:translateX(0)}}
+@keyframes pf-shake2{10%,90%{transform:translateX(-2px)}30%,70%{transform:translateX(4px)}50%{transform:translateX(-6px)}100%{transform:translateX(0)}}
+@media (max-width:1240px){
+[data-adm=stats]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:1000px){
+[data-adm=desktoptable]{display:none!important}
+[data-adm=mobilelist]{display:flex!important}
+[data-adm=prow]{grid-template-columns:1fr auto!important;gap:8px 12px!important;padding:14px 16px!important}
+[data-adm=prow]>span:nth-child(2){display:none!important}
+[data-adm=prow]>div{grid-column:1/-1!important}
+[data-adm=phead]{grid-template-columns:1fr auto!important}
+[data-adm=phead]>span:nth-child(2),[data-adm=phead]>span:nth-child(4){display:none!important}
+[data-adm=rgrid]{grid-template-columns:minmax(0,1fr)!important}
+[data-adm=rside]{order:-1!important;position:static!important}
+}
+@media (min-width:761px) and (max-width:1000px){
+[data-adm=mobilelist]{display:grid!important;grid-template-columns:1fr 1fr!important;align-items:start!important}
+}
+@media (max-width:760px){
+[data-adm=shell]{flex-direction:column!important}
+[data-adm=side]{width:auto!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important;gap:12px!important;padding:12px 16px!important}
+[data-adm=nav]{flex-direction:row!important;gap:8px!important;margin-left:auto!important}
+[data-adm=sidefoot]{margin-top:0!important;width:100%!important}
+[data-adm=sidenote]{display:none!important}
+[data-adm=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important;position:sticky!important;top:0!important;z-index:20!important}
+[data-adm=topbar]>div:last-child{width:100%!important;margin-left:0!important;flex-wrap:wrap!important}
+[data-adm=search]{width:100%!important;flex:1 1 100%!important}
+[data-adm=newbtn]{width:100%!important}
+[data-adm=stats]{grid-template-columns:1fr 1fr!important;gap:10px!important}
+[data-adm=filters]{gap:8px!important}
+[data-adm=filters]>select{width:100%!important}
+[data-adm=filters]>div{margin-left:0!important;width:100%!important;flex-wrap:nowrap!important;overflow-x:auto!important;padding-bottom:2px;scrollbar-width:none}
+[data-adm=filters]>div::-webkit-scrollbar{display:none}
+[data-adm=filters]>div>button{flex:none!important}
+[data-adm=body]{padding:14px!important;gap:14px!important}
+[data-adm=modalwrap]{padding:0!important;align-items:flex-end!important}
+[data-adm=modalcard]{width:100%!important;max-width:none!important;max-height:94vh!important;border-radius:22px 22px 0 0!important;padding:18px 16px!important}
+[data-adm=g2],[data-adm=g3]{grid-template-columns:1fr!important}
+[data-adm=chanrow]>button{min-width:0!important;flex:1 1 0!important;padding:0 6px!important}
+[data-adm=rtop]>select,[data-adm=rbtn]{width:100%!important;flex:1 1 100%!important}
+[data-adm=rside]{position:static!important}
+[data-adm=modalfoot]{flex-wrap:wrap!important;gap:8px!important}
+[data-adm=modalfoot]>button{min-width:0!important;margin-left:0!important;flex:1 1 100%!important;min-height:50px!important}
+[data-adm=modalfoot]>[data-adm=btnsave]{order:-2!important}
+[data-adm=modalfoot]>[data-adm=btncancel]{order:-1!important}
+[data-adm=additem]{min-height:46px!important}
+[data-adm=modalclose]{min-height:46px!important;width:46px!important}
+[data-adm=side]{width:100%!important;box-sizing:border-box!important;flex-wrap:nowrap!important;padding:9px 14px!important}
+[data-adm=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-adm=nav],[data-adm=views]{display:none!important}
+[data-adm=sidefoot]{display:none!important}
+[data-adm=phoneback]{display:flex!important}
+[data-adm=phonemenu]{display:flex!important}
+[data-adm=filters]{display:none!important}
+[data-adm=topbar] h1{font-size:20px!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.18), transparent 70%)">
+<div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:62px;height:62px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:27px;font-weight:600;color:var(--h-cream-100);letter-spacing:.01em">Golden Pastry</span>
+<span style="font-size:15px;color:rgba(255,255,255,.62)">{{ lockedLine }}</span>
+</div>
+<sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+<div style="width:100%;display:flex;flex-direction:column;gap:10px">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px;text-align:left">{{ offline }}</div>
+<button type="button" class="h-btn h-btn--primary h-btn--block" onClick="{{ onRetry }}" style="min-height:50px;font-size:16px">Încearcă din nou</button>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ denied }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.14), transparent 70%)">
+<div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Administrare comenzi</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ deniedLine }}</span>
+</div>
+<div style="width:100%;display:flex;flex-direction:column;gap:8px">
+<sc-if value="{{ deniedClient }}" hint-placeholder-val="{{ false }}">
+<a href="Client.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Vezi comanda mea</a>
+</sc-if>
+<sc-if value="{{ deniedStaff }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Panoul din laborator</a>
+<a href="Depozit.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Depozit · stoc</a>
+<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Ruta șoferului</a>
+</div>
+</sc-if>
+<button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
+<a href="Intrare.dc.html" style="font-size:14px;color:rgba(255,255,255,.72);text-decoration:none;padding-top:4px">← Alege panoul</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ unlocked }}" hint-placeholder-val="{{ true }}">
+<div data-adm="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-adm="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-adm="sidehead" style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Administrare</span>
+</div>
+<a data-adm="phoneback" href="Intrare.dc.html" title="Alege panoul" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+</div>
+<div data-adm="nav" style="display:flex;flex-direction:column;gap:6px">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Comenzi</span>
+<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
+<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
+<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
+<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
+<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
+<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
+<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
+<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<p style="margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--h-cream-100);opacity:.55">În comenzi</p>
+<div data-adm="views" style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ navItems }}" as="n" hint-placeholder-count="3">
+<button type="button" onClick="{{ n.onClick }}" style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border:0;border-radius:12px;background:{{ n.bg }};color:{{ n.fg }};font-family:var(--h-font-body);font-size:14px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1">{{ n.label }}</span>
+<span class="h-numeric" style="opacity:.75">{{ n.count }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+<div data-adm="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">conectat</span>
+</div>
+<button type="button" onClick="{{ onLogout }}" style="flex:none;min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">Ieși</button>
+</div>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p data-adm="sidenote" style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Modificările se salvează pe server, imediat. Ce schimbi aici apare pe telefonul șoferului și pe ecranul din laborator, fără să reîncarce nimeni nimic.</p>
+</div>
+</div>
+
+<div data-adm="main" style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-adm="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">{{ viewTitle }}</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ viewSub }}</span>
+</div>
+<div data-adm="phonemenu" style="display:none;align-items:center;gap:8px;width:100%">
+<button type="button" onClick="{{ onMenuOpen }}" style="flex:1;min-width:0;min-height:54px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:8px 13px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Vezi acum</span>
+<span style="max-width:100%;font-size:15px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ currentLabel }}</span>
+</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onMenuOpen }}" style="flex:none;min-height:54px;padding:0 15px;font-size:15px;border-radius:14px;white-space:nowrap">Schimbă ▾</button>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+<input data-adm="search" class="h-input" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Caută client, referință, produs" style="width:290px;height:44px;font-size:15px">
+<button data-adm="newbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" style="height:44px;font-size:15px">+ Comandă nouă</button>
+</div>
+</div>
+
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:80;background:rgba(27,18,11,.62);display:flex;flex-direction:column;justify-content:flex-end;animation:pf-fade .18s var(--h-ease-out)">
+<div class="h-card" style="width:100%;flex:none;max-height:90vh;overflow-y:auto;padding:16px 16px 22px;border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:8px;animation:pf-pop .22s var(--h-ease-spring)">
+<div style="display:flex;align-items:center;gap:12px">
+<h2 class="h-h4" style="margin:0;font-size:19px">Ce vrei să vezi</h2>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+</div>
+<sc-for list="{{ menuPages }}" as="v" hint-placeholder-count="3">
+<button type="button" onClick="{{ v.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ v.bd }};background:{{ v.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">{{ v.label }}</span>
+<span class="h-numeric" style="font-size:15px;color:var(--h-fg-subtle)">{{ v.count }}</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ v.mark }}</span>
+</button>
+</sc-for>
+<sc-if value="{{ showFilters }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Ziua</p>
+<sc-for list="{{ menuDays }}" as="d" hint-placeholder-count="8">
+<button type="button" onClick="{{ d.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-radius:15px;border:1px solid {{ d.bd }};background:{{ d.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:15px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">{{ d.label }}</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ d.mark }}</span>
+</button>
+</sc-for>
+<p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Canal</p>
+<sc-for list="{{ menuChans }}" as="c" hint-placeholder-count="4">
+<button type="button" onClick="{{ c.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-radius:15px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:15px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">{{ c.label }}</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ c.mark }}</span>
+</button>
+</sc-for>
+<p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Stare</p>
+<sc-for list="{{ menuStatuses }}" as="s" hint-placeholder-count="6">
+<button type="button" onClick="{{ s.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-radius:15px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:15px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">{{ s.label }}</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ s.mark }}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<div style="display:flex;gap:10px;margin-top:12px">
+<a href="Depozit.dc.html" class="h-btn h-btn--secondary" style="flex:1;min-height:50px;font-size:15px;text-decoration:none">Depozit</a>
+<a href="Conturi.dc.html" class="h-btn h-btn--secondary" style="flex:1;min-height:50px;font-size:15px;text-decoration:none">Conturi</a>
+</div>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onLogout }}" style="min-height:50px;font-size:15px">Ieși din cont</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pf-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isOrders }}" hint-placeholder-val="{{ true }}">
+<div data-adm="body" style="flex:1;display:flex;flex-direction:column;gap:18px;padding:22px 28px 30px;min-width:0">
+
+<div data-adm="stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+<div class="h-card" style="padding:16px 18px;border-radius:16px;display:flex;flex-direction:column;gap:6px">
+<span class="h-eyebrow" style="font-size:12px">{{ s.label }}</span>
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:32px;font-weight:700;line-height:1">{{ s.value }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ s.hint }}</span>
+</div>
+</sc-for>
+</div>
+
+<div data-adm="filters" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+<select class="h-input" value="{{ fDay }}" onChange="{{ onFDay }}" style="height:42px;font-size:14px;width:190px">
+<sc-for list="{{ dayFilterOpts }}" as="o" hint-placeholder-count="8">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<div style="display:flex;gap:6px">
+<sc-for list="{{ chanFilters }}" as="c" hint-placeholder-count="4">
+<button type="button" class="{{ c.cls }}" onClick="{{ c.onClick }}" style="height:42px;font-size:14px;border-radius:12px">{{ c.label }}</button>
+</sc-for>
+</div>
+<div style="display:flex;gap:6px;margin-left:auto">
+<sc-for list="{{ statusFilters }}" as="s" hint-placeholder-count="6">
+<button type="button" class="{{ s.cls }}" onClick="{{ s.onClick }}" style="height:42px;font-size:14px;border-radius:12px">{{ s.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<div data-adm="desktoptable" class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
+<div data-adm="thead" style="display:grid;grid-template-columns:92px 1.5fr 108px 150px 1.5fr 60px 128px 292px;gap:12px;padding:12px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
+<span>Ref.</span><span>Client</span><span>Canal</span><span>Ziua</span><span>Produse</span><span style="text-align:right">Buc.</span><span>Stare</span><span style="text-align:right">Acțiuni</span>
+</div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+<div data-adm="row" style="display:grid;grid-template-columns:92px 1.5fr 108px 150px 1.5fr 60px 128px 292px;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--h-line);background:{{ r.rowBg }}" style-hover="background:var(--h-bg-sunk)">
+<div style="display:flex;align-items:center;gap:6px;min-width:0">
+<button type="button" onClick="{{ r.onPeek }}" title="Vezi produsele" style="flex:none;width:34px;height:34px;padding:0;border:1px solid var(--h-line);border-radius:10px;background:var(--h-bg-surface);color:var(--h-fg-muted);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:var(--h-accent);color:var(--h-accent-fg);background:var(--h-accent-soft)">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M2.2 12S5.8 5.6 12 5.6 21.8 12 21.8 12 18.2 18.4 12 18.4 2.2 12 2.2 12Z"></path>
+<circle cx="12" cy="12" r="3.1"></circle>
+</svg>
+</button>
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle);overflow:hidden;text-overflow:ellipsis">{{ r.ref }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;min-width:0">
+<span style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.cust }}</span>
+<sc-if value="{{ r.urgent }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger" style="font-size:11px;flex:none">Urgent</span>
+</sc-if>
+</div>
+<sc-if value="{{ r.note }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:var(--h-crust-700);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.note }}</span>
+</sc-if>
+</div>
+<span class="{{ r.chanCls }}" style="font-size:12px;justify-self:start">{{ r.chan }}</span>
+<span style="font-size:14px;color:var(--h-fg-muted)">{{ r.when }}</span>
+<span style="font-size:14px;line-height:1.4;color:var(--h-fg-muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:break-word">{{ r.itemsLine }}</span>
+<span class="h-numeric" style="font-size:15px;font-weight:700;text-align:right">{{ r.qty }}</span>
+<span class="{{ r.statusCls }}" style="font-size:12px;justify-self:start">{{ r.status }}</span>
+<div data-adm="actions" style="display:flex;gap:6px;justify-content:flex-end;min-width:0">
+<button type="button" class="{{ r.urgentCls }}" onClick="{{ r.onUrgent }}" style="height:38px;white-space:nowrap">{{ r.urgentShort }}</button>
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ r.onEdit }}" style="height:38px">Editează</button>
+<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" style="height:38px;color:var(--h-danger)">Anulează</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+<div style="padding:44px 18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nicio comandă pe filtrele alese.</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="height:42px;font-size:14px">Șterge filtrele</button>
+</div>
+</sc-if>
+</div>
+
+<div data-adm="mobilelist" style="display:none;flex-direction:column;gap:12px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+<div class="h-card" style="padding:14px 15px;border-radius:18px;display:flex;flex-direction:column;gap:10px;background:{{ r.cardBg }}">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:17px;font-weight:700;line-height:1.25">{{ r.cust }}</span>
+<sc-if value="{{ r.urgent }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger" style="font-size:11px;flex:none">Urgent</span>
+</sc-if>
+</div>
+<div style="display:flex;align-items:center;gap:8px">
+<button type="button" onClick="{{ r.onPeek }}" title="Vezi produsele" style="flex:none;width:38px;height:38px;padding:0;border:1px solid var(--h-line);border-radius:11px;background:var(--h-bg-sunk);color:var(--h-fg-muted);display:flex;align-items:center;justify-content:center;cursor:pointer">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M2.2 12S5.8 5.6 12 5.6 21.8 12 21.8 12 18.2 18.4 12 18.4 2.2 12 2.2 12Z"></path>
+<circle cx="12" cy="12" r="3.1"></circle>
+</svg>
+</button>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ r.ref }} · {{ r.when }}</span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;flex:none">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:27px;font-weight:700;line-height:1">{{ r.qty }}</span>
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">buc.</span>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span class="{{ r.chanCls }}" style="font-size:12px">{{ r.chan }}</span>
+<span class="{{ r.statusCls }}" style="font-size:12px">{{ r.status }}</span>
+</div>
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ r.itemsLine }}</p>
+<sc-if value="{{ r.note }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;line-height:1.45;color:var(--h-crust-700)">{{ r.note }}</p>
+</sc-if>
+<div style="display:flex;gap:8px;margin-top:2px">
+<button type="button" class="{{ r.urgentCls }}" onClick="{{ r.onUrgent }}" style="flex:1;min-height:46px;font-size:14px">{{ r.urgentShort }}</button>
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ r.onEdit }}" style="flex:1;min-height:46px;font-size:14px">Editează</button>
+<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" style="min-height:46px;width:52px;flex:none;padding:0;font-size:19px;color:var(--h-danger)">×</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:34px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nicio comandă pe filtrele alese.</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="min-height:46px;font-size:14px">Șterge filtrele</button>
+</div>
+</sc-if>
+</div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isRequests }}" hint-placeholder-val="{{ false }}">
+<div data-adm="body" style="flex:1;display:flex;flex-direction:column;gap:16px;padding:22px 28px 30px;min-width:0">
+
+<div data-adm="filters" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+<sc-for list="{{ reqFilters }}" as="q" hint-placeholder-count="4">
+<button type="button" class="{{ q.cls }}" onClick="{{ q.onClick }}" style="height:42px;font-size:14px;border-radius:12px;display:flex;align-items:center;gap:8px">
+<span>{{ q.label }}</span>
+<span class="h-numeric" style="font-weight:700;opacity:.8">{{ q.count }}</span>
+</button>
+</sc-for>
+</div>
+
+<sc-for list="{{ reqRows }}" as="r" hint-placeholder-count="2">
+<div class="h-card" style="max-width:920px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px;background:{{ r.cardBg }}">
+
+<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600;line-height:1.2">{{ r.company }}</span>
+<span class="{{ r.statusCls }}" style="font-size:11px">{{ r.status }}</span>
+</div>
+<span style="font-size:14px;color:var(--h-fg-muted);line-height:1.45">{{ r.person }}</span>
+</div>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle);flex:none">{{ r.when }}</span>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<span class="h-badge h-badge--accent" style="font-size:11px">{{ r.wantLabel }}</span>
+<sc-if value="{{ r.segment }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge" style="font-size:11px">{{ r.segment }}</span>
+</sc-if>
+<sc-if value="{{ r.catalog }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--honey" style="font-size:11px">{{ r.catalog }}</span>
+</sc-if>
+</div>
+
+<sc-if value="{{ r.msg }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert" style="border-radius:12px;padding:11px 13px;font-size:14px;line-height:1.5">{{ r.msg }}</div>
+</sc-if>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ r.items }}" as="it" hint-placeholder-count="3">
+<div style="display:flex;align-items:baseline;gap:12px;padding-bottom:6px;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="width:44px;text-align:right;font-size:16px;font-weight:700;color:var(--h-accent-fg)">{{ it.q }}</span>
+<span style="font-size:15px;flex:1;min-width:0">{{ it.n }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ it.meta }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ r.noItems }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:14px;color:var(--h-fg-faint)">Fără produse selectate — doar cerere de ofertă.</span>
+</sc-if>
+<sc-if value="{{ r.totals }}" hint-placeholder-val="{{ false }}">
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-muted)">{{ r.totals }}</span>
+</sc-if>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<sc-if value="{{ r.isNew }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ r.onAccept }}" style="min-height:46px;font-size:15px">Acceptă și fă comanda</button>
+</sc-if>
+<sc-if value="{{ r.isNew }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onReject }}" style="min-height:46px;font-size:14px;color:var(--h-danger)">Refuză</button>
+</sc-if>
+<sc-if value="{{ r.isRejected }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onReopen }}" style="min-height:46px;font-size:14px">Anulează refuzul</button>
+</sc-if>
+</div>
+
+</div>
+</sc-for>
+
+<sc-if value="{{ noReq }}" hint-placeholder-val="{{ true }}">
+<div class="h-card" style="max-width:920px;padding:40px 20px;border-radius:18px;text-align:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">{{ reqEmptyLine }}</p>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isRoute }}" hint-placeholder-val="{{ false }}">
+<div data-adm="body" style="flex:1;display:flex;flex-direction:column;gap:16px;padding:22px 28px 30px;min-width:0">
+
+<div data-adm="rtop" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+<select class="h-input" value="{{ routeDay }}" onChange="{{ onRouteDay }}" style="height:46px;font-size:15px;width:190px">
+<sc-for list="{{ routeDayOpts }}" as="o" hint-placeholder-count="7">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<button data-adm="rbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onOptimize }}" style="height:46px;font-size:15px">Optimizează ruta</button>
+<button data-adm="rbtn" type="button" class="h-btn h-btn--secondary" onClick="{{ onByTime }}" style="height:46px;font-size:15px">Ordonează după interval</button>
+<sc-if value="{{ routeManual }}" hint-placeholder-val="{{ false }}">
+<button data-adm="rbtn" type="button" class="h-btn h-btn--ghost" onClick="{{ onResetRoute }}" style="height:46px;font-size:15px">Renunță la ordinea manuală</button>
+</sc-if>
+</div>
+
+<sc-if value="{{ routeMsg }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="border-radius:14px;padding:12px 16px;align-items:center;animation:pf-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ routeMsg }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onRouteMsgClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasStops }}" hint-placeholder-val="{{ true }}">
+<div data-adm="rgrid" style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start">
+
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+<sc-for list="{{ stops }}" as="s" hint-placeholder-count="5">
+<div class="h-card" style="padding:14px 16px;border-radius:18px;display:flex;gap:14px;align-items:flex-start;background:{{ s.cardBg }}">
+<span class="h-numeric" style="flex:none;width:38px;height:38px;border-radius:50%;background:var(--h-accent);color:var(--h-cocoa-800);display:flex;align-items:center;justify-content:center;font-family:var(--h-font-display);font-size:19px;font-weight:700">{{ s.num }}</span>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+<span style="font-size:17px;font-weight:700">{{ s.cust }}</span>
+<sc-if value="{{ s.urgent }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger" style="font-size:11px">Urgent</span>
+</sc-if>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ s.ref }}</span>
+</div>
+<span style="font-size:14px;color:var(--h-fg-muted)">{{ s.addr }}</span>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--h-fg-subtle)">
+<span class="h-numeric">Interval {{ s.slot }}</span>
+<span class="h-numeric">ETA {{ s.eta }}</span>
+<span class="h-numeric">+{{ s.leg }}</span>
+<span class="h-numeric">{{ s.qty }} buc.</span>
+<span class="{{ s.statusCls }}" style="font-size:11px">{{ s.status }}</span>
+</div>
+<sc-if value="{{ s.warnOn }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;font-weight:600;color:var(--h-danger)">{{ s.warn }}</span>
+</sc-if>
+<sc-if value="{{ s.note }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:var(--h-crust-700)">{{ s.note }}</span>
+</sc-if>
+</div>
+<div style="flex:none;display:flex;flex-direction:column;gap:6px">
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ s.onUp }}" disabled="{{ s.upOff }}" style="width:46px;height:44px;padding:0;font-size:16px">↑</button>
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ s.onDown }}" disabled="{{ s.downOff }}" style="width:46px;height:44px;padding:0;font-size:16px">↓</button>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div data-adm="rside" style="display:flex;flex-direction:column;gap:12px;position:sticky;top:96px">
+<div class="h-card" style="padding:16px 18px;border-radius:18px;display:flex;flex-direction:column;gap:12px">
+<span class="h-eyebrow" style="font-size:12px">Ruta zilei</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div style="display:flex;flex-direction:column"><span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700;line-height:1.1">{{ routeTotal }}</span><span style="font-size:12px;color:var(--h-fg-subtle)">distanță estimată</span></div>
+<div style="display:flex;flex-direction:column"><span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700;line-height:1.1">{{ routeDur }}</span><span style="font-size:12px;color:var(--h-fg-subtle)">cu 6 min pe oprire</span></div>
+<div style="display:flex;flex-direction:column"><span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700;line-height:1.1">{{ routeDepart }}</span><span style="font-size:12px;color:var(--h-fg-subtle)">plecare din laborator</span></div>
+<div style="display:flex;flex-direction:column"><span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700;line-height:1.1">{{ routeQty }}</span><span style="font-size:12px;color:var(--h-fg-subtle)">bucăți în mașină</span></div>
+</div>
+<sc-if value="{{ routeWarn }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:12px;padding:10px 12px;font-size:13px">{{ routeWarn }}</div>
+</sc-if>
+</div>
+<div class="h-card" style="padding:16px 18px;border-radius:18px;display:flex;flex-direction:column;gap:10px">
+<span class="h-eyebrow" style="font-size:12px">Poziții relative</span>
+<div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:14px;background:var(--h-bg-sunk);overflow:hidden">
+<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
+<sc-for list="{{ plotLines }}" as="l" hint-placeholder-count="4">
+<line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" stroke="var(--h-accent)" stroke-width="1.4" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity="0.75"></line>
+</sc-for>
+</svg>
+<sc-for list="{{ plot }}" as="p" hint-placeholder-count="5">
+<span class="h-numeric" title="{{ p.title }}" style="position:absolute;left:{{ p.x }};top:{{ p.y }};transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:{{ p.bg }};color:{{ p.fg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:var(--h-shadow-2)">{{ p.label }}</span>
+</sc-for>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--h-fg-subtle)">Schemă a pozițiilor pe zonă, nu hartă rutieră. „L" e laboratorul. Distanțele sunt în linie dreaptă × 1,35 — bune pentru comparat ordinea, nu pentru navigație.</p>
+</div>
+<a href="Ruta%20Sofer.dc.html" class="h-btn h-btn--secondary" style="height:48px;font-size:15px;text-decoration:none">Vezi ce vede șoferul →</a>
+</div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ noStops }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:40px 20px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nicio comandă cu livrare în ziua asta.</p>
+<p style="margin:0;font-size:14px;color:var(--h-fg-subtle)">Trece o comandă pe canalul „Livrare" și apare aici ca oprire.</p>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isProducts }}" hint-placeholder-val="{{ false }}">
+<div data-adm="body" style="flex:1;display:flex;flex-direction:column;gap:16px;padding:22px 28px 30px">
+<div class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
+<div data-adm="phead" style="display:grid;grid-template-columns:1.8fr 120px 120px 1.2fr;gap:14px;padding:12px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
+<span>Produs</span><span style="text-align:right">Comenzi</span><span style="text-align:right">Bucăți</span><span>Pondere</span>
+</div>
+<sc-for list="{{ products }}" as="p" hint-placeholder-count="6">
+<div data-adm="prow" style="display:grid;grid-template-columns:1.8fr 120px 120px 1.2fr;gap:14px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--h-line)">
+<span style="font-size:16px">{{ p.n }}</span>
+<span class="h-numeric" style="font-size:15px;text-align:right;color:var(--h-fg-muted)">{{ p.orders }}</span>
+<span class="h-numeric" style="font-size:16px;font-weight:700;text-align:right">{{ p.qty }}</span>
+<div class="h-progress" style="height:9px"><div class="h-progress__bar" style="width:{{ p.pct }}"></div></div>
+</div>
+</sc-for>
+</div>
+<p style="margin:0;font-size:14px;color:var(--h-fg-subtle)">Totalurile se calculează din comenzile din listă — nu există încă un catalog separat de produse. Spune-mi dacă vrei catalog cu prețuri și stoc.</p>
+</div>
+</sc-if>
+
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ formOpen }}" hint-placeholder-val="{{ false }}">
+<div data-adm="modalwrap" style="position:fixed;inset:0;background:rgba(28,18,11,.55);display:flex;align-items:center;justify-content:center;padding:28px;z-index:40;animation:pf-fade .2s var(--h-ease-out)">
+<div data-adm="modalcard" class="h-card" style="width:760px;max-height:88vh;overflow-y:auto;padding:26px 28px;border-radius:22px;display:flex;flex-direction:column;gap:18px;animation:pf-pop .28s var(--h-ease-spring)">
+<div style="display:flex;align-items:center;gap:12px">
+<h2 class="h-h3" style="margin:0;font-size:22px">{{ formTitle }}</h2>
+<button data-adm="modalclose" type="button" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
+</div>
+
+<div data-adm="g2" style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Client
+<input class="h-input" value="{{ frm.cust }}" onChange="{{ onCust }}" placeholder="ex. Cafeneaua Lumina" style="height:46px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Telefon
+<input class="h-input" value="{{ frm.phone }}" onChange="{{ onPhone }}" placeholder="ex. 0722 000 000" style="height:46px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Referință
+<input class="h-input" value="{{ frm.ref }}" onChange="{{ onRef }}" placeholder="se completează automat" style="height:46px;font-size:16px">
+</label>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Canal</span>
+<div data-adm="chanrow" style="display:flex;gap:8px">
+<sc-for list="{{ chanOpts }}" as="c" hint-placeholder-count="3">
+<button type="button" class="{{ c.cls }}" onClick="{{ c.onClick }}" style="height:46px;min-width:120px;font-size:15px;border-radius:14px">{{ c.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Prioritate</span>
+<button type="button" class="{{ frmUrgentCls }}" onClick="{{ onToggleUrgent }}" style="height:46px;align-self:flex-start;min-width:250px;font-size:15px;border-radius:14px">{{ frmUrgentLabel }}</button>
+</div>
+
+<div data-adm="g3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Zi
+<select class="h-input" value="{{ frm.day }}" onChange="{{ onDay }}" style="height:46px;font-size:15px">
+<sc-for list="{{ dayOpts }}" as="o" hint-placeholder-count="7">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Interval
+<select class="h-input" value="{{ frm.slot }}" onChange="{{ onSlot }}" style="height:46px;font-size:15px">
+<sc-for list="{{ slotOpts }}" as="o" hint-placeholder-count="6">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<button type="button" class="{{ frmTimedCls }}" onClick="{{ onToggleTimed }}" style="min-height:44px;font-size:13px;border-radius:12px;margin-top:2px;white-space:nowrap">{{ frmTimedLabel }}</button>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Stare
+<select class="h-input" value="{{ frm.status }}" onChange="{{ onStatus }}" style="height:46px;font-size:15px">
+<sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Poziții</span>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ frm.qtyTotal }} bucăți</span>
+<button data-adm="additem" type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onAddItem }}" style="margin-left:auto;min-height:44px">+ Adaugă poziție</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ frm.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;gap:10px;align-items:center">
+<input class="h-input h-numeric" value="{{ it.q }}" onChange="{{ it.onQ }}" inputMode="numeric" style="width:84px;height:46px;font-size:16px;text-align:right">
+<input class="h-input" value="{{ it.n }}" onChange="{{ it.onN }}" placeholder="Nume produs" style="flex:1;height:46px;font-size:16px">
+<select class="h-input" value="{{ it.variant }}" onChange="{{ it.onV }}" style="width:170px;height:46px;font-size:14px">
+<sc-for list="{{ variantOpts }}" as="v" hint-placeholder-count="2">
+<option value="{{ v.v }}">{{ v.l }}</option>
+</sc-for>
+</select>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ it.onDel }}" style="height:46px;width:46px;padding:0;font-size:18px;color:var(--h-danger)">×</button>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div data-adm="g2" style="display:grid;grid-template-columns:1.6fr 1fr;gap:14px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Adresă de livrare
+<input class="h-input" value="{{ frm.addr }}" onChange="{{ onAddr }}" placeholder="ex. Calea Victoriei 63" style="height:46px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Zonă
+<select class="h-input" value="{{ frm.zone }}" onChange="{{ onZone }}" style="height:46px;font-size:15px">
+<sc-for list="{{ zoneOpts }}" as="o" hint-placeholder-count="10">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+</div>
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Notă pentru laborator
+<input class="h-input" value="{{ frm.note }}" onChange="{{ onNote }}" placeholder="ex. Alergie la nuci — tavă separată" style="height:46px;font-size:16px">
+</label>
+
+<sc-if value="{{ formErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 16px;font-size:14px">{{ formErr }}</div>
+</sc-if>
+
+<div data-adm="modalfoot" style="display:flex;align-items:center;gap:10px;margin-top:4px">
+<sc-if value="{{ canDelete }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onDeleteFromForm }}" style="height:48px;font-size:15px;color:var(--h-danger)">Șterge comanda</button>
+</sc-if>
+<button data-adm="btncancel" type="button" class="h-btn h-btn--secondary" onClick="{{ onCancel }}" style="margin-left:auto;height:48px;font-size:15px">Anulează</button>
+<button data-adm="btnsave" type="button" class="h-btn h-btn--primary" onClick="{{ onSave }}" disabled="{{ saveOff }}" style="height:48px;font-size:16px;min-width:190px">{{ saveLabel }}</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ peekOpen }}" hint-placeholder-val="{{ false }}">
+<div data-adm="modalwrap" style="position:fixed;inset:0;background:rgba(28,18,11,.55);display:flex;align-items:center;justify-content:center;padding:28px;z-index:45;animation:pf-fade .2s var(--h-ease-out)" onClick="{{ onPeekClose }}">
+<div data-adm="modalcard" class="h-card" style="width:520px;max-height:86vh;overflow-y:auto;padding:24px 26px;border-radius:22px;display:flex;flex-direction:column;gap:16px;animation:pf-pop .28s var(--h-ease-spring)" onClick="{{ stop }}">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<h2 class="h-h3" style="margin:0;font-size:21px">{{ peek.cust }}</h2>
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ peek.ref }} · {{ peek.when }}</span>
+</div>
+<button data-adm="modalclose" type="button" class="h-btn h-btn--ghost" onClick="{{ onPeekClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span class="{{ peek.chanCls }}" style="font-size:12px">{{ peek.chan }}</span>
+<span class="{{ peek.statusCls }}" style="font-size:12px">{{ peek.status }}</span>
+<sc-if value="{{ peek.urgent }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger" style="font-size:12px">Urgent</span>
+</sc-if>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ peek.items }}" as="it" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk)">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:22px;font-weight:700;min-width:44px;text-align:right">{{ it.q }}</span>
+<span style="flex:1;font-size:17px;line-height:1.35">{{ it.n }}</span>
+</div>
+</sc-for>
+<div style="display:flex;align-items:center;gap:14px;padding:4px 14px 0">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:22px;font-weight:700;min-width:44px;text-align:right">{{ peek.qty }}</span>
+<span style="flex:1;font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">bucăți în total</span>
+</div>
+</div>
+
+<sc-if value="{{ peek.note }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:14px;padding:12px 14px;font-size:15px">{{ peek.note }}</div>
+</sc-if>
+<sc-if value="{{ peek.addr }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;color:var(--h-fg-muted)">Livrare: {{ peek.addr }}</p>
+</sc-if>
+
+<div data-adm="modalfoot" style="display:flex;align-items:center;gap:10px;margin-top:2px">
+<button data-adm="btncancel" type="button" class="h-btn h-btn--secondary" onClick="{{ onPeekClose }}" style="margin-left:auto;height:48px;font-size:15px">Închide</button>
+<button data-adm="btnsave" type="button" class="h-btn h-btn--primary" onClick="{{ onPeekEdit }}" style="height:48px;font-size:15px;min-width:170px">Editează comanda</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
+<div data-adm="modalwrap" style="position:fixed;inset:0;background:rgba(28,18,11,.55);display:flex;align-items:center;justify-content:center;padding:28px;z-index:50;animation:pf-fade .2s var(--h-ease-out)">
+<div data-adm="modalcard" class="h-card" style="width:470px;padding:26px 28px;border-radius:22px;display:flex;flex-direction:column;gap:14px;animation:pf-pop .28s var(--h-ease-spring)">
+<h2 class="h-h3" style="margin:0;font-size:21px">Anulezi comanda {{ confirmRef }}?</h2>
+<p style="margin:0;font-size:15px;color:var(--h-fg-muted);text-wrap:pretty">{{ confirmCust }} · {{ confirmWhen }}. Dispare de pe panoul din laborator și de pe ruta șoferului, dar rămâne în registru, marcată „Anulată”.</p>
+<div style="display:flex;gap:10px;margin-top:6px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onConfirmCancel }}" style="flex:1;height:48px;font-size:15px">Păstrează</button>
+<button type="button" class="h-btn h-btn--danger" onClick="{{ onConfirmDelete }}" style="flex:1;height:48px;font-size:15px">Anulează comanda</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+// Catalogul, ca să putem trimite serverului productId când personalul
+// introduce o comandă direct din panou.
+let CATALOG = [];
+gp.get('/products').then((r) => { CATALOG = r.products || []; }).catch(() => {});
+/**
+ * Numele scris în panou, potrivit cu un produs din catalog.
+ *
+ * Potrivirea era „conține": „Croissant" prindea primul croissant din listă,
+ * deci „Croissant cu ciocolată" putea ajunge „Croissant simplu", la alt preț,
+ * fără niciun semn. Iar un nume care nu prindea nimic făcea linia să dispară
+ * în tăcere din comandă — clientul primea mai puțin decât a cerut.
+ *
+ * Acum potrivirea e exactă: se ignoră doar spațiile, literele mari și
+ * diacriticele („Strudel" găsește „Ștrudel"). Ce nu se potrivește nu se
+ * ghicește: `save()` refuză și spune care nume nu există în catalog.
+ */
+const fara = (s) => String(s).trim().toLowerCase()
+  .normalize('NFD').replace(/\p{M}/gu, '')
+  .replace(/\s+/g, ' ');
+const productIdByName = (name) => {
+  const n = fara(name);
+  if (!n) return null;
+  const hit = CATALOG.find((p) => fara(p.name) === n);
+  return hit ? hit.id : null;
+};
+
+// Panoul lucrează cu data întreagă („2026-09-10"), nu cu ziua din lună.
+//
+// Ziua din lună era o scurtătură care ținea doar cât timp toate comenzile
+// cădeau în aceeași lună. Din ea ieșeau cinci greșeli deodată: filtrul de zi
+// amesteca „10 august" cu „10 septembrie", „Comenzi azi" număra și comenzi din
+// alte luni, ordinea opririlor se salva pe altă dată, iar o comandă veche
+// deschisă și salvată din nou sărea în viitor, fiindcă ziua ei era ghicită
+// înapoi alegând luna cea mai apropiată de azi.
+//
+// Data unei comenzi vine de la server; aici doar o afișăm.
+const MON_S = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "noi", "dec"];
+const DOW_S = ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sâm"];
+const fmtDay = (iso) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ""));
+  if (!m) return String(iso || "");
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  return DOW_S[d.getDay()] + " " + Number(m[3]) + " " + MON_S[Number(m[2]) - 1];
+};
+
+const KEY = "gp-admin-orders-v1";
+const QKEY = "gp-requests-v1";
+const LKEY = "gp-log-v1";
+// Jurnalul îl scrie serverul, la fiecare operație, în tabelul audit_log.
+// Varianta locală înregistra doar ce făcea browserul acesta — adică exact
+// ce NU trebuie să fie un jurnal. Păstrăm funcția ca să nu atingem zecile de
+// apeluri din pagină, dar nu mai scrie nimic.
+const logAct = () => {};
+
+const authRole = (a) => (a && a.role) || "";
+const isAdmin = (a) => authRole(a) === "admin";
+const readAuth = () => null;   // sesiunea vine de la server, prin gp.me()
+// Punctul de plecare vine din Setări, nu din cod: depozitul se poate muta,
+// iar adresa din prototip nici măcar nu era a lui.
+const HQ_OF = () => gp.hq();
+// Zonele și punctele lor de pe hartă vin din Setări. Erau scrise în cod, în
+// trei pagini deodată: o zonă adăugată din panou primea în tăcere coordonatele
+// unei zone inventate în prototip, iar kilometrii de pe rută ieșeau greșiți
+// fără niciun semn.
+const ZONES_OF = () => (gp.__lists && gp.__lists.zones) || [];
+// Fereastra de zile: azi și următoarele șase. Prototipul le avea scrise în cod
+// („Mie 26 aug”), deci filtrul de zi ar fi rămas blocat în trecut la câteva
+// zile după publicare și n-ar mai fi găsit nicio comandă.
+let DAYS = gp.days(7).map(d => ({ v: d.iso, l: d.label }));
+let TODAY = DAYS[0].v;
+// Fereastra se calcula o singură dată, la deschiderea paginii. Calculatorul din
+// birou rămâne însă cu panoul deschis peste noapte, iar sesiunea ține zile la
+// rând: dimineața următoare „+ Comandă nouă" pornea pe ziua de ieri, comanda se
+// scria în trecut, laboratorul n-o mai vedea în fereastra lui și nu se cocea.
+// Tot de aici veneau „Comenzi azi" care număra ziua de ieri și vizualizarea
+// Rută pornită pe o zi trecută. Ca în Panou Laborator, zilele se recalculează
+// cât timp pagina stă deschisă.
+const refreshDays = () => {
+  DAYS = gp.days(7).map(d => ({ v: d.iso, l: d.label }));
+  TODAY = DAYS[0].v;
+};
+// Intervalele și modurile de onorare se citesc din Setări la fiecare randare.
+// Erau scrise aici: „06:00" nu exista pe server, deci comanda se refuza cu 422
+// după ce omul o completase, iar un mod redenumit din Setări făcea imposibilă
+// salvarea oricărei comenzi. Lista din cod rămâne doar ca plasă de siguranță,
+// pentru cazul în care `/lists` nu s-a încărcat încă.
+const SLOTS_OF = () => { const l = gp.slots(); return l.length ? l : ["08:00"]; };
+const CHANS_OF = () => { const l = gp.fulfillments(); return l.length ? l : ["Livrare"]; };
+const defaultSlot = () => SLOTS_OF()[0];
+const defaultChan = () => (CHANS_OF().indexOf("Livrare") >= 0 ? "Livrare" : CHANS_OF()[0]);
+// Zona implicită era „Centru", scrisă în cod. Zonele vin din Setări și acolo
+// nu există niciun „Centru": comanda se salva cu o zonă necunoscută, iar
+// oprirea ei ateriza pe hartă peste depozit, fiindcă `zonePoint` nu găsea
+// coordonate și cădea pe punctul de plecare.
+//
+// Nici prima zonă din listă nu e un implicit onest — ar pune tot ce se
+// introduce la telefon în Sectorul 1. Formularul pornește fără zonă și cere
+// una explicit când comanda se livrează.
+const defaultZone = () => "";
+// Culoarea insignei de mod de onorare.
+//
+// Era o hartă cu trei nume scrise în cod — „Ridicare/Livrare/Angro" — într-o
+// aplicație în care modurile de onorare se editează din Setări: un mod nou,
+// legitim, cădea pe insigna neutră și rămânea gri pe vecie. Acum culoarea vine
+// din aceeași listă după care serverul decide ce urcă în mașină
+// („moduri fără mașină”), deci spune ceva adevărat și despre un mod adăugat
+// ieri: miere = clientul vine după marfă, accent = pleacă cu duba.
+//
+// Fără lista de la server nu ghicim. Insigna neutră spune „nu știu"; una
+// colorată ar spune „știu" și ar minți la fiecare încărcare mai lentă.
+const CH = (chan) => {
+  const ridicare = gp.pickupFulfillments();
+  if (!chan || !ridicare.length) return "h-badge";
+  return ridicare.indexOf(chan) >= 0 ? "h-badge h-badge--honey" : "h-badge h-badge--accent";
+};
+const ST = {
+  "În așteptare": "h-badge", "La dospit": "h-badge", "În cuptor": "h-badge h-badge--warning",
+  "La ambalare": "h-badge h-badge--success", "Predată": "h-badge h-badge--solid"
+};
+
+class Component extends DCLogic {
+  state = {
+    orders: [], view: "comenzi", search: "", fDay: "toate", fChan: "Toate", fStatus: "Toate",
+    form: null, confirm: null, msg: "", formErr: "", peek: null,
+    rDay: TODAY, seq: {}, routeMsg: "", menu: false, requests: [], qf: "nou",
+    // Autentificarea nu mai stă aici. Pagina are un singur lucru de făcut cu
+    // ea: să întrebe serverul cine ești și, dacă nu ești nimeni, să te trimită
+    // la `Intrare.dc.html` cu urma de întoarcere.
+    // offline — serverul n-a răspuns deloc. Atunci NU trimitem pe nimeni la
+    // autentificare: acolo l-ar aștepta același server mut, iar omul ar crede
+    // că i-a expirat sesiunea.
+    auth: readAuth(), offline: "",
+    // Cât ține cererea de salvare. Fără ea, butonul rămâne aprins între
+    // apăsare și răspuns, iar al doilea clic pleacă tot spre server.
+    saving: false
+  };
+
+  componentDidMount() {
+    // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
+    // dacă le redenumești din panou, pagina trebuie să afle de la server.
+    gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    document.documentElement.setAttribute("data-theme", "light");
+    this.__gpBack = () => {
+      if (this.__gpSkip) { this.__gpSkip = false; return; }
+      const st = this.state || {};
+      if (st.menu || st.form || st.peek || st.confirm) this.setState({ menu: false, form: null, peek: null, confirm: null, formErr: "" });
+    };
+    window.addEventListener("popstate", this.__gpBack);
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    this.intra();
+  }
+
+  /**
+   * Cine ești, și abia apoi ce ai de lucru.
+   *
+   * Ordinea asta e reparația, nu un amănunt. `pullRequests()` pleca de aici
+   * necondiționat, ÎNAINTE ca `me()` să apuce să spună dacă există sesiune:
+   * lua 401 și, din `catch`, trimitea omul la pagina de intrare. Pagina de
+   * administrare își avea pe atunci propriul formular de autentificare, care
+   * apuca să se deseneze — și dispărea sub degete o clipă mai târziu, împins
+   * de o cerere pornită înaintea lui. Din afară arăta ca o pagină care te
+   * bagă înăuntru și te dă imediat afară.
+   *
+   * Formularul acela a dispărut cu totul: autentificarea e într-un singur loc.
+   * Aici rămâne o singură întrebare, pusă o dată, înaintea oricărei alteia.
+   */
+  intra() {
+    this.setState({ offline: "" });
+    return gp.requireUser()
+      .then((user) => {
+        // Fără sesiune, requireUser a plecat deja spre pagina de intrare.
+        if (!user) return;
+        this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
+        // Clientul are cont adevărat, doar că nu pe ușa asta: îi arătăm
+        // ecranul care i-o spune, nu o pagină goală.
+        if (user.role === "client") return;
+        this.porneste();
+        return Promise.all([this.pullOrders(), this.pullRequests()]);
+      })
+      .catch((e) => {
+        this.setState({
+          offline: (e && e.message) || "Serverul nu răspunde. Verifică legătura la internet."
+        });
+      });
+  }
+
+  /** Ordinea manuală a opririlor, reconstruită din comenzile venite de la server. */
+  seqFromOrders(list) {
+    const byDay = {};
+    list.filter(o => o.routeSeq !== null && o.routeSeq !== undefined)
+      .slice()
+      .sort((a, b) => a.routeSeq - b.routeSeq)
+      .forEach((o) => { (byDay[o.date] || (byDay[o.date] = [])).push(o.id); });
+    return byDay;
+  }
+
+  /**
+   * Cererile clienților, de pe server.
+   *
+   * Aici se vede rostul migrării: o cerere trimisă de pe telefonul clientului
+   * ajunge în lista asta, pe orice calculator. Înainte, cererea rămânea în
+   * browserul care o crease și nu o vedea nimeni.
+   */
+  pullRequests() {
+    return gp.get('/requests')
+      .then((r) => {
+        const list = (r.requests || []).map(gp.toPageRequest);
+        const next = JSON.stringify(list);
+        if (next !== this.__reqSeen) { this.__reqSeen = next; this.setState({ requests: list }); }
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else console.warn('[gp] nu am putut aduce cererile:', e.message);
+      });
+  }
+
+  /** Comenzile confirmate, de pe server. */
+  pullOrders() {
+    return gp.get('/orders')
+      .then((r) => {
+        const list = (r.orders || []).map(gp.toPageOrder);
+        const next = JSON.stringify(list);
+        if (next !== this.__ordSeen) {
+          this.__ordSeen = next;
+          this.setState({ orders: list, seq: this.seqFromOrders(list) });
+        }
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else console.warn('[gp] nu am putut aduce comenzile:', e.message);
+      });
+  }
+
+  /**
+   * Bătaia de patru secunde a panoului.
+   *
+   * Aducea doar cererile: comenzile rămâneau înghețate la instantaneul de la
+   * deschiderea paginii. Doi oameni care lucrează în același timp vedeau
+   * lucruri diferite — unul muta comanda mai departe, celălalt o avea încă „În
+   * așteptare" pe ecran — și cel cu ecranul vechi o trăgea înapoi la salvare,
+   * fără să știe. Ce se vede trebuie să vină de la server, ca în Panou
+   * Laborator.
+   *
+   * Formularul deschis nu e atins: comenzile proaspete intră în `state.orders`,
+   * iar ce a tastat omul trăiește separat, în `state.form`.
+   */
+  tick() {
+    this.treziZiua();
+    this.pullRequests();
+    this.pullOrders();
+  }
+
+  /**
+   * Reîmprospătarea pornește abia după ce se știe cine ești.
+   *
+   * Ceasul de 4 secunde și ascultătorul dintre file cereau comenzi și cereri
+   * necondiționat, din `componentDidMount`. Pentru cine n-are sesiune era
+   * aceeași cursă care stricase pagina: o cerere plecată înaintea răspunsului
+   * la „cine ești". Pentru un client oprit la ecranul de refuz erau cereri
+   * duse degeaba, din patru în patru secunde, în spatele unui ecran care
+   * tocmai îi spusese că n-are ce căuta aici.
+   *
+   * Se poate chema de mai multe ori — butonul „Încearcă din nou" trece pe
+   * aici — deci nu se pun două ceasuri unul peste altul.
+   */
+  porneste() {
+    if (this.reqTimer) return;
+    this.reqTimer = setInterval(() => this.tick(), 4000);
+    this.onReqStore = (e) => { if (!e || !e.key || e.key === QKEY) this.pullRequests(); };
+    window.addEventListener("storage", this.onReqStore);
+  }
+
+  /**
+   * Trecerea în ziua nouă, pentru panoul lăsat deschis peste noapte.
+   *
+   * Ziua aleasă în filtru și în Rută se păstrează dacă mai încape în fereastra
+   * nouă: cine se uita la comenzile de poimâine nu trebuie mutat pe altă listă
+   * fără să fi atins nimic. Formularul deschis rămâne cum e — ziua din el a
+   * ales-o omul, iar `dayOpts` știe să afișeze și o zi din afara ferestrei.
+   */
+  treziZiua() {
+    if (gp.today() === TODAY) return;
+    refreshDays();
+    const inFereastra = (v) => DAYS.some(d => d.v === v);
+    const S = this.state;
+    const patch = {};
+    if (!inFereastra(S.rDay)) patch.rDay = TODAY;
+    if (S.fDay !== "toate" && !inFereastra(S.fDay)) patch.fDay = "toate";
+    // Chiar dacă nu se schimbă nicio alegere, etichetele („Sâm 29 aug") și
+    // numărătoarea „Comenzi azi" se recalculează abia la următoarea randare.
+    if (Object.keys(patch).length) this.setState(patch);
+    else this.forceUpdate();
+  }
+
+  /**
+   * Cantitatea scrisă în formular, ca număr.
+   *
+   * Întoarce `null` pentru orice nu se poate citi ca o cantitate reală: câmp
+   * gol, spațiu, „doua", „0", un număr negativ. Înainte se scria
+   * `parseInt(i.q, 10) || 1`, adică toate astea deveneau în tăcere o bucată:
+   * cine ștergea „12" ca să scrie numărul nou și era întrerupt salva o comandă
+   * de un croasant, cu alertă verde de reușită. Serverul chiar refuză
+   * cantitățile ≤ 0 (api/lib/orders.php, `bad_qty`), dar nu apuca să le vadă.
+   */
+  citesteCantitate(v) {
+    const t = String(v == null ? "" : v).trim().replace(",", ".");
+    // Zecimalele sunt permise fiindcă baza le păstrează (DECIMAL(10,2)) și o
+    // comandă veche trebuie să se poată salva mai departe; ce nu e număr,
+    // sau nu e pozitiv, se refuză.
+    if (!/^\d+(?:\.\d{1,2})?$/.test(t)) return null;
+    const n = parseFloat(t);
+    if (!(n > 0) || n > 10000) return null;
+    return n;
+  }
+
+  /**
+   * Comanda venită de la server, în exact forma trimisă înapoi la salvare.
+   * E punctul de reper al formularului: ce nu diferă de ea nu se mai trimite.
+   */
+  antetDin(o) {
+    return {
+      customerName: o.cust || "", phone: o.phone || "", address: o.addr || "",
+      zone: o.zone || "", day: o.date, slot: o.slot || "", fulfillment: o.chan,
+      notes: o.note || "", urgent: !!o.urgent, timed: !!o.timed,
+      ref: (o.ref || "").trim(), status: o.status,
+      items: (o.items || []).map(i => ({
+        productId: i.productId == null ? null : i.productId,
+        qty: this.citesteCantitate(i.q),
+        variant: i.variant === "congelat" ? "congelat" : "copt"
+      }))
+    };
+  }
+
+  /**
+   * Ce s-a schimbat în formular față de comanda de la deschidere.
+   *
+   * `PATCH /orders/{id}` scrie doar câmpurile primite, dar formularul le
+   * trimitea pe toate — inclusiv etapa și pozițiile, din instantaneul de pe
+   * ecranul celui care salvează. Cine deschidea comanda dimineața și o salva la
+   * prânz doar ca să corecteze telefonul îi rescria și etapa cu valoarea veche:
+   * comanda scoasă din cuptor sărea înapoi la „În așteptare", iar în laborator
+   * cardul se întorcea singur. Serverul nu are control de versiune (nicio
+   * verificare de concurență în api/routes/orders.php), deci grija stă aici:
+   * ce n-a atins omul nu pleacă și rămâne cum l-a lăsat colegul.
+   */
+  doarSchimbate(nou, baza) {
+    if (!baza) return Object.assign({}, nou);
+    const acelasi = (a, b) =>
+      ((a && typeof a === "object") || (b && typeof b === "object"))
+        ? JSON.stringify(a) === JSON.stringify(b)
+        : a === b;
+    const out = {};
+    Object.keys(nou).forEach((k) => { if (!acelasi(nou[k], baza[k])) out[k] = nou[k]; });
+    return out;
+  }
+
+  pos(o) {
+    const z = gp.zonePoint(o.zone);
+    return { lat: o.lat || z.lat, lng: o.lng || z.lng };
+  }
+
+  km(a, b) {
+    const R = 6371, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+    const la = a.lat * Math.PI / 180, lb = b.lat * Math.PI / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(la) * Math.cos(lb) * Math.sin(dLng / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(h)) * 1.35;
+  }
+
+  legs(list) {
+    let prev = HQ_OF(), total = 0;
+    const out = list.map(o => {
+      const p = this.pos(o), d = this.km(prev, p);
+      prev = p; total += d;
+      return d;
+    });
+    return { legs: out, total };
+  }
+
+  stopsFor(day) {
+    // Comenzile anulate nu intră în rută. Serverul le scoate oricum din ce
+    // primește șoferul, deci fără filtrul ăsta administrarea ar planifica
+    // opriri pe care șoferul nu le vede — și ar număra altfel decât el.
+    const all = this.state.orders.filter(o =>
+      o.chan === "Livrare" && o.date === day && o.status !== gp.cancelled());
+    const order = this.state.seq[day] || [];
+    const rank = {};
+    order.forEach((id, i) => { rank[id] = i; });
+    return all.slice().sort((a, b) => {
+      const ra = rank[a.id], rb = rank[b.id];
+      if (ra !== undefined && rb !== undefined) return ra - rb;
+      if (ra !== undefined) return -1;
+      if (rb !== undefined) return 1;
+      return a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : 0;
+    });
+  }
+
+  /**
+   * Ordinea opririlor, salvată pe server.
+   *
+   * Înainte se scria în localStorage, adică rămânea în browserul care a
+   * stabilit-o. Șoferul deschide ruta pe telefonul lui, deci nu vedea nimic —
+   * cu toate că pagina anunța „Șoferul o vede imediat”.
+   */
+  writeSeq(day, list, msg) {
+    const ids = list.map(o => o.id);
+    const seq = Object.assign({}, this.state.seq, { [day]: ids });
+    this.setState({ seq, routeMsg: msg || "" });
+    // `day` e data întreagă, cea a comenzilor din listă. Înainte era ziua din
+    // lună, iar data pentru server se ghicea alegând luna cea mai apropiată:
+    // ordinea stabilită pentru 10 septembrie ajungea salvată pe 10 august și
+    // ștergea, cu `route_seq = NULL`, ordinea zilei aceleia.
+    gp.setRouteOrder(day, ids)
+      .then(() => this.pullOrders())
+      .catch((e) => this.setState({ routeMsg: "Ordinea nu a putut fi salvată: " + e.message }));
+  }
+
+  optimize(day) {
+    const list = this.stopsFor(day);
+    if (list.length < 3) return this.setState({ routeMsg: "Prea puține opriri ca să merite optimizat." });
+    const before = this.legs(list).total;
+    const pool = list.slice();
+    const out = [];
+    let cur = HQ_OF();
+    while (pool.length) {
+      let bi = 0, bd = Infinity;
+      pool.forEach((o, i) => { const d = this.km(cur, this.pos(o)); if (d < bd) { bd = d; bi = i; } });
+      cur = this.pos(pool[bi]);
+      out.push(pool.splice(bi, 1)[0]);
+    }
+    let improved = true;
+    while (improved) {
+      improved = false;
+      for (let i = 0; i < out.length - 1; i++) {
+        for (let j = i + 1; j < out.length; j++) {
+          const cand = out.slice(0, i).concat(out.slice(i, j + 1).reverse(), out.slice(j + 1));
+          if (this.legs(cand).total < this.legs(out).total - 0.01) { out.length = 0; cand.forEach(x => out.push(x)); improved = true; }
+        }
+      }
+    }
+    const after = this.legs(out).total;
+    const saved = before - after;
+    this.writeSeq(day, out, saved > 0.15
+      ? "Rută optimizată: " + before.toFixed(1) + " km → " + after.toFixed(1) + " km (−" + saved.toFixed(1) + " km)."
+      : "Ordinea actuală era deja cea mai scurtă (" + after.toFixed(1) + " km).");
+  }
+
+  /** Închide formularul și reîncarcă din sursa de adevăr: serverul. */
+  commit(msg) {
+    this.__saving = false;
+    this.setState({ msg: msg || "", form: null, confirm: null, formErr: "", saving: false });
+    this.__ordSeen = null;
+    this.__reqSeen = null;
+    return Promise.all([this.pullOrders(), this.pullRequests()]);
+  }
+
+  /** Afișează eroarea venită de la server, fără să închidă formularul. */
+  fail(e) {
+    this.__saving = false;
+    this.setState({ formErr: e.message || 'Operația nu a reușit.', saving: false });
+  }
+
+  qty(o) { return o.items.reduce((a, i) => a + gp.qty(i.q), 0); }
+
+  nextRef(orders) {
+    const nums = orders.map(o => parseInt(String(o.ref).replace(/\D/g, ""), 10) || 0);
+    return "#" + (Math.max(1041, ...nums) + 1);
+  }
+
+  __gpSync() {
+    const st = this.state || {};
+    const now = !!(st.menu || st.form || st.peek || st.confirm);
+    if (now === this.__gpOvWas) return;
+    this.__gpOvWas = now;
+    try {
+      if (now) history.pushState({ gpOv: 1 }, "");
+      else if (history.state && history.state.gpOv) { this.__gpSkip = true; history.back(); }
+    } catch (e) {}
+  }
+
+  renderVals() {
+    this.__gpSync();
+    const S = this.state;
+    const set = (p) => this.setState(p);
+    // O comandă din afara ferestrei de șapte zile — una veche, sau una promisă
+    // peste două săptămâni — nu-și mai arată data brută: o scriem la fel ca pe
+    // celelalte, „Joi 10 sep".
+    const dayLabel = (v) => (DAYS.find(d => d.v === v) || { l: fmtDay(v) }).l;
+
+    const sorted = S.orders.slice().sort((a, b) => {
+      if (!!b.urgent !== !!a.urgent) return b.urgent ? 1 : -1;
+      // Sortăm după poziția zilei în fereastră, nu după numărul ei: la trecerea
+      // dintr-o lună în alta, „01” vine după „31”, nu înaintea lui.
+      const rk = (d) => { const i = DAYS.findIndex(x => x.v === d); return (i < 0 ? 99 : i) + 100; };
+      const ka = rk(a.date) + a.slot;
+      const kb = rk(b.date) + b.slot;
+      return ka < kb ? -1 : ka > kb ? 1 : 0;
+    });
+
+    const q = S.search.trim().toLowerCase();
+    const filtered = sorted.filter(o => {
+      if (S.fDay !== "toate" && o.date !== S.fDay) return false;
+      if (S.fChan !== "Toate" && o.chan !== S.fChan) return false;
+      if (S.fStatus !== "Toate" && o.status !== S.fStatus) return false;
+      if (!q) return true;
+      const hay = (o.ref + " " + o.cust + " " + o.items.map(i => i.n).join(" ")).toLowerCase();
+      return hay.indexOf(q) !== -1;
+    });
+
+    // Deschiderea sau închiderea unui formular stinge semaforul: dacă o cerere
+    // rămâne fără răspuns, panoul nu trebuie să rămână blocat până la
+    // reîncărcarea paginii.
+    const openFromReq = (r) => (this.__saving = false, this.__formBase = null, set({
+      view: "comenzi",
+      formErr: "", saving: false,
+      form: {
+        // Precompletat din cerere, exact cum a trimis-o clientul. Câmpurile
+        // rămân editabile: rostul acestui pas e ca administratorul să poată
+        // corecta ziua, intervalul și zona înainte de a promite comanda.
+        id: null, ref: "", cust: String(r.cust || "").trim(), chan: defaultChan(),
+        // Ziua cerută de client se păstrează așa cum a scris-o, chiar dacă e
+        // dincolo de fereastra de șapte zile. Înainte era înlocuită în tăcere
+        // cu ziua de azi — clientul cerea marfa pe 20 septembrie, comanda ieșea
+        // pe 29 august — iar din data completă se ținea doar ziua din lună,
+        // deci „10 septembrie" putea deveni „10 august".
+        day: r.date || TODAY,
+        slot: r.slot || defaultSlot(),
+        status: gp.statuses()[0] || "În așteptare", urgent: false, timed: false,
+        // Telefonul are câmpul lui. Îndesat în notă, ajungea pe bonul din
+        // laborator și nicăieri în comandă: șoferul nu-l găsea, iar la a doua
+        // salvare se dubla în text.
+        note: String(r.note || "").trim(),
+        phone: String(r.phone || "").trim(),
+        addr: r.addr || "", zone: r.zone || defaultZone(), fromReq: r.id,
+        variant: r.variant || "copt",
+        items: (r.items && r.items.length
+          ? r.items.map(i => ({
+              q: String(i.q), n: i.n,
+              variant: i.variant || r.variant || "copt",
+              productId: i.productId == null ? null : i.productId,
+              n0: i.n
+            }))
+          : [{ q: "1", n: "", variant: "copt", productId: null, n0: "" }])
+      }
+    }));
+
+    // Odată cu formularul se reține și comanda așa cum a venit de la server:
+    // la salvare se compară cu ea, ca să nu plece înapoi câmpuri neatinse.
+    const openForm = (o) => (this.__saving = false, this.__formBase = o ? this.antetDin(o) : null, set({
+      formErr: "", saving: false,
+      form: o
+        ? {
+            id: o.id, ref: o.ref, cust: o.cust, chan: o.chan, day: o.date, slot: o.slot,
+            status: o.status, urgent: !!o.urgent, timed: !!o.timed, note: o.note || "",
+            phone: o.phone || "", addr: o.addr || "", zone: o.zone || defaultZone(),
+            variant: o.variant || "copt",
+            items: o.items.map(i => ({
+              q: i.q, n: i.n,
+              variant: i.variant || o.variant || "copt",
+              productId: i.productId == null ? null : i.productId,
+              n0: i.n
+            }))
+          }
+        : {
+            id: null, ref: "", cust: "", chan: defaultChan(), day: TODAY, slot: defaultSlot(),
+            status: gp.statuses()[0] || "În așteptare", urgent: false, timed: false, note: "",
+            phone: "", addr: "", zone: defaultZone(), variant: "copt",
+            items: [{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]
+          }
+    }));
+
+    const setF = (patch) => set(s => ({ form: Object.assign({}, s.form, patch), formErr: "" }));
+    const setItem = (i, patch) => set(s => {
+      const items = s.form.items.slice();
+      items[i] = Object.assign({}, items[i], patch);
+      return { form: Object.assign({}, s.form, { items }), formErr: "" };
+    });
+
+    /**
+     * Salvează formularul — tot formularul.
+     *
+     * Aici stăteau trei greșeli care se vedeau abia mai târziu:
+     *
+     * 1. „Salvează modificările" trimitea doar starea, nota, ziua, intervalul,
+     *    zona și canalul. Clientul, telefonul, adresa, referința și pozițiile
+     *    rămâneau în bază așa cum erau, deși pe ecran apărea „a fost salvată".
+     * 2. Acceptarea unei cereri trimitea la fel de puțin: corecturile făcute în
+     *    formularul de acceptare — chiar rostul acelui pas — se pierdeau.
+     * 3. La comanda nouă, pozițiile al căror nume nu se găsea în catalog erau
+     *    aruncate în tăcere (`.filter(i => i.productId)`): se putea salva o
+     *    comandă cu jumătate din marfă, sau serverul o refuza pentru „comandă
+     *    goală" fără să spună care nume e de vină.
+     *
+     * Acum pozițiile se verifică înainte de trimitere, iar ce nu se potrivește
+     * oprește salvarea cu numele scris în clar.
+     */
+    const save = () => {
+      // O comandă se trimite o singură dată.
+      //
+      // Formularul se închide abia în `commit()`, adică după ce răspunde
+      // serverul. Pe internetul mobil al laboratorului asta înseamnă o
+      // secundă în care nu se întâmplă nimic vizibil, iar omul mai apasă o
+      // dată. La acceptarea unei cereri, al doilea clic făcea a doua comandă,
+      // cu alt număr, pentru aceeași cerere: laboratorul cocea de două ori,
+      // șoferul avea două opriri la aceeași adresă, iar greșeala se vedea
+      // abia la numărătoarea de seară. Tiparul e cel din Site Public și din
+      // Depozit: butonul se stinge și spune ce face.
+      //
+      // Semaforul stă pe instanță, nu în stare. `setState` nu schimbă starea
+      // pe loc — React o aplică la următoarea randare —, iar trei clicuri în
+      // aceeași sutime de secundă citesc toate aceeași stare veche: un semnal
+      // ținut doar în `S.saving` le-ar fi lăsat pe toate să treacă, deși
+      // butonul se stinge pe ecran. `saving` din stare rămâne doar pentru ce
+      // se vede.
+      if (this.__saving) return;
+      const f = S.form;
+      const items = f.items.filter(i => String(i.n).trim());
+      if (!String(f.cust).trim()) return set({ formErr: "Scrie numele clientului." });
+      if (!items.length) return set({ formErr: "Adaugă cel puțin o poziție cu nume de produs." });
+
+      if (!CATALOG.length) {
+        return set({ formErr: "Catalogul de produse nu s-a încărcat. Reîncarcă pagina și încearcă din nou." });
+      }
+      // O comandă de livrare fără zonă ajunge pe hartă peste depozit, fiindcă
+      // nu are coordonate. Mai bine se cere acum decât să iasă șoferul greșit.
+      if (f.chan === "Livrare" && !String(f.zone || "").trim()) {
+        return set({ formErr: "Alege zona: fără ea, oprirea nu apare corect pe ruta șoferului." });
+      }
+
+      // Produsul se ia din numele scris acum. `productId` adus odată cu comanda
+      // se folosește doar dacă numele n-a fost atins — altfel un produs
+      // redenumit în catalog ar bloca salvarea unei comenzi vechi, dar un nume
+      // schimbat de administrator ar fi ignorat în tăcere.
+      const linii = items.map(i => ({
+        productId: (i.productId && fara(i.n) === fara(i.n0 || ""))
+          ? i.productId
+          : productIdByName(i.n),
+        qty: this.citesteCantitate(i.q),
+        variant: i.variant === "congelat" ? "congelat" : "copt",
+        n: String(i.n).trim()
+      }));
+      // O cantitate pe care pagina n-o poate citi se refuză aici, cu numele
+      // poziției scris în clar. Înainte devenea tăcut o bucată și greșeala se
+      // vedea abia la livrare.
+      const cantitatiRele = linii.filter(i => i.qty === null).map(i => "„" + i.n + "”");
+      if (cantitatiRele.length) {
+        return set({
+          formErr: (cantitatiRele.length === 1 ? "Poziția " : "Pozițiile ") + cantitatiRele.join(", ")
+            + (cantitatiRele.length === 1 ? " nu are" : " nu au") + " o cantitate validă. "
+            + "Scrie un număr mai mare decât zero: un câmp gol sau „0” nu se mai salvează ca o bucată."
+        });
+      }
+      const gresite = linii.filter(i => !i.productId).map(i => "„" + i.n + "”");
+      if (gresite.length) {
+        return set({
+          formErr: (gresite.length === 1 ? "Produsul " : "Produsele ") + gresite.join(", ")
+            + (gresite.length === 1 ? " nu există" : " nu există") + " în catalog. "
+            + "Scrie numele exact ca în Produse, altfel poziția nu poate fi tarifată."
+        });
+      }
+      const trimise = linii.map(i => ({ productId: i.productId, qty: i.qty, variant: i.variant }));
+
+      // Ziua e deja data întreagă („2026-09-10"), venită de la server sau
+      // aleasă din listă. Nu se mai ghicește luna din ziua din lună.
+      const antet = {
+        customerName: f.cust.trim(), phone: (f.phone || '').trim(),
+        address: (f.addr || '').trim(), zone: f.zone || '',
+        day: f.day, slot: f.slot || '', fulfillment: f.chan,
+        notes: f.note.trim(), urgent: !!f.urgent, timed: !!f.timed
+      };
+
+      this.__saving = true;
+      set({ saving: true, formErr: "" });
+
+      if (f.id) {
+        // Modificarea unei comenzi existente: pleacă doar ce s-a schimbat față
+        // de comanda deschisă, ca să nu rescriem cu instantaneul nostru vechi
+        // ce a mutat între timp altcineva.
+        const schimbat = this.doarSchimbate(Object.assign({}, antet, {
+          ref: (f.ref || '').trim(), status: f.status, items: trimise
+        }), this.__formBase);
+        if (!Object.keys(schimbat).length) {
+          // Serverul refuză un PATCH gol („Nimic de modificat"), iar omul n-are
+          // ce afla din refuzul ăsta: închidem formularul și spunem pe față.
+          return this.commit("Comanda " + (f.ref || "") + " nu avea nimic de schimbat.");
+        }
+        gp.patch('/orders/' + f.id, schimbat)
+          .then(() => this.commit("Comanda " + (f.ref || "") + " a fost salvată."))
+          .catch((e) => this.fail(e));
+
+      } else if (f.fromReq) {
+        // Acceptarea unei cereri: serverul o transformă în comandă, îi dă
+        // număr și păstrează legătura între ele.
+        gp.post('/requests/' + f.fromReq + '/accept', Object.assign({}, antet, { items: trimise }))
+          .then((r) => this.commit("Cerere acceptată → " + (r.order ? r.order.ref : "") + " · " + f.cust.trim() + "."))
+          .catch((e) => this.fail(e));
+
+      } else {
+        // Comandă introdusă direct de personal (telefon, ghișeu).
+        gp.post('/orders', Object.assign({}, antet, { channel: 'panou', items: trimise }))
+          .then((r) => this.commit("Comandă nouă adăugată: " + (r.order ? r.order.ref : "") + " · " + f.cust.trim() + "."))
+          .catch((e) => this.fail(e));
+      }
+    };
+
+    const toggleUrgent = (o) => {
+      const next = !o.urgent;
+      gp.patch('/orders/' + o.id, { urgent: next })
+        .then(() => {
+          this.__ordSeen = null;
+          return this.pullOrders();
+        })
+        .then(() => this.setState({
+          msg: next
+            ? o.ref + " a fost marcată URGENT — apare prima în laborator."
+            : "Urgența a fost anulată pentru " + o.ref + "."
+        }))
+        .catch((e) => this.setState({ msg: e.message }));
+    };
+
+    const askDelete = (o) => set({ confirm: { id: o.id, ref: o.ref, cust: o.cust, when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : "") } });
+
+    const rows = filtered.map(o => ({
+      ref: o.ref, cust: o.cust, chan: o.chan, chanCls: CH(o.chan),
+      when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : ""),
+      itemsLine: o.items.map(i => i.q + " " + i.n).join(" · "),
+      qty: gp.qtyLabel(this.qty(o)), status: o.status, statusCls: ST[o.status] || "h-badge",
+      note: o.note || "",
+      urgent: !!o.urgent,
+      rowBg: o.urgent ? "var(--h-jam-soft)" : "transparent",
+      cardBg: o.urgent ? "var(--h-jam-soft)" : "var(--h-bg-surface)",
+      urgentLabel: o.urgent ? "Anulează urgența" : "Urgentează",
+      urgentShort: o.urgent ? "Nu e urgent" : "Urgentează",
+      urgentCls: o.urgent ? "h-btn h-btn--danger h-btn--sm" : "h-btn h-btn--honey h-btn--sm",
+      onUrgent: () => toggleUrgent(o),
+      onEdit: () => openForm(o),
+      onDelete: () => askDelete(o),
+      onPeek: () => set({ peek: o.id })
+    }));
+
+    const today = S.orders.filter(o => o.date === TODAY);
+    const openCount = S.orders.filter(o => o.status !== gp.done()).length;
+    // „Total 7 zile" număra tot ce vine de la server (până la 500 de comenzi,
+    // fără fereastră de zile), deci arăta istoricul întreg sub o etichetă care
+    // promite o săptămână. Fereastra e chiar lista de zile din filtre.
+    const inSaptamana = new Set(DAYS.map(d => d.v));
+    const week = S.orders.filter(o => inSaptamana.has(o.date));
+    const prod = {};
+    S.orders.forEach(o => o.items.forEach(i => {
+      const k = i.n;
+      prod[k] = prod[k] || { n: k, qty: 0, orders: 0 };
+      prod[k].qty += gp.qty(i.q);
+      prod[k].orders += 1;
+    }));
+    const prodList = Object.keys(prod).map(k => prod[k]).sort((a, b) => b.qty - a.qty);
+    const maxQty = prodList.length ? prodList[0].qty : 1;
+
+    const stopList = this.stopsFor(S.rDay);
+    const lg = this.legs(stopList);
+    const rTotal = lg.total;
+    const SPEED = 22, SERVICE = 6;
+    const mins = (t) => parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3), 10);
+    const hhmm = (m) => {
+      const x = ((Math.round(m) % 1440) + 1440) % 1440;
+      return String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0");
+    };
+    const drive = (d) => d / SPEED * 60;
+    let clock = stopList.length ? mins(stopList[0].slot) - drive(lg.legs[0]) : 0;
+    const rDepart = stopList.length ? hhmm(clock) : "—";
+    let warnCount = 0;
+    const move = (i, dir) => {
+      const l = stopList.slice();
+      const j = i + dir;
+      if (j < 0 || j >= l.length) return;
+      const t = l[i]; l[i] = l[j]; l[j] = t;
+      this.writeSeq(S.rDay, l, "Ordine modificată manual — " + this.legs(l).total.toFixed(1) + " km. Șoferul o vede imediat.");
+    };
+    const stops = stopList.map((o, i) => {
+      clock += drive(lg.legs[i]);
+      const eta = hhmm(clock);
+      clock += SERVICE;
+      const late = mins(eta) > mins(o.slot) + 10;
+      const outOfOrder = i > 0 && o.slot < stopList[i - 1].slot;
+      if (late || outOfOrder) warnCount++;
+      return {
+        num: String(i + 1), ref: o.ref, cust: o.cust, slot: o.slot,
+        addr: (o.addr || "adresă necompletată") + (o.zone ? " · " + o.zone : ""),
+        itemsLine: o.items.map(it => it.q + " " + it.n).join(" · "),
+        qty: gp.qtyLabel(this.qty(o)), note: o.note || "",
+        status: o.status, statusCls: ST[o.status] || "h-badge",
+        urgent: !!o.urgent,
+        leg: lg.legs[i].toFixed(1) + " km", eta,
+        warn: late ? "Ajunge " + eta + ", promis " + o.slot : outOfOrder ? "Interval promis " + o.slot + ", mai devreme decât oprirea anterioară" : "",
+        warnOn: !!(late || outOfOrder),
+        cardBg: o.urgent ? "var(--h-jam-soft)" : "var(--h-bg-surface)",
+        upOff: i === 0, downOff: i === stopList.length - 1,
+        onUp: () => move(i, -1), onDown: () => move(i, 1),
+        onEdit: () => openForm(o)
+      };
+    });
+    const rDur = stopList.length ? Math.round(rTotal / SPEED * 60 + stopList.length * SERVICE) + " min" : "—";
+
+    const pts = [HQ_OF()].concat(stopList.map(o => this.pos(o)));
+    const lats = pts.map(p => p.lat), lngs = pts.map(p => p.lng);
+    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+    const minLng = Math.min(...lngs), maxLng = Math.max(...lngs);
+    const spL = Math.max(maxLat - minLat, 0.005), spG = Math.max(maxLng - minLng, 0.005);
+    const px = (p) => 8 + (p.lng - minLng) / spG * 84;
+    const py = (p) => 92 - (p.lat - minLat) / spL * 84;
+    const plot = pts.map((p, i) => ({
+      x: px(p).toFixed(2) + "%", y: py(p).toFixed(2) + "%",
+      label: i === 0 ? "L" : String(i),
+      isHq: i === 0,
+      bg: i === 0 ? "var(--h-cocoa-800)" : "var(--h-accent)",
+      fg: i === 0 ? "var(--h-cream-100)" : "var(--h-cocoa-800)",
+      title: i === 0 ? HQ_OF().label : stopList[i - 1].cust
+    }));
+    const plotLines = pts.slice(1).map((p, i) => ({
+      x1: px(pts[i]).toFixed(2), y1: py(pts[i]).toFixed(2),
+      x2: px(p).toFixed(2), y2: py(p).toFixed(2)
+    }));
+
+    const pk = S.peek ? S.orders.find(o => o.id === S.peek) : null;
+
+    const f = S.form || { ref: "", cust: "", chan: "Ridicare", day: TODAY, slot: "08:00", status: "În așteptare", note: "", items: [] };
+
+    const reqs = (S.requests || []).slice().sort((a, b) => b.at - a.at);
+    const newReq = reqs.filter(r => (r.status || "nou") === "nou");
+    const reqShown = reqs.filter(r => S.qf === "toate" || (r.status || "nou") === S.qf);
+    const reqTime = (ms) => {
+      const d = new Date(ms), p = (n) => (n < 10 ? "0" : "") + n;
+      return p(d.getDate()) + "." + p(d.getMonth() + 1) + " · " + p(d.getHours()) + ":" + p(d.getMinutes());
+    };
+    // Doar respingerea trece pe aici; acceptarea deschide formularul, fiindcă
+    // administratorul poate corecta ziua, intervalul și zona înainte de a
+    // promite comanda laboratorului.
+    const cineE = (r) => String(r.cust || "").trim() || String(r.phone || "").trim() || "vizitator";
+    const trimiteReq = (r, cale, msg) =>
+      gp.post('/requests/' + r.id + '/' + cale, {})
+        .then(() => {
+          this.__reqSeen = null;
+          return this.pullRequests();
+        })
+        .then(() => set({ msg: msg }))
+        .catch((e) => set({ msg: e.message }));
+
+    const rejectReq = (r) => trimiteReq(r, 'reject', "Cererea de la " + cineE(r) + " a fost refuzată.");
+    // Refuzul dat din greșeală se poate întoarce: serverul readuce cererea la
+    // „nouă" și o poți accepta normal. Înainte, butonul doar afișa un mesaj
+    // fără legătură și nu apela nimic — datele clientului rămâneau blocate.
+    const reopenReq = (r) => trimiteReq(r, 'reopen', "Cererea de la " + cineE(r) + " e din nou în așteptare.");
+
+    return {
+      menuOpen: S.menu,
+      onMenuOpen: () => set({ menu: true }),
+      onMenuClose: () => set({ menu: false }),
+      showFilters: S.view === "comenzi",
+      currentLabel: (S.view === "comenzi" ? "Comenzi" : S.view === "ruta" ? "Rută șofer" : S.view === "cereri" ? "Cereri de pe site · " + newReq.length + " noi" : "Produse cerute") +
+        (S.view === "comenzi"
+          ? " · " + (S.fDay === "toate" ? "toate zilele" : ((DAYS.find(d => d.v === S.fDay) || { l: S.fDay }).l)) +
+            (S.fChan === "Toate" ? "" : " · " + S.fChan) + (S.fStatus === "Toate" ? "" : " · " + S.fStatus)
+          : ""),
+      menuPages: [
+        { v: "comenzi", l: "Comenzi", c: String(S.orders.length) },
+        { v: "cereri", l: "Cereri de pe site", c: String(newReq.length) },
+        { v: "ruta", l: "Rută șofer", c: String(stops.length) },
+        { v: "produse", l: "Produse cerute", c: String(prodList.length) }
+      ].map(x => ({
+        label: x.l, count: x.c, mark: S.view === x.v ? "✓" : "",
+        bg: S.view === x.v ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
+        bd: S.view === x.v ? "var(--h-accent)" : "var(--h-line)",
+        onClick: () => set({ view: x.v, menu: false })
+      })),
+      menuDays: [{ v: "toate", l: "Toate zilele" }].concat(DAYS).map(d => ({
+        label: d.l, mark: S.fDay === d.v ? "✓" : "",
+        bg: S.fDay === d.v ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
+        bd: S.fDay === d.v ? "var(--h-accent)" : "var(--h-line)",
+        onClick: () => set({ fDay: d.v, menu: false })
+      })),
+      menuChans: ["Toate"].concat(CHANS_OF()).map(c => ({
+        label: c === "Toate" ? "Toate canalele" : c, mark: S.fChan === c ? "✓" : "",
+        bg: S.fChan === c ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
+        bd: S.fChan === c ? "var(--h-accent)" : "var(--h-line)",
+        onClick: () => set({ fChan: c, menu: false })
+      })),
+      menuStatuses: ["Toate"].concat(gp.statuses()).map(s => ({
+        label: s === "Toate" ? "Toate stările" : s, mark: S.fStatus === s ? "✓" : "",
+        bg: S.fStatus === s ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
+        bd: S.fStatus === s ? "var(--h-accent)" : "var(--h-line)",
+        onClick: () => set({ fStatus: s, menu: false })
+      })),
+      navItems: [
+        { label: "Comenzi", count: String(S.orders.length), bg: S.view === "comenzi" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "comenzi" }) },
+        { label: "Rută șofer", count: String(stops.length), bg: S.view === "ruta" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "ruta" }) },
+        { label: "Produse", count: String(prodList.length), bg: S.view === "produse" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "produse" }) },
+        { label: "Cereri de pe site", count: String(newReq.length), bg: S.view === "cereri" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "cereri" }) }
+      ],
+      isOrders: S.view === "comenzi",
+      isRequests: S.view === "cereri",
+      // Starea refuzului se numește „respinsa" în baza de date (ENUM-ul din
+      // order_requests) și așa vine de la server. Filtrul cerea „refuzata",
+      // adică o valoare care nu există: butonul arăta mereu 0.
+      reqFilters: [{ v: "nou", l: "Noi" }, { v: "acceptata", l: "Acceptate" }, { v: "respinsa", l: "Refuzate" }, { v: "toate", l: "Toate" }].map(x => ({
+        label: x.l,
+        count: String(x.v === "toate" ? reqs.length : reqs.filter(r => (r.status || "nou") === x.v).length),
+        cls: S.qf === x.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ qf: x.v })
+      })),
+      reqRows: reqShown.map(r => {
+        const st = r.status || "nou";
+        return {
+          id: r.id,
+          // Cardul citea câmpurile din prototip (`company`, `person`, `segment`,
+          // `wantWhen`), care nu mai există: cererea vine acum de la server, cu
+          // altă formă. Rezultatul era că FIECARE cerere apărea drept „Vizitator
+          // site", fără telefon și fără ziua cerută — adică fix datele de care e
+          // nevoie ca să o accepți.
+          company: r.cust || "Vizitator site",
+          person: [r.phone, r.email].filter(x => String(x || "").trim()).join(" · "),
+          when: reqTime(r.at),
+          segment: [gp.variantLabel(r.variant), r.zone, r.addr]
+            .filter(x => String(x || "").trim()).join(" · "),
+          msg: r.note || "",
+          items: (r.items || []).map(i => ({ q: String(i.q), n: i.n, meta: "" })),
+          wantLabel: r.date
+            ? "Vrea pe " + r.date.split("-").reverse().join(".") + (r.slot ? ", ora " + r.slot : "")
+            : "Cât de repede se poate",
+          noItems: !(r.items || []).length,
+          totals: (() => {
+            const it = r.items || [];
+            if (!it.length) return "";
+            const buc = it.reduce((n, i) => n + (Number(i.q) || 0), 0);
+            const lei = Number(r.total);
+            return [buc + (buc === 1 ? " bucată" : " bucăți"),
+                    isFinite(lei) && lei > 0 ? lei.toFixed(2).replace(".", ",") + " RON" : ""]
+              .filter(Boolean).join(" · ");
+          })(),
+          catalog: r.catalog ? "vrea catalogul PDF" : "",
+          status: st === "nou" ? "Nouă" : st === "acceptata" ? "Acceptată" + (r.ref ? " · " + r.ref : "") : "Refuzată",
+          statusCls: st === "nou" ? "h-badge h-badge--warning" : st === "acceptata" ? "h-badge h-badge--success" : "h-badge h-badge--danger",
+          cardBg: st === "nou" ? "var(--h-warning-soft)" : "var(--h-bg-surface)",
+          isNew: st === "nou",
+          notNew: st !== "nou",
+          // Doar un refuz se poate anula. O cerere acceptată a devenit deja
+          // comandă; readusă la „nouă" ar putea fi acceptată a doua oară.
+          isRejected: st === "respinsa",
+          onAccept: () => openFromReq(r),
+          // `r` e cererea de la server, nu rândul desenat: `company` și
+          // `person` sunt câmpuri din prototip și lipsesc, așa că mesajul
+          // spunea de fiecare dată „de la vizitator".
+          onReject: () => rejectReq(r),
+          onReopen: () => reopenReq(r)
+        };
+      }),
+      noReq: reqShown.length === 0,
+      reqEmptyLine: reqs.length === 0
+        ? "Nicio cerere încă. Când un client trimite formularul din site, apare aici."
+        : "Nicio cerere pe filtrul ales.",
+      isProducts: S.view === "produse",
+      isRoute: S.view === "ruta",
+      viewTitle: S.view === "comenzi" ? "Comenzi" : S.view === "ruta" ? "Rută șofer" : S.view === "cereri" ? "Cereri de pe site" : "Produse cerute",
+      reqSubUnused: "",
+      viewSub: S.view === "comenzi"
+        ? filtered.length + " din " + S.orders.length + " comenzi afișate · " + week.length + " în săptămâna curentă"
+        : S.view === "ruta"
+          ? stops.length + " opriri de livrare · ordinea de aici e ordinea din telefonul șoferului"
+          : S.view === "cereri"
+            ? (newReq.length
+                ? newReq.length + (newReq.length === 1 ? " cerere nouă de răspuns" : " cereri noi de răspuns") + " · " + reqs.length + " în total"
+                : reqs.length + (reqs.length === 1 ? " cerere în istoric" : " cereri în istoric") + " · niciuna nouă")
+            : prodList.length + " produse distincte în comenzile active",
+      search: S.search,
+      onSearch: (e) => set({ search: e.target.value }),
+      onNew: () => openForm(null),
+      msg: S.msg,
+      onMsgClose: () => set({ msg: "" }),
+
+      stats: [
+        { label: "Comenzi azi", value: String(today.length), hint: gp.qtyLabel(today.reduce((a, o) => a + this.qty(o), 0)) + " bucăți de făcut" },
+        { label: "Urgente", value: String(S.orders.filter(o => o.urgent && o.status !== gp.done()).length), hint: openCount + " comenzi în lucru" },
+        { label: "Total 7 zile", value: String(week.length), hint: gp.qtyLabel(week.reduce((a, o) => a + this.qty(o), 0)) + " bucăți" },
+        { label: "Livrări", value: String(S.orders.filter(o => o.chan === "Livrare").length), hint: S.orders.filter(o => o.chan === "Angro").length + " angro · " + S.orders.filter(o => o.chan === "Ridicare").length + " ridicări" }
+      ],
+
+      fDay: S.fDay,
+      onFDay: (e) => set({ fDay: e.target.value }),
+      dayFilterOpts: [{ v: "toate", l: "Toate zilele" }].concat(DAYS),
+      chanFilters: ["Toate"].concat(CHANS_OF()).map(c => ({
+        label: c, cls: c === S.fChan ? "h-btn h-btn--primary h-btn--sm" : "h-btn h-btn--secondary h-btn--sm",
+        onClick: () => set({ fChan: c })
+      })),
+      statusFilters: ["Toate"].concat(gp.statuses()).map(s => ({
+        label: s, cls: s === S.fStatus ? "h-btn h-btn--primary h-btn--sm" : "h-btn h-btn--ghost h-btn--sm",
+        onClick: () => set({ fStatus: s })
+      })),
+      onClearFilters: () => set({ fDay: "toate", fChan: "Toate", fStatus: "Toate", search: "" }),
+      rows,
+      noRows: rows.length === 0,
+
+      products: prodList.map(p => ({ n: p.n, qty: gp.qtyLabel(p.qty), orders: String(p.orders), pct: Math.round(p.qty / maxQty * 100) + "%" })),
+
+      routeDay: S.rDay,
+      routeDayOpts: DAYS.map(d => ({ v: d.v, l: d.l })),
+      onRouteDay: (e) => set({ rDay: e.target.value, routeMsg: "" }),
+      routeMsg: S.routeMsg,
+      onRouteMsgClose: () => set({ routeMsg: "" }),
+      onOptimize: () => this.optimize(S.rDay),
+      onByTime: () => {
+        const l = this.stopsFor(S.rDay).slice().sort((a, b) => a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : 0);
+        this.writeSeq(S.rDay, l, "Opriri puse în ordinea intervalelor promise (" + this.legs(l).total.toFixed(1) + " km).");
+      },
+      onResetRoute: () => {
+        const seq = Object.assign({}, S.seq);
+        delete seq[S.rDay];
+        set({ seq, routeMsg: "Ordinea manuală a fost ștearsă — revine la ordinea intervalelor." });
+        gp.setRouteOrder(S.rDay, [])
+          .then(() => this.pullOrders())
+          .catch((e) => set({ routeMsg: "Nu am putut șterge ordinea: " + e.message }));
+      },
+      stops, plot, plotLines,
+      routeCount: String(stops.length),
+      hasStops: stops.length > 0,
+      noStops: stops.length === 0,
+      routeTotal: rTotal.toFixed(1) + " km",
+      routeDur: rDur,
+      routeDepart: rDepart,
+      routeQty: gp.qtyLabel(stops.reduce((a, s) => a + gp.qty(s.qty), 0)),
+      routeWarn: warnCount ? warnCount + (warnCount === 1 ? " oprire iese din intervalul promis." : " opriri ies din intervalele promise.") : "",
+      routeManual: !!S.seq[S.rDay],
+
+      formOpen: !!S.form,
+      formTitle: S.form && S.form.id ? "Editează comanda " + S.form.ref : "Comandă nouă",
+      // Cât timp cererea e pe drum, butonul spune ce face și nu mai primește
+      // clicuri: altfel a doua apăsare trimite a doua comandă.
+      saveLabel: S.saving
+        ? "Se salvează…"
+        : (S.form && S.form.id ? "Salvează modificările" : "Adaugă comanda"),
+      saveOff: !!S.saving,
+      canDelete: !!(S.form && S.form.id),
+      formErr: S.formErr,
+      frm: {
+        ref: f.ref, cust: f.cust, phone: f.phone || "", day: f.day, slot: f.slot,
+        status: f.status, note: f.note,
+        // Zona implicită „Centru" nu există în lista din Setări: comanda pleca
+        // spre server cu o zonă pe care el o refuză, iar ruta o punea peste
+        // depozit. Gol înseamnă „fără zonă", ceea ce serverul acceptă.
+        addr: f.addr || "", zone: f.zone || "",
+        qtyTotal: gp.qtyLabel(f.items.reduce((a, i) => a + gp.qty(i.q), 0)),
+        items: f.items.map((it, i) => ({
+          q: it.q, n: it.n, variant: it.variant || "copt",
+          onQ: (e) => setItem(i, { q: e.target.value }),
+          onN: (e) => setItem(i, { n: e.target.value }),
+          onV: (e) => setItem(i, { variant: e.target.value }),
+          onDel: () => set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.filter((_, j) => j !== i) }) }))
+        }))
+      },
+      // Fiecare poziție își alege varianta: aceeași comandă poate cuprinde și
+      // marfă congelată, și marfă gata de servire, la prețurile lor.
+      variantOpts: [
+        { v: "copt", l: "Copt (gata de servit)" },
+        { v: "congelat", l: "Congelat (crud)" }
+      ],
+      frmTimedLabel: f.timed ? "Ora se afișează pe panouri" : "Doar ordinea (ora ascunsă)",
+      frmTimedCls: f.timed ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+      onToggleTimed: () => setF({ timed: !f.timed }),
+      frmUrgentLabel: f.urgent ? "Urgent — trece prima în laborator" : "Normal — după interval",
+      frmUrgentCls: f.urgent ? "h-btn h-btn--danger" : "h-btn h-btn--secondary",
+      onToggleUrgent: () => setF({ urgent: !f.urgent }),
+      chanOpts: CHANS_OF().map(c => ({
+        label: c, cls: f.chan === c ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => setF({ chan: c })
+      })),
+      // Lista arată șapte zile de azi înainte. O comandă mai veche sau o cerere
+      // pentru o dată mai îndepărtată nu se regăsea în listă, iar `<select>`
+      // afișa prima opțiune: deschideai comanda de acum două săptămâni, salvai
+      // fără să atingi ziua, și comanda sărea pe ziua de azi.
+      dayOpts: (DAYS.some(d => d.v === f.day) ? DAYS : [{ v: f.day, l: fmtDay(f.day) }].concat(DAYS))
+        .map(d => ({ v: d.v, l: d.l })),
+      // Același lucru pentru interval și stare: o valoare veche, scoasă între
+      // timp din Setări, trebuie să rămână vizibilă până e schimbată.
+      slotOpts: (SLOTS_OF().indexOf(f.slot) >= 0 || !f.slot ? SLOTS_OF() : [f.slot].concat(SLOTS_OF()))
+        .map(s => ({ v: s, l: s })),
+      statusOpts: (gp.statuses().indexOf(f.status) >= 0 ? gp.statuses() : [f.status].concat(gp.statuses()))
+        .map(s => ({ v: s, l: s })),
+      onCust: (e) => setF({ cust: e.target.value }),
+      onPhone: (e) => setF({ phone: e.target.value }),
+      onRef: (e) => setF({ ref: e.target.value }),
+      onDay: (e) => setF({ day: e.target.value }),
+      onSlot: (e) => setF({ slot: e.target.value }),
+      onStatus: (e) => setF({ status: e.target.value }),
+      onNote: (e) => setF({ note: e.target.value }),
+      onAddr: (e) => setF({ addr: e.target.value }),
+      onZone: (e) => setF({ zone: e.target.value }),
+      zoneOpts: [{ v: "", l: "— fără zonă —" }]
+        .concat((ZONES_OF().indexOf(f.zone) >= 0 || !f.zone ? ZONES_OF() : [f.zone].concat(ZONES_OF()))
+          .map(z => ({ v: z, l: z }))),
+      isDelivery: f.chan === "Livrare",
+      onAddItem: () => set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.concat([{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]) }) })),
+      onSave: save,
+      onCancel: () => { this.__saving = false; set({ form: null, formErr: "", saving: false }); },
+      onDeleteFromForm: () => {
+        const o = S.orders.find(x => x.id === S.form.id);
+        if (o) askDelete(o);
+      },
+
+      peekOpen: !!pk,
+      peek: {
+        ref: pk ? pk.ref : "", cust: pk ? pk.cust : "",
+        when: pk ? dayLabel(pk.date) + (pk.timed ? " · ora " + pk.slot : "") : "",
+        chan: pk ? pk.chan : "", chanCls: pk ? CH(pk.chan) : "h-badge",
+        status: pk ? pk.status : "", statusCls: pk ? (ST[pk.status] || "h-badge") : "h-badge",
+        urgent: !!(pk && pk.urgent), note: pk ? pk.note || "" : "",
+        addr: pk && pk.chan === "Livrare" ? (pk.addr || "adresă necompletată") + (pk.zone ? " · " + pk.zone : "") : "",
+        qty: pk ? gp.qtyLabel(this.qty(pk)) : "0",
+        items: pk ? pk.items.map(i => ({ q: i.q, n: i.n })) : []
+      },
+      stop: (e) => e.stopPropagation(),
+      onPeekClose: () => set({ peek: null }),
+      onPeekEdit: () => { set({ peek: null }); if (pk) openForm(pk); },
+
+      locked: !S.auth,
+      // Cât ține întrebarea către server, ecranul nu spune nici „autentifică-te",
+      // nici „n-ai voie": nu știm încă. O clipă de „se verifică" e mai cinstită
+      // decât un formular care apoi dispare singur.
+      lockedLine: S.offline ? "Administrare comenzi" : "Se verifică sesiunea…",
+      offline: S.offline,
+      onRetry: () => this.intra(),
+      denied: !!S.auth && !isAdmin(S.auth),
+      deniedClient: !!S.auth && authRole(S.auth) === "client",
+      deniedStaff: !!S.auth && authRole(S.auth) !== "client",
+      // Aceeași propoziție nu se potrivea amândurora. Clientul nu e angajat, iar
+      // „panourile de lucru” nu-i sunt nici măcar arătate: sub text îi apare butonul
+      // spre „Comanda mea”. Textul se desparte pe aceeași întrebare pe care o pun
+      // deja butoanele de dedesubt, ca ecranul să nu se contrazică singur.
+      deniedLine: !S.auth ? ""
+        : authRole(S.auth) === "client"
+          ? "Contul „" + S.auth.name + "” e cont de client: aici lucrează doar personalul. Comenzile tale le vezi în „Comanda mea”."
+          : "Contul „" + S.auth.name + "” e cont de angajat: nu are acces la comenzi, la conturi și la parole. Folosește panourile de lucru de mai jos.",
+      unlocked: !!S.auth && isAdmin(S.auth),
+      authName: S.auth ? S.auth.name : "",
+      onLogout: () => {
+        // Închide sesiunea și pe server și golește datele din pagină, ca ele
+        // să nu rămână vizibile pentru cine ajunge după la același calculator.
+        // Apoi pleacă la pagina de intrare: aici nu mai e nimic de făcut fără
+        // sesiune, iar un ecran gol l-ar lăsa pe om să se întrebe dacă a ieșit.
+        gp.logout().finally(() => {
+          set({ auth: null, orders: [], requests: [], form: null, confirm: null, peek: null, msg: "" });
+          gp.toLogin();
+        });
+      },
+
+      confirmOpen: !!S.confirm,
+      confirmRef: S.confirm ? S.confirm.ref : "",
+      confirmCust: S.confirm ? S.confirm.cust : "",
+      confirmWhen: S.confirm ? S.confirm.when : "",
+      onConfirmCancel: () => set({ confirm: null }),
+      onConfirmDelete: () => {
+        const id = S.confirm.id;
+        const gone = S.orders.find(o => o.id === id);
+        // Comenzile nu se șterg, se anulează: istoricul trebuie să rămână.
+        gp.patch('/orders/' + id, { status: gp.cancelled() })
+          .then(() => this.commit("Comanda " + (gone ? gone.ref : "") + " a fost anulată."))
+          .catch((e) => this.setState({ msg: e.message, confirm: null }));
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

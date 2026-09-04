@@ -1,0 +1,15 @@
+# Toate fișierele text stau cu LF, și în depozit, și la checkout, pe orice
+# sistem: exact cum sunt acum pe disc. Fără asta, un clone pe Windows le-ar
+# rescrie cu CRLF (core.autocrlf=true) și ar apărea diferențe false.
+* text=auto eol=lf
+
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.webp   binary
+*.gif    binary
+*.ico    binary
+*.woff   binary
+*.woff2  binary
+*.ttf    binary
+.thumbnail binary

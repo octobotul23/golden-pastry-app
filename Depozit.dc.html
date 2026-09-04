@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+@keyframes dp-pop{from{transform:translateY(10px) scale(.985);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+@keyframes dp-fade{from{opacity:0}to{opacity:1}}
+@media (max-width:1240px){
+[data-dep=stats]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media (max-width:1280px){
+[data-dep=desktoptable]{display:none!important}
+[data-dep=mobilelist]{display:flex!important}
+}
+@media (min-width:761px) and (max-width:1280px){
+[data-dep=mobilelist]{display:grid!important;grid-template-columns:1fr 1fr!important;align-items:start!important}
+}
+@media (max-width:760px){
+[data-dep=shell]{flex-direction:column!important}
+[data-dep=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-dep=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-dep=nav]{display:none!important}
+[data-dep=sidefoot]{display:none!important}
+[data-dep=phoneback]{display:flex!important}
+[data-dep=filterbar]{position:sticky!important;top:0!important;z-index:19!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:6px!important;width:auto!important;margin:0 -14px!important;padding:8px 14px!important;background:var(--h-bg-page)!important;border-bottom:1px solid var(--h-line)!important;overflow-x:auto!important;scrollbar-width:none}
+[data-dep=filterbar]::-webkit-scrollbar{display:none}
+
+[data-dep=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-dep=topbar]>div:last-child{width:100%!important;margin-left:0!important;flex-wrap:wrap!important}
+[data-dep=search]{width:100%!important;flex:1 1 100%!important}
+[data-dep=newbtn],[data-dep=newartbtn]{display:none!important}
+[data-dep=stats]{display:none!important}
+[data-dep=phonesummary]{display:flex!important}
+[data-dep=fab]{display:flex!important}
+[data-dep=whobox]{display:none!important}
+[data-dep=topbar] h1{font-size:20px!important}
+[data-dep=body]{padding:14px 14px 108px!important;gap:14px!important}
+[data-dep=tabs],[data-dep=sorts],[data-dep=filtersep]{display:none!important}
+[data-dep=phonemenu]{display:flex!important}
+[data-dep=modalwrap]{padding:0!important;align-items:flex-end!important}
+[data-dep=modalcard]{width:100%!important;max-width:none!important;max-height:94vh!important;border-radius:22px 22px 0 0!important;padding:18px 16px!important}
+[data-dep=g2]{grid-template-columns:1fr!important}
+[data-dep=modalfoot]{flex-wrap:wrap!important;gap:8px!important}
+[data-dep=modalfoot]>button{min-width:0!important;margin-left:0!important;flex:1 1 100%!important;min-height:50px!important}
+[data-dep=modalfoot]>[data-dep=btnsave]{order:-2!important}
+}
+@media (max-width:1100px){
+[data-dep=logrow]{grid-template-columns:66px 96px minmax(0,1fr) auto!important;gap:8px 10px!important}
+[data-dep=logrow]>[data-dep=logmeta]{grid-column:1/4!important}
+}
+@media (max-width:560px){
+[data-dep=logrow]{grid-template-columns:minmax(0,1fr) auto!important;gap:5px 10px!important;padding:12px 14px!important}
+[data-dep=logrow]>[data-dep=logmeta]{grid-column:1/-1!important}
+[data-dep=logrow]>[data-dep=logact]{grid-column:1/-1!important}
+}
+</style>
+</helmet>
+
+<div data-dep="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-dep="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-dep="sidehead" style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Depozit</span>
+</div>
+<a data-dep="phoneback" href="Intrare.dc.html" title="Alege panoul" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+</div>
+<div data-dep="nav" style="display:flex;flex-direction:column;gap:6px">
+<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
+<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
+<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Depozit</span>
+<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
+<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
+<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
+<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
+<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+</div>
+<div data-dep="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div data-dep="whobox" style="display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<a href="{{ accountHref }}" style="display:flex;flex-direction:column;min-width:0;flex:1;padding:6px 0;color:var(--h-cream-100);text-decoration:none" style-hover="opacity:.85">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ who }}</span>
+<span style="font-size:12px;opacity:.6">{{ accountHint }}</span>
+</a>
+<sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ onLogout }}" style="flex:none;min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:13px;font-weight:600;cursor:pointer">Ieși</button>
+</sc-if>
+</div>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p data-dep="sidenote" style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Stocul se calculează din registrul de intrări și ieșiri, nu se scrie de mână. Ștergi o mișcare greșită și stocul revine singur.</p>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-dep="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">{{ viewTitle }}</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ viewSub }}</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+<input data-dep="search" class="h-input" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Caută produs sau materie primă" style="width:290px;height:44px;font-size:15px">
+<button data-dep="newartbtn" type="button" class="h-btn h-btn--secondary" onClick="{{ onNewArt }}" style="height:44px;font-size:15px">+ Articol</button>
+<button data-dep="newbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" style="height:44px;font-size:15px">+ Mișcare</button>
+</div>
+</div>
+
+<sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
+<div class="{{ msgCls }}" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:dp-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<div data-dep="body" style="flex:1;display:flex;flex-direction:column;gap:18px;padding:22px 28px 30px;min-width:0">
+
+<div data-dep="stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+<div class="h-card" style="padding:16px 18px;border-radius:16px;display:flex;flex-direction:column;gap:6px;border-color:{{ s.bd }}">
+<span class="h-eyebrow" style="font-size:12px">{{ s.label }}</span>
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:32px;font-weight:700;line-height:1;color:{{ s.fg }}">{{ s.value }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ s.hint }}</span>
+</div>
+</sc-for>
+</div>
+
+<div data-dep="phonesummary" style="display:none;gap:8px;overflow-x:auto;padding-bottom:2px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+<div style="flex:none;display:flex;align-items:baseline;gap:7px;padding:10px 13px;border-radius:13px;border:1px solid {{ s.bd }};background:var(--h-bg-surface)">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:19px;font-weight:700;line-height:1;color:{{ s.fg }}">{{ s.value }}</span>
+<span style="font-size:12px;color:var(--h-fg-muted);white-space:nowrap">{{ s.label }}</span>
+</div>
+</sc-for>
+</div>
+
+<sc-if value="{{ hasPending }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:220px">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ pendingTitle }}</p>
+<p style="margin:0;font-size:13px;color:var(--h-fg-muted)">{{ pendingHint }}</p>
+</div>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onSync }}" disabled="{{ syncBusy }}" style="height:44px;font-size:14px;flex:none">{{ syncLabel }}</button>
+</div>
+</sc-if>
+
+<div data-dep="filterbar" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+<div data-dep="phonemenu" style="display:none;align-items:center;gap:8px;width:100%">
+<button type="button" onClick="{{ onMenuOpen }}" style="flex:1;min-width:0;min-height:54px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:8px 13px;border-radius:14px;background:var(--h-bg-surface);border:1px solid var(--h-line);color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Vezi acum</span>
+<span style="max-width:100%;font-size:15px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ currentLabel }}</span>
+</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onMenuOpen }}" style="flex:none;min-height:54px;padding:0 15px;font-size:15px;border-radius:14px;white-space:nowrap">Schimbă ▾</button>
+</div>
+<div data-dep="tabs" style="display:flex;flex-wrap:wrap;gap:6px;min-width:0">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5">
+<button type="button" class="{{ t.cls }}" onClick="{{ t.onClick }}" style="height:42px;font-size:14px;border-radius:12px;display:flex;align-items:center;gap:8px">
+<span>{{ t.label }}</span>
+<span class="h-numeric" style="font-weight:700;opacity:.8">{{ t.count }}</span>
+</button>
+</sc-for>
+</div>
+<span data-dep="filtersep" style="display:none;flex:none;width:1px;align-self:stretch;min-height:30px;background:var(--h-line);margin:0 3px"></span>
+<div data-dep="sorts" style="display:flex;flex-wrap:wrap;gap:6px;margin-left:auto;min-width:0">
+<sc-for list="{{ sorts }}" as="s" hint-placeholder-count="3">
+<button type="button" class="{{ s.cls }}" onClick="{{ s.onClick }}" style="height:42px;font-size:14px;border-radius:12px">{{ s.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{ isStock }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+
+<div data-dep="desktoptable" class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
+<div style="display:grid;grid-template-columns:minmax(150px,1.7fr) 100px 88px 96px 108px minmax(120px,1.2fr) 172px;gap:12px;padding:12px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
+<span>Produs</span><span style="text-align:right">Stoc</span><span style="text-align:right">Prag</span><span style="text-align:right">Rezervat</span><span style="text-align:right">Disponibil</span><span>Ultima mișcare</span><span style="text-align:right">Mișcare nouă</span>
+</div>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="8">
+<div style="display:grid;grid-template-columns:minmax(150px,1.7fr) 100px 88px 96px 108px minmax(120px,1.2fr) 172px;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--h-line);background:{{ r.rowBg }}">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<span style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.n }}</span>
+<div style="display:flex;align-items:center;gap:8px;min-width:0">
+<span style="font-size:12px;color:var(--h-fg-subtle);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.c }}</span>
+<sc-if value="{{ r.flag }}" hint-placeholder-val="{{ false }}">
+<span class="{{ r.flagCls }}" style="font-size:11px;flex:none">{{ r.flag }}</span>
+</sc-if>
+</div>
+</div>
+<div style="display:flex;align-items:baseline;gap:5px;justify-content:flex-end;min-width:0">
+<span class="h-numeric" style="font-size:19px;font-weight:700;color:{{ r.stockFg }}">{{ r.stock }}</span>
+<span style="font-size:12px;color:var(--h-fg-subtle)">{{ r.u }}</span>
+</div>
+<input class="h-input h-numeric" value="{{ r.min }}" onChange="{{ r.onMin }}" onBlur="{{ r.onMinBlur }}" title="Prag minim de alarmă" style="height:38px;font-size:14px;text-align:right;padding:0 8px">
+<span class="h-numeric" style="font-size:15px;text-align:right;color:var(--h-fg-muted);display:{{ resDisplay }}">{{ r.res }}</span>
+<div style="align-items:baseline;gap:5px;justify-content:flex-end;min-width:0;display:{{ resDisplay }}">
+<span class="h-numeric" style="font-size:17px;font-weight:700;color:{{ r.availFg }}">{{ r.avail }}</span>
+<span style="font-size:12px;color:var(--h-fg-subtle)">{{ r.u }}</span>
+</div>
+<span style="font-size:13px;line-height:1.4;color:var(--h-fg-muted);overflow:hidden;text-overflow:ellipsis">{{ r.last }}</span>
+<div style="display:flex;gap:6px;justify-content:flex-end">
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ r.onIn }}" style="height:38px;min-width:78px;white-space:nowrap">+ Intrare</button>
+<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onOut }}" style="height:38px;min-width:78px;white-space:nowrap">− Ieșire</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+<div style="padding:44px 18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nimic pe filtrele alese.</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="height:42px;font-size:14px">Șterge filtrele</button>
+</div>
+</sc-if>
+</div>
+
+<div data-dep="mobilelist" style="display:none;flex-direction:column;gap:12px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+<div class="h-card" style="padding:14px 15px;border-radius:18px;display:flex;flex-direction:column;gap:11px;background:{{ r.cardBg }}">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:0">
+<span style="font-size:17px;font-weight:700;line-height:1.25">{{ r.n }}</span>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:12px;color:var(--h-fg-subtle)">{{ r.c }}</span>
+<sc-if value="{{ r.flag }}" hint-placeholder-val="{{ false }}">
+<span class="{{ r.flagCls }}" style="font-size:11px">{{ r.flag }}</span>
+</sc-if>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;align-items:flex-end;flex:none">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:27px;font-weight:700;line-height:1;color:{{ r.stockFg }}">{{ r.stock }}</span>
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ r.u }} în stoc</span>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--h-fg-muted)">
+<span style="display:{{ resInline }}">Rezervat <strong class="h-numeric">{{ r.res }}</strong></span>
+<span style="display:{{ resInline }}">Disponibil <strong class="h-numeric" style="color:{{ r.availFg }}">{{ r.avail }}</strong></span>
+<label style="display:flex;align-items:center;gap:6px;margin-left:auto">Prag
+<input class="h-input h-numeric" value="{{ r.min }}" onChange="{{ r.onMin }}" onBlur="{{ r.onMinBlur }}" style="height:40px;width:74px;font-size:14px;text-align:right;padding:0 8px">
+</label>
+</div>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ r.last }}</span>
+<div style="display:flex;gap:8px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onIn }}" style="flex:1;min-height:46px;font-size:15px">+ Intrare</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onOut }}" style="flex:1;min-height:46px;font-size:15px">− Ieșire</button>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:26px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
+<p style="margin:0;font-size:15px;color:var(--h-fg-muted)">Nimic pe filtrele alese.</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="min-height:44px;font-size:14px">Șterge filtrele</button>
+</div>
+</sc-if>
+</div>
+
+</div>
+</sc-if>
+
+<sc-if value="{{ isLog }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+<sc-for list="{{ logDays }}" as="d" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:12px">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600">{{ d.label }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ d.meta }}</span>
+</div>
+<div class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
+<sc-for list="{{ d.moves }}" as="m" hint-placeholder-count="5">
+<div data-dep="logrow" style="display:grid;grid-template-columns:66px 96px 1.5fr 118px 1.2fr 108px;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ m.t }}</span>
+<span class="{{ m.kindCls }}" style="font-size:11px;justify-self:start">{{ m.kind }}</span>
+<span style="font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.p }}</span>
+<span class="h-numeric" style="font-size:16px;font-weight:700;text-align:right;color:{{ m.qFg }}">{{ m.q }}</span>
+<span data-dep="logmeta" style="font-size:13px;line-height:1.4;color:var(--h-fg-muted)">{{ m.meta }}</span>
+<div data-dep="logact" style="display:flex;justify-content:flex-end">
+<sc-if value="{{ m.canDelete }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ m.onDelete }}" disabled="{{ m.undoOff }}" style="height:38px;color:var(--h-danger)">{{ m.undoLabel }}</button>
+</sc-if>
+<sc-if value="{{ m.corrected }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge" style="font-size:11px">Corectată</span>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+<sc-if value="{{ noLog }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nicio mișcare înregistrată pe filtrul ales.</p>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+</div>
+
+<sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:70;background:rgba(27,18,11,.62);display:flex;flex-direction:column;justify-content:flex-end;animation:dp-fade .18s var(--h-ease-out)">
+<div class="h-card" style="width:100%;flex:none;max-height:88vh;overflow-y:auto;padding:16px 16px 20px;border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:8px;animation:dp-pop .22s var(--h-ease-spring)">
+<div style="display:flex;align-items:center;gap:12px;padding-bottom:2px">
+<h2 class="h-h4" style="margin:0;font-size:19px">Ce vrei să vezi</h2>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+</div>
+<sc-for list="{{ menuViews }}" as="v" hint-placeholder-count="5">
+<button type="button" onClick="{{ v.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ v.bd }};background:{{ v.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">{{ v.label }}</span>
+<span class="h-numeric" style="font-size:15px;color:var(--h-fg-subtle)">{{ v.count }}</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ v.mark }}</span>
+</button>
+</sc-for>
+<p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Ordonează lista</p>
+<sc-for list="{{ menuSorts }}" as="s" hint-placeholder-count="3">
+<button type="button" onClick="{{ s.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-radius:15px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:15px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">{{ s.label }}</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ s.mark }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<div data-dep="fab" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;gap:10px;padding:10px 14px 14px;background:var(--h-bg-surface);border-top:1px solid var(--h-line);box-shadow:0 -10px 26px rgba(27,18,11,.14)">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onNewIn }}" style="flex:1;min-height:54px;font-size:16px;border-radius:15px">+ Intrare</button>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onNewOut }}" style="flex:1;min-height:54px;font-size:16px;border-radius:15px">− Ieșire</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onNewArt }}" style="flex:none;min-height:54px;padding:0 14px;font-size:16px;border-radius:15px;white-space:nowrap">+ Articol</button>
+</div>
+
+<sc-if value="{{ hasForm }}" hint-placeholder-val="{{ false }}">
+<div data-dep="modalwrap" style="position:fixed;inset:0;z-index:60;background:rgba(27,18,11,.62);display:flex;align-items:center;justify-content:center;padding:24px;animation:dp-fade .18s var(--h-ease-out)">
+<div data-dep="modalcard" class="h-card" style="width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:22px 24px;border-radius:22px;display:flex;flex-direction:column;gap:14px;animation:dp-pop .22s var(--h-ease-spring)">
+
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<h2 class="h-h4" style="margin:0;font-size:21px">Mișcare de depozit</h2>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ formSub }}</span>
+</div>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+</div>
+
+<div style="display:flex;gap:8px">
+<sc-for list="{{ kindBtns }}" as="k" hint-placeholder-count="2">
+<button type="button" class="{{ k.cls }}" onClick="{{ k.onClick }}" style="flex:1;min-height:52px;font-size:16px;border-radius:14px">{{ k.label }}</button>
+</sc-for>
+</div>
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Produs
+<select class="h-input" value="{{ fP }}" onChange="{{ onFP }}" style="height:50px;font-size:16px">
+<sc-for list="{{ prodOpts }}" as="o" hint-placeholder-count="10">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+
+<div data-dep="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cantitate ({{ fU }})
+<input class="h-input h-numeric" value="{{ fQ }}" onChange="{{ onFQ }}" inputMode="decimal" placeholder="0" style="height:50px;font-size:17px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Motiv
+<select class="h-input" value="{{ fR }}" onChange="{{ onFR }}" style="height:50px;font-size:15px">
+<sc-for list="{{ reasonOpts }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+</div>
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Notă (opțional)
+<input class="h-input" value="{{ fNote }}" onChange="{{ onFNote }}" placeholder="furnizor, tavă, lot, cine a primit" style="height:48px;font-size:15px">
+</label>
+
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:13px;color:var(--h-fg-subtle)">Stoc acum</span>
+<span class="h-numeric" style="font-size:18px;font-weight:700">{{ fNow }}</span>
+</div>
+<span style="font-size:20px;color:var(--h-fg-faint)">→</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:13px;color:var(--h-fg-subtle)">După mișcare</span>
+<span class="h-numeric" style="font-size:18px;font-weight:700;color:{{ fAfterFg }}">{{ fAfter }}</span>
+</div>
+<span style="margin-left:auto;font-size:13px;color:var(--h-fg-subtle);text-align:right">{{ fWho }}</span>
+</div>
+
+<sc-if value="{{ fErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px">{{ fErr }}</div>
+</sc-if>
+
+<div data-dep="modalfoot" style="display:flex;align-items:center;gap:10px;padding-top:2px">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="min-height:48px;font-size:15px">Renunță</button>
+<button data-dep="btnsave" type="button" class="h-btn h-btn--primary" onClick="{{ onSave }}" style="margin-left:auto;min-height:48px;min-width:190px;font-size:16px">{{ saveLabel }}</button>
+</div>
+
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasArt }}" hint-placeholder-val="{{ false }}">
+<div data-dep="modalwrap" style="position:fixed;inset:0;z-index:60;background:rgba(27,18,11,.62);display:flex;align-items:center;justify-content:center;padding:24px;animation:dp-fade .18s var(--h-ease-out)">
+<div data-dep="modalcard" class="h-card" style="width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:22px 24px;border-radius:22px;display:flex;flex-direction:column;gap:14px;animation:dp-pop .22s var(--h-ease-spring)">
+
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<h2 class="h-h4" style="margin:0;font-size:21px">Articol nou în depozit</h2>
+<span style="font-size:13px;color:var(--h-fg-subtle)">Intră în listă cu stocul 0 · pune-i prima intrare imediat după.</span>
+</div>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onArtCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+</div>
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Denumire
+<input class="h-input" value="{{ artN }}" onChange="{{ onArtN }}" placeholder="ex. Cutie tort 26 cm" style="height:50px;font-size:16px">
+</label>
+
+<div data-dep="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Categorie
+<select class="h-input" value="{{ artC }}" onChange="{{ onArtC }}" style="height:50px;font-size:15px">
+<sc-for list="{{ artCats }}" as="o" hint-placeholder-count="3">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Unitate
+<select class="h-input" value="{{ artU }}" onChange="{{ onArtU }}" style="height:50px;font-size:15px">
+<sc-for list="{{ artUnits }}" as="o" hint-placeholder-count="3">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+</div>
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Prag minim ({{ artU }})
+<input class="h-input h-numeric" value="{{ artMin }}" onChange="{{ onArtMin }}" inputMode="decimal" placeholder="prag implicit din Setări" style="height:50px;font-size:17px">
+</label>
+<p style="margin:-6px 0 0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Lăsat gol, articolul ia pragul implicit din Setări. Cu pragul 0 nu apare niciodată în „Sub prag minim”, deci nimeni nu află când s-a terminat.</p>
+
+<sc-if value="{{ artErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px">{{ artErr }}</div>
+</sc-if>
+
+<div data-dep="modalfoot" style="display:flex;align-items:center;gap:10px;padding-top:2px">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onArtCancel }}" style="min-height:48px;font-size:15px">Renunță</button>
+<button data-dep="btnsave" type="button" class="h-btn h-btn--primary" onClick="{{ onArtSave }}" disabled="{{ artBusy }}" style="margin-left:auto;min-height:48px;min-width:190px;font-size:16px">{{ artSaveLabel }}</button>
+</div>
+
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showReserved&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Depozit&quot;},&quot;autoDeduct&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Depozit&quot;},&quot;defaultView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Stoc&quot;,&quot;Registru&quot;],&quot;default&quot;:&quot;Stoc&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Depozit&quot;}}">
+const MKEY = "gp-stock-moves-v1", NKEY = "gp-stock-min-v1", SKEY = "gp-stock-sync-v1";
+const OKEY = "gp-admin-orders-v1", AKEY = "gp-auth-v1", UKEY = "gp-users-v1";
+const LKEY = "gp-log-v1";
+// Jurnalul îl scrie serverul, la fiecare operație, în tabelul audit_log.
+// Varianta locală înregistra doar ce făcea browserul acesta — adică exact
+// ce NU trebuie să fie un jurnal. Păstrăm funcția ca să nu atingem zecile de
+// apeluri din pagină, dar nu mai scrie nimic.
+const logAct = () => {};
+
+const authRole = (a) => {
+  if (!a) return "";
+  try {
+    const raw = localStorage.getItem(UKEY);
+    const list = raw ? JSON.parse(raw) : null;
+    const hit = Array.isArray(list) ? list.find(x => x.u === a.u) : null;
+    if (hit) return hit.role || (hit.u === "admin" ? "admin" : "angajat");
+  } catch (e) {}
+  return a.role || (a.u === "admin" ? "admin" : "angajat");
+};
+
+// Datele erau scrise în cod, deci pagina ar fi rămas convinsă că e mereu
+// 26 august 2026: „Azi" ar fi arătat mișcările altei zile, iar totalurile
+// zilnice ar fi rămas înghețate la acea dată.
+const TODAY = gp.days(1)[0].iso;
+const YEST = (() => {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  const p2 = (n) => (n < 10 ? "0" : "") + n;
+  return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
+})();
+const MON = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "noi", "dec"];
+// Categoriile se editează din Setări → Liste. Erau fixate aici, deci o
+// categorie adăugată din panou nu ar fi apărut nici în file, nici în sortare.
+const CATS_OF = () => (gp.__lists && gp.__lists.stockCategories) || ["Materii prime", "Produse finite", "Ambalaje"];
+const IN_R = ["Producție laborator", "Livrare furnizor", "Retur din livrare", "Corecție inventar"];
+const OUT_R = ["Consum în producție", "Comandă client", "Pierdere / rebut", "Degustare / mostre", "Corecție inventar"];
+
+
+
+const num = (v) => { const x = parseFloat(String(v).replace(",", ".")); return isFinite(x) ? x : 0; };
+const fmt = (x) => {
+  const r = Math.round(x * 10) / 10;
+  return (Math.abs(r % 1) < 0.05 ? String(Math.round(r)) : String(r).replace(".", ","));
+};
+const dLabel = (iso) => {
+  const [y, mo, dd] = iso.split("-");
+  const base = parseInt(dd, 10) + " " + MON[parseInt(mo, 10) - 1];
+  if (iso === TODAY) return "Azi · " + base;
+  if (iso === YEST) return "Ieri · " + base;
+  return base;
+};
+
+class Component extends DCLogic {
+  state = { items: [], categories: [], units: [], moves: [], mins: {}, orders: [], who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false };
+
+  componentDidMount() {
+    // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
+    // dacă le redenumești din panou, pagina trebuie să afle de la server.
+    gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    document.documentElement.setAttribute("data-theme", "light");
+    this.__gpBack = () => {
+      if (this.__gpSkip) { this.__gpSkip = false; return; }
+      const st = this.state || {};
+      if (st.menu || st.form || st.art) this.setState({ menu: false, form: null, art: null });
+    };
+    window.addEventListener("popstate", this.__gpBack);
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    this.setState({ view: this.props.defaultView === "Registru" ? "Registru" : "Stoc" });
+    this.pull();
+    this.timer = setInterval(() => this.pull(), 15000);
+  }
+
+  componentWillUnmount() {
+    if (this.timer) clearInterval(this.timer);
+  }
+
+  /**
+   * Aduce articolele, mișcările și comenzile de pe server.
+   *
+   * Stocul curent vine calculat din mișcări de către server, nu însumat aici:
+   * două tablete care adaugă simultan o intrare trebuie să ajungă la aceeași
+   * cifră, iar singurul loc unde asta se poate garanta e baza de date.
+   */
+  pull() {
+    return Promise.all([
+      gp.get('/stock/items'),
+      gp.get('/stock/moves'),
+      gp.get('/orders'),
+      gp.me(),
+    ])
+      .then(([items, moves, orders, user]) => {
+        this.setState({
+          items: items.items || [],
+          categories: items.categories || [],
+          units: items.units || [],
+          // Forma veche a registrului, ca restul paginii să rămână neatins:
+          // d = data, t = ora, k = in/out, p = produs, q = cantitate.
+          moves: (moves.moves || []).map((m) => {
+            const dt = new Date((m.createdAt || '').replace(' ', 'T') + 'Z');
+            const p2 = (n) => (n < 10 ? '0' : '') + n;
+            return {
+              id: m.id,
+              itemId: m.itemId,
+              d: isNaN(dt) ? '' : dt.getFullYear() + '-' + p2(dt.getMonth() + 1) + '-' + p2(dt.getDate()),
+              t: isNaN(dt) ? '' : p2(dt.getHours()) + ':' + p2(dt.getMinutes()),
+              k: m.direction > 0 ? 'in' : 'out',
+              p: m.name,
+              q: m.qty,
+              r: m.reason || '',
+              note: m.note || '',
+              w: m.user || '—',
+            };
+          }),
+          orders: (orders.orders || []).map(gp.toPageOrder),
+          who: user ? user.name : 'Laborator',
+          role: user ? user.role : '',
+          loaded: true,
+        });
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ msg: e.message, msgBad: true, loaded: true });
+      });
+  }
+
+  /**
+   * Înregistrează o mișcare pe server, apoi reîncarcă.
+   *
+   * Eroarea se arată, dar promisiunea rămâne respinsă. Stinsă aici, mișcarea
+   * refuzată de server (sesiune expirată, rețea căzută, cantitate refuzată)
+   * ajungea în `.then`-ul apelantului ca o salvare reușită: caseta se închidea
+   * și pe ecran apărea „Intrare înregistrată · +50 kg”, peste mesajul de
+   * eroare. Nimic nu se scria, stocul rămânea sub cel real, iar depozitarul
+   * avea confirmarea în față. Cine cheamă addMove anunță succesul doar pe
+   * ramura reușită.
+   */
+  addMove(itemId, qty, direction, reason, note) {
+    return gp.post('/stock/moves', { itemId, qty, direction, reason, note })
+      .then(() => this.pull())
+      .catch((e) => {
+        this.setState({ msg: e.message, msgBad: true });
+        throw e;
+      });
+  }
+
+  /**
+   * Adaugă un articol nou în depozit.
+   *
+   * Ruta există pe server de la început, dar n-o chema nicio pagină: un ambalaj
+   * nou nu putea fi urmărit până nu intra cineva direct în baza de date. Chiar
+   * și mesajul scăderii din stoc cere „creează articolele și apasă din nou” —
+   * o instrucțiune pe care depozitarul n-avea cum s-o ducă la capăt.
+   *
+   * Pragul pleacă doar dacă omul a scris ceva. Câmpul lăsat gol înseamnă „ia
+   * pragul implicit din Setări”, nu prag 0: cu pragul 0 articolul nu apare
+   * niciodată în „Sub prag minim”, deci nimeni nu află că s-a terminat.
+   */
+  adaugaArticol(nume, categorie, unitate, prag) {
+    const cerere = { name: nume, category: categorie, unit: unitate };
+    if (prag !== null) cerere.minQty = prag;
+    // Articolul pleacă legat de produsul din catalog, când se poate afla care e.
+    // Caseta n-a trimis niciodată `productId`, deci articolul intra nelegat; iar
+    // dacă produsul fusese redenumit între timp, marfa ajungea cu două articole
+    // — cel vechi, legat prin produs, și acesta, potrivit după nume — și fiecare
+    // comandă scădea din amândouă.
+    const pid = this.produsulDupaNume(nume);
+    if (pid !== null) cerere.productId = pid;
+    return gp.post('/stock/items', cerere).then(() => this.pull());
+  }
+
+  /**
+   * Produsul din catalog care poartă chiar numele scris în caseta „Articol nou".
+   *
+   * Depozitarul nu inventează denumirea: o copiază din lista de comenzi din
+   * fața lui, adică din numele produsului. Îl legăm de produsul de acolo, ca
+   * scăderea din stoc să meargă pe `product_id` — singura legătură pe care n-o
+   * strică o redenumire din Catalog. Dacă produsul are deja articol în depozit,
+   * serverul refuză și îi spune pe care să facă intrările, în loc să lase două.
+   *
+   * Căutăm și în comenzile predate, nu doar în cele în lucru: singurul loc în
+   * care aplicația îi cere depozitarului să facă un articol e mesajul scăderii
+   * din stoc („creează articolele și apasă din nou"), iar acolo comenzile sunt
+   * tocmai cele predate. Dacă le-am sări, articolele născute chiar din acel
+   * mesaj ar intra nelegate — sămânța dublurii de mâine. Comanda anulată rămâne
+   * pe dinafară, fiindcă un nume reciclat de ea ar lega articolul de alt produs;
+   * iar dacă pozițiile cu numele ăsta arată spre produse diferite nu ghicim:
+   * articolul intră nelegat, ca înainte.
+   */
+  produsulDupaNume(nume) {
+    const gasite = {};
+    (this.state.orders || []).forEach(o => {
+      if (o.status === gp.cancelled()) return;
+      (o.items || []).forEach(i => {
+        if (i.n === nume && i.productId !== null && i.productId !== undefined) gasite[i.productId] = true;
+      });
+    });
+    const ids = Object.keys(gasite);
+    return ids.length === 1 ? Number(ids[0]) : null;
+  }
+
+  /** Schimbă pragul minim al unui articol. */
+  setMin(itemId, minQty) {
+    return gp.patch('/stock/items/' + itemId, { minQty })
+      .then(() => this.pull())
+      .catch((e) => this.setState({ msg: e.message, msgBad: true }));
+  }
+
+  /**
+   * Încheie scrierea în câmpul „Prag": trimite pe server doar dacă e ceva
+   * de trimis, apoi lasă rândul înapoi pe cifra venită de la server.
+   *
+   * Câmpul golit nu înseamnă prag zero. Un prag 0 stinge pentru totdeauna
+   * alarma „sub prag" a articolului: oricât de puțină făină ar mai rămâne,
+   * nimeni nu mai află că trebuie comandată. Din același motiv nu pleacă
+   * nimic pentru un text care nu e număr sau pentru o valoare negativă, pe
+   * care serverul oricum o refuză. Iar o valoare neschimbată n-are ce căuta
+   * pe server: altfel fiecare trecere prin câmp ar lăsa o intrare în Jurnal
+   * și ar porni cele patru cereri ale reîmprospătării degeaba.
+   */
+  incheiePrag(itemId, pragVechi) {
+    const S = this.state;
+    const gata = () => this.setState({ minEdit: null, minText: "" });
+    if (S.minEdit !== itemId) return gata();
+    const v = parseFloat(String(S.minText).trim().replace(",", "."));
+    if (!isFinite(v) || v < 0 || v === pragVechi) return gata();
+    return this.setMin(itemId, v).then(gata);
+  }
+
+
+
+  now() {
+    const d = new Date(), z = (n) => (n < 10 ? "0" : "") + n;
+    return z(d.getHours()) + ":" + z(d.getMinutes());
+  }
+
+  /**
+   * Articolele de depozit, în forma folosită de pagină
+   * (n = nume, c = categorie, u = unitate, min = prag, open = stoc curent,
+   * res = cât e promis unei comenzi, avail = ce rămâne).
+   * Vin de pe server: lista scrisă în cod a dispărut, fiindcă articolele se
+   * administrează acum din baza de date.
+   */
+  catalog() {
+    return (this.state.items || []).map((it) => ({
+      id: it.id,
+      // Produsul din catalog de care ține articolul. Pe el se leagă
+      // rezervările: numele se schimbă, product_id nu.
+      pid: it.productId === undefined ? null : it.productId,
+      n: it.name,
+      c: it.category,
+      u: it.unit,
+      min: it.minQty,
+      open: it.qty,
+      // Rezervările nu se mai socotesc aici. Pagina le aduna din comenzile
+      // primite de la `GET /orders`, care întoarce cel mult 500: peste atâtea
+      // comenzi, „Rezervat" scădea tăcut, fără ca ceva pe ecran să spună că
+      // s-a numărat doar o parte. Acum le adună serverul, din tabelul de
+      // rezervări, unde intră toate.
+      res: it.reserved === undefined ? 0 : it.reserved,
+      avail: it.available === undefined ? it.qty : it.available,
+      low: it.low,
+    }));
+  }
+
+  ledger() {
+    const by = {};
+    this.state.moves.forEach(mv => {
+      const e = by[mv.p] || (by[mv.p] = { in: 0, out: 0, last: null });
+      if (mv.k === "in") e.in += num(mv.q); else e.out += num(mv.q);
+      if (!e.last || mv.d + mv.t > e.last.d + e.last.t) e.last = mv;
+    });
+    return by;
+  }
+
+  /**
+   * Spune, pentru fiecare mișcare din registru, dacă a fost deja anulată.
+   *
+   * Corecția nu șterge rândul greșit — îl lasă în registru, ca într-o
+   * contabilitate — deci butonul „Anulează" rămânea aprins pe el la nesfârșit.
+   * A doua zi, al doilea depozitar vedea rândul greșit cu butonul activ,
+   * credea că nu l-a corectat nimeni și îl apăsa din nou: se scria o a doua
+   * corecție, iar stocul rămânea sub cel real, fără nicio atenționare.
+   *
+   * Recunoaștem corecția după ce a scris chiar butonul: motivul „Corecție" și
+   * nota care numește ziua și ora mișcării anulate. Cerem în plus același
+   * articol, aceeași cantitate și direcția inversă, ca două mișcări din
+   * același minut să nu se ia una pe alta.
+   */
+  corectii() {
+    const cheie = (itemId, d, t, q, k) => itemId + "|" + d + " " + t + "|" + num(q) + "|" + k;
+    const gasite = {};
+    (this.state.moves || []).forEach(mv => {
+      if (mv.r !== "Corecție") return;
+      const n = /^Anulează mișcarea din (\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(mv.note || "");
+      if (!n) return;
+      gasite[cheie(mv.itemId, n[1], n[2], mv.q, mv.k === "in" ? "out" : "in")] = true;
+    });
+    return (mv) => !!gasite[cheie(mv.itemId, mv.d, mv.t, mv.q, mv.k)];
+  }
+
+  /**
+   * Comenzile încheiate care încă n-au fost scăzute din depozit.
+   *
+   * Marcajul vine de pe server (`stockSynced`). Se ținea în starea paginii,
+   * deci dispărea la reîncărcare: butonul „scade din stoc” apăsat a doua oară
+   * scădea din nou aceleași produse, iar pe două calculatoare se scădea de
+   * două ori. Stocul cobora singur, fără urmă.
+   */
+  pending() {
+    return this.state.orders.filter(o => o.status === gp.done() && !o.stockSynced && (o.items || []).length);
+  }
+
+  sync(silent) {
+    const list = this.pending();
+    if (!list.length) return;
+    // Butonul nu se blochează singur, iar un al doilea clic pornea a doua
+    // cerere înainte să răspundă prima. Serverul se apără acum de scăderea
+    // dublă, dar tot n-are rost să-i trimitem două.
+    if (this.__syncing) return;
+    this.__syncing = true;
+    this.setState({ syncing: true });
+
+    // Serverul face totul într-o singură tranzacție: ori intră toate mișcările
+    // și comenzile se marchează, ori nu se schimbă nimic. Varianta veche
+    // trimitea mișcările una câte una și marca totul ca scăzut chiar dacă
+    // unele picau.
+    gp.syncStock()
+      .then((r) => this.pull().then(() => r))
+      .then((r) => this.setState({
+        msgBad: false,
+        msg: silent ? "" : (
+          r.orders + (r.orders === 1 ? " comandă predată scăzută din stoc · " : " comenzi predate scăzute din stoc · ")
+          + fmt(r.pieces) + " buc."
+          + (r.missing && r.missing.length
+            ? " Fără articol în depozit: " + r.missing.join(", ") + ". "
+              + ((r.skipped && r.skipped.length) || 1)
+              + ((r.skipped && r.skipped.length) === 1
+                  ? " comandă a rămas nescăzută, întreagă — creează articolele și apasă din nou."
+                  : " comenzi au rămas nescăzute, întregi — creează articolele și apasă din nou.")
+            : "")
+        )
+      }))
+      .catch((e) => this.setState({ msg: "Scăderea din stoc a eșuat: " + e.message, msgBad: true }))
+      .then(() => { this.__syncing = false; this.setState({ syncing: false }); });
+  }
+
+  __gpSync() {
+    const st = this.state || {};
+    const now = !!(st.menu || st.form || st.art);
+    if (now === this.__gpOvWas) return;
+    this.__gpOvWas = now;
+    try {
+      if (now) history.pushState({ gpOv: 1 }, "");
+      else if (history.state && history.state.gpOv) { this.__gpSkip = true; history.back(); }
+    } catch (e) {}
+  }
+
+  renderVals() {
+    this.__gpSync();
+    const S = this.state, set = (x) => this.setState(x);
+    const showRes = this.props.showReserved !== false;
+    const cat = this.catalog(), led = this.ledger();
+    const corectat = this.corectii();
+    const byName = {};
+    cat.forEach(c => { byName[c.n] = c; });
+
+    // Stocul afișat este soldul trimis de server, nu suma mișcărilor ajunse în
+    // pagină: registrul vine tăiat la ultimele 1000 de rânduri, deci recepțiile
+    // vechi cad primele și articolul ar apărea cu mult mai puțin decât are în
+    // depozit. Tot de aici vine și scăparea la redenumire: mișcările păstrează
+    // numele de la momentul lor, iar un articol redenumit ar arăta zero și
+    // „Lipsă”, deși marfa e pe raft. Registrul rămâne folosit doar pentru
+    // ultima mișcare afișată pe rând.
+    const items = cat.map(c => {
+      const e = led[c.n] || { in: 0, out: 0, last: null };
+      const stock = num(c.open);
+      // Amândouă cifrele vin de la server, care le socotește din tabelul de
+      // rezervări. Legarea poziției de articol se face acolo, o dată, la
+      // scrierea rezervării: pe product_id unde există, pe nume doar pentru
+      // articolele fără produs. Numele singur nu ajunge — se schimbă din
+      // catalog fără ca articolul de depozit să afle — și tocmai de aceea
+      // potrivirea nu mai are ce căuta în browser, unde se refăcea la fiecare
+      // desenare, din comenzile care încăpuseră în pagină.
+      const r = showRes ? num(c.res) : 0;
+      const avail = showRes ? num(c.avail) : stock;
+      return { c, stock, res: r, avail, last: e.last, under: c.min > 0 && stock < c.min, short: avail < 0 };
+    });
+
+    const alerts = items.filter(x => x.under && !x.short).length;
+    const shorts = items.filter(x => x.short);
+    const inToday = S.moves.filter(x => x.d === TODAY && x.k === "in");
+    const outToday = S.moves.filter(x => x.d === TODAY && x.k === "out");
+
+    const q = S.search.trim().toLowerCase();
+    let rows = items.filter(x => (S.cat === "Toate" || x.c.c === S.cat) && (!q || x.c.n.toLowerCase().indexOf(q) >= 0));
+    if (S.sort === "low") rows = rows.slice().sort((a, b) => {
+      const sa = (a.short ? 0 : a.under ? 1 : 2), sb = (b.short ? 0 : b.under ? 1 : 2);
+      if (sa !== sb) return sa - sb;
+      const ra = a.c.min > 0 ? a.stock / a.c.min : 9, rb = b.c.min > 0 ? b.stock / b.c.min : 9;
+      return ra - rb;
+    });
+    else if (S.sort === "recent") rows = rows.slice().sort((a, b) => {
+      const ka = a.last ? a.last.d + a.last.t : "", kb = b.last ? b.last.d + b.last.t : "";
+      return kb < ka ? -1 : kb > ka ? 1 : 0;
+    });
+    else rows = rows.slice().sort((a, b) => {
+      const ia = CATS_OF().indexOf(a.c.c), ib = CATS_OF().indexOf(b.c.c);
+      return ia !== ib ? ia - ib : a.c.n.localeCompare(b.c.n, "ro");
+    });
+
+    const openForm = (name, kind) => set({
+      form: { k: kind, p: name || (rows.length ? rows[0].c.n : ((this.state.items[0] || {}).name || "")), q: "", r: kind === "in" ? IN_R[0] : OUT_R[0], note: "", err: "" }
+    });
+
+    const rowVals = rows.map(x => ({
+      n: x.c.n, c: x.c.c, u: x.c.u,
+      // Cât timp omul scrie în câmpul „Prag", arătăm ce a tastat el, nu ce
+      // spune serverul: reîmprospătarea de la 15 secunde îi ștergea altfel
+      // cifra de sub degete, în mijlocul numărului.
+      min: S.minEdit === x.c.id ? S.minText : String(x.c.min),
+      stock: fmt(x.stock), res: fmt(x.res), avail: fmt(x.avail),
+      stockFg: x.short ? "var(--h-danger)" : x.under ? "var(--h-warning)" : "var(--h-fg)",
+      availFg: x.avail < 0 ? "var(--h-danger)" : "var(--h-fg)",
+      rowBg: x.short ? "var(--h-danger-soft)" : x.under ? "var(--h-warning-soft)" : "transparent",
+      cardBg: x.short ? "var(--h-danger-soft)" : x.under ? "var(--h-warning-soft)" : "var(--h-bg-surface)",
+      flag: x.short ? "Lipsă " + fmt(-x.avail) + " " + x.c.u : x.under ? "Sub prag" : "",
+      flagCls: x.short ? "h-badge h-badge--danger" : "h-badge h-badge--warning",
+      last: x.last ? x.last.t + " · " + (x.last.k === "in" ? "+" : "−") + fmt(num(x.last.q)) + " " + x.c.u + " · " + x.last.r : "fără mișcări",
+      // Tastarea doar ține minte textul în pagină. Salvarea la fiecare tastă
+      // trimitea pe server numerele pe jumătate scrise („1", apoi „12"), le
+      // scria pe toate în Jurnal și lăsa în prag ce apuca ultima cerere: omul
+      // pleca convins că a pus 125 și rămânea 12.
+      onMin: (e) => set({ minEdit: x.c.id, minText: e.target.value }),
+      onMinBlur: () => this.incheiePrag(x.c.id, x.c.min),
+      onIn: () => openForm(x.c.n, "in"),
+      onOut: () => openForm(x.c.n, "out")
+    }));
+
+    const days = {};
+    S.moves.forEach(mv => (days[mv.d] || (days[mv.d] = [])).push(mv));
+    const logDays = Object.keys(days).sort().reverse().map(d => {
+      const list = days[d].slice().sort((a, b) => (b.t < a.t ? -1 : b.t > a.t ? 1 : 0));
+      const filtered = list.filter(mv => (S.cat === "Toate" || (byName[mv.p] && byName[mv.p].c === S.cat)) && (!q || mv.p.toLowerCase().indexOf(q) >= 0));
+      const ins = filtered.filter(x => x.k === "in").length;
+      return {
+        label: dLabel(d), meta: filtered.length + " mișcări · " + ins + " intrări · " + (filtered.length - ins) + " ieșiri",
+        empty: filtered.length === 0,
+        moves: filtered.map(mv => {
+          const u = byName[mv.p] ? byName[mv.p].u : "buc";
+          return {
+            t: mv.t, p: mv.p,
+            kind: mv.k === "in" ? "Intrare" : "Ieșire",
+            kindCls: mv.k === "in" ? "h-badge h-badge--success" : "h-badge h-badge--jam",
+            q: (mv.k === "in" ? "+" : "−") + fmt(num(mv.q)) + " " + u,
+            qFg: mv.k === "in" ? "var(--h-success)" : "var(--h-jam)",
+            meta: mv.r + (mv.note ? " · " + mv.note : "") + " · " + mv.w,
+            // Registrul nu se rescrie: o mișcare greșită se corectează cu una
+            // inversă, ca într-o contabilitate. Altfel stocul afișat nu ar mai
+            // putea fi explicat prin istoric.
+            // Pe mișcarea deja anulată butonul dispare și rămâne doar semnul
+            // „Corectată": altfel al doilea om îl apăsa a doua oară și scădea
+            // încă o dată aceeași cantitate. Cât timp corecția e pe drum
+            // butonul e stins, ca un al doilea tap dat pentru că rândul arată
+            // neschimbat să nu scrie a doua mișcare.
+            canDelete: !!mv.itemId && !corectat(mv),
+            corrected: !!mv.itemId && corectat(mv),
+            undoOff: S.undoing === mv.id,
+            undoLabel: S.undoing === mv.id ? "Se anulează…" : "Anulează",
+            onDelete: () => {
+              if (this.__anulez) return;
+              this.__anulez = mv.id;
+              set({ undoing: mv.id });
+              return this.addMove(
+                mv.itemId, num(mv.q), mv.k === "in" ? -1 : 1,
+                "Corecție", "Anulează mișcarea din " + mv.d + " " + mv.t
+              ).then(() => {
+                this.__anulez = null;
+                this.setState({ undoing: null, msg: "Corecție înregistrată pentru · " + mv.p, msgBad: false });
+              }, () => {
+                // Corecția n-a plecat. Se anunță doar eroarea pusă de addMove,
+                // iar butonul se aprinde la loc: mișcarea greșită e tot acolo
+                // și tot trebuie anulată.
+                this.__anulez = null;
+                this.setState({ undoing: null });
+              });
+            }
+          };
+        })
+      };
+    }).filter(d => !d.empty);
+
+    const F = S.form, A = S.art;
+    // Categoriile și unitățile propuse în caseta de articol nou vin de la
+    // server, din Setări → Liste. Scrise aici, o categorie adăugată din panou
+    // n-ar apărea în listă, iar una ștearsă ar fi propusă în continuare și
+    // salvarea ar pica cu „Categorie necunoscută”.
+    const artCats = (S.categories || []).length ? S.categories : CATS_OF();
+    const artUnits = (S.units || []).length ? S.units : ["buc", "kg", "L"];
+    const fc = F ? (byName[F.p] || { u: "buc" }) : { u: "buc" };
+    // Caseta de mișcare pornește de la aceeași cifră ca lista: soldul
+    // serverului. Calculată din mișcările ajunse în pagină, verificarea de mai
+    // jos ar refuza cantități pe care depozitul chiar le are, cu mesajul „Nu ai
+    // decât 0 kg în stoc”.
+    const fStock = F ? num(fc.open) : 0;
+    const fDelta = F ? (F.k === "in" ? num(F.q) : -num(F.q)) : 0;
+    const pend = this.pending();
+    const pendPieces = pend.reduce((a, o) => a + (o.items || []).reduce((x, i) => x + num(i.q), 0), 0);
+
+    return {
+      who: S.who,
+      signedIn: S.who !== "Laborator",
+      accountHref: S.role === "admin" ? "Conturi.dc.html" : S.who !== "Laborator" ? "Depozit.dc.html" : "Administrare%20Comenzi.dc.html",
+      accountHint: S.role === "admin" ? "contul tău · schimbă parola" : S.who !== "Laborator" ? "cont de angajat" : "intră în cont →",
+      onLogout: () => {
+        try { localStorage.removeItem("gp-auth-v1"); } catch (e) {}
+        set({ who: "Laborator", msg: "Ai ieșit din cont · mișcările se trec pe „Laborator”.", msgBad: false });
+      },
+      viewTitle: S.view === "Registru" ? "Registru de mișcări" : "Stoc în depozit",
+      viewSub: S.loaded
+        ? items.length + " poziții · " + inToday.length + " intrări și " + outToday.length + " ieșiri azi · " + (alerts + shorts.length) + " atenționări"
+        : "Se citește registrul…",
+      search: S.search,
+      onSearch: (e) => set({ search: e.target.value }),
+      onNew: () => openForm(null, "in"),
+      onNewIn: () => openForm(null, "in"),
+      onNewOut: () => openForm(null, "out"),
+      msg: S.msg,
+      // Bannerul era desenat mereu ca succes, deci și „Sesiune expirată” sau
+      // „Scăderea din stoc a eșuat” apăreau verzi, în locul și în culoarea
+      // confirmărilor. Un refuz al serverului trebuie să arate a refuz.
+      msgCls: S.msgBad ? "h-alert h-alert--danger" : "h-alert h-alert--success",
+      onMsgClose: () => set({ msg: "", msgBad: false }),
+
+      stats: [
+        {
+          label: "Sub prag minim", value: String(alerts), hint: alerts ? "trebuie completat azi" : "toate pozițiile peste prag",
+          fg: alerts ? "var(--h-warning)" : "var(--h-fg)", bd: alerts ? "var(--h-warning)" : "var(--h-line)"
+        },
+        {
+          label: "Lipsă la comenzi", value: String(shorts.length),
+          hint: shorts.length ? shorts.slice(0, 2).map(x => x.c.n).join(", ") : "stocul acoperă comenzile deschise",
+          fg: shorts.length ? "var(--h-danger)" : "var(--h-fg)", bd: shorts.length ? "var(--h-danger)" : "var(--h-line)"
+        },
+        {
+          label: "Intrări azi", value: String(inToday.length), hint: "producție, furnizori, retururi",
+          fg: "var(--h-success)", bd: "var(--h-line)"
+        },
+        {
+          label: "Ieșiri azi", value: String(outToday.length), hint: "comenzi, consum, pierderi",
+          fg: "var(--h-jam)", bd: "var(--h-line)"
+        }
+      ],
+
+      hasPending: pend.length > 0,
+      pendingTitle: pend.length + (pend.length === 1 ? " comandă predată nu e scăzută din stoc" : " comenzi predate nu sunt scăzute din stoc"),
+      pendingHint: fmt(pendPieces) + " bucăți din comenzile marcate „" + gp.done() + "” în laborator sau administrare.",
+      onSync: () => this.sync(false),
+      // Butonul se stinge cât timp scăderea e în lucru. Paza din sync() oprea
+      // deja a doua cerere, dar pe ecran nu se schimba nimic: pe tabletă, un
+      // buton care rămâne aprins după apăsare pare că n-a răspuns, iar
+      // depozitarul mai dă un tap, și încă unul, convins că nu se scade.
+      syncBusy: !!S.syncing,
+      syncLabel: S.syncing ? "Se scade…" : "Scade din stoc",
+
+      tabs: ["Toate"].concat(CATS_OF()).concat(["Registru"]).map(t => {
+        const isLogTab = t === "Registru";
+        const count = isLogTab ? S.moves.length : (t === "Toate" ? items.length : items.filter(x => x.c.c === t).length);
+        const active = isLogTab ? S.view === "Registru" : (S.view === "Stoc" && S.cat === t);
+        return {
+          label: t, count: String(count),
+          cls: active ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+          onClick: () => set(isLogTab ? { view: "Registru" } : { view: "Stoc", cat: t })
+        };
+      }),
+      sorts: [{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
+        label: s.l, cls: S.sort === s.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ sort: s.v })
+      })),
+
+      currentLabel: S.view === "Registru"
+        ? "Registru · " + S.moves.length + " mișcări"
+        : (S.cat === "Toate" ? "Tot stocul" : S.cat) + " · " + (S.cat === "Toate" ? items.length : items.filter(x => x.c.c === S.cat).length) + " poziții",
+      menuOpen: S.menu,
+      onMenuOpen: () => set({ menu: true }),
+      onMenuClose: () => set({ menu: false }),
+      menuViews: ["Toate"].concat(CATS_OF()).concat(["Registru"]).map(t => {
+        const isLogTab = t === "Registru";
+        const active = isLogTab ? S.view === "Registru" : (S.view === "Stoc" && S.cat === t);
+        return {
+          label: isLogTab ? "Registru de mișcări" : (t === "Toate" ? "Tot stocul" : t),
+          count: String(isLogTab ? S.moves.length : (t === "Toate" ? items.length : items.filter(x => x.c.c === t).length)),
+          mark: active ? "✓" : "",
+          bg: active ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
+          bd: active ? "var(--h-accent)" : "var(--h-line)",
+          onClick: () => set(isLogTab ? { view: "Registru", menu: false } : { view: "Stoc", cat: t, menu: false })
+        };
+      }),
+      menuSorts: [{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
+        label: s.l, mark: S.sort === s.v ? "✓" : "",
+        bg: S.sort === s.v ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
+        bd: S.sort === s.v ? "var(--h-accent)" : "var(--h-line)",
+        onClick: () => set({ sort: s.v, menu: false })
+      })),
+
+      isStock: S.view === "Stoc", isLog: S.view === "Registru",
+      resDisplay: showRes ? "flex" : "none",
+      resInline: showRes ? "inline" : "none",
+      rows: rowVals, noRows: rowVals.length === 0,
+      onClearFilters: () => set({ cat: "Toate", search: "", sort: "cat" }),
+      logDays, noLog: logDays.length === 0,
+
+      // Deschiderea casetei stinge semaforul: o cerere rămasă fără răspuns nu
+      // trebuie să blocheze adăugarea până la reîncărcarea paginii.
+      onNewArt: () => (this.__artBusy = false, set({
+        art: {
+          n: "", min: "", err: "", busy: false,
+          // Pornim pe fila deschisă: articolul apare în lista din fața omului,
+          // nu în alta, pe care ar trebui s-o caute ca să vadă că s-a salvat.
+          c: artCats.indexOf(S.cat) >= 0 ? S.cat : artCats[0],
+          u: artUnits[0]
+        }
+      })),
+      hasArt: !!A,
+      artN: A ? A.n : "", artC: A ? A.c : "", artU: A ? A.u : "",
+      artMin: A ? A.min : "", artErr: A ? A.err : "",
+      artCats: artCats.map(c => ({ v: c, l: c })),
+      artUnits: artUnits.map(u => ({ v: u, l: u })),
+      artBusy: !!(A && A.busy),
+      artSaveLabel: A && A.busy ? "Se salvează…" : "Adaugă articolul",
+      onArtN: (e) => set({ art: Object.assign({}, A, { n: e.target.value, err: "" }) }),
+      onArtC: (e) => set({ art: Object.assign({}, A, { c: e.target.value, err: "" }) }),
+      onArtU: (e) => set({ art: Object.assign({}, A, { u: e.target.value }) }),
+      onArtMin: (e) => set({ art: Object.assign({}, A, { min: e.target.value, err: "" }) }),
+      onArtCancel: () => set({ art: null }),
+      onArtSave: () => {
+        // Semaforul stă pe instanță, nu în stare: `setState` nu schimbă starea
+        // pe loc, deci două tapuri grăbite ar citi amândouă `busy: false` și ar
+        // trimite amândouă articolul. `busy` din stare rămâne pentru buton.
+        if (!A || A.busy || this.__artBusy) return;
+        const nume = String(A.n).trim();
+        if (!nume) return set({ art: Object.assign({}, A, { err: "Scrie denumirea articolului." }) });
+        // Câmpul gol înseamnă „pragul implicit din Setări”, deci pleacă null.
+        // Un text care nu e număr nu are voie să cadă pe 0: articolul ar intra
+        // cu alarma stinsă pentru totdeauna, fără ca nimeni să bage de seamă.
+        const scris = String(A.min).trim();
+        const prag = scris === "" ? null : parseFloat(scris.replace(",", "."));
+        if (prag !== null && (!isFinite(prag) || prag < 0)) {
+          return set({ art: Object.assign({}, A, { err: "Pragul minim trebuie să fie un număr, zero sau mai mare." }) });
+        }
+        // Butonul se stinge cât ține cererea: pe tabletă, un buton care rămâne
+        // aprins pare că n-a răspuns, iar al doilea tap ar trimite încă un
+        // articol cu același nume — refuzat de server, cu mesaj roșu degeaba.
+        this.__artBusy = true;
+        set({ art: Object.assign({}, A, { err: "", busy: true }) });
+        return this.adaugaArticol(nume, A.c, A.u, prag)
+          .then(() => { this.__artBusy = false; return set({ art: null, msgBad: false, msg: "Articol adăugat · " + nume + " · pornește de la 0, pune-i prima intrare." }); })
+          // Refuzul serverului („există deja un articol cu numele…”) se arată
+          // chiar în casetă: bannerul de sus rămâne acoperit de fereastră, deci
+          // omul ar vedea doar o casetă care nu se închide, fără să afle de ce.
+          .catch((e) => { this.__artBusy = false; return set({ art: Object.assign({}, this.state.art || A, { err: e.message, busy: false }) }); });
+      },
+
+      hasForm: !!F,
+      formSub: F ? (F.k === "in" ? "Intrare în depozit · " + dLabel(TODAY) : "Ieșire din depozit · " + dLabel(TODAY)) : "",
+      kindBtns: [{ v: "in", l: "Intrare" }, { v: "out", l: "Ieșire" }].map(k => ({
+        label: k.l,
+        cls: F && F.k === k.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ form: Object.assign({}, F, { k: k.v, r: k.v === "in" ? IN_R[0] : OUT_R[0], err: "" }) })
+      })),
+      prodOpts: cat.slice().sort((a, b) => {
+        const ia = CATS_OF().indexOf(a.c), ib = CATS_OF().indexOf(b.c);
+        return ia !== ib ? ia - ib : a.n.localeCompare(b.n, "ro");
+      }).map(c => ({ v: c.n, l: c.c + " · " + c.n })),
+      reasonOpts: (F && F.k === "out" ? OUT_R : IN_R).map(r => ({ v: r, l: r })),
+      fP: F ? F.p : "", fQ: F ? F.q : "", fR: F ? F.r : "", fNote: F ? F.note : "", fErr: F ? F.err : "",
+      fU: fc.u,
+      fNow: fmt(fStock) + " " + fc.u,
+      fAfter: fmt(fStock + fDelta) + " " + fc.u,
+      fAfterFg: fStock + fDelta < 0 ? "var(--h-danger)" : "var(--h-fg)",
+      fWho: "Înregistrează: " + S.who,
+      saveLabel: F && F.k === "out" ? "Salvează ieșirea" : "Salvează intrarea",
+      onFP: (e) => set({ form: Object.assign({}, F, { p: e.target.value, err: "" }) }),
+      onFQ: (e) => set({ form: Object.assign({}, F, { q: e.target.value, err: "" }) }),
+      onFR: (e) => set({ form: Object.assign({}, F, { r: e.target.value }) }),
+      onFNote: (e) => set({ form: Object.assign({}, F, { note: e.target.value }) }),
+      onCancel: () => set({ form: null }),
+      onSave: () => {
+        if (!F) return;
+        const qv = num(F.q);
+        if (qv <= 0) return set({ form: Object.assign({}, F, { err: "Scrie o cantitate mai mare decât zero." }) });
+        if (F.k === "out" && qv > fStock) return set({ form: Object.assign({}, F, { err: "Nu ai decât " + fmt(fStock) + " " + fc.u + " în stoc. Fă mai întâi intrarea sau corectează inventarul." }) });
+        // Mișcarea se scrie pe server; stocul se recalculează de acolo.
+        set({ form: null });
+        this.addMove(fc.id, qv, F.k === "in" ? 1 : -1, F.r, F.note)
+          .then(() => set({
+            msg: (F.k === "in" ? "Intrare înregistrată · +" : "Ieșire înregistrată · −") + fmt(qv) + " " + fc.u + " " + F.p,
+            msgBad: false
+          }))
+          // Serverul a refuzat: mișcarea NU s-a scris, deci nu se anunță
+          // nimic. Caseta se deschide la loc, cu cifrele omului în ea și cu
+          // motivul înăuntru — bannerul de sus ar rămâne acoperit de fereastră,
+          // iar depozitarul ar trebui să retasteze cantitatea ca să reîncerce.
+          .catch((e) => set({ form: Object.assign({}, F, { err: e.message }), msg: "" }));
+      }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

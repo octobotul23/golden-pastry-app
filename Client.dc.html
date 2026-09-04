@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+@keyframes cl-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cl-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media (min-width:560px){[data-cl=phone]{max-width:520px!important;margin:0 auto!important}}
+@media (max-width:420px){
+[data-cl=big]{font-size:64px!important}
+[data-cl=pad]{padding:14px!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.18), transparent 70%)">
+<div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:26px;font-weight:600;color:var(--h-cream-100)">Comanda mea</span>
+<span style="font-size:15px;color:rgba(255,255,255,.65)">Intră cu datele primite de la patiserie</span>
+</div>
+</div>
+<div class="h-card" style="padding:22px 20px;border-radius:22px;display:flex;flex-direction:column;gap:14px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Utilizator
+<input class="h-input" value="{{ lu }}" onChange="{{ onLu }}" onKeyDown="{{ onKey }}" autoComplete="username" placeholder="client" style="height:50px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parolă
+<input class="h-input" type="password" value="{{ lp }}" onChange="{{ onLp }}" onKeyDown="{{ onKey }}" autoComplete="current-password" placeholder="••••••••" style="height:50px;font-size:16px">
+</label>
+<sc-if value="{{ lerr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px">{{ lerr }}</div>
+</sc-if>
+<button type="button" class="h-btn h-btn--primary h-btn--block" onClick="{{ onLogin }}" style="min-height:54px;font-size:17px">Vezi comanda mea</button>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;font-weight:600;color:var(--h-fg-muted);text-decoration:none" style-hover="color:var(--h-fg)">Ți-ai uitat parola?</a>
+<p style="margin:0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">Vezi doar comanda ta: în câte zile vine și, în ziua livrării, câte opriri mai sunt până la tine.</p>
+</div>
+<div style="display:grid;grid-template-columns:1fr;gap:8px">
+<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.10);color:var(--h-cream-100)">← Ești din echipă? Alege panoul</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ unlocked }}" hint-placeholder-val="{{ true }}">
+<div data-cl="phone" style="min-height:100vh;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--h-cocoa-800);color:var(--h-cream-100)">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:38px;height:38px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-family:var(--h-font-display);font-size:17px;font-weight:600">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ clientName }}</span>
+</div>
+<a href="Parola.dc.html" title="Schimbă-ți parola" style="flex:none;display:flex;align-items:center;min-height:40px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:11px;color:var(--h-cream-100);font-size:13px;font-weight:600;text-decoration:none">Parola</a>
+<button type="button" onClick="{{ onLogout }}" style="flex:none;min-height:40px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:11px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:13px;font-weight:600;cursor:pointer">Ieși</button>
+</div>
+
+<!-- Contul are încă parola pusă de administrator. Steagul se scria în baza de date
+     la fiecare cont creat sau resetat și nu-l citea nicio pagină: clientul
+     primea parola pe telefon, cu îndemnul s-o schimbe, și nu avea de unde. -->
+<sc-if value="{{ mustChange }}" hint-placeholder-val="{{ false }}">
+<a href="Parola.dc.html" style="display:flex;align-items:center;gap:10px;padding:11px 16px;background:var(--h-warning-soft);border-bottom:1px solid var(--h-line);color:var(--h-fg);font-size:13px;line-height:1.5;text-decoration:none">Pe cont e încă parola primită când ți s-a făcut contul. Schimb-o cu una știută doar de tine →</a>
+</sc-if>
+
+<sc-if value="{{ isPreview }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--h-warning-soft);border-bottom:1px solid var(--h-line)">
+<span style="font-size:13px;color:var(--h-fg-muted);flex:none">Previzualizare client:</span>
+<select class="h-input" value="{{ pickCust }}" onChange="{{ onPickCust }}" style="flex:1;min-width:0;height:42px;font-size:14px">
+<sc-for list="{{ custOpts }}" as="c" hint-placeholder-count="6">
+<option value="{{ c.v }}">{{ c.l }}</option>
+</sc-for>
+</select>
+</div>
+</sc-if>
+
+<div data-cl="pad" style="flex:1;display:flex;flex-direction:column;gap:14px;padding:18px 16px 26px">
+
+<sc-if value="{{ hasOrder }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:14px">
+
+<div class="h-card" style="padding:20px 18px;border-radius:20px;display:flex;flex-direction:column;gap:10px;background:var(--h-accent-soft);border-color:var(--h-accent);animation:cl-in .3s var(--h-ease-out)">
+<span class="h-eyebrow" style="font-size:12px;color:var(--h-crust-700)">{{ nextEyebrow }}</span>
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+<span data-cl="big" class="h-numeric" style="font-family:var(--h-font-display);font-size:74px;font-weight:700;line-height:.9;color:var(--h-accent)">{{ bigNum }}</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-family:var(--h-font-display);font-size:21px;font-weight:600;line-height:1.15">{{ bigLabel }}</span>
+<span style="font-size:15px;color:var(--h-fg-muted)">{{ dayLine }}</span>
+</div>
+</div>
+<span style="font-size:15px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ nextHint }}</span>
+</div>
+
+<sc-if value="{{ showRoute }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px">
+<span class="h-eyebrow" style="font-size:12px">Livrarea de azi</span>
+<span class="{{ routeCls }}" style="font-size:11px;margin-left:auto">{{ routeBadge }}</span>
+</div>
+<div style="display:flex;align-items:center;gap:14px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:52px;font-weight:700;line-height:.95;color:var(--h-accent);flex:none">{{ stopsNum }}</span>
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<span style="font-size:17px;font-weight:700;line-height:1.2">{{ stopsLabel }}</span>
+<span style="font-size:14px;color:var(--h-fg-muted);line-height:1.4">{{ driverLine }}</span>
+</div>
+</div>
+<sc-if value="{{ routeTotal }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--h-fg-subtle)">
+<span>{{ routeTotal }}</span>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<div class="h-card" style="padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span class="h-eyebrow" style="font-size:12px">Comanda ta</span>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ orderRef }}</span>
+<span class="{{ chanCls }}" style="font-size:11px;margin-left:auto">{{ chanLabel }}</span>
+<sc-if value="{{ showStatus }}" hint-placeholder-val="{{ true }}">
+<span class="{{ statusCls }}" style="font-size:11px">{{ statusLabel }}</span>
+</sc-if>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ items }}" as="it" hint-placeholder-count="3">
+<div style="display:flex;align-items:baseline;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="width:38px;text-align:right;font-size:17px;font-weight:700;color:var(--h-accent)">{{ it.q }}</span>
+<span style="font-size:16px;line-height:1.35;flex:1;min-width:0">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-size:14px;color:var(--h-fg-muted)">Total</span>
+<span class="h-numeric" style="margin-left:auto;font-size:18px;font-weight:700">{{ totalQty }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">buc.</span>
+</div>
+<sc-if value="{{ addrLine }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:14px;color:var(--h-fg-muted);line-height:1.45">{{ addrLine }}</span>
+</sc-if>
+</div>
+
+<sc-if value="{{ hasMore }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<span class="h-eyebrow" style="font-size:12px">Următoarele comenzi</span>
+<sc-for list="{{ more }}" as="m" hint-placeholder-count="2">
+<div class="h-card" style="padding:14px 16px;border-radius:16px;display:flex;align-items:center;gap:14px">
+<span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700;line-height:1;color:var(--h-accent);flex:none">{{ m.days }}</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
+<span style="font-size:15px;font-weight:600">{{ m.day }}</span>
+<span style="font-size:13px;color:var(--h-fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.line }}</span>
+</div>
+<span class="{{ m.chanCls }}" style="font-size:11px;flex:none">{{ m.chan }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+<!-- Comanda trimisă din magazin, cât timp nu e confirmată. Ecranul de succes
+     al magazinului trimite clientul chiar aici; până la acceptarea din
+     laborator ea nu e comandă, deci /orders n-o vede. Fără cartonașul acesta,
+     pagina îi spunea că nu găsește nimic pe numele lui. -->
+<sc-if value="{{ hasPending }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<span class="h-eyebrow" style="font-size:12px">{{ pendingTitle }}</span>
+<sc-for list="{{ pending }}" as="c" hint-placeholder-count="1">
+<div class="h-card" style="padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:12px;background:var(--h-warning-soft)">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="font-size:15px;font-weight:600;min-width:0">{{ c.when }}</span>
+<span class="h-badge h-badge--warning" style="font-size:11px;margin-left:auto;flex:none">Se confirmă</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ c.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;align-items:baseline;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="width:38px;text-align:right;font-size:16px;font-weight:700;color:var(--h-accent)">{{ it.q }}</span>
+<span style="font-size:15px;line-height:1.35;flex:1;min-width:0">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-size:14px;color:var(--h-fg-muted)">Total</span>
+<span class="h-numeric" style="margin-left:auto;font-size:18px;font-weight:700">{{ c.qty }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">buc.</span>
+</div>
+<span style="font-size:13px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ c.hint }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<!-- Cererile refuzate, cu motivul. Serverul îl salvează de la bun început
+     (`order_requests.reject_reason`), dar pagina cerea doar cererile „nou”,
+     deci clientul vedea cererea dispărând fără nicio explicație și suna să
+     întrebe ce s-a întâmplat. -->
+<sc-if value="{{ hasRejected }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<span class="h-eyebrow" style="font-size:12px">{{ rejectedTitle }}</span>
+<sc-for list="{{ rejected }}" as="c" hint-placeholder-count="1">
+<div class="h-card" style="padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:12px;background:var(--h-danger-soft)">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="font-size:15px;font-weight:600;min-width:0">{{ c.when }}</span>
+<span class="h-badge h-badge--danger" style="font-size:11px;margin-left:auto;flex:none">Nu s-a putut onora</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ c.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;align-items:baseline;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="width:38px;text-align:right;font-size:16px;font-weight:700;color:var(--h-fg-muted)">{{ it.q }}</span>
+<span style="font-size:15px;line-height:1.35;flex:1;min-width:0">{{ it.n }}</span>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:baseline;gap:10px">
+<span style="font-size:14px;color:var(--h-fg-muted)">Total</span>
+<span class="h-numeric" style="margin-left:auto;font-size:18px;font-weight:700">{{ c.qty }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">buc.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px">
+<span class="h-eyebrow" style="font-size:11px">Motivul</span>
+<span style="font-size:14px;line-height:1.5;text-wrap:pretty">{{ c.reason }}</span>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ noOrder }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:26px 20px;border-radius:20px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center">
+<span style="font-family:var(--h-font-display);font-size:21px;font-weight:600">Nicio comandă activă</span>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">{{ emptyLine }}</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasPast }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:10px">
+<span class="h-eyebrow" style="font-size:12px">Ce ai comandat până acum</span>
+<span style="margin-left:auto;font-size:13px;color:var(--h-fg-subtle)">{{ pastCount }}</span>
+</div>
+<sc-for list="{{ past }}" as="h" hint-placeholder-count="3">
+<div class="h-card" style="padding:0;border-radius:16px;overflow:hidden">
+<button type="button" onClick="{{ h.toggle }}" aria-expanded="{{ h.expanded }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:14px 16px;border:0;background:transparent;color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+<span style="font-size:15px;font-weight:600">{{ h.when }}</span>
+<span style="font-size:13px;color:var(--h-fg-muted)">{{ h.line }}</span>
+</div>
+<span class="{{ h.cls }}" style="font-size:11px;flex:none">{{ h.status }}</span>
+<span style="flex:none;font-size:12px;color:var(--h-fg-subtle)">{{ h.caret }}</span>
+</button>
+<sc-if value="{{ h.open }}" hint-placeholder-val="{{ false }}">
+<div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ h.items }}" as="it" hint-placeholder-count="2">
+<div style="display:flex;align-items:baseline;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="width:38px;text-align:right;font-size:16px;font-weight:700;color:var(--h-accent)">{{ it.q }}</span>
+<span style="font-size:15px;line-height:1.35;flex:1;min-width:0">{{ it.n }}</span>
+</div>
+</sc-for>
+<span style="font-size:13px;color:var(--h-fg-subtle);line-height:1.45">{{ h.detail }}</span>
+</div>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{ hasMorePast }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ showAllPast }}" style="min-height:46px;border:1px solid var(--h-line-strong);border-radius:14px;background:transparent;color:var(--h-fg-muted);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">{{ morePastLabel }}</button>
+</sc-if>
+</div>
+</sc-if>
+
+<p style="margin:0;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-align:center;text-wrap:pretty">Se actualizează singur cât ține pagina deschisă. Pentru schimbări în comandă, sună la patiserie.</p>
+
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showProduction&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Client&quot;},&quot;showDriverZone&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Client&quot;}}">
+const OKEY = "gp-admin-orders-v1", RKEY = "gp-route-order-v1", AKEY = "gp-auth-v1", UKEY = "gp-users-v1", LKEY = "gp-log-v1";
+// Fereastra de zile, calculată la fiecare încărcare. Era scrisă în cod, cu
+// „26" ca zi curentă: clientul vedea „3 zile până la comandă" pentru o comandă
+// de azi, fiindcă pagina credea că e mereu 26 august 2026.
+const GPDAYS = gp.days(7);
+const TODAY = GPDAYS[0].v;
+const DAYS = GPDAYS.map(d => ({ v: d.v, l: d.long }));
+const CH = { Ridicare: "h-badge h-badge--honey", Livrare: "h-badge h-badge--accent", Angro: "h-badge h-badge--jam" };
+const CLIENT_ST = {
+  "În așteptare": { l: "Programată", c: "h-badge" },
+  "La dospit": { l: "Se prepară", c: "h-badge h-badge--warning" },
+  "În cuptor": { l: "Se prepară", c: "h-badge h-badge--warning" },
+  "La ambalare": { l: "La ambalare", c: "h-badge h-badge--success" },
+  "Predată": { l: "Gata", c: "h-badge h-badge--solid" }
+};
+const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
+const idx = (v) => DAYS.findIndex(d => d.v === v);
+const TODAY_ISO = gp.today();
+const RO_DOWL = ["duminică", "luni", "marți", "miercuri", "joi", "vineri", "sâmbătă"];
+const RO_MONL = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie",
+  "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+const RO_MONS = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "noi", "dec"];
+const zData = (iso) => {
+  const d = new Date(String(iso) + "T00:00:00");
+  return isNaN(d.getTime()) ? null : d;
+};
+/** „sâmbătă 29 august" */
+const zLung = (iso) => {
+  const d = zData(iso);
+  return d ? RO_DOWL[d.getDay()] + " " + d.getDate() + " " + RO_MONL[d.getMonth()] : "";
+};
+/** „29 august", cu anul doar dacă nu e cel curent. */
+const zScurt = (iso) => {
+  const d = zData(iso);
+  if (!d) return "";
+  const acum = zData(TODAY_ISO);
+  return d.getDate() + " " + RO_MONL[d.getMonth()] +
+    (acum && d.getFullYear() !== acum.getFullYear() ? " " + d.getFullYear() : "");
+};
+/**
+ * Câte zile sunt de azi până la data cerută.
+ *
+ * Se socotea căutând ziua din lună în fereastra de șapte zile a panoului. O
+ * comandă de peste două săptămâni nu se găsea acolo, iar dacă avea aceeași zi
+ * din lună ca azi, pagina o anunța drept „azi".
+ */
+const zDif = (iso) => {
+  const d = zData(iso), a = zData(TODAY_ISO);
+  return d && a ? Math.round((d - a) / 86400000) : -1;
+};
+const bani = (v) => {
+  const n = Number(v);
+  return isFinite(n) && n > 0 ? n.toFixed(2).replace(".", ",") + " RON" : "";
+};
+const roleOf = (x) => x.role || (x.u === "admin" ? "admin" : "angajat");
+const qty = (o) => (o.items || []).reduce((a, i) => a + gp.qty(i.q), 0);
+// Jurnalul îl scrie serverul, la fiecare operație, în tabelul audit_log.
+// Varianta locală înregistra doar ce făcea browserul acesta — adică exact
+// ce NU trebuie să fie un jurnal. Păstrăm funcția ca să nu atingem zecile de
+// apeluri din pagină, dar nu mai scrie nimic.
+const logAct = () => {};
+
+class Component extends DCLogic {
+  state = { orders: [], requests: [], auth: null, users: [], pick: "", lu: "", lp: "", lerr: "", loaded: false,
+    // Istoricul: care comandă e desfăcută și dacă s-au cerut toate.
+    openPast: {}, pastAll: false };
+
+  componentDidMount() {
+    // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
+    // dacă le redenumești din panou, pagina trebuie să afle de la server.
+    gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    document.documentElement.setAttribute("data-theme", "light");
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    // gp.poll() se oprește când fila e ascunsă și reia la revenire, și nu
+    // lasă două ture să se suprapună. Un setInterval propriu ținea pagina să
+    // întrebe serverul din cinci în cinci secunde și pe un telefon lăsat în
+    // buzunar toată ziua, iar la o legătură proastă cererile se încălecau.
+    this.stopPoll = gp.poll(() => this.pull(), 5000);
+    this.onStore = () => this.pull();
+    window.addEventListener("storage", this.onStore);
+  }
+
+  componentWillUnmount() {
+    if (this.stopPoll) this.stopPoll();
+    window.removeEventListener("storage", this.onStore);
+  }
+
+  /**
+   * Aduce sesiunea, comenzile și cererile neconfirmate de pe server.
+   *
+   * API-ul întoarce clientului exclusiv comenzile lui — filtrul se aplică în
+   * interogarea SQL, nu în pagină, deci nu poate fi ocolit din browser. La fel
+   * și cererile: `GET /requests` e filtrat pe `customer_id` pentru clienți.
+   *
+   * Comanda trimisă din magazin nu intră în tabelul comenzilor: rămâne cerere
+   * până când o acceptă cineva din laborator. Pagina cerea doar `/orders`,
+   * deci clientul venit chiar de pe ecranul de succes — care îl trimite aici
+   * pe litere — găsea „Nu găsim nicio comandă pe numele …”, credea că nu s-a
+   * trimis și suna, iar marfa se comanda a doua oară.
+   */
+  pull() {
+    return gp.me()
+      .then((user) => {
+        if (!user) {
+          return this.setState({ auth: null, orders: [], requests: [], loaded: true });
+        }
+        this.setState({
+          auth: { u: user.username, name: user.customerName || user.name, role: user.role,
+            // Steagul spune ca pe cont e inca parola pusa de administrator.
+            temp: user.mustChangePassword === true }
+        });
+        // Cererile se cer numai pentru clienți: personalului serverul i le dă
+        // pe toate ale laboratorului, iar aici ar însemna cinci sute de rânduri
+        // la fiecare tur de cinci secunde, pentru un ecran care oricum arată o
+        // singură persoană. Un eșec pe `/requests` nu are voie să ascundă
+        // comenzile: rămâne o listă goală, nu o pagină goală.
+        // Și cele respinse: serverul le dă cu tot cu motiv, iar clientul e
+        // singurul care nu-l afla. Filtrul rămâne pe server — un client vede
+        // oricum doar cererile lui, `route_requests_list` le taie pe
+        // `customer_id`.
+        const cereri = user.role === 'client'
+          ? gp.get('/requests?status=nou,respinsa')
+              .then((r) => (r.requests || []).map(gp.toPageRequest))
+              .catch(() => [])
+          : Promise.resolve([]);
+        return Promise.all([gp.get('/orders'), cereri]).then(([r, cer]) => this.setState({
+          orders: (r.orders || []).map(gp.toPageOrder),
+          requests: cer,
+          loaded: true
+        }));
+      })
+      .catch(() => this.setState({ loaded: true }));
+  }
+
+  renderVals() {
+    const S = this.state, set = (x) => this.setState(x);
+    const showStatus = this.props.showProduction !== false;
+    const showZone = this.props.showDriverZone !== false;
+    const auth = S.auth;
+    const role = auth ? (() => {
+      const hit = (S.users || []).find(x => x.u === auth.u);
+      return hit ? roleOf(hit) : (auth.role || "client");
+    })() : "";
+    const isPreview = role === "admin";
+
+    const custOf = (u) => {
+      const hit = (S.users || []).find(x => x.u === u);
+      return hit && hit.cust ? hit.cust : "";
+    };
+    const custList = Array.from(new Set(S.orders.map(o => o.cust))).sort((a, b) => a.localeCompare(b, "ro"));
+    const cust = isPreview ? (S.pick || custList[0] || "") : (custOf(auth ? auth.u : "") || (auth ? auth.name : ""));
+
+    const staffBlocked = role === "angajat";
+    // Serverul îi trimite clientului exclusiv comenzile contului lui: filtrul
+    // stă în interogarea SQL, pe `customer_id`. Filtrarea încă o dată, după
+    // numele afișat, punea față în față numele viu al contului și numele
+    // înghețat în comandă la crearea ei — două copii ale aceluiași text, care
+    // se despart la prima corectură. Era destul ca cineva să completeze
+    // „Numele clientului din comenzi" în Conturi sau să-l salveze cu un spațiu
+    // în plus, și clientul deschidea pagina fără nicio comandă: nici cea de
+    // mâine, nici istoricul, doar „Nu găsim nicio comandă pe numele ...".
+    // Numele mai are rost doar la previzualizarea de admin, unde serverul chiar
+    // trimite comenzile tuturor și alegerea din listă spune pe cine ne uităm.
+    const alMeu = (o) => !isPreview ||
+      (o.cust || "").trim().toLowerCase() === (cust || "").trim().toLowerCase();
+    const anulata = (o) => o.status === gp.cancelled();
+
+    // Împărțirea se face pe data întreagă, nu pe ziua din lună: „29" se
+    // repetă în fiecare lună, iar o comandă de peste o lună apărea drept azi.
+    // O comandă anulată nu mai e „următoarea comandă" — trece în istoric.
+    const mine = staffBlocked ? [] : S.orders
+      .filter(alMeu)
+      .filter(o => !anulata(o) && String(o.date || "") >= TODAY_ISO)
+      .sort((a, b) => String(a.date || "").localeCompare(String(b.date || "")));
+
+    const first = mine[0] || null;
+    const days = first ? zDif(first.date) : -1;
+    const dayLabel = first ? zLung(first.date) : "";
+    const st = first ? (CLIENT_ST[first.status] || { l: first.status, c: "h-badge" }) : null;
+
+    // Istoricul: tot ce a trecut, plus comenzile anulate, oricând ar fi fost.
+    // Panoul arăta doar ce urmează, deci clientul nu avea de unde ști ce a
+    // comandat data trecută și cât a fost.
+    const trecute = staffBlocked ? [] : S.orders
+      .filter(alMeu)
+      .filter(o => anulata(o) || String(o.date || "") < TODAY_ISO)
+      .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+    const aratate = S.pastAll ? trecute : trecute.slice(0, 6);
+
+    // Cererile trimise din magazin și neconfirmate încă. Până la acceptare ele
+    // nu sunt comenzi — nu există în tabelul `orders`, deci `/orders` nu le
+    // întoarce niciodată. Fără ele, pagina spunea „Nicio comandă activă”
+    // clientului venit direct de pe ecranul care tocmai îi promisese că își
+    // vede comanda aici. Cele fără zi cerută stau la urmă: n-au după ce să fie
+    // ordonate în calendar.
+    const toateCererile = staffBlocked ? [] : (S.requests || [])
+      .slice()
+      .sort((a, b) => String(a.date || "9999-99-99").localeCompare(String(b.date || "9999-99-99"))
+        || (a.at || 0) - (b.at || 0));
+    const cereri = toateCererile.filter((c) => c.status !== "respinsa");
+    // Cererile refuzate merg în cartonașul lor, cel mai nou întâi: e o veste,
+    // nu o comandă în așteptare, și nu are ce căuta în numărătoarea de mai jos
+    // („nicio comandă activă” trebuie să rămână adevărat dacă tot ce are
+    // clientul e un refuz).
+    const respinse = toateCererile
+      .filter((c) => c.status === "respinsa")
+      .sort((a, b) => (b.at || 0) - (a.at || 0));
+    const stIstoric = (o) => anulata(o)
+      ? { l: "Anulată", c: "h-badge h-badge--danger" }
+      : o.status === gp.done()
+        ? { l: o.chan === "Ridicare" ? "Ridicată" : "Livrată", c: "h-badge h-badge--success" }
+        : (CLIENT_ST[o.status] || { l: o.status, c: "h-badge" });
+
+    // Poziția pe ruta zilei o știe numai serverul: ordinea se stabilește în
+    // Administrare și se scrie pe comandă, în `route_seq`. Pagina clientului
+    // primește de la /orders exclusiv comenzile lui, deci lista de „opriri" pe
+    // care și-o construia singură avea un singur element — al lui — și de acolo
+    // ieșea, în fiecare dimineață, „Ești următoarea oprire", chiar dacă era a
+    // noua din douăsprezece; textul rămânea neschimbat oricâte opriri făcea
+    // șoferul înaintea lui. Acum pagina folosește singurul lucru adevărat pe
+    // care îl are: locul comenzii în ruta zilei, numărat de la zero. Cât timp
+    // ruta nu e aranjată, câmpul lipsește — și atunci pagina spune că nu se
+    // știe încă, în loc să inventeze un număr.
+    let route = { show: false };
+    if (first && days === 0 && first.chan === "Livrare") {
+      const livrata = first.status === gp.done();
+      const poz = typeof first.routeSeq === "number" ? first.routeSeq : null;
+      const unde = [
+        first.zone ? "zona " + first.zone : "",
+        first.slot ? "intervalul " + first.slot : ""
+      ].filter(Boolean).join(", ");
+      route = {
+        show: true,
+        num: livrata ? "✓" : poz === null ? "—" : String(poz),
+        label: livrata
+          ? "Comanda ta a fost livrată"
+          : poz === null
+            ? "Ordinea opririlor nu e stabilită încă"
+            : poz === 0
+              ? "Ești prima oprire a zilei"
+              : poz === 1
+                ? "o oprire înaintea ta"
+                : poz + " opriri înaintea ta",
+        driver: !showZone ? "" : livrata
+          ? "Mulțumim! Ne vedem la comanda următoare."
+          : poz === null
+            ? "Îți spunem aici a câta oprire ești, imediat ce se aranjează ruta zilei."
+            : unde ? "Livrarea ta e trecută pe " + unde + "." : "",
+        badge: livrata ? "Livrată" : poz === null ? "Ruta se aranjează" : "Pe rută",
+        cls: livrata ? "h-badge h-badge--success" : poz === null ? "h-badge" : "h-badge h-badge--accent",
+        total: poz === null ? "" : "tu ești oprirea " + (poz + 1) + " de azi"
+      };
+    }
+
+    // Parola se verifică pe server, ca în restul aplicației.
+    const doLogin = async () => {
+      const u = String(S.lu).trim().toLowerCase(), p = String(S.lp);
+      if (!u || !p) return set({ lerr: "Completează utilizatorul și parola." });
+
+      try {
+        const user = await gp.login(u, p);
+        if (user.role === "angajat") {
+          await gp.logout();
+          return set({ lerr: "Contul „" + user.name + "” e cont de angajat — folosește panourile de lucru." });
+        }
+        set({ lu: "", lp: "", lerr: "" });
+        this.pull();
+      } catch (e) {
+        set({ lerr: e.message || "Utilizator sau parolă greșite.", lp: "" });
+      }
+    };
+
+    return {
+      locked: S.loaded && !auth, unlocked: !S.loaded || !!auth,
+      lu: S.lu, lp: S.lp, lerr: S.lerr,
+      onLu: (e) => set({ lu: e.target.value, lerr: "" }),
+      onLp: (e) => set({ lp: e.target.value, lerr: "" }),
+      onKey: (e) => { if (e.key === "Enter") doLogin(); },
+      onLogin: () => doLogin(),
+      onLogout: () => {
+        gp.logout().finally(() => set({ auth: null, orders: [] }));
+      },
+
+      clientName: cust || (auth ? auth.name : ""),
+      mustChange: !!(auth && auth.temp),
+      isPreview,
+      pickCust: cust,
+      custOpts: custList.map(c => ({ v: c, l: c })),
+      onPickCust: (e) => set({ pick: e.target.value }),
+
+      hasOrder: !!first, noOrder: S.loaded && !first && !cereri.length,
+
+      hasPending: !!cereri.length,
+      pendingTitle: cereri.length === 1 ? "Comanda trimisă, în așteptare" : "Comenzi trimise, în așteptare",
+      pending: cereri.map((c) => ({
+        id: c.id,
+        when: c.date ? "Pentru " + zLung(c.date) : "Ziua se stabilește la confirmare",
+        qty: gp.qtyLabel(qty(c)),
+        items: (c.items || []).map(i => ({ q: i.q, n: i.n })),
+        hint: "Am primit-o. Intră în producție după ce o confirmăm — atunci apare aici cu numărul ei și cu ziua livrării."
+      })),
+
+      hasRejected: !!respinse.length,
+      rejectedTitle: respinse.length === 1 ? "O cerere n-a putut fi onorată" : "Cereri care n-au putut fi onorate",
+      rejected: respinse.map((c) => ({
+        id: c.id,
+        when: c.date ? "Cerută pentru " + zLung(c.date) : "Fără zi cerută",
+        qty: gp.qtyLabel(qty(c)),
+        items: (c.items || []).map(i => ({ q: i.q, n: i.n })),
+        // Un refuz fără explicație e mai rău decât niciun răspuns: omul rămâne
+        // să ghicească dacă e vina lui. Când motivul lipsește din bază, spunem
+        // pe față că lipsește și trimitem la telefon.
+        reason: c.reason || "Nu s-a scris un motiv. Sună-ne și îți spunem despre ce a fost vorba."
+      })),
+
+      emptyLine: staffBlocked
+        ? "Contul „" + (auth ? auth.name : "") + "” e cont de angajat: acest ecran e doar pentru clienți. Folosește panourile de lucru."
+        : "Nu găsim nicio comandă pe numele „" + (cust || "—") + "” în zilele următoare. Dacă ai comandat telefonic, sună-ne să o adăugăm.",
+
+      nextEyebrow: days === 0 ? "Comanda ta e astăzi" : "Următoarea comandă",
+      bigNum: days === 0 ? "azi" : String(days),
+      bigLabel: days === 0 ? (first && first.chan === "Ridicare" ? "o ridici" : "se livrează") : days === 1 ? "zi până la comandă" : "zile până la comandă",
+      dayLine: dayLabel,
+      nextHint: days === 0
+        ? (first && first.chan === "Ridicare" ? "Te așteptăm la laborator cu comanda ambalată." : "Urmărește mai jos câte opriri mai sunt până la tine.")
+        : (first && first.chan === "Ridicare" ? "O ridici de la laborator în ziua comenzii." : "În ziua livrării vezi aici câte opriri mai sunt până la tine."),
+
+      showRoute: route.show,
+      stopsNum: route.num || "",
+      stopsLabel: route.label || "",
+      driverLine: route.driver || "",
+      routeBadge: route.badge || "",
+      routeCls: route.cls || "h-badge",
+      routeTotal: route.total || "",
+
+      orderRef: first ? first.ref : "",
+      chanLabel: first ? (first.chan === "Ridicare" ? "Ridicare" : first.chan === "Livrare" ? "Livrare" : "Angro") : "",
+      chanCls: first ? (CH[first.chan] || "h-badge") : "h-badge",
+      showStatus,
+      statusLabel: st ? st.l : "",
+      statusCls: st ? st.c : "h-badge",
+      items: first ? (first.items || []).map(i => ({ q: i.q, n: i.n })) : [],
+      totalQty: first ? gp.qtyLabel(qty(first)) : "0",
+      addrLine: first && first.chan === "Livrare" && first.addr ? "Livrare la " + first.addr + " · " + (first.zone || "") : "",
+
+      hasMore: mine.length > 1,
+      more: mine.slice(1).map(o => {
+        const dd = zDif(o.date);
+        return {
+          days: dd === 0 ? "azi" : String(dd),
+          day: zLung(o.date),
+          line: (o.items || []).map(i => i.q + " " + i.n).join(" · "),
+          chan: o.chan, chanCls: CH[o.chan] || "h-badge"
+        };
+      }),
+
+      /* --- ce a comandat până acum --- */
+      hasPast: !!trecute.length,
+      pastCount: trecute.length === 1 ? "o comandă" : trecute.length + " comenzi",
+      past: aratate.map(o => {
+        const deschis = !!S.openPast[o.id];
+        return {
+          id: o.id,
+          when: zScurt(o.date),
+          line: [gp.qtyLabel(qty(o)) + " buc", bani(o.total)].filter(Boolean).join(" · "),
+          status: stIstoric(o).l,
+          cls: stIstoric(o).c,
+          caret: deschis ? "▾" : "▸",
+          open: deschis,
+          expanded: String(deschis),
+          items: (o.items || []).map(i => ({ q: i.q, n: i.n })),
+          detail: [
+            o.ref ? "Comanda " + o.ref : "",
+            o.chan === "Livrare" ? (o.addr ? "livrată la " + o.addr : "livrare") : "ridicată de la laborator"
+          ].filter(Boolean).join(" · "),
+          toggle: () => set({ openPast: Object.assign({}, S.openPast, { [o.id]: !deschis }) })
+        };
+      }),
+      hasMorePast: trecute.length > aratate.length,
+      morePastLabel: "Vezi toate cele " + trecute.length + " comenzi",
+      showAllPast: () => set({ pastAll: true })
+    };
+  }
+}
+
+</script>
+</body>
+</html>
