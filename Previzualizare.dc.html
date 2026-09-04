@@ -15,6 +15,11 @@ body{margin:0;background:var(--h-cocoa-800);font-family:var(--h-font-body);color
 a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 [data-pv=bar]{scrollbar-width:none}
 [data-pv=bar]::-webkit-scrollbar{display:none}
+[data-pv=bar]>button{flex:none}
+[data-pv=bar] button{background:rgba(255,255,255,.12);color:#FBF3E8;border:1px solid rgba(255,255,255,.24);box-shadow:none;font-weight:600}
+[data-pv=bar] button:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);color:#FFF}
+[data-pv=bar] button[data-active=true]{background:var(--h-honey);color:#1B120B;border-color:var(--h-honey);font-weight:700}
+[data-pv=bar] button[data-active=true]:hover{background:#F7C46B;color:#1B120B}
 @media (max-width:760px){
 [data-pv=top]{flex-direction:column!important;align-items:stretch!important;gap:10px!important}
 [data-pv=bar]{width:100%!important;overflow-x:auto!important}
@@ -24,25 +29,26 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 
 <div style="min-height:100vh;display:flex;flex-direction:column;background-image:radial-gradient(80% 50% at 50% 0%, rgba(242,166,59,.12), transparent 70%)">
 
-<div data-pv="top" style="display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.12)">
+<div data-pv="top" style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:14px 18px;border-bottom:1px solid rgba(255,255,255,.12)">
 <div style="display:flex;flex-direction:column;gap:2px;flex:none">
 <span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Previzualizare</span>
 <span style="font-size:13px;color:rgba(255,255,255,.55)">{{ note }}</span>
 </div>
 
-<div data-pv="bar" style="display:flex;gap:6px;margin-left:auto;flex:none">
+<div data-pv="bar" style="display:flex;gap:6px;margin-left:auto;flex:1 1 auto;min-width:0;overflow-x:auto">
 <sc-for list="{{ pages }}" as="p" hint-placeholder-count="4">
-<button type="button" class="{{ p.cls }}" onClick="{{ p.onClick }}" style="min-height:44px;flex:none;font-size:14px;border-radius:12px">{{ p.label }}</button>
+<button type="button" class="h-btn h-btn--sm" data-active="{{ p.active }}" onClick="{{ p.onClick }}" style="min-height:44px;flex:none;font-size:15px;border-radius:12px">{{ p.label }}</button>
 </sc-for>
 </div>
 
-<div data-pv="bar" style="display:flex;gap:6px;flex:none">
+<div data-pv="bar" style="display:flex;gap:6px;flex:none;min-width:0;overflow-x:auto">
 <sc-for list="{{ devices }}" as="d" hint-placeholder-count="3">
-<button type="button" class="{{ d.cls }}" onClick="{{ d.onClick }}" style="min-height:44px;flex:none;font-size:14px;border-radius:12px">{{ d.label }}</button>
+<button type="button" class="h-btn h-btn--sm" data-active="{{ d.active }}" onClick="{{ d.onClick }}" style="min-height:44px;flex:none;font-size:15px;border-radius:12px">{{ d.label }}</button>
 </sc-for>
 </div>
 
-<a href="{{ src }}" target="_blank" rel="noopener" class="h-btn h-btn--ghost" style="min-height:44px;font-size:14px;flex:none;text-decoration:none;color:var(--h-cream-100)">Deschide întreg →</a>
+<a href="Intrare.dc.html" class="h-btn" style="min-height:44px;font-size:15px;font-weight:600;flex:none;text-decoration:none;color:#FBF3E8;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.24);box-shadow:none;border-radius:12px">← Panouri</a>
+<a href="{{ src }}" target="_blank" rel="noopener" class="h-btn" style="min-height:44px;font-size:15px;font-weight:600;flex:none;text-decoration:none;color:#FBF3E8;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.24);box-shadow:none;border-radius:12px">Deschide întreg →</a>
 </div>
 
 <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px;padding:22px 18px 30px;overflow:auto">
@@ -62,7 +68,11 @@ const PAGES = [
   { label: "Intrare", src: "Intrare.dc.html" },
   { label: "Administrare", src: "Administrare%20Comenzi.dc.html" },
   { label: "Laborator", src: "Panou%20Laborator.dc.html" },
-  { label: "Rută șofer", src: "Ruta%20Sofer.dc.html" }
+  { label: "Rută șofer", src: "Ruta%20Sofer.dc.html" },
+  { label: "Depozit", src: "Depozit.dc.html" },
+  { label: "Client", src: "Client.dc.html" },
+  { label: "Jurnal", src: "Jurnal.dc.html" },
+  { label: "Site public", src: "Site%20Public.dc.html" }
 ];
 const DEVICES = [
   { label: "Telefon", w: 390, h: 844, pad: 10, radius: 42 },
@@ -75,6 +85,20 @@ class Component extends DCLogic {
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "dark");
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
     this.onResize = () => this.setState({ vw: window.innerWidth, vh: window.innerHeight });
     this.onResize();
     window.addEventListener("resize", this.onResize);
@@ -95,12 +119,12 @@ class Component extends DCLogic {
       note: "Aceleași pagini, la lățimi diferite de ecran",
       pages: PAGES.map((x, i) => ({
         label: x.label,
-        cls: i === S.page ? "h-btn h-btn--primary h-btn--sm" : "h-btn h-btn--secondary h-btn--sm",
+        active: i === S.page ? "true" : "false",
         onClick: () => this.setState({ page: i })
       })),
       devices: DEVICES.map((x, i) => ({
         label: x.label,
-        cls: i === S.device ? "h-btn h-btn--honey h-btn--sm" : "h-btn h-btn--secondary h-btn--sm",
+        active: i === S.device ? "true" : "false",
         onClick: () => this.setState({ device: i })
       })),
       src: p.src,

@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+@keyframes ct-fade{from{opacity:0}to{opacity:1}}
+@keyframes ct-pop{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media (max-width:760px){
+[data-ct=shell]{flex-direction:column!important}
+[data-ct=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-ct=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-ct=nav]{display:none!important}
+[data-ct=sidefoot]{display:none!important}
+[data-ct=phoneback]{display:flex!important}
+[data-ct=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-ct=topbar] h1{font-size:20px!important}
+[data-ct=newbtn]{width:100%!important}
+[data-ct=body]{padding:14px 14px 26px!important;gap:14px!important}
+[data-ct=g2]{grid-template-columns:1fr!important}
+[data-ct=cardfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+[data-ct=cardfoot]>button{width:100%!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.18), transparent 70%)">
+<div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Conturi și parole</span>
+<span style="font-size:15px;color:rgba(255,255,255,.62)">{{ lockedLine }}</span>
+</div>
+<sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+<div style="width:100%;display:flex;flex-direction:column;gap:10px">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px;text-align:left">{{ offline }}</div>
+<button type="button" class="h-btn h-btn--primary h-btn--block" onClick="{{ onRetry }}" style="min-height:50px;font-size:16px">Încearcă din nou</button>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ denied }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.14), transparent 70%)">
+<div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Conturi și parole</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ deniedLine }}</span>
+</div>
+<div style="width:100%;display:flex;flex-direction:column;gap:8px">
+<sc-if value="{{ deniedClient }}" hint-placeholder-val="{{ false }}">
+<a href="Client.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Vezi comanda mea</a>
+</sc-if>
+<sc-if value="{{ deniedStaff }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Panoul din laborator</a>
+<a href="Depozit.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Depozit · stoc</a>
+<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Ruta șoferului</a>
+</div>
+</sc-if>
+<button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
+<a href="Intrare.dc.html" style="font-size:14px;color:rgba(255,255,255,.72);text-decoration:none;padding-top:4px">← Alege panoul</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ unlocked }}" hint-placeholder-val="{{ true }}">
+<div data-ct="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-ct="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-ct="sidehead" style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Conturi</span>
+</div>
+<a data-ct="phoneback" href="Administrare%20Comenzi.dc.html" title="Administrare" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+</div>
+<div data-ct="nav" style="display:flex;flex-direction:column;gap:6px">
+<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
+<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
+<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
+<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
+<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Conturi</span>
+<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
+<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
+<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+</div>
+<div data-ct="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">conectat</span>
+</div>
+<button type="button" onClick="{{ onLogout }}" style="flex:none;min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">Ieși</button>
+</div>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Parolele sunt criptate pe server și nu pot fi citite de nimeni — nici de tine, nici de mine. Dacă un coleg și-o uită, generezi una nouă.</p>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-ct="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">Conturi și parole</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<a href="Jurnal.dc.html" class="h-btn h-btn--ghost h-btn--sm" style="height:40px;font-size:13px;text-decoration:none;white-space:nowrap">Jurnal de modificări →</a>
+<button data-ct="newbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" style="height:44px;font-size:15px">+ Cont nou</button>
+</div>
+</div>
+
+<sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
+<div class="{{ msgCls }}" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:ct-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<div data-ct="body" style="flex:1;display:flex;flex-direction:column;gap:16px;padding:22px 28px 34px;min-width:0">
+
+<sc-if value="{{ formOpen }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px;border-color:var(--h-accent);animation:ct-pop .2s var(--h-ease-out)">
+<h2 class="h-h4" style="margin:0;font-size:19px">Cont nou</h2>
+<div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Nume afișat
+<input class="h-input" value="{{ nName }}" onChange="{{ onNName }}" placeholder="Ana · tura de seară" style="height:48px;font-size:15px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Utilizator
+<input class="h-input" value="{{ nUser }}" onChange="{{ onNUser }}" placeholder="ana" autoComplete="off" style="height:48px;font-size:15px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parolă
+<input class="h-input" type="text" value="{{ nPass }}" onChange="{{ onNPass }}" placeholder="minim {{ minLen }} caractere" autoComplete="off" style="height:48px;font-size:15px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">E-mail de recuperare
+<input class="h-input" value="{{ nMail }}" onChange="{{ onNMail }}" placeholder="nume@exemplu.ro" style="height:48px;font-size:15px">
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ nMailHint }}</span>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
+<button type="button" class="{{ nRoleCls }}" onClick="{{ onNRole }}" style="min-height:48px;font-size:15px;border-radius:12px">{{ nRoleLabel }}</button>
+</label>
+<sc-if value="{{ nIsClient }}" hint-placeholder-val="{{ false }}">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele clientului din comenzi
+<input class="h-input" value="{{ nCust }}" onChange="{{ onNCust }}" placeholder="Hotel Belvedere" style="height:48px;font-size:15px">
+</label>
+</sc-if>
+</div>
+<sc-if value="{{ nErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:12px;padding:11px 13px;font-size:14px">{{ nErr }}</div>
+</sc-if>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onFormCancel }}" style="min-height:46px;font-size:15px">Renunță</button>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onFormSave }}" style="margin-left:auto;min-height:46px;min-width:180px;font-size:15px">Adaugă contul</button>
+</div>
+</div>
+</sc-if>
+
+<div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<h2 class="h-h4" style="margin:0;font-size:18px">Cod pentru panourile de lucru</h2>
+<span class="h-badge h-badge--honey" style="font-size:11px">comun pe tablete</span>
+</div>
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">Se cere o dată pe ecran, la deschiderea paginii „Intrare", și dă acces la laborator, rută și depozit. Nu înlocuiește conturile.</p>
+<div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Codul de acum
+<div style="display:flex;gap:8px">
+<input class="h-input h-numeric" type="{{ pType }}" value="{{ pShown }}" readOnly="{{ true }}" style="flex:1;min-width:0;height:46px;font-size:15px;background:var(--h-bg-sunk)">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onPReveal }}" style="flex:none;min-height:46px;min-width:96px;font-size:14px">{{ pRevealLabel }}</button>
+</div>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cod nou
+<div style="display:flex;gap:8px">
+<input class="h-input" type="text" value="{{ pNew }}" onChange="{{ onPNew }}" placeholder="minim 6 caractere" style="flex:1;min-width:0;height:46px;font-size:15px">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onPSave }}" style="flex:none;min-height:46px;min-width:110px;font-size:14px">Salvează</button>
+</div>
+</label>
+</div>
+<sc-if value="{{ pErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:12px;padding:11px 13px;font-size:14px">{{ pErr }}</div>
+</sc-if>
+</div>
+
+<sc-for list="{{ accounts }}" as="a" hint-placeholder-count="2">
+<div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:14px;border-color:{{ a.bd }}">
+
+<div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600;line-height:1.2">{{ a.name }}</span>
+<span class="{{ a.roleCls }}" style="font-size:11px">{{ a.roleLabel }}</span>
+<sc-if value="{{ a.isMe }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--success" style="font-size:11px">contul tău</span>
+</sc-if>
+<sc-if value="{{ a.tempPass }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--honey" style="font-size:11px">parolă provizorie</span>
+</sc-if>
+</div>
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">utilizator: {{ a.u }} · {{ a.changed }}</span>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-faint)">{{ a.seen }}</span>
+</div>
+</div>
+
+<div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Nume afișat
+<input class="h-input" value="{{ a.nameEdit }}" onChange="{{ a.onName }}" onBlur="{{ a.saveName }}" onKeyDown="{{ a.onFieldKey }}" style="height:46px;font-size:15px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">E-mail de recuperare
+<input class="h-input" value="{{ a.mailEdit }}" onChange="{{ a.onMail }}" onBlur="{{ a.saveMail }}" onKeyDown="{{ a.onFieldKey }}" placeholder="nume@exemplu.ro" style="height:46px;font-size:15px">
+</label>
+</div>
+
+<sc-if value="{{ a.dirty }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:var(--h-fg-muted)">Se salvează când ieși din câmp sau când apeși Enter.</span>
+</sc-if>
+
+<sc-if value="{{ a.isClient }}" hint-placeholder-val="{{ false }}">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele clientului din comenzi
+<input class="h-input" value="{{ a.custEdit }}" onChange="{{ a.onCust }}" onBlur="{{ a.saveCust }}" onKeyDown="{{ a.onFieldKey }}" placeholder="Hotel Belvedere" style="height:46px;font-size:15px">
+</label>
+</sc-if>
+
+<sc-if value="{{ a.notSystem }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+<label style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parola
+<input class="h-input h-numeric" type="text" value="{{ a.shown }}" readOnly="{{ true }}" style="height:46px;font-size:15px;background:var(--h-bg-sunk)">
+</label>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onGenPass }}" style="min-height:46px;min-width:104px;font-size:14px;flex:none">Generează</button>
+<button type="button" class="{{ a.mailCls }}" onClick="{{ a.onMailPass }}" style="min-height:46px;font-size:14px;flex:none">Trimite pe mail</button>
+</div>
+<sc-if value="{{ a.freshPass }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-accent);font-size:13px;line-height:1.55;color:var(--h-fg)">
+Notează parola acum: <strong>{{ a.freshPass }}</strong> — nu mai poate fi afișată după ce pleci de pe pagină.
+</div>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ a.isSystem }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);font-size:13px;line-height:1.55;color:var(--h-fg-muted)">
+Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, comun întregii echipe. Codul se schimbă din <strong>Setări → Acces</strong>.
+</div>
+</sc-if>
+
+<sc-if value="{{ a.editing }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);animation:ct-pop .18s var(--h-ease-out)">
+<div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parolă nouă
+<input class="h-input" type="text" value="{{ a.n1 }}" onChange="{{ a.onN1 }}" onKeyDown="{{ a.onKey }}" autoComplete="new-password" placeholder="minim {{ minLen }} caractere" style="height:48px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Confirmă parola
+<input class="h-input" type="text" value="{{ a.n2 }}" onChange="{{ a.onN2 }}" onKeyDown="{{ a.onKey }}" autoComplete="new-password" placeholder="scrie din nou" style="height:48px;font-size:16px">
+</label>
+</div>
+<sc-if value="{{ a.err }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:12px;padding:11px 13px;font-size:14px">{{ a.err }}</div>
+</sc-if>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onCancel }}" style="min-height:46px;font-size:15px">Renunță</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onSuggest }}" style="min-height:46px;font-size:14px">Propune o parolă</button>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ a.onSave }}" style="margin-left:auto;min-height:46px;min-width:180px;font-size:15px">Salvează parola</button>
+</div>
+</div>
+</sc-if>
+
+<div data-ct="cardfoot" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<sc-if value="{{ a.canEditPass }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ a.onEdit }}" style="min-height:46px;font-size:15px">Schimbă parola</button>
+</sc-if>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onRole }}" title="{{ a.roleHint }}" style="min-height:46px;font-size:14px">{{ a.roleBtn }}</button>
+<sc-if value="{{ a.delArmed }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onDelCancel }}" style="margin-left:auto;min-height:46px;font-size:14px">Renunț la ștergere</button>
+</sc-if>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onDelete }}" style="margin-left:{{ a.delGap }};min-height:46px;font-size:14px;color:{{ a.delFg }}">{{ a.delLabel }}</button>
+</div>
+
+</div>
+</sc-for>
+
+<sc-if value="{{ hasResets }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px">
+<h2 class="h-h4" style="margin:0;font-size:18px">Cereri „am uitat parola"</h2>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onClearResets }}" style="margin-left:auto;min-height:42px;font-size:14px">Golește lista</button>
+</div>
+<sc-for list="{{ resets }}" as="r" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:11px 13px;border-radius:13px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<span style="font-size:15px;font-weight:600">{{ r.u }}</span>
+<span style="font-size:14px;color:var(--h-fg-muted)">{{ r.mail }}</span>
+<span class="h-numeric" style="margin-left:auto;font-size:13px;color:var(--h-fg-subtle)">{{ r.when }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<p style="margin:0;max-width:760px;font-size:13px;line-height:1.6;color:var(--h-fg-faint);text-wrap:pretty">„Trimite pe mail" deschide clientul tău de mail cu mesajul deja scris, către adresa de recuperare a contului. Parola pleacă din cutia ta poștală, nu de pe server — deci rămâne și în „Trimise", la tine.</p>
+
+</div>
+</div>
+
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;minLength&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:8,&quot;min&quot;:8,&quot;max&quot;:16,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Conturi&quot;},&quot;allowReveal&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Conturi&quot;}}">
+const RKEY = "gp-pwreset-v1";
+// Aici stătea codul tabletelor, scris în clar, ca valoare implicită. Pagina se
+// publică pe lab.goldenpastry.ro ca fișier static, deci oricine îl putea citi
+// din „View source", fără niciun cont, și deschide panourile cu el. Acum
+// instalatorul generează un cod aleator și îl arată o singură dată; pagina
+// asta află doar DACĂ există unul (`panel_code_set`), niciodată care e.
+const LKEY = "gp-log-v1";
+// Jurnalul îl scrie serverul, la fiecare operație, în tabelul audit_log.
+// Varianta locală înregistra doar ce făcea browserul acesta — adică exact
+// ce NU trebuie să fie un jurnal. Păstrăm funcția ca să nu atingem zecile de
+// apeluri din pagină, dar nu mai scrie nimic.
+const logAct = () => {};
+
+// Aici stătea o adresă de e-mail scrisă în cod, preîncărcată în caseta
+// „E-mail" a fiecărui cont nou și folosită și ca rezervă la trimiterea
+// parolei. Rezultatul: conturile de client se năşteau cu adresa altcuiva, iar
+// „Ți-ai uitat parola?" le trimitea linkul de resetare tot acolo — clientul nu
+// primea nimic, iar cine deținea acea cutie poștală putea intra în contul lui.
+// Caseta pornește goală, iar mesajul cu parola nu mai are unde să cadă.
+
+// Conturile vin de la server (GET /users). Nu mai există nicio listă locală:
+// varianta veche ținea aici parolele în clar, vizibile din „View source".
+// Traducem forma API-ului în forma folosită de pagină.
+const fromApi = (x) => ({
+  id: x.id,
+  u: x.username,
+  name: x.name,
+  mail: x.email || "",
+  role: x.role,
+  cust: x.customerName || "",
+  active: x.active !== false,
+  // Contul de sistem al tabletelor. Nu se intră în el cu parolă, deci pagina
+  // nu trebuie să ofere butoane de parolă pentru el.
+  sys: x.isSystem === true,
+  at: x.lastLogin ? Date.parse(x.lastLogin + "Z") || 0 : 0,
+  // Momentul în care omul și-a schimbat SINGUR parola, și steagul care spune
+  // că pe cont e încă parola pusă de administrator. Pagina afișa în locul lor
+  // `lastLogin`, sub eticheta „parolă schimbată": un cont care intrase azi cu
+  // parola primită pe WhatsApp apărea ca și cum și-ar fi pus parolă proprie.
+  pwAt: x.passwordChangedAt ? Date.parse(x.passwordChangedAt + "Z") || 0 : 0,
+  temp: x.mustChangePassword === true
+});
+const roleOf = (x) => x.role || (x.u === "admin" ? "admin" : "angajat");
+const ROLE_L = { admin: "administrator", angajat: "angajat", client: "client" };
+// Rolul vine din sesiunea de pe server. Varianta veche îl deducea din lista
+// locală de conturi, sau din numele de utilizator — deci putea fi falsificat
+// din consola browserului.
+const authRole = (a) => (a && a.role) || "";
+const isAdmin = (a) => authRole(a) === "admin";
+const WORDS = ["croissant", "vanilie", "migdale", "caramel", "foietaj", "brioșă", "zmeură", "unt", "cuptor", "tavă"];
+const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
+const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const dataOra = (ms) => {
+  if (!ms) return "";
+  const d = new Date(ms), z = (n) => (n < 10 ? "0" : "") + n;
+  return z(d.getDate()) + "." + z(d.getMonth() + 1) + "." + d.getFullYear() + " · " + z(d.getHours()) + ":" + z(d.getMinutes());
+};
+
+/**
+ * Ce se poate spune cinstit despre parola unui cont.
+ *
+ * Aici stătea `when(acc.at)`, care formata `lastLogin` cu textul „parolă
+ * schimbată …". Administratorul se uită la rândul acesta ca să afle dacă
+ * parola dictată la telefon mai deschide contul, iar pagina îi răspundea pe
+ * dos: un cont care tocmai se autentificase cu parola primită de la el apărea
+ * drept „parolă schimbată azi". Acum răspunsul vine din două valori care chiar
+ * înseamnă asta: steagul pus la fiecare resetare făcută de administrator și
+ * data scrisă doar când omul își schimbă singur parola.
+ */
+const desprePar = (acc) => {
+  if (acc.sys) return "fără parolă — se deschide cu codul tabletelor";
+  if (acc.temp) return "parolă provizorie, pusă de administrator";
+  if (acc.pwAt) return "parolă proprie, schimbată " + dataOra(acc.pwAt);
+  return "parolă proprie";
+};
+
+class Component extends DCLogic {
+  // `draft` ține ce s-a tastat în casetele de nume / e-mail / nume client și
+  // nu s-a salvat încă. Fără el, fiecare tastă apăsată pleca ca PATCH separat
+  // la server: un UPDATE și o intrare în jurnal per literă, iar caseta —
+  // fiind input controlat de React fără stare locală — își pierdea litera pe
+  // loc și o primea înapoi abia cu răspunsul serverului. Cine scria mai
+  // repede decât rețeaua rămânea cu numele trunchiat.
+  state = { users: [], auth: null, resets: [], edit: null, draft: {}, sterg: null, n1: "", n2: "", err: "", fresh: {}, form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "", pNew: "", pErr: "", pShow: false, pCode: null, msg: "", msgBad: false, offline: "", loaded: false };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+    this.__gpBack = () => {
+      if (this.__gpSkip) { this.__gpSkip = false; return; }
+      const st = this.state || {};
+      if (st.form || st.edit) this.setState({ form: false, edit: null });
+    };
+    window.addEventListener("popstate", this.__gpBack);
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    this.setState({ resets: read(RKEY, []) || [] });
+
+    this.intra();
+  }
+
+  /**
+   * Cine ești, și abia apoi lista de conturi.
+   *
+   * Pagina își avea propriul formular de autentificare, copiat din celelalte
+   * panouri. Autentificarea stă acum într-un singur loc — `Intrare.dc.html` —
+   * iar de aici plecăm acolo cu urma de întoarcere, ca omul să nu-și piardă
+   * pagina. Un formular copiat în patru locuri e un formular pe care nu-l
+   * repară nimeni în toate patru: în „Administrare Comenzi" el se bătea cap în
+   * cap cu redirectul din `catch` și nu putea fi folosit deloc.
+   */
+  intra() {
+    this.setState({ offline: "" });
+    // Lista de conturi se cere doar dacă suntem administratori: API-ul o
+    // refuză altfel, cu 403.
+    return gp.requireUser()
+      .then((user) => {
+        // Fără sesiune, requireUser a plecat deja spre pagina de intrare.
+        if (!user) return null;
+        this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
+        if (user.role !== "admin") return null;
+        // Aflăm doar DACĂ există un cod, nu care este.
+        gp.get('/settings')
+          .then((r) => this.setState({ pCode: r.settings && r.settings.panel_code_set ? "•" : "" }))
+          .catch(() => {});
+        return this.reloadUsers();
+      })
+      .catch((e) => {
+        // Serverul nu răspunde. Nu trimitem pe nimeni la autentificare: acolo
+        // l-ar aștepta același server mut, iar omul ar crede că i-a expirat
+        // sesiunea și și-ar scrie parola degeaba.
+        this.setState({
+          offline: (e && e.message) || "Serverul nu răspunde. Verifică legătura la internet."
+        });
+      })
+      .then(() => this.setState({ loaded: true }));
+  }
+
+  /** Reîncarcă lista de conturi de pe server. */
+  reloadUsers(patch) {
+    return gp.get("/users")
+      .then((r) => this.setState(Object.assign({ users: (r.users || []).map(fromApi) }, patch || {})))
+      .catch((e) => this.setState(Object.assign({ msg: e.message, msgBad: true }, patch || {})));
+  }
+
+  /**
+   * Trimite o modificare pentru un cont și reîncarcă lista.
+   * Fiecare operație merge separat la server, care verifică din nou dreptul —
+   * interfața nu este o măsură de securitate.
+   */
+  patchUser(acc, fields, patch) {
+    return gp.patch("/users/" + acc.id, fields)
+      .then(() => this.reloadUsers(patch))
+      .catch((e) => this.setState({ msg: e.message, msgBad: true }));
+  }
+
+  minLen() {
+    // Serverul refuză orice parolă sub 8 caractere (route_users_create și
+    // route_users_password). Pagina cerea 6, deci omul scria o parolă de 6,
+    // apăsa „Salvează" și primea un refuz pe care caseta i-l promisese că nu
+    // va veni. Pragul de aici nu poate coborî sub cel de pe server.
+    const n = parseInt(this.props.minLength, 10);
+    return Math.max(8, isFinite(n) && n > 0 ? n : 8);
+  }
+
+  suggest() {
+    // Lista WORDS are și cuvinte de trei litere („unt"): „unt-123" ieșea de
+    // șapte caractere, sub pragul serverului. Butonul „Generează" trimitea
+    // parola, serverul o refuza, iar refuzul apărea în bannerul de sus — pe
+    // care pagina îl desena verde, ca o confirmare. Adminul rămânea convins
+    // că a schimbat parola.
+    const min = this.minLen();
+    let p = WORDS[Math.floor(Math.random() * WORDS.length)] + "-" + (1000 + Math.floor(Math.random() * 9000));
+    while (p.length < min) p += Math.floor(Math.random() * 10);
+    return p;
+  }
+
+  /**
+   * Pregătește mesajul prin care adminul trimite unui coleg parola tocmai
+   * generată.
+   *
+   * Trimitea `acc.p` — un câmp care nu mai există: parolele stau pe server ca
+   * hash bcrypt și nu se întorc niciodată în listă. Mesajul ieșea cu textul
+   * „Parola este: undefined". Acum se trimite exact parola generată în pagină,
+   * și doar dacă există una.
+   */
+  mailto(acc, pass) {
+    if (!pass) return false;
+    const to = acc.mail;
+    if (!to) return false;
+    const body = "Bună,\n\nParola nouă pentru contul „" + acc.name + "” (utilizator: "
+      + acc.u + ") din aplicația Golden Pastry este:\n\n" + pass
+      // Îndemnul trimitea omul nicăieri: nicio pagină nu putea schimba parola.
+      // Acum există „Parola mea", iar prima intrare îl duce direct acolo.
+      + "\n\nLa prima intrare aplicația îți cere s-o schimbi cu una știută doar "
+      + "de tine. O poți schimba oricând din „Parola mea”.\n";
+    const url = "mailto:" + encodeURIComponent(to)
+      + "?subject=" + encodeURIComponent("Golden Pastry · parolă nouă pentru " + acc.u)
+      + "&body=" + encodeURIComponent(body);
+    try { window.location.href = url; } catch (e) {}
+    return true;
+  }
+
+  __gpSync() {
+    const st = this.state || {};
+    const now = !!(st.form || st.edit);
+    if (now === this.__gpOvWas) return;
+    this.__gpOvWas = now;
+    try {
+      if (now) history.pushState({ gpOv: 1 }, "");
+      else if (history.state && history.state.gpOv) { this.__gpSkip = true; history.back(); }
+    } catch (e) {}
+  }
+
+  renderVals() {
+    this.__gpSync();
+    const S = this.state;
+    // Orice mesaj nou pornește ca mesaj bun; cine vrea unul de refuz trimite
+    // explicit msgBad. Altfel un „nu s-a putut" de dinainte ar fi lăsat caseta
+    // roșie peste următoarea confirmare — sau, mai rău, invers: bannerul era
+    // desenat mereu verde, deci „Parola trebuie să aibă cel puțin 8 caractere"
+    // arăta exact ca o parolă schimbată cu succes.
+    const set = (x) => this.setState(("msg" in x && !("msgBad" in x)) ? Object.assign({ msgBad: false }, x) : x);
+    const ml = this.minLen();
+    const me = S.auth && S.auth.u;
+
+    // Casetele de nume / e-mail / nume client se scriu în `draft` și pleacă la
+    // server o singură dată, când ieși din câmp sau apeși Enter. Înainte,
+    // `onChange` chema direct patchUser: un UPDATE și o intrare de jurnal la
+    // fiecare tastă, cu litera dispărând din casetă până venea răspunsul.
+    const dr = S.draft || {};
+    const cheie = (u, camp) => u + "|" + camp;
+    const draftVal = (acc, camp, deLaServer) => {
+      const k = cheie(acc.u, camp);
+      return k in dr ? dr[k] : deLaServer;
+    };
+    const onTasta = (acc, camp) => (e) => set({ draft: Object.assign({}, dr, { [cheie(acc.u, camp)]: e.target.value }) });
+    // La ieșirea din câmp: dacă valoarea e neschimbată, doar uităm ciorna;
+    // dacă serverul refuză (nume gol, e-mail invalid), ciorna RĂMÂNE, ca omul
+    // să vadă ce a scris și să poată corecta, nu să-și piardă textul.
+    const laIesire = (acc, camp, coloana, deLaServer) => () => {
+      const k = cheie(acc.u, camp);
+      if (!(k in dr)) return;
+      const v = dr[k];
+      const rest = Object.assign({}, dr);
+      delete rest[k];
+      if (v === deLaServer) return set({ draft: rest });
+      this.patchUser(acc, { [coloana]: v }, { draft: rest });
+    };
+    const iesiCuEnter = (e) => { if (e.key === "Enter" && e.target && e.target.blur) e.target.blur(); };
+
+    const savePass = (acc) => {
+      const a = String(S.n1), b = String(S.n2);
+      if (a.length < ml) return set({ err: "Parola trebuie să aibă minim " + ml + " caractere." });
+      if (a !== b) return set({ err: "Cele două parole nu sunt identice." });
+
+      gp.post("/users/" + acc.id + "/password", { password: a })
+        .then(() => this.reloadUsers({
+          edit: null, n1: "", n2: "", err: "",
+          msg: "Parola pentru „" + acc.name + "” a fost schimbată."
+        }))
+        .catch((e) => set({ err: e.message }));
+    };
+
+    /**
+     * Generează o parolă puternică, o salvează pe server și o arată o
+     * singură dată. Înlocuiește vechiul „Arată parola": parolele sunt
+     * stocate ca hash bcrypt, deci nu mai pot fi citite de nimeni, nici de
+     * administrator.
+     */
+    const genPass = (acc) => {
+      const pass = this.suggest();
+      gp.post("/users/" + acc.id + "/password", { password: pass })
+        .then(() => this.reloadUsers({
+          fresh: Object.assign({}, S.fresh, { [acc.u]: pass }),
+          msg: "Parolă nouă pentru „" + acc.name + "”. Notează-o acum — nu mai poate fi afișată."
+        }))
+        .catch((e) => set({ msg: e.message, msgBad: true }));
+    };
+
+    const accounts = S.users.map(acc => {
+      const editing = S.edit === acc.u;
+      const isMe = me === acc.u;
+      const rl = roleOf(acc);
+      return {
+        u: acc.u, name: acc.name, mail: acc.mail || "",
+        roleLabel: ROLE_L[rl],
+        roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
+        roleBtn: rl === "admin" ? "Trece pe angajat" : rl === "angajat" ? "Trece pe client" : "Trece pe administrator",
+        roleHint: rl === "admin"
+          ? "Administratorii intră în comenzi, depozit, conturi, jurnal și parole."
+          : rl === "client"
+            ? "Clienții văd doar comanda lor: în câte zile vine și câte opriri mai sunt până la ei."
+            : "Angajații au acces doar la laborator, rută și depozit.",
+        isClient: rl === "client",
+        cust: acc.cust || "",
+        custEdit: draftVal(acc, "cust", acc.cust || ""),
+        onCust: onTasta(acc, "cust"),
+        saveCust: laIesire(acc, "cust", "customerName", acc.cust || ""),
+        onRole: () => {
+          if (isMe) return set({ msg: "Nu-ți poți schimba propriul drept de acces — cere altui administrator.", msgBad: true });
+          const admins = S.users.filter(x => roleOf(x) === "admin").length;
+          if (rl === "admin" && admins <= 1) return set({ msg: "Trebuie să rămână cel puțin un administrator.", msgBad: true });
+          const nextRole = rl === "admin" ? "angajat" : rl === "angajat" ? "client" : "admin";
+          this.patchUser(acc, { role: nextRole }, { msg: "„" + acc.name + "” e acum " + ROLE_L[nextRole] + "." });
+        },
+        changed: desprePar(acc),
+        // Ultima intrare rămâne vizibilă, dar sub numele ei adevărat. Era
+        // singura valoare pe care o avea pagina și o dădea drept altceva.
+        seen: acc.at ? "ultima intrare " + dataOra(acc.at) : "n-a intrat încă niciodată",
+        // Un cont cu parolă provizorie se vede dintr-o privire, nu doar din text.
+        tempPass: acc.temp && !acc.sys,
+        isMe,
+        bd: editing ? "var(--h-accent)" : "var(--h-line)",
+        // Parolele sunt stocate ca hash bcrypt pe server, deci nu pot fi
+        // afișate — hash-ul nu se poate inversa. Nevoia reală (adminul trebuie
+        // să comunice o parolă unui angajat) e acoperită prin generarea uneia
+        // noi, arătată o singură dată.
+        shown: "••••••••••",
+        freshPass: S.fresh[acc.u] || "",
+        onGenPass: () => genPass(acc),
+        // Butonul are ce trimite doar după „Generează": parola veche nu se poate
+        // citi de nicăieri, nici măcar de pe server.
+        mailReady: !!S.fresh[acc.u],
+        mailCls: S.fresh[acc.u] ? "h-btn h-btn--ghost" : "h-btn h-btn--ghost",
+        onMailPass: () => {
+          const pass = S.fresh[acc.u];
+          if (!pass) {
+            return set({ msg: "Generează întâi o parolă nouă — cea veche nu poate fi citită de nimeni.", msgBad: true });
+          }
+          // Fără adresă pe cont, mesajul pleca spre adresa scrisă în pagină,
+          // adică spre altcineva. Mai bine nimic decât în altă cutie poștală.
+          if (!acc.mail) {
+            return set({ msg: "Contul „" + acc.name + "” n-are e-mail. Scrie-l în caseta de deasupra, apoi trimite — sau dictează parola direct.", msgBad: true });
+          }
+          this.mailto(acc, pass);
+          set({ msg: "Mesaj pregătit pentru " + acc.mail + " — apasă „Trimite” în clientul de mail." });
+        },
+        nameEdit: draftVal(acc, "name", acc.name),
+        onName: onTasta(acc, "name"),
+        saveName: laIesire(acc, "name", "name", acc.name),
+        mailEdit: draftVal(acc, "mail", acc.mail || ""),
+        onMail: onTasta(acc, "mail"),
+        saveMail: laIesire(acc, "mail", "email", acc.mail || ""),
+        onFieldKey: iesiCuEnter,
+        // Se salvează la ieșirea din câmp, nu la fiecare tastă. Cât timp există
+        // o ciornă nesalvată, rândul o spune — altfel omul ar pleca de pe
+        // pagină convins că a salvat.
+        dirty: [cheie(acc.u, "name"), cheie(acc.u, "mail"), cheie(acc.u, "cust")].some(k => k in dr),
+        editing, notEditing: !editing,
+        // Serverul refuză parola pe contul de sistem; butoanele nu trebuie să
+        // promită ceva ce se termină cu o eroare.
+        isSystem: acc.sys, notSystem: !acc.sys,
+        canEditPass: !editing && !acc.sys,
+        n1: editing ? S.n1 : "", n2: editing ? S.n2 : "", err: editing ? S.err : "",
+        onEdit: () => set({ edit: acc.u, n1: "", n2: "", err: "" }),
+        onCancel: () => set({ edit: null, n1: "", n2: "", err: "" }),
+        onN1: (e) => set({ n1: e.target.value, err: "" }),
+        onN2: (e) => set({ n2: e.target.value, err: "" }),
+        onKey: (e) => { if (e.key === "Enter") savePass(acc); },
+        onSuggest: () => { const s = this.suggest(); set({ n1: s, n2: s, err: "" }); },
+        onSave: () => savePass(acc),
+        // Ștergerea unui cont se făcea din prima apăsare, fără nicio întrebare.
+        // Pe server e un DELETE adevărat: rândul dispare definitiv, spre
+        // deosebire de comenzi, care se anulează. Un deget alunecat pe telefon,
+        // unde butonul stă singur pe rândul lui, ștergea contul unui client, iar
+        // parola lui nu se poate reface — hash-ul a plecat odată cu rândul.
+        // Acum prima apăsare doar pregătește, a doua execută.
+        delArmed: !isMe && S.sterg === acc.u,
+        // Când apare și butonul de renunțare, el e cel împins la dreapta;
+        // altfel cele două s-ar bate pe același „margin-left:auto" și ar sări
+        // pe rânduri diferite, cu butonul roșu singur dedesubt.
+        delGap: !isMe && S.sterg === acc.u ? "0" : "auto",
+        delLabel: isMe
+          ? "Nu poți șterge contul cu care ești conectat"
+          : S.sterg === acc.u ? "Apasă din nou: șterg definitiv contul" : "Șterge contul",
+        delFg: isMe ? "var(--h-fg-faint)" : "var(--h-danger)",
+        onDelCancel: () => set({ sterg: null }),
+        onDelete: () => {
+          if (isMe) return;
+          if (S.sterg !== acc.u) {
+            return set({
+              sterg: acc.u,
+              msg: "Ștergi contul „" + acc.name + "”? Apasă încă o dată pe buton. Contul dispare definitiv, cu tot cu parolă; comenzile lui rămân.",
+              msgBad: true
+            });
+          }
+          gp.del("/users/" + acc.id)
+            .then(() => this.reloadUsers({ edit: null, sterg: null, msg: "Contul „" + acc.name + "” a fost șters." }))
+            .catch((e) => set({ msg: e.message, msgBad: true, sterg: null }));
+        }
+      };
+    });
+
+    const addUser = () => {
+      const u = String(S.nUser).trim().toLowerCase();
+      const n = String(S.nName).trim() || u;
+      const p = String(S.nPass);
+      if (!u) return set({ nErr: "Scrie un utilizator." });
+      if (S.users.some(x => x.u === u)) return set({ nErr: "Există deja un cont cu utilizatorul „" + u + "”." });
+      if (p.length < ml) return set({ nErr: "Parola trebuie să aibă minim " + ml + " caractere." });
+
+      gp.post("/users", {
+        username: u, password: p, name: n, role: S.nRole,
+        customerName: String(S.nCust || "").trim(),
+        email: String(S.nMail).trim()
+      })
+        .then(() => this.reloadUsers({
+          form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "",
+          pNew: "", pErr: "", pShow: false,
+          msg: "Contul „" + n + "” a fost creat ca " + ROLE_L[S.nRole] + "."
+        }))
+        // Serverul are ultimul cuvânt: respinge utilizatori duplicați sau
+        // parole slabe chiar dacă verificarea din pagină ar fi trecut.
+        .catch((e) => set({ nErr: e.message }));
+    };
+
+    // Rezumatul din capul paginii spunea „ultima schimbare <dată>", tot din
+    // `lastLogin`. Numărul care ajută cu adevărat e altul: câte conturi mai
+    // umblă cu parola dictată de administrator.
+    const provizorii = S.users.filter(x => x.temp && !x.sys).length;
+
+    return {
+      locked: S.loaded && !S.auth,
+      denied: S.loaded && !!S.auth && !isAdmin(S.auth),
+      deniedClient: !!S.auth && authRole(S.auth) === "client",
+      deniedStaff: !!S.auth && authRole(S.auth) !== "client",
+      // Aceeași propoziție nu se potrivea amândurora. Clientul nu e angajat, iar
+      // „panourile de lucru” nu-i sunt nici măcar arătate: sub text îi apare butonul
+      // spre „Comanda mea”. Textul se desparte pe aceeași întrebare pe care o pun
+      // deja butoanele de dedesubt, ca ecranul să nu se contrazică singur.
+      deniedLine: !S.auth ? ""
+        : authRole(S.auth) === "client"
+          ? "Contul „" + S.auth.name + "” e cont de client: conturile și parolele se văd doar dintr-un cont de administrator."
+          : "Contul „" + S.auth.name + "” e cont de angajat: nu poate vedea sau schimba parolele.",
+      unlocked: !S.loaded || (!!S.auth && isAdmin(S.auth)),
+      // Cât ține întrebarea către server nu spunem nici „autentifică-te", nici
+      // „n-ai voie": încă nu știm. O clipă de „se verifică" e mai cinstită
+      // decât un ecran care apoi se schimbă singur.
+      lockedLine: S.offline ? "Conturi și parole" : "Se verifică sesiunea…",
+      offline: S.offline,
+      onRetry: () => this.intra(),
+      authName: S.auth ? S.auth.name : "",
+      onLogout: () => {
+        // După ieșire nu mai e nimic de făcut aici fără sesiune: plecăm la
+        // pagina de intrare, ca omul să nu rămână pe un ecran gol.
+        gp.logout().finally(() => { set({ auth: null, users: [] }); gp.toLogin(); });
+      },
+
+      pType: S.pShow ? "text" : "password",
+      // Codul e stocat criptat pe server și nu se returnează în clar, deci nu
+      // poate fi afișat. Dacă îl uiți, pui unul nou — ca la parole.
+      // Trei stări, nu două: până răspunde serverul nu știm dacă există un cod,
+      // iar „neconfigurat" afișat pe încredere ar trimite administratorul să
+      // pună unul nou peste unul bun. Punctele înseamnă „se verifică".
+      pShown: S.pCode === null ? "…" : (S.pCode ? "••••••••" : "neconfigurat"),
+      pRevealLabel: "",
+      onPReveal: () => set({ msg: "Codul nu poate fi afișat — este stocat criptat. Dacă l-ai uitat, scrie unul nou mai jos." }),
+      pNew: S.pNew, pErr: S.pErr,
+      onPNew: (e) => set({ pNew: e.target.value, pErr: "" }),
+      onPSave: () => {
+        const v = String(S.pNew).trim();
+        // Serverul refuză sub 6 (api/lib/settings.php). Pagina cerea 4, deci
+        // un cod de 4–5 caractere trecea de casetă și se lovea de server cu un
+        // mesaj de eroare roșu — refuz după drum dus-întors, pentru ceva ce se
+        // știa dinainte.
+        if (v.length < 6) return set({ pErr: "Codul trebuie să aibă minim 6 caractere." });
+
+        gp.put('/settings', { panel_code: v })
+          .then(() => set({
+            // Acum sigur există un cod: cardul de deasupra trebuie să arate
+            // „••••••••", nu „neconfigurat".
+            pNew: "", pErr: "", pShow: false, pCode: "•",
+            msg: "Codul panourilor a fost schimbat. Tabletele cer codul nou la următoarea deschidere."
+          }))
+          .catch((e) => set({ pErr: e.message }));
+      },
+      sub: S.users.length + (S.users.length === 1 ? " cont" : " conturi") + " · "
+        + (provizorii === 0 ? "toate cu parolă proprie" : provizorii + " cu parolă provizorie"),
+      minLen: String(ml),
+      msg: S.msg,
+      msgCls: S.msgBad ? "h-alert h-alert--danger" : "h-alert h-alert--success",
+      onMsgClose: () => set({ msg: "" }),
+      accounts,
+
+      formOpen: S.form,
+      onNew: () => set({ form: true, nErr: "", nPass: this.suggest() }),
+      onFormCancel: () => set({ form: false, nErr: "" }),
+      onFormSave: () => addUser(),
+      nName: S.nName, nUser: S.nUser, nPass: S.nPass, nMail: S.nMail, nErr: S.nErr,
+      // Caseta venea completată cu o adresă scrisă în cod. Acum pornește goală,
+      // deci trebuie spus ce se pierde dacă rămâne așa: fără e-mail, „Ți-ai
+      // uitat parola?" nu are unde trimite linkul, iar contul rămâne pe viață
+      // cu parola dictată de administrator.
+      nMailHint: String(S.nMail).trim()
+        ? "Aici pleacă linkul de la „Ți-ai uitat parola?”."
+        : "Fără e-mail, contul nu poate folosi „Ți-ai uitat parola?” — parola i-o schimbi tot tu, de aici.",
+      nRoleLabel: S.nRole === "admin" ? "Administrator · tot" : S.nRole === "client" ? "Client · doar comanda lui" : "Angajat · laborator, rută, depozit",
+      nRoleCls: S.nRole === "admin" ? "h-btn h-btn--honey" : S.nRole === "client" ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+      onNRole: () => set({ nRole: S.nRole === "admin" ? "angajat" : S.nRole === "angajat" ? "client" : "admin" }),
+      nIsClient: S.nRole === "client",
+      nCust: S.nCust,
+      onNCust: (e) => set({ nCust: e.target.value, nErr: "" }),
+      onNName: (e) => set({ nName: e.target.value, nErr: "" }),
+      onNUser: (e) => set({ nUser: e.target.value, nErr: "" }),
+      onNPass: (e) => set({ nPass: e.target.value, nErr: "" }),
+      onNMail: (e) => set({ nMail: e.target.value, nErr: "" }),
+
+      hasResets: S.resets.length > 0,
+      resets: S.resets.slice().reverse().map(r => ({
+        u: "utilizator: " + r.u, mail: "trimis la " + r.mail,
+        when: dataOra(r.at)
+      })),
+      onClearResets: () => { write(RKEY, []); set({ resets: [], msg: "Lista de cereri a fost golită." }); }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+@keyframes jr-fade{from{opacity:0}to{opacity:1}}
+@media (max-width:1000px){
+[data-jr=row]{grid-template-columns:74px minmax(0,1fr)!important;gap:4px 10px!important}
+[data-jr=row]>[data-jr=who]{grid-column:2/3!important}
+[data-jr=row]>[data-jr=act]{grid-column:1/-1!important}
+[data-jr=head]{display:none!important}
+}
+@media (max-width:760px){
+[data-jr=shell]{flex-direction:column!important}
+[data-jr=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-jr=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-jr=nav]{display:none!important}
+[data-jr=sidefoot]{display:none!important}
+[data-jr=phoneback]{display:flex!important}
+[data-jr=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-jr=topbar] h1{font-size:20px!important}
+[data-jr=body]{padding:14px 14px 26px!important;gap:12px!important}
+[data-jr=filters]{width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
+[data-jr=filters]::-webkit-scrollbar{display:none}
+[data-jr=filters]>button{flex:none!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
+<div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Jurnal de modificări</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
+</div>
+<div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<a href="Conturi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">Conturi</a>
+<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Comenzi</a>
+<a href="Depozit.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Depozit</a>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">← Alege panoul</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
+<div data-jr="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-jr="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-jr="sidehead" style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Jurnal</span>
+</div>
+<a data-jr="phoneback" href="Conturi.dc.html" title="Conturi" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+</div>
+<div data-jr="nav" style="display:flex;flex-direction:column;gap:6px">
+<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
+<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
+<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
+<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
+<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
+<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Jurnal</span>
+<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
+<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+</div>
+<div data-jr="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">administrator</span>
+</div>
+</div>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Jurnalul ține minte tot ce s-a întâmplat pe server: cine a intrat, ce comandă a schimbat, ce mișcare de stoc a trecut — de pe orice dispozitiv, nu doar de pe acesta.</p>
+</div>
+</div>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-jr="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">Jurnal de modificări</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+<input class="h-input" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Caută acțiune, comandă, produs" style="width:280px;max-width:100%;height:44px;font-size:15px">
+</div>
+</div>
+
+<sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:jr-fade .25s var(--h-ease-out)">
+<p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<div data-jr="body" style="flex:1;display:flex;flex-direction:column;gap:14px;padding:20px 28px 30px;min-width:0">
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="h-eyebrow" style="font-size:12px">Cont</span>
+<div data-jr="filters" style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ whoFilters }}" as="w" hint-placeholder-count="3">
+<button type="button" class="{{ w.cls }}" onClick="{{ w.onClick }}" style="height:42px;font-size:14px;border-radius:12px;display:flex;align-items:center;gap:8px">
+<span>{{ w.label }}</span>
+<span class="h-numeric" style="font-weight:700;opacity:.8">{{ w.count }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="h-eyebrow" style="font-size:12px">Zonă</span>
+<div data-jr="filters" style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ pageFilters }}" as="p" hint-placeholder-count="4">
+<button type="button" class="{{ p.cls }}" onClick="{{ p.onClick }}" style="height:42px;font-size:14px;border-radius:12px;display:flex;align-items:center;gap:8px">
+<span>{{ p.label }}</span>
+<span class="h-numeric" style="font-weight:700;opacity:.8">{{ p.count }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:12px">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600">{{ g.label }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ g.meta }}</span>
+</div>
+<div class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
+<div data-jr="head" style="display:grid;grid-template-columns:74px 190px 132px minmax(0,1fr);gap:12px;padding:11px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
+<span>Ora</span><span>Cont</span><span>Zonă</span><span>Ce s-a schimbat</span>
+</div>
+<sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="6">
+<div data-jr="row" style="display:grid;grid-template-columns:74px 190px 132px minmax(0,1fr);gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ r.time }}</span>
+<div data-jr="who" style="display:flex;align-items:center;gap:8px;min-width:0">
+<span style="font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span>
+<span class="{{ r.roleCls }}" style="font-size:10px;flex:none">{{ r.role }}</span>
+</div>
+<span class="{{ r.pageCls }}" style="font-size:11px;justify-self:start">{{ r.page }}</span>
+<span data-jr="act" style="font-size:15px;line-height:1.4;color:var(--h-fg-muted)">{{ r.action }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+
+<sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">{{ emptyLine }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="min-height:44px;font-size:14px">Șterge filtrele</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasRows }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:4px">
+<p style="margin:0;flex:1;min-width:200px;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ footLine }}</p>
+<sc-if value="{{ hasMore }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onMore }}" style="min-height:44px;font-size:14px">{{ moreLabel }}</button>
+</sc-if>
+
+</div>
+</sc-if>
+
+</div>
+</div>
+
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+// Zonele jurnalului sunt entitățile pe care serverul le scrie în audit_log:
+// „order”, „user”, „stock_item” și celelalte. Aici erau scrise numele
+// paginilor din meniu — „Comenzi”, „Laborator”, „Site” — care nu apar
+// niciodată în ce trimite serverul. Din cauza asta fiecare buton de zonă
+// arăta 0 și, apăsat, golea lista întreagă, iar în coloana „Zonă” omul citea
+// „stock_item” în loc de numele zonei.
+const ZONES = [
+  { key: "order", label: "Comenzi", cls: "h-badge h-badge--accent" },
+  { key: "request", label: "Cereri", cls: "h-badge h-badge--jam" },
+  { key: "product", label: "Produse", cls: "h-badge h-badge--success" },
+  { key: "category", label: "Categorii", cls: "h-badge h-badge--success" },
+  { key: "stock", label: "Depozit", cls: "h-badge h-badge--honey" },
+  { key: "stock_item", label: "Articole depozit", cls: "h-badge h-badge--honey" },
+  { key: "route", label: "Rută", cls: "h-badge h-badge--warning" },
+  { key: "user", label: "Conturi", cls: "h-badge h-badge--solid" },
+  { key: "settings", label: "Setări", cls: "h-badge" }
+];
+const ZLAB = {}, PCLS = {};
+ZONES.forEach((zn) => { ZLAB[zn.key] = zn.label; PCLS[zn.key] = zn.cls; });
+const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
+const z = (n) => (n < 10 ? "0" : "") + n;
+const dayKey = (ms) => { const d = new Date(ms); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
+const MON = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+
+class Component extends DCLogic {
+  // „search” este ce scrie omul în casetă, „q” este căutarea pe care a făcut-o
+  // serverul și căreia îi aparțin intrările din „log”. Sunt două lucruri
+  // diferite: între apăsarea tastei și răspuns trece timp, iar un răspuns
+  // întârziat despre altă căutare trebuie recunoscut și aruncat, ca omul să nu
+  // vadă rezultatele cuvântului pe care tocmai l-a șters.
+  state = { log: [], pg: 1, pages: 1, total: 0, auth: null, who: "Toate", page: "Toate", search: "", q: "", msg: "", loaded: false };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    gp.me()
+      .then((user) => {
+        if (user) this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
+      })
+      .catch(() => this.setState({ loaded: true }))
+      // gp.poll() aduce prima pagină imediat și o reia din cinci în cinci
+      // secunde. Față de un cronometru propriu, se oprește cât timp fila e
+      // ascunsă și nu lasă două ture să se suprapună, deci un răspuns întârziat
+      // nu mai poate pune pe ecran o listă mai veche decât cea deja afișată.
+      // Pornește abia după ce știm cine e conectat, ca administratorului să nu
+      // i se arate o clipă ecranul „nu ai acces la jurnal”.
+      .then(() => { this.stopPoll = gp.poll(() => this.pull(1), 5000); });
+    this.onStore = () => this.pull(1);
+    window.addEventListener("storage", this.onStore);
+  }
+
+  componentWillUnmount() {
+    if (this.stopPoll) this.stopPoll();
+    clearTimeout(this.tCauta);
+    window.removeEventListener("storage", this.onStore);
+  }
+
+  /**
+   * Jurnalul de pe server.
+   *
+   * Diferența față de varianta veche: intrările sunt scrise de server la
+   * fiecare operație, nu de pagina care se întâmplă să fie deschisă. Un
+   * jurnal ținut în localStorage nu înregistra ce făcea altcineva, de pe alt
+   * dispozitiv — adică exact ce trebuie să vadă un jurnal.
+   */
+  pull(page, term) {
+    const wanted = page || 1;
+    // Căutarea o face serverul, peste tot jurnalul, iar lista de aici e chiar
+    // răspunsul lui. Filtrată doar în pagină, căutarea vedea numai cele 50 de
+    // intrări aduse, deci răspundea „nicio acțiune” și pentru o comandă care
+    // fusese înregistrată, doar că mai jos de primele 50 — iar omul rămânea cu
+    // impresia că nu s-a înregistrat nimic despre ea.
+    const termen = term === undefined ? this.state.q : term;
+    return gp.get('/log?page=' + wanted + (termen ? '&search=' + encodeURIComponent(termen) : ''))
+      .then((r) => {
+        // Între cerere și răspuns omul mai scrie în casetă. Un răspuns despre
+        // altă căutare decât cea de acum nu are voie să ajungă pe ecran.
+        if (termen !== this.state.q) return;
+
+        const fresh = (r.entries || []).map((e) => ({
+          id: e.id,
+          at: e.createdAt ? Date.parse(e.createdAt + 'Z') || 0 : 0,
+          u: e.user || '—',
+          name: e.user || 'Sistem',
+          role: e.role || '',
+          page: e.entity || '',
+          action: e.action,
+          detail: e.detail || ''
+        }));
+
+        // Prima pagină înlocuiește lista; „mai vechi" o completează. Fără asta,
+        // reîmprospătarea periodică ar arunca de fiecare dată paginile aduse.
+        const seen = new Set();
+        const merged = (wanted === 1 ? fresh.concat(this.state.log) : this.state.log.concat(fresh))
+          .filter((x) => (seen.has(x.id) ? false : seen.add(x.id)));
+
+        this.setState({
+          log: merged,
+          loaded: true,
+          // Reîmprospătarea cere mereu pagina 1, dar nu are voie să dea cursorul
+          // înapoi acolo: dacă îl dă, „Încarcă mai vechi” cere din nou pagina
+          // tocmai adusă, deduplicarea de mai sus o aruncă întreagă și jurnalul
+          // se termină la primele 100 de intrări — cu un buton care arată în
+          // continuare că mai are ce încărca. Restul de mii de acțiuni rămâneau
+          // de necitit.
+          pg: Math.max(wanted, this.state.pg || 1),
+          pages: r.pages || 1,
+          total: r.total || merged.length
+        });
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ msg: e.message, loaded: true });
+      });
+  }
+
+  /**
+   * Trimite la server ce s-a scris în casetă.
+   *
+   * Intrările de pe ecran sunt răspunsul la căutarea de dinainte, deci se
+   * golesc odată cu ea, iar cursorul se întoarce la prima pagină: altfel
+   * „Încarcă mai vechi” ar sări peste primele rezultate ale căutării noi.
+   */
+  cauta(text) {
+    const term = (text || "").trim();
+    if (term === this.state.q) return;
+    this.setState({ q: term, log: [], pg: 1, pages: 1, total: 0, loaded: false });
+    return this.pull(1, term);
+  }
+
+  renderVals() {
+    const S = this.state, set = (x) => this.setState(x);
+    const auth = S.auth;
+    const role = auth ? (auth.role || "") : "";
+    const isAdmin = role === "admin";
+
+    const all = S.log.slice().sort((a, b) => b.at - a.at);
+    // Căutarea nu se mai repetă aici: a făcut-o serverul, peste tot jurnalul,
+    // iar S.log e chiar răspunsul lui. Repetată în pagină, ar ascunde rânduri
+    // pe care serverul le-a găsit — el potrivește „comanda” și cu „Comandă”,
+    // pagina nu — deci omul ar citi „nicio acțiune” despre ceva ce există.
+    // Rămân filtrele de cont și de zonă, care lucrează pe ce s-a adus.
+    const rows = all.filter(e =>
+      (S.who === "Toate" || e.u === S.who) &&
+      (S.page === "Toate" || e.page === S.page)
+    );
+
+    const byDay = {};
+    rows.forEach(e => (byDay[dayKey(e.at)] || (byDay[dayKey(e.at)] = [])).push(e));
+    const today = dayKey(Date.now());
+    const groups = Object.keys(byDay).sort().reverse().map(k => {
+      const [y, m, d] = k.split("-");
+      const label = k === today ? "Azi · " + parseInt(d, 10) + " " + MON[parseInt(m, 10) - 1] : parseInt(d, 10) + " " + MON[parseInt(m, 10) - 1] + " " + y;
+      const list = byDay[k];
+      const people = Array.from(new Set(list.map(e => e.name))).length;
+      return {
+        label,
+        meta: list.length + (list.length === 1 ? " acțiune · " : " acțiuni · ") + people + (people === 1 ? " cont" : " conturi"),
+        rows: list.map(e => {
+          // Rolul vine de la server. Se deducea din numele de utilizator
+          // („dacă te cheamă admin, ești admin") căutând într-o listă care era
+          // mereu goală, deci fiecare rând arăta „—".
+          const rl = e.role || "";
+          const dt = new Date(e.at);
+          return {
+            time: z(dt.getHours()) + ":" + z(dt.getMinutes()),
+            name: e.name || e.u || "—",
+            role: rl === "admin" ? "admin" : rl === "client" ? "client" : rl === "angajat" ? "angajat" : "—",
+            roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
+            page: ZLAB[e.page] || e.page || "—",
+            pageCls: PCLS[e.page] || "h-badge",
+            action: (e.action || "") + (e.detail ? " · " + e.detail : "")
+          };
+        })
+      };
+    });
+
+    const accounts = Array.from(new Set(all.map(e => e.u)));
+    // Butoanele de zonă se fac din zonele care chiar apar în jurnal, în ordinea
+    // din ZONES. O zonă pe care serverul o scrie fără să fie în listă rămâne la
+    // coadă, cu numele ei tehnic — tot e mai bine decât să lipsească din filtre
+    // și acțiunile ei să nu poată fi izolate.
+    const rang = (k) => { const i = ZONES.findIndex(zn => zn.key === k); return i < 0 ? ZONES.length : i; };
+    const zones = Array.from(new Set(all.map(e => e.page).filter(Boolean))).sort((a, b) => rang(a) - rang(b));
+
+    return {
+      blocked: S.loaded && !isAdmin,
+      allowed: !S.loaded || isAdmin,
+      blockedLine: auth
+        ? "Contul „" + auth.name + "” nu are acces la jurnal. Doar administratorii văd ce a schimbat fiecare cont."
+        : "Intră cu un cont de administrator din pagina de conturi ca să vezi jurnalul.",
+      authName: auth ? auth.name : "",
+
+      sub: all.length + (all.length === 1 ? " acțiune înregistrată" : " acțiuni înregistrate") + " · " + accounts.length + (accounts.length === 1 ? " cont" : " conturi"),
+      search: S.search,
+      onSearch: (e) => {
+        const text = e.target.value;
+        set({ search: text });
+        // Căutarea pleacă la server, dar nu la fiecare literă: altfel un cuvânt
+        // de opt litere ar fi opt cereri, iar lista ar clipi la fiecare.
+        clearTimeout(this.tCauta);
+        this.tCauta = setTimeout(() => this.cauta(text), 300);
+      },
+      msg: S.msg,
+      onMsgClose: () => set({ msg: "" }),
+
+      whoFilters: ["Toate"].concat(accounts).map(u => {
+        const label = u === "Toate" ? "Toate conturile" : ((all.find(e => e.u === u) || {}).name || u);
+        return {
+          label, count: String(u === "Toate" ? all.length : all.filter(e => e.u === u).length),
+          cls: S.who === u ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+          onClick: () => set({ who: u })
+        };
+      }),
+      pageFilters: ["Toate"].concat(zones).map(p => ({
+        label: p === "Toate" ? "Toate zonele" : (ZLAB[p] || p),
+        count: String(p === "Toate" ? all.length : all.filter(e => e.page === p).length),
+        cls: S.page === p ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ page: p })
+      })),
+
+      groups,
+      // Subsolul și „Încarcă mai vechi” țin de câte intrări s-au adus, nu de
+      // câte trec de filtrele de cont și de zonă. Legate de rândurile filtrate,
+      // dispăreau exact când omul avea nevoie de ele: nu se potrivea nimic din
+      // ce era încărcat, iar butonul care ar fi adus restul jurnalului se
+      // ascundea odată cu contorul care spunea că se vede doar o felie.
+      hasRows: S.log.length > 0,
+      empty: S.loaded && rows.length === 0,
+      // Cu căutarea pe server, o listă goală nu mai înseamnă „jurnalul e gol”,
+      // ci „nimic din tot jurnalul nu conține textul căutat”. Textul vechi ar fi
+      // spus „nicio acțiune înregistrată încă” peste mii de acțiuni înregistrate.
+      emptyLine: S.q
+        ? "Nicio acțiune care să conțină „" + S.q + "”, în tot jurnalul."
+        : all.length === 0 ? "Nicio acțiune înregistrată încă. Schimbă o comandă sau o parolă și apare aici." : "Nicio acțiune pe filtrele alese.",
+      // Serverul trimite câte 50 de intrări. Pagina arăta doar primele și n-avea
+      // nicio cale către cele mai vechi, deși scria că jurnalul e permanent.
+      footLine: S.total
+        ? "Se văd " + S.log.length + " din " + S.total + (S.total === 1 ? " acțiune" : " acțiuni") + (S.q ? " găsite în tot jurnalul." : " înregistrate.")
+        : "Jurnalul se scrie pe server, la fiecare operație.",
+      hasMore: S.pg < S.pages,
+      moreLabel: "Încarcă mai vechi",
+      onMore: () => this.pull(S.pg + 1),
+
+      onClearFilters: () => {
+        clearTimeout(this.tCauta);
+        set({ who: "Toate", page: "Toate", search: "" });
+        // Ștergerea filtrelor înseamnă și întoarcerea la jurnalul întreg, nu
+        // doar golirea casetei: altfel lista ar rămâne pe rezultatele unei
+        // căutări care nu mai e scrisă nicăieri pe ecran.
+        this.cauta("");
+      }
+      // „Golește jurnalul" a fost scos. Ștergea doar afișajul — scria într-un
+      // localStorage pe care nu-l mai citește nimeni — iar la reîmprospătarea
+      // următoare, peste cinci secunde, tot ce părea șters revenea. Un buton
+      // care spune „gata, s-a șters" fără să șteargă nimic e mai rău decât
+      // niciun buton.
+      //
+      // Nici nu l-am înlocuit cu unul care chiar șterge: rostul jurnalului e
+      // să arate cine ce a schimbat, iar un jurnal pe care oricine îl poate
+      // goli nu mai dovedește nimic.
+    };
+  }
+}
+
+</script>
+</body>
+</html>

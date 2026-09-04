@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="ext-resource-dependency" content=".image-slots.state.json" data-resource-id="slots" />
+<meta name="ext-resource-dependency" content="products/trial-pack.png" data-resource-id="trialpack" />
+<meta name="ext-resource-dependency" content="products/prod-1.jpg" data-resource-id="prod1" />
+<meta name="ext-resource-dependency" content="products/prod-2.jpg" data-resource-id="prod2" />
+<meta name="ext-resource-dependency" content="products/prod-3.jpg" data-resource-id="prod3" />
+<meta name="ext-resource-dependency" content="products/prod-4.jpg" data-resource-id="prod4" />
+<meta name="ext-resource-dependency" content="products/prod-5.jpg" data-resource-id="prod5" />
+<meta name="ext-resource-dependency" content="products/prod-6.jpg" data-resource-id="prod6" />
+<meta name="ext-resource-dependency" content="products/prod-7.jpg" data-resource-id="prod7" />
+<meta name="ext-resource-dependency" content="products/prod-8.jpg" data-resource-id="prod8" />
+<meta name="ext-resource-dependency" content="products/prod-9.jpg" data-resource-id="prod9" />
+<meta name="ext-resource-dependency" content="products/prod-10.jpg" data-resource-id="prod10" />
+<meta name="ext-resource-dependency" content="products/prod-11.jpg" data-resource-id="prod11" />
+<meta name="ext-resource-dependency" content="products/prod-12.jpg" data-resource-id="prod12" />
+<meta name="ext-resource-dependency" content="products/prod-13.jpg" data-resource-id="prod13" />
+<meta name="ext-resource-dependency" content="products/prod-14.jpg" data-resource-id="prod14" />
+<meta name="ext-resource-dependency" content="products/prod-15.jpg" data-resource-id="prod15" />
+<meta name="ext-resource-dependency" content="products/prod-16.jpg" data-resource-id="prod16" />
+<meta name="ext-resource-dependency" content="products/prod-17.jpg" data-resource-id="prod17" />
+<meta name="ext-resource-dependency" content="products/prod-18.jpg" data-resource-id="prod18" />
+<meta name="ext-resource-dependency" content="products/prod-19.jpg" data-resource-id="prod19" />
+<meta name="ext-resource-dependency" content="products/prod-20.jpg" data-resource-id="prod20" />
+<meta name="ext-resource-dependency" content="products/prod-21.jpg" data-resource-id="prod21" />
+<meta name="ext-resource-dependency" content="products/prod-22.jpg" data-resource-id="prod22" />
+<template id="__bundler_thumbnail" data-bg-color="#241B16">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+    <rect width="100" height="100" fill="#241B16"></rect>
+    <g fill="none" stroke="#F2A63B" stroke-width="3" stroke-linecap="round">
+      <path d="M50 32v36"></path><path d="M32 50h36"></path>
+      <path d="M37.3 37.3l25.4 25.4"></path><path d="M62.7 37.3L37.3 62.7"></path>
+    </g>
+  </svg>
+</template>
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+  <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+  <script src="./image-slot.js"></script>
+  <style>
+    body { margin: 0; background: var(--h-bg-page); }
+    a { color: var(--h-accent-fg); text-decoration-color: color-mix(in srgb, var(--h-accent) 40%, transparent); text-underline-offset: 3px; }
+    a:hover { color: var(--h-accent-hover); text-decoration-color: currentColor; }
+    @keyframes pf-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  </style>
+</helmet>
+
+<div style="background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body);min-height:100vh;overflow-x:hidden">
+
+  <div style="position:sticky;top:0;z-index:100;padding:1rem clamp(1.25rem,4vw,3rem) 0;background:linear-gradient(180deg,var(--h-bg-page) 55%,transparent)">
+    <header class="h-header" style="max-width:1740px;margin-inline:auto;position:relative">
+      <a class="h-logo" href="#" onClick="{{ goHome }}" style="gap:0.6rem">
+        <img src="./ratio-1x1-golden-pastryuntitled-design-3-mt7jbr2f-anx6.png" alt="Golden Pastry" style="width: 2.1rem; height: 2.1rem; object-fit: contain">
+        <span style="display:flex;flex-direction:column;line-height:1.05">
+          <span style="font-family:var(--h-font-display);font-size:1.0625rem;font-weight:700;letter-spacing:0.01em">Golden Pastry</span>
+          <span style="font-family:var(--h-font-body);font-size:0.5625rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ logoKicker }}</span>
+        </span>
+      </a>
+      <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
+      <nav class="h-nav" aria-label="Main">
+        <a class="h-nav__link" href="#" aria-current="{{ curHome }}" onClick="{{ goHome }}">{{ navHome }}</a>
+        <a class="h-nav__link" href="#" aria-current="{{ curCat }}" onClick="{{ goCat }}">{{ navCat }}</a>
+        <a class="h-nav__link" href="#" aria-current="{{ curDist }}" onClick="{{ goDist }}">{{ navDist }}</a>
+        <a class="h-nav__link" href="#" aria-current="{{ curAbout }}" onClick="{{ goAbout }}">{{ navAbout }}</a>
+        <a class="h-nav__link" href="#" aria-current="{{ curContact }}" onClick="{{ goContact }}">{{ navContact }}</a>
+      </nav>
+      </sc-if>
+      <sc-if value="{{ mob }}">
+        <div style="display:flex;align-items:center;gap:0.4rem;margin-left:auto">
+          <sc-if value="{{ anon }}" hint-placeholder-val="{{ true }}">
+          <a class="h-btn h-btn--secondary" href="Intrare.dc.html" style="flex:none;min-height:2.25rem;height:2.25rem;padding:0 0.7rem;font-size:0.75rem;font-weight:700;letter-spacing:0.02em;gap:0.35rem;text-decoration:none;white-space:nowrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path></svg>
+            {{ ctaLogin }}
+          </a>
+          </sc-if>
+          <sc-if value="{{ signed }}" hint-placeholder-val="{{ false }}">
+            <button type="button" aria-label="{{ accMenuLabel }}" aria-expanded="{{ accExpanded }}" onClick="{{ toggleAcc }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;flex:none;padding:0;border:0;border-radius:999px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:0.75rem;font-weight:700;cursor:pointer">{{ accInitials }}</button>
+          </sc-if>
+          <div role="group" aria-label="Language" style="display:inline-flex;gap:0.2rem;padding:0.2rem;background:var(--h-bg-sunk);border-radius:999px">
+            <button type="button" aria-pressed="{{ isRo }}" onClick="{{ setRo }}" style="{{ roBtn }}">RO</button>
+            <button type="button" aria-pressed="{{ isEn }}" onClick="{{ setEn }}" style="{{ enBtn }}">EN</button>
+          </div>
+          <button type="button" aria-label="{{ menuLabel }}" aria-expanded="{{ menuExpanded }}" onClick="{{ toggleMenu }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;flex:none;border:1px solid var(--h-line-strong);border-radius:14px;background:var(--h-bg-raised);color:var(--h-fg);cursor:pointer">
+            <sc-if value="{{ menuClosed }}" hint-placeholder-val="{{ true }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+            </sc-if>
+            <sc-if value="{{ menuOpen }}">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+            </sc-if>
+          </button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;gap:0.75rem">
+        <sc-if value="{{ anon }}" hint-placeholder-val="{{ true }}">
+        <a class="h-btn h-btn--secondary h-btn--sm" href="Intrare.dc.html" style="gap:0.4rem;text-decoration:none;white-space:nowrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path></svg>
+          {{ ctaLogin }}
+        </a>
+        </sc-if>
+        <sc-if value="{{ signed }}" hint-placeholder-val="{{ false }}">
+        <button type="button" class="h-btn h-btn--secondary h-btn--sm" aria-expanded="{{ accExpanded }}" onClick="{{ toggleAcc }}" style="gap:0.45rem;white-space:nowrap;max-width:15rem">
+          <span style="{{ accDot }}">{{ accInitials }}</span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ accName }}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.6"><path d="M6 9l6 6 6-6"></path></svg>
+        </button>
+        </sc-if><div role="group" aria-label="Language" style="display:inline-flex;gap:0.25rem;padding:0.25rem;background:var(--h-bg-sunk);border-radius:999px">
+          <button type="button" aria-pressed="{{ isRo }}" onClick="{{ setRo }}" style="{{ roBtn }}">RO</button>
+          <button type="button" aria-pressed="{{ isEn }}" onClick="{{ setEn }}" style="{{ enBtn }}">EN</button>
+        </div>
+        <a class="h-btn h-btn--sm" href="{{ waHelloHref }}" target="_blank" rel="noopener" aria-label="WhatsApp" title="WhatsApp" style="background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-1);padding:0.45rem;width:2.25rem;height:2.25rem;text-decoration:none" style-hover="filter:brightness(1.08)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+        </a>
+        
+        <button type="button" class="h-btn h-btn--primary h-btn--sm" onClick="{{ goContact }}">{{ ctaQuote }}</button>
+      </div>
+      </sc-if>
+      <sc-if value="{{ accOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeAcc }}" style="position:fixed;inset:0;z-index:110"></div>
+        <div style="position:absolute;top:calc(100% + 0.6rem);right:0;z-index:120;min-width:16rem;max-width:min(20rem, calc(100vw - 2rem));padding:0.75rem;background:var(--h-bg-raised);border:1px solid var(--h-line);border-radius:20px;box-shadow:var(--h-shadow-3);display:flex;flex-direction:column;gap:0.15rem">
+          <div style="padding:0.35rem 0.6rem 0.65rem;border-bottom:1px solid var(--h-line);margin-bottom:0.4rem">
+            <p style="margin:0;font-weight:700;line-height:1.3;text-wrap:pretty">{{ accName }}</p>
+            <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ accRole }}</p>
+          </div>
+          <a href="{{ accPanelHref }}" style="{{ mLink }}">{{ accPanelLabel }}</a>
+          <a href="Parola.dc.html" style="{{ mLink }}">{{ ctaPassword }}</a>
+          <button type="button" onClick="{{ doLogout }}" style="{{ mBtn }}">{{ ctaLogout }}</button>
+        </div>
+      </sc-if>
+    </header>
+    <sc-if value="{{ menuOpen }}">
+      <nav aria-label="Main" style="max-width:1740px;margin:0.65rem auto 0;padding:0.75rem;background:var(--h-bg-raised);border:1px solid var(--h-line);border-radius:20px;box-shadow:var(--h-shadow-3);display:flex;flex-direction:column;gap:0.15rem">
+        <a href="#" aria-current="{{ curHome }}" onClick="{{ goHome }}" style="{{ mLink }}">{{ navHome }}</a>
+        <a href="#" aria-current="{{ curCat }}" onClick="{{ goCat }}" style="{{ mLink }}">{{ navCat }}</a>
+        <a href="#" aria-current="{{ curDist }}" onClick="{{ goDist }}" style="{{ mLink }}">{{ navDist }}</a>
+        <a href="#" aria-current="{{ curAbout }}" onClick="{{ goAbout }}" style="{{ mLink }}">{{ navAbout }}</a>
+        <a href="#" aria-current="{{ curContact }}" onClick="{{ goContact }}" style="{{ mLink }}">{{ navContact }}</a>
+        <button type="button" class="h-btn h-btn--primary h-btn--block" style="margin-top:0.5rem;min-height:2.75rem" onClick="{{ goContact }}">{{ ctaQuote }}</button>
+        <a class="h-btn h-btn--block" href="{{ waHelloHref }}" target="_blank" rel="noopener" style="margin-top:0.4rem;min-height:2.75rem;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-1);gap:0.5rem;text-decoration:none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+          {{ ctaWa }}
+        </a>
+      </nav>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ onHome }}" hint-placeholder-val="{{ true }}">
+  <main>
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(1.5rem,4vw,3rem) clamp(1.25rem,4vw,3rem) 0">
+      <div style="position:relative;border-radius:32px;overflow:hidden;background:var(--h-bg-surface);isolation:isolate;border:1px solid var(--h-line)">
+        <div style="position:absolute;inset:0;background:var(--h-grad-oven);z-index:-1"></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr));gap:clamp(1.5rem,4vw,3.5rem);align-items:center;padding:clamp(1.75rem,4vw,3.5rem)">
+          <div>
+            <span class="h-badge h-badge--honey" style="margin-bottom:1.25rem">
+              <span class="h-badge__dot" style="animation:pf-pulse 2.4s ease-in-out infinite"></span> {{ heroBadge }}
+            </span>
+            <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+              <h1 class="h-display" style="margin:0 0 1.25rem">Patiserie congelată,<br>gata de vânzare</h1>
+            </sc-if>
+            <sc-if value="{{ en }}">
+              <h1 class="h-display" style="margin:0 0 1.25rem">Frozen pastry,<br>ready to sell</h1>
+            </sc-if>
+            <p class="h-lead" style="margin:0 0 2rem">{{ heroLead }}</p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.75rem">
+              <button type="button" class="h-btn h-btn--primary h-btn--lg" onClick="{{ goCat }}">{{ ctaCatalog }}</button>
+              <a class="h-btn h-btn--lg" href="{{ waHelloHref }}" target="_blank" rel="noopener" style="background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-2);gap:0.55rem;min-height:2.75rem;text-decoration:none" style-hover="filter:brightness(1.08)">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+                {{ ctaWa }}
+              </a>
+              <button type="button" class="h-btn h-btn--secondary h-btn--lg" onClick="{{ goContact }}">{{ ctaQuoteLong }}</button>
+            </div>
+            <p class="h-caption" style="margin:1.25rem 0 0">{{ heroFoot }}</p>
+          </div>
+          <div style="{{ heroMedia }}">
+            <image-slot id="pf-hero" shape="rect" placeholder="Produs congelat sau cutie de transport" src="assets/img/hero.webp"></image-slot>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="max-width:1740px;margin:0 auto;padding:2.5rem clamp(1.25rem,4vw,3rem) 0">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(11rem,100%),1fr));gap:1rem">
+        <div class="h-stat"><p class="h-stat__value">{{ st1n }}</p><p class="h-stat__label">{{ st1 }}</p></div>
+        <div class="h-stat"><p class="h-stat__value">−18<span style="font-size:1.25rem">°C</span></p><p class="h-stat__label">{{ st2 }}</p></div>
+        <div class="h-stat"><p class="h-stat__value">24<span style="font-size:1.25rem">–48h</span></p><p class="h-stat__label">{{ st3 }}</p></div>
+        <div class="h-stat"><p class="h-stat__value">2</p><p class="h-stat__label">{{ st4 }}</p></div>
+      </div>
+    </section>
+
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(3rem,7vw,5rem) clamp(1.25rem,4vw,3rem)">
+      <div style="max-width:36rem;margin-bottom:2.5rem">
+        <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebRange }}</p>
+        <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+          <h2 class="h-h2" style="margin:0 0 0.75rem">Două game, un singur furnizor</h2>
+          <p class="h-lead" style="margin:0">Aluat crud congelat pentru cine are cuptor, produs finit pentru cine nu are. Aceleași rețete, același gust — diferă doar cine face ultimul pas.</p>
+        </sc-if>
+        <sc-if value="{{ en }}">
+          <h2 class="h-h2" style="margin:0 0 0.75rem">Two ranges, one supplier</h2>
+          <p class="h-lead" style="margin:0">Raw frozen dough if you have an oven, finished product if you don't. Same recipes, same taste — the only difference is who takes the last step.</p>
+        </sc-if>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(18rem,100%),1fr));gap:1.5rem">
+        <article class="h-card h-card--interactive" onClick="{{ goCat }}">
+          <div onClick="{{ stopClick }}" style="position:relative;aspect-ratio:16/10;margin:-1.5rem -1.5rem 1.25rem;border-radius:24px 24px 0 0;overflow:hidden;background:var(--h-grad-warm)">
+            <image-slot id="pf-range-1" src="{{ photoRange1 }}" fit="cover" shape="rect" placeholder="Aluat crud congelat"></image-slot>
+          </div>
+          <span class="h-badge h-badge--accent" style="margin-bottom:0.75rem">{{ tagFrozen }}</span>
+          <p class="h-card__title">{{ r1t }}</p>
+          <p class="h-card__body">{{ r1b }}</p>
+        </article>
+        <article class="h-card h-card--interactive" onClick="{{ goCat }}">
+          <div onClick="{{ stopClick }}" style="position:relative;aspect-ratio:16/10;margin:-1.5rem -1.5rem 1.25rem;border-radius:24px 24px 0 0;overflow:hidden;background:var(--h-grad-warm)">
+            <image-slot id="pf-range-2" src="{{ photoRange2 }}" fit="cover" shape="rect" placeholder="Produs ambalat, gata de consum"></image-slot>
+          </div>
+          <span class="h-badge h-badge--honey" style="margin-bottom:0.75rem">{{ tagRTE }}</span>
+          <p class="h-card__title">{{ r2t }}</p>
+          <p class="h-card__body">{{ r2b }}</p>
+        </article>
+        <article class="h-card h-card--interactive" onClick="{{ goCat }}">
+          <div onClick="{{ stopClick }}" style="position:relative;aspect-ratio:16/10;margin:-1.5rem -1.5rem 1.25rem;border-radius:24px 24px 0 0;overflow:hidden;background:var(--h-grad-warm)">
+            <image-slot id="pf-range-3" shape="rect" placeholder="Ambalaj personalizat" src="assets/img/ambalaj.webp"></image-slot>
+          </div>
+          <span class="h-badge h-badge--jam" style="margin-bottom:0.75rem">{{ tagPL }}</span>
+          <p class="h-card__title">{{ r3t }}</p>
+          <p class="h-card__body">{{ r3b }}</p>
+        </article>
+      </div>
+    </section>
+
+    <section style="background:var(--h-bg-sunk)">
+      <div style="max-width:1740px;margin:0 auto;padding:clamp(3rem,7vw,5rem) clamp(1.25rem,4vw,3rem)">
+        <div style="max-width:36rem;margin-bottom:2.5rem">
+          <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebWho }}</p>
+          <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+            <h2 class="h-h2" style="margin:0">Pentru cine lucrăm</h2>
+          </sc-if>
+          <sc-if value="{{ en }}">
+            <h2 class="h-h2" style="margin:0">Who we supply</h2>
+          </sc-if>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(14rem,100%),1fr));gap:1.25rem">
+          <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ s1t }}</p><p class="h-card__body">{{ s1b }}</p></div>
+          <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ s2t }}</p><p class="h-card__body">{{ s2b }}</p></div>
+          <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ s3t }}</p><p class="h-card__body">{{ s3b }}</p></div>
+          <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ s4t }}</p><p class="h-card__body">{{ s4b }}</p></div>
+          <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ s5t }}</p><p class="h-card__body">{{ s5b }}</p></div>
+          <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ s6t }}</p><p class="h-card__body">{{ s6b }}</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(3rem,7vw,5rem) clamp(1.25rem,4vw,3rem)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr));gap:2.5rem;align-items:center">
+        <div>
+          <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebHow }}</p>
+          <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+            <h2 class="h-h2" style="margin:0 0 1rem">Cum se lucrează cu noi</h2>
+            <p class="h-lead" style="margin:0 0 2rem">Patru pași, fără birocrație. De la prima discuție la prima livrare trec de obicei mai puțin de două săptămâni.</p>
+          </sc-if>
+          <sc-if value="{{ en }}">
+            <h2 class="h-h2" style="margin:0 0 1rem">How working with us goes</h2>
+            <p class="h-lead" style="margin:0 0 2rem">Four steps, no paperwork maze. From first conversation to first delivery is usually under two weeks.</p>
+          </sc-if>
+          <div style="display:flex;flex-direction:column;gap:1rem">
+            <div style="display:flex;gap:1rem;align-items:flex-start">
+              <span class="h-badge h-badge--solid" style="flex:none;margin-top:0.15rem">01</span>
+              <div><p style="margin:0;font-weight:700;font-size:0.9375rem">{{ h1t }}</p><p class="h-small h-muted" style="margin:0.15rem 0 0">{{ h1b }}</p></div>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:flex-start">
+              <span class="h-badge h-badge--solid" style="flex:none;margin-top:0.15rem">02</span>
+              <div><p style="margin:0;font-weight:700;font-size:0.9375rem">{{ h2t }}</p><p class="h-small h-muted" style="margin:0.15rem 0 0">{{ h2b }}</p></div>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:flex-start">
+              <span class="h-badge h-badge--solid" style="flex:none;margin-top:0.15rem">03</span>
+              <div><p style="margin:0;font-weight:700;font-size:0.9375rem">{{ h3t }}</p><p class="h-small h-muted" style="margin:0.15rem 0 0">{{ h3b }}</p></div>
+            </div>
+            <div style="display:flex;gap:1rem;align-items:flex-start">
+              <span class="h-badge h-badge--solid" style="flex:none;margin-top:0.15rem">04</span>
+              <div><p style="margin:0;font-weight:700;font-size:0.9375rem">{{ h4t }}</p><p class="h-small h-muted" style="margin:0.15rem 0 0">{{ h4b }}</p></div>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative;aspect-ratio:4/3;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-3);background:var(--h-grad-warm)">
+          <image-slot id="pf-logistics" shape="rect" placeholder="Livrare sau depozit frigorific" src="assets/img/logistica.webp"></image-slot>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding:0 clamp(1.25rem,4vw,3rem) clamp(3rem,7vw,5rem)">
+      <div style="max-width:1740px;margin:0 auto;background:var(--h-bg-inverse);color:var(--h-fg-inverse);border-radius:32px;padding:clamp(2rem,5vw,3.5rem)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr));gap:2.5rem;align-items:center">
+          <div style="display:flex;justify-content:center">
+            
+          <img src="./logo-full-gold.png" alt="Golden Pastry" style="width: min(328px, 62vw); height: auto; object-fit: contain; opacity: 0.95"></div>
+          <div>
+            <p class="h-eyebrow" style="color:var(--h-accent-inverse);margin-bottom:0.75rem">{{ ebCatalog }}</p>
+            <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+              <h2 class="h-h2" style="margin:0 0 0.75rem;color:var(--h-fg-inverse)">Catalogul complet, cu gramaje și prețuri</h2>
+              <p style="margin:0 0 1.75rem;font-size:1.0625rem;line-height:1.7;color:color-mix(in srgb, var(--h-fg-inverse) 78%, transparent);max-width:44ch">Specificații, unități per cutie și lista de prețuri pentru volume. Îl trimitem pe email în aceeași zi lucrătoare.</p>
+            </sc-if>
+            <sc-if value="{{ en }}">
+              <h2 class="h-h2" style="margin:0 0 0.75rem;color:var(--h-fg-inverse)">The full catalogue, with weights and pricing</h2>
+              <p style="margin:0 0 1.75rem;font-size:1.0625rem;line-height:1.7;color:color-mix(in srgb, var(--h-fg-inverse) 78%, transparent);max-width:44ch">Specifications, units per case, and volume pricing. We send it by email the same working day.</p>
+            </sc-if>
+            <button type="button" class="h-btn h-btn--honey h-btn--lg" onClick="{{ goContact }}">{{ ctaGetCatalog }}</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ onCat }}">
+  <main>
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(2rem,5vw,3.5rem) clamp(1.25rem,4vw,3rem) 0">
+      <div style="max-width:46rem">
+        <div>
+          <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebCatalog }}</p>
+          <h1 class="h-h1" style="margin:0 0 1rem">{{ catTitle }}</h1>
+          <p class="h-lead" style="margin:0">{{ catLead }}</p>
+        </div>
+      </div>
+    </section>
+
+    <sc-if value="{{ mob }}">
+      <div style="position:sticky;top:4.6rem;z-index:80;max-width:1740px;margin:1.1rem auto 0;padding:0 clamp(1.25rem,4vw,3rem)">
+        <div style="display:flex;gap:0.3rem;padding:0.3rem;background:var(--h-bg-raised);border:1px solid var(--h-line);border-radius:999px;box-shadow:var(--h-shadow-2)">
+          <button type="button" aria-pressed="{{ isFrozen }}" onClick="{{ setFrozen }}" style="{{ frozenBtn }}">{{ tabFrozen }}</button>
+          <button type="button" aria-pressed="{{ isBaked }}" onClick="{{ setBaked }}" style="{{ bakedBtn }}">{{ tabBaked }}</button>
+        </div>
+      </div>
+      <div style="max-width:1740px;margin:0.7rem auto 0;padding:0 clamp(1.25rem,4vw,3rem)">
+        <p class="h-small" style="margin:0;color:var(--h-fg-muted);line-height:1.5">{{ tierNote }}</p>
+      </div>
+    </sc-if>
+
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(2rem,5vw,3rem) clamp(1.25rem,4vw,3rem) clamp(3rem,7vw,5rem)">
+      <div ref="{{ colsRef }}" style="display:flex;flex-wrap:wrap;gap:clamp(1.5rem,3vw,2.5rem);align-items:flex-start">
+
+        <div style="flex:1 1 min(44rem,100%);min-width:0;display:flex;flex-direction:column;gap:clamp(1.75rem,3vw,2.75rem)">
+
+          <sc-if value="{{ catBroken }}">
+            <section class="h-card h-card--raised" role="alert" style="border-color:var(--h-danger);box-shadow:0 0 0 2px var(--h-danger-soft),var(--h-shadow-2);display:flex;flex-direction:column;gap:0.5rem;align-items:flex-start">
+              <span class="h-badge h-badge--danger">{{ catErrTitle }}</span>
+              <p class="h-small" style="margin:0;color:var(--h-fg-muted);line-height:1.6;text-wrap:pretty;max-width:52ch">{{ catErrBody }}</p>
+              <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ catErrReload }}">{{ catErrCta }}</button>
+            </section>
+          </sc-if>
+
+          <sc-if value="{{ hasCat }}" hint-placeholder-val="{{ true }}">
+          <section class="h-card h-card--raised" style="{{ trialCard }}">
+            <div style="{{ trialMedia }}">
+              <image-slot id="pf-trial-pack" src="{{ trialPhoto }}" fit="cover" shape="rect" placeholder="Pachet de test"></image-slot>
+            </div>
+            <div style="flex:1 1 min(20rem,100%);min-width:0;display:flex;flex-direction:column;gap:0.55rem">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem">
+                <span class="h-badge" style="background:var(--h-jam-700);color:#FDF6EC">{{ trialBadge }}</span>
+                <span class="h-caption" style="color:var(--h-fg-subtle)">{{ trialTierLabel }}</span>
+              </div>
+              <h2 class="h-h4" style="margin:0;font-family:var(--h-font-display)">{{ trialTitle }}</h2>
+              <p class="h-small" style="margin:0;color:var(--h-fg-muted);line-height:1.6;text-wrap:pretty;max-width:48ch">{{ trialBody }}</p>
+            </div>
+            <div style="{{ trialBuy }}">
+              <div style="display:flex;align-items:baseline;gap:0.5rem;flex-wrap:wrap">
+                <span style="font-family:var(--h-font-display);font-size:1.625rem;font-weight:700;line-height:1.05">{{ trialPrice }}</span>
+                <span class="h-small" style="color:var(--h-fg-subtle);text-decoration:line-through">{{ trialWas }}</span>
+              </div>
+              <span class="h-caption" style="color:var(--h-fg-subtle)">{{ trialMeta }}</span>
+              <sc-if value="{{ trialNone }}" hint-placeholder-val="{{ true }}">
+                <button type="button" class="h-btn h-btn--primary h-btn--block" style="margin-top:0.4rem;min-height:2.75rem" onClick="{{ trialAdd }}">{{ trialCta }}</button>
+              </sc-if>
+              <sc-if value="{{ trialSome }}">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;margin-top:0.4rem">
+                  <span class="h-badge" style="background:var(--h-success-soft);color:var(--h-success);text-transform:none;letter-spacing:0;font-weight:700">{{ trialAdded }}</span>
+                  <button type="button" class="h-btn h-btn--ghost h-btn--sm" style="{{ clearBtn }}" onClick="{{ trialRemove }}">{{ ctaRemove }}</button>
+                </div>
+              </sc-if>
+            </div>
+          </section>
+          </sc-if>
+
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+            <section>
+              <div style="{{ grpHead }}">
+                <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0.6rem">
+                  <h2 class="h-h3" style="{{ grpTitle }}">{{ g.title }}</h2>
+                  <span class="h-badge">{{ g.count }}</span>
+                </div>
+                <p class="h-small" style="{{ grpNote }}">{{ g.note }}</p>
+              </div>
+              <div style="{{ prodGrid }}">
+                <sc-for list="{{ g.items }}" as="pr" hint-placeholder-count="3">
+                  <article class="h-card" style="{{ pr.card }}">
+                    <div style="{{ prodMedia }}">
+                      <image-slot id="{{ pr.slot }}" src="{{ pr.photo }}" fit="cover" shape="rect" placeholder="{{ pr.name }}"></image-slot>
+                      <span style="{{ noBadge }}">{{ pr.no }}</span>
+                      <sc-if value="{{ pr.special }}">
+                        <span class="h-badge" style="{{ specialBadge }}">{{ tagSpecial }}</span>
+                      </sc-if>
+                    </div>
+                    <div style="{{ prodBody }}">
+                      <h3 class="h-card__title" style="{{ prodTitle }}">{{ pr.name }}</h3>
+                      <p class="h-small" style="{{ prodDesc }}">{{ pr.desc }}</p>
+                      <div style="{{ prodPriceRow }}">
+                        <div style="display:flex;flex-direction:column;gap:0.05rem;min-width:0">
+                          <span style="{{ prodPrice }}">{{ pr.price }}</span>
+                          <span class="h-caption" style="{{ prodUnit }}">{{ pr.unit }}</span>
+                        </div>
+                        <span class="h-badge" style="{{ prodWeight }}">{{ pr.weight }}</span>
+                      </div>
+                      <p class="h-caption" style="{{ prodAlt }}">{{ pr.alt }}</p>
+                      <sc-if value="{{ pr.none }}" hint-placeholder-val="{{ true }}">
+                        <button type="button" class="{{ prodBtnClass }}" onClick="{{ pr.add }}" style="{{ addStyle }}">{{ addLabel }}</button>
+                      </sc-if>
+                      <sc-if value="{{ pr.some }}">
+                        <div style="{{ prodQtyRow }}">
+                          <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
+                            <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ lessLabel }}" onClick="{{ pr.dec }}">−</button>
+                            <span class="h-stepper__value" style="{{ stepVal }}">{{ pr.qty }}</span>
+                            <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ moreLabel }}" onClick="{{ pr.inc }}">+</button>
+                          </div>
+                          <span style="{{ lineTotalStyle }}">{{ pr.lineTotal }}</span>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </article>
+                </sc-for>
+              </div>
+            </section>
+          </sc-for>
+
+          <sc-if value="{{ mobBar }}">
+            <div style="height:5.5rem"></div>
+          </sc-if>
+          <div class="h-alert h-alert--accent">
+            <span class="h-alert__icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 8h.01M11 12h1v4h1"></path></svg>
+            </span>
+            <div><p class="h-alert__title">{{ noteTitle }}</p><p class="h-alert__body">{{ noteBody }}</p></div>
+          </div>
+        </div>
+
+        <aside ref="{{ asideRef }}" style="{{ asideStyle }}">
+          <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
+          <div class="h-card h-card--flat">
+            <p class="h-caption" style="margin:0 0 0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ catSwitchLabel }}</p>
+            <div role="group" aria-label="{{ catSwitchLabel }}" style="display:flex;gap:0.3rem;padding:0.3rem;background:var(--h-bg-sunk);border:1px solid var(--h-line);border-radius:999px">
+              <button type="button" aria-pressed="{{ isFrozen }}" onClick="{{ setFrozen }}" style="{{ frozenBtn }}">{{ tabFrozen }}</button>
+              <button type="button" aria-pressed="{{ isBaked }}" onClick="{{ setBaked }}" style="{{ bakedBtn }}">{{ tabBaked }}</button>
+            </div>
+            <p class="h-small" style="margin:0.7rem 0 0;color:var(--h-fg-muted);line-height:1.5">{{ tierNote }}</p>
+          </div>
+          </sc-if>
+          <div class="h-card h-card--raised">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem;margin-bottom:1rem">
+              <h2 class="h-h4" style="margin:0;font-family:var(--h-font-display)">{{ reqTitle }} <span style="font-weight:600;color:var(--h-fg-subtle)">{{ picksCount }}</span></h2>
+              <sc-if value="{{ hasPicks }}"><button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ clearPicks }}" style="{{ clearBtn }}">{{ ctaClear }}</button></sc-if>
+            </div>
+            <sc-if value="{{ noPicks }}" hint-placeholder-val="{{ true }}">
+              <div class="h-empty" style="padding:2rem 1.25rem">
+                <span class="h-empty__icon">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11l3 3v13H5z"></path><path d="M9 10h6M9 14h6"></path></svg>
+                </span>
+                <p class="h-empty__body">{{ reqEmpty }}</p>
+              </div>
+            </sc-if>
+            <sc-if value="{{ hasPicks }}">
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ picks }}" as="row" hint-placeholder-count="2">
+                  <div style="display:flex;flex-direction:column;gap:0.5rem;padding:0.7rem 0;border-bottom:1px solid var(--h-line)">
+                    <div style="display:flex;align-items:flex-start;gap:0.5rem">
+                      <div style="flex:1;min-width:0">
+                        <p class="h-list__title" style="margin:0;text-wrap:pretty">{{ row.name }}</p>
+                        <p class="h-list__meta" style="margin:2px 0 0">{{ row.meta }}</p>
+                      </div>
+                      <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ row.remove }}" aria-label="{{ rmLabel }}" style="{{ rmBtn }}">×</button>
+                    </div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem">
+                      <sc-if value="{{ row.fixed }}">
+                        <span class="h-badge" style="background:var(--h-success-soft);color:var(--h-success);text-transform:none;letter-spacing:0;font-weight:700">{{ row.fixedLabel }}</span>
+                      </sc-if>
+                      <sc-if value="{{ row.steppable }}" hint-placeholder-val="{{ true }}">
+                        <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
+                          <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ lessLabel }}" onClick="{{ row.dec }}">−</button>
+                          <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ row.qty }}" onChange="{{ row.set }}" onBlur="{{ row.blur }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
+                          <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ moreLabel }}" onClick="{{ row.inc }}">+</button>
+                        </div>
+                      </sc-if>
+                      <span style="{{ lineTotalStyle }}">{{ row.lineTotal }}</span>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="margin-top:0.9rem;padding-top:0.9rem;border-top:1px solid var(--h-line-strong);display:flex;flex-direction:column;gap:0.35rem">
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem">
+                  <span class="h-small" style="color:var(--h-fg-muted)">{{ totalPiecesLabel }}</span>
+                  <span class="h-small" style="font-weight:700;font-variant-numeric:tabular-nums">{{ totalPieces }}</span>
+                </div>
+                <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem">
+                  <span style="font-weight:700">{{ totalLabel }}</span>
+                  <span style="font-family:var(--h-font-display);font-size:1.375rem;font-weight:700;line-height:1.1">{{ totalMoney }}</span>
+                </div>
+                <p class="h-caption" style="margin:0.15rem 0 0;color:var(--h-fg-subtle);line-height:1.5">{{ totalNote }}</p>
+              </div>
+              <div style="{{ minBox }}">
+                <div style="display:flex;align-items:center;gap:0.45rem">
+                  <span style="{{ minDot }}"></span>
+                  <p class="h-small" style="margin:0;font-weight:700">{{ minTitle }}</p>
+                </div>
+                <div style="height:5px;border-radius:999px;background:var(--h-line);overflow:hidden;margin:0.5rem 0 0.45rem">
+                  <div style="{{ minBar }}"></div>
+                </div>
+                <p class="h-caption" style="margin:0;color:var(--h-fg-muted);line-height:1.5">{{ minBody }}</p>
+              </div>
+              <a class="h-btn h-btn--block" href="{{ waOrderHref }}" target="_blank" rel="noopener" style="margin-top:1rem;min-height:2.75rem;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-2);gap:0.5rem;text-decoration:none" style-hover="filter:brightness(1.08)">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+                {{ ctaWaOrder }}
+              </a>
+              <button type="button" class="h-btn h-btn--secondary h-btn--block" style="margin-top:0.5rem;min-height:2.75rem" onClick="{{ goContact }}">{{ ctaContinue }}</button>
+            </sc-if>
+          </div>
+          <div class="h-card h-card--flat">
+            <p class="h-caption" style="margin-bottom:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ askLabel }}</p>
+            <p class="h-small" style="margin:0 0 0.75rem;color:var(--h-fg-muted)">{{ askBody }}</p>
+            <a class="h-link h-small" href="{{ mailHref }}">{{ emailText }}</a>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ mobBar }}">
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;align-items:center;gap:0.75rem;padding:0.7rem clamp(1rem,4vw,1.5rem) calc(0.7rem + env(safe-area-inset-bottom));background:var(--h-bg-raised);border-top:1px solid var(--h-line);box-shadow:0 -8px 24px rgba(0,0,0,0.18)">
+      <div style="min-width:0">
+        <p style="margin:0;font-family:var(--h-font-display);font-size:1.0625rem;font-weight:700;line-height:1.2">{{ totalMoney }}</p>
+        <p style="margin:0;font-size:0.75rem;color:var(--h-fg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ barTitle }} · {{ totalPieces }}</p>
+      </div>
+      <a class="h-btn" href="{{ waOrderHref }}" target="_blank" rel="noopener" aria-label="{{ ctaWaOrder }}" style="margin-left:auto;flex:none;width:2.75rem;height:2.75rem;padding:0;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-1);text-decoration:none">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+      </a>
+      <button type="button" class="h-btn h-btn--primary" style="flex:none;min-height:2.75rem;padding-inline:1rem" onClick="{{ goContact }}">{{ ctaBarGo }}</button>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ onDist }}">
+  <main>
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(2rem,5vw,3.5rem) clamp(1.25rem,4vw,3rem) 0">
+      <div style="max-width:46rem">
+        <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebDist }}</p>
+        <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+          <h1 class="h-h1" style="margin:0 0 1rem">Distribuție și logistică</h1>
+          <p class="h-lead" style="margin:0">Produsele pleacă congelate la −18°C și ajung la tine în lanț frigorific neîntrerupt. Livrăm în București și Ilfov cu flota proprie, iar în restul țării prin curier frigorific.</p>
+        </sc-if>
+        <sc-if value="{{ en }}">
+          <h1 class="h-h1" style="margin:0 0 1rem">Distribution and logistics</h1>
+          <p class="h-lead" style="margin:0">Product leaves frozen at −18°C and reaches you in an unbroken cold chain. We deliver in Bucharest and Ilfov with our own fleet, and elsewhere through refrigerated couriers.</p>
+        </sc-if>
+      </div>
+    </section>
+
+    <section style="max-width:1740px;margin:0 auto;padding:2.5rem clamp(1.25rem,4vw,3rem) 0">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(15rem,100%),1fr));gap:1.25rem">
+        <div class="h-card"><p class="h-eyebrow" style="margin-bottom:0.5rem">{{ d1e }}</p><p class="h-card__title" style="font-size:1.0625rem">{{ d1t }}</p><p class="h-card__body">{{ d1b }}</p></div>
+        <div class="h-card"><p class="h-eyebrow" style="margin-bottom:0.5rem">{{ d2e }}</p><p class="h-card__title" style="font-size:1.0625rem">{{ d2t }}</p><p class="h-card__body">{{ d2b }}</p></div>
+        <div class="h-card"><p class="h-eyebrow" style="margin-bottom:0.5rem">{{ d3e }}</p><p class="h-card__title" style="font-size:1.0625rem">{{ d3t }}</p><p class="h-card__body">{{ d3b }}</p></div>
+        <div class="h-card"><p class="h-eyebrow" style="margin-bottom:0.5rem">{{ d4e }}</p><p class="h-card__title" style="font-size:1.0625rem">{{ d4t }}</p><p class="h-card__body">{{ d4b }}</p></div>
+      </div>
+    </section>
+
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(3rem,7vw,4.5rem) clamp(1.25rem,4vw,3rem)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr));gap:2.5rem;align-items:start">
+        <div>
+          <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebCoverage }}</p>
+          <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+            <h2 class="h-h2" style="margin:0 0 1rem">Acoperire</h2>
+            <p class="h-lead" style="margin:0 0 1.75rem">Depozitul e în sectorul 4, pe Șoseaua Olteniței. De acolo pleacă tot ce livrăm.</p>
+          </sc-if>
+          <sc-if value="{{ en }}">
+            <h2 class="h-h2" style="margin:0 0 1rem">Coverage</h2>
+            <p class="h-lead" style="margin:0 0 1.75rem">The warehouse is in sector 4, on Șoseaua Olteniței. Everything we deliver leaves from there.</p>
+          </sc-if>
+          <div class="h-list" style="max-width:26rem">
+            <div class="h-list__row"><div class="h-list__main"><p class="h-list__title">{{ cov1t }}</p><p class="h-list__meta">{{ cov1b }}</p></div><span class="h-badge h-badge--success">24h</span></div>
+            <div class="h-list__row"><div class="h-list__main"><p class="h-list__title">{{ cov2t }}</p><p class="h-list__meta">{{ cov2b }}</p></div><span class="h-badge h-badge--success">24–48h</span></div>
+            <div class="h-list__row"><div class="h-list__main"><p class="h-list__title">{{ cov3t }}</p><p class="h-list__meta">{{ cov3b }}</p></div><span class="h-badge h-badge--honey">{{ covAsk }}</span></div>
+          </div>
+        </div>
+        <div style="border-radius:24px;overflow:hidden;border:1px solid var(--h-line);box-shadow:var(--h-shadow-2);background:var(--h-bg-surface)">
+          <iframe title="{{ mapTitle }}" src="https://www.openstreetmap.org/export/embed.html?bbox=26.1155%2C44.3880%2C26.1315%2C44.3975&amp;layer=mapnik&amp;marker=44.39235%2C26.12385" style="width:100%;height:20rem;border:0;display:block"></iframe>
+          <div style="padding:0.75rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;justify-content:space-between">
+            <p class="h-caption" style="margin:0">{{ mapCaption }}</p>
+            <a class="h-link h-caption" href="https://www.google.com/maps/search/?api=1&amp;query=ICTCM%20Soseaua%20Oltenitei%20103%20Bucuresti" target="_blank" rel="noopener">Google Maps</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="background:var(--h-bg-sunk)">
+      <div style="max-width:1740px;margin:0 auto;padding:clamp(3rem,7vw,5rem) clamp(1.25rem,4vw,3rem)">
+        <div style="max-width:36rem;margin-bottom:2.5rem">
+          <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebOven }}</p>
+          <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+            <h2 class="h-h2" style="margin:0 0 0.75rem">De la congelator la vitrină</h2>
+            <p class="h-lead" style="margin:0">Produsele bake-off nu au nevoie de brutar. Se scot din cutie, se pun în tavă și intră în cuptor direct din congelator.</p>
+          </sc-if>
+          <sc-if value="{{ en }}">
+            <h2 class="h-h2" style="margin:0 0 0.75rem">From freezer to counter</h2>
+            <p class="h-lead" style="margin:0">Bake-off products don't need a baker. Out of the case, onto the tray, into the oven straight from frozen.</p>
+          </sc-if>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(13rem,100%),1fr));gap:1.25rem">
+          <div class="h-card"><span class="h-badge h-badge--solid" style="margin-bottom:0.75rem">01</span><p class="h-card__title" style="font-size:1.0625rem">{{ o1t }}</p><p class="h-card__body">{{ o1b }}</p></div>
+          <div class="h-card"><span class="h-badge h-badge--solid" style="margin-bottom:0.75rem">02</span><p class="h-card__title" style="font-size:1.0625rem">{{ o2t }}</p><p class="h-card__body">{{ o2b }}</p></div>
+          <div class="h-card"><span class="h-badge h-badge--solid" style="margin-bottom:0.75rem">03</span><p class="h-card__title" style="font-size:1.0625rem">{{ o3t }}</p><p class="h-card__body">{{ o3b }}</p></div>
+          <div class="h-card"><span class="h-badge h-badge--solid" style="margin-bottom:0.75rem">04</span><p class="h-card__title" style="font-size:1.0625rem">{{ o4t }}</p><p class="h-card__body">{{ o4b }}</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ onAbout }}">
+  <main>
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(2rem,5vw,3.5rem) clamp(1.25rem,4vw,3rem) 0">
+      <div style="max-width:46rem">
+        <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebAbout }}</p>
+        <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+          <h1 class="h-h1" style="margin:0 0 1.25rem">Rețete de acasă, la scară industrială</h1>
+          <p class="h-lead" style="margin:0">Golden Pastry face patiserie românească pentru cei care o vând mai departe. Rețetele sunt cele simple, cunoscute — scovergi, langoși, plăcinte, covrigi. Procesul din spate e însă standardizat, ca fiecare cutie să iasă la fel ca precedenta.</p>
+        </sc-if>
+        <sc-if value="{{ en }}">
+          <h1 class="h-h1" style="margin:0 0 1.25rem">Home recipes, at industrial scale</h1>
+          <p class="h-lead" style="margin:0">Golden Pastry makes Romanian pastry for the people who sell it on. The recipes are the simple, familiar ones — scovergi, langoși, pies, pretzels. The process behind them is standardised, so every case comes out like the last one.</p>
+        </sc-if>
+      </div>
+    </section>
+
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(2rem,5vw,3rem) clamp(1.25rem,4vw,3rem)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(16rem,100%),1fr));gap:1.25rem">
+        <div style="position:relative;aspect-ratio:1;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-2);background:var(--h-grad-warm)">
+          <image-slot id="pf-about-1" shape="rect" placeholder="Linia de producție" src="assets/img/despre-productie.webp"></image-slot>
+        </div>
+        <div style="position:relative;aspect-ratio:1;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-2);background:var(--h-grad-warm)">
+          <image-slot id="pf-about-2" shape="rect" placeholder="Ambalare" src="assets/img/despre-ambalare.webp"></image-slot>
+        </div>
+        <div style="position:relative;aspect-ratio:1;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-2);background:var(--h-grad-warm)">
+          <image-slot id="pf-about-3" shape="rect" placeholder="Depozit frigorific" src="assets/img/despre-depozit.webp"></image-slot>
+        </div>
+      </div>
+    </section>
+
+    <section style="background:var(--h-bg-sunk)">
+      <div style="max-width:1740px;margin:0 auto;padding:clamp(3rem,7vw,5rem) clamp(1.25rem,4vw,3rem)">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr));gap:2.5rem">
+          <div>
+            <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebStandard }}</p>
+            <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+              <h2 class="h-h2" style="margin:0 0 1rem">Ce ținem constant</h2>
+              <p class="h-lead" style="margin:0 0 1.5rem">Un furnizor de patiserie congelată se judecă pe repetabilitate, nu pe inspirație. Rețeta e fixă, gramajul e fix, iar aluatul se face după aceeași procedură în fiecare tură.</p>
+              <p class="h-body h-muted" style="margin:0">Fără premixuri și fără arome adăugate — lista de ingrediente rămâne scurtă, exact cum era în rețeta originală.</p>
+            </sc-if>
+            <sc-if value="{{ en }}">
+              <h2 class="h-h2" style="margin:0 0 1rem">What we hold constant</h2>
+              <p class="h-lead" style="margin:0 0 1.5rem">A frozen pastry supplier is judged on repeatability, not inspiration. The recipe is fixed, the weight is fixed, and the dough follows the same procedure on every shift.</p>
+              <p class="h-body h-muted" style="margin:0">No premixes and no added flavourings — the ingredient list stays short, exactly as the original recipe had it.</p>
+            </sc-if>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1rem">
+            <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ v1t }}</p><p class="h-card__body">{{ v1b }}</p></div>
+            <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ v2t }}</p><p class="h-card__body">{{ v2b }}</p></div>
+            <div class="h-card"><p class="h-card__title" style="font-size:1.0625rem">{{ v3t }}</p><p class="h-card__body">{{ v3b }}</p></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(3rem,7vw,5rem) clamp(1.25rem,4vw,3rem)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(20rem,100%),1fr));gap:2.5rem;align-items:center">
+        <div>
+          <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebFounder }}</p>
+          <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
+            <h2 class="h-h2" style="margin:0 0 1rem">Cine e în spate</h2>
+            <p class="h-lead" style="margin:0 0 1.5rem">Brandul a fost fondat de <strong>Felix Nacea</strong> și <strong>Ples Octavian</strong>, antreprenori cu experiență în construirea companiilor de la zero. Aceeași disciplină de proces care a scalat afaceri de milioane de euro stă acum în spatele unei linii de patiserie.</p>
+          </sc-if>
+          <sc-if value="{{ en }}">
+            <h2 class="h-h2" style="margin:0 0 1rem">Who's behind it</h2>
+            <p class="h-lead" style="margin:0 0 1.5rem">The brand was founded by <strong>Felix Nacea</strong> and <strong>Ples Octavian</strong>, entrepreneurs with a track record of building companies from zero. The same process discipline that scaled multi-million-euro businesses now sits behind a pastry line.</p>
+          </sc-if>
+          <button type="button" class="h-btn h-btn--secondary" onClick="{{ goContact }}">{{ ctaQuoteLong }}</button>
+        </div>
+        <div style="position:relative;aspect-ratio:4/3;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-3);background:var(--h-grad-warm)">
+          <image-slot id="pf-about-4" shape="rect" placeholder="Echipa sau facilitatea" src="assets/img/despre-echipa.webp"></image-slot>
+        </div>
+      </div>
+    </section>
+  </main>
+  </sc-if>
+
+  <sc-if value="{{ onContact }}">
+  <main>
+    <section style="max-width:1740px;margin:0 auto;padding:clamp(2rem,5vw,3.5rem) clamp(1.25rem,4vw,3rem) 0">
+      <div style="max-width:44rem">
+        <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebContact }}</p>
+        <h1 class="h-h1" style="margin:0 0 1rem">{{ contactTitle }}</h1>
+        <p class="h-lead" style="margin:0">{{ contactLead }}</p>
+      </div>
+    </section>
+
+    <section style="max-width:1740px;margin:0 auto;padding:2.5rem clamp(1.25rem,4vw,3rem) clamp(3rem,7vw,5rem)">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr));gap:1.5rem;align-items:start">
+
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+          <div class="h-card">
+            <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebDirect }}</p>
+            <div class="h-list">
+              <div class="h-list__row"><div class="h-list__main"><p class="h-list__title">{{ emailText }}</p><p class="h-list__meta">{{ emailMeta }}</p></div><a class="h-btn h-btn--secondary h-btn--sm" href="{{ mailHref }}">Email</a></div>
+              <div class="h-list__row"><div class="h-list__main"><p class="h-list__title">{{ phoneText }}</p><p class="h-list__meta">{{ phoneMeta }}</p></div><a class="h-btn h-btn--ghost h-btn--sm" href="{{ telHref }}" style="{{ contactRowBtn }}">{{ ctaCall }}</a></div>
+              <div class="h-list__row"><div class="h-list__main"><p class="h-list__title">WhatsApp</p><p class="h-list__meta">{{ waMeta }}</p></div>
+                <a class="h-btn h-btn--sm" href="{{ waHelloHref }}" target="_blank" rel="noopener" style="background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-1);gap:0.4rem;min-height:2.25rem;text-decoration:none;flex:none" style-hover="filter:brightness(1.08)">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+                  {{ ctaWaOpen }}
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div class="h-card">
+            <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebWarehouse }}</p>
+            <p class="h-h4" style="font-family:var(--h-font-display);margin:0 0 0.5rem">Șos. Olteniței 103</p>
+            <p class="h-body h-muted" style="margin:0 0 1.25rem">{{ addrHint }}</p>
+            <div class="h-hours">
+              <div class="h-hours__row" style="{{ rowWeek }}"><span class="h-hours__day">{{ dayWeek }}</span><span class="h-hours__time">07:00 – 21:00</span></div>
+              <div class="h-hours__row" style="{{ rowSat }}"><span class="h-hours__day">{{ daySat }}</span><span class="h-hours__time">07:00 – 17:00</span></div>
+              <div class="h-hours__row" style="{{ rowSun }}"><span class="h-hours__day">{{ daySun }}</span><span class="h-hours__time">{{ closedWord }}</span></div>
+            </div>
+            <a class="h-btn h-btn--ghost h-btn--sm" style="margin-top:1.25rem;padding-inline:0" href="https://www.google.com/maps/search/?api=1&amp;query=ICTCM%20Soseaua%20Oltenitei%20103%20Bucuresti" target="_blank" rel="noopener">{{ ctaOpenMaps }} →</a>
+          </div>
+
+          <sc-if value="{{ hasPicks }}">
+            <div class="h-card h-card--flat">
+              <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ interestLabel }}</p>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ picks }}" as="row" hint-placeholder-count="2">
+                  <div style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0;border-bottom:1px solid var(--h-line)">
+                    <sc-if value="{{ row.fixed }}">
+                      <span class="h-badge" style="flex:none;background:var(--h-success-soft);color:var(--h-success);text-transform:none;letter-spacing:0;font-weight:700">{{ row.fixedLabel }}</span>
+                    </sc-if>
+                    <sc-if value="{{ row.steppable }}" hint-placeholder-val="{{ true }}">
+                      <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
+                        <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ lessLabel }}" onClick="{{ row.dec }}">−</button>
+                        <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ row.qty }}" onChange="{{ row.set }}" onBlur="{{ row.blur }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
+                        <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ moreLabel }}" onClick="{{ row.inc }}">+</button>
+                      </div>
+                    </sc-if>
+                    <div style="flex:1;min-width:0">
+                      <p class="h-list__title" style="margin:0;text-wrap:pretty">{{ row.name }}</p>
+                      <p class="h-list__meta" style="margin:2px 0 0">{{ row.meta }}</p>
+                    </div>
+                    <span style="{{ lineTotalStyle }}">{{ row.lineTotal }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding-top:0.8rem">
+                <span style="font-weight:700">{{ totalLabel }} · {{ totalPieces }}</span>
+                <span style="font-family:var(--h-font-display);font-size:1.375rem;font-weight:700;line-height:1.1">{{ totalMoney }}</span>
+              </div>
+              <button type="button" class="h-btn h-btn--ghost h-btn--sm" style="margin-top:0.75rem;padding-inline:0" onClick="{{ goCat }}">{{ ctaEditPicks }} →</button>
+            </div>
+          </sc-if>
+        </div>
+
+        <form class="h-card h-card--raised" ref="{{ formRef }}" onSubmit="{{ submitQuote }}" style="display:flex;flex-direction:column;gap:1rem">
+          <div>
+            <h2 class="h-h4" style="font-family:var(--h-font-display);margin:0 0 0.35rem">{{ formTitle }}</h2>
+            <p class="h-small h-muted" style="margin:0">{{ formSub }}</p>
+          </div>
+          <sc-if value="{{ asClient }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.9rem 1rem;border-radius:16px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+              <span style="{{ accDot }}">{{ accInitials }}</span>
+              <div style="flex:1;min-width:0">
+                <p style="margin:0;font-weight:700;line-height:1.3;text-wrap:pretty">{{ accName }}</p>
+                <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ accContact }}</p>
+              </div>
+            </div>
+            <div class="h-field"><label class="h-label" for="q-addr">{{ lblAddr }}</label>
+              <input class="h-input" id="q-addr" name="Adresa" value="{{ addr }}" onChange="{{ onAddr }}" placeholder="{{ phAddr }}">
+              <p class="h-caption" style="margin:0.4rem 0 0">{{ addrNote }}</p>
+            </div>
+          </sc-if>
+          <sc-if value="{{ asGuest }}" hint-placeholder-val="{{ true }}">
+          <div style="{{ fieldPair }}">
+            <div class="h-field"><label class="h-label" for="q-company">{{ lblCompany }}</label><input class="h-input" id="q-company" name="Companie" required="{{ true }}" placeholder="{{ phCompany }}"></div>
+            <div class="h-field"><label class="h-label" for="q-name">{{ lblName }}</label><input class="h-input" id="q-name" name="Persoana de contact" required="{{ true }}" placeholder="{{ phName }}"></div>
+          </div>
+          <div style="{{ fieldPair }}">
+            <div class="h-field"><label class="h-label" for="q-email">{{ lblEmail }}</label><input class="h-input" id="q-email" name="Email" type="email" required="{{ true }}" placeholder="nume@companie.ro"></div>
+            <div class="h-field"><label class="h-label" for="q-phone">{{ lblPhone }}</label><input class="h-input" id="q-phone" name="Telefon" type="tel" required="{{ phoneReq }}" placeholder="07xx xxx xxx"></div>
+          </div>
+          <div class="h-field"><label class="h-label" for="q-segment">{{ lblSegment }}</label>
+            <select class="h-select" id="q-segment" name="Segment">
+              <option>{{ seg1 }}</option>
+              <option>{{ seg2 }}</option>
+              <option>{{ seg3 }}</option>
+              <option>{{ seg4 }}</option>
+              <option>{{ seg5 }}</option>
+              <option>{{ seg6 }}</option>
+            </select>
+          </div>
+          <div class="h-field"><label class="h-label" for="q-volume">{{ lblVolume }}</label>
+            <select class="h-select" id="q-volume" name="Volum estimat">
+              <option>{{ vol1 }}</option>
+              <option>{{ vol2 }}</option>
+              <option>{{ vol3 }}</option>
+              <option>{{ vol4 }}</option>
+            </select>
+          </div>          </sc-if>
+          <div class="h-field"><label class="h-label">{{ lblWhen }}</label>
+            <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
+              <button type="button" class="{{ asapCls }}" onClick="{{ setAsap }}" style="flex:1 1 12rem;min-height:2.75rem">{{ ctaAsap }}</button>
+              <button type="button" class="{{ pickCls }}" onClick="{{ setPickDate }}" style="flex:1 1 12rem;min-height:2.75rem">{{ ctaPickDate }}</button>
+            </div>
+            <sc-if value="{{ wantsDate }}" hint-placeholder-val="{{ false }}">
+              <input class="h-input" name="Data dorită" type="date" value="{{ whenDate }}" onChange="{{ onWhenDate }}" min="{{ dateMin }}" max="{{ dateMax }}" style="margin-top:0.6rem">
+            </sc-if>
+            <sc-if value="{{ isAsap }}" hint-placeholder-val="{{ true }}">
+              <input type="hidden" name="Data dorită" value="{{ asapText }}">
+            </sc-if>
+            <p class="h-caption" style="margin:0.45rem 0 0">{{ whenNote }}</p>
+          </div>
+          <div class="h-field"><label class="h-label" for="q-msg">{{ lblMsg }}</label><textarea class="h-textarea" id="q-msg" name="Mesaj" placeholder="{{ phMsg }}"></textarea></div>
+          <sc-if value="{{ asGuest }}" hint-placeholder-val="{{ true }}">
+          <label class="h-check"><input type="checkbox" name="Vreau catalogul PDF" checked="{{ wantCatalog }}" onChange="{{ toggleCatalog }}"><span>{{ lblWantCatalog }}</span></label>
+          </sc-if>
+          <sc-if value="{{ sendErr }}">
+            <div class="h-alert h-alert--danger"><div><p class="h-alert__body">{{ sendErr }}</p></div></div>
+          </sc-if>
+          <sc-if value="{{ sent }}">
+            <div class="h-alert h-alert--success"><span class="h-alert__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span><div><p class="h-alert__title">{{ sentTitle }}</p><p class="h-alert__body">{{ sentBody }}</p></div></div>
+          </sc-if>
+          <button type="submit" class="h-btn h-btn--primary h-btn--block" disabled="{{ sending }}" style="min-height:2.75rem">{{ sendLabel }}</button>
+          <button type="button" class="h-btn h-btn--block" onClick="{{ sendWa }}" style="min-height:2.75rem;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-2);gap:0.5rem" style-hover="filter:brightness(1.08)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+            {{ ctaWaSend }}
+          </button>
+          <p class="h-caption" style="text-align:center;margin:0;line-height:1.5">{{ waFormNote }}</p>
+          <p class="h-caption" style="text-align:center;margin:0">{{ formNote }}</p>
+        </form>
+
+      </div>
+    </section>
+  </main>
+  </sc-if>
+
+  <footer style="background:var(--h-bg-sunk);color:var(--h-fg);border-top:1px solid var(--h-line)">
+    <div style="max-width:1740px;margin:0 auto;padding:clamp(2.5rem,6vw,4rem) clamp(1.25rem,4vw,3rem) 2rem">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(13rem,100%),1fr));gap:2.5rem">
+        <div>
+          <img src="./logo-full-gold.png" alt="Golden Pastry" style="width:9rem;height:auto;object-fit:contain;margin-bottom:1rem">
+          <p style="margin:0;font-size:0.9375rem;line-height:1.7;color:var(--h-fg-muted);max-width:28ch">{{ footTag }}</p>
+        </div>
+        <div>
+          <p style="margin:0 0 0.75rem;font-size:0.6875rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ footNav }}</p>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;align-items:flex-start">
+            <button type="button" onClick="{{ goHome }}" style="{{ footBtn }}" style-hover="color:var(--h-accent-fg)">{{ navHome }}</button>
+            <button type="button" onClick="{{ goCat }}" style="{{ footBtn }}" style-hover="color:var(--h-accent-fg)">{{ navCat }}</button>
+            <button type="button" onClick="{{ goDist }}" style="{{ footBtn }}" style-hover="color:var(--h-accent-fg)">{{ navDist }}</button>
+            <button type="button" onClick="{{ goAbout }}" style="{{ footBtn }}" style-hover="color:var(--h-accent-fg)">{{ navAbout }}</button>
+            <button type="button" onClick="{{ goContact }}" style="{{ footBtn }}" style-hover="color:var(--h-accent-fg)">{{ navContact }}</button>
+          </div>
+        </div>
+        <div>
+          <p style="margin:0 0 0.75rem;font-size:0.6875rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ ebWarehouse }}</p>
+          <p style="margin:0 0 0.5rem;font-size:0.9375rem;color:var(--h-fg)">Șos. Olteniței 103<br>Sector 4, București</p>
+          <p style="margin:0;font-size:0.9375rem;color:var(--h-fg-muted)">{{ hoursLong }}</p>
+        </div>
+        <div>
+          <p style="margin:0 0 0.75rem;font-size:0.6875rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ footContact }}</p>
+          <div style="display:flex;flex-direction:column;gap:0.5rem">
+            <a href="{{ telHref }}" style="{{ footLink }}" style-hover="color:var(--h-accent-fg)">{{ phoneText }}</a>
+            <a href="{{ waHelloHref }}" target="_blank" rel="noopener" style="{{ footLinkWa }}" style-hover="color:#3DD07C">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+              WhatsApp
+            </a>
+            <a href="{{ mailHref }}" style="font-size:0.9375rem;color:var(--h-fg);text-decoration:none" style-hover="color:var(--h-accent-fg)">{{ emailText }}</a>
+            <a href="https://goldenpastry.ro" target="_blank" rel="noopener" style="font-size:0.9375rem;color:var(--h-accent-fg);text-decoration:none" style-hover="color:var(--h-accent-hover)">goldenpastry.ro</a>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--h-line);display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;align-items:center">
+        <p style="margin:0;font-size:0.8125rem;color:var(--h-fg-subtle)">© 2026 Golden Pastry · goldenpastry.ro</p>
+        <p style="margin:0;font-size:0.8125rem;color:var(--h-fg-subtle)">{{ footLegal }}</p>
+      </div>
+    </div>
+  </footer>
+
+  <sc-if value="{{ showFab }}" hint-placeholder-val="{{ true }}">
+    <a href="{{ waOrderHref }}" target="_blank" rel="noopener" aria-label="{{ ctaWa }}" title="{{ ctaWa }}" style="position:fixed;right:clamp(1rem,3vw,1.75rem);bottom:clamp(1rem,3vw,1.75rem);z-index:110;display:inline-flex;align-items:center;justify-content:center;width:3.25rem;height:3.25rem;border-radius:999px;background:#1EA855;color:#FFFFFF;box-shadow:0 10px 28px rgba(20,20,20,0.3);text-decoration:none" style-hover="filter:brightness(1.08)">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
+    </a>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;defaultLang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ro&quot;,&quot;en&quot;],&quot;default&quot;:&quot;ro&quot;,&quot;tsType&quot;:&quot;'ro' | 'en'&quot;,&quot;section&quot;:&quot;Site&quot;},&quot;audienceFocus&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;both&quot;,&quot;retail&quot;,&quot;horeca&quot;],&quot;default&quot;:&quot;both&quot;,&quot;tsType&quot;:&quot;'both' | 'retail' | 'horeca'&quot;,&quot;section&quot;:&quot;Site&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.asideRef = React.createRef();
+    this.colsRef = React.createRef();
+    this.formRef = React.createRef();
+    this.state = {
+      asap: true,
+      whenDate: '',
+      mob: typeof window !== 'undefined' && window.innerWidth < 1080,
+      menuOpen: false,
+      page: 'home',
+      lang: props.defaultLang === 'en' ? 'en' : 'ro',
+      qty: {},
+      tier: 'frozen',
+      // Catalogul vine de la server. Era scris în pagină, într-o listă
+      // paralelă cu baza de date: coincideau doar fiindcă din listă am
+      // generat baza, iar la prima modificare de preț clientul ar fi văzut o
+      // sumă și ar fi fost taxat cu alta.
+      prod: null,
+      groups: null,
+      catErr: '',
+      // Telefonul și e-mailul publice, din Setări. Erau scrise în pagină, deci
+      // numărul schimbat din panou nu ajungea niciodată la vizitator. Rămâne
+      // `null` până răspunde serverul, moment în care pagina se redesenează.
+      contact: null,
+      // Bifa „Trimiteți-mi și catalogul PDF", pentru vizitatorii fără cont.
+      // Era legată în marcaj direct la `true`, fără nicio stare în spate:
+      // runtime-ul readucea căsuța la valoarea din props după fiecare apăsare,
+      // deci nu se putea debifa, iar cererea pleca mereu cu „vrea catalogul",
+      // inclusiv de la cine tocmai îl refuzase.
+      wantCatalog: true,
+      sent: false,
+      sending: false,
+      sendErr: '',
+      // Cine e conectat. Sesiunea e un cookie pus pe tot domeniul, deci
+      // magazinul o vede la fel de bine ca panourile de pe subdomenii.
+      // Rămâne `null` până răspunde serverul: nu presupunem „vizitator" cât
+      // timp nu știm, ca antetul să nu arate întâi butonul de intrare și abia
+      // apoi numele contului.
+      auth: null,
+      authReady: false,
+      accMenu: false,
+      // Adresa de livrare: vine de pe cont și se poate schimba pentru comanda
+      // curentă. `addrTouched` ține minte că a fost scrisă de om, ca răspunsul
+      // întârziat al serverului să nu suprascrie ce tocmai a tastat.
+      addr: '',
+      addrTouched: false,
+      // Cheia și textul brut din căsuța de cantitate care se editează acum:
+      // cât timp e goală, rândul rămâne în coș cu cantitatea de dinainte.
+      editKey: '',
+      editText: ''
+    };
+  }
+
+  /**
+   * Catalogul, de pe server.
+   *
+   * Forma de tablou o păstrăm — restul paginii o folosește peste tot — dar
+   * conținutul vine acum din baza de date, aceeași din care se calculează
+   * totalul comenzii. Poziția 1 este ID-ul real al produsului, tot el fiind
+   * trimis la plasarea cererii.
+   */
+  pullCatalog() {
+    gp.get('/products')
+      .then((r) => {
+        const prod = (r.products || []).map((x) => [
+          x.category, x.id, x.name, x.nameEn || x.name,
+          x.grams || 0, x.priceFrozen, x.priceBaked,
+          x.description || '', x.descriptionEn || x.description || '',
+          x.isNew ? 1 : 0, x.photo || ''
+        ]);
+        const groups = (r.categories || []).map((c) => [
+          c.slug, c.name, c.nameEn || c.name, c.note || '', c.noteEn || c.note || ''
+        ]);
+        this.setState({ prod, groups, catErr: '' });
+      })
+      .catch((e) => this.setState({
+        prod: [], groups: [],
+        catErr: 'Catalogul nu a putut fi încărcat. Reîncarcă pagina sau scrie-ne.'
+      }));
+  }
+
+  /**
+   * Cine e conectat.
+   *
+   * Fără asta, un client care tocmai își scrisese parola vedea în magazin tot
+   * butonul „intră în cont", iar la comandă i se cereau din nou numele,
+   * telefonul și adresa — pe care aplicația le știa deja.
+   *
+   * Ce vine de aici e doar pentru afișare. Dreptul de a face ceva îl dă
+   * cookie-ul, verificat de server la fiecare cerere.
+   */
+  pullAuth() {
+    gp.me()
+      .then((u) => this.setState((st) => ({
+        auth: u,
+        authReady: true,
+        addr: st.addrTouched ? st.addr : ((u && u.address) || '')
+      })))
+      .catch(() => this.setState({ auth: null, authReady: true }));
+  }
+
+  /**
+   * Telefonul și e-mailul publice, din Setări.
+   *
+   * Fără cererea asta pagina rămâne cu numărul scris în cod, iar patiseria
+   * nu-și poate schimba datele de contact fără un programator. Cât timp
+   * răspunsul nu a venit se afișează valorile de rezervă din `gp.contact()`:
+   * un rând de contact gol e mai rău decât unul care se împrospătează.
+   */
+  pullContact() {
+    gp.lists()
+      .then(() => this.setState({ contact: gp.contact() }))
+      .catch(() => { /* rămân valorile de rezervă */ });
+  }
+
+  componentDidMount() {
+    this.pullCatalog();
+    this.pullAuth();
+    this.pullContact();
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    try {
+      const raw = window.localStorage.getItem('gp-cart-v1');
+      const d = raw ? JSON.parse(raw) : null;
+      if (d && typeof d === 'object') {
+        this.setState({
+          qty: d.qty && typeof d.qty === 'object' ? d.qty : {},
+          tier: d.tier === 'baked' ? 'baked' : 'frozen'
+        });
+      }
+    } catch (err) { /* noop */ }
+    this.asideRef = this.asideRef || React.createRef();
+    this._off = 0;
+    this._floatTick = () => {
+      this._raf = 0;
+      const a = this.asideRef.current, w = this.colsRef.current;
+      if (!a || !w) return;
+      const col = w.firstElementChild;
+      const stacked = !col || a.offsetTop > col.offsetTop + 24 || a.offsetHeight + 140 > window.innerHeight * 1.6;
+      if (stacked) { a.style.transform = ''; this._off = 0; return; }
+      const aRect = a.getBoundingClientRect();
+      const base = aRect.top - this._off;
+      const maxOff = Math.max(0, w.getBoundingClientRect().bottom - 8 - aRect.height - base);
+      const target = Math.min(Math.max(0, 104 - base), maxOff);
+      const next = this._off + (target - this._off) * 0.14;
+      this._off = Math.abs(target - next) < 0.4 ? target : next;
+      a.style.transform = 'translate3d(0,' + this._off.toFixed(1) + 'px,0)';
+      if (this._off !== target) this._raf = requestAnimationFrame(this._floatTick);
+    };
+    this._onScroll = () => { if (!this._raf) this._raf = requestAnimationFrame(this._floatTick); };
+    this._onResize = () => {
+      const m = window.innerWidth < 1080;
+      if (m !== this.state.mob) this.setState({ mob: m, menuOpen: false });
+    };
+    window.addEventListener('resize', this._onResize);
+    window.addEventListener('scroll', this._onScroll, { passive: true });
+    window.addEventListener('resize', this._onScroll);
+    this._onScroll();
+  }
+
+  componentDidUpdate() {
+    if (this._onScroll) this._onScroll();
+    try {
+      window.localStorage.setItem('gp-cart-v1', JSON.stringify({ qty: this.state.qty, tier: this.state.tier }));
+    } catch (err) { /* noop */ }
+  }
+
+  componentWillUnmount() {
+    if (this._raf) cancelAnimationFrame(this._raf);
+    window.removeEventListener('scroll', this._onScroll);
+    window.removeEventListener('resize', this._onScroll);
+    window.removeEventListener('resize', this._onResize);
+  }
+
+  nav(page) {
+    return (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      this.setState({ page: page, menuOpen: false });
+      try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (err) { /* noop */ }
+    };
+  }
+
+  setQty(key, n) {
+    const v = Math.max(0, Math.min(9999, Math.round(Number(n) || 0)));
+    this.setState((s) => {
+      const q = Object.assign({}, s.qty);
+      if (v > 0) q[key] = v; else delete q[key];
+      return { qty: q };
+    });
+  }
+
+  bump(key, d) {
+    this.setState((s) => {
+      const q = Object.assign({}, s.qty);
+      const v = Math.max(0, Math.min(9999, (q[key] || 0) + d));
+      if (v > 0) q[key] = v; else delete q[key];
+      return { qty: q };
+    });
+  }
+
+  renderVals() {
+    const ro = this.state.lang === 'ro';
+    const t = (a, b) => (ro ? a : b);
+    const p = this.state.page;
+    const mob = !!this.state.mob;
+    const dow = new Date().getDay();
+
+    // Contul, o singură dată: îl folosesc antetul, meniul și formularul.
+    // `mine` înseamnă „client cu cont", singurul caz în care formularul se
+    // scurtează. Un angajat care comandă de pe site o face pentru altcineva,
+    // deci lui i se cer în continuare datele clientului.
+    const A = this.state.auth;
+    const mine = !!A && A.role === 'client';
+    const accName = A ? (A.customerName || A.name || '') : '';
+    const initials = (n) => String(n).trim().split(' ').filter(Boolean)
+      .slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '·';
+    const hi = 'background:var(--h-accent-soft);border-radius:10px;padding-inline:0.5rem;margin-inline:-0.5rem';
+
+    const langBtn = (on) =>
+      (mob
+        ? 'min-height:2.75rem;min-width:3rem;padding:0.5rem 0.8rem;font-size:0.875rem;'
+        : 'padding:0.4rem 0.7rem;font-size:0.8125rem;') +
+      'border:0;border-radius:999px;cursor:pointer;font-family:inherit;font-weight:700;transition:all 180ms ease;' +
+      (on
+        ? 'background:var(--h-bg-raised);color:var(--h-fg);box-shadow:var(--h-shadow-1)'
+        : 'background:transparent;color:var(--h-fg-muted)');
+
+    const TIER_RO = { frozen: 'Congelate', baked: 'Gata de servire' };
+    const TIER_EN = { frozen: 'Frozen', baked: 'Ready to serve' };
+    const tierName = (k) => (ro ? TIER_RO[k] : TIER_EN[k]);
+    const tier = this.state.tier === 'baked' ? 'baked' : 'frozen';
+    const res = (id, url) => (typeof window !== 'undefined' && window.__resources && window.__resources[id]) || url;
+    // Plasă: un produs fără preț oprea randarea întregii pagini cu „Cannot read
+    // properties of null". Serverul nu mai acceptă așa ceva, dar o bază veche
+    // sau un import făcut de mână pot conține unul — iar un rând stricat nu are
+    // voie să lase site-ul alb.
+    const money = (v) => {
+      const n = Number(v);
+      if (v === null || v === undefined || !isFinite(n)) return t('preț la cerere', 'price on request');
+      return (ro ? n.toFixed(2).replace('.', ',') : n.toFixed(2)) + ' RON';
+    };
+    const QTY = this.state.qty || {};
+    // Numărul afișat, cel de pe butonul „Sună" și cel de pe WhatsApp vin din
+    // aceeași setare: altfel omul citește un număr pe ecran și scrie pe
+    // WhatsApp altuia. Cifrele se aduc la forma internațională, fiindcă nici
+    // „tel:", nici wa.me nu acceptă numărul cu spații sau cu 0 în față.
+    const contact = this.state.contact || gp.contact();
+    const phoneText = contact.phone;
+    const emailText = contact.email;
+    const phoneDigits = phoneText.replace(/[^0-9]/g, '').replace(/^00/, '').replace(/^0/, '40');
+    const telHref = 'tel:+' + phoneDigits;
+    const mailHref = 'mailto:' + emailText;
+    const waLink = (txt) => 'https://wa.me/' + phoneDigits + '?text=' + encodeURIComponent(txt);
+    const helloText = t(
+      'Bună! Sunt interesat de produsele Golden Pastry. Vă rog să-mi trimiteți catalogul și prețurile.',
+      'Hello! I am interested in Golden Pastry products. Please send me the catalogue and pricing.'
+    );
+
+    const tierBtn = (on) =>
+      'flex:1 1 0;border:0;border-radius:999px;cursor:pointer;font-family:var(--h-font-body);font-size:0.875rem;font-weight:700;white-space:nowrap;transition:all 180ms ease;' +
+      (mob ? 'min-height:2.75rem;padding:0.7rem 0.5rem;' : 'padding:0.6rem 0.5rem;') +
+      (on
+        ? 'background:var(--h-bg-raised);color:var(--h-fg);box-shadow:var(--h-shadow-1)'
+        : 'background:transparent;color:var(--h-fg-muted)');
+
+    // [grupa, id, numeRO, numeEN, gramaj, prețHoReCa, prețRaft, descRO, descEN, noutate, poză]
+    // Vine din baza de date, prin pullCatalog(). Era scris aici, ca listă
+    // paralelă cu baza — două adevăruri despre același catalog.
+    // Produsele fără preț nu se pot comanda, deci nu se afișează.
+    const PROD = (this.state.prod || []).filter((r) => r[5] !== null && r[6] !== null);
+
+    // [cheie, numeRO, numeEN, subtitluRO, subtitluEN] — tot din baza de date.
+    const GROUPS = this.state.groups || [];
+
+    const unselBtn = 'background:var(--h-bg-raised);color:var(--h-fg);border:1px solid var(--h-line-strong);box-shadow:var(--h-shadow-1)';
+    const cardBase = 'padding:0;overflow:hidden;display:flex;transition:border-color 180ms ease,box-shadow 180ms ease;'
+      + (mob ? 'flex-direction:row;align-items:stretch' : 'flex-direction:column');
+    const cardOn = ';border-color:var(--h-accent);box-shadow:0 0 0 2px var(--h-accent-soft),var(--h-shadow-2)';
+
+    const byNo = {};
+    PROD.forEach((r) => { byNo[r[1]] = r; });
+
+    const groups = GROUPS.map((g) => {
+      const items = PROD.filter((r) => r[0] === g[0]).map((r) => {
+        const key = tier + ':' + r[1];
+        const n = QTY[key] || 0;
+        const unitPrice = tier === 'frozen' ? r[5] : r[6];
+        const other = tier === 'frozen' ? 'baked' : 'frozen';
+        return {
+          no: r[1] < 10 ? '0' + r[1] : String(r[1]),
+          slot: 'pf-prod-' + r[1],
+          // Un produs adăugat din Catalog fără poză are `photo` gol. Numele
+          // „products/prod-<nr>.jpg" era doar ghicit după numărul de ordine:
+          // fotografiile încărcate nu se cheamă așa, deci calea asta nu există
+          // niciodată pe server. Rezultatul era un 404 pentru fiecare produs
+          // fără poză. Gol înseamnă gol: se arată substituentul, fără cerere.
+          photo: r[10] ? res('prod' + r[1], r[10]) : '',
+          name: t(r[2], r[3]),
+          desc: t(r[7], r[8]),
+          weight: r[4] + ' g',
+          price: money(unitPrice),
+          unit: t('pe bucată', 'per piece'),
+          alt: tierName(other) + ': ' + money(other === 'frozen' ? r[5] : r[6]),
+          special: !!r[9],
+          qty: String(n),
+          none: n === 0,
+          some: n > 0,
+          add: () => this.bump(key, 1),
+          inc: () => this.bump(key, 1),
+          dec: () => this.bump(key, -1),
+          lineTotal: money(n * unitPrice),
+          card: cardBase + (n > 0 ? cardOn : '')
+        };
+      });
+      return {
+        key: g[0],
+        title: t(g[1], g[2]),
+        note: t(g[3], g[4]),
+        count: items.length + ' ' + t('produse', 'products'),
+        items: items
+      };
+    });
+
+    const TRIAL_EACH = 3;
+    const TRIAL_OFF = 0.2;
+    const TRIAL_PIECES = PROD.length * TRIAL_EACH;
+    const trialList = (tr) => PROD.reduce((s, r) => s + TRIAL_EACH * (tr === 'frozen' ? r[5] : r[6]), 0);
+    const trialNet = (tr) => trialList(tr) * (1 - TRIAL_OFF);
+    // Româna cere „de" de la 20 în sus: 1 pachet, 2 pachete, 20 de pachete.
+    const pachete = (k) => k === 1
+      ? t('1 pachet', '1 pack')
+      : k + ' ' + (k % 100 === 0 || k % 100 > 19 ? t('de pachete', 'packs') : t('pachete', 'packs'));
+    const trialKey = 'trial:' + tier;
+    const trialN = QTY[trialKey] || 0;
+    const trialName = (tr) => t(
+      'Pachet de test — ' + PROD.length + ' produse × ' + TRIAL_EACH + ' buc',
+      'Trial pack — ' + PROD.length + ' products × ' + TRIAL_EACH + ' pcs'
+    ) + ' (' + tierName(tr) + ')';
+
+    let totPieces = 0;
+    let totMoney = 0;
+    // Două sume, fiindcă în coș sunt două întrebări diferite, iar până acum le
+    // răspundea aceeași variabilă:
+    //   `totMoney` — cât scrie pe ecran și cât pleacă în cerere. Preț de listă,
+    //     fiindcă API-ul nu are noțiunea de reducere (vezi pachetul de test mai
+    //     jos): ecranul și oferta trebuie să spună aceeași cifră.
+    //   `totNet`   — cât plătește clientul, cu −20% deja scăzut pe pachetul de
+    //     test. Numai ea are voie să decidă dacă s-a atins comanda minimă.
+    // Cu o singură sumă, un coș în care intra pachetul trecea pragul la preț de
+    // listă deși net rămânea sub el: cardul se făcea verde „Comandă minimă
+    // atinsă" pentru o comandă care nu era minimă.
+    let totNet = 0;
+    const picks = Object.keys(QTY)
+      .filter((k) => QTY[k] > 0 && (k.indexOf('trial:') === 0 || byNo[k.split(':')[1]]))
+      .map((k) => {
+        const parts = k.split(':');
+        const n = QTY[k];
+        if (parts[0] === 'trial') {
+          const tr = parts[1] === 'baked' ? 'baked' : 'frozen';
+          // Coșul socotește pachetul la prețul de listă, iar reducerea se
+          // scrie ca promisiune separată. Înainte aduna aici prețul redus, pe
+          // când cererea ajungea pe server fără nicio reducere — API-ul nici
+          // nu are noțiunea — deci pe ecran scria o sumă și în ofertă alta.
+          const unitPrice = trialList(tr);
+          // Toate cifrele se înmulțesc cu `n`. Înainte pachetul intra în coș ca
+          // și cum ar fi mereu unul singur: cantitatea era citită din coș, dar
+          // bucățile, banii și rândul de pe ecran o ignorau. Azi `trialAdd` pune
+          // mereu 1, deci nu se vedea — dar nimic din cod nu impune asta, iar al
+          // doilea pachet ar fi plecat gratis.
+          totPieces += n * TRIAL_PIECES;
+          totMoney += n * unitPrice;
+          totNet += n * trialNet(tr);
+          return {
+            trial: tr,
+            name: trialName(tr),
+            meta: (n * TRIAL_PIECES) + ' ' + t('buc', 'pcs') + ' · '
+              + t('−20% aplicat de laborator la confirmarea ofertei',
+                  '−20% applied by the bakery when the quote is confirmed'),
+            qty: String(n),
+            fixed: true,
+            steppable: false,
+            fixedLabel: pachete(n),
+            lineTotal: money(n * unitPrice),
+            remove: () => this.setQty(k, 0)
+          };
+        }
+        const r = byNo[parts[1]];
+        const unitPrice = parts[0] === 'frozen' ? r[5] : r[6];
+        totPieces += n;
+        totMoney += n * unitPrice;
+        // Produsele obișnuite n-au reducere: cele două sume merg umăr la umăr.
+        totNet += n * unitPrice;
+        return {
+          productId: Number(parts[1]) || null,
+          // Varianta rândului, nu a tabului deschis. Coșul ține cheile
+          // separat („frozen:3" și „baked:3"), deci același produs poate fi
+          // cerut și congelat, și copt; până acum spre server pleca o
+          // singură variantă pentru tot coșul.
+          variant: parts[0] === 'frozen' ? 'congelat' : 'copt',
+          name: r[1] + '. ' + t(r[2], r[3]),
+          meta: r[4] + ' g · ' + money(unitPrice) + '/' + t('buc', 'pc') + ' · ' + tierName(parts[0]),
+          steppable: true,
+          fixed: false,
+          // Căsuța golită nu mai șterge rândul: cât timp se scrie în ea,
+          // afișăm textul brut, iar în coș rămâne cantitatea de dinainte.
+          qty: k === this.state.editKey ? String(this.state.editText) : String(n),
+          lineTotal: money(n * unitPrice),
+          inc: () => this.bump(k, 1),
+          dec: () => this.bump(k, -1),
+          set: (e) => {
+            const cifre = String(e.target.value).replace(/[^0-9]/g, '');
+            this.setState({ editKey: k, editText: cifre });
+            // Din căsuță se schimbă doar cantitatea. Scos din coș se face cu
+            // „×" sau cu „−", nu ștergând cifra — altfel rândul dispărea de
+            // sub cursor, iar tasta următoare mergea la alt produs.
+            if (Number(cifre) > 0) this.setQty(k, cifre);
+          },
+          blur: () => this.setState({ editKey: '', editText: '' }),
+          remove: () => this.setQty(k, 0)
+        };
+      });
+
+    const MIN_ORDER = 700;
+    // Pragul se măsoară în bani plătiți, nu în preț de listă — vezi `totNet`.
+    const minLeft = Math.max(0, MIN_ORDER - totNet);
+    const minOk = totNet >= MIN_ORDER;
+    // Cele două sume diferă doar cu pachetul de test în coș. Când diferă,
+    // ecranul o spune: altfel „Total 780 RON" lângă „mai lipsesc 76 RON" arată
+    // ca o greșeală de socoteală, nu ca o reducere deja scăzută.
+    const minRedus = totNet < totMoney;
+
+    const piecesText = totPieces + ' ' + t('buc', 'pcs');
+    const orderText = (extra) => {
+      const L = [t('Comandă / cerere de ofertă — Golden Pastry', 'Order / quote request — Golden Pastry'), ''];
+      picks.forEach((row) => { L.push(row.qty + ' × ' + row.name + ' (' + row.meta + ') = ' + row.lineTotal); });
+      L.push('');
+      L.push(t('Total: ', 'Total: ') + piecesText + ' · ' + money(totMoney));
+      L.push(minOk
+        ? t('Comanda atinge minimul de 700 RON (București și Ilfov).', 'Order meets the 700 RON minimum (Bucharest and Ilfov).')
+        : t('Sub comanda minimă de 700 RON — mai lipsesc ' + money(minLeft) + '. În restul țării livrăm la cerere.',
+            'Below the 700 RON minimum — ' + money(minLeft) + ' short. Elsewhere in Romania we deliver on request.'));
+      // Cine primește oferta pe WhatsApp nu are cardul lângă el: dacă în text
+      // apar două cifre diferite, textul trebuie să spună singur de ce.
+      if (minRedus) {
+        L.push(t('La prag socotim ' + money(totNet) + ' — cu reducerea de 20% a pachetului de test scăzută.',
+                 'Towards the minimum we count ' + money(totNet) + ' — with the trial pack 20% discount deducted.'));
+      }
+      if (extra && extra.length) { L.push(''); extra.forEach((x) => { L.push(x); }); }
+      return L.join('\n');
+    };
+
+    return {
+      ro, en: !ro, isRo: String(ro), isEn: String(!ro),
+      roBtn: langBtn(ro), enBtn: langBtn(!ro),
+      setRo: () => this.setState({ lang: 'ro' }),
+      setEn: () => this.setState({ lang: 'en' }),
+      // Era scris direct în antet, în română, pe toate paginile — inclusiv pe
+      // versiunea în engleză. Valoarea asta exista deja, dar nu o folosea
+      // nimeni: textul din markup n-o citea.
+      logoKicker: t('Patiserie artizanală', 'Artisan pastry'),
+      mapTitle: t('Depozit — incinta ICTCM, Șoseaua Olteniței 103',
+                  'Warehouse — ICTCM site, Șoseaua Olteniței 103'),
+      mapCaption: t(
+        'Incinta ICTCM · Șos. Olteniței 103, sector 4 · vis-à-vis de metrou Piața Sudului',
+        'ICTCM site · Șos. Olteniței 103, district 4 · opposite Piața Sudului metro station'
+      ),
+
+      onHome: p === 'home', onCat: p === 'catalog', onDist: p === 'distribution',
+      onAbout: p === 'about', onContact: p === 'contact',
+      curHome: p === 'home' ? 'page' : null,
+      curCat: p === 'catalog' ? 'page' : null,
+      curDist: p === 'distribution' ? 'page' : null,
+      curAbout: p === 'about' ? 'page' : null,
+      curContact: p === 'contact' ? 'page' : null,
+      stopClick: (e) => { if (e && e.stopPropagation) e.stopPropagation(); },
+      mob: mob, desk: !mob,
+      menuOpen: this.state.menuOpen, menuClosed: !this.state.menuOpen,
+      menuExpanded: String(!!this.state.menuOpen),
+      menuLabel: t('Meniu', 'Menu'),
+      toggleMenu: () => this.setState((st) => ({ menuOpen: !st.menuOpen })),
+      mLink: 'display:flex;align-items:center;min-height:2.75rem;padding:0 0.85rem;border-radius:12px;text-decoration:none;color:var(--h-fg);font-weight:600;font-size:1rem',
+      prodGrid: mob
+        ? 'display:flex;flex-direction:column;gap:0.6rem'
+        : 'display:grid;grid-template-columns:repeat(auto-fill,minmax(min(15.5rem,100%),1fr));gap:1.15rem',
+      heroMedia: 'position:relative;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-3);background:var(--h-grad-warm);aspect-ratio:' + (mob ? '4/3' : '4/5'),
+      grpHead: mob
+        ? 'display:flex;flex-direction:column;gap:0.2rem;padding-bottom:0.6rem;margin-bottom:0.9rem;border-bottom:1px solid var(--h-line)'
+        : 'display:flex;flex-wrap:wrap;align-items:baseline;gap:0.75rem;padding-bottom:0.7rem;margin-bottom:1.25rem;border-bottom:1px solid var(--h-line)',
+      grpTitle: mob ? 'margin:0;font-size:1.25rem' : 'margin:0',
+      grpNote: mob ? 'margin:0;color:var(--h-fg-subtle);font-size:0.75rem' : 'margin:0 0 0 auto;color:var(--h-fg-subtle)',
+      prodMedia: mob
+        ? 'position:relative;width:6.75rem;flex:none;align-self:stretch;min-height:8.75rem;background:var(--h-grad-warm)'
+        : 'position:relative;aspect-ratio:4/3;background:var(--h-grad-warm);flex:none',
+      prodTitle: mob ? 'margin:0;font-size:0.9375rem;line-height:1.3' : 'margin:0',
+      prodDesc: mob
+        ? 'margin:0;color:var(--h-fg-muted);font-size:0.75rem;line-height:1.45;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden'
+        : 'margin:0;color:var(--h-fg-muted);line-height:1.55;text-wrap:pretty',
+      prodPriceRow: mob
+        ? 'display:flex;align-items:flex-end;justify-content:space-between;gap:0.5rem;margin-top:0.1rem'
+        : 'margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:0.6rem;padding-top:0.7rem;border-top:1px dashed var(--h-line)',
+      prodPrice: 'font-family:var(--h-font-display);font-weight:700;line-height:1.15;font-size:' + (mob ? '1.125rem' : '1.1875rem'),
+      prodUnit: mob ? 'color:var(--h-fg-subtle);font-size:0.625rem' : 'color:var(--h-fg-subtle)',
+      prodWeight: 'text-transform:none;letter-spacing:0;font-weight:600;flex:none' + (mob ? ';font-size:0.625rem;padding:0.2rem 0.45rem' : ''),
+      prodAlt: mob ? 'margin:0;color:var(--h-fg-subtle);font-size:0.625rem' : 'margin:0;color:var(--h-fg-subtle)',
+      prodQtyRow: 'display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-top:0.25rem',
+      noBadge: 'position:absolute;top:0.5rem;left:0.5rem;display:inline-flex;align-items:center;justify-content:center;min-width:1.65rem;height:1.65rem;padding-inline:0.4rem;border-radius:999px;background:var(--h-bg-raised);color:var(--h-fg-muted);font-family:var(--h-font-display);font-size:0.6875rem;font-weight:700;box-shadow:var(--h-shadow-1)',
+      specialBadge: 'position:absolute;top:0.5rem;right:0.5rem;background:var(--h-jam-700);color:#FDF6EC;box-shadow:var(--h-shadow-1)'
+        + (mob ? ';font-size:0.5rem;padding:0.2rem 0.4rem;letter-spacing:0.04em' : ''),
+      addStyle: unselBtn + (mob ? ';min-height:2.75rem;font-size:0.875rem' : ''),
+      stepBtn: mob ? 'width:2.6rem;height:2.6rem;font-size:1.125rem' : 'width:2.25rem;height:2.25rem',
+      stepVal: mob ? 'min-width:2.1rem;font-size:1rem' : 'min-width:2.25rem',
+      qtyInput: 'width:2.75rem;min-width:2.75rem;border:0;background:transparent;color:var(--h-fg);text-align:center;font-family:var(--h-font-body);font-weight:700;font-variant-numeric:tabular-nums;padding:0;outline:none;font-size:'
+        + (mob ? '1rem;height:2.6rem' : '0.9375rem;height:2.25rem'),
+      lineTotalStyle: 'font-family:var(--h-font-display);font-weight:700;white-space:nowrap;font-size:' + (mob ? '0.9375rem' : '0.9375rem'),
+      fieldPair: mob
+        ? 'display:grid;grid-template-columns:1fr;gap:1rem'
+        : 'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(9rem,100%),1fr));gap:1rem',
+      contactRowBtn: mob ? 'min-height:2.75rem;flex:none' : 'flex:none',
+      footLink: 'font-size:0.9375rem;color:var(--h-fg);text-decoration:none' + (mob ? ';min-height:2.75rem;display:flex;align-items:center' : ''),
+      footLinkWa: 'display:inline-flex;align-items:center;gap:0.4rem;font-size:0.9375rem;font-weight:600;color:#3DD07C;text-decoration:none' + (mob ? ';min-height:2.75rem' : ''),
+      footBtn: 'background:none;border:0;padding:0;font-size:0.9375rem;color:var(--h-fg);cursor:pointer;font-family:inherit;text-align:left'
+        + (mob ? ';min-height:2.75rem;display:flex;align-items:center;width:100%' : ''),
+      clearBtn: mob ? 'min-height:2.75rem;padding-inline:0.75rem' : 'padding-inline:0.5rem',
+      rmBtn: mob ? 'min-width:2.75rem;min-height:2.75rem;padding:0.25rem' : 'padding:0.15rem 0.5rem',
+      prodBtnClass: mob ? 'h-btn h-btn--block' : 'h-btn h-btn--sm h-btn--block',
+      prodBody: mob
+        ? 'display:flex;flex-direction:column;gap:0.4rem;padding:0.7rem 0.75rem 0.8rem;flex:1'
+        : 'display:flex;flex-direction:column;gap:0.55rem;padding:1rem 1.1rem 1.1rem;flex:1',
+      asideRef: this.asideRef, colsRef: this.colsRef,
+      asideStyle: mob
+        ? 'flex:1 1 100%;width:100%;position:relative;display:flex;flex-direction:column;gap:0.9rem'
+        : 'flex:0 1 21rem;min-width:min(18rem,100%);position:relative;will-change:transform;max-height:calc(100vh - 8rem);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:1rem',
+      goHome: this.nav('home'), goCat: this.nav('catalog'), goDist: this.nav('distribution'),
+      goAbout: this.nav('about'), goContact: this.nav('contact'),
+
+      navHome: t('Acasă', 'Home'),
+      navCat: t('Catalog', 'Catalogue'),
+      navDist: t('Distribuție', 'Distribution'),
+      navAbout: t('Despre noi', 'About'),
+      navContact: t('Contact', 'Contact'),
+
+      // Scria „Log in" și în varianta românească. Pe mobil, unde antetul ține
+      // trei butoane pe un rând, rămâne doar primul cuvânt.
+      ctaLogin: mob ? t('Intră', 'Log in') : t('Intră în cont', 'Log in'),
+
+      /* --- contul, în antet și în formular --- */
+      // `anon` e adevărat abia după ce serverul a răspuns: altfel butonul de
+      // intrare ar apărea o clipă și celui care e deja conectat.
+      anon: this.state.authReady && !A,
+      signed: !!A,
+      accOpen: !!A && !!this.state.accMenu,
+      accExpanded: String(!!this.state.accMenu),
+      accName: accName,
+      accInitials: initials(accName),
+      accDot: 'display:inline-flex;align-items:center;justify-content:center;width:1.5rem;height:1.5rem;flex:none;border-radius:999px;background:var(--h-accent);color:#1B120B;font-size:0.6875rem;font-weight:700;letter-spacing:0',
+      accRole: A
+        ? (A.role === 'client'
+            ? t('Cont de client · comanzi direct de aici', 'Customer account · order straight from here')
+            : t('Cont de echipă · ' + A.role, 'Team account · ' + A.role))
+        : '',
+      accContact: [A && A.phone, A && A.email].filter(Boolean).join(' · ')
+        || t('Fără telefon pe cont — scrie-l în mesaj.', 'No phone on the account — add it in the message.'),
+      accPanelHref: A && A.role === 'client' ? 'Client.dc.html' : 'Administrare%20Comenzi.dc.html',
+      accPanelLabel: A && A.role === 'client'
+        ? t('Comanda mea', 'My order') : t('Panoul de lucru', 'Work panel'),
+      accMenuLabel: t('Contul meu', 'My account'),
+      // Meniul contului avea o singură intrare în afară de panou: „Ieși din
+      // cont". Clientul primea parola de la administrator, cu mesajul „schimb-o
+      // după prima intrare", și nu găsea nicăieri de unde.
+      ctaPassword: t('Parola mea', 'My password'),
+      ctaLogout: t('Ieși din cont', 'Sign out'),
+      mBtn: 'display:flex;align-items:center;width:100%;min-height:2.75rem;padding:0 0.85rem;border:0;border-radius:12px;background:transparent;color:var(--h-fg);font-family:var(--h-font-body);font-weight:600;font-size:1rem;cursor:pointer;text-align:left',
+      toggleAcc: () => this.setState((st) => ({ accMenu: !st.accMenu })),
+      closeAcc: () => this.setState({ accMenu: false }),
+      doLogout: () => {
+        // Sesiunea se închide și pe server, nu doar în pagină: altfel
+        // cookie-ul ar rămâne valabil pentru cine ajunge la același telefon.
+        gp.logout().finally(() => this.setState({
+          auth: null, accMenu: false, addr: '', addrTouched: false
+        }));
+      },
+
+      asClient: mine,
+      asGuest: !mine,
+      addr: this.state.addr,
+      onAddr: (e) => this.setState({ addr: e.target.value, addrTouched: true }),
+      lblAddr: t('Adresa de livrare', 'Delivery address'),
+      phAddr: t('ex. Calea Victoriei 63', 'e.g. 63 Calea Victoriei'),
+      addrNote: t('Rămâne salvată pe cont pentru comanda următoare.',
+        'We keep it on your account for next time.'),
+      ctaQuote: t('Cere ofertă', 'Get a quote'),
+      ctaQuoteLong: t('Cere ofertă pentru volume', 'Request volume pricing'),
+      ctaCatalog: t('Vezi catalogul', 'See the catalogue'),
+      ctaGetCatalog: t('Cere catalogul PDF', 'Request the PDF catalogue'),
+      ctaCall: t('Sună', 'Call'),
+      ctaOpenMaps: t('Deschide în Maps', 'Open in Maps'),
+      ctaClear: t('Golește', 'Clear'),
+      contactTitle: mine
+        ? t('Trimite comanda', 'Place your order')
+        : t('Cere catalogul și oferta', 'Request the catalogue and a quote'),
+      contactLead: mine
+        ? t('Produsele alese sunt mai jos. Verifică adresa, spune-ne pe când o vrei și trimite.',
+            'Your selection is below. Check the address, tell us when you need it, and send.')
+        : t('Spune-ne ce vinzi și cât ai nevoie. Trimitem catalogul complet, cu gramaje, unități per cutie și prețuri pe volum, în aceeași zi lucrătoare.',
+            'Tell us what you sell and how much you need. We send the full catalogue — weights, units per case, volume pricing — the same working day.'),
+      catTitle: t('Catalog de produse', 'Product catalogue'),
+      catLead: mine
+        ? t('Alege varianta de livrare — congelate sau gata de servire — și adaugă produsele în comandă.',
+            'Pick the delivery format — frozen or ready to serve — and add products to your order.')
+        : t('Patiserie artizanală preparată zilnic în laboratorul nostru. Alege varianta de livrare — congelate sau gata de servire — și adaugă produsele în cererea de ofertă.',
+            'Artisan pastry made fresh every day in our own kitchen. Pick the delivery format — frozen or ready to serve — and add products to your quote request.'),
+      ctaContinue: mine
+        ? t('Continuă spre comandă', 'Continue to the order')
+        : t('Continuă spre ofertă', 'Continue to the quote'),
+      ctaEditPicks: t('Modifică selecția', 'Edit selection'),
+      sendLabel: this.state.sending
+        ? t('Se trimite…', 'Sending…')
+        : (mine ? t('Trimite comanda', 'Send the order') : t('Trimite cererea', 'Send the request')),
+
+      heroBadge: t('Producător și distribuitor · București', 'Producer and distributor · Bucharest'),
+      heroLead: this.props.audienceFocus === 'horeca'
+        ? t('Furnizăm restaurante, cafenele și hoteluri cu patiserie românească congelată — bake-off pentru cuptorul tău sau produs finit, gata de servit.', 'We supply restaurants, cafés and hotels with frozen Romanian pastry — bake-off for your own oven, or finished product ready to serve.')
+        : this.props.audienceFocus === 'retail'
+          ? t('Furnizăm magazine de proximitate, benzinării și lanțuri de retail cu patiserie românească congelată, la gramaje și ambalaje pentru raft.', 'We supply convenience stores, forecourts and retail chains with frozen Romanian pastry, in shelf-ready weights and packaging.')
+          : t('Producem patiserie românească și o livrăm congelată către retail, HoReCa și benzinării. Bake-off pentru cuptorul tău sau produs finit, gata de vânzare.', 'We produce Romanian pastry and deliver it frozen to retail, HoReCa and forecourts. Bake-off for your own oven, or finished product ready to sell.'),
+      heroFoot: t('Livrare în lanț frigorific · comandă minimă 700 RON în București și Ilfov', 'Unbroken cold chain · 700 RON minimum order in Bucharest and Ilfov'),
+
+      // Numărul era scris în pagină. Catalogul se editează din panou, deci la
+      // primul produs adăugat site-ul ar fi anunțat un număr fals despre el
+      // însuși. Până răspunde serverul punem o linie, nu o cifră inventată.
+      // …iar când catalogul nu s-a încărcat deloc, tot o linie: „0" ar fi
+      // spus că patiseria nu mai are produse, ceea ce e altceva.
+      st1n: this.state.prod && !this.state.catErr ? String(this.state.prod.length) : '—',
+      st1: t('Referințe în catalog', 'References in the catalogue'),
+      st2: t('Lanț frigorific', 'Cold chain'),
+      st3: t('Termen de livrare', 'Delivery lead time'),
+      st4: t('Game: bake-off și RTE', 'Ranges: bake-off and RTE'),
+
+      ebRange: t('Gamele', 'The ranges'),
+      ebWho: t('Clienți', 'Customers'),
+      ebHow: t('Procesul', 'The process'),
+      ebCatalog: t('Catalog', 'Catalogue'),
+      ebDist: t('Logistică', 'Logistics'),
+      ebCoverage: t('Acoperire', 'Coverage'),
+      ebOven: t('Bake-off', 'Bake-off'),
+      ebAbout: t('Despre noi', 'About us'),
+      ebStandard: t('Standard', 'Standard'),
+      ebFounder: t('Fondatori', 'Founders'),
+      ebContact: t('Contact', 'Contact'),
+      ebDirect: t('Direct', 'Direct'),
+      ebWarehouse: t('Depozit', 'Warehouse'),
+
+      tagFrozen: t('Congelat crud', 'Raw frozen'),
+      tagRTE: t('Gata de consum', 'Ready to eat'),
+      tagPL: t('Marcă privată', 'Private label'),
+
+      r1t: t('Bake-off congelat', 'Frozen bake-off'),
+      r1b: t('Aluat crud, porționat și congelat. Intră în cuptor direct din congelator, fără decongelare și fără brutar.', 'Raw dough, portioned and frozen. Straight from the freezer into the oven — no thawing, no baker needed.'),
+      r2t: t('Produs finit, gata de consum', 'Finished, ready to eat'),
+      r2b: t('Coapte sau prăjite la noi, ambalate individual. Se decongelează și se vând, sau se încălzesc pe loc.', 'Baked or fried by us, individually wrapped. Thaw and sell, or warm through on the spot.'),
+      r3t: t('Marcă privată', 'Private label'),
+      r3b: t('Aceleași rețete, ambalajul tău. Etichetă, gramaj și cutie de transport pe specificațiile voastre.', 'The same recipes, your packaging. Label, weight and case spec built to your requirements.'),
+
+      s1t: t('Retail și proximitate', 'Retail and convenience'),
+      s1b: t('Magazine de cartier și lanțuri mici, cu produs ambalat pentru raft.', 'Neighbourhood shops and small chains, with shelf-ready packaged product.'),
+      s2t: t('Benzinării', 'Forecourts'),
+      s2b: t('Vitrină caldă non-stop, cu bake-off care se face în ture scurte.', 'A hot counter around the clock, with bake-off run in short batches.'),
+      s3t: 'HoReCa',
+      s3b: t('Cafenele, bistrouri și hoteluri care vor patiserie proaspătă fără patiser.', 'Cafés, bistros and hotels that want fresh pastry without a pastry chef.'),
+      s4t: t('Catering și evenimente', 'Catering and events'),
+      s4b: t('Cantități mari, planificate, cu livrare pe dată fixă.', 'Large planned quantities, delivered on a fixed date.'),
+      s5t: t('Patiserii și francize', 'Bakeries and franchises'),
+      s5b: t('Rețetar constant pentru rețele care trebuie să livreze același gust în fiecare punct.', 'A consistent recipe base for networks that must deliver the same taste at every site.'),
+      s6t: t('Vending și birouri', 'Vending and offices'),
+      s6b: t('Produs ambalat individual, cu termen de valabilitate lung la congelare.', 'Individually wrapped product with a long frozen shelf life.'),
+
+      h1t: t('Catalog și mostre', 'Catalogue and samples'),
+      h1b: t('Trimitem catalogul cu gramaje și prețuri, plus mostre pentru gamele care te interesează.', 'We send the catalogue with weights and pricing, plus samples of the lines you care about.'),
+      h2t: t('Ofertă pe volum', 'Volume quote'),
+      h2b: t('Prețul depinde de cantitate și frecvență. Îl stabilim o dată și îl ținem.', 'Price depends on quantity and frequency. We set it once and hold it.'),
+      h3t: t('Prima comandă', 'First order'),
+      h3b: t('Comandă minimă 700 RON în București și Ilfov. Sau ia pachetul de test, cu 3 bucăți din fiecare produs, la −20%.', 'Minimum order 700 RON in Bucharest and Ilfov. Or take the trial pack — three pieces of every product, at 20% off.'),
+      h4t: t('Livrare recurentă', 'Recurring delivery'),
+      h4b: t('Stabilim un grafic fix săptămânal și livrăm fără să mai fie nevoie să comanzi.', 'We agree a fixed weekly schedule and deliver without you having to re-order.'),
+
+      groups, picks,
+      mobBar: mob && p === 'catalog' && picks.length > 0,
+      showFab: !(mob && p === 'catalog' && picks.length > 0),
+      barTitle: picks.length + ' ' + (picks.length === 1 ? t('produs', 'product') : t('produse', 'products')),
+      ctaBarGo: t('Cerere', 'Request'),
+      totalPieces: piecesText,
+      totalMoney: money(totMoney),
+      totalLabel: mine ? t('Total', 'Total') : t('Total estimativ', 'Estimated total'),
+      totalPiecesLabel: t('Total bucăți', 'Total pieces'),
+      totalNote: mine
+        ? t('Preț pe bucată din catalog. Comanda intră în producție după ce o confirmăm.',
+            'Catalogue price per piece. The order enters production once we confirm it.')
+        : t('Preț pe bucată din catalog. Confirmăm oferta finală în funcție de volum.', 'Catalogue price per piece. We confirm final pricing based on volume.'),
+
+      minBox: 'margin-top:0.9rem;padding:0.7rem 0.8rem;border-radius:14px;background:'
+        + (minOk ? 'var(--h-success-soft)' : 'var(--h-bg-raised)')
+        + ';border:1px solid ' + (minOk ? 'var(--h-success)' : 'var(--h-line)'),
+      minDot: 'width:0.5rem;height:0.5rem;border-radius:999px;flex:none;background:' + (minOk ? 'var(--h-success)' : 'var(--h-fg-subtle)'),
+      minBar: 'height:100%;border-radius:999px;transition:width 220ms ease;background:'
+        + (minOk ? 'var(--h-success)' : 'var(--h-accent)')
+        + ';width:' + Math.min(100, Math.round((totNet / MIN_ORDER) * 100)) + '%',
+      minTitle: minOk
+        ? t('Comandă minimă atinsă', 'Minimum order met')
+        : t('Comandă minimă: 700 RON', 'Minimum order: 700 RON'),
+      minBody: (minOk
+        ? t('Livrăm în București și Ilfov cu flota proprie. În restul țării, la cerere.', 'We deliver in Bucharest and Ilfov with our own fleet. Elsewhere in Romania, on request.')
+        : t('Mai adaugă ' + money(minLeft) + ' pentru livrare în București și Ilfov. În restul țării livrăm la cerere, indiferent de valoare.',
+            'Add ' + money(minLeft) + ' more for delivery in Bucharest and Ilfov. Elsewhere in Romania we deliver on request, whatever the value.'))
+        + (minRedus
+          ? ' ' + t('La prag socotim ' + money(totNet) + ', nu ' + money(totMoney) + ': reducerea de 20% a pachetului de test e deja scăzută.',
+                    'Towards the minimum we count ' + money(totNet) + ', not ' + money(totMoney) + ': the 20% trial pack discount is already deducted.')
+          : ''),
+
+      // Catalogul nu s-a încărcat: se spunea doar în starea componentei, care
+      // nu ajungea în nicio legătură din pagină. Catalogul rămânea gol fără
+      // explicație, iar cardul pachetului de test își calcula prețul peste o
+      // listă goală și oferea „0 produse, 0,00 RON".
+      catBroken: !!this.state.catErr,
+      catErrTitle: t('Catalogul nu s-a încărcat', 'The catalogue did not load'),
+      catErrBody: t(
+        'Nu am putut lua lista de produse de pe server. Reîncarcă pagina; dacă tot nu merge, scrie-ne sau sună — preluăm comanda direct.',
+        'We could not fetch the product list from the server. Reload the page; if it still fails, write or call us — we will take the order directly.'
+      ),
+      catErrCta: t('Reîncarcă pagina', 'Reload the page'),
+      catErrReload: () => { try { window.location.reload(); } catch (err) { /* noop */ } },
+      // Pachetul de test are sens doar peste un catalog încărcat.
+      hasCat: PROD.length > 0,
+
+      trialCard: 'display:flex;flex-wrap:wrap;gap:clamp(1rem,3vw,2rem);align-items:center;justify-content:space-between;background:var(--h-bg-raised);border-color:var(--h-accent);box-shadow:0 0 0 2px var(--h-accent-soft),var(--h-shadow-2)',
+      trialBuy: 'flex:0 1 15rem;min-width:min(13rem,100%);display:flex;flex-direction:column;gap:0.2rem',
+      trialPhoto: res('trialpack', 'products/trial-pack.png'),
+      trialMedia: mob
+        ? 'flex:1 1 100%;position:relative;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:var(--h-grad-warm)'
+        : 'flex:0 1 18rem;min-width:min(15rem,100%);position:relative;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:var(--h-grad-warm)',
+      trialBadge: t('Pachet promoțional −20%', 'Trial pack −20%'),
+      trialTierLabel: tierName(tier),
+      trialTitle: t('Comandă de test: 3 bucăți din fiecare produs', 'Trial order: 3 pieces of every product'),
+      trialBody: t(
+        'Toate cele ' + PROD.length + ' produse din gamă, câte 3 bucăți, cu 20% reducere. Îl pui în vitrină o săptămână și vezi ce se vinde, fără să te blochezi pe stoc.',
+        'All ' + PROD.length + ' products in the range, three pieces each, at 20% off. Put it on the counter for a week and see what sells, without locking up stock.'
+      ),
+      trialPrice: money(trialNet(tier)),
+      trialWas: money(trialList(tier)),
+      trialMeta: TRIAL_PIECES + ' ' + t('buc', 'pcs') + ' · '
+        + t('o singură dată per client · reducerea se confirmă în ofertă',
+            'one per customer · the discount is confirmed in the quote'),
+      trialNone: trialN === 0,
+      trialSome: trialN > 0,
+      trialAdded: t('✓ Adăugat în cerere', '✓ Added to request'),
+      trialAdd: () => this.setState((s) => {
+        const q = Object.assign({}, s.qty);
+        delete q['trial:frozen'];
+        delete q['trial:baked'];
+        q[trialKey] = 1;
+        return { qty: q };
+      }),
+      trialRemove: () => this.setQty(trialKey, 0),
+      ctaRemove: t('Scoate', 'Remove'),
+      trialCta: t('Adaugă pachetul de test', 'Add the trial pack'),
+      addLabel: mob
+        ? t('Adaugă', 'Add')
+        : (mine ? t('Adaugă în comandă', 'Add to order') : t('Adaugă la ofertă', 'Add to quote')),
+      lessLabel: t('Scade cantitatea', 'Decrease quantity'),
+      moreLabel: t('Crește cantitatea', 'Increase quantity'),
+      qtyLabel: t('Cantitate', 'Quantity'),
+      rmLabel: t('Șterge produsul', 'Remove product'),
+      ctaWa: t('Scrie pe WhatsApp', 'Chat on WhatsApp'),
+      ctaWaOpen: t('Deschide', 'Open'),
+      ctaWaOrder: t('Trimite comanda pe WhatsApp', 'Send the order on WhatsApp'),
+      ctaWaSend: t('Trimite pe WhatsApp', 'Send on WhatsApp'),
+      waMeta: t('Comandă sau întrebări, direct pe telefon', 'Orders or questions, straight to the phone'),
+      waFormNote: t('WhatsApp trimite datele din formular împreună cu produsele și cantitățile selectate.', 'WhatsApp sends the form details together with the selected products and quantities.'),
+      waHelloHref: waLink(helloText),
+      waOrderHref: waLink(picks.length ? orderText() : helloText),
+      formRef: this.formRef,
+      sendWa: () => {
+        const extra = [];
+        const f = this.formRef && this.formRef.current;
+        if (f) {
+          try {
+            Array.from(new FormData(f).entries()).forEach((kv) => {
+              if (String(kv[1]).trim()) extra.push(kv[0] + ': ' + kv[1]);
+            });
+          } catch (err) { /* noop */ }
+        }
+        const txt = picks.length
+          ? orderText(extra)
+          : (extra.length ? [t('Cerere de ofertă — Golden Pastry', 'Quote request — Golden Pastry'), ''].concat(extra).join('\n') : helloText);
+        try { window.open(waLink(txt), '_blank'); } catch (err) { /* noop */ }
+      },
+      photoRange1: res('prod4', 'products/prod-4.jpg'),
+      photoRange2: res('prod19', 'products/prod-19.jpg'),
+      catSwitchLabel: t('Variantă de livrare', 'Delivery format'),
+      tabFrozen: t('Congelate', 'Frozen'),
+      tabBaked: t('Gata de servire', 'Ready to serve'),
+      isFrozen: String(tier === 'frozen'), isBaked: String(tier === 'baked'),
+      frozenBtn: tierBtn(tier === 'frozen'), bakedBtn: tierBtn(tier === 'baked'),
+      setFrozen: () => this.setState({ tier: 'frozen' }),
+      setBaked: () => this.setState({ tier: 'baked' }),
+      tierNote: tier === 'frozen'
+        ? t('Congelate imediat după producție și livrate în lanț frigorific. Le coci tu, în locație, pe măsură ce vinzi.', 'Frozen right after production and delivered in an unbroken cold chain. You bake them on site, as you sell.')
+        : t('Coapte în laboratorul nostru și livrate zilnic, gata de vitrină. Fără cuptor și fără pregătire la tine.', 'Baked in our own kitchen and delivered daily, ready for the counter. No oven, no prep on your side.'),
+      tagSpecial: t('Preț special', 'Special price'),
+      picksCount: picks.length ? '(' + picks.length + ')' : '',
+
+      hasPicks: picks.length > 0,
+      noPicks: picks.length === 0,
+      clearPicks: () => this.setState({ qty: {} }),
+      reqTitle: mine ? t('Comanda ta', 'Your order') : t('Cererea ta', 'Your request'),
+      reqEmpty: mine
+        ? t('Alege produsele și cantitățile. Le trimiți cu un buton — datele tale le avem deja.',
+            'Pick the products and quantities. One button sends them — we already have your details.')
+        : t('Adaugă produsele care te interesează și le trecem automat în cererea de ofertă, cu gramaj și preț.', 'Add the products you need and we carry them into the quote request automatically, with weight and price.'),
+      interestLabel: t('Produse selectate', 'Selected products'),
+      askLabel: t('Ai o rețetă a ta?', 'Got your own recipe?'),
+      askBody: t('Producem și pe specificația clientului, în marcă privată. Scrie-ne ce ai în minte.', 'We also produce to customer specification, under private label. Tell us what you have in mind.'),
+
+      noteTitle: t('Prețuri pe bucată, în RON · comandă minimă 700 RON', 'Prices per piece, in RON · 700 RON minimum order'),
+      noteBody: t('Comanda minimă este 700 RON pentru București și Ilfov; comanzi exact ce îți trebuie. În restul țării livrăm la cerere. Pentru volume mari, livrare recurentă sau marcă privată trimitem ofertă dedicată.', 'The minimum order is 700 RON for Bucharest and Ilfov; you order exactly what you need. Elsewhere in Romania we deliver on request. For high volumes, recurring delivery or private label we send a dedicated quote.'),
+
+      d1e: t('Temperatură', 'Temperature'),
+      d1t: '−18°C',
+      d1b: t('Produsele pleacă congelate și rămân congelate. Lanțul nu se întrerupe nici la încărcare.', 'Product leaves frozen and stays frozen. The chain does not break, not even at loading.'),
+      d2e: t('Comandă minimă', 'Minimum order'),
+      d2t: t('700 RON', '700 RON'),
+      d2b: t('Pentru București și Ilfov. Comanzi exact produsele și cantitățile de care ai nevoie. În restul țării, la cerere.', 'For Bucharest and Ilfov. You order exactly the products and quantities you need. Elsewhere in Romania, on request.'),
+      d3e: t('Frecvență', 'Frequency'),
+      d3t: t('Săptămânal sau la comandă', 'Weekly or on demand'),
+      d3b: t('Majoritatea clienților preferă un grafic fix. Livrăm și ad-hoc, în funcție de disponibilitate.', 'Most customers prefer a fixed schedule. We also deliver ad hoc, subject to availability.'),
+      d4e: t('Ambalare', 'Packaging'),
+      d4t: t('Cutie standard', 'Standard case'),
+      d4b: t('Cutii etichetate cu lot și termen, dimensionate pentru congelatorul din locație.', 'Cases labelled with batch and best-before, sized for the freezer on site.'),
+
+      cov1t: t('București și Ilfov', 'Bucharest and Ilfov'),
+      cov1b: t('Flotă proprie, livrare în ziua următoare · minim 700 RON', 'Own fleet, next-day delivery · 700 RON minimum'),
+      cov2t: t('Restul țării', 'Rest of Romania'),
+      cov2b: t('Curier frigorific partener, în colet izolat, la cerere', 'Partner refrigerated courier, insulated parcel, on request'),
+      cov3t: t('Export în UE', 'Export within the EU'),
+      cov3b: t('Pentru volume mari, la cerere', 'For large volumes, on request'),
+      covAsk: t('La cerere', 'On request'),
+
+      o1t: t('Scoate din cutie', 'Out of the case'),
+      o1b: t('Fără decongelare. Produsul merge direct pe tavă.', 'No thawing. The product goes straight onto the tray.'),
+      o2t: t('Așază pe tavă', 'Onto the tray'),
+      o2b: t('Distanță egală între bucăți, hârtie de copt dedesubt.', 'Even spacing between pieces, baking paper underneath.'),
+      o3t: t('Coace', 'Bake'),
+      o3b: t('Timpul și temperatura sunt pe eticheta fiecărei cutii.', 'Time and temperature are printed on every case label.'),
+      o4t: t('Vinde cald', 'Sell warm'),
+      o4b: t('Ture scurte, de câte ori e nevoie, ca vitrina să nu stea plină.', 'Short batches as often as needed, so the counter never sits full.'),
+
+      v1t: t('Rețetă fixă', 'Fixed recipe'),
+      v1b: t('Aceleași proporții la fiecare șarjă. Nimic nu se ajustează după ochi.', 'The same proportions on every batch. Nothing is adjusted by eye.'),
+      v2t: t('Gramaj controlat', 'Controlled weight'),
+      v2b: t('Fiecare bucată e cântărită. Ce scrie în catalog e ce primești în cutie.', 'Every piece is weighed. What the catalogue says is what arrives in the case.'),
+      v3t: t('Trasabilitate pe lot', 'Batch traceability'),
+      v3b: t('Lot și dată pe fiecare cutie, până la tura în care s-a produs.', 'Batch and date on every case, back to the shift that produced it.'),
+
+      addrHint: t('Incinta ICTCM, sector 4, București · vis-à-vis de metrou Piața Sudului', 'ICTCM compound, sector 4, Bucharest · opposite Piața Sudului metro'),
+      emailMeta: t('Răspundem în aceeași zi lucrătoare', 'We reply the same working day'),
+      phoneMeta: t('Luni–Sâmbătă, în program', 'Monday–Saturday, during working hours'),
+      phoneText,
+      telHref,
+      emailText,
+      mailHref,
+      dayWeek: t('Luni – Vineri', 'Monday – Friday'),
+      daySat: t('Sâmbătă', 'Saturday'),
+      daySun: t('Duminică', 'Sunday'),
+      closedWord: t('Închis', 'Closed'),
+      rowWeek: dow >= 1 && dow <= 5 ? hi : '',
+      rowSat: dow === 6 ? hi : '',
+      rowSun: dow === 0 ? hi : '',
+      hoursLong: t('Lun–Vin 07:00–21:00 · Sâm 07:00–17:00', 'Mon–Fri 07:00–21:00 · Sat 07:00–17:00'),
+
+      lblWhen: t('Când vrei comanda?', 'When do you need it?'),
+      ctaAsap: t('Cât de repede se poate', 'As soon as possible'),
+      ctaPickDate: t('Aleg data', 'Pick a date'),
+      isAsap: this.state.asap,
+      wantsDate: !this.state.asap,
+      whenDate: this.state.whenDate,
+      asapText: t('Cât de repede se poate', 'As soon as possible'),
+      asapCls: this.state.asap ? 'h-btn h-btn--primary' : 'h-btn h-btn--secondary',
+      pickCls: this.state.asap ? 'h-btn h-btn--secondary' : 'h-btn h-btn--primary',
+      setAsap: () => this.setState({ asap: true }),
+      setPickDate: () => this.setState({ asap: false }),
+      // Marginile calendarului. Fără ele, clientul putea alege ziua de ieri —
+      // pagina îi mulțumea, cererea intra în panou, iar acceptarea o refuza cu
+      // „ziua a trecut": rămânea blocată și cineva trebuia să-l sune.
+      dateMin: gp.orderWindow().first,
+      dateMax: gp.orderWindow().last,
+      onWhenDate: (ev) => this.setState({ whenDate: ev.target.value }),
+      whenNote: this.state.asap
+        ? t('Îți confirmăm prima zi liberă de producție.', 'We confirm the first available production day.')
+        : t('Scrie ziua în care vrei comanda — o confirmăm sau te sunăm dacă e plină.', 'Set the day you want — we confirm it or call you if it is full.'),
+      formTitle: mine
+        ? t('Trimite comanda', 'Place your order')
+        : t('Cerere de ofertă', 'Quote request'),
+      formSub: mine
+        ? t('Datele sunt din contul tău. Verifică adresa și trimite — o confirmăm noi.',
+            'The details come from your account. Check the address and send — we confirm it.')
+        : t('Completează o dată — revenim cu catalogul și prețurile pentru volumul tău.', 'Fill this in once — we come back with the catalogue and pricing for your volume.'),
+      lblCompany: t('Companie', 'Company'),
+      lblName: t('Persoana de contact', 'Contact person'),
+      lblEmail: 'Email',
+      // Serverul refuză orice cerere fără cont care n-are telefon
+      // (`if (!$user && $phone === '')`), dar câmpul nu era marcat nicăieri:
+      // omul completa tot formularul și afla abia după drumul dus-întors.
+      // Îl cerem exact în cazul în care îl cere și serverul — vizitator
+      // anonim; pentru un cont conectat rămâne opțional.
+      phoneReq: this.state.authReady && !A,
+      lblPhone: this.state.authReady && !A
+        ? t('Telefon (obligatoriu)', 'Phone (required)')
+        : t('Telefon', 'Phone'),
+      lblSegment: t('Ce tip de business ai', 'What kind of business'),
+      lblVolume: t('Volum estimat pe lună', 'Estimated monthly volume'),
+      lblMsg: mine ? t('Mențiuni pentru comandă', 'Notes for this order') : t('Detalii', 'Details'),
+      lblWantCatalog: t('Trimiteți-mi și catalogul PDF complet', 'Send me the full PDF catalogue as well'),
+      wantCatalog: this.state.wantCatalog,
+      toggleCatalog: (e) => this.setState({ wantCatalog: !!(e && e.target && e.target.checked) }),
+      phCompany: t('Numele firmei', 'Company name'),
+      phName: t('Numele tău', 'Your name'),
+      phMsg: mine
+        ? t('Ora la care ești deschis, unde lăsăm marfa, orice altceva trebuie să știm la livrare.',
+            'When you open, where to leave the delivery, anything else we should know.')
+        : t('Ce game te interesează, câte puncte de vânzare ai și de când ai nevoie de livrare.', 'Which lines interest you, how many outlets you run, and when you need delivery to start.'),
+      seg1: t('Magazin de proximitate', 'Convenience store'),
+      seg2: t('Lanț de retail', 'Retail chain'),
+      seg3: t('Benzinărie', 'Forecourt / petrol station'),
+      seg4: 'HoReCa',
+      seg5: t('Catering / evenimente', 'Catering / events'),
+      seg6: t('Altceva', 'Something else'),
+      vol1: t('Pachet de test (3 buc din fiecare)', 'Trial pack (3 pcs of each)'),
+      vol2: t('700 – 3.000 RON pe lună', '700 – 3,000 RON a month'),
+      vol3: t('Peste 3.000 RON pe lună', 'Over 3,000 RON a month'),
+      vol4: t('Încă estimez', 'Still estimating'),
+
+      sent: this.state.sent,
+      sending: this.state.sending,
+      sendErr: this.state.sendErr,
+      sentTitle: t('Mulțumim!', 'Thank you!'),
+      sentBody: mine
+        ? t('Comanda a ajuns la noi. Intră în producție după ce o confirmăm — o vezi în „Comanda mea", din meniul contului.',
+            'Your order has reached us. It enters production once we confirm it — follow it under “My order”, in the account menu.')
+        : t('Cererea ta a intrat la noi în platformă. O confirmăm sau te sunăm pentru detalii în aceeași zi lucrătoare.', 'Your request has arrived in our platform. We confirm it or call you for details the same working day.'),
+      formNote: mine
+        ? t('Comanda intră în producție numai după ce o confirmăm.',
+            'The order enters production only after we confirm it.')
+        : t('Datele tale se folosesc doar pentru a răspunde acestei cereri.', 'Your details are used only to answer this request.'),
+
+      submitQuote: (e) => {
+        e.preventDefault();
+        // O cerere se trimite o singură dată.
+        //
+        // Butonul se stinge (`disabled="{{ sending }}"`), dar `sending` e stare
+        // React, iar `setState` nu schimbă starea pe loc: între apăsare și
+        // randare butonul e încă activ. Pe telefon, unde nu se vede nimic
+        // schimbat în prima zecime de secundă, omul mai apasă — și formularul
+        // e un `<form>` real, deci și Enter apăsat de două ori îl trimite de
+        // două ori. Ieșeau două cereri identice, de la același client, la
+        // aceeași oră: administratorul le accepta pe amândouă, fiindcă exact
+        // așa arată două comenzi reale. Semaforul stă pe instanță, ca să se
+        // aprindă sincron.
+        if (this.__trimit) return;
+        const fd = new FormData(e.target);
+        const get = (k) => String(fd.get(k) || '').trim();
+        const req = {
+          id: 'r' + Date.now(),
+          at: Date.now(),
+          company: get('Companie'),
+          person: get('Persoana de contact'),
+          email: get('Email'),
+          phone: get('Telefon'),
+          segment: get('Segment'),
+          wantWhen: this.state.asap ? 'asap' : 'data',
+          wantDate: this.state.asap ? '' : String(this.state.whenDate || ''),
+          volume: get('Volum estimat'),
+          msg: get('Mesaj'),
+          // Bifa e o stare a paginii, nu un câmp citit din formular: legată
+          // doar prin `checked`, căsuța nu se putea debifa deloc. Condiția pe
+          // cont o repetă pe cea din marcaj (`asGuest`): căsuța se arată doar
+          // vizitatorilor fără cont, iar ce nu se vede pe ecran nu are voie să
+          // plece în cerere.
+          catalog: !(this.state.auth && this.state.auth.role === 'client')
+            && !!this.state.wantCatalog,
+          items: picks.map((row) => ({ q: String(row.qty), n: row.name, meta: row.meta })),
+          pieces: piecesText,
+          total: money(totMoney),
+          status: 'nou',
+          source: 'site'
+        };
+        // Cererea pleacă spre server. Diferența față de varianta veche: ea
+        // ajunge în platformă și o vede administratorul pe orice dispozitiv.
+        // Înainte rămânea în browserul clientului și nu o citea nimeni.
+        // Pozițiile care pleacă efectiv. Pachetul de test nu e un produs din
+        // catalog, deci n-are `productId` — și se filtra tăcut din cerere:
+        // dispărea fără urmă, iar singur în coș bloca trimiterea cu un mesaj
+        // care contrazicea ecranul. Acum se desface în pozițiile lui reale,
+        // toate produsele câte 3 bucăți, în varianta la care a fost adăugat.
+        const linii = [];
+        let cuTest = null;
+        picks.forEach((row) => {
+          if (row.productId) {
+            linii.push({ productId: row.productId, qty: Number(row.qty) || 1, variant: row.variant });
+            return;
+          }
+          if (row.trial) {
+            cuTest = row.trial === 'frozen' ? 'congelat' : 'copt';
+            PROD.forEach((r) => {
+              linii.push({ productId: r[1], qty: TRIAL_EACH, variant: cuTest });
+            });
+          }
+        });
+        if (!linii.length) {
+          return this.setState({ sendErr: t(
+            'Alege cel puțin un produs din catalog înainte de a trimite cererea.',
+            'Pick at least one product from the catalogue before sending the request.'
+          ) });
+        }
+
+        // Calendarul are acum `min` și `max`, dar câmpul de dată se poate și
+        // tasta, iar un browser vechi nu ține cont de ele. Serverul refuză
+        // oricum ziua din afara ferestrei; verificarea de aici o spune însă
+        // înainte de drumul dus-întors, lângă câmpul greșit.
+        const fer = gp.orderWindow();
+        if (!this.state.asap && req.wantDate && (req.wantDate < fer.first || req.wantDate > fer.last)) {
+          return this.setState({ sendErr: req.wantDate < fer.first
+            ? t('Ziua aleasă a trecut. Alege o zi începând cu ' + fer.first + '.',
+                'That day has passed. Pick a day from ' + fer.first + ' onwards.')
+            : t('Ziua aleasă e prea departe. Ultima zi care se poate cere este ' + fer.last + '.',
+                'That day is too far ahead. The last day you can request is ' + fer.last + '.') });
+        }
+
+        this.__trimit = true;
+        this.setState({ sending: true, sendErr: '' });
+        gp.post('/requests', {
+          // Cu cont, numele îl pune serverul, de pe cont: o comandă nu poate
+          // intra pe numele altui client fiindcă a fost scris în formular.
+          // Telefonul și e-mailul lipsesc din formular și se completează tot
+          // de acolo, deci le trimitem goale.
+          customerName: mine ? '' : (req.company || req.person || 'Vizitator site'),
+          phone: req.phone,
+          email: req.email,
+          day: req.wantDate || '',
+          address: mine ? String(this.state.addr || '').trim() : '',
+          notes: [req.person, req.segment, req.volume, req.msg,
+            // Reducerea o aplică laboratorul la confirmare: API-ul nu are
+            // noțiunea de reducere, deci ea trebuie măcar spusă, nu pierdută.
+            cuTest ? t('PACHET DE TEST −20%: ' + PROD.length + ' produse × ' + TRIAL_EACH
+                       + ' buc (' + tierName(cuTest === 'congelat' ? 'frozen' : 'baked')
+                       + ') — aplică reducerea la confirmare',
+                       'TRIAL PACK −20%: ' + PROD.length + ' products × ' + TRIAL_EACH
+                       + ' pcs (' + tierName(cuTest === 'congelat' ? 'frozen' : 'baked')
+                       + ') — apply the discount on confirmation') : '',
+            req.catalog ? t('Vrea catalogul PDF', 'Wants the PDF catalogue') : '']
+            .filter((x) => String(x || '').trim()).join(' · '),
+          // Varianta merge acum pe fiecare poziție, fiindcă în coș pot sta
+          // amestecate: aceasta rămâne doar implicitul pentru pozițiile care
+          // nu o trimit. Înainte pleca una singură pentru tot coșul, cea a
+          // tabului deschis, iar serverul recalcula totul la prețul ei — pe
+          // ecran scria o sumă, în cerere se înregistra alta.
+          variant: tier === 'frozen' ? 'congelat' : 'copt',
+          items: linii
+        })
+          .then(() => {
+            this.__trimit = false;
+            return this.setState(mine
+              ? { sent: true, sending: false, sendErr: '', qty: {} }
+              : { sent: true, sending: false, sendErr: '' });
+          })
+          .catch((e) => {
+            // Refuzul aprinde butonul la loc: cererea completată trebuie să
+            // poată fi trimisă din nou după ce omul corectează ce lipsea.
+            this.__trimit = false;
+            return this.setState({
+              sending: false,
+              // Mesajul serverului e mai util decât unul generic: spune exact
+              // ce lipsește (telefon, produs inexistent).
+              sendErr: e.message || t('Nu am putut trimite cererea. Încearcă din nou.',
+                'We could not send the request. Please try again.')
+            });
+          });
+      },
+
+      footTag: t('Patiserie românească congelată, produsă în București și livrată în lanț frigorific.', 'Frozen Romanian pastry, produced in Bucharest and delivered in an unbroken cold chain.'),
+      footNav: t('Navigare', 'Navigate'),
+      footContact: t('Contact', 'Contact'),
+      footLegal: t('Gramajele și prețurile sunt cele din catalogul în vigoare.', 'Weights and prices are those in the current catalogue.')
+    };
+  }
+}
+</script>
+</body>
+</html>
