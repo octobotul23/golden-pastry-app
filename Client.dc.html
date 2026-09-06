@@ -279,6 +279,23 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<sc-if value="{{ hasReferral }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span class="h-eyebrow" style="font-size:12px">Recomandă Golden Pastry</span>
+<span class="h-badge h-badge--honey h-numeric" style="font-size:11px;margin-left:auto">{{ refCode }}</span>
+</div>
+<p style="margin:0;font-size:14px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">Trimite linkul de mai jos cuiva care ar comanda de la noi. Când își face cont pe el, rămâne trecut că a venit de la tine.</p>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<input class="h-input h-numeric" type="text" value="{{ refLink }}" readOnly="{{ true }}" onFocus="{{ onRefPick }}" style="flex:1;min-width:200px;height:46px;font-size:13px;background:var(--h-bg-sunk)">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onRefCopy }}" style="min-height:46px;font-size:14px;flex:none">Copiază</button>
+</div>
+<sc-if value="{{ refMsg }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;line-height:1.5;color:var(--h-fg-subtle)">{{ refMsg }}</span>
+</sc-if>
+</div>
+</sc-if>
+
 <p style="margin:0;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-align:center;text-wrap:pretty">Se actualizează singur cât ține pagina deschisă. Pentru schimbări în comandă, sună la patiserie.</p>
 
 </div>
@@ -352,7 +369,9 @@ const logAct = () => {};
 class Component extends DCLogic {
   state = { orders: [], requests: [], auth: null, users: [], pick: "", lu: "", lp: "", lerr: "", loaded: false,
     // Istoricul: care comandă e desfăcută și dacă s-au cerut toate.
-    openPast: {}, pastAll: false };
+    openPast: {}, pastAll: false,
+    // Mesajul de sub linkul de recomandare („Link copiat.").
+    refMsg: "" };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -409,7 +428,11 @@ class Component extends DCLogic {
         this.setState({
           auth: { u: user.username, name: user.customerName || user.name, role: user.role,
             // Steagul spune ca pe cont e inca parola pusa de administrator.
-            temp: user.mustChangePassword === true }
+            temp: user.mustChangePassword === true,
+            // Codul de recomandare al contului, cu linkul gata de trimis.
+            // Lipsește pe o instalare fără migrarea 007 — atunci cardul de
+            // recomandare pur și simplu nu se desenează.
+            ref: user.referral || null }
         });
         // Cererile se cer numai pentru clienți: personalului serverul i le dă
         // pe toate ale laboratorului, iar aici ar însemna cinci sute de rânduri
@@ -585,6 +608,35 @@ class Component extends DCLogic {
 
       clientName: cust || (auth ? auth.name : ""),
       mustChange: !!(auth && auth.temp),
+
+      /* --- recomandări --- */
+      // Cardul apare doar dacă serverul a trimis chiar un cod: pe o instalare
+      // fără migrarea 007 câmpul lipsește cu totul. În previzualizarea de
+      // administrator nu-l arătăm — acolo pagina imită contul altcuiva, iar
+      // linkul afișat ar fi al adminului, nu al clientului ales din listă.
+      hasReferral: !isPreview && !!(auth && auth.ref && auth.ref.code && auth.ref.link),
+      refCode: auth && auth.ref ? auth.ref.code : "",
+      refLink: auth && auth.ref ? auth.ref.link : "",
+      refMsg: S.refMsg || "",
+      // Un clic selectează tot linkul: e de copiat, nu de citit.
+      onRefPick: (e) => { try { e.target.select(); } catch (err) {} },
+      onRefCopy: () => {
+        const link = auth && auth.ref ? auth.ref.link : "";
+        if (!link) return;
+        // navigator.clipboard cere context sigur (HTTPS) și lipsește pe unele
+        // browsere de telefon. Când nu merge, nu tăcem: îi spunem omului să
+        // copieze din casetă, unde linkul e deja vizibil și selectat.
+        const gata = () => set({ refMsg: "Link copiat. Trimite-l pe WhatsApp sau pe mail." });
+        const pica = () => set({ refMsg: "Nu am putut copia singur — ține apăsat pe casetă și alege „Copiază”." });
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link).then(gata).catch(pica);
+            return;
+          }
+        } catch (err) { /* cădem pe mesajul de mai jos */ }
+        pica();
+      },
+
       isPreview,
       pickCust: cust,
       custOpts: custList.map(c => ({ v: c, l: c })),

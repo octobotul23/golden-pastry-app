@@ -22,7 +22,7 @@ la final (`:427-433`), deci nicio urcare nu-l poate atinge din greșeală.
 **Cheia de criptare nu se schimbă niciodată după instalare.** Dacă se schimbă,
 `api/lib/crypto.php:85` întoarce `null`, iar `api/lib/settings.php:36` doar
 scrie o linie în jurnal și merge mai departe — *tăcut*. Efectul vizibil:
-codul tabletelor devine gol, `api/routes/auth.php:87-91` răspunde 503
+codul tabletelor devine gol, `api/routes/auth.php:250-254` răspunde 503
 „Codul panoului nu este configurat", și toată echipa din laborator rămâne
 pe dinafară.
 
@@ -131,7 +131,7 @@ patru subdomeniile odată**.
 
 API-ul e aproape întotdeauna aditiv: rute noi, câmpuri noi, iar paginile vechi
 ignoră ce nu cunosc. Paginile noi, în schimb, cer rute noi. Dacă urci întâi
-paginile, clientul primește pe ecran exact textul de la `api/index.php:209` —
+paginile, clientul primește pe ecran exact textul de la `api/index.php:224` —
 „Rută inexistentă: POST /requests/12/reopen" — iar comanda pur și simplu nu se
 face. Cu ordinea corectă, fereastra e „API nou + pagini vechi", care nu strică
 nimic.
@@ -183,7 +183,7 @@ peste schema nouă. Codul vechi nu știe de coloana nouă și nu o cere;
 funcționează normal tot intervalul.
 
 **De ce nu invers.** Codul nou cere o coloană care încă nu există → PDO ridică
-excepție → `api/index.php:210-215` întoarce „Eroare internă." Nu e o pagină
+excepție → `api/index.php:225-230` întoarce „Eroare internă." Nu e o pagină
 urâtă, e o **oprire**: formularul de comandă cade la trimitere, panoul nu mai
 încarcă lista. Nu există coadă și nu există reîncercare — comenzile din acel
 interval se pierd.
@@ -432,7 +432,7 @@ lipește-le înapoi sub blocul generat, după extragere.
 ### 5. Urcare întreruptă la jumătate
 
 `support.js` trunchiat → pagina cu ambele limbi și `{{ }}` pe ecran. Un fișier
-din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:209-215`.
+din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:224-230`.
 Vestea bună: comenzile și cererile rulează în tranzacții, deci **nu rămân
 comenzi pe jumătate în bază**.
 
@@ -440,9 +440,9 @@ comenzi pe jumătate în bază**.
 
 Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
-(`Site Public.dc.html:1092`), deci o schimbare de preț se vede corect. **Dar
-dispariția e complet tăcută**: `:1198` scoate din catalog orice produs care nu
-are **amândouă** prețurile, iar `:1282` filtrează din coș rândurile rămase fără
+(`Site Public.dc.html:1104`), deci o schimbare de preț se vede corect. **Dar
+dispariția e complet tăcută**: `:1210` scoate din catalog orice produs care nu
+are **amândouă** prețurile, iar `:1294` filtrează din coș rândurile rămase fără
 pereche, fără niciun mesaj.
 
 Concret: un client își face coșul luni seara, 8 produse, 340 lei. Marți scoți un

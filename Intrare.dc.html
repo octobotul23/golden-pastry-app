@@ -32,9 +32,23 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 <img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
 <div style="display:flex;flex-direction:column;gap:4px">
 <span style="font-family:var(--h-font-display);font-size:27px;font-weight:600;color:var(--h-cream-100)">Golden Pastry</span>
-<span style="font-size:15px;color:rgba(255,255,255,.62)">Intră în cont · client sau administrator</span>
+<span style="font-size:15px;color:rgba(255,255,255,.62)">{{ modeSub }}</span>
 </div>
 </div>
+
+<!-- Selectorul de mod. Până acum nu exista: pagina se deschidea direct pe
+     formularul de client, iar echipa avea jos, sub o etichetă gri, două
+     butoane — dintre care unul („Administrare") era un simplu link către o
+     pagină care te trimitea imediat înapoi, fiindcă n-aveai sesiune. Omul din
+     tură nu avea de unde ști că intră tot prin formularul de deasupra, iar
+     ecranul cu codul tabletelor nu avea niciun câmp de cont. Acum alegerea e
+     prima decizie de pe ecran, iar fiecare mod arată tot ce-i trebuie. -->
+<sc-if value="{{ showModeToggle }}" hint-placeholder-val="{{ true }}">
+<div role="group" aria-label="Cine ești" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px;border-radius:16px;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.12)">
+<button type="button" aria-pressed="{{ isClientMode }}" onClick="{{ onGoClient }}" style="{{ tabClient }}">Sunt client</button>
+<button type="button" aria-pressed="{{ isStaffMode }}" onClick="{{ onGoStaff }}" style="{{ tabStaff }}">Sunt din echipă</button>
+</div>
+</sc-if>
 
 <sc-if value="{{ showSession }}" hint-placeholder-val="{{ false }}">
 <div style="padding:22px 20px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:14px">
@@ -104,10 +118,51 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 </div>
 </sc-if>
 
+<sc-if value="{{ showRegister }}" hint-placeholder-val="{{ false }}">
+<div style="padding:22px 20px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:16px;font-weight:600;color:var(--h-cream-100)">Cont nou</span>
+<span style="font-size:13px;line-height:1.5;color:rgba(255,255,255,.55)">Îți ține adresa și telefonul, ca să nu le mai scrii la fiecare comandă, și îți arată tot ce ai comandat până acum.</span>
+</div>
+
+<sc-if value="{{ regInvite }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;border-radius:14px;background:rgba(242,166,59,.14);border:1px solid rgba(242,166,59,.42);color:#F6EDE1;font-size:13px;line-height:1.55">{{ regInvite }}</div>
+</sc-if>
+
+<sc-if value="{{ regOpen }}" hint-placeholder-val="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Numele tău
+<input type="text" autoComplete="name" value="{{ gn }}" onChange="{{ onGn }}" onKeyDown="{{ onRegKey }}" placeholder="ex. Ana Popescu" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Utilizator
+<input type="text" autoComplete="username" value="{{ gu }}" onChange="{{ onGu }}" onKeyDown="{{ onRegKey }}" placeholder="{{ guHint }}" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:rgba(255,255,255,.45);text-wrap:pretty">Litere mici, cifre, punct, minus și underscore. Cu el intri în cont.</span>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">E-mail
+<input type="email" autoComplete="email" value="{{ gm }}" onChange="{{ onGm }}" onKeyDown="{{ onRegKey }}" placeholder="nume@exemplu.ro" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:rgba(255,255,255,.45);text-wrap:pretty">Aici pleacă linkul dacă îți uiți parola. Fără el, parola ți-o putem schimba doar noi, la telefon.</span>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Telefon
+<input type="tel" autoComplete="tel" value="{{ gph }}" onChange="{{ onGph }}" onKeyDown="{{ onRegKey }}" placeholder="07xx xxx xxx" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Parolă
+<div style="display:flex;gap:8px">
+<input type="{{ gtype }}" autoComplete="new-password" value="{{ gpw }}" onChange="{{ onGpw }}" onKeyDown="{{ onRegKey }}" placeholder="minim 8 caractere" style="flex:1;min-width:0;height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<button type="button" onClick="{{ onGShow }}" style="flex:none;min-width:80px;height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">{{ gShowLabel }}</button>
+</div>
+</label>
+<sc-if value="{{ gerr }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;border-radius:14px;background:rgba(232,160,175,.16);border:1px solid rgba(232,160,175,.5);color:#F6EDE1;font-size:14px;line-height:1.55">{{ gerr }}</div>
+</sc-if>
+<button type="button" onClick="{{ onRegister }}" disabled="{{ gbusy }}" style="min-height:54px;border:0;border-radius:16px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:17px;font-weight:700;cursor:pointer">{{ regLabel }}</button>
+</sc-if>
+<button type="button" onClick="{{ onRegClose }}" style="min-height:46px;border:0;border-radius:12px;background:transparent;color:rgba(255,255,255,.55);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">← Am deja cont</button>
+</div>
+</sc-if>
+
 <sc-if value="{{ notSignedIn }}" hint-placeholder-val="{{ true }}">
 <div style="padding:22px 20px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:14px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Utilizator
-<input type="text" autoComplete="username" value="{{ lu }}" onChange="{{ onLu }}" onKeyDown="{{ onLoginKey }}" placeholder="ex. cafeneaua-veche" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<input type="text" autoComplete="username" value="{{ lu }}" onChange="{{ onLu }}" onKeyDown="{{ onLoginKey }}" placeholder="{{ luHint }}" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Parolă
 <div style="display:flex;gap:8px">
@@ -120,54 +175,40 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 </sc-if>
 <button type="button" onClick="{{ onClientLogin }}" disabled="{{ lbusy }}" style="min-height:54px;border:0;border-radius:16px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:17px;font-weight:700;cursor:pointer">{{ loginLabel }}</button>
 <button type="button" onClick="{{ onForgotOpen }}" style="min-height:44px;border:0;border-radius:12px;background:transparent;color:rgba(255,255,255,.62);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer" style-hover="color:var(--h-cream-100)">Ți-ai uitat parola?</button>
-<p style="margin:0;font-size:13px;line-height:1.5;color:rgba(255,255,255,.5);text-wrap:pretty">Vezi în câte zile vine comanda ta și, în ziua livrării, câte opriri mai sunt până la tine. Nu ai cont? Scrie-ne la <a href="mailto:contact@goldenpastry.ro">contact@goldenpastry.ro</a> și îl deschidem.</p>
+
+<!-- Contul nou e doar pentru clienți: conturile echipei le face
+     administratorul, din pagina Conturi. -->
+<sc-if value="{{ isClientMode }}" hint-placeholder-val="{{ true }}">
+<div style="height:1px;background:rgba(255,255,255,.14)"></div>
+<button type="button" onClick="{{ onRegOpen }}" style="min-height:50px;border:1px solid rgba(255,255,255,.24);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.10)">{{ regCta }}</button>
+<p style="margin:0;font-size:13px;line-height:1.5;color:rgba(255,255,255,.5);text-wrap:pretty">Vezi în câte zile vine comanda ta și, în ziua livrării, câte opriri mai sunt până la tine. Preferi să vorbești cu noi? Scrie-ne la <a href="mailto:contact@goldenpastry.ro">contact@goldenpastry.ro</a> și îți deschidem noi contul.</p>
+</sc-if>
+<sc-if value="{{ isStaffMode }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;line-height:1.5;color:rgba(255,255,255,.5);text-wrap:pretty">Administratorii, managerii, agenții de vânzări și angajații intră cu contul lor. Te ducem direct în panoul care ți se cuvine. Contul îl face administratorul, din pagina Conturi.</p>
+</sc-if>
 </div>
 </sc-if>
 
-<sc-if value="{{ showTeamLinks }}" hint-placeholder-val="{{ true }}">
-<div style="display:flex;flex-direction:column;gap:8px;padding-top:2px">
-<p style="margin:0 0 2px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.38)">Ești din echipă?</p>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none;text-align:center">Administrare</a>
-<button type="button" onClick="{{ onGoStaff }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Panouri de lucru</button>
+<!-- Codul comun al tabletelor. Stătea pe un ecran separat, care NU avea niciun
+     formular de cont: cine ajungea acolo rămânea blocat, fiindcă singura
+     ieșire era butonul „← Cont client". Acum stă sub formularul echipei, ca a
+     doua cale de intrare, nu ca înlocuitor al primeia. -->
+<sc-if value="{{ showPanelCode }}" hint-placeholder-val="{{ false }}">
+<div style="padding:20px;border-radius:22px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.2);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:15px;font-weight:600;color:var(--h-cream-100)">Tabletă din laborator?</span>
+<span style="font-size:13px;line-height:1.5;color:rgba(255,255,255,.55)">Deschide panourile cu codul comun, fără cont individual.</span>
 </div>
-</div>
-</sc-if>
-
-<a href="Site%20Public.dc.html" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.62);font-size:14px;font-weight:600;text-decoration:none" style-hover="color:var(--h-cream-100)">← Înapoi la magazin</a>
-</div>
-</div>
-</sc-if>
-
-<sc-if value="{{ showStaff }}" hint-placeholder-val="{{ false }}">
-<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.18), transparent 70%)">
-<div style="width:100%;max-width:410px;display:flex;flex-direction:column;gap:18px;animation:{{ shake }}">
-<div style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
-<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
-<div style="display:flex;flex-direction:column;gap:4px">
-<span style="font-family:var(--h-font-display);font-size:27px;font-weight:600;color:var(--h-cream-100)">Golden Pastry</span>
-<span style="font-size:15px;color:rgba(255,255,255,.62)">Panourile de lucru · cod de acces</span>
-</div>
-</div>
-
-<div style="padding:22px 20px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:14px">
-<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Cod de acces
 <div style="display:flex;gap:8px">
-<input type="{{ ctype }}" value="{{ code }}" onChange="{{ onCode }}" onKeyDown="{{ onKey }}" placeholder="••••••" style="flex:1;min-width:0;height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
-<button type="button" onClick="{{ onShow }}" style="flex:none;min-width:80px;height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">{{ showLabel }}</button>
+<input type="{{ ctype }}" value="{{ code }}" onChange="{{ onCode }}" onKeyDown="{{ onKey }}" placeholder="cod de acces" style="flex:1;min-width:0;height:50px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:16px">
+<button type="button" onClick="{{ onShow }}" style="flex:none;min-width:78px;height:50px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">{{ showLabel }}</button>
 </div>
-</label>
 <sc-if value="{{ cerr }}" hint-placeholder-val="{{ false }}">
 <div style="padding:12px 14px;border-radius:14px;background:rgba(232,160,175,.16);border:1px solid rgba(232,160,175,.5);color:#F6EDE1;font-size:14px">{{ cerr }}</div>
 </sc-if>
-<button type="button" onClick="{{ onUnlock }}" style="min-height:54px;border:0;border-radius:16px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:17px;font-weight:700;cursor:pointer">Deschide panourile</button>
-<p style="margin:0;font-size:13px;line-height:1.5;color:rgba(255,255,255,.5);text-wrap:pretty">Codul e comun pentru tabletele din patiserie. Se schimbă oricând din Setări → Acces.</p>
+<button type="button" onClick="{{ onUnlock }}" style="min-height:50px;border:1px solid rgba(255,255,255,.24);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.10)">Deschide panourile cu cod</button>
 </div>
-
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<button type="button" onClick="{{ onGoClient }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">← Cont client</button>
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none;text-align:center">Administrare</a>
-</div>
+</sc-if>
 
 <a href="Site%20Public.dc.html" style="display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.62);font-size:14px;font-weight:600;text-decoration:none" style-hover="color:var(--h-cream-100)">← Înapoi la magazin</a>
 </div>
@@ -250,6 +291,25 @@ const HQ_OF = () => gp.hq();
 // Zonele și punctele lor de pe hartă vin din Setări. Erau scrise în cod, în
 // trei pagini deodată: o zonă adăugată din panou primea în tăcere coordonatele
 // Centrului, iar kilometrii de pe rută ieșeau greșiți fără niciun semn.
+/**
+ * O propunere de utilizator, pornind de la numele scris în formular.
+ *
+ * Serverul cere /^[a-z0-9._-]{3,64}$/ — fără diacritice și fără spații, adică
+ * exact ce are un nume românesc scris firesc. „Ștefan Matei" devine
+ * „stefan.matei". E doar un exemplu, pus în caseta goală și în mesajul de
+ * eroare: omul scrie ce vrea, iar serverul verifică din nou.
+ */
+const userDinNume = (nume) => String(nume || "")
+  .trim()
+  .toLowerCase()
+  // NFD desface litera în literă de bază + semn diacritic, iar intervalul de
+  // mai jos cuprinde și virgula dedesubt (U+0326) și sedila (U+0327) — ambele
+  // feluri în care circulă „ș" și „ț" prin tastaturi și fișiere.
+  .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+  .replace(/[^a-z0-9]+/g, ".")
+  .replace(/^\.+|\.+$/g, "")
+  .slice(0, 64);
+
 class Component extends DCLogic {
   // `lbusy` împiedică trimiterea de două ori a formularului cât timp cererea
   // către server este în curs.
@@ -260,7 +320,11 @@ class Component extends DCLogic {
   // next — pagina din care a fost trimis aici, ca să-l ducem înapoi în ea.
   state = { stats: null, auth: null, loaded: false, next: "", open: false, view: "client", code: "", cerr: "", cshow: false, shakes: 0, lu: "", lp: "", lshow: false, lerr: "", lshakes: 0, lbusy: false,
     forgot: false, fu: "", fmsg: "", ferr: "", fbusy: false,
-    rtoken: "", rp: "", rshow: false, rerr: "", rbusy: false, rdone: false };
+    rtoken: "", rp: "", rshow: false, rerr: "", rbusy: false, rdone: false,
+    // Contul nou. `gref` e codul de recomandare cu care a venit omul („?ref=ana"),
+    // citit din adresă la prima încărcare a magazinului și ținut în
+    // sessionStorage până aici — vezi gp.referralCode() din shared/gp-api.js.
+    reg: false, gu: "", gn: "", gpw: "", gm: "", gph: "", gshow: false, gerr: "", gbusy: false, gref: "" };
 
   componentDidMount() {
     /**
@@ -350,6 +414,15 @@ class Component extends DCLogic {
         history.replaceState(null, "", curat);
       }
     } catch (e) { /* adresă neobișnuită — mergem mai departe fără întoarcere */ }
+
+    // Codul de recomandare. gp.referralCode() îl ia din „?ref=" dacă omul a
+    // ajuns direct aici, altfel din sessionStorage — unde l-a pus magazinul
+    // atunci când a intrat pe link. Curăță și adresa, ca la „?parola=" și
+    // „?next=" de mai sus, din același motiv. Nu aruncă niciodată.
+    try {
+      const ref = gp.referralCode();
+      if (ref) this.setState({ gref: ref });
+    } catch (e) { /* fără recomandare — înscrierea merge la fel */ }
 
     this.setState({ loaded: true });
 
@@ -471,6 +544,72 @@ class Component extends DCLogic {
             : (e.message || "Cod greșit. Cere codul administratorului."),
           code: "",
           shakes: S.shakes + 1
+        });
+      }
+    };
+
+    /**
+     * Contul nou, făcut de client.
+     *
+     * Verificările de aici sunt cele de pe server (route_register), scrise încă
+     * o dată în pagină ca omul să afle imediat ce e de corectat, nu după un drum
+     * dus-întors. Serverul rămâne cel care decide: el prinde utilizatorul luat
+     * între timp, adresa deja folosită și pragul de înscrieri pe conexiune.
+     *
+     * Semaforul e pe instanță (`this.__reg`), nu în stare: setState nu schimbă
+     * starea pe loc, deci două clicuri în aceeași sutime de secundă ar citi
+     * amândouă `gbusy: false` și ar trimite amândouă cererea.
+     */
+    const faCont = async () => {
+      if (this.__reg) return;
+
+      const nume = String(S.gn).trim();
+      const u = String(S.gu).trim().toLowerCase();
+      const p = String(S.gpw);
+      const m = String(S.gm).trim();
+
+      if (!nume) return this.setState({ gerr: "Scrie-ți numele." });
+      if (!u) return this.setState({ gerr: "Alege un utilizator — cu el intri în cont." });
+      if (!/^[a-z0-9._-]{3,64}$/.test(u)) {
+        return this.setState({
+          gerr: "Utilizatorul poate conține doar litere mici, cifre, punct, minus și underscore (3–64 caractere)."
+            + (userDinNume(nume) ? " Încearcă „" + userDinNume(nume) + "”." : "")
+        });
+      }
+      if (p.length < 8) return this.setState({ gerr: "Parola trebuie să aibă cel puțin 8 caractere." });
+      // Aceeași regulă ca pe server (filter_var FILTER_VALIDATE_EMAIL): adresa
+      // e opțională, dar dacă e scrisă trebuie să fie o adresă. Una strâmbă nu
+      // se plânge la salvare — face doar ca „Ți-ai uitat parola?" să nu plece
+      // niciodată, iar omul află peste o lună, când nu mai poate intra.
+      if (m && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(m)) {
+        return this.setState({ gerr: "Adresa de e-mail nu pare validă. Verific-o sau lasă caseta goală." });
+      }
+
+      this.__reg = true;
+      this.setState({ gbusy: true, gerr: "" });
+      try {
+        const r = await gp.register({
+          username: u, name: nume, password: p,
+          email: m, phone: String(S.gph).trim(),
+          // Codul de recomandare, dacă omul a venit pe un link. Unul greșit nu
+          // oprește nimic: serverul face contul oricum, doar fără recomandant.
+          ref: String(S.gref || "")
+        });
+        this.__reg = false;
+        // Codul s-a consumat: dacă omul se întoarce pe pagină, nu mai are ce
+        // recomandare să ducă mai departe.
+        gp.forgetReferral();
+        // Sesiunea e deja deschisă de server, deci mergem exact pe drumul pe
+        // care ar fi mers după o autentificare obișnuită.
+        this.setState({ auth: r.user, reg: false, gbusy: false, gpw: "", gref: "" });
+        goAfterLogin(r.user);
+      } catch (e) {
+        this.__reg = false;
+        this.setState({
+          gbusy: false,
+          gerr: e.status === 429
+            ? (e.message || "Prea multe conturi create de pe această conexiune. Încearcă mai târziu.")
+            : (e.message || "Nu am putut crea contul. Încearcă din nou.")
         });
       }
     };
@@ -602,17 +741,43 @@ class Component extends DCLogic {
       }
     };
 
-    return {
-      // Pe clienti.goldenpastry.ro nu are ce căuta intrarea pentru personal.
-      // GP_SITE e pus de scriptul de publicare, în fișierul fiecărui subdomeniu.
-      showTeamLinks: window.GP_SITE !== "clienti",
+    // Modul ales: „client" sau „echipă". Formularul de cont e ACELAȘI pentru
+    // amândouă — serverul verifică rolul și goAfterLogin() duce fiecare om unde
+    // îi e locul. Ce se schimbă e limbajul din jur și ce apare pe lângă
+    // formular: „Fă-ți cont" doar la client, codul tabletelor doar la echipă.
+    const eEchipa = S.view === "staff";
+    const tabBaza = "min-height:44px;border-radius:12px;border:0;font-family:var(--h-font-body);"
+      + "font-size:15px;font-weight:600;cursor:pointer;transition:background .15s,color .15s;";
+    const tabAles = tabBaza + "background:var(--h-accent);color:#1B120B;";
+    const tabAltul = tabBaza + "background:transparent;color:rgba(255,255,255,.72);";
 
-      showClient: !S.open && S.view === "client",
-      showStaff: S.loaded && !S.open && S.view === "staff",
+    return {
+      // Pe clienti.goldenpastry.ro nu are ce căuta intrarea pentru personal:
+      // acolo rămâne doar formularul de client, fără selector. GP_SITE e pus de
+      // scriptul de publicare, în fișierul fiecărui subdomeniu.
+      showModeToggle: window.GP_SITE !== "clienti" && !S.auth && !S.rtoken && !S.rdone && !S.forgot && !S.reg,
+      isClientMode: !eEchipa,
+      isStaffMode: eEchipa,
+      tabClient: eEchipa ? tabAltul : tabAles,
+      tabStaff: eEchipa ? tabAles : tabAltul,
+      modeSub: eEchipa
+        ? "Intrarea echipei · cont propriu sau codul tabletelor"
+        : "Intră în cont · comenzile și livrările tale",
+      // Codul tabletelor apare sub formularul echipei, nu în locul lui.
+      showPanelCode: eEchipa && window.GP_SITE !== "clienti"
+        && !S.auth && !S.rtoken && !S.rdone && !S.forgot && !S.reg,
+
+      // Un singur ecran de intrare. Ecranul separat pentru „staff" a dispărut:
+      // el arăta DOAR caseta de cod, fără niciun formular de cont, deci un
+      // angajat care ajungea acolo nu avea de unde să se autentifice.
+      showClient: !S.open,
       unlocked: S.open,
       lu: S.lu, lp: S.lp, lerr: S.lerr,
       lbusy: S.lbusy,
-      loginLabel: S.lbusy ? "Se verifică…" : "Intră în contul meu",
+      loginLabel: S.lbusy ? "Se verifică…" : (eEchipa ? "Intră în panouri" : "Intră în contul meu"),
+      // Exemplul din casetă se schimbă cu modul: un angajat nu se cheamă
+      // „cafeneaua-veche", iar un client nu se cheamă „ana.popescu".
+      luHint: eEchipa ? "ex. ana.popescu" : "ex. cafeneaua-veche",
       ltype: S.lshow ? "text" : "password",
       lShowLabel: S.lshow ? "Ascunde" : "Arată",
       cshakeAnim: S.lshakes ? "in-shake .4s" : "none",
@@ -621,8 +786,13 @@ class Component extends DCLogic {
       onLShow: () => this.setState({ lshow: !S.lshow }),
       onLoginKey: (e) => { if (e.key === "Enter") doClientLogin(); },
       onClientLogin: () => doClientLogin(),
-      onGoStaff: () => this.setState({ view: "staff", lerr: "" }),
-      onGoClient: () => this.setState({ view: "client", code: "", cerr: "" }),
+      // Comutarea între moduri închide și ce era deschis pe lângă formular
+      // (parola uitată, contul nou) și șterge mesajele de eroare ale modului
+      // părăsit: altfel omul trecea pe „echipă" și rămânea cu un refuz de
+      // client agățat sub casete, sau cu formularul de cont nou deschis peste
+      // un ecran care nu-l mai oferă.
+      onGoStaff: () => this.setState({ view: "staff", lerr: "", forgot: false, reg: false, gerr: "" }),
+      onGoClient: () => this.setState({ view: "client", code: "", cerr: "", lerr: "", forgot: false, reg: false }),
       code: S.code, cerr: S.cerr,
       ctype: S.cshow ? "text" : "password",
       showLabel: S.cshow ? "Ascunde" : "Arată",
@@ -682,7 +852,36 @@ class Component extends DCLogic {
       // corect (cookie-ul e valabil, serverul îl verifică la fiecare cerere),
       // dar din afară arăta exact ca o parolă sărită. Acum pagina spune cine
       // ești, unde intri și cum ieși.
-      notSignedIn: !S.auth && !S.rtoken && !S.rdone && !S.forgot,
+      notSignedIn: !S.auth && !S.rtoken && !S.rdone && !S.forgot && !S.reg,
+
+      /* --- cont nou --- */
+      // Aceleași condiții ca la formularul de intrare, plus steagul propriu:
+      // cele două cartonașe se înlocuiesc, nu se suprapun.
+      showRegister: !S.auth && !S.rtoken && !S.rdone && !S.forgot && S.reg,
+      regOpen: true,
+      // Butonul spune de la început dacă omul a venit pe un link de recomandare.
+      regCta: S.gref ? "Fă-ți cont — ai venit pe o invitație" : "Fă-ți cont",
+      regInvite: S.gref
+        ? "Ai ajuns aici prin recomandarea cuiva („" + S.gref + "”). O păstrăm pe contul tău la înscriere."
+        : "",
+      gu: S.gu, gn: S.gn, gpw: S.gpw, gm: S.gm, gph: S.gph, gerr: S.gerr, gbusy: S.gbusy,
+      gtype: S.gshow ? "text" : "password",
+      gShowLabel: S.gshow ? "Ascunde" : "Arată",
+      regLabel: S.gbusy ? "Se creează…" : "Creează contul",
+      // Propunerea de utilizator se face din numele scris, cu aceleași reguli
+      // ca pe server: litere mici, fără diacritice. Doar un exemplu în casetă —
+      // omul scrie ce vrea.
+      guHint: userDinNume(S.gn) || "ex. ana.popescu",
+      onGu: (e) => this.setState({ gu: e.target.value, gerr: "" }),
+      onGn: (e) => this.setState({ gn: e.target.value, gerr: "" }),
+      onGpw: (e) => this.setState({ gpw: e.target.value, gerr: "" }),
+      onGm: (e) => this.setState({ gm: e.target.value, gerr: "" }),
+      onGph: (e) => this.setState({ gph: e.target.value, gerr: "" }),
+      onGShow: () => this.setState({ gshow: !S.gshow }),
+      onRegOpen: () => this.setState({ reg: true, gerr: "", gbusy: false }),
+      onRegClose: () => this.setState({ reg: false, gerr: "", gbusy: false }),
+      onRegKey: (e) => { if (e.key === "Enter") faCont(); },
+      onRegister: () => faCont(),
 
       /* --- parola uitată --- */
       // Serverul răspunde la fel indiferent dacă acel cont există; pagina nu

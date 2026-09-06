@@ -212,6 +212,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;gap:6px;justify-content:flex-end">
 <button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ r.onIn }}" style="height:38px;min-width:78px;white-space:nowrap">+ Intrare</button>
 <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onOut }}" style="height:38px;min-width:78px;white-space:nowrap">− Ieșire</button>
+<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" title="{{ r.delTitle }}" style="height:38px;padding:0 10px;white-space:nowrap;color:{{ r.delFg }}">{{ r.delLabel }}</button>
 </div>
 </div>
 </sc-for>
@@ -252,6 +253,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;gap:8px">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onIn }}" style="flex:1;min-height:46px;font-size:15px">+ Intrare</button>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onOut }}" style="flex:1;min-height:46px;font-size:15px">− Ieșire</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onDelete }}" style="flex:none;min-height:46px;padding:0 14px;font-size:15px;color:{{ r.delFg }}">{{ r.delLabel }}</button>
 </div>
 </div>
 </sc-for>
@@ -514,7 +516,7 @@ const dLabel = (iso) => {
 };
 
 class Component extends DCLogic {
-  state = { items: [], categories: [], units: [], moves: [], mins: {}, orders: [], who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false };
+  state = { items: [], categories: [], units: [], moves: [], mins: {}, orders: [], who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, sterg: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -909,7 +911,36 @@ class Component extends DCLogic {
       onMin: (e) => set({ minEdit: x.c.id, minText: e.target.value }),
       onMinBlur: () => this.incheiePrag(x.c.id, x.c.min),
       onIn: () => openForm(x.c.n, "in"),
-      onOut: () => openForm(x.c.n, "out")
+      onOut: () => openForm(x.c.n, "out"),
+      // Ștergerea cere două apăsări, ca la conturi: prima armează butonul și
+      // spune ce se întâmplă, a doua execută. Un singur clic lângă „− Ieșire"
+      // ar scoate din depozit un articol din greșeală, iar articolul cu istoric
+      // n-ar mai putea fi pus înapoi din pagină.
+      delLabel: S.sterg === x.c.id ? "Sigur?" : "Șterge",
+      delFg: S.sterg === x.c.id ? "var(--h-danger)" : "var(--h-fg-faint)",
+      delTitle: S.sterg === x.c.id
+        ? "Apasă din nou ca să scoți articolul din depozit"
+        : "Scoate articolul din depozit",
+      onDelete: () => {
+        if (S.sterg !== x.c.id) {
+          return set({
+            sterg: x.c.id,
+            msg: "Scoți „" + x.c.n + "” din depozit? Apasă încă o dată pe „Sigur?”. "
+              + "Dacă articolul are mișcări în registru, ele rămân — dispare doar din listă.",
+            msgBad: true
+          });
+        }
+        gp.del("/stock/items/" + x.c.id)
+          .then((r) => {
+            set({ sterg: null });
+            // Serverul spune ce a făcut: șters de tot, sau doar scos din listă
+            // fiindcă avea istoric. Mesajul lui e mai exact decât orice am
+            // putea ghici noi aici.
+            this.pull();
+            set({ msg: (r && r.message) || "Articolul a fost scos din depozit.", msgBad: false });
+          })
+          .catch((e) => set({ msg: e.message, msgBad: true, sterg: null }));
+      }
     }));
 
     const days = {};

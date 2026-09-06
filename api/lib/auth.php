@@ -117,10 +117,64 @@ function require_role(string ...$roles): array
     return $u;
 }
 
+/**
+ * Rolurile care înseamnă „personal", adică oricine lucrează în firmă.
+ *
+ * Ținute într-o constantă, nu scrise în require_staff(): lista a crescut o dată
+ * și va mai crește, iar un rol nou trebuie adăugat într-un singur loc, nu
+ * căutat prin cod. `client` NU e pe listă și nu are ce căuta pe ea.
+ *
+ * Atenție: „personal" nu înseamnă „administrator". Rutele care cer drepturi
+ * depline — conturi, catalog, setări, jurnal, acceptarea cererilor de pe site,
+ * ordinea opririlor pe rută — folosesc mai departe require_role('admin') și
+ * rămân închise pentru manager și pentru agentul de vânzări, exact cum sunt
+ * pentru angajat. Nimic din ce era permis până acum nu s-a lărgit.
+ */
+const GP_STAFF_ROLES = ['admin', 'angajat', 'manager', 'agent_vanzari'];
+
 /** Scurtătură pentru personalul intern. */
 function require_staff(): array
 {
-    return require_role('admin', 'angajat');
+    return require_role(...GP_STAFF_ROLES);
+}
+
+/**
+ * Rolurile pe care le acceptă CHIAR baza de date, acum.
+ *
+ * `ROLES` din api/routes/users.php spune ce știe codul; ENUM-ul coloanei
+ * `users.role` spune ce încape în rând. Cele două se despart într-o fereastră
+ * reală: pe cPanel fișierele se urcă întâi și abia apoi se importă SQL-ul din
+ * phpMyAdmin. În intervalul acela, un rol nou trecea de verificarea din PHP și
+ * se lovea de MySQL cu „1265 Data truncated for column 'role'" — adică
+ * „Eroare internă." în fața administratorului, fără nicio vorbă despre migrarea
+ * neimportată.
+ *
+ * Citim lista adevărată o dată pe cerere și o intersectăm cu ce știe codul.
+ * Dacă interogarea nu merge, ne întoarcem la lista din cod: o poartă care se
+ * închide singură ar fi mai rea decât eroarea pe care o evităm.
+ *
+ * @param string[] $cunoscute rolurile pe care le știe codul
+ * @return string[]
+ */
+function roles_available(array $cunoscute): array
+{
+    static $inBaza = null;
+    if ($inBaza === null) {
+        try {
+            $tip = (string) scalar(
+                "SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'
+                    AND COLUMN_NAME = 'role'"
+            );
+            preg_match_all("/'([^']+)'/", $tip, $m);
+            $inBaza = $m[1] ?: [];
+        } catch (Throwable $e) {
+            error_log('[gp] nu pot citi rolurile din schemă: ' . $e->getMessage());
+            $inBaza = [];
+        }
+    }
+    // Lista goală înseamnă „n-am putut afla", nu „niciun rol permis".
+    return $inBaza ? array_values(array_intersect($cunoscute, $inBaza)) : $cunoscute;
 }
 
 /* ---------------------------------------------------------------- CSRF -- */
@@ -147,10 +201,15 @@ function require_staff(): array
  * intri în contul LUI. Cere ca atacatorul să aibă deja un cont valid aici,
  * iar paguba e că lucrezi în sesiunea lui, nu că ajunge el în a ta. Față de
  * blocarea reală de mai sus, schimbul merită.
+ *
+ * `/auth/register` intră pe aceeași listă din motivul cel mai simplu cu putință:
+ * cine își face cont NU are încă sesiune, deci nu are de unde lua un token.
+ * Ruta nu e totuși descoperită: are prag propriu pe conexiune
+ * (register_rate_limited) și scrie rolul fix, nu-l citește din cerere.
  */
 function csrf_exempt(string $path): bool
 {
-    return in_array($path, ['/auth/login', '/auth/logout', '/auth/panel'], true);
+    return in_array($path, ['/auth/login', '/auth/logout', '/auth/panel', '/auth/register'], true);
 }
 
 function check_csrf(string $path = ''): void
@@ -233,6 +292,38 @@ function forgot_rate_limited(string $ip, int $max): bool
           WHERE ip = ? AND username = ? AND ok = 0
             AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
         [$ip, GP_FORGOT_KEY, $window]
+    );
+    return $n >= $max;
+}
+
+/** Pseudo-utilizatorul sub care se numără înscrierile de pe site. */
+const GP_REGISTER_KEY = 'inscriere';
+
+/**
+ * Prea multe conturi făcute de pe ACEEAȘI conexiune?
+ *
+ * `/auth/register` e singura rută care scrie în `users` fără să ceară o sesiune.
+ * Fără prag, un script poate umple tabelul peste noapte cu mii de conturi — și,
+ * cu ele, jurnalul, lista din pagina Conturi și codurile de recomandare.
+ *
+ * Fereastra are cheie proprie — `register_window_min`, 60 de minute implicit —
+ * nu cea de 15 minute a autentificării: o înscriere nu e o încercare de parolă
+ * și pragul cerut e „zece pe oră". Numărătoarea e pe IP ȘI pe pseudo-utilizator,
+ * ca înscrierile de la o conexiune să nu consume plafonul altcuiva — greșeala pe
+ * care o făcea recuperarea parolei înainte de a fi reparată.
+ *
+ * Nu se cheamă niciodată record_attempt(..., true) cu cheia asta: o reușită ar
+ * șterge, prin regula din record_attempt(), încercările TUTUROR conexiunilor.
+ */
+function register_rate_limited(string $ip, int $max): bool
+{
+    $window = (int) config('register_window_min', 60);
+    $window = $window > 0 ? $window : 60;
+    $n = (int) scalar(
+        'SELECT COUNT(*) FROM login_attempts
+          WHERE ip = ? AND username = ? AND ok = 0
+            AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
+        [$ip, GP_REGISTER_KEY, $window]
     );
     return $n >= $max;
 }
@@ -497,6 +588,54 @@ function audit(
     );
 }
 
+/* ------------------------------------------------------- conturi -- */
+
+/*
+ * Mutată aici din api/routes/users.php. Motivul e structura routerului:
+ * index.php încarcă doar fișierul rutei potrivite, deci o funcție din
+ * routes/users.php nu există pentru routes/auth.php — iar de regula asta are
+ * nevoie și înscrierea de pe site, nu doar conturile făcute de administrator.
+ * Numele, semnătura și comportamentul sunt neschimbate; apelurile din
+ * routes/users.php merg mai departe fără nicio modificare.
+ */
+/**
+ * Verifică adresa unui cont înainte să fie scrisă.
+ *
+ * Formatul: singurul lucru pentru care aplicația folosește câmpul e „am uitat
+ * parola". O adresă strâmbă nu se plânge la salvare, dar face ca linkul să nu
+ * plece niciodată — send_email() aruncă, excepția e doar jurnalizată, iar omul
+ * primește același răspuns ca oricine. Adică o greșeală de tastare descoperită
+ * peste o lună, de cineva care nu mai poate intra în cont.
+ *
+ * Unicitatea: nu e curățenie, e securitate. Cu aceeași adresă pe două conturi,
+ * /auth/forgot nu mai poate spune care dintre ele a cerut parola nouă (vezi
+ * api/routes/auth.php), deci ori schimbă parola omului nepotrivit, ori — de
+ * când e reparat acolo — nu mai poate trimite nimic niciunuia. Ambele rele se
+ * opresc aici, la scriere: e singurul loc unde se mai știe cine a cerut ce.
+ *
+ * `$exceptId` e contul care se editează, ca adresa lui să nu se certe cu ea
+ * însăși.
+ */
+function check_user_email(string $email, ?int $exceptId = null): void
+{
+    // Contul fără adresă e o stare normală: clienții luați la telefon n-au una.
+    if ($email === '') {
+        return;
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        fail('Adresa de e-mail nu este validă.', 422, 'bad_email');
+    }
+    // Coloana e utf8mb4_unicode_ci, deci comparația nu se uită la majuscule:
+    // „Comenzi@Firma.ro" și „comenzi@firma.ro" duc la aceeași cutie poștală și
+    // trebuie să se ciocnească.
+    $alt = one('SELECT username FROM users WHERE email = ? AND id <> ? LIMIT 1', [$email, $exceptId ?? 0]);
+    if ($alt) {
+        fail('Adresa „' . $email . '” este deja trecută pe contul „' . $alt['username'] . '”. '
+            . 'Recuperarea parolei se face după adresă, deci două conturi nu pot avea aceeași adresă. '
+            . 'Șterge-o de pe celălalt cont sau folosește alta.', 409, 'email_taken');
+    }
+}
+
 /** Forma publică a unui utilizator — fără hash de parolă, niciodată. */
 function public_user(array $u): array
 {
@@ -513,6 +652,12 @@ function public_user(array $u): array
         // paginile de administrare.
         'address'            => $u['address'] ?? null,
         'customerName'       => $u['customer_name'] ?? null,
+        // Codul de recomandare, când rândul primit îl conține. `?? null` nu e
+        // lene: funcția primește și rânduri din interogări cu listă fixă de
+        // coloane (current_user(), route_login()), și rânduri dintr-o bază pe
+        // care migrarea 007 încă n-a fost rulată. În ambele cazuri câmpul iese
+        // `null`, iar paginile nu desenează secțiunea — nimic nu se strică.
+        'referralCode'       => $u['referral_code'] ?? null,
         'mustChangePassword' => (bool) ($u['must_change_password'] ?? false),
     ];
 }

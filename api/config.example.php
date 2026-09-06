@@ -95,6 +95,21 @@ return [
     // scris, fiindcă pagina nu e la rădăcina serverului.
     'reset_url'            => '',
 
+    // --- conturi făcute de pe site --------------------------------------
+    // /auth/register e singura rută care scrie în `users` fără sesiune, deci
+    // fără prag un script poate umple tabelul peste noapte. Zece conturi pe oră
+    // de pe aceeași conexiune acoperă cu mult o familie sau un birou care se
+    // înscriu de pe același internet.
+    //
+    // Cheile lipsesc dintr-un config.php mai vechi? Nu e nimic de făcut:
+    // valorile de mai jos sunt și cele implicite din cod.
+    'max_register_attempts' => 10,
+    'register_window_min'   => 60,
+    // Adresa magazinului, pentru linkurile de invitație („…/?ref=ana"). Gol
+    // înseamnă „prima origine din allowed_origins", care în producție e chiar
+    // https://goldenpastry.ro. Scrie-o explicit dacă schimbi ordinea listei.
+    'site_url'              => '',
+
     'session_days_client' => 30,
     'session_days_staff'  => 7,
     // Valoarea de dinaintea împărțirii pe roluri. Rămâne aici ca o instalare

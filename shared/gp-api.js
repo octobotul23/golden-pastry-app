@@ -88,7 +88,54 @@
 
   /* ----------------------------------------------------------- cereri -- */
 
-  async function request(method, path, payload) {
+  /**
+   * Rutele care intră sau ies din sesiune. Pe ele serverul NU cere token
+   * (csrf_exempt din api/lib/auth.php), deci n-are rost să-l căutăm întâi —
+   * am face o cerere în plus înaintea fiecărei autentificări.
+   */
+  const FARA_CSRF = ['/auth/login', '/auth/logout', '/auth/panel', '/auth/register'];
+
+  /**
+   * Se asigură că avem un token CSRF înainte de o scriere.
+   *
+   * Tokenul stă în sessionStorage, care e AL FILEI: se golește la fiecare filă
+   * nouă, în timp ce cookie-ul de sesiune ține zile întregi. O pagină deschisă
+   * direct — un link trimis pe WhatsApp, o filă nouă, un semn de carte — pornea
+   * deci cu sesiune validă și fără token. Citirile mergeau (GET nu cere token),
+   * dar prima scriere se lovea de „Token CSRF lipsă sau invalid.".
+   *
+   * Așa s-a manifestat pe „Ruta Șofer": ruta se vedea, dar „Marchează livrat"
+   * refuza, iar de pe altă adresă — adică dintr-o filă care trecuse deja printr-o
+   * pagină care ceruse sesiunea — mergea. Aceeași lipsă o avea și „Panou
+   * Laborator", unde ar fi oprit avansarea etapelor pe tabletele din laborator.
+   *
+   * Reparat aici, în clientul comun, nu în fiecare pagină: e singurul loc prin
+   * care trec toate cererile, deci acoperă și paginile care se vor adăuga.
+   * `gp.me()` pune tokenul prin setCsrf(), iar cererile pornite în același timp
+   * așteaptă aceeași promisiune — nu plecăm cu zece „/auth/me" deodată.
+   */
+  let cerereMe = null;
+  async function asiguraCsrf() {
+    if (getCsrf()) return;
+    if (!cerereMe) {
+      cerereMe = request('GET', '/auth/me')
+        .then((out) => {
+          if (out && out.csrf) setCsrf(out.csrf);
+          if (out && out.sessionDays) sessionDays = out.sessionDays;
+        })
+        // Fără sesiune nu există token, iar cererea va lua oricum 401 de la
+        // server, cu mesajul potrivit. Nu stricăm aici cu altă eroare.
+        .catch(() => {})
+        .finally(() => { cerereMe = null; });
+    }
+    await cerereMe;
+  }
+
+  async function request(method, path, payload, reincercat) {
+    const scrie = method !== 'GET' && method !== 'HEAD';
+    if (scrie && !FARA_CSRF.includes(path.split('?')[0])) {
+      await asiguraCsrf();
+    }
     const headers = {};
     const init = {
       method,
@@ -133,6 +180,17 @@
       const err = (data && data.error) || {};
       // O sesiune expirată invalidează și tokenul CSRF păstrat local.
       if (res.status === 401) setCsrf('');
+
+      // Token vechi: se întâmplă când sesiunea a fost refăcută în altă filă
+      // (cineva s-a autentificat acolo), iar fila asta a rămas cu tokenul
+      // dinainte. Îl aruncăm, cerem unul nou și încercăm O SINGURĂ dată —
+      // altfel un refuz adevărat s-ar învârti la nesfârșit. Omul n-are ce
+      // învăța dintr-un „Token CSRF invalid": e treaba noastră, nu a lui.
+      if (res.status === 403 && err.code === 'bad_csrf' && !reincercat) {
+        setCsrf('');
+        await asiguraCsrf();
+        return request(method, path, payload, true);
+      }
 
       // Un 404 fără corp JSON înseamnă, aproape întotdeauna, că pagina e
       // deschisă de pe un server care nu are API-ul — nu că ruta nu există.
@@ -191,6 +249,77 @@
     },
 
     /**
+     * Contul pe care și-l face singur vizitatorul magazinului.
+     *
+     * Serverul deschide sesiunea pe loc, ca la `login()`: cine tocmai și-a ales
+     * o parolă n-are de ce s-o mai scrie o dată. De aceea tokenul CSRF se pune
+     * și aici — fără el, prima cerere de comandă a omului ar pica cu 403.
+     *
+     * Codul de recomandare se trimite ca `ref`. Unul greșit nu oprește nimic:
+     * serverul creează contul oricum, doar fără recomandant.
+     *
+     * @param {{username:string,name:string,password:string,email?:string,
+     *          phone?:string,customerName?:string,ref?:string}} date
+     * @returns {Promise<{user:object,referral:?object,referredBy:?string}>}
+     */
+    async register(date) {
+      const out = await request('POST', '/auth/register', date || {});
+      setCsrf(out.csrf);
+      if (out && out.sessionDays) sessionDays = out.sessionDays;
+      return out;
+    },
+
+    /**
+     * Codul de recomandare venit prin „?ref=" în adresă.
+     *
+     * Se citește o singură dată, la prima încărcare, și se ține în
+     * sessionStorage: între clicul pe link și formularul de cont omul umblă prin
+     * catalog, iar o variabilă din pagină s-ar pierde la prima navigare.
+     *
+     * URL-ul se curăță pe loc cu history.replaceState, fără reîncărcare — ca
+     * linkul să nu rămână în istoricul browserului și să nu plece mai departe ca
+     * „referrer" către alte site-uri. Exact tratamentul pe care îl primește deja
+     * „?parola=" în Intrare.dc.html, din același motiv.
+     *
+     * Întoarce '' când nu există niciun cod. Nu aruncă niciodată: pe un browser
+     * cu stocarea blocată recomandarea se pierde, dar înscrierea merge.
+     */
+    referralCode() {
+      const KEY = 'gp-ref';
+      let dinUrl = '';
+      try {
+        const q = new global.URLSearchParams(global.location.search || '');
+        dinUrl = String(q.get('ref') || '').trim().slice(0, 64);
+        if (dinUrl) {
+          q.delete('ref');
+          const coada = q.toString();
+          global.history.replaceState(
+            null,
+            '',
+            global.location.pathname + (coada ? '?' + coada : '') + (global.location.hash || '')
+          );
+        }
+      } catch (e) { /* fără URLSearchParams sau fără history: mergem mai departe */ }
+
+      try {
+        if (dinUrl) {
+          global.sessionStorage.setItem(KEY, dinUrl);
+          return dinUrl;
+        }
+        return String(global.sessionStorage.getItem(KEY) || '');
+      } catch (e) {
+        // Stocare blocată (fereastră privată, setări stricte). Codul rămâne
+        // valabil doar pentru pagina curentă — tot mai bine decât deloc.
+        return dinUrl;
+      }
+    },
+
+    /** Uită codul de recomandare. Se cheamă după ce contul a fost creat. */
+    forgetReferral() {
+      try { global.sessionStorage.removeItem('gp-ref'); } catch (e) { /* noop */ }
+    },
+
+    /**
      * Deschide panoul cu codul comun al tabletelor din laborator.
      *
      * Codul se verifică pe server. Sesiunea rezultată vede și avansează
@@ -207,7 +336,13 @@
       const out = await request('GET', '/auth/me');
       if (out && out.csrf) setCsrf(out.csrf);
       if (out && out.sessionDays) sessionDays = out.sessionDays;
-      return (out && out.user) || null;
+      const user = (out && out.user) || null;
+      // Codul de recomandare al contului se lipește de utilizator, ca paginile
+      // să nu fie nevoite să cheme separat serverul pentru el. Lipsește — deci
+      // câmpul rămâne nedefinit — pe o instalare pe care migrarea 007 n-a fost
+      // rulată, iar paginile verifică asta înainte să deseneze ceva.
+      if (user && out && out.referral) user.referral = out.referral;
+      return user;
     },
 
     /** Câte zile ține sesiunea, așa cum spune serverul. 0 până la primul me(). */

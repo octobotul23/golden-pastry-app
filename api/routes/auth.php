@@ -26,7 +26,164 @@ function route_login(): void
         'user'        => public_user($full),
         'csrf'        => $csrf,
         'sessionDays' => session_days_for((string) $full['role']),
+        // Codul de recomandare și linkul gata de trimis. Se citește separat, nu
+        // din SELECT-ul de mai sus: acela are listă fixă de coloane, iar o
+        // coloană adăugată acolo ar cădea cu 1054 pe o instalare pe care
+        // migrarea 007 încă n-a fost rulată. `null` când nu există — pagina
+        // verifică și nu desenează nimic.
+        'referral'    => referral_public((int) $full['id']),
     ]);
+}
+
+/**
+ * POST /auth/register { username, name, password, email?, phone?, customerName?, ref? }
+ *
+ * Contul pe care și-l face singur vizitatorul de pe site. Până acum conturile se
+ * puteau naște în două locuri — instalatorul (o singură dată) și `POST /users`,
+ * care cere `require_role('admin')` — deci un client nu avea de unde începe, iar
+ * o recomandare n-avea unde să se agațe: momentul „își face cont" nu exista.
+ *
+ * Trei lucruri sunt scrise fix și NU se citesc niciodată din corpul cererii:
+ *
+ *  1. `role = 'client'`. Ruta e publică. Citit din `body()`, un
+ *     `{"role":"admin"}` trimis de oricine ar da drepturi depline peste comenzi,
+ *     prețuri, conturi, Jurnal și Setări. Rolurile se schimbă doar din pagina
+ *     Conturi, de către un administrator.
+ *  2. `must_change_password = 0`. Steagul e pentru parolele DICTATE de
+ *     administrator; aici omul și-a ales-o singur. Pus pe 1, l-ar fi trimis, la
+ *     prima intrare, să schimbe o parolă provizorie pe care nu i-a dat-o nimeni
+ *     — și, până atunci, require_auth() îi răspundea 403 pe tot API-ul.
+ *  3. `is_system = 0`, implicit din schemă. Conturile de sistem sunt ale
+ *     tabletelor, nu ale internetului.
+ *
+ * Validările și mesajele sunt aceleași cu ale conturilor făcute de administrator: omul
+ * primește exact aceleași explicații, indiferent cine îi face contul.
+ */
+function route_register(): void
+{
+    $ip = client_ip();
+
+    // Pragul se verifică ÎNAINTE de orice citire sau scriere: o rută publică
+    // spre `users` fără prag e o invitație să fie umplută tabela peste noapte.
+    if (register_rate_limited($ip, (int) config('max_register_attempts', 10))) {
+        fail(
+            'Prea multe conturi create de pe această conexiune. Încearcă din nou peste o oră '
+            . 'sau sună-ne și îți facem noi contul.',
+            429,
+            'rate_limited'
+        );
+    }
+
+    $b        = body();
+    $username = strtolower(need($b, 'username'));
+    $name     = need($b, 'name');
+    // Tăiată de spații, ca peste tot altundeva: autentificarea compară parola
+    // trecută prin need(), care taie. Un spațiu lipit de la copiat sau de la
+    // tastatura telefonului ar da un hash pe care intrarea în cont nu l-ar mai
+    // putea potrivi niciodată.
+    $password = need($b, 'password');
+
+    // Abia acum se consumă din plafon: o cerere fără câmpuri n-a încercat nimic.
+    // Se numără și încercările care pică mai jos — altfel cineva ar putea afla,
+    // fără limită, ce nume de utilizator sunt deja luate.
+    record_attempt($ip, GP_REGISTER_KEY, false);
+
+    if (!preg_match('/^[a-z0-9._-]{3,64}$/', $username)) {
+        fail('Utilizatorul poate conține doar litere mici, cifre, punct, minus și underscore (3–64).', 422, 'bad_username');
+    }
+    if (strlen($password) < 8) {
+        fail('Parola trebuie să aibă cel puțin 8 caractere.', 422, 'weak_password');
+    }
+    if (scalar('SELECT 1 FROM users WHERE username = ?', [$username])) {
+        fail('Există deja un cont cu acest utilizator.', 409, 'username_taken');
+    }
+
+    $email = trim((string) ($b['email'] ?? ''));
+    // Aceeași funcție ca la conturile făcute de administrator: formatul, plus
+    // regula că o adresă nu poate sta pe două conturi — fără ea, „Ți-ai uitat
+    // parola?" nu mai știe cui să trimită linkul.
+    //
+    // Stă în api/lib/auth.php, nu în routes/users.php: rutele nu se încarcă una
+    // pe alta, iar o a doua copie a unei reguli de unicitate se depărtează de
+    // prima exact când contează.
+    check_user_email($email);
+
+    // Verificările de mai sus sunt din memorie, iar între ele și scriere încap
+    // două cereri paralele. q_unique() prinde ciocnirea de index și o întoarce
+    // ca refuzul pe care cererea l-ar fi primit o clipă mai târziu, în loc de
+    // „Eroare internă.".
+    q_unique(
+        "INSERT INTO users (username, password_hash, name, email, phone, role, customer_name,
+                            active, is_system, must_change_password, password_changed_at)
+         VALUES (?, ?, ?, ?, ?, 'client', ?, 1, 0, 0, UTC_TIMESTAMP())",
+        [
+            $username, password_hash($password, PASSWORD_DEFAULT), $name,
+            $email ?: null, trim((string) ($b['phone'] ?? '')) ?: null,
+            trim((string) ($b['customerName'] ?? '')) ?: null,
+        ],
+        'Există deja un cont cu acest utilizator.',
+        'username_taken'
+    );
+    $id = (int) db()->lastInsertId();
+
+    // Contul făcut de pe site NU primește cod de recomandare.
+    //
+    // Codurile sunt unealta agenților de vânzări, iar clienților li le dă
+    // administratorul, unul câte unul, când chiar e cazul. Dat automat aici,
+    // oricine se înscrie ar căpăta un cod — inclusiv un script care umple
+    // tabelul — și lista recomandărilor ar deveni un dublet al listei de
+    // conturi. Cine are nevoie de unul îl cere, și i-l dă adminul din Conturi.
+    $codPropriu = null;
+
+    // Recomandantul, dacă vizitatorul a venit pe un link cu „?ref=".
+    // Un cod greșit, expirat sau de pe un cont dezactivat NU oprește înscrierea:
+    // omul primește cont ca oricine altcineva, doar fără recomandant. Un refuz
+    // aici ar costa un client pentru un link stricat.
+    $adusDe = referral_link_new_user($id, (string) ($b['ref'] ?? ''));
+
+    // Sesiunea se deschide pe loc, ca omul să nu fie pus să scrie a doua oară
+    // parola pe care tocmai a ales-o. Pașii sunt cei din do_login(), fără
+    // verificarea parolei — care aici n-are ce verifica.
+    $previous = $_COOKIE[GP_COOKIE] ?? '';
+    if ($previous !== '') {
+        q('DELETE FROM sessions WHERE id = ?', [token_hash($previous)]);
+    }
+
+    $token = random_token();
+    $csrf  = random_token();
+    $zile  = session_days_for('client');
+    q(
+        'INSERT INTO sessions (id, user_id, csrf_token, expires_at, ip, user_agent)
+         VALUES (?, ?, ?, UTC_TIMESTAMP() + INTERVAL ? DAY, ?, ?)',
+        [
+            token_hash($token), $id, $csrf, $zile,
+            $ip, substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
+        ]
+    );
+    set_session_cookie($token, $zile);
+    q('UPDATE users SET last_login = UTC_TIMESTAMP() WHERE id = ?', [$id]);
+
+    audit(
+        'user_register',
+        'user',
+        (string) $id,
+        'Cont creat de pe site' . ($adusDe ? ', recomandat de ' . $adusDe['name'] : ''),
+        $id,
+        $name
+    );
+
+    $nou = one('SELECT * FROM users WHERE id = ?', [$id]);
+    json_out([
+        'user'        => public_user($nou),
+        'csrf'        => $csrf,
+        'sessionDays' => $zile,
+        'referral'    => $codPropriu === null ? null : [
+            'code' => $codPropriu,
+            'link' => referral_link($codPropriu),
+        ],
+        // Cine l-a adus, ca pagina să poată spune „mulțumim, ai venit de la Ana".
+        'referredBy'  => $adusDe ? $adusDe['name'] : null,
+    ], 201);
 }
 
 function route_logout(): void
@@ -53,6 +210,12 @@ function route_me(): void
         'user'        => public_user($u),
         'csrf'        => $u['csrf_token'],
         'sessionDays' => session_days_for((string) $u['role']),
+        // Codul de recomandare al contului. Nu se ia din current_user() —
+        // interogarea aceea are listă fixă de coloane și e pe drumul fiecărei
+        // cereri; o coloană adăugată acolo ar cădea cu 1054 pe o instalare pe
+        // care migrarea 007 n-a fost încă rulată, adică ar opri toată aplicația
+        // pentru o funcție secundară. Aici e o citire după cheia primară.
+        'referral'    => referral_public((int) $u['id']),
     ]);
 }
 

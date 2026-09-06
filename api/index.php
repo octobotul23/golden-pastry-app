@@ -56,6 +56,7 @@ require __DIR__ . '/lib/settings.php';
 require __DIR__ . '/lib/orders.php';
 require __DIR__ . '/lib/catalog.php';
 require __DIR__ . '/lib/notify.php';
+require __DIR__ . '/lib/referral.php';
 
 cors((array) config('allowed_origins', []));
 
@@ -92,6 +93,11 @@ $routes = [
     ['POST',   '/auth/panel',        'auth',     'route_panel_login'],
     ['POST',   '/auth/forgot',       'auth',     'route_forgot'],
     ['POST',   '/auth/reset',        'auth',     'route_reset'],
+    // Contul pe care și-l face singur vizitatorul magazinului. Publică prin
+    // forța lucrurilor — cine n-are cont n-are nici sesiune, nici token CSRF —
+    // deci e și singura rută spre `users` cu prag propriu pe conexiune
+    // (register_rate_limited) și cu rolul scris fix, nu citit din cerere.
+    ['POST',   '/auth/register',     'auth',     'route_register'],
 
     ['GET',    '/products',          'products', 'route_products_list'],
     ['POST',   '/products',          'catalog',  'route_products_create'],
@@ -140,6 +146,10 @@ $routes = [
     ['GET',    '/stock/items',       'stock',    'route_items_list'],
     ['POST',   '/stock/items',       'stock',    'route_items_create'],
     ['PATCH',  '/stock/items/#',     'stock',    'route_items_update'],
+    // Scoaterea unui articol din depozit. Șterge de-a binelea doar articolul
+    // fără nicio urmă; pe cel cu istoric îl scoate din listă, ca registrul să
+    // rămână întreg. Vezi route_items_delete().
+    ['DELETE', '/stock/items/#',     'stock',    'route_items_delete'],
     ['GET',    '/stock/moves',       'stock',    'route_moves_list'],
     ['POST',   '/stock/moves',       'stock',    'route_moves_create'],
     ['POST',   '/stock/sync',        'stock',    'route_stock_sync'],
@@ -149,6 +159,11 @@ $routes = [
     ['PATCH',  '/users/#',           'users',    'route_users_update'],
     ['DELETE', '/users/#',           'users',    'route_users_delete'],
     ['POST',   '/users/#/password',  'users',    'route_users_password'],
+    // Codul de recomandare pentru un cont vechi, care s-a născut înainte să
+    // existe coloana. Rută proprie, nu un câmp în plus la PATCH: e o operație
+    // care se face o singură dată pe cont și nu trebuie să poată fi trimisă din
+    // greșeală de formularul care salvează numele la ieșirea din casetă.
+    ['POST',   '/users/#/referral',  'users',    'route_users_referral'],
 
     ['GET',    '/log',               'log',      'route_log_list'],
 

@@ -154,7 +154,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ nMailHint }}</span>
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
-<button type="button" class="{{ nRoleCls }}" onClick="{{ onNRole }}" style="min-height:48px;font-size:15px;border-radius:12px">{{ nRoleLabel }}</button>
+<select class="h-input" value="{{ nRole }}" onChange="{{ onNRole }}" style="height:48px;font-size:15px">
+<sc-for list="{{ roleOpts }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ nRoleHint }}</span>
 </label>
 <sc-if value="{{ nIsClient }}" hint-placeholder-val="{{ false }}">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele clientului din comenzi
@@ -167,7 +172,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onFormCancel }}" style="min-height:46px;font-size:15px">Renunță</button>
-<button type="button" class="h-btn h-btn--primary" onClick="{{ onFormSave }}" style="margin-left:auto;min-height:46px;min-width:180px;font-size:15px">Adaugă contul</button>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onFormSave }}" disabled="{{ nBusy }}" style="margin-left:auto;min-height:46px;min-width:180px;font-size:15px">{{ nSaveLabel }}</button>
 </div>
 </div>
 </sc-if>
@@ -196,6 +201,31 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="h-alert h-alert--danger" style="border-radius:12px;padding:11px 13px;font-size:14px">{{ pErr }}</div>
 </sc-if>
 </div>
+
+<sc-if value="{{ refShowPanel }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<h2 class="h-h4" style="margin:0;font-size:18px">Linkuri de recomandare</h2>
+<span class="h-badge h-badge--honey" style="font-size:11px">{{ refCount }}</span>
+</div>
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ refPanelHint }}</p>
+
+<sc-for list="{{ refList }}" as="rf" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<div style="display:flex;flex-direction:column;gap:2px;min-width:150px;flex:1">
+<span style="font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ rf.name }}</span>
+<span style="font-size:12px;color:var(--h-fg-faint)">{{ rf.roleLabel }} · cod <strong class="h-numeric">{{ rf.code }}</strong></span>
+</div>
+<input class="h-input h-numeric" type="text" value="{{ rf.link }}" readOnly="{{ true }}" onFocus="{{ rf.onPick }}" style="flex:2;min-width:210px;height:42px;font-size:13px;background:var(--h-bg)">
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ rf.onCopy }}" style="height:42px;flex:none">Copiază</button>
+</div>
+</sc-for>
+
+<sc-if value="{{ refNone }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Niciun cont n-are încă un cod. Un cont de <strong>agent de vânzări</strong> primește unul din clipa în care e creat; oricui altcuiva îi dai unul de la butonul „Dă-i un cod" de pe cardul contului, mai jos.</p>
+</sc-if>
+</div>
+</sc-if>
 
 <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="2">
 <div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:14px;border-color:{{ a.bd }}">
@@ -278,11 +308,45 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 </div>
 </sc-if>
 
+<sc-if value="{{ a.refShown }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+<span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cod de recomandare</span>
+<sc-if value="{{ a.refCode }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--honey h-numeric" style="font-size:12px">{{ a.refCode }}</span>
+</sc-if>
+</div>
+<sc-if value="{{ a.refCode }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+<label style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Link de invitație
+<input class="h-input h-numeric" type="text" value="{{ a.refLink }}" readOnly="{{ true }}" onFocus="{{ a.onRefPick }}" style="height:46px;font-size:14px;background:var(--h-bg)">
+</label>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onRefCopy }}" style="min-height:46px;font-size:14px;flex:none">Copiază linkul</button>
+</div>
+</sc-if>
+<sc-if value="{{ a.refMissing }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="flex:1;min-width:220px;font-size:13px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Contul e mai vechi decât recomandările, deci n-a primit niciun cod. Se face din prenume — „{{ a.refPreview }}" — și nu se mai schimbă după aceea.</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onRefMake }}" style="min-height:46px;font-size:14px;flex:none">Dă-i un cod</button>
+</div>
+</sc-if>
+<sc-if value="{{ a.refFrom }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;line-height:1.5;color:var(--h-fg-subtle)">Adus de <strong>{{ a.refFrom }}</strong>{{ a.refWhen }}.</span>
+</sc-if>
+</div>
+</sc-if>
+
 <div data-ct="cardfoot" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <sc-if value="{{ a.canEditPass }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--primary" onClick="{{ a.onEdit }}" style="min-height:46px;font-size:15px">Schimbă parola</button>
 </sc-if>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onRole }}" title="{{ a.roleHint }}" style="min-height:46px;font-size:14px">{{ a.roleBtn }}</button>
+<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
+<select class="h-input" value="{{ a.role }}" onChange="{{ a.onRole }}" title="{{ a.roleHint }}" style="height:46px;font-size:14px;width:auto;min-width:170px">
+<sc-for list="{{ roleOpts }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
 <sc-if value="{{ a.delArmed }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onDelCancel }}" style="margin-left:auto;min-height:46px;font-size:14px">Renunț la ștergere</button>
 </sc-if>
@@ -358,10 +422,64 @@ const fromApi = (x) => ({
   // `lastLogin`, sub eticheta „parolă schimbată": un cont care intrase azi cu
   // parola primită pe WhatsApp apărea ca și cum și-ar fi pus parolă proprie.
   pwAt: x.passwordChangedAt ? Date.parse(x.passwordChangedAt + "Z") || 0 : 0,
-  temp: x.mustChangePassword === true
+  temp: x.mustChangePassword === true,
+  // Recomandări. Rămân goale pe o instalare pe care migrarea 007 n-a fost încă
+  // rulată — serverul nu trimite câmpurile, iar pagina nu desenează secțiunea
+  // (vezi `refShown` mai jos). Nimic nu se strică între urcarea fișierelor și
+  // importul din phpMyAdmin.
+  refCode: x.referralCode || "",
+  refLink: x.referralLink || "",
+  refFrom: x.referredByName || "",
+  refAt: x.referredAt ? Date.parse(x.referredAt + "Z") || 0 : 0
 });
 const roleOf = (x) => x.role || (x.u === "admin" ? "admin" : "angajat");
-const ROLE_L = { admin: "administrator", angajat: "angajat", client: "client" };
+// Etichetele rolurilor. Ordinea din ROLE_OPTS e cea din ENUM-ul coloanei
+// `users.role` (sql/007): valorile noi stau la coadă, fiindcă MySQL ține în rând
+// poziția, nu textul, iar una strecurată la mijloc ar schimba în tăcere rolul
+// conturilor de după ea.
+const ROLE_L = {
+  admin: "administrator",
+  angajat: "angajat",
+  client: "client",
+  manager: "manager",
+  agent_vanzari: "agent de vânzări"
+};
+// Butonul care ciclează prin roluri a fost înlocuit cu o listă: cu trei valori
+// mergea, cu cinci ar fi însemnat patru apăsări ca să ajungi de la „client" la
+// „administrator", fără să vezi vreodată lista întreagă.
+const ROLE_OPTS = [
+  { v: "admin",         l: "Administrator · tot" },
+  { v: "manager",       l: "Manager · panourile de lucru" },
+  { v: "agent_vanzari", l: "Agent de vânzări · panourile de lucru" },
+  { v: "angajat",       l: "Angajat · laborator, rută, depozit" },
+  { v: "client",        l: "Client · doar comanda lui" }
+];
+// Ce vede fiecare rol. Textul spune ce face serverul, nu ce ascunde pagina:
+// manager și agent au exact drepturile angajatului (GP_STAFF_ROLES din
+// api/lib/auth.php) — conturile, catalogul, setările și jurnalul rămân numai
+// ale administratorului.
+const ROLE_HINT = {
+  admin: "Administratorii intră în comenzi, depozit, conturi, catalog, jurnal și setări.",
+  angajat: "Angajații văd comenzile zilei, le avansează și lucrează în depozit.",
+  manager: "Managerii au aceleași drepturi ca angajații: comenzi, rută, depozit. Conturile, catalogul, jurnalul și setările rămân doar la administrator.",
+  agent_vanzari: "Agenții de vânzări au aceleași drepturi ca angajații: comenzi, rută, depozit. Nu ajung la conturi, catalog, jurnal sau setări.",
+  client: "Clientul își vede doar comenzile lui și comandă din magazin."
+};
+// Codul de recomandare se face din PRENUME, cu aceleași reguli ca pe server
+// (api/lib/referral.php): primul cuvânt, fără diacritice, doar litere și cifre.
+// Aici e folosit numai ca să arătăm dinainte ce cod ar primi un cont vechi —
+// codul adevărat îl scrie serverul, care e și singurul care poate garanta
+// unicitatea.
+const refPreviewOf = (nume) => {
+  const prim = String(nume || "").trim().split(/\s+/)[0] || "";
+  return prim
+    .toLowerCase()
+    // NFD desface litera în literă de bază + semn, iar intervalul de mai jos
+    // cuprinde și virgula dedesubt (U+0326) și sedila (U+0327), adică ambele
+    // feluri în care circulă „ș" și „ț" prin fișiere și tastaturi.
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+};
 // Rolul vine din sesiunea de pe server. Varianta veche îl deducea din lista
 // locală de conturi, sau din numele de utilizator — deci putea fi falsificat
 // din consola browserului.
@@ -401,7 +519,7 @@ class Component extends DCLogic {
   // fiind input controlat de React fără stare locală — își pierdea litera pe
   // loc și o primea înapoi abia cu răspunsul serverului. Cine scria mai
   // repede decât rețeaua rămânea cu numele trunchiat.
-  state = { users: [], auth: null, resets: [], edit: null, draft: {}, sterg: null, n1: "", n2: "", err: "", fresh: {}, form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "", pNew: "", pErr: "", pShow: false, pCode: null, msg: "", msgBad: false, offline: "", loaded: false };
+  state = { users: [], auth: null, resets: [], edit: null, draft: {}, sterg: null, n1: "", n2: "", err: "", fresh: {}, form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "", nBusy: false, pNew: "", pErr: "", pShow: false, pCode: null, msg: "", msgBad: false, offline: "", loaded: false, refReady: false };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
@@ -470,7 +588,13 @@ class Component extends DCLogic {
   /** Reîncarcă lista de conturi de pe server. */
   reloadUsers(patch) {
     return gp.get("/users")
-      .then((r) => this.setState(Object.assign({ users: (r.users || []).map(fromApi) }, patch || {})))
+      .then((r) => this.setState(Object.assign({
+        users: (r.users || []).map(fromApi),
+        // Steagul vine de la server: el știe dacă migrarea 007 e rulată.
+        // Fără el, pagina n-ar putea deosebi „niciun cont n-are încă un cod"
+        // de „coloanele nici nu există în baza de date".
+        refReady: r.referral === true
+      }, patch || {})))
       .catch((e) => this.setState(Object.assign({ msg: e.message, msgBad: true }, patch || {})));
   }
 
@@ -609,31 +733,74 @@ class Component extends DCLogic {
         .catch((e) => set({ msg: e.message, msgBad: true }));
     };
 
+    /**
+     * Pune un text în clipboard, sau spune limpede de ce n-a mers.
+     *
+     * navigator.clipboard cere context sigur (HTTPS) și lipsește pe unele
+     * browsere; când nu merge, nu tăcem — linkul e oricum vizibil în casetă,
+     * deci îi spunem omului să-l ia de acolo.
+     */
+    const copiaza = (text, cineE) => {
+      if (!text) return;
+      const gata = () => set({ msg: "Linkul lui „" + cineE + "” e în clipboard.", msgBad: false });
+      const pica = () => set({ msg: "Nu am putut copia singur. Selectează linkul din casetă și copiază-l cu Ctrl+C.", msgBad: true });
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(gata).catch(pica);
+          return;
+        }
+      } catch (e) { /* cădem pe mesajul de mai jos */ }
+      pica();
+    };
+
     const accounts = S.users.map(acc => {
       const editing = S.edit === acc.u;
       const isMe = me === acc.u;
       const rl = roleOf(acc);
       return {
         u: acc.u, name: acc.name, mail: acc.mail || "",
-        roleLabel: ROLE_L[rl],
+        role: rl,
+        roleLabel: ROLE_L[rl] || rl,
         roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
-        roleBtn: rl === "admin" ? "Trece pe angajat" : rl === "angajat" ? "Trece pe client" : "Trece pe administrator",
-        roleHint: rl === "admin"
-          ? "Administratorii intră în comenzi, depozit, conturi, jurnal și parole."
-          : rl === "client"
-            ? "Clienții văd doar comanda lor: în câte zile vine și câte opriri mai sunt până la ei."
-            : "Angajații au acces doar la laborator, rută și depozit.",
+        roleHint: ROLE_HINT[rl] || "",
         isClient: rl === "client",
         cust: acc.cust || "",
         custEdit: draftVal(acc, "cust", acc.cust || ""),
         onCust: onTasta(acc, "cust"),
         saveCust: laIesire(acc, "cust", "customerName", acc.cust || ""),
-        onRole: () => {
+        // Lista înlocuiește butonul care ciclează. Pazele rămân exact aceleași —
+        // nu-ți schimbi propriul acces, iar ultimul administrator nu poate fi
+        // retrogradat — plus una nouă, cerută de listă: alegerea aceleiași
+        // valori nu mai trimite nimic la server (PATCH-ul ar fi răspuns
+        // „Nimic de modificat.").
+        onRole: (e) => {
+          const nextRole = e && e.target ? String(e.target.value) : rl;
+          if (nextRole === rl) return;
           if (isMe) return set({ msg: "Nu-ți poți schimba propriul drept de acces — cere altui administrator.", msgBad: true });
           const admins = S.users.filter(x => roleOf(x) === "admin").length;
           if (rl === "admin" && admins <= 1) return set({ msg: "Trebuie să rămână cel puțin un administrator.", msgBad: true });
-          const nextRole = rl === "admin" ? "angajat" : rl === "angajat" ? "client" : "admin";
-          this.patchUser(acc, { role: nextRole }, { msg: "„" + acc.name + "” e acum " + ROLE_L[nextRole] + "." });
+          this.patchUser(acc, { role: nextRole }, { msg: "„" + acc.name + "” e acum " + (ROLE_L[nextRole] || nextRole) + "." });
+        },
+        // --- recomandări ---
+        // Secțiunea apare doar dacă serverul chiar a trimis ceva: pe o
+        // instalare fără migrarea 007 toate câmpurile sunt goale, iar un cont
+        // de sistem („panou") n-are ce recomanda.
+        refShown: !acc.sys && (!!acc.refCode || !!acc.refFrom || S.refReady),
+        refCode: acc.refCode,
+        refLink: acc.refLink,
+        refMissing: !acc.sys && S.refReady && !acc.refCode,
+        refPreview: refPreviewOf(acc.name) || acc.u,
+        refFrom: acc.refFrom,
+        refWhen: acc.refAt ? " pe " + dataOra(acc.refAt) : "",
+        // Selectarea întregului link la un clic: e de copiat, nu de citit.
+        onRefPick: (e) => { try { e.target.select(); } catch (err) {} },
+        onRefCopy: () => copiaza(acc.refLink, acc.name),
+        onRefMake: () => {
+          gp.post("/users/" + acc.id + "/referral")
+            .then((r) => this.reloadUsers({
+              msg: "„" + acc.name + "” are acum codul „" + r.referralCode + "”."
+            }))
+            .catch((e) => set({ msg: e.message, msgBad: true }));
         },
         changed: desprePar(acc),
         // Ultima intrare rămâne vizibilă, dar sub numele ei adevărat. Era
@@ -724,26 +891,49 @@ class Component extends DCLogic {
     });
 
     const addUser = () => {
+      // Semafor pe instanță, nu în stare: setState NU schimbă starea pe loc,
+      // deci două clicuri în aceeași sutime de secundă ar citi amândouă
+      // `nBusy: false` și ar trimite amândouă. Al doilea POST se lovea de
+      // indexul unic și se întorcea cu 409 „Există deja un cont cu acest
+      // utilizator." — o casetă roșie despre un cont care TOCMAI fusese creat
+      // cu succes. Același tipar e folosit în „Administrare Comenzi"
+      // (this.__saving), din exact același motiv.
+      if (this.__saving) return;
+
       const u = String(S.nUser).trim().toLowerCase();
       const n = String(S.nName).trim() || u;
       const p = String(S.nPass);
       if (!u) return set({ nErr: "Scrie un utilizator." });
+      // Aceeași regulă ca pe server (route_users_create). Verificată aici,
+      // pagina nu mai trimite degeaba un „Ana Popescu" sau un „ștefan" ca să
+      // primească un 422 după drumul dus-întors — refuz pentru ceva ce se
+      // știa dinainte.
+      if (!/^[a-z0-9._-]{3,64}$/.test(u)) {
+        return set({ nErr: "Utilizatorul poate conține doar litere mici, cifre, punct, minus și underscore (3–64 caractere). Încearcă „" + (refPreviewOf(n) || "ana") + "”." });
+      }
       if (S.users.some(x => x.u === u)) return set({ nErr: "Există deja un cont cu utilizatorul „" + u + "”." });
       if (p.length < ml) return set({ nErr: "Parola trebuie să aibă minim " + ml + " caractere." });
+
+      this.__saving = true;
+      set({ nBusy: true, nErr: "" });
 
       gp.post("/users", {
         username: u, password: p, name: n, role: S.nRole,
         customerName: String(S.nCust || "").trim(),
         email: String(S.nMail).trim()
       })
-        .then(() => this.reloadUsers({
-          form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "",
-          pNew: "", pErr: "", pShow: false,
-          msg: "Contul „" + n + "” a fost creat ca " + ROLE_L[S.nRole] + "."
-        }))
+        .then(() => {
+          this.__saving = false;
+          return this.reloadUsers({
+            form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "",
+            pNew: "", pErr: "", pShow: false, nBusy: false,
+            msg: "Contul „" + n + "” a fost creat ca " + (ROLE_L[S.nRole] || S.nRole) + "."
+          });
+        })
         // Serverul are ultimul cuvânt: respinge utilizatori duplicați sau
         // parole slabe chiar dacă verificarea din pagină ar fi trecut.
-        .catch((e) => set({ nErr: e.message }));
+        // La refuz semaforul se stinge, ca omul să poată corecta și reîncerca.
+        .catch((e) => { this.__saving = false; set({ nErr: e.message, nBusy: false }); });
     };
 
     // Rezumatul din capul paginii spunea „ultima schimbare <dată>", tot din
@@ -814,10 +1004,42 @@ class Component extends DCLogic {
       onMsgClose: () => set({ msg: "" }),
       accounts,
 
+      /* --- linkurile de recomandare, strânse la un loc --- */
+      // Codul era greu de găsit: stătea pe cardul fiecărui cont, iar ca să dai
+      // unui agent linkul lui trebuia să derulezi până la el printre toate
+      // conturile. Aici sunt toate într-un singur loc, în capul paginii.
+      //
+      // Panoul apare doar dacă serverul chiar cunoaște recomandările (migrarea
+      // 007 rulată); altfel n-ar avea ce lista și ar promite ceva ce nu există.
+      refShowPanel: S.refReady,
+      refList: S.users
+        .filter(x => !x.sys && x.refCode)
+        .map(x => ({
+          name: x.name,
+          code: x.refCode,
+          link: x.refLink,
+          roleLabel: ROLE_L[roleOf(x)] || roleOf(x),
+          onPick: (e) => { try { e.target.select(); } catch (err) {} },
+          onCopy: () => copiaza(x.refLink, x.name)
+        })),
+      refNone: S.refReady && !S.users.some(x => !x.sys && x.refCode),
+      refCount: (() => {
+        const n = S.users.filter(x => !x.sys && x.refCode).length;
+        return n === 1 ? "1 cod" : n + " coduri";
+      })(),
+      refPanelHint: "Agenții de vânzări primesc un cod din clipa în care li se face contul. "
+        + "Oricărui alt cont — un client fidel, de pildă — îi dai unul de la butonul „Dă-i un cod” "
+        + "de pe cardul lui. Codul se face din prenume și nu se mai schimbă după aceea.",
+
       formOpen: S.form,
-      onNew: () => set({ form: true, nErr: "", nPass: this.suggest() }),
-      onFormCancel: () => set({ form: false, nErr: "" }),
+      // Semaforul se stinge la deschiderea și la închiderea formularului: o
+      // cerere rămasă fără răspuns (internet căzut) n-are voie să blocheze
+      // pentru totdeauna butonul.
+      onNew: () => { this.__saving = false; set({ form: true, nErr: "", nBusy: false, nPass: this.suggest() }); },
+      onFormCancel: () => { this.__saving = false; set({ form: false, nErr: "", nBusy: false }); },
       onFormSave: () => addUser(),
+      nBusy: !!S.nBusy,
+      nSaveLabel: S.nBusy ? "Se salvează…" : "Adaugă contul",
       nName: S.nName, nUser: S.nUser, nPass: S.nPass, nMail: S.nMail, nErr: S.nErr,
       // Caseta venea completată cu o adresă scrisă în cod. Acum pornește goală,
       // deci trebuie spus ce se pierde dacă rămâne așa: fără e-mail, „Ți-ai
@@ -826,9 +1048,10 @@ class Component extends DCLogic {
       nMailHint: String(S.nMail).trim()
         ? "Aici pleacă linkul de la „Ți-ai uitat parola?”."
         : "Fără e-mail, contul nu poate folosi „Ți-ai uitat parola?” — parola i-o schimbi tot tu, de aici.",
-      nRoleLabel: S.nRole === "admin" ? "Administrator · tot" : S.nRole === "client" ? "Client · doar comanda lui" : "Angajat · laborator, rută, depozit",
-      nRoleCls: S.nRole === "admin" ? "h-btn h-btn--honey" : S.nRole === "client" ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
-      onNRole: () => set({ nRole: S.nRole === "admin" ? "angajat" : S.nRole === "angajat" ? "client" : "admin" }),
+      nRole: S.nRole,
+      roleOpts: ROLE_OPTS,
+      nRoleHint: ROLE_HINT[S.nRole] || "",
+      onNRole: (e) => set({ nRole: e && e.target ? String(e.target.value) : S.nRole, nErr: "" }),
       nIsClient: S.nRole === "client",
       nCust: S.nCust,
       onNCust: (e) => set({ nCust: e.target.value, nErr: "" }),
