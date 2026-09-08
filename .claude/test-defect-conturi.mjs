@@ -231,6 +231,21 @@ console.log('\n=== „am uitat parola" pe o adresă purtată de două conturi ==
   // Regula de mai sus oprește scrierile noi, dar nu poate șterge trecutul:
   // instalările de până acum au putut ajunge la două conturi cu aceeași
   // adresă. Le punem în starea aceea direct în bază, cum ar fi rămas ele.
+  //
+  // De la migrarea 007, `users.email` are index unic (`uq_users_email`), deci
+  // starea asta nu se mai poate NAȘTE — dar poate fi MOȘTENITĂ: pe o bază
+  // veche, cu duplicate, pasul care adaugă indexul se sare (vezi comentariul
+  // din sql/007_update_roles_referral.sql), iar rândurile rămân acolo. Exact
+  // acea bază o imităm aici: scoatem indexul cât fabricăm situația și îl punem
+  // la loc imediat. Ce se verifică mai jos — că /auth/forgot NU ghicește când
+  // adresa arată spre două conturi — rămâne neschimbat, fiindcă acel cod de pe
+  // server e neschimbat și trebuie să funcționeze pe bazele moștenite.
+  const areIndexEmail = Number(sql(
+    "SELECT COUNT(*) FROM information_schema.STATISTICS "
+    + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' "
+    + "AND INDEX_NAME = 'uq_users_email'"
+  )) > 0;
+  if (areIndexEmail) sql('ALTER TABLE users DROP INDEX uq_users_email');
   sql(`UPDATE users SET email = '${COMUN}' WHERE username IN (${chei})`);
   sql(`DELETE FROM password_resets WHERE user_id IN (${idA}, ${idB})`);
 
@@ -273,6 +288,21 @@ console.log('\n=== „am uitat parola" pe o adresă purtată de două conturi ==
 
 curata();
 sql("DELETE FROM login_attempts WHERE username = 'recuperare'");
+// Indexul unic pe adresă se pune la loc, dacă proba l-a scos ca să fabrice
+// starea moștenită de mai sus. Se face DUPĂ curata(), care șterge conturile
+// duplicate — altfel ALTER-ul s-ar lovi chiar de rândurile probei. Condiția pe
+// information_schema face pasul sigur pe o bază pe care migrarea 007 n-a fost
+// rulată: acolo nu era niciun index de pus la loc.
+sql(
+  "SET @s := IF((SELECT COUNT(*) FROM information_schema.STATISTICS "
+  + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' "
+  + "AND INDEX_NAME = 'uq_users_email') = 0 "
+  + "AND (SELECT COUNT(*) FROM information_schema.COLUMNS "
+  + "WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' "
+  + "AND COLUMN_NAME = 'referral_code') = 1, "
+  + "'ALTER TABLE users ADD UNIQUE KEY uq_users_email (email)', 'SELECT 1'); "
+  + "PREPARE st FROM @s; EXECUTE st; DEALLOCATE PREPARE st"
+);
 
 console.log(`\n${'='.repeat(52)}`);
 console.log(`${pass} trecute · ${fail} eșuate`);

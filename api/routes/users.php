@@ -3,60 +3,65 @@
 
 declare(strict_types=1);
 
-const ROLES = ['admin', 'angajat', 'client'];
-
 /**
- * Verifică adresa unui cont înainte să fie scrisă.
+ * Rolurile pe care le poate purta un cont.
  *
- * Formatul: singurul lucru pentru care aplicația folosește câmpul e „am uitat
- * parola". O adresă strâmbă nu se plânge la salvare, dar face ca linkul să nu
- * plece niciodată — send_email() aruncă, excepția e doar jurnalizată, iar omul
- * primește același răspuns ca oricine. Adică o greșeală de tastare descoperită
- * peste o lună, de cineva care nu mai poate intra în cont.
+ * Ordinea e cea din ENUM-ul coloanei `users.role` (vezi sql/007): valorile noi
+ * se adaugă mereu la coadă, fiindcă MySQL ține în rând poziția, nu textul, iar
+ * o valoare strecurată la mijloc ar schimba în tăcere rolul conturilor de după.
  *
- * Unicitatea: nu e curățenie, e securitate. Cu aceeași adresă pe două conturi,
- * /auth/forgot nu mai poate spune care dintre ele a cerut parola nouă (vezi
- * api/routes/auth.php), deci ori schimbă parola omului nepotrivit, ori — de
- * când e reparat acolo — nu mai poate trimite nimic niciunuia. Ambele rele se
- * opresc aici, la scriere: e singurul loc unde se mai știe cine a cerut ce.
- *
- * `$exceptId` e contul care se editează, ca adresa lui să nu se certe cu ea
- * însăși.
+ * `manager` și `agent_vanzari` intră în GP_STAFF_ROLES (api/lib/auth.php), deci
+ * ajung la panourile de lucru ca angajatul — dar NU la conturi, catalog, setări,
+ * jurnal, acceptarea cererilor sau ordinea opririlor: acelea cer în continuare
+ * require_role('admin').
  */
-function check_user_email(string $email, ?int $exceptId = null): void
-{
-    // Contul fără adresă e o stare normală: clienții luați la telefon n-au una.
-    if ($email === '') {
-        return;
-    }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        fail('Adresa de e-mail nu este validă.', 422, 'bad_email');
-    }
-    // Coloana e utf8mb4_unicode_ci, deci comparația nu se uită la majuscule:
-    // „Comenzi@Firma.ro" și „comenzi@firma.ro" duc la aceeași cutie poștală și
-    // trebuie să se ciocnească.
-    $alt = one('SELECT username FROM users WHERE email = ? AND id <> ? LIMIT 1', [$email, $exceptId ?? 0]);
-    if ($alt) {
-        fail('Adresa „' . $email . '” este deja trecută pe contul „' . $alt['username'] . '”. '
-            . 'Recuperarea parolei se face după adresă, deci două conturi nu pot avea aceeași adresă. '
-            . 'Șterge-o de pe celălalt cont sau folosește alta.', 409, 'email_taken');
-    }
-}
+const ROLES = ['admin', 'angajat', 'client', 'manager', 'agent_vanzari'];
+
+/*
+ * check_user_email() stătea aici. S-a mutat în api/lib/auth.php, fără nicio
+ * schimbare de nume, de semnătură sau de comportament: rutele din routes/ nu se
+ * încarcă una pe alta (index.php cere doar fișierul rutei potrivite), iar de
+ * regula asta are nevoie acum și înscrierea de pe site, din routes/auth.php.
+ * O a doua copie a unei reguli de unicitate se depărtează de prima exact când
+ * contează. Apelurile de mai jos merg neschimbate — lib/ se încarcă mereu.
+ */
 
 function route_users_list(): void
 {
     require_role('admin');
+
+    // Coloanele de recomandare se cer numai dacă migrarea 007 a fost rulată.
+    // Cerute necondiționat, o instalare pe care fișierele au fost urcate
+    // înaintea importului din phpMyAdmin ar primi 1054 „Unknown column" — adică
+    // pagina Conturi ar rămâne goală până la import. Așa, ea merge exact ca
+    // înainte, doar fără coloana de recomandări.
+    $areReferral = referral_supported();
+    $extra = $areReferral
+        ? ', u.referral_code, u.referred_by, u.referred_at, r.name AS referred_by_name'
+        : '';
+    $join = $areReferral ? ' LEFT JOIN users r ON r.id = u.referred_by' : '';
+
     $rows = all(
-        'SELECT id, username, name, email, phone, address, role, customer_name, active,
-                must_change_password, password_changed_at, last_login, created_at, is_system
-           FROM users ORDER BY role, name'
+        'SELECT u.id, u.username, u.name, u.email, u.phone, u.address, u.role, u.customer_name,
+                u.active, u.must_change_password, u.password_changed_at, u.last_login,
+                u.created_at, u.is_system' . $extra . '
+           FROM users u' . $join . '
+          ORDER BY u.role, u.name'
     );
+    // `referral` spune paginii dacă migrarea 007 a fost rulată. Fără steagul
+    // ăsta, ea n-ar avea cum deosebi „niciun cont n-are încă un cod" de
+    // „coloanele nici nu există" — și ar oferi un buton care s-ar lovi de 503.
     // public_user() nu include niciodată password_hash.
-    json_out(['users' => array_map(static function ($r) {
+    json_out(['referral' => $areReferral, 'users' => array_map(static function ($r) {
         $u                = public_user($r);
         $u['phone']       = $r['phone'];
         $u['active']      = (bool) $r['active'];
         $u['lastLogin']   = $r['last_login'];
+        // Recomandări: codul propriu, linkul gata de trimis și cine l-a adus.
+        // `referralCode` vine deja din public_user(); aici se adaugă restul.
+        $u['referralLink']   = referral_link($r['referral_code'] ?? null);
+        $u['referredByName'] = $r['referred_by_name'] ?? null;
+        $u['referredAt']     = $r['referred_at'] ?? null;
         // Momentul în care omul și-a schimbat SINGUR parola — NULL cât timp pe
         // cont e cea pusă de administrator. Pagina arăta aici `last_login` și
         // scria „parolă schimbată" despre un cont care doar se autentificase.
@@ -83,8 +88,23 @@ function route_users_create(): void
     if (!preg_match('/^[a-z0-9._-]{3,64}$/', $username)) {
         fail('Utilizatorul poate conține doar litere mici, cifre, punct, minus și underscore (3–64).', 422, 'bad_username');
     }
-    if (!in_array($role, ROLES, true)) {
-        fail('Rol necunoscut. Valori permise: ' . implode(', ', ROLES), 422, 'bad_role');
+    if (reserved_username($username)) {
+        fail('Acest nume de utilizator este rezervat. Alege altul.', 422, 'bad_username');
+    }
+    // Lista se ia din schemă, nu din constantă: între urcarea fișierelor și
+    // importul migrării din phpMyAdmin, codul cunoaște roluri pe care coloana
+    // încă nu le încape, iar MySQL le-ar refuza cu „1265 Data truncated" — adică
+    // „Eroare internă." în loc de o vorbă despre migrarea neimportată.
+    $permise = roles_available(ROLES);
+    if (!in_array($role, $permise, true)) {
+        fail(
+            in_array($role, ROLES, true)
+                ? 'Rolul „' . $role . '” cere migrarea sql/007_update_roles_referral.sql, care nu a fost '
+                  . 'încă importată în baza de date. Valori permise acum: ' . implode(', ', $permise)
+                : 'Rol necunoscut. Valori permise: ' . implode(', ', $permise),
+            422,
+            'bad_role'
+        );
     }
     if (strlen($password) < 8) {
         fail('Parola trebuie să aibă cel puțin 8 caractere.', 422, 'weak_password');
@@ -104,14 +124,29 @@ function route_users_create(): void
         'INSERT INTO users (username, password_hash, name, email, phone, role, customer_name, must_change_password)
          VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
         [
-            $username, password_hash($password, PASSWORD_DEFAULT), $name,
-            $email ?: null, trim((string) ($b['phone'] ?? '')) ?: null,
-            $role, trim((string) ($b['customerName'] ?? '')) ?: null,
+            $username, password_hash($password, PASSWORD_DEFAULT), text_field($name, 'Numele', 128, true),
+            $email ?: null, text_field($b['phone'] ?? '', 'Telefonul', 32) ?: null,
+            $role, text_field($b['customerName'] ?? '', 'Numele firmei', 160) ?: null,
         ],
         'Există deja un cont cu acest utilizator.',
         'username_taken'
     );
     $id = (int) db()->lastInsertId();
+
+    // Codul de recomandare se dă AUTOMAT doar agenților de vânzări: la ei el e
+    // unealta de lucru, nu un accesoriu. Restul conturilor — clienți, angajați,
+    // manageri — pornesc fără cod, iar administratorul îl dă când chiar e
+    // nevoie, de la butonul din pagina Conturi (POST /users/{id}/referral).
+    //
+    // Regula asta ține numărul de coduri în frâu. Cu un cod pe fiecare cont,
+    // lista de recomandări devenea un dublet al listei de conturi, în care
+    // codurile care chiar aduc clienți nu se mai deosebeau de restul.
+    //
+    // Se scrie într-un UPDATE separat, după cont: o ciocnire de coduri — al
+    // doilea „Ion" din firmă — nu are voie să dea peste cap crearea contului.
+    if ($role === 'agent_vanzari') {
+        referral_assign($id, $name, $username);
+    }
 
     audit('user_create', 'user', (string) $id, $name . ' (' . $role . ')');
     json_out(['user' => public_user(one('SELECT * FROM users WHERE id = ?', [$id]))], 201);
@@ -147,6 +182,10 @@ function route_users_update(string $id): void
             if ($col === 'name' && $val === '') {
                 fail('Numele nu poate rămâne gol. Scrie numele afișat al contului.', 422, 'empty_name');
             }
+            // Lungimea coloanei, verificată înainte de UPDATE: peste ea ieșea
+            // „Eroare internă." (1406), nu un refuz care spune ce e prea lung.
+            $val = text_field($val, ['name' => 'Numele', 'email' => 'Adresa de e-mail', 'phone' => 'Telefonul', 'customer_name' => 'Numele firmei'][$col],
+                ['name' => 128, 'email' => 190, 'phone' => 32, 'customer_name' => 160][$col]);
             // Adresa se verifică numai când chiar se schimbă. Pagina Conturi
             // salvează la ieșirea din casetă, deci trimite câmpul și când nu
             // l-a atins nimeni; verificat necondiționat, un duplicat rămas în
@@ -160,8 +199,17 @@ function route_users_update(string $id): void
         }
     }
     if (array_key_exists('role', $b)) {
-        if (!in_array($b['role'], ROLES, true)) {
-            fail('Rol necunoscut.', 422, 'bad_role');
+        // Aceeași regulă ca la creare: ce încape în coloană, nu doar ce știe codul.
+        $permise = roles_available(ROLES);
+        if (!in_array($b['role'], $permise, true)) {
+            fail(
+                in_array($b['role'], ROLES, true)
+                    ? 'Rolul „' . $b['role'] . '” cere migrarea sql/007_update_roles_referral.sql, '
+                      . 'care nu a fost încă importată în baza de date.'
+                    : 'Rol necunoscut.',
+                422,
+                'bad_role'
+            );
         }
         // Fără asta, un admin își poate retrograda propriul cont și rămâne
         // instalarea fără niciun administrator.
@@ -170,6 +218,10 @@ function route_users_update(string $id): void
         }
         $sets[] = 'role = ?';
         $vals[] = $b['role'];
+        // Trecerea pe „agent de vânzări" e momentul firesc în care omul capătă
+        // codul: de aici încolo îi trebuie ca să lucreze. Se scrie după UPDATE,
+        // mai jos, ca să nu depindă de reușita lui.
+        $devineAgent = $b['role'] === 'agent_vanzari' && $target['role'] !== 'agent_vanzari';
     }
     if (array_key_exists('active', $b)) {
         if ($id === (int) $me['id'] && !$b['active']) {
@@ -189,6 +241,13 @@ function route_users_update(string $id): void
     $vals[] = $id;
     q('UPDATE users SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
     audit('user_update', 'user', (string) $id, $target['name']);
+
+    // Codul agentului, dacă tocmai a devenit agent și n-avea unul.
+    // referral_assign() nu atinge un cont care are deja cod, deci un agent
+    // retrogradat și repus nu-și pierde codul dat clienților.
+    if (!empty($devineAgent)) {
+        referral_assign($id, (string) $target['name'], (string) $target['username']);
+    }
 
     json_out(['user' => public_user(one('SELECT * FROM users WHERE id = ?', [$id]))]);
 }
@@ -264,4 +323,52 @@ function route_users_password(string $id): void
 
     audit('user_password_reset', 'user', (string) $id, $target['name']);
     json_out(['ok' => true]);
+}
+
+/**
+ * POST /users/{id}/referral — dă un cod de recomandare unui cont care n-are.
+ *
+ * Conturile făcute înainte de migrarea 007 au `referral_code` NULL: nu li s-a
+ * generat nimic, fiindcă nu exista coloana. Ele NU se ating în masă la import —
+ * un UPDATE peste tot tabelul ar fi exact genul de operație care merge prost o
+ * singură dată și strică date pe care nimeni nu le mai poate reface. Codul se
+ * dă unul câte unul, de la butonul din pagina Conturi, când chiar e nevoie.
+ *
+ * Nu schimbă rolul, parola, starea sau orice altceva de pe cont: scrie o
+ * singură coloană, și numai dacă era goală. Chemată a doua oară pe același cont,
+ * întoarce codul existent fără să-l schimbe — un cod deja dat pe la clienți nu
+ * are voie să se schimbe sub picioarele lor.
+ */
+function route_users_referral(string $id): void
+{
+    require_role('admin');
+    $id = (int) $id;
+
+    if (!referral_supported()) {
+        fail('Recomandările nu sunt disponibile: rulează întâi sql/007_update_roles_referral.sql.',
+            503, 'referral_unavailable');
+    }
+
+    $target = one('SELECT id, name, username, referral_code, is_system FROM users WHERE id = ?', [$id]);
+    if (!$target) {
+        fail('Contul nu există.', 404, 'not_found');
+    }
+    // Contul comun „panou" al tabletelor nu recomandă pe nimeni.
+    if ((int) $target['is_system'] === 1) {
+        fail('Contul „panou” este de sistem și nu poate avea cod de recomandare.', 422, 'system_account');
+    }
+
+    $existent = trim((string) ($target['referral_code'] ?? ''));
+    if ($existent !== '') {
+        json_out(['referralCode' => $existent, 'referralLink' => referral_link($existent), 'created' => false]);
+    }
+
+    $cod = referral_assign($id, (string) $target['name'], (string) $target['username']);
+    if ($cod === null) {
+        fail('Nu am putut construi un cod din numele „' . $target['name'] . '”. '
+            . 'Scrie un nume care începe cu litere, apoi încearcă din nou.', 422, 'referral_failed');
+    }
+
+    audit('user_referral_code', 'user', (string) $id, $target['name'] . ' → ' . $cod);
+    json_out(['referralCode' => $cod, 'referralLink' => referral_link($cod), 'created' => true]);
 }

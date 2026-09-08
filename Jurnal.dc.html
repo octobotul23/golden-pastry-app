@@ -237,15 +237,25 @@ class Component extends DCLogic {
     gp.me()
       .then((user) => {
         if (user) this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
+        return user;
       })
-      .catch(() => this.setState({ loaded: true }))
+      .catch(() => { this.setState({ loaded: true }); return null; })
       // gp.poll() aduce prima pagină imediat și o reia din cinci în cinci
       // secunde. Față de un cronometru propriu, se oprește cât timp fila e
       // ascunsă și nu lasă două ture să se suprapună, deci un răspuns întârziat
       // nu mai poate pune pe ecran o listă mai veche decât cea deja afișată.
       // Pornește abia după ce știm cine e conectat, ca administratorului să nu
       // i se arate o clipă ecranul „nu ai acces la jurnal”.
-      .then(() => { this.stopPoll = gp.poll(() => this.pull(1), 5000); });
+      // …și doar pentru administrator: pentru oricine altcineva serverul
+      // răspunde 403 la /log, iar ecranul „nu ai acces" nu are ce
+      // reîmprospăta — pornea totuși, cu un refuz la fiecare 5 secunde.
+      // Utilizatorul vine din promisiune, nu din `this.state`: setState-ul de
+      // mai sus e amânat de React, deci aici starea ar fi încă goală.
+      .then((user) => {
+        if (!user) gp.toLogin();
+        else if (user.role === "admin") this.stopPoll = gp.poll(() => this.pull(1), 5000);
+        else this.setState({ loaded: true });
+      });
     this.onStore = () => this.pull(1);
     window.addEventListener("storage", this.onStore);
   }
@@ -280,7 +290,7 @@ class Component extends DCLogic {
 
         const fresh = (r.entries || []).map((e) => ({
           id: e.id,
-          at: e.createdAt ? Date.parse(e.createdAt + 'Z') || 0 : 0,
+          at: gp.utc(e.createdAt),
           u: e.user || '—',
           name: e.user || 'Sistem',
           role: e.role || '',
@@ -366,7 +376,9 @@ class Component extends DCLogic {
           return {
             time: z(dt.getHours()) + ":" + z(dt.getMinutes()),
             name: e.name || e.u || "—",
-            role: rl === "admin" ? "admin" : rl === "client" ? "client" : rl === "angajat" ? "angajat" : "—",
+            // Rolurile noi (manager, agent_vanzari, din migrarea 007) se
+            // arată cu numele lor, nu cu o liniuță.
+            role: rl === "agent_vanzari" ? "agent vânzări" : (rl || "—"),
             roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
             page: ZLAB[e.page] || e.page || "—",
             pageCls: PCLS[e.page] || "h-badge",

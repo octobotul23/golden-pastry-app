@@ -237,7 +237,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
-<div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pf-fade .25s var(--h-ease-out)">
+<div class="{{ msgCls }}" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pf-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
 </div>
@@ -647,7 +647,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ frm.items }}" as="it" hint-placeholder-count="2">
 <div style="display:flex;gap:10px;align-items:center">
-<input class="h-input h-numeric" value="{{ it.q }}" onChange="{{ it.onQ }}" inputMode="numeric" style="width:84px;height:46px;font-size:16px;text-align:right">
+<input class="h-input h-numeric" value="{{ it.q }}" onChange="{{ it.onQ }}" inputMode="decimal" style="width:84px;height:46px;font-size:16px;text-align:right">
 <input class="h-input" value="{{ it.n }}" onChange="{{ it.onN }}" placeholder="Nume produs" style="flex:1;height:46px;font-size:16px">
 <select class="h-input" value="{{ it.variant }}" onChange="{{ it.onV }}" style="width:170px;height:46px;font-size:14px">
 <sc-for list="{{ variantOpts }}" as="v" hint-placeholder-count="2">
@@ -842,6 +842,12 @@ const refreshDays = () => {
 // pentru cazul în care `/lists` nu s-a încărcat încă.
 const SLOTS_OF = () => { const l = gp.slots(); return l.length ? l : ["08:00"]; };
 const CHANS_OF = () => { const l = gp.fulfillments(); return l.length ? l : ["Livrare"]; };
+// „Cu mașina" = orice mod care NU e în lista „Moduri fără mașină" din Setări
+// (`fulfillment_pickup`), exact regula după care serverul umple ruta șoferului
+// (GET /routes: fulfillment NOT IN pickup). Înainte pagina compara cu textul
+// fix „Livrare": un mod nou adăugat din Setări („Curier") ajungea pe ruta
+// șoferului, dar nu apărea în fila Rută a administratorului și nu cerea zonă.
+const CU_MASINA = (chan) => { const p = gp.pickupFulfillments(); return p.length ? p.indexOf(chan) < 0 : chan === "Livrare"; };
 const defaultSlot = () => SLOTS_OF()[0];
 const defaultChan = () => (CHANS_OF().indexOf("Livrare") >= 0 ? "Livrare" : CHANS_OF()[0]);
 // Zona implicită era „Centru", scrisă în cod. Zonele vin din Setări și acolo
@@ -877,7 +883,7 @@ const ST = {
 class Component extends DCLogic {
   state = {
     orders: [], view: "comenzi", search: "", fDay: "toate", fChan: "Toate", fStatus: "Toate",
-    form: null, confirm: null, msg: "", formErr: "", peek: null,
+    form: null, confirm: null, msg: "", msgBad: false, formErr: "", peek: null,
     rDay: TODAY, seq: {}, routeMsg: "", menu: false, requests: [], qf: "nou",
     // Autentificarea nu mai stă aici. Pagina are un singur lucru de făcut cu
     // ea: să întrebe serverul cine ești și, dacă nu ești nimeni, să te trimită
@@ -940,9 +946,9 @@ class Component extends DCLogic {
         // Fără sesiune, requireUser a plecat deja spre pagina de intrare.
         if (!user) return;
         this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
-        // Clientul are cont adevărat, doar că nu pe ușa asta: îi arătăm
-        // ecranul care i-o spune, nu o pagină goală.
-        if (user.role === "client") return;
+        // Doar administratorul vede panoul; ceilalți primesc ecranul de refuz
+        // și ceasul nu pornește pentru ei (bătea serverul din spatele lui).
+        if (!isAdmin({ role: user.role })) return;
         this.porneste();
         return Promise.all([this.pullOrders(), this.pullRequests()]);
       })
@@ -1034,7 +1040,12 @@ class Component extends DCLogic {
    */
   porneste() {
     if (this.reqTimer) return;
-    this.reqTimer = setInterval(() => this.tick(), 4000);
+    // gp.poll(): se oprește cât fila e ascunsă și nu lasă două ture să se
+    // suprapună. Cu setInterval, fila lăsată deschisă pe un al doilea ecran
+    // cerea toate comenzile (500, cu poziții) și toate cererile la fiecare 4
+    // secunde, zi și noapte, iar un răspuns întârziat putea pune pe ecran o
+    // listă mai veche decât cea deja afișată.
+    this.reqTimer = gp.poll(() => this.tick(), 4000);
     this.onReqStore = (e) => { if (!e || !e.key || e.key === QKEY) this.pullRequests(); };
     window.addEventListener("storage", this.onReqStore);
   }
@@ -1150,7 +1161,7 @@ class Component extends DCLogic {
     // primește șoferul, deci fără filtrul ăsta administrarea ar planifica
     // opriri pe care șoferul nu le vede — și ar număra altfel decât el.
     const all = this.state.orders.filter(o =>
-      o.chan === "Livrare" && o.date === day && o.status !== gp.cancelled());
+      CU_MASINA(o.chan) && o.date === day && o.status !== gp.cancelled());
     const order = this.state.seq[day] || [];
     const rank = {};
     order.forEach((id, i) => { rank[id] = i; });
@@ -1180,7 +1191,16 @@ class Component extends DCLogic {
     // ștergea, cu `route_seq = NULL`, ordinea zilei aceleia.
     gp.setRouteOrder(day, ids)
       .then(() => this.pullOrders())
-      .catch((e) => this.setState({ routeMsg: "Ordinea nu a putut fi salvată: " + e.message }));
+      .catch((e) => {
+        // Ordinea de pe ecran e cea optimistă, pusă înainte de răspuns. Dacă
+        // serverul a refuzat, o luăm înapoi de la el: `__ordSeen` pe null
+        // forțează pullOrders() să rescrie starea chiar dacă lista de comenzi
+        // n-a schimbat nimic. Altfel adminul rămânea cu o ordine pe care
+        // șoferul n-o are, sub un mesaj care zice că „o vede imediat".
+        this.__ordSeen = null;
+        this.setState({ routeMsg: "Ordinea nu a putut fi salvată: " + e.message });
+        this.pullOrders();
+      });
   }
 
   optimize(day) {
@@ -1216,7 +1236,7 @@ class Component extends DCLogic {
   /** Închide formularul și reîncarcă din sursa de adevăr: serverul. */
   commit(msg) {
     this.__saving = false;
-    this.setState({ msg: msg || "", form: null, confirm: null, formErr: "", saving: false });
+    this.setState({ msg: msg || "", msgBad: false, form: null, confirm: null, formErr: "", saving: false });
     this.__ordSeen = null;
     this.__reqSeen = null;
     return Promise.all([this.pullOrders(), this.pullRequests()]);
@@ -1391,7 +1411,7 @@ class Component extends DCLogic {
       }
       // O comandă de livrare fără zonă ajunge pe hartă peste depozit, fiindcă
       // nu are coordonate. Mai bine se cere acum decât să iasă șoferul greșit.
-      if (f.chan === "Livrare" && !String(f.zone || "").trim()) {
+      if (CU_MASINA(f.chan) && !String(f.zone || "").trim()) {
         return set({ formErr: "Alege zona: fără ea, oprirea nu apare corect pe ruta șoferului." });
       }
 
@@ -1479,11 +1499,12 @@ class Component extends DCLogic {
           return this.pullOrders();
         })
         .then(() => this.setState({
+          msgBad: false,
           msg: next
             ? o.ref + " a fost marcată URGENT — apare prima în laborator."
             : "Urgența a fost anulată pentru " + o.ref + "."
         }))
-        .catch((e) => this.setState({ msg: e.message }));
+        .catch((e) => this.setState({ msg: e.message, msgBad: true }));
     };
 
     const askDelete = (o) => set({ confirm: { id: o.id, ref: o.ref, cust: o.cust, when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : "") } });
@@ -1527,13 +1548,21 @@ class Component extends DCLogic {
     const lg = this.legs(stopList);
     const rTotal = lg.total;
     const SPEED = 22, SERVICE = 6;
-    const mins = (t) => parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3), 10);
+    // O oprire fără interval (serverul permite slot gol) dădea NaN, iar
+    // ceasul rămânea NaN pentru ea și pentru toate opririle de după: „NaN:NaN"
+    // pe toată ruta. Fără interval, plecarea se ia de la 08:00, iar oprirea
+    // nu poate fi „întârziată" față de o oră pe care nimeni n-a promis-o.
+    const mins = (t) => {
+      const m = /^(\d{1,2}):(\d{2})/.exec(String(t || ""));
+      return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
+    };
+    const minsOr = (t, alt) => { const v = mins(t); return isNaN(v) ? alt : v; };
     const hhmm = (m) => {
       const x = ((Math.round(m) % 1440) + 1440) % 1440;
       return String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0");
     };
     const drive = (d) => d / SPEED * 60;
-    let clock = stopList.length ? mins(stopList[0].slot) - drive(lg.legs[0]) : 0;
+    let clock = stopList.length ? minsOr(stopList[0].slot, 8 * 60) - drive(lg.legs[0]) : 0;
     const rDepart = stopList.length ? hhmm(clock) : "—";
     let warnCount = 0;
     const move = (i, dir) => {
@@ -1547,7 +1576,7 @@ class Component extends DCLogic {
       clock += drive(lg.legs[i]);
       const eta = hhmm(clock);
       clock += SERVICE;
-      const late = mins(eta) > mins(o.slot) + 10;
+      const late = !isNaN(mins(o.slot)) && mins(eta) > mins(o.slot) + 10;
       const outOfOrder = i > 0 && o.slot < stopList[i - 1].slot;
       if (late || outOfOrder) warnCount++;
       return {
@@ -1609,8 +1638,8 @@ class Component extends DCLogic {
           this.__reqSeen = null;
           return this.pullRequests();
         })
-        .then(() => set({ msg: msg }))
-        .catch((e) => set({ msg: e.message }));
+        .then(() => set({ msg: msg, msgBad: false }))
+        .catch((e) => set({ msg: e.message, msgBad: true }));
 
     const rejectReq = (r) => trimiteReq(r, 'reject', "Cererea de la " + cineE(r) + " a fost refuzată.");
     // Refuzul dat din greșeală se poate întoarce: serverul readuce cererea la
@@ -1703,8 +1732,12 @@ class Component extends DCLogic {
                     isFinite(lei) && lei > 0 ? lei.toFixed(2).replace(".", ",") + " RON" : ""]
               .filter(Boolean).join(" · ");
           })(),
-          catalog: r.catalog ? "vrea catalogul PDF" : "",
-          status: st === "nou" ? "Nouă" : st === "acceptata" ? "Acceptată" + (r.ref ? " · " + r.ref : "") : "Refuzată",
+          // Dorința de catalog vine în mențiuni (textul „vrea catalogul“), nu ca
+          // un câmp propriu; iar referința comenzii născute din cerere e
+          // `orderRef`, cum o dă gp.toPageRequest — `r.ref` nu exista, deci
+          // „Acceptată · #1042" nu se arăta niciodată.
+          catalog: /catalogul pdf/i.test(String(r.note || "")) ? "vrea catalogul" : "",
+          status: st === "nou" ? "Nouă" : st === "acceptata" ? "Acceptată" + (r.orderRef ? " · " + r.orderRef : "") : "Refuzată",
           statusCls: st === "nou" ? "h-badge h-badge--warning" : st === "acceptata" ? "h-badge h-badge--success" : "h-badge h-badge--danger",
           cardBg: st === "nou" ? "var(--h-warning-soft)" : "var(--h-bg-surface)",
           isNew: st === "nou",
@@ -1741,13 +1774,16 @@ class Component extends DCLogic {
       onSearch: (e) => set({ search: e.target.value }),
       onNew: () => openForm(null),
       msg: S.msg,
-      onMsgClose: () => set({ msg: "" }),
+      // Refuzul serverului se arăta în aceeași casetă verde ca succesul —
+      // „Nu s-a putut salva" cu bifă verde. Culoarea spune ce s-a întâmplat.
+      msgCls: S.msgBad ? "h-alert h-alert--danger" : "h-alert h-alert--success",
+      onMsgClose: () => set({ msg: "", msgBad: false }),
 
       stats: [
         { label: "Comenzi azi", value: String(today.length), hint: gp.qtyLabel(today.reduce((a, o) => a + this.qty(o), 0)) + " bucăți de făcut" },
         { label: "Urgente", value: String(S.orders.filter(o => o.urgent && o.status !== gp.done()).length), hint: openCount + " comenzi în lucru" },
         { label: "Total 7 zile", value: String(week.length), hint: gp.qtyLabel(week.reduce((a, o) => a + this.qty(o), 0)) + " bucăți" },
-        { label: "Livrări", value: String(S.orders.filter(o => o.chan === "Livrare").length), hint: S.orders.filter(o => o.chan === "Angro").length + " angro · " + S.orders.filter(o => o.chan === "Ridicare").length + " ridicări" }
+        { label: "Livrări", value: String(S.orders.filter(o => CU_MASINA(o.chan)).length), hint: gp.pickupFulfillments().map(m => S.orders.filter(o => o.chan === m).length + " " + m.toLowerCase()).join(" · ") || "fără moduri fără mașină" }
       ],
 
       fDay: S.fDay,
@@ -1783,7 +1819,7 @@ class Component extends DCLogic {
         set({ seq, routeMsg: "Ordinea manuală a fost ștearsă — revine la ordinea intervalelor." });
         gp.setRouteOrder(S.rDay, [])
           .then(() => this.pullOrders())
-          .catch((e) => set({ routeMsg: "Nu am putut șterge ordinea: " + e.message }));
+          .catch((e) => { this.__ordSeen = null; set({ routeMsg: "Nu am putut șterge ordinea: " + e.message }); this.pullOrders(); });
       },
       stops, plot, plotLines,
       routeCount: String(stops.length),
@@ -1862,7 +1898,7 @@ class Component extends DCLogic {
       zoneOpts: [{ v: "", l: "— fără zonă —" }]
         .concat((ZONES_OF().indexOf(f.zone) >= 0 || !f.zone ? ZONES_OF() : [f.zone].concat(ZONES_OF()))
           .map(z => ({ v: z, l: z }))),
-      isDelivery: f.chan === "Livrare",
+      isDelivery: CU_MASINA(f.chan),
       onAddItem: () => set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.concat([{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]) }) })),
       onSave: save,
       onCancel: () => { this.__saving = false; set({ form: null, formErr: "", saving: false }); },
@@ -1878,7 +1914,7 @@ class Component extends DCLogic {
         chan: pk ? pk.chan : "", chanCls: pk ? CH(pk.chan) : "h-badge",
         status: pk ? pk.status : "", statusCls: pk ? (ST[pk.status] || "h-badge") : "h-badge",
         urgent: !!(pk && pk.urgent), note: pk ? pk.note || "" : "",
-        addr: pk && pk.chan === "Livrare" ? (pk.addr || "adresă necompletată") + (pk.zone ? " · " + pk.zone : "") : "",
+        addr: pk && CU_MASINA(pk.chan) ? (pk.addr || "adresă necompletată") + (pk.zone ? " · " + pk.zone : "") : "",
         qty: pk ? gp.qtyLabel(this.qty(pk)) : "0",
         items: pk ? pk.items.map(i => ({ q: i.q, n: i.n })) : []
       },
@@ -1928,7 +1964,7 @@ class Component extends DCLogic {
         // Comenzile nu se șterg, se anulează: istoricul trebuie să rămână.
         gp.patch('/orders/' + id, { status: gp.cancelled() })
           .then(() => this.commit("Comanda " + (gone ? gone.ref : "") + " a fost anulată."))
-          .catch((e) => this.setState({ msg: e.message, confirm: null }));
+          .catch((e) => this.setState({ msg: e.message, msgBad: true, confirm: null }));
       }
     };
   }

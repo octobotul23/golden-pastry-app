@@ -49,10 +49,11 @@ Apoi importă structura, în ordine:
 
 A doua rulare adaugă cele 22 de produse reale și setările implicite.
 
-`002_seed.sql` se poate rula ori de câte ori e nevoie: adaugă ce lipsește și
-reîmprospătează datele produselor, dar **nu** șterge comenzi și **nu**
-suprascrie setările pe care le-ai configurat deja din panou (tokenul de
-WhatsApp, adresa de notificare).
+`002_seed.sql` se poate rula ori de câte ori e nevoie: e numai `INSERT IGNORE`
+— adaugă ce lipsește și lasă neatins ce există. **Nu** șterge comenzi, **nu**
+rescrie produsele editate din pagina Produse și **nu** suprascrie setările pe
+care le-ai configurat deja din panou (tokenul de WhatsApp, adresa de
+notificare).
 
 ## 4. Pune proiectul unde îl vede Laragon
 

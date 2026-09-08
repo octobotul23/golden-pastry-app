@@ -1030,6 +1030,18 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
+    // Codul de recomandare, dacă omul a ajuns aici pe un link „…/?ref=ana".
+    // Se citește ÎNAINTE de orice altceva, fiindcă gp.referralCode() curăță și
+    // adresa: parametrul n-are de ce să rămână în istoricul browserului și să
+    // plece mai departe ca „referrer" către alte site-uri — același tratament
+    // pe care îl primesc deja „?parola=" și „?next=" în Intrare.dc.html.
+    //
+    // Codul rămâne în sessionStorage, deci supraviețuiește plimbării prin
+    // catalog și e găsit de formularul de cont nou, pe pagina de intrare.
+    // Funcția nu aruncă niciodată: pe un browser cu stocarea blocată se pierde
+    // recomandarea, nu magazinul.
+    try { gp.referralCode(); } catch (e) { /* fără recomandare — mergem mai departe */ }
+
     this.pullCatalog();
     this.pullAuth();
     this.pullContact();
@@ -1995,9 +2007,12 @@ class Component extends DCLogic {
         })
           .then(() => {
             this.__trimit = false;
-            return this.setState(mine
-              ? { sent: true, sending: false, sendErr: '', qty: {} }
-              : { sent: true, sending: false, sendErr: '' });
+            // Coșul se golește pentru oricine a trimis, nu doar pentru clientul
+            // cu cont: cererea e la noi, iar un coș plin sub „Mulțumim" cu
+            // butonul aprins la loc însemna aceeași cerere trimisă a doua oară
+            // la următoarea atingere. Câmpurile de contact rămân completate —
+            // omul vrea uneori să mai comande ceva, nu să-și rescrie telefonul.
+            return this.setState({ sent: true, sending: false, sendErr: '', qty: {} });
           })
           .catch((e) => {
             // Refuzul aprinde butonul la loc: cererea completată trebuie să

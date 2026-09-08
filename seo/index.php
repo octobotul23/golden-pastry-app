@@ -245,7 +245,11 @@ if ($prods) {
     }
 }
 
-$ldJson = json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+// Fără JSON_UNESCAPED_SLASHES: textul stă într-un <script>, iar un „</script>"
+// dintr-o denumire de produs (scrisă de administrator, dar servită fiecărui
+// vizitator) ar închide blocul și ar injecta HTML în pagină. Cu „/" scris ca
+// „\/", secvența nu mai poate apărea. JSON-ul rămâne perfect valid.
+$ldJson = json_encode($ld, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
 /* ------------------------------------------------------------- antetul -- */
 

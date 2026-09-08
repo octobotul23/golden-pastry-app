@@ -117,10 +117,64 @@ function require_role(string ...$roles): array
     return $u;
 }
 
+/**
+ * Rolurile care înseamnă „personal", adică oricine lucrează în firmă.
+ *
+ * Ținute într-o constantă, nu scrise în require_staff(): lista a crescut o dată
+ * și va mai crește, iar un rol nou trebuie adăugat într-un singur loc, nu
+ * căutat prin cod. `client` NU e pe listă și nu are ce căuta pe ea.
+ *
+ * Atenție: „personal" nu înseamnă „administrator". Rutele care cer drepturi
+ * depline — conturi, catalog, setări, jurnal, acceptarea cererilor de pe site,
+ * ordinea opririlor pe rută — folosesc mai departe require_role('admin') și
+ * rămân închise pentru manager și pentru agentul de vânzări, exact cum sunt
+ * pentru angajat. Nimic din ce era permis până acum nu s-a lărgit.
+ */
+const GP_STAFF_ROLES = ['admin', 'angajat', 'manager', 'agent_vanzari'];
+
 /** Scurtătură pentru personalul intern. */
 function require_staff(): array
 {
-    return require_role('admin', 'angajat');
+    return require_role(...GP_STAFF_ROLES);
+}
+
+/**
+ * Rolurile pe care le acceptă CHIAR baza de date, acum.
+ *
+ * `ROLES` din api/routes/users.php spune ce știe codul; ENUM-ul coloanei
+ * `users.role` spune ce încape în rând. Cele două se despart într-o fereastră
+ * reală: pe cPanel fișierele se urcă întâi și abia apoi se importă SQL-ul din
+ * phpMyAdmin. În intervalul acela, un rol nou trecea de verificarea din PHP și
+ * se lovea de MySQL cu „1265 Data truncated for column 'role'" — adică
+ * „Eroare internă." în fața administratorului, fără nicio vorbă despre migrarea
+ * neimportată.
+ *
+ * Citim lista adevărată o dată pe cerere și o intersectăm cu ce știe codul.
+ * Dacă interogarea nu merge, ne întoarcem la lista din cod: o poartă care se
+ * închide singură ar fi mai rea decât eroarea pe care o evităm.
+ *
+ * @param string[] $cunoscute rolurile pe care le știe codul
+ * @return string[]
+ */
+function roles_available(array $cunoscute): array
+{
+    static $inBaza = null;
+    if ($inBaza === null) {
+        try {
+            $tip = (string) scalar(
+                "SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'
+                    AND COLUMN_NAME = 'role'"
+            );
+            preg_match_all("/'([^']+)'/", $tip, $m);
+            $inBaza = $m[1] ?: [];
+        } catch (Throwable $e) {
+            error_log('[gp] nu pot citi rolurile din schemă: ' . $e->getMessage());
+            $inBaza = [];
+        }
+    }
+    // Lista goală înseamnă „n-am putut afla", nu „niciun rol permis".
+    return $inBaza ? array_values(array_intersect($cunoscute, $inBaza)) : $cunoscute;
 }
 
 /* ---------------------------------------------------------------- CSRF -- */
@@ -147,10 +201,15 @@ function require_staff(): array
  * intri în contul LUI. Cere ca atacatorul să aibă deja un cont valid aici,
  * iar paguba e că lucrezi în sesiunea lui, nu că ajunge el în a ta. Față de
  * blocarea reală de mai sus, schimbul merită.
+ *
+ * `/auth/register` intră pe aceeași listă din motivul cel mai simplu cu putință:
+ * cine își face cont NU are încă sesiune, deci nu are de unde lua un token.
+ * Ruta nu e totuși descoperită: are prag propriu pe conexiune
+ * (register_rate_limited) și scrie rolul fix, nu-l citește din cerere.
  */
 function csrf_exempt(string $path): bool
 {
-    return in_array($path, ['/auth/login', '/auth/logout', '/auth/panel'], true);
+    return in_array($path, ['/auth/login', '/auth/logout', '/auth/panel', '/auth/register'], true);
 }
 
 function check_csrf(string $path = ''): void
@@ -192,10 +251,16 @@ function login_rate_limited(string $ip, string $username = '', ?int $maxPerUser 
     $window = (int) config('login_window_min');
 
     if ($username !== '') {
+        // Pe utilizator ȘI pe conexiune. Numărat pe utilizator indiferent de
+        // IP, pragul era o armă: oricine știa numele contului de administrator
+        // îl închidea de oriunde cu opt parole greșite la fiecare sfert de oră
+        // — la nesfârșit, fără să știe parola. Acum greșelile unui străin îl
+        // opresc doar pe străin; ghicirea de pe multe adrese o oprește pragul
+        // pe IP de mai jos și costul hash-ului, nu blocarea contului.
         $perUser = (int) scalar(
             'SELECT COUNT(*) FROM login_attempts
-              WHERE username = ? AND ok = 0 AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
-            [$username, $window]
+              WHERE username = ? AND ip = ? AND ok = 0 AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
+            [$username, $ip, $window]
         );
         if ($perUser >= ($maxPerUser ?? (int) config('max_login_attempts'))) {
             return true;
@@ -208,6 +273,40 @@ function login_rate_limited(string $ip, string $username = '', ?int $maxPerUser 
         [$ip, $window]
     );
     return $perIp >= (int) config('max_login_attempts_ip');
+}
+
+/**
+ * Contul e blocat pentru ACEASTĂ conexiune?
+ *
+ * Blocat înseamnă: cel puțin `lock_account_after` greșeli de pe același IP
+ * în ultimele `lock_window_min` minute, iar ultima dintre ele mai nouă de
+ * `lock_minutes`. Fereastra e mai lungă decât cea a limitării (15 minute),
+ * altfel blocarea n-ar apuca să se declanșeze niciodată — limitarea răspunde
+ * 429 la a opta greșeală dintr-un sfert de oră, înainte de a zecea. Rostul ei
+ * e ghicirea răbdătoare, întinsă peste mai multe ferestre, de pe aceeași
+ * adresă. O intrare reușită șterge greșelile (record_attempt), deci și
+ * blocarea; la fel resetarea parolei (clear_attempts).
+ */
+function login_locked(string $ip, string $username): bool
+{
+    $window = (int) config('lock_window_min', 60);
+    $ultima = scalar(
+        'SELECT MAX(created_at) FROM login_attempts
+          WHERE username = ? AND ip = ? AND ok = 0
+            AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
+        [$username, $ip, $window]
+    );
+    if ($ultima === null) {
+        return false;
+    }
+    $n = (int) scalar(
+        'SELECT COUNT(*) FROM login_attempts
+          WHERE username = ? AND ip = ? AND ok = 0
+            AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
+        [$username, $ip, $window]
+    );
+    return $n >= (int) config('lock_account_after')
+        && strtotime($ultima . ' UTC') + 60 * (int) config('lock_minutes') > time();
 }
 
 /** Pseudo-utilizatorul sub care se numără cererile de parolă nouă. */
@@ -237,8 +336,85 @@ function forgot_rate_limited(string $ip, int $max): bool
     return $n >= $max;
 }
 
+/** Pseudo-utilizatorul sub care se numără înscrierile de pe site. */
+const GP_REGISTER_KEY = 'inscriere';
+
+/**
+ * Prea multe conturi făcute de pe ACEEAȘI conexiune?
+ *
+ * `/auth/register` e singura rută care scrie în `users` fără să ceară o sesiune.
+ * Fără prag, un script poate umple tabelul peste noapte cu mii de conturi — și,
+ * cu ele, jurnalul, lista din pagina Conturi și codurile de recomandare.
+ *
+ * Fereastra are cheie proprie — `register_window_min`, 60 de minute implicit —
+ * nu cea de 15 minute a autentificării: o înscriere nu e o încercare de parolă
+ * și pragul cerut e „zece pe oră". Numărătoarea e pe IP ȘI pe pseudo-utilizator,
+ * ca înscrierile de la o conexiune să nu consume plafonul altcuiva — greșeala pe
+ * care o făcea recuperarea parolei înainte de a fi reparată.
+ *
+ * Nu se cheamă niciodată record_attempt(..., true) cu cheia asta: o reușită ar
+ * șterge, prin regula din record_attempt(), încercările TUTUROR conexiunilor.
+ */
+function register_rate_limited(string $ip, int $max): bool
+{
+    $window = (int) config('register_window_min', 60);
+    $window = $window > 0 ? $window : 60;
+    $n = (int) scalar(
+        'SELECT COUNT(*) FROM login_attempts
+          WHERE ip = ? AND username = ? AND ok = 0
+            AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
+        [$ip, GP_REGISTER_KEY, $window]
+    );
+    return $n >= $max;
+}
+
+/** Pseudo-utilizatorul sub care se numără cererile de pe site fără cont. */
+const GP_REQUEST_KEY = 'cerere';
+
+/**
+ * Prea multe cereri de comandă de pe ACEEAȘI conexiune, fără cont?
+ *
+ * `POST /requests` e ruta prin care vizitatorul de pe site comandă — publică,
+ * fără parolă. Fiecare cerere scrie în bază, în jurnal și pornește anunțurile
+ * pe e-mail, WhatsApp și Telegram. Fără prag, un script trimitea cinci sute de
+ * cereri într-un minut: anunțuri fără oprire pe telefonul patiseriei, iar
+ * cererile adevărate împinse afară din panou, care arată doar ultimele 500.
+ *
+ * Pragul e larg — implicit 20 pe oră — fiindcă o cerere nu e o încercare de
+ * parolă: un client care își corectează comanda de trei ori nu trebuie oprit.
+ * Clienții cu cont nu trec pe aici: ei sunt identificați și oricum se văd
+ * în Conturi.
+ */
+function request_rate_limited(string $ip, int $max): bool
+{
+    $window = (int) config('register_window_min', 60);
+    $window = $window > 0 ? $window : 60;
+    $n = (int) scalar(
+        'SELECT COUNT(*) FROM login_attempts
+          WHERE ip = ? AND username = ? AND ok = 0
+            AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
+        [$ip, GP_REQUEST_KEY, $window]
+    );
+    return $n >= $max;
+}
+
 /** Pseudo-utilizatorul sub care se numără deschiderile panoului cu cod. */
 const GP_PANEL_KEY = 'panou';
+
+/**
+ * Numele sub care se numără limitările, care NU pot fi nume de cont.
+ *
+ * `record_attempt(..., true)` șterge greșelile contului care tocmai a intrat.
+ * Dacă cineva își făcea un cont chiar cu numele „inscriere" sau „recuperare",
+ * fiecare intrare reușită a lui ștergea contoarele TUTUROR înscrierilor și
+ * cererilor de parolă nouă de pe internet — și plafonul de zece pe oră
+ * dispărea. Așa că numele astea sunt refuzate la crearea contului, iar
+ * ștergerea de mai jos le ocolește oricum.
+ */
+function reserved_username(string $username): bool
+{
+    return in_array($username, [GP_FORGOT_KEY, GP_REGISTER_KEY, GP_REQUEST_KEY, GP_PANEL_KEY], true);
+}
 
 /**
  * Prea multe coduri greșite de panou de pe ACEEAȘI conexiune?
@@ -289,7 +465,7 @@ function record_attempt(string $ip, string $username, bool $ok): void
     //
     // Nu slăbește apărarea: cine nu știe parola nu poate ajunge niciodată aici
     // cu $ok = true, deci nu-și poate șterge propriile încercări.
-    if ($ok && $username !== '') {
+    if ($ok && $username !== '' && ($username === GP_PANEL_KEY || !reserved_username($username))) {
         // Contul „panou" e comun tuturor tabletelor și se numără pe conexiune
         // (vezi panel_rate_limited), deci și ștergerea rămâne pe conexiune.
         // Altfel prima tabletă care deschide dimineața ar șterge și greșelile
@@ -336,9 +512,29 @@ function do_login(string $username, string $password): array
         [$username]
     );
 
+    // Blocarea contului, verificată ÎNAINTE de parolă, cu același răspuns
+    // indiferent de parolă. Înainte se verifica abia după password_verify():
+    // parola greșită primea 401, cea corectă 423 — blocarea nu oprea ghicirea,
+    // ci confirma parola bună.
+    //
+    // Și e pe conexiune, ca limitarea de mai sus: se calculează din
+    // `login_attempts` pentru (utilizator, IP), nu din `users.locked_until`,
+    // care e o singură valoare pentru toată lumea. Cu ea, zece greșeli pe oră
+    // trimise de oriunde țineau contul închis douăzeci de minute, iar repetate
+    // ținându-l închis permanent — tot fără să știe nimeni parola.
+    if ($u && login_locked($ip, $username)) {
+        record_attempt($ip, $username, false);
+        fail('Contul este blocat temporar. Încearcă mai târziu.', 423, 'account_locked');
+    }
+
     // Verificăm parola chiar și când contul nu există, ca durata răspunsului
-    // să nu dezvăluie dacă utilizatorul este valid.
-    $hash = $u['password_hash'] ?? '$2y$10$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidinv';
+    // să nu dezvăluie dacă utilizatorul este valid. Hash-ul fals se face cu
+    // ACELAȘI cost ca al conturilor reale (PASSWORD_DEFAULT, o singură dată pe
+    // proces): unul scris fix, cu cost 10, dura de patru ori mai puțin decât
+    // un hash real cu cost 12, iar diferența spunea dacă utilizatorul există.
+    static $dummy = null;
+    $dummy ??= password_hash('parola-care-nu-exista', PASSWORD_DEFAULT);
+    $hash = $u['password_hash'] ?? $dummy;
     $ok   = password_verify($password, $hash);
 
     if (!$u || !$ok || (int) $u['active'] !== 1) {
@@ -362,24 +558,20 @@ function do_login(string $username, string $password): array
             //
             // Rândul curent e deja înregistrat de record_attempt() de mai sus,
             // deci numărătoarea îl include.
+            //
+            // `locked_until` nu se mai scrie: blocarea se citește din
+            // login_attempts, pe conexiune (vezi login_locked()). Contorul
+            // rămâne pentru pagina de diagnostic.
             $fails = (int) scalar(
                 'SELECT COUNT(*) FROM login_attempts
-                  WHERE username = ? AND ok = 0
+                  WHERE username = ? AND ip = ? AND ok = 0
                     AND created_at > (UTC_TIMESTAMP() - INTERVAL ? MINUTE)',
-                [$username, (int) config('lock_window_min', 60)]
+                [$username, $ip, (int) config('lock_window_min', 60)]
             );
-            $lock  = $fails >= (int) config('lock_account_after')
-                ? 'UTC_TIMESTAMP() + INTERVAL ' . (int) config('lock_minutes') . ' MINUTE'
-                : 'locked_until';
-            q("UPDATE users SET failed_logins = ?, locked_until = $lock WHERE id = ?", [$fails, $u['id']]);
+            q('UPDATE users SET failed_logins = ? WHERE id = ?', [$fails, $u['id']]);
         }
         // Mesaj identic în toate cazurile: nu spunem care parte a fost greșită.
         fail('Utilizator sau parolă greșită.', 401, 'bad_credentials');
-    }
-
-    if ($u['locked_until'] !== null && strtotime($u['locked_until'] . ' UTC') > time()) {
-        record_attempt($ip, $username, false);
-        fail('Contul este blocat temporar. Încearcă mai târziu.', 423, 'account_locked');
     }
 
     // Parola veche poate avea un cost mai mic decât cel curent al PHP-ului.
@@ -490,11 +682,75 @@ function audit(
         $userId    = $u ? (int) $u['id'] : null;
         $userLabel = $u ? $u['name'] : null;
     }
+    // Tăiate la lungimea coloanelor (entity_id VARCHAR(64), user_label 128):
+    // identificatorul vine uneori direct din adresa cererii, iar un segment
+    // lung (/orders/12<70 de caractere>) trecea de (int)-ul din rută, comanda
+    // se salva, tranzacția se închidea — și abia jurnalul pica cu 1406, adică
+    // 500 pentru o scriere reușită. Jurnalul nu are voie să strice cererea.
+    $entityId  = $entityId === null ? null : mb_substr($entityId, 0, 64);
+    $userLabel = $userLabel === null ? null : mb_substr($userLabel, 0, 128);
     q(
         'INSERT INTO audit_log (user_id, user_label, action, entity, entity_id, detail, ip)
          VALUES (?, ?, ?, ?, ?, ?, ?)',
         [$userId, $userLabel, $action, $entity, $entityId, $detail, client_ip()]
     );
+}
+
+/* ------------------------------------------------------- conturi -- */
+
+/*
+ * Mutată aici din api/routes/users.php. Motivul e structura routerului:
+ * index.php încarcă doar fișierul rutei potrivite, deci o funcție din
+ * routes/users.php nu există pentru routes/auth.php — iar de regula asta are
+ * nevoie și înscrierea de pe site, nu doar conturile făcute de administrator.
+ * Numele, semnătura și comportamentul sunt neschimbate; apelurile din
+ * routes/users.php merg mai departe fără nicio modificare.
+ */
+/**
+ * Verifică adresa unui cont înainte să fie scrisă.
+ *
+ * Formatul: singurul lucru pentru care aplicația folosește câmpul e „am uitat
+ * parola". O adresă strâmbă nu se plânge la salvare, dar face ca linkul să nu
+ * plece niciodată — send_email() aruncă, excepția e doar jurnalizată, iar omul
+ * primește același răspuns ca oricine. Adică o greșeală de tastare descoperită
+ * peste o lună, de cineva care nu mai poate intra în cont.
+ *
+ * Unicitatea: nu e curățenie, e securitate. Cu aceeași adresă pe două conturi,
+ * /auth/forgot nu mai poate spune care dintre ele a cerut parola nouă (vezi
+ * api/routes/auth.php), deci ori schimbă parola omului nepotrivit, ori — de
+ * când e reparat acolo — nu mai poate trimite nimic niciunuia. Ambele rele se
+ * opresc aici, la scriere: e singurul loc unde se mai știe cine a cerut ce.
+ *
+ * `$exceptId` e contul care se editează, ca adresa lui să nu se certe cu ea
+ * însăși.
+ */
+function check_user_email(string $email, ?int $exceptId = null, bool $public = false): void
+{
+    // Contul fără adresă e o stare normală: clienții luați la telefon n-au una.
+    if ($email === '') {
+        return;
+    }
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || mb_strlen($email) > 190) {
+        fail('Adresa de e-mail nu este validă.', 422, 'bad_email');
+    }
+    // Coloana e utf8mb4_unicode_ci, deci comparația nu se uită la majuscule:
+    // „Comenzi@Firma.ro" și „comenzi@firma.ro" duc la aceeași cutie poștală și
+    // trebuie să se ciocnească.
+    $alt = one('SELECT username FROM users WHERE email = ? AND id <> ? LIMIT 1', [$email, $exceptId ?? 0]);
+    if ($alt) {
+        // Pe ruta publică de înscriere mesajul NU numește contul: altfel oricine
+        // află, fără să fie autentificat, ce nume de utilizator stă în spatele
+        // unei adrese — exact informația de care are nevoie ca să-i ghicească
+        // parola sau să-i blocheze contul cu încercări greșite. Administratorul,
+        // din Conturi, primește numele: el trebuie să știe de pe care cont s-o
+        // șteargă.
+        if ($public) {
+            fail('Există deja un cont cu această adresă de e-mail. Dacă e al tău, folosește „Ți-ai uitat parola?”.', 409, 'email_taken');
+        }
+        fail('Adresa „' . $email . '” este deja trecută pe contul „' . $alt['username'] . '”. '
+            . 'Recuperarea parolei se face după adresă, deci două conturi nu pot avea aceeași adresă. '
+            . 'Șterge-o de pe celălalt cont sau folosește alta.', 409, 'email_taken');
+    }
 }
 
 /** Forma publică a unui utilizator — fără hash de parolă, niciodată. */
@@ -513,6 +769,12 @@ function public_user(array $u): array
         // paginile de administrare.
         'address'            => $u['address'] ?? null,
         'customerName'       => $u['customer_name'] ?? null,
+        // Codul de recomandare, când rândul primit îl conține. `?? null` nu e
+        // lene: funcția primește și rânduri din interogări cu listă fixă de
+        // coloane (current_user(), route_login()), și rânduri dintr-o bază pe
+        // care migrarea 007 încă n-a fost rulată. În ambele cazuri câmpul iese
+        // `null`, iar paginile nu desenează secțiunea — nimic nu se strică.
+        'referralCode'       => $u['referral_code'] ?? null,
         'mustChangePassword' => (bool) ($u['must_change_password'] ?? false),
     ];
 }

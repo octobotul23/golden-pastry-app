@@ -49,7 +49,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p style="margin:0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">Vezi doar comanda ta: în câte zile vine și, în ziua livrării, câte opriri mai sunt până la tine.</p>
 </div>
 <div style="display:grid;grid-template-columns:1fr;gap:8px">
-<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.10);color:var(--h-cream-100)">← Ești din echipă? Alege panoul</a>
+<a href="{{ staffHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.10);color:var(--h-cream-100)">← Ești din echipă? Alege panoul</a>
 </div>
 </div>
 </div>
@@ -237,6 +237,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<sc-if value="{{ loadErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:16px;padding:14px 16px">
+<p class="h-alert__title" style="margin:0;font-size:14px;line-height:1.5">{{ loadErrLine }}</p>
+</div>
+</sc-if>
+
 <sc-if value="{{ noOrder }}" hint-placeholder-val="{{ false }}">
 <div class="h-card" style="padding:26px 20px;border-radius:20px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center">
 <span style="font-family:var(--h-font-display);font-size:21px;font-weight:600">Nicio comandă activă</span>
@@ -275,6 +281,23 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 <sc-if value="{{ hasMorePast }}" hint-placeholder-val="{{ false }}">
 <button type="button" onClick="{{ showAllPast }}" style="min-height:46px;border:1px solid var(--h-line-strong);border-radius:14px;background:transparent;color:var(--h-fg-muted);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">{{ morePastLabel }}</button>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasReferral }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span class="h-eyebrow" style="font-size:12px">Recomandă Golden Pastry</span>
+<span class="h-badge h-badge--honey h-numeric" style="font-size:11px;margin-left:auto">{{ refCode }}</span>
+</div>
+<p style="margin:0;font-size:14px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">Trimite linkul de mai jos cuiva care ar comanda de la noi. Când își face cont pe el, rămâne trecut că a venit de la tine.</p>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<input class="h-input h-numeric" type="text" value="{{ refLink }}" readOnly="{{ true }}" onFocus="{{ onRefPick }}" style="flex:1;min-width:200px;height:46px;font-size:13px;background:var(--h-bg-sunk)">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onRefCopy }}" style="min-height:46px;font-size:14px;flex:none">Copiază</button>
+</div>
+<sc-if value="{{ refMsg }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;line-height:1.5;color:var(--h-fg-subtle)">{{ refMsg }}</span>
 </sc-if>
 </div>
 </sc-if>
@@ -350,9 +373,11 @@ const qty = (o) => (o.items || []).reduce((a, i) => a + gp.qty(i.q), 0);
 const logAct = () => {};
 
 class Component extends DCLogic {
-  state = { orders: [], requests: [], auth: null, users: [], pick: "", lu: "", lp: "", lerr: "", loaded: false,
+  state = { orders: [], requests: [], auth: null, users: [], pick: "", lu: "", lp: "", lerr: "", loaded: false, loadErr: "",
     // Istoricul: care comandă e desfăcută și dacă s-au cerut toate.
-    openPast: {}, pastAll: false };
+    openPast: {}, pastAll: false,
+    // Mesajul de sub linkul de recomandare („Link copiat.").
+    refMsg: "" };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -406,10 +431,22 @@ class Component extends DCLogic {
         if (!user) {
           return this.setState({ auth: null, orders: [], requests: [], loaded: true });
         }
+        // Cu parola provizorie, serverul refuză cu 403 ORICE altă cerere decât
+        // schimbarea parolei. Pagina asta o lăsa pe om înăuntru, cererea de
+        // comenzi pica tăcut și ecranul zicea „Nicio comandă activă" — fals.
+        // Îl ducem unde poate face singurul lucru care merge: Parola.
+        if (user.mustChangePassword === true) {
+          location.href = "Parola.dc.html";
+          return new Promise(() => {});
+        }
         this.setState({
           auth: { u: user.username, name: user.customerName || user.name, role: user.role,
             // Steagul spune ca pe cont e inca parola pusa de administrator.
-            temp: user.mustChangePassword === true }
+            temp: user.mustChangePassword === true,
+            // Codul de recomandare al contului, cu linkul gata de trimis.
+            // Lipsește pe o instalare fără migrarea 007 — atunci cardul de
+            // recomandare pur și simplu nu se desenează.
+            ref: user.referral || null }
         });
         // Cererile se cer numai pentru clienți: personalului serverul i le dă
         // pe toate ale laboratorului, iar aici ar însemna cinci sute de rânduri
@@ -428,10 +465,18 @@ class Component extends DCLogic {
         return Promise.all([gp.get('/orders'), cereri]).then(([r, cer]) => this.setState({
           orders: (r.orders || []).map(gp.toPageOrder),
           requests: cer,
-          loaded: true
+          loaded: true,
+          loadErr: ""
         }));
       })
-      .catch(() => this.setState({ loaded: true }));
+      // O eroare de rețea sau de server NU înseamnă „n-ai comenzi". Comenzile
+      // deja aduse rămân pe ecran, iar lipsa lor se spune ca ce e: nu s-au
+      // putut citi. Înainte, orice cădere a serverului arăta clientului „Nu
+      // găsim nicio comandă pe numele tău… sună-ne" — și omul chiar suna.
+      .catch((e) => this.setState({
+        loaded: true,
+        loadErr: e && e.isAuth ? "" : "Nu am putut citi comenzile acum (" + ((e && e.message) || "serverul nu răspunde") + "). Reîncerc automat."
+      }));
   }
 
   renderVals() {
@@ -452,7 +497,11 @@ class Component extends DCLogic {
     const custList = Array.from(new Set(S.orders.map(o => o.cust))).sort((a, b) => a.localeCompare(b, "ro"));
     const cust = isPreview ? (S.pick || custList[0] || "") : (custOf(auth ? auth.u : "") || (auth ? auth.name : ""));
 
-    const staffBlocked = role === "angajat";
+    // Orice cont care nu e de client (și nu e adminul în previzualizare) e
+    // personal: serverul îi dă TOATE comenzile laboratorului, iar ecranul
+    // ăsta le-ar arăta drept „Comanda ta". Înainte se oprea doar „angajat";
+    // managerul și agentul de vânzări vedeau comanda altcuiva ca pe a lor.
+    const staffBlocked = !!role && role !== "client" && role !== "admin";
     // Serverul îi trimite clientului exclusiv comenzile contului lui: filtrul
     // stă în interogarea SQL, pe `customer_id`. Filtrarea încă o dată, după
     // numele afișat, punea față în față numele viu al contului și numele
@@ -561,7 +610,11 @@ class Component extends DCLogic {
 
       try {
         const user = await gp.login(u, p);
-        if (user.role === "angajat") {
+        if (user.mustChangePassword === true) {
+          location.href = "Parola.dc.html";
+          return;
+        }
+        if (user.role !== "client" && user.role !== "admin") {
           await gp.logout();
           return set({ lerr: "Contul „" + user.name + "” e cont de angajat — folosește panourile de lucru." });
         }
@@ -579,18 +632,61 @@ class Component extends DCLogic {
       onLp: (e) => set({ lp: e.target.value, lerr: "" }),
       onKey: (e) => { if (e.key === "Enter") doLogin(); },
       onLogin: () => doLogin(),
+      // Pe clienti.goldenpastry.ro pagina de intrare ascunde modul de echipă
+      // (GP_SITE === "clienti"), deci legătura trebuie să ducă la lab., nu la
+      // intrarea de aici. Local, unde totul e pe o singură origine, rămâne
+      // Intrare.dc.html.
+      staffHref: (() => {
+        try {
+          const h = location.hostname;
+          if (window.GP_SITE && h && h !== "localhost" && !/^[0-9.]+$/.test(h) && !h.endsWith(".test")) {
+            return location.protocol + "//lab." + h.split(".").slice(-2).join(".") + "/";
+          }
+        } catch (e) { /* noop */ }
+        return "Intrare.dc.html";
+      })(),
       onLogout: () => {
         gp.logout().finally(() => set({ auth: null, orders: [] }));
       },
 
       clientName: cust || (auth ? auth.name : ""),
       mustChange: !!(auth && auth.temp),
+
+      /* --- recomandări --- */
+      // Cardul apare doar dacă serverul a trimis chiar un cod: pe o instalare
+      // fără migrarea 007 câmpul lipsește cu totul. În previzualizarea de
+      // administrator nu-l arătăm — acolo pagina imită contul altcuiva, iar
+      // linkul afișat ar fi al adminului, nu al clientului ales din listă.
+      hasReferral: !isPreview && !!(auth && auth.ref && auth.ref.code && auth.ref.link),
+      refCode: auth && auth.ref ? auth.ref.code : "",
+      refLink: auth && auth.ref ? auth.ref.link : "",
+      refMsg: S.refMsg || "",
+      // Un clic selectează tot linkul: e de copiat, nu de citit.
+      onRefPick: (e) => { try { e.target.select(); } catch (err) {} },
+      onRefCopy: () => {
+        const link = auth && auth.ref ? auth.ref.link : "";
+        if (!link) return;
+        // navigator.clipboard cere context sigur (HTTPS) și lipsește pe unele
+        // browsere de telefon. Când nu merge, nu tăcem: îi spunem omului să
+        // copieze din casetă, unde linkul e deja vizibil și selectat.
+        const gata = () => set({ refMsg: "Link copiat. Trimite-l pe WhatsApp sau pe mail." });
+        const pica = () => set({ refMsg: "Nu am putut copia singur — ține apăsat pe casetă și alege „Copiază”." });
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(link).then(gata).catch(pica);
+            return;
+          }
+        } catch (err) { /* cădem pe mesajul de mai jos */ }
+        pica();
+      },
+
       isPreview,
       pickCust: cust,
       custOpts: custList.map(c => ({ v: c, l: c })),
       onPickCust: (e) => set({ pick: e.target.value }),
 
-      hasOrder: !!first, noOrder: S.loaded && !first && !cereri.length,
+      hasOrder: !!first, noOrder: S.loaded && !first && !cereri.length && !S.loadErr,
+      loadErr: !!S.loadErr && !first, loadErrLine: S.loadErr,
 
       hasPending: !!cereri.length,
       pendingTitle: cereri.length === 1 ? "Comanda trimisă, în așteptare" : "Comenzi trimise, în așteptare",
@@ -636,7 +732,9 @@ class Component extends DCLogic {
       routeTotal: route.total || "",
 
       orderRef: first ? first.ref : "",
-      chanLabel: first ? (first.chan === "Ridicare" ? "Ridicare" : first.chan === "Livrare" ? "Livrare" : "Angro") : "",
+      // Tipul vine din lista configurabilă din Setări: se afișează cum e,
+      // nu tradus printr-o listă fixă („Angro" pentru orice necunoscut).
+      chanLabel: first ? (first.chan || "") : "",
       chanCls: first ? (CH[first.chan] || "h-badge") : "h-badge",
       showStatus,
       statusLabel: st ? st.l : "",

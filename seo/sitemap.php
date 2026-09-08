@@ -34,7 +34,12 @@ $pagini = [
 ];
 
 $e = static fn($s) => htmlspecialchars((string) $s, ENT_QUOTES | ENT_XML1, 'UTF-8');
-$azi = gmdate('Y-m-d');
+// Data ultimei modificări a paginii publice, nu ziua de azi: o hartă care zice
+// „modificat azi" la fiecare vizită învață motoarele s-o ignore.
+$azi = gmdate('Y-m-d', max(
+    @filemtime(__DIR__ . '/index.php') ?: 0,
+    @filemtime(__DIR__ . '/app.html') ?: 0
+) ?: time());
 
 echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
 echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";

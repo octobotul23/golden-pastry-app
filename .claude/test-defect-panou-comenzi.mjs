@@ -90,7 +90,9 @@ check('Administrare Comenzi.dc.html:1273', 'o cantitate refuzată oprește salva
   /\.filter\(i => i\.qty === null\)/.test(logica) && /cantitate validă/.test(logica),
   'nu am găsit oprirea salvării pentru cantități invalide');
 check('Administrare Comenzi.dc.html:1273', 'câmpul de cantitate cere tastatura numerică',
-  /value="\{\{ it\.q \}\}"[^>]*inputMode="numeric"/.test(marcaj));
+  // „decimal", nu „numeric": tastatura numerică de pe iPhone n-are virgulă,
+  // iar cantitățile pot fi 0,5 (vezi citesteCantitate).
+  /value="\{\{ it\.q \}\}"[^>]*inputMode="(numeric|decimal)"/.test(marcaj));
 
 /* ================================= 868 · fereastra de zile se recalculează */
 
@@ -182,7 +184,9 @@ if (declDays && declToday && fnRefresh && corpTrezi) {
 
 console.log('\n=== Administrare Comenzi.dc.html:918 — comenzile se reîmprospătează, salvarea nu mai dă etapa înapoi ===');
 
-const cronometru = /this\.reqTimer = setInterval\(\(\) => this\.(\w+)\(\), (\d+)\);/.exec(logica);
+// setInterval sau gp.poll — al doilea se oprește cât fila e ascunsă și nu
+// suprapune două ture; bătaia e aceeași.
+const cronometru = /this\.reqTimer = (?:setInterval|gp\.poll)\(\(\) => this\.(\w+)\(\), (\d+)\);/.exec(logica);
 check('Administrare Comenzi.dc.html:918', 'cronometrul panoului se poate citi din sursă', !!cronometru);
 if (cronometru) {
   const corpTick = metoda(cronometru[1], '');

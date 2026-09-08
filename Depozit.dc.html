@@ -212,6 +212,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;gap:6px;justify-content:flex-end">
 <button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ r.onIn }}" style="height:38px;min-width:78px;white-space:nowrap">+ Intrare</button>
 <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onOut }}" style="height:38px;min-width:78px;white-space:nowrap">− Ieșire</button>
+<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" title="{{ r.delTitle }}" style="height:38px;padding:0 10px;white-space:nowrap;color:{{ r.delFg }}">{{ r.delLabel }}</button>
 </div>
 </div>
 </sc-for>
@@ -252,6 +253,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;gap:8px">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onIn }}" style="flex:1;min-height:46px;font-size:15px">+ Intrare</button>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onOut }}" style="flex:1;min-height:46px;font-size:15px">− Ieșire</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onDelete }}" style="flex:none;min-height:46px;padding:0 14px;font-size:15px;color:{{ r.delFg }}">{{ r.delLabel }}</button>
 </div>
 </div>
 </sc-for>
@@ -514,7 +516,7 @@ const dLabel = (iso) => {
 };
 
 class Component extends DCLogic {
-  state = { items: [], categories: [], units: [], moves: [], mins: {}, orders: [], who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false };
+  state = { items: [], categories: [], units: [], moves: [], mins: {}, orders: [], who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, sterg: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -542,12 +544,15 @@ class Component extends DCLogic {
       }, true);
     }
     this.setState({ view: this.props.defaultView === "Registru" ? "Registru" : "Stoc" });
-    this.pull();
-    this.timer = setInterval(() => this.pull(), 15000);
+    // gp.poll() aduce prima dată imediat, apoi din 15 în 15 secunde; se
+    // oprește cât fila e ascunsă și nu suprapune două ture. Cu setInterval,
+    // fila lăsată deschisă cerea 4 liste (mișcări LIMIT 1000, comenzi LIMIT
+    // 500…) la fiecare 15 secunde și pe un ecran pe care nu se uita nimeni.
+    this.timer = gp.poll(() => this.pull(), 15000);
   }
 
   componentWillUnmount() {
-    if (this.timer) clearInterval(this.timer);
+    if (typeof this.timer === "function") this.timer();
   }
 
   /**
@@ -572,7 +577,7 @@ class Component extends DCLogic {
           // Forma veche a registrului, ca restul paginii să rămână neatins:
           // d = data, t = ora, k = in/out, p = produs, q = cantitate.
           moves: (moves.moves || []).map((m) => {
-            const dt = new Date((m.createdAt || '').replace(' ', 'T') + 'Z');
+            const dt = new Date(gp.utc(m.createdAt));
             const p2 = (n) => (n < 10 ? '0' : '') + n;
             return {
               id: m.id,
@@ -588,6 +593,7 @@ class Component extends DCLogic {
             };
           }),
           orders: (orders.orders || []).map(gp.toPageOrder),
+          movesTruncated: !!moves.truncated,
           who: user ? user.name : 'Laborator',
           role: user ? user.role : '',
           loaded: true,
@@ -909,7 +915,36 @@ class Component extends DCLogic {
       onMin: (e) => set({ minEdit: x.c.id, minText: e.target.value }),
       onMinBlur: () => this.incheiePrag(x.c.id, x.c.min),
       onIn: () => openForm(x.c.n, "in"),
-      onOut: () => openForm(x.c.n, "out")
+      onOut: () => openForm(x.c.n, "out"),
+      // Ștergerea cere două apăsări, ca la conturi: prima armează butonul și
+      // spune ce se întâmplă, a doua execută. Un singur clic lângă „− Ieșire"
+      // ar scoate din depozit un articol din greșeală, iar articolul cu istoric
+      // n-ar mai putea fi pus înapoi din pagină.
+      delLabel: S.sterg === x.c.id ? "Sigur?" : "Șterge",
+      delFg: S.sterg === x.c.id ? "var(--h-danger)" : "var(--h-fg-faint)",
+      delTitle: S.sterg === x.c.id
+        ? "Apasă din nou ca să scoți articolul din depozit"
+        : "Scoate articolul din depozit",
+      onDelete: () => {
+        if (S.sterg !== x.c.id) {
+          return set({
+            sterg: x.c.id,
+            msg: "Scoți „" + x.c.n + "” din depozit? Apasă încă o dată pe „Sigur?”. "
+              + "Dacă articolul are mișcări în registru, ele rămân — dispare doar din listă.",
+            msgBad: true
+          });
+        }
+        gp.del("/stock/items/" + x.c.id)
+          .then((r) => {
+            set({ sterg: null });
+            // Serverul spune ce a făcut: șters de tot, sau doar scos din listă
+            // fiindcă avea istoric. Mesajul lui e mai exact decât orice am
+            // putea ghici noi aici.
+            this.pull();
+            set({ msg: (r && r.message) || "Articolul a fost scos din depozit.", msgBad: false });
+          })
+          .catch((e) => set({ msg: e.message, msgBad: true, sterg: null }));
+      }
     }));
 
     const days = {};
@@ -987,13 +1022,22 @@ class Component extends DCLogic {
       signedIn: S.who !== "Laborator",
       accountHref: S.role === "admin" ? "Conturi.dc.html" : S.who !== "Laborator" ? "Depozit.dc.html" : "Administrare%20Comenzi.dc.html",
       accountHint: S.role === "admin" ? "contul tău · schimbă parola" : S.who !== "Laborator" ? "cont de angajat" : "intră în cont →",
+      // Ieșirea adevărată: sesiunea se închide pe SERVER, apoi pagina duce la
+      // intrare. Înainte se ștergea doar o cheie din localStorage pe care n-o
+      // mai citea nimeni: cookie-ul HttpOnly rămânea valabil, următorul
+      // pull() punea numele la loc, iar mișcările se scriau tot pe contul
+      // omului care credea că a ieșit — pe o tabletă comună, cu tot ce urmează.
       onLogout: () => {
-        try { localStorage.removeItem("gp-auth-v1"); } catch (e) {}
-        set({ who: "Laborator", msg: "Ai ieșit din cont · mișcările se trec pe „Laborator”.", msgBad: false });
+        set({ msg: "Se închide sesiunea…", msgBad: false });
+        gp.logout().finally(() => gp.toLogin());
       },
       viewTitle: S.view === "Registru" ? "Registru de mișcări" : "Stoc în depozit",
       viewSub: S.loaded
         ? items.length + " poziții · " + inToday.length + " intrări și " + outToday.length + " ieșiri azi · " + (alerts + shorts.length) + " atenționări"
+          // Serverul dă cel mult 1000 de mișcări: registrul și totalurile lui
+          // acoperă doar atât. Stocul curent e calculat pe server din TOATE
+          // mișcările, deci cifrele din fila „Stoc" rămân bune.
+          + (S.movesTruncated ? " · registrul arată doar ultimele 1000 de mișcări" : "")
         : "Se citește registrul…",
       search: S.search,
       onSearch: (e) => set({ search: e.target.value }),

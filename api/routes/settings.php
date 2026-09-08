@@ -151,6 +151,21 @@ function list_keys(): array
  */
 function validate_lists(array $incoming): void
 {
+    // Cât încape în coloanele în care ajung valorile: `orders.slot` VARCHAR(16),
+    // `zone` 64, `status` 48, `fulfillment` 32, `stock_items.category` 64,
+    // `unit` 16. Fără pragul ăsta, un interval scris „06:30 – 08:00 dimineața"
+    // se salva fără nicio obiecție — iar fiecare vizitator care îl alegea pe
+    // site primea „Eroare internă." de la POST /requests (1406, data too long).
+    // Refuzul trebuie să fie aici, la cel care poate corecta valoarea.
+    $maxim = [
+        'delivery_slots'     => 16,
+        'delivery_zones'     => 64,
+        'order_statuses'     => 48,
+        'fulfillment_types'  => 32,
+        'fulfillment_pickup' => 32,
+        'stock_categories'   => 64,
+        'stock_units'        => 16,
+    ];
     foreach (list_keys() as $key) {
         if (!array_key_exists($key, $incoming)) {
             continue;
@@ -173,6 +188,14 @@ function validate_lists(array $incoming): void
                 fail('Lista „' . $key . '” conține o valoare care nu este text.', 422, 'bad_list');
             }
             $v = trim((string) $v);
+            if (isset($maxim[$key]) && mb_strlen($v) > $maxim[$key]) {
+                fail(
+                    'Lista „' . $key . '”: valoarea „' . $v . '” are ' . mb_strlen($v)
+                      . ' caractere, maximum ' . $maxim[$key] . '.',
+                    422,
+                    'list_value_too_long'
+                );
+            }
             if ($v !== '' && !in_array($v, $clean, true)) {
                 $clean[] = $v;
             }
@@ -459,11 +482,12 @@ function route_settings_test(string $channel): void
             'SELECT error FROM notifications WHERE channel = ? ORDER BY id DESC LIMIT 1',
             [$channel]
         );
-        json_out([
-            'ok'      => false,
-            'channel' => $channel,
-            'error'   => $last['error'] ?? 'Cauză necunoscută.',
-        ], 502);
+        // În forma pe care o citește clientul: `error` este un obiect
+        // {code, message}, ca la orice alt refuz (vezi fail() și gp-api.js).
+        // Trimis ca text simplu, pagina Setări nu-l găsea și arăta doar
+        // „Eroare 502." — tocmai motivul furnizorului, pentru care există
+        // ruta asta, nu ajungea niciodată la om.
+        fail($last['error'] ?? 'Cauză necunoscută.', 502, 'test_failed');
     }
 
     audit('settings_test', 'settings', $channel, 'Test trimis cu succes');

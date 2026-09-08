@@ -34,19 +34,6 @@ const values = rows.map((r) => '  (' + [
   q(r.photo), r.g, r.p1, r.p2, q(r.cat), r.flag ? 1 : 0, r.sort,
 ].join(', ') + ')');
 
-// Reîmprospătarea se face cu UPDATE-uri explicite, nu cu
-// „ON DUPLICATE KEY UPDATE ... VALUES(col)": VALUES() este depreciat în MySQL
-// 8.0.20+, iar înlocuitorul recomandat (VALUES ... AS alias) nu există nici în
-// MariaDB, nici în MySQL 5.7 — adică exact ce rulează de obicei pe cPanel.
-// Varianta INSERT IGNORE + UPDATE merge pe toate, fără avertismente.
-const updates = rows.map((r) => `UPDATE products SET
-    slug = ${q(r.slug)}, name = ${q(r.ro)}, name_en = ${q(r.en)},
-    description = ${q(r.dro)}, description_en = ${q(r.den)},
-    photo = ${q(r.photo)}, grams = ${r.g},
-    price_frozen = ${r.p1}, price_baked = ${r.p2},
-    category = ${q(r.cat)}, is_new = ${r.flag ? 1 : 0}, sort = ${r.sort}
-  WHERE id = ${r.id};`);
-
 const SETTINGS = [
   ['company_name', 'Golden Pastry', 0],
   ['company_phone', '+40769493163', 0],
@@ -112,14 +99,13 @@ const stockRows = [
 const out = `-- Golden Pastry — date inițiale
 -- GENERAT din catalogul real din „Site Public.dc.html" (${rows.length} produse).
 --
--- Rulează DUPĂ 001_schema.sql. Se poate rula de câte ori e nevoie: adaugă ce
--- lipsește și reîmprospătează restul, fără să șteargă comenzi sau setări.
+-- Rulează DUPĂ 001_schema.sql, la instalare. Se poate rula din nou fără
+-- teamă: totul e INSERT IGNORE — adaugă ce lipsește și lasă neatins ce există.
 --
 -- LA REIMPORT vei vedea avertismente „#1062 Duplicate entry ... for key
 -- 'products.PRIMARY'", câte unul per produs existent, urmate de „0 rows
--- affected". Este comportamentul normal al lui INSERT IGNORE: rândurile deja
--- prezente sunt sărite, iar UPDATE-urile de mai jos le actualizează datele.
--- Nu este o eroare și nu se pierde nimic.
+-- affected". Este comportamentul normal al lui INSERT IGNORE. Nu se pierde
+-- nimic: fișierul NU mai conține UPDATE-uri care să rescrie produsele.
 --
 -- Compatibil MySQL 5.7 / 8.x și MariaDB 10.x. Nu folosește VALUES() în
 -- ON DUPLICATE KEY UPDATE (depreciat în MySQL 8.0.20+) și nici sintaxa cu
@@ -135,8 +121,6 @@ INSERT IGNORE INTO products
 VALUES
 ${values.join(',\n')};
 
--- Reîmprospătează datele produselor existente (prețuri, denumiri, descrieri).
-${updates.join('\n')}
 
 -- ---------------------------------------------------------------- setări --
 -- Valorile goale se completează din panoul de Setări (lab.goldenpastry.ro/setari).
@@ -161,6 +145,6 @@ ${stockRows.join(',\n')};
 
 fs.writeFileSync(process.argv[3], out);
 console.log('scris ' + process.argv[3]);
-console.log(`produse: ${rows.length} | setări: ${SETTINGS.length} | update-uri: ${updates.length}`);
+console.log(`produse: ${rows.length} | setări: ${SETTINGS.length}`);
 const dup = rows.map((r) => r.slug).filter((v, i, a) => a.indexOf(v) !== i);
 console.log('slug-uri duplicate: ' + (dup.length ? dup.join(', ') : 'niciunul'));

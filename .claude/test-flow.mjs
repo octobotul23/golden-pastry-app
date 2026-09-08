@@ -58,6 +58,29 @@ const LISTS = (await (await fetch(BASE + '/lists')).json());
 const ZONE = (LISTS.zones || [])[0] || '';
 const SLOT = (LISTS.slots || [])[0] || '';
 
+// Zilele probei se calculează din ziua de azi, nu se scriu în cod.
+//
+// Serverul refuză o zi trecută încă de la trimiterea cererii
+// (valid_order_day din api/lib/http.php), deci o dată fixă face proba să
+// pice singură din clipa în care ziua aceea trece — și pică zgomotos: toate
+// cele șaisprezece verificări de mai jos cad odată cu ea, iar mesajul
+// „day_in_past" nu seamănă cu un defect al probei, ci cu unul al aplicației.
+// Exact ce s-a întâmplat cu „2026-09-02", scris aici cândva.
+//
+// Ziua se compune din câmpurile LOCALE, nu prin toISOString(): acela dă ora
+// UTC, iar seara târziu ar întoarce ziua de mâine în loc de cea de azi —
+// serverul socotește în Europe/Bucharest (vezi today_local()).
+const zi = (peste) => {
+  const d = new Date();
+  d.setDate(d.getDate() + peste);
+  const dd = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${dd(d.getMonth() + 1)}-${dd(d.getDate())}`;
+};
+// Ziua principală a scenariului: cererea, acceptarea, laboratorul, ruta.
+const ZI = zi(1);
+// A doua zi, pentru comanda amestecată — ca să nu se încurce cu prima.
+const ZI_URMATOARE = zi(2);
+
 const anon = agent();
 const admin = agent();
 
@@ -67,7 +90,7 @@ let reqId = null;
   const r = await post(anon, '/requests', {
     customerName: 'Cafeneaua Lumina',
     phone: '0722334455',
-    day: '2026-09-02',
+    day: ZI,
     slot: '06:30',
     zone: ZONE,
     address: 'Str. Lipscani 12',
@@ -82,7 +105,7 @@ let reqId = null;
   check('intervalul a fost reținut', r.data?.request?.slot === '06:30');
 }
 {
-  const r = await post(anon, '/requests', { customerName: 'X', phone: '0722', items: [], day: '2026-09-02' });
+  const r = await post(anon, '/requests', { customerName: 'X', phone: '0722', items: [], day: ZI });
   check('cerere fără produse → 422', r.status === 422, `a dat ${r.status}`);
 }
 {
@@ -105,7 +128,7 @@ let mixtId = null;
   const r = await post(anon, '/requests', {
     customerName: 'Cofetăria Amestecată',
     phone: '0722334466',
-    day: '2026-09-02',
+    day: ZI,
     zone: ZONE,
     // Varianta de la nivel de cerere rămâne doar implicitul: pozițiile o au
     // pe a lor. Aici e pusă dinadins pe cealaltă, ca o regresie să se vadă.
@@ -151,7 +174,7 @@ console.log('\n=== treapta 2: adminul acceptă → devine comandă ===');
 let orderId = null, orderRef = null;
 {
   const r = await post(admin, `/requests/${reqId}/accept`, {
-    day: '2026-09-02', slot: '06:30', zone: ZONE, fulfillment: 'Livrare',
+    day: ZI, slot: '06:30', zone: ZONE, fulfillment: 'Livrare',
   });
   check('acceptare → 201', r.status === 201, `${r.status} ${JSON.stringify(r.data)}`);
   orderId = r.data?.order?.id;
@@ -163,7 +186,7 @@ let orderId = null, orderRef = null;
   check('comanda păstrează legătura cu cererea', r.data?.order?.requestId === reqId);
 }
 {
-  const r = await post(admin, `/requests/${reqId}/accept`, { day: '2026-09-02' });
+  const r = await post(admin, `/requests/${reqId}/accept`, { day: ZI });
   check('a doua acceptare a aceleiași cereri → 409', r.status === 409, `a dat ${r.status}`);
 }
 
@@ -233,7 +256,7 @@ let orderId = null, orderRef = null;
   // Varianta fiecărei poziții trebuie să treacă și peste treapta a doua:
   // altfel clientul cere amestecat, iar laboratorul primește totul într-una.
   const r = await post(admin, `/requests/${mixtId}/accept`, {
-    day: '2026-09-03', slot: '06:30', zone: ZONE, fulfillment: 'Livrare',
+    day: ZI_URMATOARE, slot: '06:30', zone: ZONE, fulfillment: 'Livrare',
   });
   check('acceptarea cererii amestecate → 201', r.status === 201,
     `${r.status} ${JSON.stringify(r.data)}`);
@@ -254,7 +277,7 @@ let orderId = null, orderRef = null;
 
 console.log('\n=== comanda e acum în laborator ===');
 {
-  const r = await get(admin, '/orders?day=2026-09-02');
+  const r = await get(admin, `/orders?day=${ZI}`);
   const o = (r.data?.orders || []).find((x) => x.id === orderId);
   check('comanda apare pe ziua ei', !!o);
   check('are interval și zonă', o?.slot === SLOT && o?.zone === ZONE, `${o?.slot} / ${o?.zone}`);
@@ -270,7 +293,7 @@ console.log('\n=== comanda e acum în laborator ===');
   check('etapă inexistentă → 422', r.status === 422, `a dat ${r.status}`);
 }
 {
-  const r = await get(admin, '/routes?day=2026-09-02');
+  const r = await get(admin, `/routes?day=${ZI}`);
   check('comanda apare pe ruta șoferului', (r.data?.stops || []).some((x) => x.id === orderId));
 }
 
@@ -395,7 +418,9 @@ console.log('\n=== clientul află a câta oprire e pe ruta zilei ===');
   // lucru din care își poate afla locul pe ruta zilei este `routeSeq` de pe
   // propria comandă. Dacă răspunsul nu-l mai duce, pagina rămâne fără sursă de
   // adevăr și se întoarce la „Ești următoarea oprire" pentru toată lumea.
-  const ZIUA = '2026-09-11';
+  // Mai încolo decât restul scenariului, ca opririle probei de ordonare să nu
+  // se amestece cu comenzile făcute mai sus.
+  const ZIUA = zi(9);
   const alta = await post(admin, '/orders', {
     customerName: 'Cofetăria Dinaintea Ta', fulfillment: 'Livrare',
     zone: ZONE, slot: SLOT, day: ZIUA, items: [{ productId: 1, qty: 1 }],

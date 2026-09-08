@@ -317,6 +317,94 @@ function stock_local_day_utc(string $day, int $plusZile = 0): string
 }
 
 /** GET /stock/moves?from=&to=&item= — registrul. */
+/**
+ * DELETE /stock/items/{id} — scoate un articol din depozit.
+ *
+ * Ștergerea unui articol nu e o singură operație, fiindcă articolele nu sunt
+ * toate la fel. Trei situații, trei răspunsuri:
+ *
+ *  1. **Intră într-o rețetă** → refuz, cu produsele numite. `fk_recipe_item` e
+ *     ON DELETE RESTRICT, deci baza ar refuza oricum — dar cu „Eroare internă.",
+ *     iar depozitarul n-ar afla că vinovată e rețeta unui produs. Rețeta se
+ *     schimbă din pagina Produse, de un administrator; noi doar spunem unde.
+ *
+ *  2. **Are istoric** — mișcări în registru sau marfă rezervată pentru comenzi
+ *     → articolul se SCOATE DIN LISTĂ (`active = 0`), nu se șterge. Rândurile
+ *     din `stock_moves` poartă numele ca text, deci registrul rămâne lizibil,
+ *     iar `fk_moves_item` e ON DELETE SET NULL: o ștergere adevărată ar tăia
+ *     legătura și ar lăsa în urmă intrări care nu mai duc nicăieri. Registrul
+ *     depozitului e o socoteală, nu o listă de curățat.
+ *
+ *  3. **Curat, fără nicio urmă** → se șterge de-a binelea. E cazul greșelii de
+ *     tastare de acum două minute, iar acolo un articol „scos din listă", pe
+ *     care nu-l mai vede nimeni dar care ocupă numele, ar fi doar gunoi ascuns:
+ *     `uq_stock_items_name` l-ar împiedica pe om să scrie numele corect.
+ *
+ * Răspunsul spune ce s-a întâmplat (`mode`), ca pagina să nu ghicească și să
+ * poată explica omului de ce articolul cu istoric n-a dispărut de tot.
+ *
+ * `require_staff()`, ca restul depozitului: cine poate face intrări și ieșiri
+ * poate și să scoată un articol din listă — putea deja, prin PATCH cu
+ * `active: false`. Ștergerea adevărată se face doar acolo unde n-are ce strica.
+ */
+function route_items_delete(string $id): void
+{
+    require_staff();
+    $id = (int) $id;
+
+    $item = one('SELECT id, name, active FROM stock_items WHERE id = ?', [$id]);
+    if (!$item) {
+        fail('Articolul nu există.', 404, 'not_found');
+    }
+
+    // 1. Rețetele. Le numim pe toate: cu un singur produs în mesaj, omul le-ar
+    // descoperi pe rând, câte una la fiecare încercare.
+    $retete = all(
+        'SELECT p.name FROM product_recipes r
+           JOIN products p ON p.id = r.product_id
+          WHERE r.item_id = ?
+          ORDER BY p.name',
+        [$id]
+    );
+    if ($retete) {
+        $nume = array_column($retete, 'name');
+        fail(
+            'Articolul „' . $item['name'] . '” intră în rețeta produsului '
+            . (count($nume) === 1 ? '„' . $nume[0] . '”' : 'următoarelor produse: „' . implode('”, „', $nume) . '”')
+            . '. Scoate-l întâi din rețetă, din pagina Produse.',
+            409,
+            'in_recipe'
+        );
+    }
+
+    // 2. Istoricul: mișcări din registru sau marfă rezervată pentru comenzi.
+    $miscari  = (int) scalar('SELECT COUNT(*) FROM stock_moves WHERE item_id = ?', [$id]);
+    $rezervat = (int) scalar('SELECT COUNT(*) FROM stock_reservations WHERE item_id = ?', [$id]);
+
+    if ($miscari > 0 || $rezervat > 0) {
+        q('UPDATE stock_items SET active = 0 WHERE id = ?', [$id]);
+        audit('stock_item_deactivate', 'stock_item', (string) $id, $item['name']);
+        json_out([
+            'ok'   => true,
+            'mode' => 'deactivated',
+            'message' => 'Articolul „' . $item['name'] . '” a fost scos din depozit. '
+                . 'Nu s-a șters de tot fiindcă are ' . $miscari . ' '
+                . ($miscari === 1 ? 'mișcare' : 'mișcări') . ' în registru'
+                . ($rezervat > 0 ? ' și marfă rezervată pentru comenzi' : '')
+                . ' — istoricul rămâne întreg.',
+        ]);
+    }
+
+    // 3. Fără nicio urmă: se șterge.
+    q('DELETE FROM stock_items WHERE id = ?', [$id]);
+    audit('stock_item_delete', 'stock_item', (string) $id, $item['name']);
+    json_out([
+        'ok'   => true,
+        'mode' => 'deleted',
+        'message' => 'Articolul „' . $item['name'] . '” a fost șters.',
+    ]);
+}
+
 function route_moves_list(): void
 {
     require_staff();
@@ -357,7 +445,14 @@ function route_moves_list(): void
         . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
         . ' ORDER BY m.created_at DESC, m.id DESC LIMIT 1000';
 
-    json_out(['moves' => array_map(static fn($r) => [
+    $rows = all($sql, $params);
+    json_out([
+        // Lista e tăiată la 1000 de rânduri. Pagina Depozit își face din ea
+        // registrul și totalurile pe articol; fără semnul ăsta, după câteva
+        // zile de producție (o mișcare pe fiecare linie de rețetă, la fiecare
+        // raport) cifrele ieșeau greșite fără niciun avertisment.
+        'truncated' => count($rows) >= 1000,
+        'moves' => array_map(static fn($r) => [
         'id'        => (int) $r['id'],
         'itemId'    => $r['item_id'] === null ? null : (int) $r['item_id'],
         'name'      => $r['name'],
@@ -369,7 +464,7 @@ function route_moves_list(): void
         'note'      => $r['note'],
         'user'      => $r['user_name'],
         'createdAt' => $r['created_at'],
-    ], all($sql, $params))]);
+    ], $rows)]);
 }
 
 /** POST /stock/moves — intrare (direction 1) sau ieșire (-1). */

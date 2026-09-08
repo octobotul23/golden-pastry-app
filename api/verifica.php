@@ -329,6 +329,7 @@ check('Conexiune HTTPS', $https, $https ? 'da' : 'nu',
 // terminată și pagina rămâne deschisă: exact situația pentru care există.
 // Până aici nu s-a tipărit nimic, doar s-au adunat verificările, deci ieșirea
 // nu lasă o pagină pe jumătate.
+$instalat = null;
 if (isset($pdo)) {
     try {
         $instalat = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin' AND active = 1")->fetchColumn();
@@ -338,6 +339,22 @@ if (isset($pdo)) {
         }
     } catch (Throwable $e) {
         // Fără tabela users nu există instalare terminată, deci nu zăvorâm.
+    }
+}
+
+// Zăvorul de mai sus ține doar cât timp baza răspunde. La o pană de MySQL sau
+// la o parolă schimbată, `$instalat` rămâne necunoscut și pagina se deschidea
+// oricui, cu tot ce are pe ea: versiuni de PHP și MySQL, extensii, modul
+// `env`, textul erorii PDO (care conține utilizatorul și gazda bazei). Când nu
+// se poate dovedi că instalarea NU e terminată, pagina cere codul de instalare
+// — același cu al lui setup.php, pe care îl are doar cine a scris config.php.
+// Pe o găzduire încă fără config.php nu e nimic de protejat și codul nu există.
+if ($instalat === null && $hasConfig) {
+    $cod = (string) (($cfg ?? [])['install_code'] ?? '');
+    $dat = (string) ($_GET['cod'] ?? $_POST['cod'] ?? '');
+    if ($cod === '' || strlen($cod) < 12 || !hash_equals($cod, $dat)) {
+        http_response_code(404);
+        exit;
     }
 }
 

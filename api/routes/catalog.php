@@ -640,18 +640,54 @@ function route_product_recipe_put(string $id): void
     // cel pe care l-a văzut adminul când a apăsat „Salvează".
     $pdo = db();
     $pdo->beginTransaction();
+    $rescrise = 0;
     try {
         q('DELETE FROM product_recipes WHERE product_id = ?', [$id]);
         foreach ($curate as $itemId => $qty) {
             q('INSERT INTO product_recipes (product_id, item_id, qty) VALUES (?, ?, ?)', [$id, $itemId, $qty]);
         }
+
+        // Promisiunile comenzilor deschise se rescriu după rețeta nouă.
+        //
+        // Rezervările de materie primă se calculează la acceptare, din rețeta
+        // de ATUNCI (bucăți × cantitatea pe piesă), și rămâneau așa până
+        // cineva corecta pozițiile comenzii. Rețeta schimbată de la 100 g la
+        // 120 g de făină lăsa „Rezervat" pe cifra veche pentru toate comenzile
+        // din lucru, iar producția — care scade după rețeta nouă — împingea
+        // `consumed` peste `qty`. Rescrierea e aceeași cu cea de la corectarea
+        // pozițiilor (stock_reserve_order), doar comenzile care au deja rânduri
+        // de rezervare pe produsul ăsta și nu sunt predate ori anulate (acelea
+        // nu mai promit nimic, stock.php le lasă oricum deoparte). Rândul se
+        // blochează, ca un raport de producție de pe tabletă să nu scrie în
+        // același timp.
+        $deschise = all(
+            'SELECT DISTINCT r.order_id
+               FROM stock_reservations r
+               JOIN order_items oi ON oi.id = r.order_item_id
+               JOIN orders o       ON o.id  = r.order_id
+              WHERE oi.product_id = ? AND o.status <> ? AND o.status <> ?',
+            [$id, status_done(), status_cancelled()]
+        );
+        foreach ($deschise as $rand) {
+            $oid = (int) $rand['order_id'];
+            one('SELECT id FROM orders WHERE id = ? FOR UPDATE', [$oid]);
+            stock_reserve_order($oid);
+            $rescrise++;
+        }
+
         $pdo->commit();
     } catch (Throwable $e) {
         $pdo->rollBack();
         throw $e;
     }
 
-    audit('product_recipe', 'product', (string) $id, $produs['name'] . ' · ' . count($curate) . ' linii');
+    audit(
+        'product_recipe',
+        'product',
+        (string) $id,
+        $produs['name'] . ' · ' . count($curate) . ' linii'
+            . ($rescrise > 0 ? ' · rezervări rescrise pe ' . $rescrise . ' comenzi' : '')
+    );
 
-    json_out(['ok' => true, 'lines' => count($curate)]);
+    json_out(['ok' => true, 'lines' => count($curate), 'ordersUpdated' => $rescrise]);
 }

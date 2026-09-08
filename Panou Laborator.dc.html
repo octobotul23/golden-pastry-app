@@ -348,13 +348,16 @@ class Component extends DCLogic {
       this.pull();
     };
     window.addEventListener("storage", this.onStore);
-    this.poll = setInterval(() => this.pull(), 4000);
+    // gp.poll(): pauză cât fila e ascunsă și o singură tură în zbor. Cu
+    // setInterval, un răspuns pornit înaintea unui PATCH putea ajunge după
+    // clearPending() și pune înapoi etapa veche pe card, pentru o tură.
+    this.poll = gp.poll(() => this.pull(), 4000);
     this.tick();
     this.timer = setInterval(() => this.tick(), 20000);
   }
   componentWillUnmount() {
     clearInterval(this.timer);
-    clearInterval(this.poll);
+    if (typeof this.poll === "function") this.poll();
     window.removeEventListener("storage", this.onStore);
     window.removeEventListener("popstate", this.__gpBack);
   }

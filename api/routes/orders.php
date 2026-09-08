@@ -104,7 +104,7 @@ function route_orders_create(): void
     // în care laboratorul lucrează pentru livrarea de dimineață — o comandă
     // luată la telefon fără zi se scria pe ziua de IERI, iar Panoul Laborator,
     // care cere fereastra azi..azi+6, n-o mai arăta deloc.
-    $day = valid_day(trim((string) ($b['day'] ?? '')) ?: today_local());
+    $day = valid_day_not_too_far(trim((string) ($b['day'] ?? '')) ?: today_local());
 
     // Comanda o scrie personalul, pentru altcineva: numele vine din formular
     // și e obligatoriu. Înainte, un formular fără nume nu era refuzat — se
@@ -387,7 +387,7 @@ function route_orders_update(string $id): void
     }
     $newDay = null;
     if (array_key_exists('day', $b)) {
-        $newDay = valid_day((string) $b['day']);
+        $newDay = valid_day_not_too_far((string) $b['day']);
         $sets[] = 'day = ?';
         $vals[] = $newDay;
     }
@@ -599,6 +599,21 @@ function route_orders_update(string $id): void
             q('UPDATE orders SET ' . implode(', ', $s) . ' WHERE id = ?', $v);
 
             if ($priced !== null) {
+                // Producția se RECITEȘTE sub lacăt, chiar înainte de rescriere.
+                // `$facut` de mai sus s-a citit înaintea tranzacției, iar între
+                // acea citire și lacătul pe rândul comenzii (luat de
+                // stock_unsync_order) încap un raport de producție de pe
+                // tabletă: cu harta veche, pozițiile se rescriau cu done_qty=0,
+                // producția raportată dispărea fără urmă, iar următorul raport
+                // (pe totaluri) scădea făina încă o dată. Rândul comenzii e deja
+                // blocat; SELECT-ul de aici e explicit, ca regula să nu depindă
+                // de ce face funcția de retur.
+                one('SELECT id FROM orders WHERE id = ? FOR UPDATE', [(int) $id]);
+                $facut = produced_qty(all(
+                    'SELECT product_id, variant, done_qty FROM order_items WHERE order_id = ?',
+                    [(int) $id]
+                ));
+
                 q('DELETE FROM order_items WHERE order_id = ?', [(int) $id]);
                 // Producția raportată trece peste rescriere ca prețurile promise.
                 // Se pleacă de la o COPIE a hărții, nu de la ea: blocul se reia la

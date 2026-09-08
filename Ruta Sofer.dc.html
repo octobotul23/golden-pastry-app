@@ -68,7 +68,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 
 <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
-<div class="h-alert h-alert--success" style="margin:12px 16px 0;border-radius:14px;padding:12px 14px;font-size:15px;align-items:center;animation:rt-in .25s var(--h-ease-out)">
+<div class="{{ toastCls }}" style="margin:12px 16px 0;border-radius:14px;padding:12px 14px;font-size:15px;align-items:center;animation:rt-in .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ toast }}</p>
 </div>
 </sc-if>
@@ -187,7 +187,7 @@ buildDays();
 const SPEED = 22, SERVICE = 6;
 
 class Component extends DCLogic {
-  state = { orders: [], counts: {}, day: DAYS[0].v, loaded: {}, open: null, toast: "", menu: false };
+  state = { orders: [], counts: {}, day: DAYS[0].v, loaded: {}, open: null, toast: "", toastBad: false, menu: false };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -378,14 +378,19 @@ class Component extends DCLogic {
     this.__gpSync();
     const S = this.state;
     const list = this.stopsFor(S.day);
-    const mins = (t) => parseInt(String(t).slice(0, 2), 10) * 60 + parseInt(String(t).slice(3), 10);
+    // Oprire fără interval → fără NaN pe tot restul rutei (vezi Administrare).
+    const mins = (t) => {
+      const m = /^(\d{1,2}):(\d{2})/.exec(String(t || ""));
+      return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
+    };
+    const minsOr = (t, alt) => { const v = mins(t); return isNaN(v) ? alt : v; };
     const hhmm = (m) => {
       const x = ((Math.round(m) % 1440) + 1440) % 1440;
       return String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0");
     };
     let prev = HQ_OF(), total = 0;
     const legs = list.map(o => { const p = this.pos(o), d = this.km(prev, p); prev = p; total += d; return d; });
-    let clock = list.length ? mins(list[0].slot) - legs[0] / SPEED * 60 : 0;
+    let clock = list.length ? minsOr(list[0].slot, 8 * 60) - legs[0] / SPEED * 60 : 0;
 
     const toggleItem = (o, i) => {
       const cur = (S.loaded[o.id] || []).slice();
@@ -416,6 +421,7 @@ class Component extends DCLogic {
       this.setState({
         orders: S.orders.map(x => x.id === o.id ? Object.assign({}, x, { status: next }) : x),
         open: null,
+        toastBad: false,
         toast: delivered ? o.cust + " — livrarea a fost anulată." : o.cust + " · " + o.ref + " marcat livrat. Laboratorul vede „" + gp.done() + "”."
       });
 
@@ -423,7 +429,7 @@ class Component extends DCLogic {
         .catch((e) => {
           this.__seen = null;
           this.pull();
-          this.setState({ toast: "Nu s-a salvat: " + e.message });
+          this.setState({ toast: "Nu s-a salvat: " + e.message, toastBad: true });
         });
     };
 
@@ -531,6 +537,7 @@ class Component extends DCLogic {
       nextCls: next ? "h-badge h-badge--warning" : "h-badge h-badge--success",
       allDone: list.length > 0 && !next,
       toast: S.toast,
+      toastCls: S.toastBad ? "h-alert h-alert--danger" : "h-alert h-alert--success",
       // Ordinea manuală stă pe comenzile brute din `list`; obiectele din
       // `stops` sunt cele pregătite pentru afișare și nu au câmpul routeSeq,
       // deci testul pe ele ieșea mereu adevărat (`undefined !== null`), iar

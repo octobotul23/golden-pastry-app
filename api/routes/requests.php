@@ -58,6 +58,17 @@ function route_requests_create(): void
     $b    = body();
     $user = current_user();
 
+    // Pragul pe conexiune, doar pentru vizitatorii fără cont — vezi
+    // request_rate_limited(). Se verifică înainte de orice citire sau scriere.
+    if (!$user && request_rate_limited(client_ip(), (int) config('max_request_attempts', 20))) {
+        fail(
+            'Prea multe cereri trimise de pe această conexiune. Încearcă din nou peste o oră '
+            . 'sau sună-ne și luăm comanda la telefon.',
+            429,
+            'rate_limited'
+        );
+    }
+
     $items = $b['items'] ?? [];
     if (!is_array($items) || !$items) {
         fail('Cererea trebuie să conțină cel puțin un produs.', 422, 'empty_request');
@@ -181,10 +192,23 @@ function route_requests_create(): void
         throw $e;
     }
 
+    // Se consumă din plafon abia după ce cererea e scrisă: una refuzată mai sus
+    // n-a costat pe nimeni nimic.
+    if (!$user) {
+        record_attempt(client_ip(), GP_REQUEST_KEY, false);
+    }
+
     // Adresa nouă rămâne pe cont: la comanda următoare e deja completată.
-    // Se salvează după commit, ca o eroare aici să nu piardă cererea.
+    // Se salvează după commit, ca o eroare aici să nu piardă cererea — și
+    // prinsă aici, ca o eroare aici (o coloană rămasă îngustă pe o bază
+    // nemigrată) să nu întoarcă „Eroare internă." pentru o cerere care există
+    // deja; omul ar retrimite-o și ar ieși dublă.
     if ($isClient && $address !== '' && $address !== trim((string) ($user['address'] ?? ''))) {
-        q('UPDATE users SET address = ? WHERE id = ?', [$address, (int) $user['id']]);
+        try {
+            q('UPDATE users SET address = ? WHERE id = ?', [$address, (int) $user['id']]);
+        } catch (Throwable $e) {
+            error_log('[gp] adresa clientului nu s-a putut salva pe cont: ' . $e->getMessage());
+        }
     }
 
     $req = attach_request_items([one('SELECT * FROM order_requests WHERE id = ?', [$id])])[0];
@@ -445,7 +469,14 @@ function route_requests_accept(string $id): void
                     $seq, '#' . (1000 + $seq), $customerId, $customerName,
                     $phone, $address, $zone ?: null, $day, $slot ?: null,
                     $fulfillment, 'site', $first,
-                    trim((string) ($b['notes'] ?? '')) ?: $req['notes'],
+                    // Mențiunile trimise de administrator, chiar și goale:
+                    // el a văzut nota clientului în formular și a ales să o
+                    // șteargă. Cu „?: $req['notes']", golirea era ignorată
+                    // și nota revenea pe comandă. Fără câmp deloc (un client
+                    // vechi), rămâne nota cererii. Lungimea, ca la creare.
+                    array_key_exists('notes', $b)
+                        ? (text_field($b['notes'], 'Mențiunile', 2000) ?: null)
+                        : $req['notes'],
                     $total, $id, (int) $u['id'], $variant,
                     $urgent ? 1 : 0, $timed ? 1 : 0,
                 ]
@@ -557,7 +588,10 @@ function route_requests_reject(string $id): void
         // nu se atinge niciun rând, deci respingerea nu are ce suprascrie.
         $marcata = q(
             "UPDATE order_requests SET status = 'respinsa', reject_reason = ?, handled_by = ?, handled_at = UTC_TIMESTAMP() WHERE id = ? AND status = 'nou'",
-            [trim((string) ($b['reason'] ?? '')) ?: null, (int) $u['id'], $id]
+            // Lungimea coloanei (255), verificată aici: peste ea UPDATE-ul
+            // pica cu 1406, tranzacția se întorcea și adminul vedea „Eroare
+            // internă." pentru un motiv de refuz scris mai lung.
+            [text_field($b['reason'] ?? '', 'Motivul', 255) ?: null, (int) $u['id'], $id]
         )->rowCount();
         if ($marcata === 0) {
             $pdo->rollBack();

@@ -95,6 +95,24 @@ return [
     // scris, fiindcă pagina nu e la rădăcina serverului.
     'reset_url'            => '',
 
+    // --- conturi făcute de pe site --------------------------------------
+    // /auth/register e singura rută care scrie în `users` fără sesiune, deci
+    // fără prag un script poate umple tabelul peste noapte. Zece conturi pe oră
+    // de pe aceeași conexiune acoperă cu mult o familie sau un birou care se
+    // înscriu de pe același internet.
+    //
+    // Cheile lipsesc dintr-un config.php mai vechi? Nu e nimic de făcut:
+    // valorile de mai jos sunt și cele implicite din cod.
+    'max_register_attempts' => 10,
+    'register_window_min'   => 60,
+    // Cereri de comandă de pe site, fără cont, de pe aceeași conexiune și în
+    // aceeași fereastră. Prag larg: o cerere nu e o încercare de parolă.
+    'max_request_attempts'  => 20,
+    // Adresa magazinului, pentru linkurile de invitație („…/?ref=ana"). Gol
+    // înseamnă „prima origine din allowed_origins", care în producție e chiar
+    // https://goldenpastry.ro. Scrie-o explicit dacă schimbi ordinea listei.
+    'site_url'              => '',
+
     'session_days_client' => 30,
     'session_days_staff'  => 7,
     // Valoarea de dinaintea împărțirii pe roluri. Rămâne aici ca o instalare
@@ -102,7 +120,8 @@ return [
     'session_days'  => 14,
 
     // --- limitarea autentificărilor eșuate ------------------------------
-    // Pe cont: oprește repede ghicirea parolei unui utilizator anume.
+    // Pe cont ȘI pe conexiune: oprește repede ghicirea parolei unui utilizator
+    // anume de pe o adresă, fără ca greșelile unui străin să-i închidă contul.
     'max_login_attempts'    => 8,
     // Pe IP: prag mult mai larg. Într-o patiserie toate dispozitivele ies la
     // internet prin aceeași adresă, iar o limită strânsă pe IP ar bloca tot
@@ -128,7 +147,7 @@ return [
     'trusted_proxies' => [
         // gol pe o găzduire obișnuită
     ],
-    'lock_account_after' => 10,   // blocare temporară a contului
+    'lock_account_after' => 10,   // blocare temporară a contului, pe conexiune
     'lock_minutes'       => 20,
     // Fereastra în care se numără greșelile pentru blocare. Mai lungă decât
     // 'login_window_min', fiindcă limitarea de acolo oprește oricum rafalele;

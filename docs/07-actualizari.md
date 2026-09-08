@@ -22,7 +22,7 @@ la final (`:427-433`), deci nicio urcare nu-l poate atinge din greșeală.
 **Cheia de criptare nu se schimbă niciodată după instalare.** Dacă se schimbă,
 `api/lib/crypto.php:85` întoarce `null`, iar `api/lib/settings.php:36` doar
 scrie o linie în jurnal și merge mai departe — *tăcut*. Efectul vizibil:
-codul tabletelor devine gol, `api/routes/auth.php:87-91` răspunde 503
+codul tabletelor devine gol, `api/routes/auth.php:255-260` răspunde 503
 „Codul panoului nu este configurat", și toată echipa din laborator rămâne
 pe dinafară.
 
@@ -35,12 +35,13 @@ mea locală — cele două se depărtează unul de altul din prima zi. Urcând p
 ștergi pozele adăugate live, iar în bază rămân trimiteri către fișiere care
 nu mai există.
 
-**3. `sql/001_schema.sql` și `sql/002_seed.sql` nu se mai importă niciodată.**
+**3. `sql/001_schema.sql` nu se mai importă niciodată.**
 Al doilea import al schemei se oprește cu eroarea `#1826`
-(`sql/001_schema.sql:229-230`, o cheie străină adăugată neprotejat). Iar
-seed-ul conține 22 de `UPDATE products` necondiționate
-(`sql/002_seed.sql:76-229`) care îți rescriu prețurile, denumirile,
-descrierile, gramajele **și fotografiile**. Detalii la capcana 1.
+(`sql/001_schema.sql:229-230`, o cheie străină adăugată neprotejat).
+`sql/002_seed.sql` e din 2.0.2 numai `INSERT IGNORE` și se poate reimporta;
+înainte conținea 22 de `UPDATE products` necondiționate care rescriau
+prețurile, denumirile, descrierile, gramajele **și fotografiile**. Detalii
+la capcana 1.
 
 **4. Nu goli niciodată `public_html/` înainte de a urca.**
 Acolo mai stau lucruri care nu sunt în pachet și pe care nimeni nu le poate
@@ -131,7 +132,7 @@ patru subdomeniile odată**.
 
 API-ul e aproape întotdeauna aditiv: rute noi, câmpuri noi, iar paginile vechi
 ignoră ce nu cunosc. Paginile noi, în schimb, cer rute noi. Dacă urci întâi
-paginile, clientul primește pe ecran exact textul de la `api/index.php:209` —
+paginile, clientul primește pe ecran exact textul de la `api/index.php:224` —
 „Rută inexistentă: POST /requests/12/reopen" — iar comanda pur și simplu nu se
 face. Cu ordinea corectă, fereastra e „API nou + pagini vechi", care nu strică
 nimic.
@@ -183,7 +184,7 @@ peste schema nouă. Codul vechi nu știe de coloana nouă și nu o cere;
 funcționează normal tot intervalul.
 
 **De ce nu invers.** Codul nou cere o coloană care încă nu există → PDO ridică
-excepție → `api/index.php:210-215` întoarce „Eroare internă." Nu e o pagină
+excepție → `api/index.php:225-230` întoarce „Eroare internă." Nu e o pagină
 urâtă, e o **oprire**: formularul de comandă cade la trimitere, panoul nu mai
 încarcă lista. Nu există coadă și nu există reîncercare — comenzile din acel
 interval se pierd.
@@ -209,7 +210,7 @@ după nu.
 | Fișier | Reimport |
 |---|---|
 | `001_schema.sql` | **NU** — `:229-230` dă `#1826`. Nu pierzi date, dar nu știi ce s-a aplicat. |
-| `002_seed.sql` | **NU, niciodată în întregime.** Vezi capcana 1. |
+| `002_seed.sql` | Da, din 2.0.2 (numai `INSERT IGNORE`). Înainte: **NU** — vezi capcana 1. |
 | `003_route_order.sql` | Da — fiecare pas e învelit într-un test pe `information_schema`. **Dar** `:104` readuce grupele de produse pe care le-ai șters din pagina Produse. |
 | `004_variante_pe_pozitie.sql` | Da, dar fără motiv nu. |
 | `005_parola_schimbata.sql` | Da, complet sigur — nu atinge niciun rând. |
@@ -328,7 +329,7 @@ e un număr mai mare decât adevărul — ce iese pe listă chiar a ieșit în p
 (`„#1042 Restaurant Bistro"`), iar și referința, și numele clientului se pot
 schimba din formularul comenzii. O comandă redenumită de atunci nu mai apare
 aici. E aceeași fragilitate pentru care codul reparat nu caută returile după
-însemnare, ci recalculează pozițiile (`api/lib/orders.php:518`).
+însemnare, ci recalculează pozițiile (`api/lib/orders.php:528`).
 
 Ce faci cu ce iese: adaugă în Depozit o mișcare de **intrare** cu diferența
 (`iesit_net - pe_comanda`), pe articolul din registru, cu motivul „Corectură
@@ -361,10 +362,14 @@ primit-o.
 
 ## Capcanele, de la cea mai dureroasă în jos
 
-### 1. Reimportul lui `002_seed.sql`
+### 1. Reimportul lui `002_seed.sql` — REPARAT în 2.0.2
 
-Fișierul are patru părți. Trei sunt într-adevăr `INSERT IGNORE` și nu strică
-nimic. A patra, `sql/002_seed.sql:76-229`, sunt **22 de `UPDATE products SET …
+Blocul distructiv a fost scos din fișier și din generatorul lui
+(`.claude/gen-seed.mjs`); `002_seed.sql` e acum numai `INSERT IGNORE`. Ce
+urmează descrie fișierul de dinainte, ca să știi ce ai avut pe disc.
+
+Fișierul avea patru părți. Trei erau într-adevăr `INSERT IGNORE` și nu stricau
+nimic. A patra, rândurile 76–229, erau **22 de `UPDATE products SET …
 WHERE id = N` necondiționate**.
 
 Ce se pierde într-o secundă, pentru produsele 1–22: prețurile congelat și copt,
@@ -432,7 +437,7 @@ lipește-le înapoi sub blocul generat, după extragere.
 ### 5. Urcare întreruptă la jumătate
 
 `support.js` trunchiat → pagina cu ambele limbi și `{{ }}` pe ecran. Un fișier
-din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:209-215`.
+din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:224-230`.
 Vestea bună: comenzile și cererile rulează în tranzacții, deci **nu rămân
 comenzi pe jumătate în bază**.
 
@@ -440,9 +445,9 @@ comenzi pe jumătate în bază**.
 
 Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
-(`Site Public.dc.html:1092`), deci o schimbare de preț se vede corect. **Dar
-dispariția e complet tăcută**: `:1198` scoate din catalog orice produs care nu
-are **amândouă** prețurile, iar `:1282` filtrează din coș rândurile rămase fără
+(`Site Public.dc.html:1104`), deci o schimbare de preț se vede corect. **Dar
+dispariția e complet tăcută**: `:1210` scoate din catalog orice produs care nu
+are **amândouă** prețurile, iar `:1294` filtrează din coș rândurile rămase fără
 pereche, fără niciun mesaj.
 
 Concret: un client își face coșul luni seara, 8 produse, 340 lei. Marți scoți un
@@ -466,11 +471,10 @@ Trei lucruri, ordonate după cât ajută față de cât costă. Niciunul nu e f�
    Rezolvă capcana 3, care altfel nu se poate rezolva. Vreo zece linii în
    `.claude/build-deploy.mjs`, în locul unde se rescriu deja legăturile
    (`:136-153`, `:349-354`).
-2. **Tăierea blocului distructiv din seed** într-un fișier separat, cu un nume
-   care sperie, iar `002_seed.sql` să devină ce pretinde că e: numai
-   `INSERT IGNORE`, sigur la reimport. Rezolvă capcana 1 din rădăcină.
-   Aceeași reparație s-a făcut deja o dată în proiect, la
-   `sql/003_route_order.sql:82-87` — blocul de produse a rămas nereparat.
+2. ~~**Tăierea blocului distructiv din seed**~~ — făcut în 2.0.2: blocul a
+   fost scos cu totul (la instalare `INSERT IGNORE` pune oricum aceleași
+   date), iar `002_seed.sql` e ce pretinde că e: numai `INSERT IGNORE`, sigur
+   la reimport. Capcana 1 e închisă.
 3. **Un tabel `schema_migrations`.** Azi nu există absolut niciun mecanism de
    evidență: nici tabel, nici cheie în setări, nici marcaj în cod. Nu ai cum să
    afli ce ai importat deja, iar unealta care ar trebui să-ți spună

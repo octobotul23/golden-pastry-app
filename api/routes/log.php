@@ -25,7 +25,11 @@ function route_log_list(): void
     }
 
     $perPage = 50;
-    $page    = max(1, (int) ($_GET['page'] ?? 1));
+    // Plafonat: `?page=99999999999999999999` dădea (int) PHP_INT_MAX, iar
+    // înmulțirea trecea în float — „OFFSET 4.6E+20" e eroare de sintaxă SQL,
+    // deci 500 pentru un număr de pagină. Peste un milion de pagini nu are
+    // jurnalul, și oricum răspunsul e gol.
+    $page    = min(1000000, max(1, (int) ($_GET['page'] ?? 1)));
     $offset  = ($page - 1) * $perPage;
 
     $clause = $where ? ' WHERE ' . implode(' AND ', $where) : '';

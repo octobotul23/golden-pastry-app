@@ -274,6 +274,31 @@ function valid_order_day(string $d, string $eticheta = 'Ziua cerută'): string
     return $d;
 }
 
+/**
+ * Doar marginea de sus a ferestrei: pentru comenzile scrise de personal.
+ *
+ * `POST /orders` și mutarea zilei din `PATCH /orders` primeau orice dată
+ * validă ca formă — deci și „3026", tocmai greșeala pentru care există
+ * GP_ORIZONT_ZILE. Comanda rămânea activă pe o zi pe care n-o vede niciun
+ * ecran, cu stocul rezervat la nesfârșit. Marginea de jos NU se pune aici:
+ * administratorul corectează și comenzi de ieri (o livrare consemnată târziu),
+ * iar o comandă luată la telefon după miezul nopții e tot „de azi".
+ */
+function valid_day_not_too_far(string $d, string $eticheta = 'Ziua comenzii'): string
+{
+    $d = valid_day($d);
+    [, $ultima] = order_day_window();
+    if ($d > $ultima) {
+        fail(
+            $eticheta . ', ' . $d . ', e prea departe. Ultima zi care se poate cere este '
+              . $ultima . '.',
+            422,
+            'day_too_far'
+        );
+    }
+    return $d;
+}
+
 /** Adresa IP a clientului, ținând cont de proxy-ul din față (cPanel/Cloudflare). */
 /**
  * Adresa clientului.

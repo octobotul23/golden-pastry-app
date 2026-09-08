@@ -245,9 +245,16 @@ console.log('\n=== o poziție greșită oprește salvarea, nu dispare ===');
 
 console.log('\n=== acceptarea unei cereri păstrează corecturile ===');
 {
+  // Ziua se calculează, nu se scrie: „2026-09-07" a devenit trecut la miezul
+  // nopții și proba pica cu day_in_past fără nicio legătură cu ce verifică.
+  const MAINE = (() => {
+    const d = new Date(); d.setDate(d.getDate() + 2);
+    const z = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate());
+  })();
   const cer = await post(anon, '/requests', {
     customerName: 'Cofetăria Cu Greșeli', phone: '0700',
-    address: 'adresă incompletă', zone: ZONE, day: '2026-09-07',
+    address: 'adresă incompletă', zone: ZONE, day: MAINE,
     items: [{ productId: 1, qty: 4, variant: 'copt' }],
   });
   check('cerere de probă → 201', cer.status === 201, `${cer.status} ${JSON.stringify(cer.data)}`);
@@ -255,7 +262,7 @@ console.log('\n=== acceptarea unei cereri păstrează corecturile ===');
 
   const asteptat = rot(pret(1, 'congelat') * 6 + pret(4, 'copt') * 2);
   const r = await post(admin, `/requests/${rid}/accept`, {
-    day: '2026-09-07', slot: SLOT, zone: ZONE2, fulfillment: 'Livrare',
+    day: MAINE, slot: SLOT, zone: ZONE2, fulfillment: 'Livrare',
     customerName: 'Cofetăria Corectată', phone: '0733 111 222',
     address: 'Str. Lămurită 8', notes: 'lămurit la telefon', urgent: true, timed: true,
     items: [

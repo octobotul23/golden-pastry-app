@@ -47,24 +47,23 @@ const TRIMITERI = [
   ['.claude/build-deploy.mjs', [502, 505], 'exit'],
   ['api/index.php', 30, 'require $configFile'],
   ['api/index.php', 47, 'display_errors'],
-  ['api/index.php', 209, 'inexistent'],
-  ['api/index.php', [210, 215], 'Eroare intern'],
+  ['api/index.php', 224, 'inexistent'],
+  ['api/index.php', [225, 230], 'Eroare intern'],
   ['api/lib/crypto.php', 85, 'null'],
-  ['api/lib/orders.php', 518, 'function stock_unsync_order'],
+  ['api/lib/orders.php', 528, 'function stock_unsync_order'],
   ['api/lib/settings.php', 36, 'error_log'],
-  ['api/routes/auth.php', [87, 91], '503'],
+  ['api/routes/auth.php', [255, 260], '503'],
   ['api/routes/catalog.php', [369, 370], 'move_uploaded_file'],
   ['api/setup.php', [39, 48], 'admin'],
   ['api/verifica.php', [332, 342], '404'],
   ['sql/001_schema.sql', [229, 230], 'fk_req_order'],
-  ['sql/002_seed.sql', [76, 229], 'UPDATE products SET'],
   ['sql/003_route_order.sql', [11, 15], 'phpMyAdmin'],
   ['sql/003_route_order.sql', [82, 87], 'UPDATE necondi'],
   ['sql/003_route_order.sql', 104, 'product_categories'],
   ['seo/index.php', 76, 'price'],
-  ['Site Public.dc.html', 1092, 'gp-cart'],
-  ['Site Public.dc.html', 1198, 'r[5] !== null'],
-  ['Site Public.dc.html', 1282, 'byNo'],
+  ['Site Public.dc.html', 1104, 'gp-cart'],
+  ['Site Public.dc.html', 1210, 'r[5] !== null'],
+  ['Site Public.dc.html', 1294, 'byNo'],
 ]
 
 for (const [fisier, unde, asteptat] of TRIMITERI) {
@@ -81,14 +80,16 @@ for (const [fisier, unde, asteptat] of TRIMITERI) {
 }
 
 // Afirmatiile numerice din ghid, verificate direct in cod
+// Din 2.0.2 seed-ul e numai INSERT IGNORE: blocul de UPDATE-uri a fost scos,
+// deci reimportul chiar e sigur — și fișierul are voie s-o spună.
 const seed = readFileSync(cd('sql/002_seed.sql'), 'utf8')
 const nrUpdate = (seed.match(/^UPDATE products SET/gm) || []).length
-verifica('seed are exact 22 de UPDATE products', nrUpdate === 22, 'gasite ' + nrUpdate)
-verifica('antetul seed avertizeaza sa nu fie reimportat',
-  /NU REIMPORTA ACEST FIȘIER/.test(seed), 'antet fara avertisment')
-verifica('seed nu mai pretinde ca reimportul e sigur',
-  !/Se poate rula de câte ori e nevoie/.test(seed) && !/nu se pierde nimic/.test(seed),
-  'a ramas afirmatia veche')
+verifica('seed nu mai are niciun UPDATE products', nrUpdate === 0, 'gasite ' + nrUpdate)
+verifica('seed e numai INSERT IGNORE',
+  (seed.match(/^INSERT /gm) || []).every(() => true) && !/^INSERT INTO/m.test(seed) && !/^UPDATE /m.test(seed) && !/^DELETE /m.test(seed),
+  'exista scrieri care nu sunt INSERT IGNORE')
+verifica('antetul seed spune ca reimportul e sigur',
+  /Se poate rula din nou fără teamă/.test(seed), 'antet fara lamurire')
 
 const doc03 = readFileSync(cd('docs/03-publicare-cpanel.md'), 'utf8')
 verifica('docs/03 nu mai cere reimportul intregului seed',

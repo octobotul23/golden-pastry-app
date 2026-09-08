@@ -180,7 +180,7 @@ console.log('\n=== Conturi.dc.html · ce spune pagina despre parola unui cont ==
   check('api/routes/users.php:172', 'pagina citește de la server steagul de parolă provizorie',
     /temp:\s*x\.mustChangePassword === true/.test(logica));
   check('Conturi.dc.html:338', 'și data reală a schimbării parolei',
-    /pwAt:\s*x\.passwordChangedAt/.test(logica));
+    /pwAt:\s*(gp\.utc\()?x\.passwordChangedAt/.test(logica));
   check('Conturi.dc.html:338', 'nu mai există nicio funcție care numește „schimbată” ultima autentificare',
     !/parolă schimbată " \+/.test(logica) && !/"parolă inițială, neschimbată"/.test(logica));
 
@@ -408,7 +408,9 @@ console.log('\n=== Autentificarea, într-un singur loc ===');
     !/setInterval/.test(mountAdm) && !/addEventListener\("storage"/.test(mountAdm));
 
   check('Administrare Comenzi.dc.html:porneste', 'ceasul pornește doar pentru cine are ce lucra aici',
-    /if \(user\.role === "client"\) return;\s*\n\s*this\.porneste\(\);/.test(logAdm));
+    // Fie vechea condiție (doar clientul refuzat), fie cea nouă: ceasul
+    // pornește doar pentru administrator, singurul care vede panoul.
+    /if \((user\.role === "client"|!isAdmin\(\{ role: user\.role \}\))\) return;\s*\n(\s*\/\/[^\n]*\n)*\s*this\.porneste\(\);/.test(logAdm));
 
   check('Administrare Comenzi.dc.html:porneste', 'o a doua încercare nu suprapune două ceasuri',
     /porneste\(\) \{\s*\n\s*if \(this\.reqTimer\) return;/.test(logAdm));
@@ -1154,7 +1156,7 @@ console.log('\n=== Jurnal.dc.html · filtrul de zonă ===');
     constructor(p) { this.props = p || {}; this.state = {}; }
     setState(x) { Object.assign(this.state, typeof x === 'function' ? x(this.state) : x); }
   }
-  const gpFals = { get: () => Promise.resolve({ entries: intrari, total: intrari.length, page: 1, pages: 1 }) };
+  const gpFals = { utc: (x) => Date.parse(String(x || '').replace(' ', 'T') + 'Z') || 0, get: () => Promise.resolve({ entries: intrari, total: intrari.length, page: 1, pages: 1 }) };
   const nimic = { hidden: false, addEventListener() {}, removeEventListener() {}, documentElement: { setAttribute() {} } };
   const Component = new Function('DCLogic', 'gp', 'window', 'document', 'localStorage', 'location',
     cod + '\n;return Component;')(Baza, gpFals, nimic, nimic, nimic, { href: '', search: '' });
@@ -1206,6 +1208,7 @@ console.log('\n=== Jurnal.dc.html · paginarea ===');
     });
   }
   const gpFals = {
+    utc: (x) => Date.parse(String(x || '').replace(' ', 'T') + 'Z') || 0,
     get: (cale) => {
       const p = Number((/[?&]page=(\d+)/.exec(cale) || [])[1] || 1);
       return Promise.resolve({
@@ -1282,6 +1285,7 @@ console.log('\n=== Jurnal.dc.html · căutarea ===');
   }
   const cereri = [];
   const gpFals = {
+    utc: (x) => Date.parse(String(x || '').replace(' ', 'T') + 'Z') || 0,
     get: (cale) => {
       cereri.push(cale);
       const p = Number((/[?&]page=(\d+)/.exec(cale) || [])[1] || 1);

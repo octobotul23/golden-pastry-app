@@ -298,7 +298,11 @@ function price_items(array $items, string $variant, array $onorate = [], array $
             && !(is_string($qtyBrut) && is_numeric(trim($qtyBrut)))) {
             fail('Cantitatea unei poziții nu e un număr.', 422, 'bad_qty');
         }
-        $qty = (float) $qtyBrut;
+        // Rotunjită la două zecimale ÎNAINTE de verificare, cum o ține și
+        // coloana (DECIMAL(10,2)): 0,004 trecea de „> 0", MySQL o rotunjea la
+        // 0,00 și rămânea o poziție cu cantitate zero; 0,125 se salva 0,13
+        // dar totalul se calcula din 0,125 — linia și totalul nu mai băteau.
+        $qty = round((float) $qtyBrut, 2);
         if ($qty <= 0 || $qty > 10000) {
             fail('Cantitate invalidă.', 422, 'bad_qty');
         }
@@ -402,6 +406,12 @@ function price_items(array $items, string $variant, array $onorate = [], array $
         }
     }
 
+    // Coloana `total` e DECIMAL(10,2): peste 99.999.999,99 INSERT-ul pica cu
+    // 22003 și omul primea „Eroare internă." Nicio comandă adevărată nu ajunge
+    // aici; e doar plasa pentru 200 de poziții × 10.000 bucăți.
+    if ($total > 99999999.99) {
+        fail('Totalul comenzii depășește ce se poate înregistra. Împarte comanda în mai multe.', 422, 'total_too_big');
+    }
     return [$priced, $total];
 }
 

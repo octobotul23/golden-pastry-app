@@ -311,9 +311,10 @@ inventar real: `lab.goldenpastry.ro/depozit` → **+ Mișcare** → **Intrare** 
 >
 >   Toate fișierele se pot rula de câte ori vrei; ce există deja e sărit, iar
 >   niciunul nu atinge setările pe care le-ai ales din panou.
-> - **Nu reimporta `sql/002_seed.sql`.** Ai nevoie doar de o setare nouă,
->   **„Moduri fără mașină"**, de care depinde ce ajunge pe ruta șoferului.
->   Rulează în phpMyAdmin, fila **SQL**, doar rândul ăsta:
+> - `sql/002_seed.sql` se poate reimporta: e numai `INSERT IGNORE` și nu
+>   atinge nimic din ce există. Dacă vrei doar setarea nouă,
+>   **„Moduri fără mașină"**, de care depinde ce ajunge pe ruta șoferului,
+>   rulează în phpMyAdmin, fila **SQL**, doar rândul ăsta:
 >
 >   ```sql
 >   INSERT IGNORE INTO settings (setting_key, value, is_secret)
@@ -321,10 +322,10 @@ inventar real: `lab.goldenpastry.ro/depozit` → **+ Mișcare** → **Intrare** 
 >   ```
 >
 >   Fără el, ruta merge ca înainte, pe valorile implicite, dar lista nu se
->   poate edita din panou. Fișierul întreg **nu** e sigur la reimport:
->   `sql/002_seed.sql:76-229` sunt 22 de `UPDATE` necondiționate care îți
->   rescriu prețurile, denumirile, descrierile și **fotografiile**
->   produselor 1–22. Vezi [07-actualizari.md](07-actualizari.md).
+>   poate edita din panou. (Până la versiunea 2.0.2 fișierul întreg **nu**
+>   era sigur la reimport: avea 22 de `UPDATE` necondiționate care rescriau
+>   prețurile, denumirile, descrierile și **fotografiile** produselor 1–22.
+>   Blocul a fost scos. Vezi [07-actualizari.md](07-actualizari.md).)
 >
 > Verificarea **nu** se face cu `api/verifica.php`: pe o instalare care are
 > deja un administrator activ, fișierul răspunde 404

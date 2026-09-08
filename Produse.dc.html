@@ -525,6 +525,12 @@ class Component extends DCLogic {
   save() {
     const f = this.state.form;
     if (!f) return;
+    // Zăvor sincron, ca în celelalte panouri: `saving` din stare se vede abia
+    // la următoarea randare, iar două apăsări rapide plecau ca două POST-uri —
+    // a doua se întorcea cu „există deja un produs cu adresa…" pentru produsul
+    // tocmai creat de prima.
+    if (this.__saving) return;
+    this.__saving = true;
 
     // Verificăm aici ce poate fi verificat aici, ca să nu plece o cerere doar
     // ca să se întoarcă cu aceeași eroare. Serverul verifică oricum din nou.
@@ -535,6 +541,7 @@ class Component extends DCLogic {
     if (!f.descEn.trim())  lipsa.push("descrierea în engleză");
     if (!f.category)       lipsa.push("grupa");
     if (lipsa.length) {
+      this.__saving = false;
       this.setState({ formErr: "Lipsește " + lipsa.join(", ") + "." });
       return;
     }
@@ -595,7 +602,8 @@ class Component extends DCLogic {
             : e.message
         });
         if (creat) this.pull();
-      });
+      })
+      .finally(() => { this.__saving = false; });
   }
 
   /** Fotografia pleacă separat: e fișier, nu JSON. */
@@ -605,16 +613,12 @@ class Component extends DCLogic {
 
     const fd = new FormData();
     fd.append("photo", file);
-    return fetch(gp.base + "/products/" + id + "/photo", {
-      method: "POST",
-      credentials: "include",
-      headers: { "X-CSRF-Token": (() => { try { return sessionStorage.getItem("gp-csrf") || ""; } catch (e) { return ""; } })() },
-      body: fd
-    }).then(async (res) => {
-      if (res.ok) return;
-      const d = await res.json().catch(() => null);
-      throw new Error((d && d.error && d.error.message) || "Fotografia nu a putut fi încărcată.");
-    });
+    // Prin clientul comun, nu printr-un fetch de mână: așa primește tokenul
+    // CSRF (și din memorie, când sessionStorage e blocat), reîncercarea la
+    // token vechi și aceleași mesaje de eroare ca restul paginii.
+    return gp.upload("/products/" + id + "/photo", fd)
+      .then(() => undefined)
+      .catch((e) => { throw new Error((e && e.message) || "Fotografia nu a putut fi încărcată."); });
   }
 
   /**
