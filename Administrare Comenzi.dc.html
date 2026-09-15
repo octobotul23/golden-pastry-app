@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comenzi · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,8 @@
 <x-dc>
 <helmet data-dc-atomics="">
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
+<link rel="stylesheet" href="shared/gp-recomandari.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg)}
@@ -32,17 +39,41 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-adm=rgrid]{grid-template-columns:minmax(0,1fr)!important}
 [data-adm=rside]{order:-1!important;position:static!important}
 }
+/* Banda de tabletă (761–1000px) avea o singură regulă — trecerea listei pe
+   două coloane — și moștenea de la monitor tot restul. Măsurat la 820px, trei
+   lucruri ieșeau din ecran cu 172px, adică se pierdeau butoane la dreapta:
+
+   1. Cardurile. `1fr 1fr` nu ține: elementele de grilă au implicit
+      `min-width:auto`, deci lățimea de care are nevoie conținutul (300px)
+      bate pista de `1fr` și grila crește peste containerul ei. `minmax(0,1fr)`
+      e leacul obișnuit.
+   2. Grupul din dreapta barei de sus. Căutarea are `width:290px` scris în
+      marcaj, iar `margin-left:auto` îl împinge la dreapta: împreună cu
+      „+ Comandă nouă" cer 461px dintr-o bară de 553px în care mai stă și
+      titlul. Trec pe rândul lor, cu căutarea elastică.
+   3. Cele șase butoane de etapă. Părintele are `flex-wrap:wrap`, dar GRUPUL
+      lor nu — 697px de butoane într-o cutie de 497px. Se lasă să se rupă;
+      pe tabletă e loc pe verticală, iar toate șase rămân la vedere (regula:
+      niciun buton nu dispare de pe nicio lățime).
+
+   Verificat stricând la loc fiecare rând: fără el, `scrollWidth` crește. */
 @media (min-width:761px) and (max-width:1000px){
-[data-adm=mobilelist]{display:grid!important;grid-template-columns:1fr 1fr!important;align-items:start!important}
+[data-adm=mobilelist]{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important}
+[data-adm=topbar]{flex-wrap:wrap!important}
+[data-adm=topbar]>div:last-child{margin-left:0!important;width:100%!important}
+[data-adm=search]{width:auto!important;flex:1 1 0!important;min-width:0!important}
+[data-adm=filters]>div{flex-wrap:wrap!important;margin-left:0!important}
+[data-adm=cardbtns]{flex-wrap:wrap!important}
 }
 @media (max-width:760px){
 [data-adm=shell]{flex-direction:column!important}
 [data-adm=side]{width:auto!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important;gap:12px!important;padding:12px 16px!important}
-[data-adm=nav]{flex-direction:row!important;gap:8px!important;margin-left:auto!important}
 [data-adm=sidefoot]{margin-top:0!important;width:100%!important}
 [data-adm=sidenote]{display:none!important}
 [data-adm=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important;position:sticky!important;top:0!important;z-index:20!important}
 [data-adm=topbar]>div:last-child{width:100%!important;margin-left:0!important;flex-wrap:wrap!important}
+[data-adm=pager]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+[data-adm=pager]>div{justify-content:center!important}
 [data-adm=search]{width:100%!important;flex:1 1 100%!important}
 [data-adm=newbtn]{width:100%!important}
 [data-adm=stats]{grid-template-columns:1fr 1fr!important;gap:10px!important}
@@ -58,6 +89,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-adm=chanrow]>button{min-width:0!important;flex:1 1 0!important;padding:0 6px!important}
 [data-adm=rtop]>select,[data-adm=rbtn]{width:100%!important;flex:1 1 100%!important}
 [data-adm=rside]{position:static!important}
+[data-adm=refbox]>button{flex:1 1 100%!important}
 [data-adm=modalfoot]{flex-wrap:wrap!important;gap:8px!important}
 [data-adm=modalfoot]>button{min-width:0!important;margin-left:0!important;flex:1 1 100%!important;min-height:50px!important}
 [data-adm=modalfoot]>[data-adm=btnsave]{order:-2!important}
@@ -68,7 +100,6 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-adm=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
 [data-adm=nav],[data-adm=views]{display:none!important}
 [data-adm=sidefoot]{display:none!important}
-[data-adm=phoneback]{display:flex!important}
 [data-adm=phonemenu]{display:flex!important}
 [data-adm=filters]{display:none!important}
 [data-adm=topbar] h1{font-size:20px!important}
@@ -130,18 +161,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7">Administrare</span>
 </div>
-<a data-adm="phoneback" href="Intrare.dc.html" title="Alege panoul" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
 <div data-adm="nav" style="display:flex;flex-direction:column;gap:6px">
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Comenzi</span>
-<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
-<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
-<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
-<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
-<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
-<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
-<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
-<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:8px">
@@ -167,6 +197,39 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p data-adm="sidenote" style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Modificările se salvează pe server, imediat. Ce schimbi aici apare pe telefonul șoferului și pe ecranul din laborator, fără să reîncarce nimeni nimic.</p>
 </div>
 </div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
 
 <div data-adm="main" style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
 
@@ -188,12 +251,20 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </div>
 
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 28px 0;padding:14px 16px;border-radius:14px;font-size:15px">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700;flex:none">Datele nu s-au încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45;flex:1;min-width:220px">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="flex:none;min-height:44px;padding:0 16px;font-size:15px;border-radius:12px">Încearcă din nou</button>
+</div>
+</sc-if>
+
 <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
 <div style="position:fixed;inset:0;z-index:80;background:rgba(27,18,11,.62);display:flex;flex-direction:column;justify-content:flex-end;animation:pf-fade .18s var(--h-ease-out)">
 <div class="h-card" style="width:100%;flex:none;max-height:90vh;overflow-y:auto;padding:16px 16px 22px;border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:8px;animation:pf-pop .22s var(--h-ease-spring)">
 <div style="display:flex;align-items:center;gap:12px">
 <h2 class="h-h4" style="margin:0;font-size:19px">Ce vrei să vezi</h2>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+<button type="button" aria-label="Închide meniul de panouri" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
 </div>
 <sc-for list="{{ menuPages }}" as="v" hint-placeholder-count="3">
 <button type="button" onClick="{{ v.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ v.bd }};background:{{ v.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
@@ -227,24 +298,23 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 </div>
 </sc-if>
-<div style="display:flex;gap:10px;margin-top:12px">
-<a href="Depozit.dc.html" class="h-btn h-btn--secondary" style="flex:1;min-height:50px;font-size:15px;text-decoration:none">Depozit</a>
-<a href="Conturi.dc.html" class="h-btn h-btn--secondary" style="flex:1;min-height:50px;font-size:15px;text-decoration:none">Conturi</a>
-</div>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onLogout }}" style="min-height:50px;font-size:15px">Ieși din cont</button>
 </div>
 </div>
 </sc-if>
 
 <sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
-<div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pf-fade .25s var(--h-ease-out)">
+<div class="{{ msgCls }}" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pf-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+<button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
 </div>
 </sc-if>
 
 <sc-if value="{{ isOrders }}" hint-placeholder-val="{{ true }}">
 <div data-adm="body" style="flex:1;display:flex;flex-direction:column;gap:18px;padding:22px 28px 30px;min-width:0">
+
+<sc-if value="{{ doarAduseDeMine }}" hint-placeholder-val="{{ false }}">
+<p data-adm="scopenote" style="margin:0;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);font-size:13px;line-height:1.55;color:var(--h-fg-subtle);text-wrap:pretty">Vezi aici numai comenzile cumpărătorilor aduși de tine și cele care poartă codul tău de recomandare. Restul comenzilor casei nu intră în listă, nici în căutare și nici în rută.</p>
+</sc-if>
 
 <div data-adm="stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
 <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
@@ -274,12 +344,30 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </div>
 
-<div data-adm="desktoptable" class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
-<div data-adm="thead" style="display:grid;grid-template-columns:92px 1.5fr 108px 150px 1.5fr 60px 128px 292px;gap:12px;padding:12px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
+<!-- Lățimile coloanelor nu sunt din ochi: s-au măsurat, la 1440, cât cere
+     fiecare celulă ca să încapă fără tăiere. Ieșise că „Ziua" primea 150px
+     pentru un nume scurt de zi (62 îi trebuiau) și „Buc." 60px pentru o
+     singură cifră, în timp ce numele clientului se strângea la 83px din 133
+     și se tăia cu trei puncte tocmai la ce se caută cel mai des într-o listă
+     de comenzi. Cei ~139px reîntorși vin de acolo, nu de nicăieri.
+
+     `minmax()` pune un prag sub care coloanele flexibile nu mai scad, iar
+     `overflow-x:auto` de pe card e perechea lui: cât timp coloanele fixe erau
+     de neînghesuit și cardul tăia (`overflow:hidden`), pe o fereastră de
+     ~1010px „Editează" și „Anulează" ieșeau din card și nu se mai puteau
+     apăsa deloc. Acum cardul se trage cu degetul până la ele.
+
+     `min-width` e pe rând și pe cap, nu pe card: fiecare e o grilă a lui, deci
+     fără el s-ar strânge fiecare separat la lățimea cardului, iar derularea
+     n-ar avea ce să arate. Cele 1092px sunt suma coloanelor plus spațiile
+     plus marginile — sub lățimea de la 1440 (1117px), ca acolo să nu apară
+     nicio bară de derulare. -->
+<div data-adm="desktoptable" class="h-card" style="padding:0;border-radius:18px;overflow-x:auto;overflow-y:hidden">
+<div data-adm="thead" style="display:grid;grid-template-columns:88px minmax(128px,1.8fr) 92px 104px minmax(104px,1.5fr) 44px 120px 292px;gap:12px;min-width:1092px;padding:12px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
 <span>Ref.</span><span>Client</span><span>Canal</span><span>Ziua</span><span>Produse</span><span style="text-align:right">Buc.</span><span>Stare</span><span style="text-align:right">Acțiuni</span>
 </div>
 <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
-<div data-adm="row" style="display:grid;grid-template-columns:92px 1.5fr 108px 150px 1.5fr 60px 128px 292px;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--h-line);background:{{ r.rowBg }}" style-hover="background:var(--h-bg-sunk)">
+<div data-adm="row" style="display:grid;grid-template-columns:88px minmax(128px,1.8fr) 92px 104px minmax(104px,1.5fr) 44px 120px 292px;gap:12px;min-width:1092px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--h-line);background:{{ r.rowBg }}" style-hover="background:var(--h-bg-sunk)">
 <div style="display:flex;align-items:center;gap:6px;min-width:0">
 <button type="button" onClick="{{ r.onPeek }}" title="Vezi produsele" style="flex:none;width:34px;height:34px;padding:0;border:1px solid var(--h-line);border-radius:10px;background:var(--h-bg-surface);color:var(--h-fg-muted);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:var(--h-accent);color:var(--h-accent-fg);background:var(--h-accent-soft)">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -306,15 +394,20 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-numeric" style="font-size:15px;font-weight:700;text-align:right">{{ r.qty }}</span>
 <span class="{{ r.statusCls }}" style="font-size:12px;justify-self:start">{{ r.status }}</span>
 <div data-adm="actions" style="display:flex;gap:6px;justify-content:flex-end;min-width:0">
+<sc-if value="{{ potEdita }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="{{ r.urgentCls }}" onClick="{{ r.onUrgent }}" style="height:38px;white-space:nowrap">{{ r.urgentShort }}</button>
 <button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ r.onEdit }}" style="height:38px">Editează</button>
+</sc-if>
 <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" style="height:38px;color:var(--h-danger)">Anulează</button>
 </div>
+<sc-if value="{{ r.adus }}" hint-placeholder-val="{{ false }}">
+<a class="{{ r.adusCls }}" href="{{ r.adusHref }}" title="{{ r.adusTitlu }}" style="grid-column:2/-1;justify-self:start;margin-top:-4px">{{ r.adus }}</a>
+</sc-if>
 </div>
 </sc-for>
 <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
 <div style="padding:44px 18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
-<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nicio comandă pe filtrele alese.</p>
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">{{ golText }}</p>
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="height:42px;font-size:14px">Șterge filtrele</button>
 </div>
 </sc-if>
@@ -349,24 +442,47 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
 <span class="{{ r.chanCls }}" style="font-size:12px">{{ r.chan }}</span>
 <span class="{{ r.statusCls }}" style="font-size:12px">{{ r.status }}</span>
+<sc-if value="{{ r.adus }}" hint-placeholder-val="{{ false }}">
+<a class="{{ r.adusClsTap }}" href="{{ r.adusHref }}" title="{{ r.adusTitlu }}">{{ r.adus }}</a>
+</sc-if>
 </div>
 <p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ r.itemsLine }}</p>
 <sc-if value="{{ r.note }}" hint-placeholder-val="{{ false }}">
 <p style="margin:0;font-size:13px;line-height:1.45;color:var(--h-crust-700)">{{ r.note }}</p>
 </sc-if>
-<div style="display:flex;gap:8px;margin-top:2px">
+<div data-adm="cardbtns" style="display:flex;gap:8px;margin-top:2px">
+<sc-if value="{{ potEdita }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="{{ r.urgentCls }}" onClick="{{ r.onUrgent }}" style="flex:1;min-height:46px;font-size:14px">{{ r.urgentShort }}</button>
 <button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ r.onEdit }}" style="flex:1;min-height:46px;font-size:14px">Editează</button>
-<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" style="min-height:46px;width:52px;flex:none;padding:0;font-size:19px;color:var(--h-danger)">×</button>
+</sc-if>
+<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" title="Anulează comanda" aria-label="Anulează comanda" style="min-height:46px;width:52px;flex:none;padding:0;font-size:19px;color:var(--h-danger)">×</button>
 </div>
 </div>
 </sc-for>
 <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
 <div class="h-card" style="padding:34px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
 <p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nicio comandă pe filtrele alese.</p>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="min-height:46px;font-size:14px">Șterge filtrele</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="min-height:46px;font-size:14px">{{ golButon }}</button>
 </div>
 </sc-if>
+</div>
+
+<sc-if value="{{ taiat }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--h-warn-line, var(--h-line));border-radius:14px;background:var(--h-warn-bg, var(--h-bg-surface))">
+<span aria-hidden="true" style="font-size:16px;line-height:1.3">⚠</span>
+<span style="font-size:13px;line-height:1.5;color:var(--h-fg-muted)">Săptămâna asta are peste 500 de comenzi, iar serverul a dat numai atâtea. Rândurile de mai jos sunt în regulă — ele se cer pe pagini — dar cifrele de sus și ruta șoferului sunt socotite din ce a încăput, deci pot fi mai mici decât adevărul. Cere o singură zi din filtrul de sus ca să le vezi întregi.</span>
+</div>
+</sc-if>
+
+<div data-adm="pager" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding-top:2px">
+<span style="font-size:13px;color:var(--h-fg-muted)">{{ pagerText }}</span>
+<div style="display:flex;align-items:center;gap:8px">
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onPagePrima }}" disabled="{{ pagePrimaOff }}" title="Prima pagină" aria-label="Prima pagină" style="width:46px;height:44px;padding:0;font-size:15px">«</button>
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onPageInapoi }}" disabled="{{ pageInapoiOff }}" style="height:44px;font-size:14px;padding:0 14px">Înapoi</button>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-muted);min-width:92px;text-align:center">{{ pagerCurent }}</span>
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onPageInainte }}" disabled="{{ pageInainteOff }}" style="height:44px;font-size:14px;padding:0 14px">Înainte</button>
+<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onPageUltima }}" disabled="{{ pageUltimaOff }}" title="Ultima pagină" aria-label="Ultima pagină" style="width:46px;height:44px;padding:0;font-size:15px">»</button>
+</div>
 </div>
 
 </div>
@@ -406,6 +522,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ r.catalog }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--honey" style="font-size:11px">{{ r.catalog }}</span>
 </sc-if>
+<sc-if value="{{ r.hotarataVia }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge" style="font-size:11px">{{ r.hotarataVia }}</span>
+</sc-if>
+<sc-if value="{{ r.adus }}" hint-placeholder-val="{{ false }}">
+<a class="{{ r.adusClsTap }}" href="{{ r.adusHref }}" title="{{ r.adusTitlu }}">{{ r.adus }}</a>
+</sc-if>
 </div>
 
 <sc-if value="{{ r.msg }}" hint-placeholder-val="{{ false }}">
@@ -429,13 +551,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<sc-if value="{{ r.isNew }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ r.potAccepta }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--primary" onClick="{{ r.onAccept }}" style="min-height:46px;font-size:15px">Acceptă și fă comanda</button>
 </sc-if>
-<sc-if value="{{ r.isNew }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ r.potAccepta }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onReject }}" style="min-height:46px;font-size:14px;color:var(--h-danger)">Refuză</button>
 </sc-if>
-<sc-if value="{{ r.isRejected }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ r.potRedeschide }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onReopen }}" style="min-height:46px;font-size:14px">Anulează refuzul</button>
 </sc-if>
 </div>
@@ -461,17 +583,27 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
 </select>
+<!-- Numai administratorul și fondatorul: toate trei scriu ordinea zilei prin
+     `PUT /routes`, care e `require_admin()` (api/routes/orders.php ·
+     `route_driver_reorder()`). Managerul și agentul de vânzări deschid fila
+     ca să VADĂ ruta — butoanele ↑/↓ de pe opriri au avut de la început
+     aceeași poartă, acestea trei fuseseră uitate. -->
+<sc-if value="{{ potEdita }}" hint-placeholder-val="{{ true }}">
 <button data-adm="rbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onOptimize }}" style="height:46px;font-size:15px">Optimizează ruta</button>
 <button data-adm="rbtn" type="button" class="h-btn h-btn--secondary" onClick="{{ onByTime }}" style="height:46px;font-size:15px">Ordonează după interval</button>
 <sc-if value="{{ routeManual }}" hint-placeholder-val="{{ false }}">
 <button data-adm="rbtn" type="button" class="h-btn h-btn--ghost" onClick="{{ onResetRoute }}" style="height:46px;font-size:15px">Renunță la ordinea manuală</button>
+</sc-if>
+</sc-if>
+<sc-if value="{{ potDoarVede }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:var(--h-fg-subtle)">Ordinea opririlor o pune administratorul.</span>
 </sc-if>
 </div>
 
 <sc-if value="{{ routeMsg }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--success" style="border-radius:14px;padding:12px 16px;align-items:center;animation:pf-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ routeMsg }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onRouteMsgClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:18px">×</button>
+<button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onRouteMsgClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:18px">×</button>
 </div>
 </sc-if>
 
@@ -480,6 +612,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
 <sc-for list="{{ stops }}" as="s" hint-placeholder-count="5">
+<sc-if value="{{ s.antet }}" hint-placeholder-val="{{ false }}">
+<div style="margin-top:6px;padding:12px 16px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);display:flex;flex-direction:column;gap:4px">
+<span class="h-eyebrow" style="font-size:12px">{{ s.antet }}</span>
+<span style="font-size:13px;line-height:1.5;color:var(--h-fg-muted)">{{ s.antetSub }}</span>
+</div>
+</sc-if>
 <div class="h-card" style="padding:14px 16px;border-radius:18px;display:flex;gap:14px;align-items:flex-start;background:{{ s.cardBg }}">
 <span class="h-numeric" style="flex:none;width:38px;height:38px;border-radius:50%;background:var(--h-accent);color:var(--h-cocoa-800);display:flex;align-items:center;justify-content:center;font-family:var(--h-font-display);font-size:19px;font-weight:700">{{ s.num }}</span>
 <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
@@ -493,8 +631,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-size:14px;color:var(--h-fg-muted)">{{ s.addr }}</span>
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--h-fg-subtle)">
 <span class="h-numeric">Interval {{ s.slot }}</span>
+<sc-if value="{{ s.peRuta }}" hint-placeholder-val="{{ true }}">
 <span class="h-numeric">ETA {{ s.eta }}</span>
 <span class="h-numeric">+{{ s.leg }}</span>
+</sc-if>
 <span class="h-numeric">{{ s.qty }} buc.</span>
 <span class="{{ s.statusCls }}" style="font-size:11px">{{ s.status }}</span>
 </div>
@@ -506,8 +646,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 </div>
 <div style="flex:none;display:flex;flex-direction:column;gap:6px">
-<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ s.onUp }}" disabled="{{ s.upOff }}" style="width:46px;height:44px;padding:0;font-size:16px">↑</button>
-<button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ s.onDown }}" disabled="{{ s.downOff }}" style="width:46px;height:44px;padding:0;font-size:16px">↓</button>
+<sc-if value="{{ potEdita }}" hint-placeholder-val="{{ true }}">
+<button type="button" title="Mai sus" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ s.onUp }}" disabled="{{ s.upOff }}" style="width:46px;height:44px;padding:0;font-size:16px">↑</button>
+<button type="button" title="Mai jos" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ s.onDown }}" disabled="{{ s.downOff }}" style="width:46px;height:44px;padding:0;font-size:16px">↓</button>
+</sc-if>
 </div>
 </div>
 </sc-for>
@@ -524,6 +666,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-if value="{{ routeWarn }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--warning" style="border-radius:12px;padding:10px 12px;font-size:13px">{{ routeWarn }}</div>
+</sc-if>
+<sc-if value="{{ routeAfara }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--h-fg-subtle)">{{ routeAfara }}</p>
 </sc-if>
 </div>
 <div class="h-card" style="padding:16px 18px;border-radius:18px;display:flex;flex-direction:column;gap:10px">
@@ -584,20 +729,36 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div data-adm="modalcard" class="h-card" style="width:760px;max-height:88vh;overflow-y:auto;padding:26px 28px;border-radius:22px;display:flex;flex-direction:column;gap:18px;animation:pf-pop .28s var(--h-ease-spring)">
 <div style="display:flex;align-items:center;gap:12px">
 <h2 class="h-h3" style="margin:0;font-size:22px">{{ formTitle }}</h2>
-<button data-adm="modalclose" type="button" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
+<button data-adm="modalclose" type="button" aria-label="Închide formularul comenzii" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
 </div>
 
 <div data-adm="g2" style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Client
-<input class="h-input" value="{{ frm.cust }}" onChange="{{ onCust }}" placeholder="ex. Cafeneaua Lumina" style="height:46px;font-size:16px">
+<input autoFocus="{{ true }}" class="h-input" value="{{ frm.cust }}" onChange="{{ onCust }}" placeholder="ex. Cafeneaua Lumina" style="height:46px;font-size:16px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Telefon
 <input class="h-input" value="{{ frm.phone }}" onChange="{{ onPhone }}" placeholder="ex. 0722 000 000" style="height:46px;font-size:16px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Referință
-<input class="h-input" value="{{ frm.ref }}" onChange="{{ onRef }}" placeholder="se completează automat" style="height:46px;font-size:16px">
+<!-- La o comandă NOUĂ referința se naște pe server (api/routes/orders.php ·
+     `route_orders_create()`): numărul se dă pe zi, în ordine, ca să nu se
+     ciocnească două comenzi luate în aceeași clipă. Caseta primea totuși
+     text, iar textul murea acolo — antetul cererii nici nu-l ducea. Pe ecran
+     apărea „Comandă nouă adăugată: #1042", cu alt număr decât cel scris, și
+     nicăieri nu scria că referința tastată a fost aruncată.
+
+     `readOnly` și nu `disabled`, din același motiv ca la codul de recomandare
+     de mai jos: un câmp stins nu se poate nici citi cu ochii. -->
+<input class="h-input" value="{{ frm.ref }}" onChange="{{ onRef }}" readOnly="{{ frmRefNoua }}" title="{{ frmRefNotaTitlu }}" placeholder="se completează automat" style="height:46px;font-size:16px;color:{{ frmRefFg2 }}">
 </label>
 </div>
+
+<sc-if value="{{ frmContNota }}" hint-placeholder-val="{{ false }}">
+<div data-adm="contlegat" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 13px;border-radius:12px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<span class="{{ frmContCls }}" style="flex:none;font-size:12px">{{ frmContEt }}</span>
+<span style="flex:1 1 240px;min-width:0;font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ frmContNota }}</span>
+</div>
+</sc-if>
 
 <div style="display:flex;flex-direction:column;gap:8px">
 <span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Canal</span>
@@ -628,6 +789,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 </select>
 <button type="button" class="{{ frmTimedCls }}" onClick="{{ onToggleTimed }}" style="min-height:44px;font-size:13px;border-radius:12px;margin-top:2px;white-space:nowrap">{{ frmTimedLabel }}</button>
+<sc-if value="{{ frmOraSfat }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:12px;font-weight:400;line-height:1.4;color:var(--h-fg-subtle)">{{ frmOraSfat }}</span>
+</sc-if>
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Stare
 <select class="h-input" value="{{ frm.status }}" onChange="{{ onStatus }}" style="height:46px;font-size:15px">
@@ -646,15 +810,24 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <div style="display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ frm.items }}" as="it" hint-placeholder-count="2">
-<div style="display:flex;gap:10px;align-items:center">
-<input class="h-input h-numeric" value="{{ it.q }}" onChange="{{ it.onQ }}" inputMode="numeric" style="width:84px;height:46px;font-size:16px;text-align:right">
-<input class="h-input" value="{{ it.n }}" onChange="{{ it.onN }}" placeholder="Nume produs" style="flex:1;height:46px;font-size:16px">
-<select class="h-input" value="{{ it.variant }}" onChange="{{ it.onV }}" style="width:170px;height:46px;font-size:14px">
+<!-- Rândul se înfășoară, altfel pe telefon numele produsului dispare. Cantitatea
+     are 84px scriși, lista de variantă 170, butonul 46 — singurul care putea
+     ceda era chiar numele (`flex:1`), și ceda până la 33px: pe un ecran de
+     390 nu se mai citea ce produs e pe rând, iar „×" se strângea la 12px,
+     sub orice deget. Cu `flex-wrap` și un prag de 150px pe nume, lista și
+     butonul trec pe rândul al doilea și fiecare își ține lățimea. `flex:none`
+     pe ele două e partea care oprește strângerea; fără el, `width` singur nu
+     apără nimic într-un rând flexibil. Tiparul e cel de la rețete, din
+     `Produse.dc.html`. Pe ecran lat totul rămâne pe un rând, ca până acum. -->
+<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+<input class="h-input h-numeric" value="{{ it.q }}" onChange="{{ it.onQ }}" inputMode="decimal" style="width:84px;height:46px;font-size:16px;text-align:right">
+<input class="h-input" value="{{ it.n }}" onChange="{{ it.onN }}" placeholder="Nume produs" style="flex:1 1 180px;min-width:150px;height:46px;font-size:16px">
+<select class="h-input" value="{{ it.variant }}" onChange="{{ it.onV }}" style="width:170px;flex:none;height:46px;font-size:14px">
 <sc-for list="{{ variantOpts }}" as="v" hint-placeholder-count="2">
 <option value="{{ v.v }}">{{ v.l }}</option>
 </sc-for>
 </select>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ it.onDel }}" style="height:46px;width:46px;padding:0;font-size:18px;color:var(--h-danger)">×</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ it.onDel }}" title="Scoate produsul din comandă" aria-label="Scoate produsul din comandă" style="flex:none;height:46px;width:46px;padding:0;font-size:18px;color:var(--h-danger)">×</button>
 </div>
 </sc-for>
 </div>
@@ -676,6 +849,39 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Notă pentru laborator
 <input class="h-input" value="{{ frm.note }}" onChange="{{ onNote }}" placeholder="ex. Alergie la nuci — tavă separată" style="height:46px;font-size:16px">
 </label>
+
+<sc-if value="{{ frmAdus }}" hint-placeholder-val="{{ false }}">
+<div data-adm="refbox" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<a class="{{ frmAdusCls }}" href="{{ frmAdusHref }}" title="{{ frmAdusTitlu }}">{{ frmAdus }}</a>
+<span style="flex:1 1 200px;min-width:0;font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ frmAdusNota }}</span>
+<sc-if value="{{ frmPoatePlati }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ onPlataComision }}" title="Aceeași bifă ca în pagina Recomandări — același rând din registru." style="flex:none;display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid {{ frmPlataLine }};background:{{ frmPlataBg }};color:{{ frmPlataFg }};font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">
+<span style="flex:none;width:22px;height:22px;border-radius:7px;border:1px solid {{ frmPlataLine }};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">{{ frmPlataBifa }}</span>
+<span>{{ frmPlataEt }}</span>
+</button>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ frmPotRecomandare }}" hint-placeholder-val="{{ false }}">
+<div data-adm="refcod" style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">{{ frmRefEt }}
+<!-- `readOnly` și nu `disabled`: un câmp stins nu se poate nici citi cu ochii
+     bine, iar codul ăsta e chiar informația pe care agentul trebuie s-o vadă.
+     Culoarea se schimbă odată cu el, ca blocarea să se vadă fără să fie
+     nevoie să se apese în câmp. Tiparul lui `disabled="{{ … }}"` e la butonul
+     de salvare, mai jos. -->
+<input class="h-input" value="{{ frm.refCode }}" onChange="{{ onRefCode }}" readOnly="{{ frmRefBlocat }}" title="{{ frmRefTitlu }}" placeholder="ex. mihai — gol dacă n-a trimis-o nimeni" style="height:46px;font-size:16px;color:{{ frmRefCodFg }}">
+</label>
+<sc-if value="{{ frmPotLega }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ onRefLeaga }}" title="Nebifat, se repară numai comanda asta." style="align-self:flex-start;display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid {{ frmRefLine }};background:{{ frmRefBg }};color:{{ frmRefFg }};font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer;text-align:left">
+<span style="flex:none;width:22px;height:22px;border-radius:7px;border:1px solid {{ frmRefLine }};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">{{ frmRefBifa }}</span>
+<span>leagă și contul cumpărătorului pe viitor</span>
+</button>
+</sc-if>
+<span style="font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ frmRefNota }}</span>
+</div>
+</sc-if>
 
 <sc-if value="{{ formErr }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 16px;font-size:14px">{{ formErr }}</div>
@@ -700,7 +906,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <h2 class="h-h3" style="margin:0;font-size:21px">{{ peek.cust }}</h2>
 <span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ peek.ref }} · {{ peek.when }}</span>
 </div>
-<button data-adm="modalclose" type="button" class="h-btn h-btn--ghost" onClick="{{ onPeekClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
+<button data-adm="modalclose" type="button" aria-label="Închide fișa comenzii" class="h-btn h-btn--ghost" onClick="{{ onPeekClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
 </div>
 
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -731,10 +937,23 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p style="margin:0;font-size:14px;color:var(--h-fg-muted)">Livrare: {{ peek.addr }}</p>
 </sc-if>
 
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Etapa
+<select class="h-input" value="{{ peek.status }}" onChange="{{ onPeekStatus }}" style="height:46px;font-size:15px">
+<sc-for list="{{ peekStatusOpts }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</label>
+
 <div data-adm="modalfoot" style="display:flex;align-items:center;gap:10px;margin-top:2px">
 <button data-adm="btncancel" type="button" class="h-btn h-btn--secondary" onClick="{{ onPeekClose }}" style="margin-left:auto;height:48px;font-size:15px">Închide</button>
+<sc-if value="{{ potEdita }}" hint-placeholder-val="{{ true }}">
 <button data-adm="btnsave" type="button" class="h-btn h-btn--primary" onClick="{{ onPeekEdit }}" style="height:48px;font-size:15px;min-width:170px">Editează comanda</button>
+</sc-if>
 </div>
+<sc-if value="{{ potDoarVede }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">Din contul tău se schimbă etapa comenzii. Restul — clientul, ziua, adresa, pozițiile — se corectează dintr-un cont de administrator.</p>
+</sc-if>
 </div>
 </div>
 </sc-if>
@@ -799,6 +1018,89 @@ const fmtDay = (iso) => {
   return DOW_S[d.getDay()] + " " + Number(m[3]) + " " + MON_S[Number(m[2]) - 1];
 };
 
+const bani = (n) => (Math.round((Number(n) || 0) * 100) / 100).toFixed(2).replace(".", ",") + " RON";
+
+/**
+ * Eticheta „Adus de …", pentru comanda sau cererea dată.
+ *
+ * UN SINGUR loc pentru toate cele patru în care apare — rândul din tabel,
+ * cardul de telefon, fereastra de editare și cardul de cerere. Scrisă de patru
+ * ori, prima stare uitată ar fi arătat altfel într-unul dintre ele, iar
+ * patronul ar fi crezut că sunt două lucruri deosebite.
+ *
+ * Trei stări, trei culori, TREI ADRESE DEOSEBITE. Legătura nu e un ornament:
+ * ea trebuie să deschidă exact ce arată eticheta, altfel e o legătură stricată
+ * care se plânge abia după ce a fost apăsată.
+ *
+ *   activ         violet        ?ref=<id>   omul și rândurile lui
+ *   in_asteptare  chihlimbariu  ?conf=1     lista de hotărât — rândul n-are stăpân
+ *   anulat        stins         ?ref=<id>   atribuirea se vede, banul nu mai e
+ *
+ * Cererea de pe site n-are comision — rândul se naște abia la acceptare — deci
+ * vine cu forma cealaltă: codul tastat în coș și contul din spatele lui. Un cod
+ * fără cont activ (greșit, sau al unuia închis între timp) rămâne totuși scris:
+ * patronul trebuie să vadă CE a tastat omul, nu un gol.
+ *
+ * @param {object|null} c  comisionul comenzii (`o.commission`)
+ * @param {object|null} t  recomandarea cererii (`r.referral`)
+ */
+const adusDe = (c, t) => {
+  const gol = { adus: "", adusCls: "rc-badge", adusHref: "Recomandari.dc.html", adusTitlu: "" };
+
+  if (c) {
+    if (c.status === "in_asteptare") {
+      return {
+        adus: "Recomandare de lămurit",
+        adusCls: "rc-badge rc-badge--wait",
+        adusHref: "Recomandari.dc.html?conf=1",
+        adusTitlu: "Două coduri se bat pe comanda asta, iar comisionul nu se "
+          + "numără pentru nimeni până alegi. Deschide Recomandări."
+      };
+    }
+    const nume = String(c.label || "").trim();
+    if (!nume) return gol;
+    const unde = c.referrer ? "Recomandari.dc.html?ref=" + c.referrer : "Recomandari.dc.html";
+    if (c.status === "anulat") {
+      return {
+        adus: "Adus de " + nume,
+        adusCls: "rc-badge rc-badge--off",
+        adusHref: unde,
+        adusTitlu: "Comision stins — comanda e anulată."
+      };
+    }
+    return {
+      adus: "Adus de " + nume,
+      adusCls: "rc-badge",
+      adusHref: unde,
+      adusTitlu: bani(c.amount) + " comision (" + String(c.rate).replace(".", ",") + "%)"
+        + (c.paid ? " · plătit" : " · neplătit încă")
+    };
+  }
+
+  if (t) {
+    const nume = String(t.name || "").trim();
+    if (nume) {
+      return {
+        adus: "Adus de " + nume,
+        adusCls: "rc-badge",
+        adusHref: t.id ? "Recomandari.dc.html?ref=" + t.id : "Recomandari.dc.html",
+        adusTitlu: "Codul „" + t.code + "”, tastat în coș. Comisionul se naște "
+          + "abia când accepți cererea."
+      };
+    }
+    return {
+      adus: "Cod: " + t.code,
+      adusCls: "rc-badge rc-badge--off",
+      adusHref: "Recomandari.dc.html?q=" + encodeURIComponent(t.code),
+      adusTitlu: "Codul ăsta nu e al niciunui cont activ — scris greșit, sau "
+        + "contul a fost între timp închis. Cererea se acceptă ca oricare alta, "
+        + "doar că nu recomandă pe nimeni."
+    };
+  }
+
+  return gol;
+};
+
 const KEY = "gp-admin-orders-v1";
 const QKEY = "gp-requests-v1";
 const LKEY = "gp-log-v1";
@@ -809,7 +1111,23 @@ const LKEY = "gp-log-v1";
 const logAct = () => {};
 
 const authRole = (a) => (a && a.role) || "";
-const isAdmin = (a) => authRole(a) === "admin";
+const isAdmin = (a) => gp.eAdmin(authRole(a));
+
+/**
+ * Cine are voie să DESCHIDĂ panoul, spre deosebire de cine are voie să
+ * schimbe ce e în el.
+ *
+ * Până acum era o singură întrebare, `isAdmin`, și de-aia managerul și
+ * agentul de vânzări erau conturi moarte: pagina de intrare îi trimitea
+ * aici, iar aici îi refuza. Serverul nu i-a refuzat niciodată — lista de
+ * comenzi e `require_staff()`.
+ *
+ * Răspunsul se citește din matricea meniului, nu se scrie a doua oară:
+ * dacă mâine „Comenzi" iese din meniul managerului, poarta se închide
+ * singură. Un buton care duce la un refuz și o poartă care refuză pe cine
+ * are butonul sunt aceeași greșeală, văzută din două părți.
+ */
+const vedeComenzi = (a) => (gp.PANOURI_ROL[authRole(a)] || []).indexOf("Comenzi") >= 0;
 const readAuth = () => null;   // sesiunea vine de la server, prin gp.me()
 // Punctul de plecare vine din Setări, nu din cod: depozitul se poate muta,
 // iar adresa din prototip nici măcar nu era a lui.
@@ -842,8 +1160,20 @@ const refreshDays = () => {
 // pentru cazul în care `/lists` nu s-a încărcat încă.
 const SLOTS_OF = () => { const l = gp.slots(); return l.length ? l : ["08:00"]; };
 const CHANS_OF = () => { const l = gp.fulfillments(); return l.length ? l : ["Livrare"]; };
+// „Cu mașina" = orice mod care NU e în lista „Moduri fără mașină" din Setări
+// (`fulfillment_pickup`), exact regula după care serverul umple ruta șoferului
+// (GET /routes: fulfillment NOT IN pickup). Înainte pagina compara cu textul
+// fix „Livrare": un mod nou adăugat din Setări („Curier") ajungea pe ruta
+// șoferului, dar nu apărea în fila Rută a administratorului și nu cerea zonă.
+const CU_MASINA = (chan) => { const p = gp.pickupFulfillments(); return p.length ? p.indexOf(chan) < 0 : chan === "Livrare"; };
 const defaultSlot = () => SLOTS_OF()[0];
-const defaultChan = () => (CHANS_OF().indexOf("Livrare") >= 0 ? "Livrare" : CHANS_OF()[0]);
+// Implicitul nu mai e textul „Livrare" scris aici. Modurile se editează din
+// Setări, iar după o redenumire (Livrare → Curier) căderea pe primul din listă
+// punea comanda nouă pe „Angro", adică pe en-gros — și o scotea de pe ruta
+// șoferului. Regula e aceeași ca la server (`default_fulfillment()`,
+// api/lib/settings.php): primul mod care CHIAR pleacă cu mașina, după lista de
+// ridicări din Setări. Așa un mod nou ajunge implicit pe rută.
+const defaultChan = () => CHANS_OF().find((c) => CU_MASINA(c)) || CHANS_OF()[0];
 // Zona implicită era „Centru", scrisă în cod. Zonele vin din Setări și acolo
 // nu există niciun „Centru": comanda se salva cu o zonă necunoscută, iar
 // oprirea ei ateriza pe hartă peste depozit, fiindcă `zonePoint` nu găsea
@@ -874,11 +1204,53 @@ const ST = {
   "La ambalare": "h-badge h-badge--success", "Predată": "h-badge h-badge--solid"
 };
 
+// Câte comenzi intră într-o pagină de tabel.
+//
+// Nu e același lucru cu plafonul serverului (500): acela e cât POATE da
+// serverul într-un răspuns, asta e cât are omul de citit pe un ecran fără să
+// deruleze o zi întreagă. Treizeci încap pe un laptop și rămân purtabile pe
+// telefon; schimbată aici, se schimbă și numărul de pagini, fiindcă serverul îl
+// socotește din `total` și din `limit`, nu din câte rânduri a trimis.
+const PE_PAGINA = 30;
+
 class Component extends DCLogic {
   state = {
-    orders: [], view: "comenzi", search: "", fDay: "toate", fChan: "Toate", fStatus: "Toate",
-    form: null, confirm: null, msg: "", formErr: "", peek: null,
+    navOpen: false,
+    // De ce n-au venit datele. Gol = au venit.
+    //
+    // Cele trei cereri ale paginii (cererile, fereastra de șapte zile, pagina
+    // de tabel) își scriau refuzul în `console.warn`, adică nicăieri, iar
+    // ecranul rămânea cu „Nicio comandă pe filtrele alese" — o afirmație pe
+    // care pagina n-avea de unde s-o facă. Oricare din cele trei pică, aici
+    // se scrie motivul; oricare reușește, se șterge.
+    eroare: "",
+    orders: [], view: "comenzi", search: "", fDay: "saptamana", fChan: "Toate", fStatus: "Toate",
+    // Tabelul de comenzi nu mai vine odată cu cifrele de sus.
+    //
+    // `orders` e fereastra de șapte zile: din ea ies contoarele, ruta șoferului
+    // și lista de produse cerute — socoteli care au nevoie de TOATE comenzile
+    // ferestrei deodată, deci nu suportă tăiere pe pagini.
+    //
+    // `lista` e altceva: exact pagina de tabel cerută, filtrată, căutată și
+    // sortată pe server, peste tot istoricul. Despărțirea nu e o eleganță:
+    // paginând `orders` s-ar fi stricat în tăcere ordinea opririlor
+    // (`seqFromOrders`) și „Total 7 zile", iar căutând în `orders` s-ar fi
+    // căutat, ca până acum, numai printre comenzile care apucaseră să sosească.
+    lista: [], listaTotal: 0, listaPagini: 1, listaPag: 1,
+    form: null, confirm: null, msg: "", msgBad: false, formErr: "", peek: null,
     rDay: TODAY, seq: {}, routeMsg: "", menu: false, requests: [], qf: "nou",
+    // Cifrele cererilor, pe stări, așa cum le numără serverul în toată ograda
+    // (api/routes/requests.php · `counts`). `null` până sosește primul
+    // răspuns — atunci se numără din lista adusă, ca înainte, ca ecranul să nu
+    // clipească cu zerouri în prima clipă.
+    reqCounts: null,
+    // Serverul dă cel mult 500 de comenzi într-un răspuns și de acum o spune
+    // (api/routes/orders.php · `truncated`). Până acum panoul desena liniștit
+    // ce primise, iar restul pur și simplu nu existau pentru cine se uita la
+    // ecran — felul cel mai rău de a pierde o comandă, fiindcă nimeni nu caută
+    // ce nu știe că lipsește. Filtrele de aici sunt locale: ele aleg din ce a
+    // sosit, nu cer altceva, deci nici ele nu pot scoate la iveală ce s-a tăiat.
+    taiat: false,
     // Autentificarea nu mai stă aici. Pagina are un singur lucru de făcut cu
     // ea: să întrebe serverul cine ești și, dacă nu ești nimeni, să te trimită
     // la `Intrare.dc.html` cu urma de întoarcere.
@@ -939,12 +1311,13 @@ class Component extends DCLogic {
       .then((user) => {
         // Fără sesiune, requireUser a plecat deja spre pagina de intrare.
         if (!user) return;
-        this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
-        // Clientul are cont adevărat, doar că nu pe ușa asta: îi arătăm
-        // ecranul care i-o spune, nu o pagină goală.
-        if (user.role === "client") return;
+        this.setState({ auth: gp.auth(user) });
+        // Cine n-are „Comenzi" în meniu primește ecranul de refuz, iar ceasul
+        // nu pornește pentru el (bătea serverul din spatele lui). Ce poate
+        // FACE înăuntru e altă întrebare, pusă mai jos cu `potEdita`.
+        if (!vedeComenzi({ role: user.role })) return;
         this.porneste();
-        return Promise.all([this.pullOrders(), this.pullRequests()]);
+        return Promise.all([this.pullOrders(), this.pullLista(1), this.pullRequests()]);
       })
       .catch((e) => {
         this.setState({
@@ -970,22 +1343,64 @@ class Component extends DCLogic {
    * ajunge în lista asta, pe orice calculator. Înainte, cererea rămânea în
    * browserul care o crease și nu o vedea nimeni.
    */
-  pullRequests() {
-    return gp.get('/requests')
+  pullRequests(filtru) {
+    // SE CERE ANUME CE SE ARATĂ, nu tot ce există.
+    //
+    // Panoul cerea lista întreagă — cele mai noi 500 de rânduri, de orice
+    // stare — și-și alegea pe urmă, în browser, ce desenează. Cât timp casa e
+    // nouă, merge; pe urmă cererile acceptate și refuzate din anii trecuți
+    // ocupă tăietura, iar una nehotărâtă din urmă nu mai ajunge aici deloc.
+    //
+    // „nou" E ÎNTOTDEAUNA ÎN LISTĂ, oricare ar fi filtrul apăsat: din cererile
+    // nehotărâte ies numărul de pe filă, cel din sertar și rândul de sus, adică
+    // tot ce-i spune omului cât are de lucru. Un filtru de istoric schimbă ce
+    // se vede în listă, nu cât are omul de răspuns.
+    //
+    // O singură cerere pe tură, ca până acum: ceasul bate din patru în patru
+    // secunde, iar a doua chemare ar fi fost o cheltuială de toată ziua pentru
+    // un ecran de istoric pe care nimeni nu stă.
+    //
+    // Filtrul se primește pe mână, nu se citește din stare: `setState` nu se
+    // aplică pe loc, deci butonul abia apăsat ar fi cerut lista filtrului DE
+    // DINAINTE — mereu cu unul în urmă.
+    const f = filtru || this.state.qf || "nou";
+    const stari = f === "toate" ? "nou,acceptata,respinsa"
+      : f === "nou" ? "nou"
+      : "nou," + f;
+    return gp.get('/requests?status=' + stari)
       .then((r) => {
         const list = (r.requests || []).map(gp.toPageRequest);
         const next = JSON.stringify(list);
         if (next !== this.__reqSeen) { this.__reqSeen = next; this.setState({ requests: list }); }
+        if (r.counts) this.setState({ reqCounts: r.counts });
+        if (this.state.eroare) this.setState({ eroare: "" });
       })
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
-        else console.warn('[gp] nu am putut aduce cererile:', e.message);
+        else this.setState({ eroare: gp.motiv(e, "cererile clienților") });
       });
   }
 
-  /** Comenzile confirmate, de pe server. */
+  /**
+   * Fereastra de șapte zile: cifrele de sus, ruta și produsele cerute.
+   *
+   * Cerea până acum tot ce dădea serverul — cele mai noi 500 de comenzi, fără
+   * fereastră de zile — și din grămada aceea se socoteau și „Comenzi azi", și
+   * „Total 7 zile", și opririle șoferului. Mergea, cât timp casa avea sub 500
+   * de comenzi în tot istoricul; de acolo încolo, cele mai vechi ieșeau din
+   * răspuns fără ca cineva să afle.
+   *
+   * Acum se cere anume fereastra pe care o arată filtrele (`DAYS`), iar
+   * serverul o citește de la capătul ei apropiat (api/routes/orders.php ·
+   * `$fereastra`): dacă tot s-ar tăia ceva, s-ar tăia ziua cea mai depărtată,
+   * nu ziua de azi.
+   *
+   * Tabelul NU se mai umple de aici — vezi `pullLista()`.
+   */
   pullOrders() {
-    return gp.get('/orders')
+    const de = DAYS[0], pana = DAYS[DAYS.length - 1];
+    const fereastra = de && pana ? '?from=' + de.v + '&to=' + pana.v : '';
+    return gp.get('/orders' + fereastra)
       .then((r) => {
         const list = (r.orders || []).map(gp.toPageOrder);
         const next = JSON.stringify(list);
@@ -993,11 +1408,133 @@ class Component extends DCLogic {
           this.__ordSeen = next;
           this.setState({ orders: list, seq: this.seqFromOrders(list) });
         }
+        if (!!r.truncated !== this.state.taiat) this.setState({ taiat: !!r.truncated });
+        if (this.state.eroare) this.setState({ eroare: "" });
       })
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
-        else console.warn('[gp] nu am putut aduce comenzile:', e.message);
+        else this.setState({ eroare: gp.motiv(e, "comenzile săptămânii") });
       });
+  }
+
+  /**
+   * Pagina de tabel, cerută de la server cu filtrele și căutarea puse.
+   *
+   * Aici e reparația propriu-zisă. Panoul trăgea până la 500 de comenzi și le
+   * filtra în browser, cu două urmări pe care nu le vedea nimeni:
+   *
+   *   · căutarea găsea numai printre cele 500 aduse. Comanda de acum o lună a
+   *     unui client vechi pur și simplu nu exista pentru caseta de căutare, iar
+   *     ecranul răspundea „Nicio comandă pe filtrele alese" — adică „nu
+   *     există", când adevărul era „n-am căutat acolo".
+   *   · filtrele de zi, canal și stare lucrau după tăietură. Un filtru care se
+   *     aplică după tăietură nu filtrează comenzile: filtrează pagina.
+   *
+   * Fereastra de zile e scrisă pe față, în filtrul de sus. „Toate zilele" nu
+   * mai putea rămâne singura opțiune: cât timp lista venea întreagă, „toate"
+   * însemna „tot ce a sosit", adică oricum o tăietură nescrisă la 500. Pe
+   * pagini, întrebarea trebuie pusă limpede, deci sunt două:
+   *
+   *   · „Săptămâna de lucru" — aceleași șapte zile ca ale contoarelor de sus,
+   *     în ordinea calendarului. Asta e lista de lucru și e pornirea.
+   *   · „Toate zilele · cu istoric" — fără fereastră, cele mai noi întâi.
+   *
+   * O căutare scrisă în casetă lasă fereastra jos oricum: cine caută vrea să
+   * găsească oriunde, nu numai în săptămâna asta — chiar asta era plângerea.
+   * Rezumatul de sub titlu spune de fiecare dată unde s-a căutat.
+   *
+   * `sort=urgent` cere sortarea acolo unde cade și tăietura. Ridicate aici, în
+   * pagină, urgentele ar fi urcat numai în pagina lor: o comandă urgentă de pe
+   * pagina a treia ar fi rămas pe pagina a treia.
+   */
+  pullLista(pag, peste) {
+    const S = this.state;
+    const F = Object.assign({
+      fDay: S.fDay, fChan: S.fChan, fStatus: S.fStatus, search: S.search
+    }, peste || {});
+    const p = Math.max(1, pag || S.listaPag || 1);
+    const cautat = String(F.search || '').trim();
+
+    const par = ['limit=' + PE_PAGINA, 'page=' + p, 'sort=urgent'];
+    if (F.fDay !== 'toate' && F.fDay !== 'saptamana') {
+      par.push('day=' + encodeURIComponent(F.fDay));
+    } else if (F.fDay === 'saptamana' && !cautat && DAYS.length) {
+      par.push('from=' + DAYS[0].v);
+      par.push('to=' + DAYS[DAYS.length - 1].v);
+    }
+    if (F.fChan !== 'Toate') par.push('chan=' + encodeURIComponent(F.fChan));
+    if (F.fStatus !== 'Toate') par.push('status=' + encodeURIComponent(F.fStatus));
+    if (cautat) par.push('q=' + encodeURIComponent(cautat));
+
+    // Numărul cererii. Între tastarea unei litere și răspunsul serverului mai
+    // pleacă alte cereri, iar rețeaua nu promite că se întorc în ordine: fără
+    // numărul ăsta, răspunsul la „ma" putea ateriza după cel la „mari" și
+    // omul rămânea cu rezultatele penultimei litere sub ochi.
+    const semn = (this.__listaSemn = (this.__listaSemn || 0) + 1);
+
+    return gp.get('/orders?' + par.join('&'))
+      .then((r) => {
+        if (semn !== this.__listaSemn) return;
+        const pagini = Math.max(1, Number(r.pages) || 1);
+        const gata = {
+          lista: (r.orders || []).map(gp.toPageOrder),
+          listaTotal: Number(r.total) || 0,
+          listaPagini: pagini,
+          listaPag: Math.min(p, pagini)
+        };
+        // Ceasul de patru secunde cere pagina din nou, la nesfârșit. Scrisă
+        // necondiționat, starea ar fi redesenat tabelul de cincisprezece ori
+        // pe minut degeaba — iar un rând sub deget, pe telefon, se mișcă.
+        // Aceeași măsură ca la `__ordSeen`, pentru aceeași pricină.
+        const acum = JSON.stringify(gata);
+        if (acum !== this.__listaSeen) { this.__listaSeen = acum; this.setState(gata); }
+        // O pagină rămasă în gol — ai anulat ultima comandă de pe pagina a
+        // patra, sau ai strâns filtrele cât erai pe ea — se trage înapoi la
+        // ultima care există. Altfel ecranul spune „pagina 4 din 2" și nu are
+        // niciun rând sub el.
+        if (p > pagini) this.pullLista(pagini, peste);
+        if (this.state.eroare) this.setState({ eroare: "" });
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ eroare: gp.motiv(e, "pagina de comenzi") });
+      });
+  }
+
+  /**
+   * Fereastra de sus și pagina de tabel deodată.
+   *
+   * Aproape orice schimbare le atinge pe amândouă: o comandă urgentată își
+   * schimbă și locul în tabel, și cifra „Urgente"; una anulată iese și din
+   * rândurile de jos, și din contoare. Cerute separat, una din două ar fi
+   * rămas veche pe ecran până la următoarea bătaie de ceas.
+   */
+  pullTot() {
+    return Promise.all([this.pullOrders(), this.pullLista()]);
+  }
+
+  /**
+   * Filtrele s-au schimbat: pagina se ia de la capăt și se cere din nou.
+   *
+   * Valoarea nouă se trimite pe față, în `peste`, nu se citește din `state`:
+   * `setState` nu promite că a apucat să se aplice până aici, iar o cerere
+   * plecată cu filtrul vechi ar fi adus exact lista pe care omul tocmai a
+   * cerut s-o schimbe.
+   */
+  cerFiltru(patch) {
+    // Un filtru apăsat cât încă bate ceasul căutării anulează ceasul: altfel
+    // cererea întârziată ar fi sosit după cea de acum, cu textul de dinainte.
+    clearTimeout(this.tCauta);
+    this.setState(Object.assign({ listaPag: 1 }, patch));
+    return this.pullLista(1, patch);
+  }
+
+  /** O comandă după număr, căutată și în pagina de tabel, și în fereastră. */
+  comandaDupaId(id) {
+    const S = this.state;
+    return (S.lista || []).find(o => o.id === id)
+      || (S.orders || []).find(o => o.id === id)
+      || null;
   }
 
   /**
@@ -1016,7 +1553,7 @@ class Component extends DCLogic {
   tick() {
     this.treziZiua();
     this.pullRequests();
-    this.pullOrders();
+    this.pullTot();
   }
 
   /**
@@ -1034,7 +1571,12 @@ class Component extends DCLogic {
    */
   porneste() {
     if (this.reqTimer) return;
-    this.reqTimer = setInterval(() => this.tick(), 4000);
+    // gp.poll(): se oprește cât fila e ascunsă și nu lasă două ture să se
+    // suprapună. Cu setInterval, fila lăsată deschisă pe un al doilea ecran
+    // cerea toate comenzile (500, cu poziții) și toate cererile la fiecare 4
+    // secunde, zi și noapte, iar un răspuns întârziat putea pune pe ecran o
+    // listă mai veche decât cea deja afișată.
+    this.reqTimer = gp.poll(() => this.tick(), 4000);
     this.onReqStore = (e) => { if (!e || !e.key || e.key === QKEY) this.pullRequests(); };
     window.addEventListener("storage", this.onReqStore);
   }
@@ -1054,7 +1596,9 @@ class Component extends DCLogic {
     const S = this.state;
     const patch = {};
     if (!inFereastra(S.rDay)) patch.rDay = TODAY;
-    if (S.fDay !== "toate" && !inFereastra(S.fDay)) patch.fDay = "toate";
+    if (S.fDay !== "toate" && S.fDay !== "saptamana" && !inFereastra(S.fDay)) {
+      patch.fDay = "saptamana";
+    }
     // Chiar dacă nu se schimbă nicio alegere, etichetele („Sâm 29 aug") și
     // numărătoarea „Comenzi azi" se recalculează abia la următoarea randare.
     if (Object.keys(patch).length) this.setState(patch);
@@ -1092,6 +1636,11 @@ class Component extends DCLogic {
       zone: o.zone || "", day: o.date, slot: o.slot || "", fulfillment: o.chan,
       notes: o.note || "", urgent: !!o.urgent, timed: !!o.timed,
       ref: (o.ref || "").trim(), status: o.status,
+      // Codul intră în linia de reper deși nu e un câmp obișnuit: lăsat afară,
+      // `doarSchimbate()` l-ar fi găsit mereu diferit de `undefined` și l-ar
+      // fi trimis la orice salvare — inclusiv la o corectură de telefon pe o
+      // comandă cu comisionul deja plătit, care s-ar fi izbit de refuz.
+      referralCode: (o.refCode || "").trim(),
       items: (o.items || []).map(i => ({
         productId: i.productId == null ? null : i.productId,
         qty: this.citesteCantitate(i.q),
@@ -1150,7 +1699,7 @@ class Component extends DCLogic {
     // primește șoferul, deci fără filtrul ăsta administrarea ar planifica
     // opriri pe care șoferul nu le vede — și ar număra altfel decât el.
     const all = this.state.orders.filter(o =>
-      o.chan === "Livrare" && o.date === day && o.status !== gp.cancelled());
+      CU_MASINA(o.chan) && o.date === day && o.status !== gp.cancelled());
     const order = this.state.seq[day] || [];
     const rank = {};
     order.forEach((id, i) => { rank[id] = i; });
@@ -1180,11 +1729,34 @@ class Component extends DCLogic {
     // ștergea, cu `route_seq = NULL`, ordinea zilei aceleia.
     gp.setRouteOrder(day, ids)
       .then(() => this.pullOrders())
-      .catch((e) => this.setState({ routeMsg: "Ordinea nu a putut fi salvată: " + e.message }));
+      .catch((e) => {
+        // Ordinea de pe ecran e cea optimistă, pusă înainte de răspuns. Dacă
+        // serverul a refuzat, o luăm înapoi de la el: `__ordSeen` pe null
+        // forțează pullOrders() să rescrie starea chiar dacă lista de comenzi
+        // n-a schimbat nimic. Altfel adminul rămânea cu o ordine pe care
+        // șoferul n-o are, sub un mesaj care zice că „o vede imediat".
+        this.__ordSeen = null;
+        this.setState({ routeMsg: "Ordinea nu a putut fi salvată: " + e.message });
+        this.pullOrders();
+      });
   }
 
+  /**
+   * Ordinea cea mai scurtă — numai peste opririle care au punct pe hartă.
+   *
+   * O oprire dintr-o zonă fără punct e așezată de `pos()` chiar în curtea
+   * laboratorului: distanța până la ea iese 0, deci pasul „cel mai apropiat"
+   * o alege ÎNTÂI și rescrie ordinea întregii zile în jurul unui drum care
+   * nu există. Ploieștiul strecurat între Sectorul 1 și Sectorul 2.
+   *
+   * Opririle din afara orașului rămân la coadă, în ordinea lor de dinainte:
+   * nu se pierd și nu se amestecă. Ecranul șoferului le desparte oricum, tot
+   * după punctul lipsă, deci cele două pagini spun același lucru.
+   */
   optimize(day) {
-    const list = this.stopsFor(day);
+    const toate = this.stopsFor(day);
+    const list = toate.filter((o) => !gp.zoneFaraPunct(o.zone));
+    const afara = toate.filter((o) => gp.zoneFaraPunct(o.zone));
     if (list.length < 3) return this.setState({ routeMsg: "Prea puține opriri ca să merite optimizat." });
     const before = this.legs(list).total;
     const pool = list.slice();
@@ -1208,7 +1780,9 @@ class Component extends DCLogic {
     }
     const after = this.legs(out).total;
     const saved = before - after;
-    this.writeSeq(day, out, saved > 0.15
+    // Ordinea salvată e ruta, apoi restul: `route_seq` le numerotează pe
+    // toate, iar telefonul șoferului le desparte din nou după punct.
+    this.writeSeq(day, out.concat(afara), saved > 0.15
       ? "Rută optimizată: " + before.toFixed(1) + " km → " + after.toFixed(1) + " km (−" + saved.toFixed(1) + " km)."
       : "Ordinea actuală era deja cea mai scurtă (" + after.toFixed(1) + " km).");
   }
@@ -1216,10 +1790,11 @@ class Component extends DCLogic {
   /** Închide formularul și reîncarcă din sursa de adevăr: serverul. */
   commit(msg) {
     this.__saving = false;
-    this.setState({ msg: msg || "", form: null, confirm: null, formErr: "", saving: false });
+    this.setState({ msg: msg || "", msgBad: false, form: null, confirm: null, formErr: "", saving: false });
     this.__ordSeen = null;
+    this.__listaSeen = null;
     this.__reqSeen = null;
-    return Promise.all([this.pullOrders(), this.pullRequests()]);
+    return Promise.all([this.pullOrders(), this.pullLista(), this.pullRequests()]);
   }
 
   /** Afișează eroarea venită de la server, fără să închidă formularul. */
@@ -1250,30 +1825,49 @@ class Component extends DCLogic {
     this.__gpSync();
     const S = this.state;
     const set = (p) => this.setState(p);
+
+    // Cine poate schimba, nu doar vedea. Se pune o dată, sus, fiindcă îl
+    // cer și rândurile de cereri de mai jos, și steagurile de la sfârșit.
+    const potEdita = !!S.auth && isAdmin(S.auth);
+    // Agentul de vânzări, cu formularul de comandă NOUĂ deschis și cu un cod
+    // pe cont. Trei condiții, fiindcă fiecare lipsește altceva dacă cade:
+    // fără rol e o comandă a casei, fără „nou" e o corectare care nu-l
+    // privește, iar fără cod n-ar avea ce scrie în câmp — un agent căruia
+    // nimeni nu i-a dat încă un cod vede formularul obișnuit, nu unul blocat
+    // pe gol.
+    const esteAgentNou = authRole(S.auth) === "agent_vanzari"
+      && !!S.form && !S.form.id && !!S.auth.referralCode;
     // O comandă din afara ferestrei de șapte zile — una veche, sau una promisă
     // peste două săptămâni — nu-și mai arată data brută: o scriem la fel ca pe
     // celelalte, „Joi 10 sep".
     const dayLabel = (v) => (DAYS.find(d => d.v === v) || { l: fmtDay(v) }).l;
 
-    const sorted = S.orders.slice().sort((a, b) => {
-      if (!!b.urgent !== !!a.urgent) return b.urgent ? 1 : -1;
-      // Sortăm după poziția zilei în fereastră, nu după numărul ei: la trecerea
-      // dintr-o lună în alta, „01” vine după „31”, nu înaintea lui.
-      const rk = (d) => { const i = DAYS.findIndex(x => x.v === d); return (i < 0 ? 99 : i) + 100; };
-      const ka = rk(a.date) + a.slot;
-      const kb = rk(b.date) + b.slot;
-      return ka < kb ? -1 : ka > kb ? 1 : 0;
-    });
-
-    const q = S.search.trim().toLowerCase();
-    const filtered = sorted.filter(o => {
-      if (S.fDay !== "toate" && o.date !== S.fDay) return false;
-      if (S.fChan !== "Toate" && o.chan !== S.fChan) return false;
-      if (S.fStatus !== "Toate" && o.status !== S.fStatus) return false;
-      if (!q) return true;
-      const hay = (o.ref + " " + o.cust + " " + o.items.map(i => i.n).join(" ")).toLowerCase();
-      return hay.indexOf(q) !== -1;
-    });
+    // Rândurile tabelului sunt chiar pagina venită de la server: filtrată,
+    // căutată și sortată acolo, ÎNAINTE de tăietură.
+    //
+    // Aici stătea o sortare și un filtru peste `S.orders`. Amândouă lucrau pe
+    // ce apucase să sosească, deci sortau și filtrau pagina, nu lista. Sortarea
+    // avea și o grijă care nu mai e a noastră — „01" al lunii următoare venea
+    // după „31", nu înaintea lui — fiindcă serverul ordonează după data
+    // adevărată (`o.day`), nu după poziția zilei într-o fereastră.
+    const filtered = S.lista;
+    // Cifrele paginării, scoase o dată: le cer și rezumatul de sus, și
+    // butoanele de sub tabel.
+    const pag = Math.min(S.listaPag, S.listaPagini);
+    const dela = S.listaTotal ? (pag - 1) * PE_PAGINA + 1 : 0;
+    const panala = Math.min(pag * PE_PAGINA, S.listaTotal);
+    // Unde s-a căutat, scris pe ecran. Fără el, omul n-ar avea de unde ști de
+    // ce numărul de sub titlu nu seamănă cu „Total 7 zile" — și, mai rău, ar
+    // citi un „nicio comandă" care înseamnă „niciuna săptămâna asta" ca și cum
+    // ar însemna „niciuna, nicăieri".
+    // Filtrele sunt curate: nimic ales, nimic scris. De aici iese și ce scrie
+    // pe ecranul gol, și ce face butonul de sub el.
+    const filtreCurate = S.fDay === "saptamana" && S.fChan === "Toate"
+      && S.fStatus === "Toate" && !S.search.trim();
+    const undeLoc = (S.search.trim() || S.fDay === "toate") ? "tot istoricul"
+      : S.fDay === "saptamana" ? "săptămâna de lucru"
+        : "ziua aleasă";
+    const undeCauta = "din " + undeLoc;
 
     // Deschiderea sau închiderea unui formular stinge semaforul: dacă o cerere
     // rămâne fără răspuns, panoul nu trebuie să rămână blocat până la
@@ -1320,6 +1914,19 @@ class Component extends DCLogic {
         ? {
             id: o.id, ref: o.ref, cust: o.cust, chan: o.chan, day: o.date, slot: o.slot,
             status: o.status, urgent: !!o.urgent, timed: !!o.timed, note: o.note || "",
+            // Comisionul călătorește cu formularul, dar NU pleacă înapoi la
+            // server: corpul cererii se scrie câmp cu câmp în `save()`, nu din
+            // formular întreg. Bifa are ruta ei, `POST /referrals/pay`.
+            commission: o.commission || null,
+            // De ce cont s-a lipit comanda. Călătorește cu formularul, dar NU
+            // pleacă înapoi la server — ca `commission`: corpul cererii se
+            // scrie câmp cu câmp în `save()`. Dezlegarea rămâne cerută pe
+            // față, cu `customerId: null` (api/routes/orders.php).
+            contId: o.contId == null ? null : o.contId,
+            // Bifa nu se ține minte de la o comandă la alta: e o hotărâre
+            // despre viitorul unui cont, iar o hotărâre nu are voie să se ia
+            // singură fiindcă a rămas apăsată de data trecută.
+            refCode: o.refCode || "", refLeaga: false,
             phone: o.phone || "", addr: o.addr || "", zone: o.zone || defaultZone(),
             variant: o.variant || "copt",
             items: o.items.map(i => ({
@@ -1332,6 +1939,27 @@ class Component extends DCLogic {
         : {
             id: null, ref: "", cust: "", chan: defaultChan(), day: TODAY, slot: defaultSlot(),
             status: gp.statuses()[0] || "În așteptare", urgent: false, timed: false, note: "",
+            commission: null,
+            contId: null,
+            // Comanda nouă a agentului pornește cu codul LUI scris în câmp.
+            //
+            // Comisionul nu se mai naște pe tăcute: agentul vede ce trece pe
+            // comandă și de ce va apărea în „Recomandări". Câmpul e blocat —
+            // codul altcuiva îl refuză oricum serverul
+            // (`api/routes/orders.php` · `referral_not_yours`) — dar e blocat
+            // ca să nu se ajungă la refuz, nu ca să-l ascundă.
+            //
+            // `S.auth`, nu `s.auth`: `openForm` cheamă `set()` cu un OBIECT, nu
+            // cu o funcție, deci aici nu există niciun `s`. Scris greșit, clicul
+            // pe „+ Comandă nouă" arunca ReferenceError și formularul nu se mai
+            // deschidea deloc — pentru toată lumea, nu doar pentru agent. `S` e
+            // instantaneul stării din randarea în care s-a legat butonul, iar
+            // butonul se desenează abia după ce sesiunea a sosit.
+            //
+            // Pentru restul personalului rămâne gol: la o comandă nouă codul se
+            // cere clientului, nu se completează din contul celui care scrie.
+            refCode: authRole(S.auth) === "agent_vanzari" ? (S.auth.referralCode || "") : "",
+            refLeaga: false,
             phone: "", addr: "", zone: defaultZone(), variant: "copt",
             items: [{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]
           }
@@ -1391,7 +2019,7 @@ class Component extends DCLogic {
       }
       // O comandă de livrare fără zonă ajunge pe hartă peste depozit, fiindcă
       // nu are coordonate. Mai bine se cere acum decât să iasă șoferul greșit.
-      if (f.chan === "Livrare" && !String(f.zone || "").trim()) {
+      if (CU_MASINA(f.chan) && !String(f.zone || "").trim()) {
         return set({ formErr: "Alege zona: fără ea, oprirea nu apare corect pe ruta șoferului." });
       }
 
@@ -1445,15 +2073,53 @@ class Component extends DCLogic {
         // de comanda deschisă, ca să nu rescriem cu instantaneul nostru vechi
         // ce a mutat între timp altcineva.
         const schimbat = this.doarSchimbate(Object.assign({}, antet, {
-          ref: (f.ref || '').trim(), status: f.status, items: trimise
+          ref: (f.ref || '').trim(), status: f.status, items: trimise,
+          referralCode: (f.refCode || '').trim()
         }), this.__formBase);
+        // Bifa nu e un câmp al comenzii, ci o instrucțiune care însoțește
+        // codul: trimisă singură, i-ar spune serverului să lege contul de un
+        // cod pe care nimeni nu l-a atins. De aceea pleacă întotdeauna CU
+        // codul lângă ea.
+        //
+        // Până acum pleca numai când codul se SCHIMBASE în aceeași salvare —
+        // iar cazul obișnuit e tocmai celălalt: codul era deja scris corect pe
+        // comandă (l-a pus cineva ieri, fără bifă), patronul bifează acum
+        // „leagă și contul pe viitor", mai corectează telefonul, salvează, și
+        // vede mesajul verde. Instrucțiunea nu pleca nicăieri, iar contul
+        // rămânea nelegat — adică fix defectul pe care bifa exista ca să-l
+        // repare. Acum instrucțiunea pleacă ori de câte ori e bifată și există
+        // un cod, cu tot cu codul, chiar neschimbat: cârligul de pe server
+        // (`referral_commission_sync()`) leagă contul de codul din CERERE.
+        const codAcum = (f.refCode || '').trim();
+        const cereLegatura = !!f.refLeaga && codAcum !== '';
+        if (cereLegatura) {
+          schimbat.referralCode = codAcum;
+          schimbat.referralLink = true;
+        }
         if (!Object.keys(schimbat).length) {
           // Serverul refuză un PATCH gol („Nimic de modificat"), iar omul n-are
           // ce afla din refuzul ăsta: închidem formularul și spunem pe față.
           return this.commit("Comanda " + (f.ref || "") + " nu avea nimic de schimbat.");
         }
         gp.patch('/orders/' + f.id, schimbat)
-          .then(() => this.commit("Comanda " + (f.ref || "") + " a fost salvată."))
+          // Mesajul se scrie din COMANDA ÎNTOARSĂ, nu din formularul de pe
+          // ecran: serverul o recitește din bază după ce a scris (vezi
+          // `route_orders_update()`), deci referința de acolo e cea adevărată.
+          // Scrisă din formular, ieșea „Comanda  a fost salvată." — cu un gol
+          // în loc de număr — ori de câte ori caseta era goală.
+          .then((r) => {
+            const o = (r && r.order) || {};
+            const ref = o.ref || f.ref || "";
+            let m = "Comanda " + ref + " a fost salvată.";
+            // Bifa spune ce s-a întâmplat, nu că s-a trimis ceva. Contul putea
+            // avea deja un recomandant, caz în care legătura n-a fost scrisă.
+            if (cereLegatura) {
+              m += (o.commission && o.commission.linked)
+                ? " Contul cumpărătorului e legat de codul „" + codAcum + "” și pe viitor."
+                : " Contul NU a fost legat pe viitor: fie n-are cont, fie avea deja un recomandant.";
+            }
+            return this.commit(m);
+          })
           .catch((e) => this.fail(e));
 
       } else if (f.fromReq) {
@@ -1465,7 +2131,15 @@ class Component extends DCLogic {
 
       } else {
         // Comandă introdusă direct de personal (telefon, ghișeu).
-        gp.post('/orders', Object.assign({}, antet, { channel: 'panou', items: trimise }))
+        //
+        // Codul pleacă doar dacă e scris ceva în câmp. Trimis gol, ar fi
+        // însemnat „șterge codul" pentru un cârlig care oricum n-are ce
+        // șterge de pe o comandă care abia se naște — dar ar fi pus în corp o
+        // cheie pe care serverul o cântărește (`referral_not_yours` o cere
+        // doar când `isset`), deci mai bine lipsește de tot când e goală.
+        const codNou = (f.refCode || '').trim();
+        gp.post('/orders', Object.assign({}, antet, { channel: 'panou', items: trimise },
+          codNou ? { referralCode: codNou } : {}))
           .then((r) => this.commit("Comandă nouă adăugată: " + (r.order ? r.order.ref : "") + " · " + f.cust.trim() + "."))
           .catch((e) => this.fail(e));
       }
@@ -1476,19 +2150,66 @@ class Component extends DCLogic {
       gp.patch('/orders/' + o.id, { urgent: next })
         .then(() => {
           this.__ordSeen = null;
-          return this.pullOrders();
+          this.__listaSeen = null;
+          return this.pullTot();
         })
         .then(() => this.setState({
+          msgBad: false,
           msg: next
             ? o.ref + " a fost marcată URGENT — apare prima în laborator."
             : "Urgența a fost anulată pentru " + o.ref + "."
         }))
-        .catch((e) => this.setState({ msg: e.message }));
+        .catch((e) => this.setState({ msg: e.message, msgBad: true }));
+    };
+
+    /**
+     * Bifa „i-am dat banii", din fereastra comenzii.
+     *
+     * Aceeași rută și același rând ca bifa din pagina „Recomandări" — de aceea
+     * arată la fel în amândouă locurile și nu se pot contrazice. Ce se schimbă
+     * aici se vede acolo la următoarea deschidere, fiindcă nu e o a doua
+     * evidență, ci același rând din registru.
+     *
+     * Semaforul stă pe instanță, ca la salvare: `setState` nu schimbă starea pe
+     * loc, iar două apăsări în aceeași sutime ar citi amândouă „neplătit" și ar
+     * trimite două cereri. Serverul e oricum idempotent (`AND paid_at IS NULL`),
+     * dar a doua cerere ar întoarce „0 schimbate" și mesajul ar minți.
+     */
+    const platesteComision = (c) => {
+      if (!c || !c.id || this.__platind) return;
+      this.__platind = true;
+      const acum = !c.paid;
+      gp.referralsPay([c.id], acum)
+        .then(() => {
+          this.__platind = false;
+          // Bifa se vede pe loc în fereastră, fără să se aștepte lista.
+          set(s => ({
+            form: s.form ? Object.assign({}, s.form, {
+              commission: Object.assign({}, c, { paid: acum })
+            }) : s.form,
+            msgBad: false,
+            msg: acum
+              ? "Comisionul de " + bani(c.amount) + " pentru " + (c.label || "recomandant") + " e bifat ca plătit."
+              : "Bifa de plată a fost scoasă: " + bani(c.amount) + " pentru " + (c.label || "recomandant") + " apar iar ca neplătite."
+          }));
+          // Lista se reîncarcă, ca sfatul de pe etichetă să nu rămână vechi.
+          this.__ordSeen = null;
+          this.__listaSeen = null;
+          return this.pullTot();
+        })
+        .catch((e) => {
+          this.__platind = false;
+          set({ msg: e.message, msgBad: true });
+        });
     };
 
     const askDelete = (o) => set({ confirm: { id: o.id, ref: o.ref, cust: o.cust, when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : "") } });
 
-    const rows = filtered.map(o => ({
+    // `Object.assign` peste rândul desenat, ca eticheta să se lipească de el
+    // fără să fie scrisă de două ori: același obiect `r` hrănește și tabelul
+    // de pe monitor, și cardul de pe telefon. `adusClsTap` e aceeași etichetă
+    // pe țintă de deget — cardul apare numai sub 1000px, unde se apasă.
+    const rows = filtered.map(o => { const ad = adusDe(o.commission, null); return Object.assign({
       ref: o.ref, cust: o.cust, chan: o.chan, chanCls: CH(o.chan),
       when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : ""),
       itemsLine: o.items.map(i => i.q + " " + i.n).join(" · "),
@@ -1504,7 +2225,7 @@ class Component extends DCLogic {
       onEdit: () => openForm(o),
       onDelete: () => askDelete(o),
       onPeek: () => set({ peek: o.id })
-    }));
+    }, ad, { adusClsTap: ad.adusCls + " rc-badge--tap" }); });
 
     const today = S.orders.filter(o => o.date === TODAY);
     const openCount = S.orders.filter(o => o.status !== gp.done()).length;
@@ -1523,49 +2244,102 @@ class Component extends DCLogic {
     const prodList = Object.keys(prod).map(k => prod[k]).sort((a, b) => b.qty - a.qty);
     const maxQty = prodList.length ? prodList[0].qty : 1;
 
-    const stopList = this.stopsFor(S.rDay);
+    // ÎN AFARA ORAȘULUI: aceeași despărțire ca pe telefonul șoferului, pusă
+    // pe același semnal — punctul lipsă din `delivery_zone_coords`, nu numele
+    // zonei (numele se schimbă din Setări, semnalul nu). Ruta se ordonează și
+    // se măsoară numai pe opririle cu punct; celelalte stau dedesubt, fără
+    // număr și fără kilometri, fiindcă n-au de unde să-i aibă.
+    //
+    // `stopList` rămâne cu numele lui pentru opririle de pe rută: ceasul,
+    // plecarea, durata și schema de poziții se socotesc toate din el, și toate
+    // se socotesc pe rută.
+    const toateOpririle = this.stopsFor(S.rDay);
+    const stopList = toateOpririle.filter((o) => !gp.zoneFaraPunct(o.zone));
+    const afaraList = toateOpririle.filter((o) => gp.zoneFaraPunct(o.zone));
+    // Ordinea care se salvează pe server: ruta, apoi restul. Aceeași pe care o
+    // scriu „Optimizează ruta" și „Ordonează după interval", ca mutarea
+    // manuală să nu le contrazică de la prima apăsare.
+    const ordinea = stopList.concat(afaraList);
     const lg = this.legs(stopList);
     const rTotal = lg.total;
     const SPEED = 22, SERVICE = 6;
-    const mins = (t) => parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3), 10);
+    // O oprire fără interval (serverul permite slot gol) dădea NaN, iar
+    // ceasul rămânea NaN pentru ea și pentru toate opririle de după: „NaN:NaN"
+    // pe toată ruta. Fără interval, plecarea se ia de la 08:00, iar oprirea
+    // nu poate fi „întârziată" față de o oră pe care nimeni n-a promis-o.
+    const mins = (t) => {
+      const m = /^(\d{1,2}):(\d{2})/.exec(String(t || ""));
+      return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
+    };
+    const minsOr = (t, alt) => { const v = mins(t); return isNaN(v) ? alt : v; };
     const hhmm = (m) => {
       const x = ((Math.round(m) % 1440) + 1440) % 1440;
       return String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0");
     };
     const drive = (d) => d / SPEED * 60;
-    let clock = stopList.length ? mins(stopList[0].slot) - drive(lg.legs[0]) : 0;
+    let clock = stopList.length ? minsOr(stopList[0].slot, 8 * 60) - drive(lg.legs[0]) : 0;
     const rDepart = stopList.length ? hhmm(clock) : "—";
     let warnCount = 0;
+    // `i` e poziția în `ordinea`, adică în lista care se salvează.
     const move = (i, dir) => {
-      const l = stopList.slice();
+      const l = ordinea.slice();
       const j = i + dir;
       if (j < 0 || j >= l.length) return;
+      // Granița dintre cele două liste nu se trece. O oprire fără punct n-are
+      // ce căuta în mijlocul unei rute măsurate — ar muta ceasul tuturor
+      // celor de după ea — iar una de pe rută n-are ce căuta sub banda care
+      // spune, negru pe alb, că acolo nu se măsoară nimic.
+      if ((i < stopList.length) !== (j < stopList.length)) return;
       const t = l[i]; l[i] = l[j]; l[j] = t;
-      this.writeSeq(S.rDay, l, "Ordine modificată manual — " + this.legs(l).total.toFixed(1) + " km. Șoferul o vede imediat.");
+      this.writeSeq(S.rDay, l, "Ordine modificată manual — "
+        + this.legs(l.slice(0, stopList.length)).total.toFixed(1) + " km. Șoferul o vede imediat.");
     };
-    const stops = stopList.map((o, i) => {
-      clock += drive(lg.legs[i]);
-      const eta = hhmm(clock);
-      clock += SERVICE;
-      const late = mins(eta) > mins(o.slot) + 10;
-      const outOfOrder = i > 0 && o.slot < stopList[i - 1].slot;
+    /**
+     * Un carton de oprire — același șablon pentru amândouă listele.
+     *
+     * Ceasul se mișcă numai pe rută și numai o dată pe oprire, deci funcția
+     * se cheamă întâi pentru toate opririle de pe rută, în ordinea lor.
+     */
+    const carton = (o, i, laRuta, cuAntet) => {
+      let eta = "";
+      if (laRuta) { clock += drive(lg.legs[i]); eta = hhmm(clock); clock += SERVICE; }
+      // Avertismentele sunt despre ceas: fără ceas, nu se pot pune. Ora
+      // promisă unei opriri din afara orașului e oricum orientativă — așa
+      // scrie și în formularul pe care l-a completat clientul.
+      const late = laRuta && !isNaN(mins(o.slot)) && mins(eta) > mins(o.slot) + 10;
+      const outOfOrder = laRuta && i > 0 && o.slot < stopList[i - 1].slot;
       if (late || outOfOrder) warnCount++;
+      const k = laRuta ? i : stopList.length + i;
       return {
-        num: String(i + 1), ref: o.ref, cust: o.cust, slot: o.slot,
+        num: laRuta ? String(i + 1) : "↗", ref: o.ref, cust: o.cust, slot: o.slot,
+        peRuta: laRuta,
+        // Banda care desparte listele o poartă PRIMA oprire din a doua, nu
+        // marcajul: `<sc-for>` desenează un singur șablon de carton.
+        antet: cuAntet ? "În afara orașului" : "",
+        antetSub: cuAntet
+          ? "Nu intră pe rută: zona n-are punct pe hartă, deci nici în "
+            + "kilometrii, nici în ora de plecare din dreapta. Le duce cine "
+            + "poate, iar ora promisă se confirmă la telefon."
+          : "",
         addr: (o.addr || "adresă necompletată") + (o.zone ? " · " + o.zone : ""),
         itemsLine: o.items.map(it => it.q + " " + it.n).join(" · "),
         qty: gp.qtyLabel(this.qty(o)), note: o.note || "",
         status: o.status, statusCls: ST[o.status] || "h-badge",
         urgent: !!o.urgent,
-        leg: lg.legs[i].toFixed(1) + " km", eta,
+        leg: laRuta ? lg.legs[i].toFixed(1) + " km" : "", eta,
         warn: late ? "Ajunge " + eta + ", promis " + o.slot : outOfOrder ? "Interval promis " + o.slot + ", mai devreme decât oprirea anterioară" : "",
         warnOn: !!(late || outOfOrder),
         cardBg: o.urgent ? "var(--h-jam-soft)" : "var(--h-bg-surface)",
-        upOff: i === 0, downOff: i === stopList.length - 1,
-        onUp: () => move(i, -1), onDown: () => move(i, 1),
+        // Săgețile mută numai în interiorul grupului, deci capetele se
+        // socotesc pe grup, nu pe lista întreagă.
+        upOff: i === 0,
+        downOff: i === (laRuta ? stopList.length : afaraList.length) - 1,
+        onUp: () => move(k, -1), onDown: () => move(k, 1),
         onEdit: () => openForm(o)
       };
-    });
+    };
+    const stops = stopList.map((o, i) => carton(o, i, true, false))
+      .concat(afaraList.map((o, i) => carton(o, i, false, i === 0)));
     const rDur = stopList.length ? Math.round(rTotal / SPEED * 60 + stopList.length * SERVICE) + " min" : "—";
 
     const pts = [HQ_OF()].concat(stopList.map(o => this.pos(o)));
@@ -1588,17 +2362,85 @@ class Component extends DCLogic {
       x2: px(p).toFixed(2), y2: py(p).toFixed(2)
     }));
 
-    const pk = S.peek ? S.orders.find(o => o.id === S.peek) : null;
+    const pk = S.peek ? this.comandaDupaId(S.peek) : null;
 
     const f = S.form || { ref: "", cust: "", chan: "Ridicare", day: TODAY, slot: "08:00", status: "În așteptare", note: "", items: [] };
+    const comF = f.commission || null;
+    const aduseF = adusDe(comF, null);
 
     const reqs = (S.requests || []).slice().sort((a, b) => b.at - a.at);
-    const newReq = reqs.filter(r => (r.status || "nou") === "nou");
-    const reqShown = reqs.filter(r => S.qf === "toate" || (r.status || "nou") === S.qf);
+    // Ceasul PATISERIEI, nu al aparatului. `gp.laPatiserie` întoarce aceeași
+    // clipă cu câmpurile locale mutate pe Europe/Bucharest, cum citește și
+    // registrul din Depozit (`Depozit.dc.html:713`). Aici era `new Date(ms)`
+    // pe curat: pe o tabletă lăsată pe UTC, ora de pe card era cu trei ore în
+    // urmă vara — cererea sosită la 22:05 se citea „12.09 · 19:05", iar omul
+    // care alege de unde începe teancul o credea cea mai veche dintre toate.
+    const p2 = (n) => (n < 10 ? "0" : "") + n;
+    const laPat = (ms) => gp.laPatiserie(new Date(ms));
     const reqTime = (ms) => {
-      const d = new Date(ms), p = (n) => (n < 10 ? "0" : "") + n;
-      return p(d.getDate()) + "." + p(d.getMonth() + 1) + " · " + p(d.getHours()) + ":" + p(d.getMinutes());
+      const d = laPat(ms);
+      return isNaN(d.getTime()) ? ""
+        : p2(d.getDate()) + "." + p2(d.getMonth() + 1) + " · " + p2(d.getHours()) + ":" + p2(d.getMinutes());
     };
+    // Cererile „de răspuns": toate cele cu starea „nou", fără nicio tăietură.
+    // Din lista asta ies numărul de pe filă, cel din sertarul de navigare și
+    // rândul de sus, deci ea e cea care spune omului cât are de lucru.
+    //
+    // Aici a fost și un scăzământ: cererile puse deoparte de la butonul
+    // „🕒 Mai târziu" din anunțul de pe telefon ieșeau din numărătoare până
+    // le venea ora. Butonul a plecat, deci nimeni nu mai scrie ore de amânare,
+    // iar scăzământul n-ar mai fi avut decât un singur lucru de făcut: să mai
+    // ascundă o dată, până la ora ei, vreo cerere rămasă cu o oră scrisă în
+    // bază dinainte de schimbare — adică o cerere nehotărâtă lipsă din „4
+    // cereri noi de răspuns", fără nimic pe ecran care s-o mai explice.
+    const newReq = reqs.filter(r => (r.status || "nou") === "nou");
+
+    // CIFRELE VIN DE LA SERVER, nu din lista adusă (`counts`, numărat în toată
+    // ograda celui care întreabă). De când se cere anume o stare, lista din
+    // browser nu le mai cuprinde pe toate: socotit din ea, butonul „Acceptate"
+    // ar scrie 0 cât timp omul se uită la „Noi" — adică exact butonul care
+    // minte, împotriva căruia e scris comentariul de la `count`, mai jos.
+    //
+    // Până la primul răspuns se numără din listă, ca înainte: un ecran care
+    // clipește cu zerouri în prima clipă e tot o minciună, doar mai scurtă.
+    const C = S.reqCounts;
+    const cateNoi = C ? C.nou : newReq.length;
+    const cateTot = C ? (C.nou + C.acceptata + C.respinsa) : reqs.length;
+    const catePe = (v) => v === "toate" ? cateTot
+      : v === "nou" ? cateNoi
+      : C ? (C[v] || 0)
+      : reqs.filter(r => (r.status || "nou") === v).length;
+    // Filtrele de cereri, scrise o singură dată: de aici se fac butoanele de
+    // sub titlu și tot de aici se alege lista arătată. Ținute în două locuri,
+    // s-ar fi putut despărți — un buton fără ramură ar deschide o listă goală,
+    // o ramură fără buton n-ar mai avea cum să fie ajunsă.
+    //
+    // Aici a stat și „Amânate", între „Noi" și „Acceptate", cu lista cererilor
+    // lăsate pentru mai încolo. A plecat fiindcă s-a scos butonul
+    // „🕒 Mai târziu" de sub anunțul din Telegram, singurul lucru din program
+    // care punea o cerere deoparte; fără el, filtrul ar fi rămas un buton care
+    // arată 0 pentru totdeauna. Cheia `snoozedUntil` vine încă în răspunsul
+    // serverului (api/routes/requests.php:1051), goală pe orice cerere de
+    // acum încolo, fiindcă în bază coloana a rămas — o migrare adaugă, nu
+    // dărâmă. Panoul nu se mai uită la ea.
+    //
+    // De asta `S.qf` se măsoară cu lista de mai sus în loc să cadă pe ultima
+    // ramură: „deoparte" a fost cândva o valoare bună, iar un panou care o
+    // mai ține în stare — filă lăsată deschisă peste schimbare, stare adusă
+    // de altundeva — ar fi ajuns la comparația cu `r.status`, unde „deoparte"
+    // nu se potrivește cu nicio stare din ENUM-ul bazei. Ar fi ieșit teanc
+    // plin și ecran gol, fără niciun buton aprins care să spună de ce. Orice
+    // valoare necunoscută cade pe „nou", filtrul cu care se deschide panoul.
+    const REQ_FILTRE = [
+      { v: "nou", l: "Noi" },
+      { v: "acceptata", l: "Acceptate" },
+      { v: "respinsa", l: "Refuzate" },
+      { v: "toate", l: "Toate" }
+    ];
+    const qf = REQ_FILTRE.some(x => x.v === S.qf) ? S.qf : "nou";
+    const reqShown = qf === "toate" ? reqs
+      : qf === "nou" ? newReq
+      : reqs.filter(r => (r.status || "nou") === qf);
     // Doar respingerea trece pe aici; acceptarea deschide formularul, fiindcă
     // administratorul poate corecta ziua, intervalul și zona înainte de a
     // promite comanda laboratorului.
@@ -1609,8 +2451,8 @@ class Component extends DCLogic {
           this.__reqSeen = null;
           return this.pullRequests();
         })
-        .then(() => set({ msg: msg }))
-        .catch((e) => set({ msg: e.message }));
+        .then(() => set({ msg: msg, msgBad: false }))
+        .catch((e) => set({ msg: e.message, msgBad: true }));
 
     const rejectReq = (r) => trimiteReq(r, 'reject', "Cererea de la " + cineE(r) + " a fost refuzată.");
     // Refuzul dat din greșeală se poate întoarce: serverul readuce cererea la
@@ -1619,18 +2461,52 @@ class Component extends DCLogic {
     const reopenReq = (r) => trimiteReq(r, 'reopen', "Cererea de la " + cineE(r) + " e din nou în așteptare.");
 
     return {
+      // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
+      // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
+      // există — bara e acum un șablon peste lista de aici, ca nu cumva un
+      // buton scos dintr-un meniu să rămână în celălalt.
+      //
+      // `gp.meniu()` (shared/gp-api.js) taie din listă panourile pe care
+      // rolul ăsta n-are voie să le deschidă. Până sosește sesiunea, `S.auth`
+      // e null și lista iese goală — dinadins: mai bine nicio intrare o
+      // clipă decât intrări care dispar sub deget. Le compară
+      // `.claude/check-meniu.mjs`.
+      meniu: gp.meniu("Comenzi", S.auth),
+      navHere: "Comenzi",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      // Apăsarea pe foaie nu are voie să ajungă la fundal, care închide.
+      onNavKeep: (e) => e.stopPropagation(),
+      // Două steaguri, nu unul negat, fiindcă `sc-if` primește o valoare, nu o
+      // expresie. Marcajul sertarului rămâne identic în toate panourile; ce se
+      // arată din el se hotărăște de aici.
+      //
+      // Numele apare NUMAI dacă se știe al cui e. Până răspunde serverul, și în
+      // paginile unde un cont fără drepturi rămâne pe ecran cu un mesaj de
+      // refuz în loc să fie trimis la intrare, `S.auth` e gol — iar un rând care
+      // scrie „conectat" sub un nume gol ar minți. Atunci nu se arată niciunul.
+      navWho: !!S.auth,
+      navAnon: false,
       menuOpen: S.menu,
       onMenuOpen: () => set({ menu: true }),
       onMenuClose: () => set({ menu: false }),
       showFilters: S.view === "comenzi",
-      currentLabel: (S.view === "comenzi" ? "Comenzi" : S.view === "ruta" ? "Rută șofer" : S.view === "cereri" ? "Cereri de pe site · " + newReq.length + " noi" : "Produse cerute") +
+      currentLabel: (S.view === "comenzi" ? "Comenzi" : S.view === "ruta" ? "Rută șofer" : S.view === "cereri" ? "Cereri de pe site · " + cateNoi + " noi" : "Produse cerute") +
         (S.view === "comenzi"
-          ? " · " + (S.fDay === "toate" ? "toate zilele" : ((DAYS.find(d => d.v === S.fDay) || { l: S.fDay }).l)) +
+          ? " · " + (S.fDay === "toate" ? "toate zilele"
+            : S.fDay === "saptamana" ? "săptămâna de lucru"
+              : ((DAYS.find(d => d.v === S.fDay) || { l: S.fDay }).l)) +
             (S.fChan === "Toate" ? "" : " · " + S.fChan) + (S.fStatus === "Toate" ? "" : " · " + S.fStatus)
           : ""),
       menuPages: [
         { v: "comenzi", l: "Comenzi", c: String(S.orders.length) },
-        { v: "cereri", l: "Cereri de pe site", c: String(newReq.length) },
+        { v: "cereri", l: "Cereri de pe site", c: String(cateNoi) },
         { v: "ruta", l: "Rută șofer", c: String(stops.length) },
         { v: "produse", l: "Produse cerute", c: String(prodList.length) }
       ].map(x => ({
@@ -1639,43 +2515,53 @@ class Component extends DCLogic {
         bd: S.view === x.v ? "var(--h-accent)" : "var(--h-line)",
         onClick: () => set({ view: x.v, menu: false })
       })),
-      menuDays: [{ v: "toate", l: "Toate zilele" }].concat(DAYS).map(d => ({
+      menuDays: [{ v: "saptamana", l: "Săptămâna de lucru" }, { v: "toate", l: "Toate zilele · cu istoric" }].concat(DAYS).map(d => ({
         label: d.l, mark: S.fDay === d.v ? "✓" : "",
         bg: S.fDay === d.v ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
         bd: S.fDay === d.v ? "var(--h-accent)" : "var(--h-line)",
-        onClick: () => set({ fDay: d.v, menu: false })
+        onClick: () => { set({ menu: false }); this.cerFiltru({ fDay: d.v }); }
       })),
       menuChans: ["Toate"].concat(CHANS_OF()).map(c => ({
         label: c === "Toate" ? "Toate canalele" : c, mark: S.fChan === c ? "✓" : "",
         bg: S.fChan === c ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
         bd: S.fChan === c ? "var(--h-accent)" : "var(--h-line)",
-        onClick: () => set({ fChan: c, menu: false })
+        onClick: () => { set({ menu: false }); this.cerFiltru({ fChan: c }); }
       })),
       menuStatuses: ["Toate"].concat(gp.statuses()).map(s => ({
         label: s === "Toate" ? "Toate stările" : s, mark: S.fStatus === s ? "✓" : "",
         bg: S.fStatus === s ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
         bd: S.fStatus === s ? "var(--h-accent)" : "var(--h-line)",
-        onClick: () => set({ fStatus: s, menu: false })
+        onClick: () => { set({ menu: false }); this.cerFiltru({ fStatus: s }); }
       })),
       navItems: [
         { label: "Comenzi", count: String(S.orders.length), bg: S.view === "comenzi" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "comenzi" }) },
         { label: "Rută șofer", count: String(stops.length), bg: S.view === "ruta" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "ruta" }) },
         { label: "Produse", count: String(prodList.length), bg: S.view === "produse" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "produse" }) },
-        { label: "Cereri de pe site", count: String(newReq.length), bg: S.view === "cereri" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "cereri" }) }
+        { label: "Cereri de pe site", count: String(cateNoi), bg: S.view === "cereri" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "cereri" }) }
       ],
       isOrders: S.view === "comenzi",
       isRequests: S.view === "cereri",
       // Starea refuzului se numește „respinsa" în baza de date (ENUM-ul din
       // order_requests) și așa vine de la server. Filtrul cerea „refuzata",
       // adică o valoare care nu există: butonul arăta mereu 0.
-      reqFilters: [{ v: "nou", l: "Noi" }, { v: "acceptata", l: "Acceptate" }, { v: "respinsa", l: "Refuzate" }, { v: "toate", l: "Toate" }].map(x => ({
+      reqFilters: REQ_FILTRE.map(x => ({
         label: x.l,
-        count: String(x.v === "toate" ? reqs.length : reqs.filter(r => (r.status || "nou") === x.v).length),
-        cls: S.qf === x.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
-        onClick: () => set({ qf: x.v })
+        // Fiecare număr vine din CHIAR lista pe care butonul o deschide, nu
+        // dintr-o socoteală scrisă a doua oară: altfel butonul ar fi putut
+        // spune 4 și ar fi deschis 3, iar omul ar fi căutat cererea lipsă.
+        count: String(catePe(x.v)),
+        // Se aprinde butonul filtrului ARĂTAT, nu cel cerut: pe o valoare
+        // necunoscută lista cade pe „nou", deci tot „Noi" trebuie să fie
+        // aprins, ca omul să știe ce se uită la el.
+        cls: qf === x.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        // Filtrul nu mai e o tăiere din ce e deja în browser: e o întrebare
+        // pusă serverului. Lista veche rămâne desenată până sosește cea nouă —
+        // o clipă, la patru secunde distanță de următoarea rotire oricum.
+        onClick: () => { set({ qf: x.v }); this.pullRequests(x.v); }
       })),
       reqRows: reqShown.map(r => {
         const st = r.status || "nou";
+        const ad = adusDe(null, r.referral);
         return {
           id: r.id,
           // Cardul citea câmpurile din prototip (`company`, `person`, `segment`,
@@ -1703,15 +2589,45 @@ class Component extends DCLogic {
                     isFinite(lei) && lei > 0 ? lei.toFixed(2).replace(".", ",") + " RON" : ""]
               .filter(Boolean).join(" · ");
           })(),
-          catalog: r.catalog ? "vrea catalogul PDF" : "",
-          status: st === "nou" ? "Nouă" : st === "acceptata" ? "Acceptată" + (r.ref ? " · " + r.ref : "") : "Refuzată",
+          // Dorința de catalog vine în mențiuni (textul „vrea catalogul“), nu ca
+          // un câmp propriu; iar referința comenzii născute din cerere e
+          // `orderRef`, cum o dă gp.toPageRequest — `r.ref` nu exista, deci
+          // „Acceptată · #1042" nu se arăta niciodată.
+          catalog: /catalogul pdf/i.test(String(r.note || "")) ? "vrea catalogul" : "",
+          // Insigna galbenă și fundalul de atenție sunt legate numai de starea
+          // din bază. A fost o vreme când mai atârnau de o a doua socoteală, a
+          // amânării, iar cardul unei cereri puse deoparte tăcea; amânarea a
+          // plecat cu tot cu butonul ei, deci o cerere „nouă" strigă mereu —
+          // și e bine că strigă, fiindcă nimic n-o mai poate pune deoparte.
+          status: st === "nou" ? "Nouă" : st === "acceptata" ? "Acceptată" + (r.orderRef ? " · " + r.orderRef : "") : "Refuzată",
           statusCls: st === "nou" ? "h-badge h-badge--warning" : st === "acceptata" ? "h-badge h-badge--success" : "h-badge h-badge--danger",
           cardBg: st === "nou" ? "var(--h-warning-soft)" : "var(--h-bg-surface)",
+          // Pe unde s-a hotărât cererea. Coloana `decided_via` există tocmai
+          // pentru reclamația de a doua zi — „cine a respins-o la 23:40?" — dar
+          // până acum n-o citea nimeni, nici măcar aici. Gol înseamnă „nu se
+          // știe" și nu se arată nimic: o insignă „hotărâtă din panou" pusă din
+          // burtă peste cererile vechi ar fi fost mai rea decât tăcerea.
+          hotarataVia: st === "nou" ? ""
+            : r.decidedVia === "telegram" ? "hotărâtă de pe telefon"
+              : r.decidedVia === "panou" ? "hotărâtă din panou" : "",
           isNew: st === "nou",
           notNew: st !== "nou",
+          // Cererea se vede de tot personalul care are panoul, dar se
+          // acceptă și se refuză doar de administrator: rutele ei sunt
+          // `require_admin()`, iar în jurnal ar rămâne oricum numele
+          // contului care a apăsat. Butoanele urmează poarta serverului.
+          potAccepta: potEdita && st === "nou",
           // Doar un refuz se poate anula. O cerere acceptată a devenit deja
           // comandă; readusă la „nouă" ar putea fi acceptată a doua oară.
           isRejected: st === "respinsa",
+          potRedeschide: potEdita && st === "respinsa",
+          // Cererea n-are comision, ci doar codul tastat în coș. Eticheta se
+          // vede din clipa în care intră cererea — asta a fost și cerința: să
+          // se știe cine a adus omul înainte de a face comanda.
+          adus: ad.adus,
+          adusClsTap: ad.adusCls + " rc-badge--tap",
+          adusHref: ad.adusHref,
+          adusTitlu: ad.adusTitlu,
           onAccept: () => openFromReq(r),
           // `r` e cererea de la server, nu rândul desenat: `company` și
           // `person` sunt câmpuri din prototip și lipsesc, așa că mesajul
@@ -1721,6 +2637,10 @@ class Component extends DCLogic {
         };
       }),
       noReq: reqShown.length === 0,
+      // Golul de tot și golul filtrului sunt două lucruri deosebite: cel
+      // dintâi spune „n-a trimis nimeni nimic", al doilea „ai ales un teanc
+      // care e gol". Cu un singur text, administratorul care lăsase filtrul
+      // pe „Refuzate" ar fi crezut că nu i-a mai scris niciun client.
       reqEmptyLine: reqs.length === 0
         ? "Nicio cerere încă. Când un client trimite formularul din site, apare aici."
         : "Nicio cerere pe filtrul ales.",
@@ -1729,41 +2649,97 @@ class Component extends DCLogic {
       viewTitle: S.view === "comenzi" ? "Comenzi" : S.view === "ruta" ? "Rută șofer" : S.view === "cereri" ? "Cereri de pe site" : "Produse cerute",
       reqSubUnused: "",
       viewSub: S.view === "comenzi"
-        ? filtered.length + " din " + S.orders.length + " comenzi afișate · " + week.length + " în săptămâna curentă"
+        ? (S.listaTotal
+            ? dela + "–" + panala + " din " + S.listaTotal + " comenzi " + undeCauta
+              + " · " + week.length + " în săptămâna curentă"
+            : "Nicio comandă " + undeCauta + " · " + week.length + " în săptămâna curentă")
         : S.view === "ruta"
           ? stops.length + " opriri de livrare · ordinea de aici e ordinea din telefonul șoferului"
           : S.view === "cereri"
-            ? (newReq.length
-                ? newReq.length + (newReq.length === 1 ? " cerere nouă de răspuns" : " cereri noi de răspuns") + " · " + reqs.length + " în total"
-                : reqs.length + (reqs.length === 1 ? " cerere în istoric" : " cereri în istoric") + " · niciuna nouă")
+            ? (cateNoi
+                ? cateNoi + (cateNoi === 1 ? " cerere nouă de răspuns" : " cereri noi de răspuns") + " · " + cateTot + " în total"
+                : cateTot + (cateTot === 1 ? " cerere în istoric" : " cereri în istoric") + " · niciuna nouă")
             : prodList.length + " produse distincte în comenzile active",
       search: S.search,
-      onSearch: (e) => set({ search: e.target.value }),
+      onSearch: (e) => {
+        const text = e.target.value;
+        set({ search: text });
+        // Căutarea pleacă la server, dar nu la fiecare literă: un cuvânt de
+        // opt litere ar fi opt cereri, iar tabelul ar clipi la fiecare.
+        // Aceeași măsură ca la Jurnal (Jurnal.dc.html · `tCauta`).
+        clearTimeout(this.tCauta);
+        this.tCauta = setTimeout(() => this.pullLista(1, { search: text }), 300);
+      },
       onNew: () => openForm(null),
       msg: S.msg,
-      onMsgClose: () => set({ msg: "" }),
+      // Refuzul serverului se arăta în aceeași casetă verde ca succesul —
+      // „Nu s-a putut salva" cu bifă verde. Culoarea spune ce s-a întâmplat.
+      msgCls: S.msgBad ? "h-alert h-alert--danger" : "h-alert h-alert--success",
+      onMsgClose: () => set({ msg: "", msgBad: false }),
 
       stats: [
         { label: "Comenzi azi", value: String(today.length), hint: gp.qtyLabel(today.reduce((a, o) => a + this.qty(o), 0)) + " bucăți de făcut" },
-        { label: "Urgente", value: String(S.orders.filter(o => o.urgent && o.status !== gp.done()).length), hint: openCount + " comenzi în lucru" },
+        { label: "Urgente", value: String(S.orders.filter(o => o.urgent && o.status !== gp.done()).length), hint: openCount + " în lucru, în 7 zile" },
         { label: "Total 7 zile", value: String(week.length), hint: gp.qtyLabel(week.reduce((a, o) => a + this.qty(o), 0)) + " bucăți" },
-        { label: "Livrări", value: String(S.orders.filter(o => o.chan === "Livrare").length), hint: S.orders.filter(o => o.chan === "Angro").length + " angro · " + S.orders.filter(o => o.chan === "Ridicare").length + " ridicări" }
+        { label: "Livrări", value: String(S.orders.filter(o => CU_MASINA(o.chan)).length), hint: gp.pickupFulfillments().map(m => S.orders.filter(o => o.chan === m).length + " " + m.toLowerCase()).join(" · ") || "fără moduri fără mașină" }
       ],
 
       fDay: S.fDay,
-      onFDay: (e) => set({ fDay: e.target.value }),
-      dayFilterOpts: [{ v: "toate", l: "Toate zilele" }].concat(DAYS),
+      onFDay: (e) => this.cerFiltru({ fDay: e.target.value }),
+      dayFilterOpts: [{ v: "saptamana", l: "Săptămâna de lucru" }, { v: "toate", l: "Toate zilele · cu istoric" }].concat(DAYS),
       chanFilters: ["Toate"].concat(CHANS_OF()).map(c => ({
         label: c, cls: c === S.fChan ? "h-btn h-btn--primary h-btn--sm" : "h-btn h-btn--secondary h-btn--sm",
-        onClick: () => set({ fChan: c })
+        onClick: () => this.cerFiltru({ fChan: c })
       })),
       statusFilters: ["Toate"].concat(gp.statuses()).map(s => ({
         label: s, cls: s === S.fStatus ? "h-btn h-btn--primary h-btn--sm" : "h-btn h-btn--ghost h-btn--sm",
-        onClick: () => set({ fStatus: s })
+        onClick: () => this.cerFiltru({ fStatus: s })
       })),
-      onClearFilters: () => set({ fDay: "toate", fChan: "Toate", fStatus: "Toate", search: "" }),
+      // Ecranul gol spunea întotdeauna același lucru: „Nicio comandă pe
+      // filtrele alese", cu un buton care șterge filtre. Când filtrele SUNT
+      // deja curate, propoziția aceea e o minciună mică și butonul nu face
+      // nimic — omul apasă, nu se schimbă nimic, și rămâne cu impresia că
+      // panoul e stricat. Adevărul e altul: săptămâna e goală. Iar singurul
+      // pas care are rost de acolo e să te uiți mai departe de ea.
+      golText: filtreCurate
+        ? "Nicio comandă în săptămâna de lucru."
+        : "Nicio comandă pe filtrele alese.",
+      golButon: filtreCurate ? "Caută în tot istoricul" : "Șterge filtrele",
+      onClearFilters: () => (filtreCurate
+        ? this.cerFiltru({ fDay: "toate" })
+        : this.cerFiltru({ fDay: "saptamana", fChan: "Toate", fStatus: "Toate", search: "" })),
       rows,
-      noRows: rows.length === 0,
+      // Ecranul gol e o afirmație — „am întrebat, nu-i nimic". Când cererea a
+      // picat, pagina n-a apucat să întrebe: locul cartonului îl ia mesajul.
+      noRows: rows.length === 0 && !S.eroare,
+      eroare: S.eroare,
+      onReincearca: () => {
+        this.__reqSeen = null;
+        this.__ordSeen = null;
+        this.__listaSeen = null;
+        // Toate trei, nu doar cea care a picat: `eroare` e una singură pentru
+        // pagină, deci „încearcă din nou" trebuie să acopere tot ce o poate
+        // aprinde. `pullTot()` aduce fereastra și tabelul; cererile au drumul
+        // lor.
+        this.setState({ eroare: "" }, () => { this.pullTot(); this.pullRequests(); });
+      },
+      taiat: S.taiat,
+      // Numerele se scriu întregi — „31–60 din 214" — nu doar „pagina 2".
+      // Cifra din dreapta e `total`, socotit de server pe aceleași condiții ca
+      // lista (api/routes/orders.php · COUNT fără JOIN), deci e numărul
+      // comenzilor care se potrivesc, nu numărul celor care au încăput.
+      pagerText: S.listaTotal
+        ? dela + "–" + panala + " din " + S.listaTotal + " · " + undeLoc
+        : "nicio comandă " + undeCauta,
+      pagerCurent: "pagina " + pag + " din " + S.listaPagini,
+      pagePrimaOff: pag <= 1,
+      pageInapoiOff: pag <= 1,
+      pageInainteOff: pag >= S.listaPagini,
+      pageUltimaOff: pag >= S.listaPagini,
+      onPagePrima: () => this.pullLista(1),
+      onPageInapoi: () => this.pullLista(pag - 1),
+      onPageInainte: () => this.pullLista(pag + 1),
+      onPageUltima: () => this.pullLista(S.listaPagini),
 
       products: prodList.map(p => ({ n: p.n, qty: gp.qtyLabel(p.qty), orders: String(p.orders), pct: Math.round(p.qty / maxQty * 100) + "%" })),
 
@@ -1774,8 +2750,15 @@ class Component extends DCLogic {
       onRouteMsgClose: () => set({ routeMsg: "" }),
       onOptimize: () => this.optimize(S.rDay),
       onByTime: () => {
-        const l = this.stopsFor(S.rDay).slice().sort((a, b) => a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : 0);
-        this.writeSeq(S.rDay, l, "Opriri puse în ordinea intervalelor promise (" + this.legs(l).total.toFixed(1) + " km).");
+        // Aceeași despărțire ca la optimizare: se ordonează ruta, iar
+        // opririle din afara orașului rămân la coadă. Ele nu intră nici în
+        // kilometrii anunțați, fiindcă n-au punct de la care să-i măsori.
+        const t = this.stopsFor(S.rDay);
+        const dup = (a, b) => a.slot < b.slot ? -1 : a.slot > b.slot ? 1 : 0;
+        const pe = t.filter((o) => !gp.zoneFaraPunct(o.zone)).slice().sort(dup);
+        const af = t.filter((o) => gp.zoneFaraPunct(o.zone)).slice().sort(dup);
+        this.writeSeq(S.rDay, pe.concat(af),
+          "Opriri puse în ordinea intervalelor promise (" + this.legs(pe).total.toFixed(1) + " km).");
       },
       onResetRoute: () => {
         const seq = Object.assign({}, S.seq);
@@ -1783,17 +2766,33 @@ class Component extends DCLogic {
         set({ seq, routeMsg: "Ordinea manuală a fost ștearsă — revine la ordinea intervalelor." });
         gp.setRouteOrder(S.rDay, [])
           .then(() => this.pullOrders())
-          .catch((e) => set({ routeMsg: "Nu am putut șterge ordinea: " + e.message }));
+          .catch((e) => { this.__ordSeen = null; set({ routeMsg: "Nu am putut șterge ordinea: " + e.message }); this.pullOrders(); });
       },
       stops, plot, plotLines,
       routeCount: String(stops.length),
       hasStops: stops.length > 0,
-      noStops: stops.length === 0,
+      // Aceeași pază ca la `noRows`: vederea „Rută șofer” se hrănește din
+      // aceleași comenzi. Când aducerea lor a picat, `stops` e gol fiindcă
+      // n-a venit nimic, nu fiindcă n-are ce livra — iar „Nicio comandă cu
+      // livrare în ziua asta” l-ar trimite pe administrator să caute defectul
+      // în comenzi, nu în legătura cu serverul.
+      noStops: stops.length === 0 && !S.eroare,
       routeTotal: rTotal.toFixed(1) + " km",
       routeDur: rDur,
       routeDepart: rDepart,
-      routeQty: gp.qtyLabel(stops.reduce((a, s) => a + gp.qty(s.qty), 0)),
+      // „Bucăți în mașină" e mașina RUTEI. Marfa din afara orașului pleacă cu
+      // altcineva, deci n-are ce căuta în cifra asta.
+      routeQty: gp.qtyLabel(stops.filter((s) => s.peRuta).reduce((a, s) => a + gp.qty(s.qty), 0)),
       routeWarn: warnCount ? warnCount + (warnCount === 1 ? " oprire iese din intervalul promis." : " opriri ies din intervalele promise.") : "",
+      // Rândul care spune pe față ce cuprind cele patru cifre. Apare numai
+      // când e ceva de spus, ca să nu devină un rând pe care nu-l mai citește
+      // nimeni.
+      routeAfara: afaraList.length
+        ? "Cifrele de sus sunt ale rutei. " + afaraList.length
+          + (afaraList.length === 1 ? " oprire e în afara orașului și nu intră în ele"
+            : " opriri sunt în afara orașului și nu intră în ele")
+          + ": zona lor n-are punct pe hartă."
+        : "",
       routeManual: !!S.seq[S.rDay],
 
       formOpen: !!S.form,
@@ -1805,10 +2804,94 @@ class Component extends DCLogic {
         : (S.form && S.form.id ? "Salvează modificările" : "Adaugă comanda"),
       saveOff: !!S.saving,
       canDelete: !!(S.form && S.form.id),
+      // DE CE CONT S-A LIPIT COMANDA.
+      //
+      // Serverul o spunea de mult (`customerId`), dar nicio pagină nu citea
+      // câmpul: legarea după nume (`client_by_name()`, api/lib/orders.php)
+      // lucra nevăzută, iar o comandă lipită de contul greșit arăta pe ecran
+      // exact ca una lipită de cel bun. Fără rândul ăsta, singurul loc din
+      // care se putea afla adevărul era phpMyAdmin.
+      //
+      // Numai la editare: pe o comandă care încă nu există n-are ce răspunde.
+      frmContEt: S.form && S.form.contId ? "Legată de cont" : "Fără cont",
+      frmContCls: S.form && S.form.contId ? "h-badge h-badge--honey" : "h-badge h-badge--warning",
+      frmContNota: !(S.form && S.form.id)
+        ? ""
+        : (S.form.contId
+            ? "Clientul o vede în „Comanda mea”, cu tot cu prețurile de pe poziții."
+            : "Clientul NU o vede în „Comanda mea”. Se leagă singură dacă numele de mai sus duce, fără dubiu, la un cont pentru care a garantat casa; conturile făcute pe site trebuie recunoscute întâi, din Conturi."),
       formErr: S.formErr,
+      // Blocul de recomandare din fereastra comenzii: cine a adus clientul,
+      // cât e comisionul și bifa de plată. Un singur loc, jos, lângă butoane —
+      // nu lângă numele clientului, unde ar fi părut o însușire a lui.
+      frmAdus: aduseF.adus,
+      frmAdusCls: aduseF.adusCls + " rc-badge--tap",
+      frmAdusHref: aduseF.adusHref,
+      frmAdusTitlu: aduseF.adusTitlu,
+      frmAdusNota: !comF ? ""
+        : comF.status === "in_asteptare"
+          ? "Comanda a intrat cu un cod, dar contul are deja alt recomandant. Până alegi, comisionul nu se numără pentru nimeni."
+          : comF.status === "anulat"
+            ? "Comanda e anulată, deci comisionul s-a stins." + (comF.paid ? " Banii au fost însă deja dați — bifa rămâne, ca să știi ce ai de cerut înapoi." : "")
+            : bani(comF.amount) + ", adică " + String(comF.rate).replace(".", ",") + "% din comandă.",
+      // Bifa are rost numai unde există bani: un rând în așteptare are suma
+      // zero și niciun stăpân. Rândul anulat DAR plătit rămâne bifabil, ca
+      // patronul să poată desface plata după ce cere banii înapoi.
+      frmPoatePlati: !!(comF && comF.id && (comF.status === "activ" || (comF.status === "anulat" && comF.paid))),
+      frmPlataBifa: comF && comF.paid ? "✓" : "",
+      frmPlataEt: comF && comF.paid ? "Plătit" : "Bifează ca plătit",
+      frmPlataBg: comF && comF.paid ? "rgba(34,150,83,.16)" : "var(--h-bg-surface)",
+      frmPlataFg: comF && comF.paid ? "#1B7A43" : "var(--h-fg-muted)",
+      frmPlataLine: comF && comF.paid ? "rgba(34,150,83,.45)" : "var(--h-line)",
+      onPlataComision: () => platesteComision(comF),
+
+      // Cutia de SCRIS codul, spre deosebire de eticheta de deasupra, care doar
+      // îl arată. Se deschide în două împrejurări deosebite:
+      //
+      //   · administratorul CORECTEAZĂ o comandă existentă — codul se scrie de
+      //     mână, iar bifa hotărăște dacă legătura rămâne și pe viitor;
+      //   · agentul de vânzări ia o comandă NOUĂ la telefon — codul e al lui,
+      //     scris deja în câmp și neschimbabil, fără bifă.
+      //
+      // Al doilea caz e motivul pentru care comisionul agentului se naște
+      // printr-un act pe care îl vede: până acum comanda lui pleca fără cod,
+      // deci fără comision, iar el afla abia din „Recomandări" că nu s-a scris
+      // nimic. Blocarea nu e o pază — paza e pe server, `referral_not_yours` —
+      // ci un fel de a spune „codul ăsta e al tău, nu se pune altul".
+      frmPotRecomandare: (potEdita && !!(S.form && S.form.id)) || esteAgentNou,
+      // Bifa e o hotărâre despre viitorul unui CONT, deci rămâne a
+      // administratorului. Agentul n-o vede: la o comandă nouă legătura o face
+      // oricum cârligul de pe server, fără s-o ceară cineva.
+      frmPotLega: potEdita && !!(S.form && S.form.id),
+      frmRefBlocat: esteAgentNou,
+      // Eticheta spune al cui e codul. „Cod de recomandare" e adevărat pentru
+      // administratorul care repară o comandă străină; pentru agent, care are
+      // în câmp propriul cod și nu-l poate schimba, ar fi fost o întrebare la
+      // care i s-a răspuns deja.
+      frmRefEt: esteAgentNou ? "Codul tău de recomandare" : "Cod de recomandare",
+      frmRefTitlu: esteAgentNou
+        ? "Codul tău, scris automat. Pe comenzile luate de tine nu se poate trece codul altcuiva."
+        : "Gol înseamnă „nimeni n-a recomandat comanda asta”.",
+      // Un câmp blocat scris cu culoarea obișnuită arată ca unul în care se
+      // poate scrie, iar omul află că nu se poate abia după ce încearcă.
+      frmRefCodFg: esteAgentNou ? "var(--h-fg-muted)" : "var(--h-fg)",
+      frmRefBifa: f.refLeaga ? "✓" : "",
+      frmRefBg: f.refLeaga ? "var(--rc-mov-bg)" : "var(--h-bg-surface)",
+      frmRefFg: f.refLeaga ? "var(--rc-mov-fg)" : "var(--h-fg-muted)",
+      frmRefLine: f.refLeaga ? "var(--rc-mov-line)" : "var(--h-line)",
+      frmRefNota: esteAgentNou
+        ? "Codul tău. Comanda asta intră în „Recomandări” ca adusă de tine, iar comisionul se calculează din totalul ei."
+        : f.refLeaga
+          ? "Contul cumpărătorului rămâne legat de codul ăsta: și comenzile lui viitoare vor merge la același om, fără să mai scrie nimeni nimic."
+          : "Se repară numai comanda asta. Contul cumpărătorului rămâne cum e, deci comenzile lui viitoare nu se schimbă.",
+      onRefCode: (e) => setF({ refCode: e.target.value }),
+      // Citit din stare, nu din `f`: două apăsări repezi pe aceeași randare ar
+      // fi întors amândouă aceeași valoare și bifa ar fi rămas pe loc.
+      onRefLeaga: () => set(s => ({ form: Object.assign({}, s.form, { refLeaga: !s.form.refLeaga }), formErr: "" })),
+
       frm: {
         ref: f.ref, cust: f.cust, phone: f.phone || "", day: f.day, slot: f.slot,
-        status: f.status, note: f.note,
+        status: f.status, note: f.note, refCode: f.refCode || "",
         // Zona implicită „Centru" nu există în lista din Setări: comanda pleca
         // spre server cu o zonă pe care el o refuză, iar ruta o punea peste
         // depozit. Gol înseamnă „fără zonă", ceea ce serverul acceptă.
@@ -1848,11 +2931,27 @@ class Component extends DCLogic {
       // timp din Setări, trebuie să rămână vizibilă până e schimbată.
       slotOpts: (SLOTS_OF().indexOf(f.slot) >= 0 || !f.slot ? SLOTS_OF() : [f.slot].concat(SLOTS_OF()))
         .map(s => ({ v: s, l: s })),
+      // Sfatul de sub interval, pentru zonele fără punct pe hartă. Intervalul
+      // NU se ascunde și nu se validează altfel: clientul alege o oră ca
+      // oricare altul, doar că ora aia n-are cum să fie ținută de o rută
+      // care nu-l cuprinde. Același rând apare și în formularul clientului,
+      // ca amândoi să citească aceeași promisiune.
+      frmOraSfat: gp.zoneFaraPunct(f.zone)
+        ? "Zonă din afara orașului: ora e orientativă, o confirmăm la telefon."
+        : "",
       statusOpts: (gp.statuses().indexOf(f.status) >= 0 ? gp.statuses() : [f.status].concat(gp.statuses()))
         .map(s => ({ v: s, l: s })),
       onCust: (e) => setF({ cust: e.target.value }),
       onPhone: (e) => setF({ phone: e.target.value }),
       onRef: (e) => setF({ ref: e.target.value }),
+      // Comanda nouă n-are încă referință: o dă serverul, pe zi, în ordine.
+      // Caseta rămâne citibilă (placeholderul o promite de mult), dar nu mai
+      // primește text care oricum n-ar pleca nicăieri.
+      frmRefNoua: !(S.form && S.form.id),
+      frmRefNotaTitlu: (S.form && S.form.id)
+        ? "Numărul după care se caută comanda în laborator și pe bon. Nu poate rămâne gol."
+        : "Se dă automat la salvare, în ordinea zilei. Se poate schimba după ce comanda e făcută.",
+      frmRefFg2: (S.form && S.form.id) ? "var(--h-fg)" : "var(--h-fg-muted)",
       onDay: (e) => setF({ day: e.target.value }),
       onSlot: (e) => setF({ slot: e.target.value }),
       onStatus: (e) => setF({ status: e.target.value }),
@@ -1862,12 +2961,12 @@ class Component extends DCLogic {
       zoneOpts: [{ v: "", l: "— fără zonă —" }]
         .concat((ZONES_OF().indexOf(f.zone) >= 0 || !f.zone ? ZONES_OF() : [f.zone].concat(ZONES_OF()))
           .map(z => ({ v: z, l: z }))),
-      isDelivery: f.chan === "Livrare",
+      isDelivery: CU_MASINA(f.chan),
       onAddItem: () => set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.concat([{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]) }) })),
       onSave: save,
       onCancel: () => { this.__saving = false; set({ form: null, formErr: "", saving: false }); },
       onDeleteFromForm: () => {
-        const o = S.orders.find(x => x.id === S.form.id);
+        const o = this.comandaDupaId(S.form.id);
         if (o) askDelete(o);
       },
 
@@ -1878,9 +2977,31 @@ class Component extends DCLogic {
         chan: pk ? pk.chan : "", chanCls: pk ? CH(pk.chan) : "h-badge",
         status: pk ? pk.status : "", statusCls: pk ? (ST[pk.status] || "h-badge") : "h-badge",
         urgent: !!(pk && pk.urgent), note: pk ? pk.note || "" : "",
-        addr: pk && pk.chan === "Livrare" ? (pk.addr || "adresă necompletată") + (pk.zone ? " · " + pk.zone : "") : "",
+        addr: pk && CU_MASINA(pk.chan) ? (pk.addr || "adresă necompletată") + (pk.zone ? " · " + pk.zone : "") : "",
         qty: pk ? gp.qtyLabel(this.qty(pk)) : "0",
         items: pk ? pk.items.map(i => ({ q: i.q, n: i.n })) : []
+      },
+      // Etapa se schimbă din fișă, nu numai din formularul de editare.
+      //
+      // Până acum singurul loc din care se muta o comandă dintr-o etapă în
+      // alta era formularul întreg — care e închis pentru manager și agent,
+      // fiindcă restul câmpurilor lui le sunt refuzate de server. Fără
+      // rândul ăsta, „vede lista și mută comenzile pe flux" n-ar fi fost
+      // posibil: ar fi văzut lista și n-ar fi putut face nimic cu ea.
+      //
+      // Trimite exclusiv `status`, adică singura cheie pe care serverul o ia
+      // de la tot personalul. Administratorului îi prinde bine la fel: e
+      // drumul scurt spre ce făcea până acum în opt apăsări.
+      peekStatusOpts: (pk && gp.statuses().indexOf(pk.status) < 0
+        ? [pk.status].concat(gp.statuses())
+        : gp.statuses()).map(s => ({ v: s, l: s })),
+      onPeekStatus: (e) => {
+        const et = e.target.value;
+        if (!pk || et === pk.status) return;
+        gp.patch('/orders/' + pk.id, { status: et })
+          .then(() => { this.__ordSeen = null; this.__listaSeen = null; return this.pullTot(); })
+          .then(() => set({ msgBad: false, msg: pk.ref + " a trecut în „" + et + "”." }))
+          .catch((err) => set({ msg: err.message, msgBad: true }));
       },
       stop: (e) => e.stopPropagation(),
       onPeekClose: () => set({ peek: null }),
@@ -1893,9 +3014,23 @@ class Component extends DCLogic {
       lockedLine: S.offline ? "Administrare comenzi" : "Se verifică sesiunea…",
       offline: S.offline,
       onRetry: () => this.intra(),
-      denied: !!S.auth && !isAdmin(S.auth),
+      denied: !!S.auth && !vedeComenzi(S.auth),
       deniedClient: !!S.auth && authRole(S.auth) === "client",
       deniedStaff: !!S.auth && authRole(S.auth) !== "client",
+      // Ce poate face cine a intrat. Serverul primește de la tot personalul
+      // o singură cheie — starea comenzii (`ORDER_FIELDS_STAFF`) — și cere
+      // administrator pentru ordinea pe rută, pentru cererile clienților și
+      // pentru orice altă corectură. Butoanele de aici sunt oglinda acelor
+      // porți, nu o pază în plus: un buton care duce sigur la 403 e mai rău
+      // decât un buton lipsă, fiindcă pare că merge.
+      potEdita,
+      potDoarVede: !!S.auth && vedeComenzi(S.auth) && !isAdmin(S.auth),
+      // Agentul de vânzări primește de la server numai comenzile oamenilor
+      // aduși de el (`referral_agent_scope()` din api/lib/referral.php). Fără
+      // rândul ăsta, lista lui ar arăta exact ca a administratorului, doar mai
+      // scurtă — iar el ar crede că lipsesc comenzi, nu că sunt ale altcuiva.
+      // Nu e o pază: paza e pe server. E explicația ei.
+      doarAduseDeMine: !!S.auth && authRole(S.auth) === "agent_vanzari",
       // Aceeași propoziție nu se potrivea amândurora. Clientul nu e angajat, iar
       // „panourile de lucru” nu-i sunt nici măcar arătate: sub text îi apare butonul
       // spre „Comanda mea”. Textul se desparte pe aceeași întrebare pe care o pun
@@ -1903,8 +3038,8 @@ class Component extends DCLogic {
       deniedLine: !S.auth ? ""
         : authRole(S.auth) === "client"
           ? "Contul „" + S.auth.name + "” e cont de client: aici lucrează doar personalul. Comenzile tale le vezi în „Comanda mea”."
-          : "Contul „" + S.auth.name + "” e cont de angajat: nu are acces la comenzi, la conturi și la parole. Folosește panourile de lucru de mai jos.",
-      unlocked: !!S.auth && isAdmin(S.auth),
+          : "Contul „" + S.auth.name + "” e cont de angajat: nu are acces la comenzi și la conturi. Folosește panourile de lucru de mai jos.",
+      unlocked: !!S.auth && vedeComenzi(S.auth),
       authName: S.auth ? S.auth.name : "",
       onLogout: () => {
         // Închide sesiunea și pe server și golește datele din pagină, ca ele
@@ -1924,11 +3059,11 @@ class Component extends DCLogic {
       onConfirmCancel: () => set({ confirm: null }),
       onConfirmDelete: () => {
         const id = S.confirm.id;
-        const gone = S.orders.find(o => o.id === id);
+        const gone = this.comandaDupaId(id);
         // Comenzile nu se șterg, se anulează: istoricul trebuie să rămână.
         gp.patch('/orders/' + id, { status: gp.cancelled() })
           .then(() => this.commit("Comanda " + (gone ? gone.ref : "") + " a fost anulată."))
-          .catch((e) => this.setState({ msg: e.message, confirm: null }));
+          .catch((e) => this.setState({ msg: e.message, msgBad: true, confirm: null }));
       }
     };
   }

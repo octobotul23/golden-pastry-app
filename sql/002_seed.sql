@@ -1,28 +1,21 @@
 -- Golden Pastry — date inițiale
 -- GENERAT din catalogul real din „Site Public.dc.html" (22 produse).
 --
--- Rulează DUPĂ 001_schema.sql, O SINGURĂ DATĂ, la instalare.
+-- Rulează DUPĂ 001_schema.sql, la instalare.
 --
--- ATENȚIE — NU REIMPORTA ACEST FIȘIER pe o instalare care merge deja.
--- Prima parte (INSERT IGNORE) e într-adevăr inofensivă. Partea a doua,
--- de la linia 76 până la 229, sunt 22 de UPDATE necondiționate care rescriu
--- prețurile, denumirile, descrierile, gramajele, ordinea de afișare ȘI
--- fotografiile produselor cu id 1-22, indiferent ce ai schimbat între timp
--- din pagina Produse. Cazul fotografiilor e tăcut și practic ireversibil:
--- calea revine la products/prod-N.jpg, care chiar există pe disc, deci nu
--- apare nicio eroare, iar poza urcată de tine rămâne orfană pe server, cu
--- un nume aleator dat de api/routes/catalog.php:369.
+-- Se poate rula din nou fără teamă: totul e INSERT IGNORE — adaugă ce lipsește
+-- și lasă neatins ce există. Un rând deja prezent dă doar avertismentul
+-- „#1062 Duplicate entry ... for key 'products.PRIMARY'" și „0 rows affected",
+-- comportamentul normal al lui INSERT IGNORE. Nu se pierde nimic.
 --
--- Ai nevoie doar de o setare nouă? Rulează doar acel INSERT IGNORE INTO
--- settings, nu tot fișierul. Vezi docs/07-actualizari.md.
+-- Înainte, fișierul avea și 22 de UPDATE necondiționate (rândurile 76–229)
+-- care rescriau prețurile, denumirile, descrierile ȘI fotografiile produselor
+-- 1–22 la fiecare reimport, peste tot ce se schimbase din pagina Produse — iar
+-- documentația chiar recomanda reimportul „ca să apară setările noi". Blocul a
+-- fost scos: la instalare INSERT-ul pune oricum aceleași date, iar pe o
+-- instalare vie n-avea ce căuta.
 --
--- La un reimport apar avertismente „#1062 Duplicate entry ... for key
--- 'products.PRIMARY'", câte unul per produs existent. Acelea chiar sunt
--- normale pentru INSERT IGNORE — dar UPDATE-urile de după ele nu sunt.
---
--- Compatibil MySQL 5.7 / 8.x și MariaDB 10.x. Nu folosește VALUES() în
--- ON DUPLICATE KEY UPDATE (depreciat în MySQL 8.0.20+) și nici sintaxa cu
--- alias care o înlocuiește (absentă în MariaDB și MySQL 5.7).
+-- Compatibil MySQL 5.7 / 8.x și MariaDB 10.x.
 
 SET NAMES utf8mb4;
 
@@ -67,166 +60,6 @@ VALUES
   (20, 'poale-n-brau', 'Poale-n brâu', 'Poale-n brâu', 'Aluat dospit moale și pufos, umplut cu brânză dulce proaspătă, pudrat delicat cu zahăr.', 'Soft, fluffy leavened dough filled with fresh sweet cheese, delicately dusted with sugar.', 'products/prod-20.jpg', 150, 2.99, 3.69, 'special', 1, 190),
   (21, 'roll-cu-pizza', 'Roll cu pizza', 'Pizza roll', 'Aluat dospit aromat, rulat cu sos de roșii, mozzarella topită și condimente savuroase.', 'Aromatic leavened dough rolled with tomato sauce, melted mozzarella and savoury spices.', 'products/prod-21.jpg', 160, 2.7, 3.29, 'roll', 1, 200),
   (22, 'merdenea', 'Merdenea', 'Merdenea', 'Foietaj stratificat, crocant și auriu, umplut cu brânză sărată și cremoasă.', 'Layered, crisp golden puff pastry filled with creamy salted cheese.', 'products/prod-22.jpg', 170, 2.99, 3.69, 'special', 1, 210);
-
--- ############################################################################
--- BLOC DISTRUCTIV LA REIMPORT — vezi avertismentul din capul fișierului.
--- Rescrie necondiționat datele produselor 1-22, fotografiile incluse.
--- La instalare e corect. Pe o instalare vie, NU.
--- ############################################################################
-UPDATE products SET
-    slug = 'strudel-cu-mere', name = 'Ștrudel cu mere', name_en = 'Apple strudel',
-    description = 'Foietaj crocant și auriu, umplut cu mere fragede, scorțișoară și zahăr brun.', description_en = 'Crisp golden puff pastry filled with tender apples, cinnamon and brown sugar.',
-    photo = 'products/prod-1.jpg', grams = 140,
-    price_frozen = 2.85, price_baked = 3.49,
-    category = 'strudel', is_new = 0, sort = 0
-  WHERE id = 1;
-UPDATE products SET
-    slug = 'strudel-cu-branza-dulce', name = 'Ștrudel cu brânză dulce', name_en = 'Sweet cheese strudel',
-    description = 'Foietaj fin și crocant, umplut cu brânză proaspătă, cremoasă și ușor dulce.', description_en = 'Fine, crisp puff pastry filled with fresh, creamy, lightly sweetened cheese.',
-    photo = 'products/prod-2.jpg', grams = 170,
-    price_frozen = 2.85, price_baked = 3.49,
-    category = 'strudel', is_new = 0, sort = 10
-  WHERE id = 2;
-UPDATE products SET
-    slug = 'strudel-cu-dovleac', name = 'Ștrudel cu dovleac', name_en = 'Pumpkin strudel',
-    description = 'Foietaj auriu și crocant, umplut cu dovleac catifelat și condimente calde aromate.', description_en = 'Golden, crisp puff pastry filled with velvety pumpkin and warm aromatic spices.',
-    photo = 'products/prod-3.jpg', grams = 150,
-    price_frozen = 2.85, price_baked = 3.49,
-    category = 'strudel', is_new = 0, sort = 20
-  WHERE id = 3;
-UPDATE products SET
-    slug = 'trigon-cu-pizza', name = 'Trigon cu pizza', name_en = 'Pizza triangle',
-    description = 'Foietaj crocant și auriu, umplut cu șuncă fragedă, sos de roșii, cașcaval topit și măsline.', description_en = 'Crisp golden puff pastry with tender ham, tomato sauce, melted cheese and olives.',
-    photo = 'products/prod-4.jpg', grams = 140,
-    price_frozen = 3.79, price_baked = 4.69,
-    category = 'trigon', is_new = 0, sort = 30
-  WHERE id = 4;
-UPDATE products SET
-    slug = 'trigon-cu-branza', name = 'Trigon cu brânză', name_en = 'Cheese triangle',
-    description = 'Foietaj delicat și crocant, umplut cu brânză proaspătă, cremoasă și ușor sărată.', description_en = 'Delicate, crisp puff pastry filled with fresh, creamy, lightly salted cheese.',
-    photo = 'products/prod-5.jpg', grams = 160,
-    price_frozen = 2.8, price_baked = 3.49,
-    category = 'trigon', is_new = 0, sort = 40
-  WHERE id = 5;
-UPDATE products SET
-    slug = 'trigon-cu-gem-de-caise', name = 'Trigon cu gem de caise', name_en = 'Apricot jam triangle',
-    description = 'Foietaj fin și auriu, umplut cu gem de caise dulce-acrișor și parfumat de vară.', description_en = 'Fine golden puff pastry filled with sweet-sharp apricot jam with a scent of summer.',
-    photo = 'products/prod-6.jpg', grams = 160,
-    price_frozen = 2.8, price_baked = 3.49,
-    category = 'trigon', is_new = 0, sort = 50
-  WHERE id = 6;
-UPDATE products SET
-    slug = 'croissant-cu-ciocolata', name = 'Croissant cu ciocolată', name_en = 'Chocolate croissant',
-    description = 'Foietaj crocant cu straturi fine, umplut cu cremă fină de ciocolată.', description_en = 'Crisp, finely layered puff pastry filled with smooth chocolate cream.',
-    photo = 'products/prod-7.jpg', grams = 140,
-    price_frozen = 3.2, price_baked = 3.99,
-    category = 'croissant', is_new = 0, sort = 60
-  WHERE id = 7;
-UPDATE products SET
-    slug = 'croissant-cu-vanilie-si-zmeura', name = 'Croissant cu vanilie și zmeură', name_en = 'Vanilla & raspberry croissant',
-    description = 'Foietaj delicat și crocant, umplut generos cu cremă de vanilie și zmeură.', description_en = 'Delicate, crisp pastry generously filled with vanilla and raspberry cream.',
-    photo = 'products/prod-8.jpg', grams = 160,
-    price_frozen = 4.1, price_baked = 4.99,
-    category = 'croissant', is_new = 0, sort = 70
-  WHERE id = 8;
-UPDATE products SET
-    slug = 'croissant-cu-fistic', name = 'Croissant cu fistic', name_en = 'Pistachio croissant',
-    description = 'Foietaj aerat și auriu, umplut cu cremă bogată și parfumată de fistic.', description_en = 'Airy golden pastry filled with rich, fragrant pistachio cream.',
-    photo = 'products/prod-9.jpg', grams = 150,
-    price_frozen = 5.8, price_baked = 6.99,
-    category = 'croissant', is_new = 0, sort = 80
-  WHERE id = 9;
-UPDATE products SET
-    slug = 'rolldog', name = 'Rolldog', name_en = 'Rolldog',
-    description = 'Aluat dospit crocant la exterior, învelit în jurul unui crenvurști suculent și apetisant.', description_en = 'Leavened dough, crisp on the outside, wrapped around a juicy frankfurter.',
-    photo = 'products/prod-10.jpg', grams = 100,
-    price_frozen = 2.2, price_baked = 2.69,
-    category = 'roll', is_new = 0, sort = 90
-  WHERE id = 10;
-UPDATE products SET
-    slug = 'roll-cu-cabanos', name = 'Roll cu cabanos', name_en = 'Cabanos sausage roll',
-    description = 'Aluat dospit moale și auriu, umplut cu cârnat fraged și bine condimentat.', description_en = 'Soft golden leavened dough filled with tender, well-seasoned sausage.',
-    photo = 'products/prod-11.jpg', grams = 140,
-    price_frozen = 2.9, price_baked = 3.49,
-    category = 'roll', is_new = 0, sort = 100
-  WHERE id = 11;
-UPDATE products SET
-    slug = 'roll-cu-sunca-si-cascaval', name = 'Roll cu șuncă și cașcaval', name_en = 'Ham & cheese roll',
-    description = 'Aluat dospit pufos, umplut generos cu șuncă și cașcaval topit.', description_en = 'Fluffy leavened dough, generously filled with ham and melted cheese.',
-    photo = 'products/prod-12.jpg', grams = 140,
-    price_frozen = 2.5, price_baked = 3.09,
-    category = 'roll', is_new = 0, sort = 110
-  WHERE id = 12;
-UPDATE products SET
-    slug = 'covrig-cu-cascaval', name = 'Covrig cu cașcaval', name_en = 'Cheese pretzel',
-    description = 'Aluat dospit moale și cald, umplut cu cașcaval afumat bine topit.', description_en = 'Soft, warm leavened dough filled with well-melted smoked cheese.',
-    photo = 'products/prod-13.jpg', grams = 160,
-    price_frozen = 2.79, price_baked = 3.39,
-    category = 'covrig', is_new = 0, sort = 120
-  WHERE id = 13;
-UPDATE products SET
-    slug = 'covrig-cu-susan-mac-seminte', name = 'Covrig cu susan / mac / semințe', name_en = 'Sesame, poppy or seed pretzel',
-    description = 'Aluat dospit crocant, acoperit cu susan, mac sau semințe.', description_en = 'Crisp leavened dough topped with sesame, poppy seeds or mixed seeds.',
-    photo = 'products/prod-14.jpg', grams = 100,
-    price_frozen = 1.2, price_baked = 1.49,
-    category = 'covrig', is_new = 0, sort = 130
-  WHERE id = 14;
-UPDATE products SET
-    slug = 'covrig-cu-mar', name = 'Covrig cu măr', name_en = 'Apple pretzel',
-    description = 'Aluat dospit pufos și aromat, umplut cu felii de mere fragede.', description_en = 'Fluffy, aromatic leavened dough filled with tender apple slices.',
-    photo = 'products/prod-15.jpg', grams = 140,
-    price_frozen = 2.49, price_baked = 2.99,
-    category = 'covrig', is_new = 0, sort = 140
-  WHERE id = 15;
-UPDATE products SET
-    slug = 'corn-cu-ciocolata', name = 'Corn cu ciocolată', name_en = 'Chocolate horn',
-    description = 'Aluat fraged și ușor dulce, umplut cu ciocolată bogată și intensă.', description_en = 'Tender, lightly sweetened dough filled with rich, intense chocolate.',
-    photo = 'products/prod-16.jpg', grams = 150,
-    price_frozen = 2.75, price_baked = 3.39,
-    category = 'corn', is_new = 0, sort = 150
-  WHERE id = 16;
-UPDATE products SET
-    slug = 'corn-cu-vanilie', name = 'Corn cu vanilie', name_en = 'Vanilla horn',
-    description = 'Aluat fraged și ușor dulce, umplut cu cremă fină și parfumată de vanilie.', description_en = 'Tender, lightly sweetened dough filled with smooth, fragrant vanilla cream.',
-    photo = 'products/prod-17.jpg', grams = 130,
-    price_frozen = 3.65, price_baked = 4.49,
-    category = 'corn', is_new = 0, sort = 160
-  WHERE id = 17;
-UPDATE products SET
-    slug = 'corn-cu-fistic', name = 'Corn cu fistic', name_en = 'Pistachio horn',
-    description = 'Aluat fraged și ușor dulce, umplut cu cremă bogată de fistic.', description_en = 'Tender, lightly sweetened dough filled with rich pistachio cream.',
-    photo = 'products/prod-18.jpg', grams = 140,
-    price_frozen = 5.35, price_baked = 6.49,
-    category = 'corn', is_new = 0, sort = 170
-  WHERE id = 18;
-UPDATE products SET
-    slug = 'trigon-cu-vanilie-si-fructe', name = 'Trigon cu vanilie și fructe', name_en = 'Vanilla & fruit triangle',
-    description = 'Foietaj crocant și auriu, umplut cu cremă fină de vanilie și fructe proaspete, colorat și răcoritor.', description_en = 'Crisp golden puff pastry with smooth vanilla cream and fresh fruit — colourful and refreshing.',
-    photo = 'products/prod-19.jpg', grams = 160,
-    price_frozen = 3.5, price_baked = 4.29,
-    category = 'trigon', is_new = 1, sort = 180
-  WHERE id = 19;
-UPDATE products SET
-    slug = 'poale-n-brau', name = 'Poale-n brâu', name_en = 'Poale-n brâu',
-    description = 'Aluat dospit moale și pufos, umplut cu brânză dulce proaspătă, pudrat delicat cu zahăr.', description_en = 'Soft, fluffy leavened dough filled with fresh sweet cheese, delicately dusted with sugar.',
-    photo = 'products/prod-20.jpg', grams = 150,
-    price_frozen = 2.99, price_baked = 3.69,
-    category = 'special', is_new = 1, sort = 190
-  WHERE id = 20;
-UPDATE products SET
-    slug = 'roll-cu-pizza', name = 'Roll cu pizza', name_en = 'Pizza roll',
-    description = 'Aluat dospit aromat, rulat cu sos de roșii, mozzarella topită și condimente savuroase.', description_en = 'Aromatic leavened dough rolled with tomato sauce, melted mozzarella and savoury spices.',
-    photo = 'products/prod-21.jpg', grams = 160,
-    price_frozen = 2.7, price_baked = 3.29,
-    category = 'roll', is_new = 1, sort = 200
-  WHERE id = 21;
-UPDATE products SET
-    slug = 'merdenea', name = 'Merdenea', name_en = 'Merdenea',
-    description = 'Foietaj stratificat, crocant și auriu, umplut cu brânză sărată și cremoasă.', description_en = 'Layered, crisp golden puff pastry filled with creamy salted cheese.',
-    photo = 'products/prod-22.jpg', grams = 170,
-    price_frozen = 2.99, price_baked = 3.69,
-    category = 'special', is_new = 1, sort = 210
-  WHERE id = 22;
 
 -- ------------------------------------------------------- cont de sistem --
 -- Tableta din laborator e folosită de mai mulți oameni, deci nu are cont
@@ -278,6 +111,25 @@ INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
   ('notify_telegram_enabled', '0', 0),
   ('notify_telegram_token', '', 1),
   ('notify_telegram_chat_id', '', 0),
+  -- Ce anunț pe ce canal. Semănate cu purtarea de dinaintea migrării 013 —
+  -- cerere nouă și comandă nouă — nu cu tot catalogul: o instalare proaspătă
+  -- n-are voie să înceapă singură să sune telefonul pentru fapte pe care nu
+  -- le-a cerut nimeni. Restul se bifează din Setări → Notificări.
+  -- Lista întreagă și cârligele ei: api/lib/notify.php · notify_events().
+  ('notify_email_events', '["request_new","order_new"]', 0),
+  ('notify_whatsapp_events', '["request_new","order_new"]', 0),
+  ('notify_telegram_events', '["request_new","order_new"]', 0),
+  -- Butoanele de sub mesajul din Telegram („Acceptă", „Respinge", „Mai
+  -- târziu"). Pornite, fiindcă nu pleacă nicăieri până nu e legat webhookul —
+  -- iar cine leagă botul vrea tocmai butoanele.
+  ('notify_telegram_buttons', '1', 0),
+  -- Secretul pe care Telegram îl trimite înapoi în antetul fiecărei apăsări.
+  -- Criptat ca tokenul: cine îl are poate accepta cereri în locul patronului.
+  ('notify_telegram_webhook_secret', '', 1),
+  ('notify_telegram_webhook_status', 'nelegat', 0),
+  -- Pe numele cui se scriu în Jurnal apăsările venite de pe telefon. O faptă
+  -- fără autor e o faptă pe care n-o mai poate lămuri nimeni la o reclamație.
+  ('notify_telegram_actor_id', '', 0),
   ('stock_min_default', '10', 0),
   ('panel_code', '', 1),
   ('panel_enabled', '1', 0),
@@ -289,7 +141,11 @@ INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
   ('order_status_done', 'Predată', 0),
   ('order_status_cancelled', 'Anulată', 0),
   ('delivery_slots', '["06:30","08:00","09:00","10:00","12:30","14:00","16:00"]', 0),
-  ('delivery_zones', '["Sector 1","Sector 2","Sector 3","Sector 4","Sector 5","Sector 6","Ilfov"]', 0),
+  -- Ultima zonă n-are punct pe hartă în lista de mai jos, și nici nu trebuie să
+  -- aibă: „în afara Bucureștiului și Ilfovului" nu e un loc, e restul hărții.
+  -- Lipsa punctului e ce scoate oprirea din ordonarea rutei și o arată aparte,
+  -- într-o listă a ei. Vezi sql/016_zona_cont.sql.
+  ('delivery_zones', '["Sector 1","Sector 2","Sector 3","Sector 4","Sector 5","Sector 6","Ilfov","În afara Bucureștiului și Ilfovului"]', 0),
   -- Punctul folosit la estimarea distanțelor pentru fiecare zonă. Zonele erau
   -- editabile din Setări, dar coordonatele stăteau scrise în cod, în trei
   -- pagini: o zonă adăugată din panou primea în tăcere coordonatele Centrului,

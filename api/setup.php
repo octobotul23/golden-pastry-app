@@ -36,7 +36,19 @@ require __DIR__ . '/lib/http.php';
 require __DIR__ . '/lib/crypto.php';
 require __DIR__ . '/lib/db.php';
 
-$adminCount = (int) scalar("SELECT COUNT(*) FROM users WHERE role = 'admin' AND active = 1");
+// Amândouă rolurile cu drepturi depline, nu doar „admin" — pagina asta nu poate
+// cere api/lib/auth.php (n-are sesiune, n-are rute), deci lista se scrie aici pe
+// litere; e singurul loc din tot codul unde are voie.
+//
+// Numărat doar pe „admin", lacătul de mai jos se descuia singur: ștergerea
+// ultimului cont cu rol „admin" e permisă dinadins câtă vreme rămâne un fondator
+// (api/routes/users.php:388-396), iar în clipa aia instalatorul înceta să mai
+// răspundă 404 și își arăta din nou formularul pe api.goldenpastry.ro. Codul de
+// instalare din config.php ar fi rămas singura pază — pe o instalare terminată
+// de luni de zile, unde nimeni nu se mai gândește la el.
+$adminCount = (int) scalar(
+    "SELECT COUNT(*) FROM users WHERE role IN ('admin', 'fondator') AND active = 1"
+);
 
 // Instalarea e terminată: de aici încolo pagina nu mai există. Ștergerea
 // fișierului rămâne în documentație, dar omul care publică o uită, iar pagina

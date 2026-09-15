@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parola mea · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,7 @@
 <x-dc>
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -20,6 +26,44 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.18), transparent 70%)">
 <div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px;animation:pa-in .22s var(--h-ease-out)">
+
+<div style="display:flex">
+<button class="gp-burger gp-burger--mereu" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}" style="margin-left:auto">☰</button>
+</div>
+
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
 
 <div style="display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center">
 <img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
@@ -86,9 +130,28 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
-<div style="display:flex;flex-direction:column;gap:8px">
-<a href="{{ inapoiHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.18)">{{ inapoiLabel }}</a>
+<!-- Contul de fondator. Cardul apare numai dacă instalarea îl are (migrarea
+     009) — altfel butonul ar duce într-un 503 pe care omul îl citește ca
+     defecțiune. Vezi `founderReady` din shared/gp-api.js. -->
+<sc-if value="{{ fondShown }}" hint-placeholder-val="{{ true }}">
+<div class="h-card" style="padding:18px 20px;border-radius:20px;display:flex;flex-direction:column;gap:12px">
+<span class="h-eyebrow" style="font-size:12px">{{ fondCap }}</span>
+<p style="margin:0;font-size:14px;line-height:1.6;color:var(--h-fg-muted);text-wrap:pretty">{{ fondText }}</p>
+
+<sc-if value="{{ fondErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px">{{ fondErr }}</div>
+</sc-if>
+
+<sc-if value="{{ fondGata }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.55">{{ fondGata }}</div>
+</sc-if>
+
+<sc-if value="{{ fondButon }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onFond }}" style="min-height:46px;font-size:15px;align-self:flex-start">{{ fondLabel }}</button>
+</sc-if>
 </div>
+</sc-if>
+
 
 </div>
 </sc-if>
@@ -117,13 +180,22 @@ const WORDS = ["croissant", "vanilie", "migdale", "caramel", "foietaj", "brioș�
 const MIN = 8;
 
 class Component extends DCLogic {
-  state = { auth: null, loaded: false, veche: "", noua: "", inca: "", err: "", vezi: false, gata: false, salvez: false };
+  state = { navOpen: false, auth: null, loaded: false, veche: "", noua: "", inca: "", err: "", vezi: false, gata: false, salvez: false,
+    // Cererea de fondator, cu stările ei proprii: nu se amestecă cu `err` și
+    // `gata` de la parolă, altfel o cerere eșuată ar șterge de pe ecran
+    // mesajul „Parola a fost schimbată" — două lucruri fără nicio legătură.
+    fondCer: false, fondErr: "", fondGata: "" };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
     gp.me()
       .then((user) => this.setState({
-        auth: user ? { u: user.username, name: user.name, role: user.role, temp: user.mustChangePassword === true } : null,
+        // `gp.auth()` dă forma cerută de meniu — rol, cod de recomandare,
+        // cont de tură — iar peste ea se pun cele două steaguri ale paginii.
+        auth: user ? Object.assign({}, gp.auth(user), {
+          temp: user.mustChangePassword === true,
+          gata: user.founderReady === true,
+        }) : null,
         loaded: true
       }))
       .catch(() => this.setState({ loaded: true }));
@@ -157,9 +229,20 @@ class Component extends DCLogic {
         .catch((e) => set({ salvez: false, err: e.message || "Parola nu a putut fi schimbată." }));
     };
 
-    // Clientul se întoarce în magazin, personalul în administrare — de acolo
-    // au venit.
-    const client = a && a.role === "client";
+
+
+    // „Cere drept de fondator". O singură apăsare, nu două ca la ștergeri:
+    // nu se strică nimic și nu se schimbă niciun rol. Tot ce se întâmplă e că
+    // pleacă un e-mail către adresa firmei — iar textul de deasupra butonului
+    // spune asta înainte de apăsare, nu după.
+    const eFondator = a && a.role === "fondator";
+    const cere = () => {
+      if (S.fondCer) return;
+      set({ fondCer: true, fondErr: "", fondGata: "" });
+      gp.founderRequest()
+        .then((d) => set({ fondCer: false, fondGata: (d && d.message) || "Am trimis linkul de confirmare." }))
+        .catch((e) => set({ fondCer: false, fondErr: e.message || "Cererea nu a putut fi trimisă." }));
+    };
 
     return {
       anonim: S.loaded && !a,
@@ -182,8 +265,38 @@ class Component extends DCLogic {
       onKey: (e) => { if (e.key === "Enter") salveaza(); },
       onSave: () => salveaza(),
 
-      inapoiHref: client ? "Site%20Public.dc.html" : "Administrare%20Comenzi.dc.html",
-      inapoiLabel: client ? "← Înapoi la magazin" : "← Înapoi la administrare"
+      /* --- contul de fondator --- */
+      fondShown: !!(a && a.gata),
+      fondCap: eFondator ? "Ești fondator" : "Contul de fondator",
+      fondText: eFondator
+        ? "Poți face și desface administratori și alți fondatori, din pagina Conturi. E singurul lucru pe care un administrator nu-l poate face."
+        : "Fondatorul e administrator, plus singurul care dă și ia rolurile de administrator și de fondator. Nu ți-l poți da singur: dacă ceri, pleacă un e-mail cu un link de confirmare către adresa firmei, iar cine deschide cutia aceea hotărăște.",
+      fondButon: !eFondator && !S.fondGata,
+      fondLabel: S.fondCer ? "Se trimite…" : "Cere drept de fondator",
+      fondErr: S.fondErr,
+      fondGata: S.fondGata,
+      onFond: () => cere(),
+
+      // Sertarul de meniu, același marcaj ca în panouri. Înainte de el, de
+      // aici se ieșea printr-o singură legătură care ghicea pe rol unde te
+      // întorci — clientul în magazin, restul în administrare. Ghicitul se
+      // strica pentru agentul de vânzări și pentru angajat, care n-au ce
+      // căuta în administrare; acum fiecare vede exact ce poate deschide.
+      meniu: gp.meniu("Parola mea", a),
+      navHere: "Parola mea",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(a),
+      navOpen: S.navOpen,
+      onNavOpen: () => set({ navOpen: true }),
+      onNavClose: () => set({ navOpen: false }),
+      onNavKeep: (e) => e.stopPropagation(),
+      navWho: !!a,
+      navAnon: false,
+      authName: a ? a.name : "",
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); }
     };
   }
 }

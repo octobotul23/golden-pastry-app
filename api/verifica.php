@@ -196,7 +196,7 @@ if ($hasConfig) {
             $missing === []
                 ? count($need) . ' din ' . count($need) . ' prezente'
                 : (count($need) - count($missing)) . ' din ' . count($need) . ' — lipsesc: ' . implode(', ', $missing),
-            'Importă sql/001_schema.sql și sql/002_seed.sql din phpMyAdmin. Dacă baza e mai veche decât tabelele care lipsesc, adu-le cu migrarea lor din sql/ — vezi docs/03-publicare-cpanel.md.',
+            'Importă sql/001_schema.sql și sql/002_seed.sql din phpMyAdmin. Dacă baza e mai veche decât tabelele care lipsesc, adu-le cu migrarea lor din sql/ — vezi docs/08-publicare-vps-hostinger.md.',
             false
         );
 
@@ -256,6 +256,87 @@ if ($hasConfig) {
                 . 'comenzi. Fără ele, laboratorul nu poate raporta ce a produs, iar '
                 . 'depozitul nu știe ce e rezervat. '
                 . 'Importă sql/006_retete_rezervari.sql din phpMyAdmin.',
+            false
+        );
+
+        // Migrarea 007 — identitatea recomandărilor. Pasul acesta lipsea, deși
+        // fișierul există din aceeași zi cu 006: pe o bază fără el, codurile de
+        // recomandare pur și simplu nu se nasc, iar pagina nu se plânge de
+        // nimic (referral_supported() stinge totul în tăcere, dinadins). Adică
+        // exact felul de lipsă pe care numai o verificare o poate arăta.
+        $lipsa007 = [];
+        if (in_array('users', $tables, true)) {
+            $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
+            foreach (['referral_code', 'referred_by', 'referred_at'] as $c) {
+                if (!in_array($c, $cols, true)) {
+                    $lipsa007[] = 'users.' . $c;
+                }
+            }
+        }
+        check(
+            'Recomandările (migrarea 007)',
+            $lipsa007 === [],
+            $lipsa007 === [] ? 'prezente' : 'lipsesc: ' . implode(', ', $lipsa007),
+            'Țin codul fiecărui cont și legătura „cine pe cine a adus". Fără ele, '
+                . 'linkurile „?ref=" nu leagă pe nimeni, iar aplicația merge mai '
+                . 'departe fără să spună nimic. '
+                . 'Importă sql/007_update_roles_referral.sql din phpMyAdmin.',
+            false
+        );
+
+        // Migrarea 008 — banii recomandărilor. Se verifică și tabelul, și
+        // coloanele, ca la 006: se pot pierde separat, iar o bază migrată pe
+        // jumătate ar avea registrul fără procentul din care se calculează.
+        $lipsa008 = array_values(array_diff(['referral_commissions'], $tables));
+        if (in_array('users', $tables, true)) {
+            $cols = $pdo->query('SHOW COLUMNS FROM users')->fetchAll(PDO::FETCH_COLUMN);
+            if (!in_array('referral_rate', $cols, true)) {
+                $lipsa008[] = 'users.referral_rate';
+            }
+        }
+        foreach (['orders', 'order_requests'] as $t) {
+            if (in_array($t, $tables, true)) {
+                $cols = $pdo->query('SHOW COLUMNS FROM ' . $t)->fetchAll(PDO::FETCH_COLUMN);
+                if (!in_array('referral_code', $cols, true)) {
+                    $lipsa008[] = $t . '.referral_code';
+                }
+            }
+        }
+        check(
+            'Comisioanele de recomandare (migrarea 008)',
+            $lipsa008 === [],
+            $lipsa008 === [] ? 'prezente' : 'lipsesc: ' . implode(', ', $lipsa008),
+            'Țin procentul, câștigul pe fiecare comandă și bifa de plată. Fără ele, '
+                . 'codurile de recomandare merg mai departe, dar nu produc niciun ban. '
+                . 'Importă sql/008_comisioane_recomandari.sql din phpMyAdmin.',
+            false
+        );
+
+        // Migrarea 009 — rolul de fondator și invitațiile lui. Se verifică
+        // amândouă: rolul stă în ENUM-ul coloanei, tabelul stă separat, iar un
+        // import oprit la jumătate le poate despărți. Cu rolul dar fără tabel,
+        // butonul „Cere drept de fondator" ar cădea la scriere; cu tabelul dar
+        // fără rol, ar cădea abia la confirmare — adică după ce omul a primit
+        // e-mailul și a apăsat.
+        $lipsa009 = array_values(array_diff(['founder_invites'], $tables));
+        if (in_array('users', $tables, true)) {
+            $tip = (string) $pdo->query(
+                "SELECT COLUMN_TYPE FROM information_schema.COLUMNS
+                  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'
+                    AND COLUMN_NAME = 'role'"
+            )->fetchColumn();
+            if (!str_contains($tip, "'fondator'")) {
+                $lipsa009[] = 'users.role → fondator';
+            }
+        }
+        check(
+            'Contul de fondator (migrarea 009)',
+            $lipsa009 === [],
+            $lipsa009 === [] ? 'prezente' : 'lipsesc: ' . implode(', ', $lipsa009),
+            'Fondatorul e singurul care poate face și desface administratori. Fără '
+                . 'ele, butonul lipsește din pagina contului, iar restul aplicației '
+                . 'merge exact ca înainte. '
+                . 'Importă sql/009_pontaj_si_roluri.sql din phpMyAdmin.',
             false
         );
     } catch (Throwable $e) {
@@ -329,15 +410,36 @@ check('Conexiune HTTPS', $https, $https ? 'da' : 'nu',
 // terminată și pagina rămâne deschisă: exact situația pentru care există.
 // Până aici nu s-a tipărit nimic, doar s-au adunat verificările, deci ieșirea
 // nu lasă o pagină pe jumătate.
+$instalat = null;
 if (isset($pdo)) {
     try {
-        $instalat = (int) $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin' AND active = 1")->fetchColumn();
+        // Amândouă rolurile cu drepturi depline. Vezi api/setup.php: numărat doar
+        // pe „admin", zăvorul se descuia pe o instalare rămasă cu un fondator.
+        $instalat = (int) $pdo->query(
+            "SELECT COUNT(*) FROM users WHERE role IN ('admin', 'fondator') AND active = 1"
+        )->fetchColumn();
         if ($instalat > 0) {
             http_response_code(404);
             exit;
         }
     } catch (Throwable $e) {
         // Fără tabela users nu există instalare terminată, deci nu zăvorâm.
+    }
+}
+
+// Zăvorul de mai sus ține doar cât timp baza răspunde. La o pană de MySQL sau
+// la o parolă schimbată, `$instalat` rămâne necunoscut și pagina se deschidea
+// oricui, cu tot ce are pe ea: versiuni de PHP și MySQL, extensii, modul
+// `env`, textul erorii PDO (care conține utilizatorul și gazda bazei). Când nu
+// se poate dovedi că instalarea NU e terminată, pagina cere codul de instalare
+// — același cu al lui setup.php, pe care îl are doar cine a scris config.php.
+// Pe o găzduire încă fără config.php nu e nimic de protejat și codul nu există.
+if ($instalat === null && $hasConfig) {
+    $cod = (string) (($cfg ?? [])['install_code'] ?? '');
+    $dat = (string) ($_GET['cod'] ?? $_POST['cod'] ?? '');
+    if ($cod === '' || strlen($cod) < 12 || !hash_equals($cod, $dat)) {
+        http_response_code(404);
+        exit;
     }
 }
 

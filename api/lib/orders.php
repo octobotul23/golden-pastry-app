@@ -35,7 +35,8 @@ function order_variants(): array
 }
 
 /**
- * Contul de client care poartă exact numele acesta, dacă e unul singur.
+ * Contul de client care poartă exact numele acesta, dacă e unul singur ȘI dacă
+ * a garantat casa pentru el.
  *
  * Comanda pe care o adaugă administratorul în panou — cea luată la telefon —
  * nu era legată de niciun cont. Clientul o vedea abia la ușă: panoul lui
@@ -44,6 +45,45 @@ function order_variants(): array
  * Potrivim doar pe numele întreg și doar când răspunsul e unul singur. Dacă
  * două conturi poartă același nume, nu ghicim: comanda rămâne nelegată, așa
  * cum era înainte, și administratorul o poate corecta.
+ *
+ * DE CE NU ORICE CONT. Un cont pe care și l-a făcut singur cineva de pe
+ * internet nu e o identitate. Pagina „Fă-ți cont" scria numele afișat exact
+ * cum era tastat, fără să-l compare cu nimic, și năștea contul cu
+ * `role = 'client'`, `active = 1` — adică fix ce caută interogarea de mai jos;
+ * iar pe nume nu există nicio unicitate, nici în schemă, nici în migrări.
+ * Numele sub care e strigat în casă un client de en-gros e scris pe firma din
+ * stradă, deci îl știe oricine. Străinul își făcea un cont cu numele acela și,
+ * de a doua zi, comanda pe care operatoarea o scria în panou se lega tăcut de
+ * contul LUI: în „Comanda mea" i se deschideau adresa punctului de lucru,
+ * telefonul, mențiunile și PREȚUL UNITAR negociat pe fiecare poziție — pentru
+ * en-gros, tocmai cifra pe care patronul n-o dă nimănui. Nimeni n-avea cum să
+ * bage de seamă: nicio pagină nu arăta contul de care s-a legat o comandă.
+ *
+ * Aici se face doar UN LUCRU: se scot din candidați conturile născute pe site
+ * pe care casa nu le-a recunoscut încă. Nu se închide „străinul își face cont
+ * cu numele tău" — acela e un defect al paginii de înscriere, cu semnalarea
+ * lui; se închide „și capătă comenzile tale", care e cel cu bani în el.
+ *
+ * Regula e ACEEAȘI pe toate cele patru drumuri prin care un nume se preface în
+ * cont (api/routes/orders.php la creare și la corectura de nume,
+ * api/routes/requests.php la trimitere și la acceptare), fiindcă funcția asta e
+ * singurul loc din tot API-ul unde se face prefacerea.
+ *
+ * PORTIȚA, ca reparația să nu fie o capcană: clientul cinstit care s-a înscris
+ * singur de pe site rămâne nelegat până când cineva din casă apasă „Recunosc
+ * clientul" în Conturi (`POST /users/{id}/vouch`). Atunci `vouched_at` se
+ * umple și contul se poartă ca oricare altul, inclusiv retroactiv: comenzile
+ * lui vechi rămân nelegate, dar toate cele de la recunoaștere încolo se leagă.
+ * Fără portița asta, cine se înscrie de pe site ar rămâne pe veci cu panoul gol
+ * și fără să afle vreodată de ce — de-aia „Comanda mea" îi spune, iar Conturi
+ * îi poartă însemnul.
+ *
+ * CE SE PIERDE, de știut: un client venit pe linkul unui agent se înscrie chiar
+ * de pe site. Până e recunoscut, comenzile lui luate la telefon n-au
+ * `customer_id`, deci `referral_commission_sync()` nu mai găsește
+ * recomandantul prin cont (api/lib/referral.php) — agentul își pierde
+ * comisionul tocmai pe clientul adus de el, dacă nu se tastează codul pe
+ * comandă. Recunoașterea îl repune. Însemnul din Conturi există și pentru asta.
  */
 function client_by_name(string $name): ?int
 {
@@ -51,14 +91,205 @@ function client_by_name(string $name): ?int
     if ($name === '') {
         return null;
     }
+    // Fără migrarea 010 coloanele nu există, iar filtrul ar cădea cu 1054 pe
+    // fiecare comandă. Vezi `user_origin_supported()` pentru ce se pierde atunci.
+    $garantat = user_origin_supported()
+        ? ' AND (self_registered = 0 OR vouched_at IS NOT NULL)'
+        : '';
     $rows = all(
         "SELECT id FROM users
           WHERE role = 'client' AND active = 1
-            AND TRIM(COALESCE(NULLIF(customer_name, ''), name)) = ?
+            AND TRIM(COALESCE(NULLIF(customer_name, ''), name)) = ?" . $garantat . "
           LIMIT 2",
         [$name]
     );
     return count($rows) === 1 ? (int) $rows[0]['id'] : null;
+}
+
+/**
+ * Cine ar mai purta numele ăsta, dacă numele s-ar scrie acum.
+ *
+ * `client_by_name()` de deasupra leagă NUMAI când răspunsul e unul singur, iar
+ * la două conturi cu același nume tace. E purtarea cuminte — nu ghicește — dar
+ * are un capăt neapărat, și nu se vede din ea: al doilea cont cu numele acela
+ * nu-și strică numai lui legarea, I-O STRICĂ ȘI PRIMULUI. Clientul vechi al
+ * casei, care n-a făcut nimic, se trezește că de a doua zi comenzile lui luate
+ * la telefon nu-i mai intră în cont. Nu află niciodată de ce: nu se scrie nimic
+ * nicăieri, fiindcă din locul unde stă codul nu s-a întâmplat nimic — pur și
+ * simplu n-a fost „unul singur".
+ *
+ * MĂSURAT VIU pe 14 septembrie 2026, pe serverul de dezvoltare: un agent a
+ * făcut cu `POST /users` un cont purtând numele „Cafeneaua Veche", al unui
+ * client vechi al casei. Comanda scrisă imediat după de administrator, pe
+ * numele acela, s-a întors cu `customer_id` gol. Nici administratorul, nici
+ * clientul n-aveau de unde afla că se schimbase ceva.
+ *
+ * DE-AIA POARTA STĂ LA NAȘTEREA NUMELUI, nu la folosirea lui: se refuză al
+ * doilea, ca primul să rămână întreg. Regula e „nu înrăutăți", nu „respinge
+ * trecutul" — două conturi rămase omonime dinainte nu se ating, și orice altă
+ * corectură pe ele merge mai departe (aceeași socoteală ca la adresa de
+ * e-mail, api/routes/users.php).
+ *
+ * INTEROGAREA E GEAMĂNA CELEI DE SUS, literă cu literă: același `role`,
+ * același `active`, aceeași expresie de nume, aceeași poartă de recunoaștere.
+ * O pază care cerne altfel decât cerne cel păzit nu păzește nimic — ar refuza
+ * nume care n-ar fi stricat nimic și ar lăsa să treacă tocmai pe cele care
+ * strică. Cine schimbă una din ele să le schimbe pe amândouă.
+ *
+ * STĂ AICI, în `api/lib/`, fiindcă are TREI uși de păzit — crearea contului,
+ * redenumirea lui și recunoașterea unui cont făcut pe site — iar routerul
+ * încarcă un singur fișier de rute pe cerere (api/index.php).
+ *
+ * @param string   $nume    numele sub care ar fi strigat contul: firma, ori,
+ *                          lipsă ea, numele afișat
+ * @param int|null $afaraDe contul care se redenumește ori se recunoaște chiar
+ *                          acum — el nu se ciocnește de sine însuși
+ */
+function client_name_conflict(string $nume, ?int $afaraDe = null): ?array
+{
+    $nume = trim($nume);
+    if ($nume === '') {
+        return null;
+    }
+    $garantat = user_origin_supported()
+        ? ' AND (self_registered = 0 OR vouched_at IS NOT NULL)'
+        : '';
+    // `id <> ?` cu zero când n-avem pe cine scoate: numerele de cont încep de
+    // la 1, deci condiția e adevărată pentru toți. Altfel ar fi trebuit două
+    // interogări aproape la fel, iar a doua ar fi rămas în urmă la prima
+    // corectură.
+    return one(
+        "SELECT id, username, name, customer_name FROM users
+          WHERE role = 'client' AND active = 1
+            AND TRIM(COALESCE(NULLIF(customer_name, ''), name)) = ?" . $garantat . "
+            AND id <> ?
+          LIMIT 1",
+        [$nume, $afaraDe ?? 0]
+    );
+}
+
+/**
+ * Numele sub care e strigat un cont: firma, ori, lipsă ea, numele afișat.
+ *
+ * Scrisă o dată, fiindcă e chiar expresia din SQL-ul celor două funcții de mai
+ * sus — `TRIM(COALESCE(NULLIF(customer_name, ''), name))` — și fiecare loc
+ * care o rescrie de mână e un loc care poate să se depărteze de ea.
+ */
+function client_display_name(?string $firma, ?string $nume): string
+{
+    $firma = trim((string) $firma);
+    return $firma !== '' ? $firma : trim((string) $nume);
+}
+
+/**
+ * Ograda de clienți a unui om din echipă.
+ *
+ * Întoarce `null` pentru cine n-are voie să caute deloc (manager, angajat,
+ * client, vizitator), altfel o pereche: `toti` pentru administrator și
+ * fondator, iar pentru agentul de vânzări numărul lui, cu care se taie lista
+ * la clienții aduși chiar de el.
+ *
+ * STĂ AICI, în `api/lib/`, nu în fișierul de rute, fiindcă routerul încarcă UN
+ * SINGUR fișier de rute pe cerere (api/index.php). Regula e nevoie în două
+ * locuri deodată — la căutare (api/routes/clients.php) și la legarea cererii de
+ * cont (api/routes/requests.php) — iar scrisă de două ori s-ar fi despărțit
+ * într-o zi, tăcut, pe partea care deschide.
+ */
+function client_scope_for(array $u): ?array
+{
+    $rol = (string) ($u['role'] ?? '');
+    if (in_array($rol, GP_ADMIN_ROLES, true)) {
+        return ['toti' => true, 'agent' => 0];
+    }
+    if ($rol === 'agent_vanzari') {
+        return ['toti' => false, 'agent' => (int) ($u['id'] ?? 0)];
+    }
+
+    return null;
+}
+
+/**
+ * Clientul ăsta e în ograda omului ăstuia?
+ *
+ * Întrebarea se pune în SQL, cu exact aceeași bucată de `WHERE` pe care o
+ * folosește lista — tiparul lui `referral_agent_sees_order()`
+ * (api/lib/referral.php). Un client care nu există dă tot „false", deci refuz,
+ * nu „nu există": agentul n-are de ce să afle prin ghicire câți clienți are casa.
+ *
+ * Poarta de „recunoaștere" a lui `client_by_name()` NU se pune aici, dinadins.
+ * Acolo se potrivește un NUME tastat, și de-aia conturile născute pe site și
+ * nerecunoscute încă sunt scoase din candidați: numele nu e o dovadă. Aici se
+ * alege un cont ANUME, cu ochii pe numele, telefonul și adresa lui, de către un
+ * om din casă — iar alegerea aceea e chiar dovada care lipsea. Lista îl poartă
+ * totuși însemnat, ca cel care alege să știe ce alege.
+ */
+function client_in_scope(array $u, int $clientId): bool
+{
+    $sc = client_scope_for($u);
+    if ($sc === null || $clientId <= 0) {
+        return false;
+    }
+
+    $sql = "SELECT COUNT(*) FROM users WHERE id = ? AND role = 'client' AND active = 1";
+    $par = [$clientId];
+    if (!$sc['toti']) {
+        $sql     .= ' AND referred_by = ?';
+        $par[]    = $sc['agent'];
+    }
+
+    return (int) scalar($sql, $par) === 1;
+}
+
+/**
+ * Numele tastat leagă cererea de un cont — DACĂ omul are voie la contul acela.
+ *
+ * Stă aici, lângă celelalte două, fiindcă regula e nevoie în DOUĂ fișiere de
+ * rute deodată — `api/routes/requests.php` (cererea de pe site) și
+ * `api/routes/orders.php` (comanda luată la telefon) — iar routerul încarcă un
+ * singur fișier de rute pe cerere (api/index.php). Scrisă de două ori, s-ar fi
+ * despărțit într-o zi, tăcut, pe partea care deschide. Exact pățania de față:
+ * poarta pusă pe `customerId` n-a fost pusă și pe nume, și s-a intrat pe nume.
+ *
+ * CE S-A MĂSURAT, pe 14 septembrie 2026, viu, nu dedus din cod. Cu contul
+ * agentului „mihai" (id 1811) și clientul „Cafeneaua Veche" (id 1809, adus de
+ * nimeni, pe care `GET /clients?q=cafe` i-l ascundea cu lista goală):
+ *   - `POST /requests` cu `customerId: 1809` → 403 `client_not_in_scope`;
+ *   - aceeași cerere cu numele scris în clar → 201, legată de ACELAȘI cont;
+ *   - `POST /orders` cu numele scris în clar → comanda 28970 legată de 1809,
+ *     comision de 2,85 RON născut pe numele agentului, ȘI
+ *     `users.referred_by = 1811` scris pe contul clientului PENTRU TOTDEAUNA,
+ *     de `referral_link_new_user()`. Adică fiecare comandă viitoare a acelui
+ *     client i-ar fi adus agentului bani, fără să mai fie nevoie de vreun cod.
+ * Rândurile probei au fost șterse și contul pus la loc pe NULL.
+ *
+ * OGRADA E NUMAI PENTRU CINE ARE UNA — hotărârea patronului, seara de
+ * 14 septembrie. `client_scope_for()` întoarce `null` pentru manager și
+ * angajat, dar `null` acolo înseamnă „n-are unealta de căutat clienți", nu
+ * „n-are niciun client". Citit ca ogradă goală, managerul ar fi rămas fără
+ * singurul drum prin care comanda luată de el la telefon ajunge în contul
+ * clientului — el nici nu poate căuta (403 `client_search_denied`), deci n-ar
+ * fi avut cu ce înlocui. Gaura era a agentului; leacul se oprește la el.
+ *
+ * Tăcerea la refuz e dinadins, și se deosebește de 403-ul de pe `customerId`:
+ * acolo omul a ALES un cont și merită să afle că n-are voie la el; aici a scris
+ * un nume, iar un refuz pe nume ar face din formular un instrument de ghicit
+ * clienții casei — scrii un nume, și răspunsul îți spune dacă firma aceea are
+ * cont. Cererea intră întreagă, cu numele, telefonul și adresa ei; doar nu se
+ * agață de contul altuia.
+ */
+function client_by_name_in_scope(?array $u, string $name): ?int
+{
+    $gasit = client_by_name($name);
+    if ($gasit === null || $u === null) {
+        return $gasit;
+    }
+
+    $sc = client_scope_for($u);
+    if ($sc === null) {
+        return $gasit;
+    }
+
+    return client_in_scope($u, $gasit) ? $gasit : null;
 }
 
 /**
@@ -92,8 +323,12 @@ function text_field($v, string $eticheta, int $max, bool $obligatoriu = false): 
         return '';
     }
     if (mb_strlen($s) > $max) {
+        // „— text prea lung", nu „este prea lung": eticheta poate fi și
+        // feminină („Mențiunea", „Descrierea"), iar adjectivul ar trebui atunci
+        // acordat. Forma de aici merge cu orice etichetă, la orice gen.
+        $n = mb_strlen($s);
         fail(
-            $eticheta . ' este prea lung: ' . mb_strlen($s) . ' caractere, maximum ' . $max . '.',
+            $eticheta . ' — text prea lung: ' . $n . ' ' . ro_de($n) . 'caractere, maximum ' . $max . '.',
             422,
             'field_too_long'
         );
@@ -129,6 +364,40 @@ function require_variant($v, string $implicit = 'copt'): string
         );
     }
     return trim($v);
+}
+
+/**
+ * O zonă de livrare primită din formular, verificată față de lista din Setări.
+ *
+ * Regula asta era scrisă de două ori, cuvânt cu cuvânt, în `POST /requests` și
+ * în `POST /orders`. Odată cu zona ținută pe cont ar fi ajuns la patru copii —
+ * iar patru copii ale aceleiași reguli se depărtează una de alta exact în ziua
+ * în care contează. Rutele nu se încarcă una pe alta (api/index.php cere un
+ * singur fișier din `routes/`), deci locul unei reguli împărțite e aici.
+ *
+ * Fără verificare, o zonă inexistentă („Centru", rămasă din prototip) trecea, iar
+ * ruta șoferului o punea pe coordonatele depozitului: oprirea apărea peste
+ * magazie, iar drumul ieșea calculat greșit.
+ *
+ * LISTA GOALĂ LASĂ ORICE SĂ TREACĂ, dinadins. Goală înseamnă „instalarea asta
+ * n-a apucat să-și scrie zonele", nu „nicio zonă nu e bună": închisă, o bază
+ * abia ridicată n-ar mai primi nicio comandă cu zonă, adică prima zi de lucru ar
+ * fi o zi de refuzuri. Purtarea e cea de dinainte, păstrată neschimbată.
+ *
+ * Întoarce '' pentru „nu s-a spus", nu null: cele două rute de mai sus scriu
+ * valoarea mai departe în INSERT-urile lor, iar '' e ce scriau și până acum.
+ */
+function zone_field($v, string $cod = 'bad_zone'): string
+{
+    $zone = is_scalar($v) ? trim((string) $v) : '';
+    if ($zone === '') {
+        return '';
+    }
+    $zones = delivery_zones();
+    if ($zones && !in_array($zone, $zones, true)) {
+        fail('Zonă necunoscută: ' . $zone, 422, $cod);
+    }
+    return $zone;
 }
 
 /**
@@ -298,7 +567,11 @@ function price_items(array $items, string $variant, array $onorate = [], array $
             && !(is_string($qtyBrut) && is_numeric(trim($qtyBrut)))) {
             fail('Cantitatea unei poziții nu e un număr.', 422, 'bad_qty');
         }
-        $qty = (float) $qtyBrut;
+        // Rotunjită la două zecimale ÎNAINTE de verificare, cum o ține și
+        // coloana (DECIMAL(10,2)): 0,004 trecea de „> 0", MySQL o rotunjea la
+        // 0,00 și rămânea o poziție cu cantitate zero; 0,125 se salva 0,13
+        // dar totalul se calcula din 0,125 — linia și totalul nu mai băteau.
+        $qty = round((float) $qtyBrut, 2);
         if ($qty <= 0 || $qty > 10000) {
             fail('Cantitate invalidă.', 422, 'bad_qty');
         }
@@ -402,6 +675,12 @@ function price_items(array $items, string $variant, array $onorate = [], array $
         }
     }
 
+    // Coloana `total` e DECIMAL(10,2): peste 99.999.999,99 INSERT-ul pica cu
+    // 22003 și omul primea „Eroare internă." Nicio comandă adevărată nu ajunge
+    // aici; e doar plasa pentru 200 de poziții × 10.000 bucăți.
+    if ($total > 99999999.99) {
+        fail('Totalul comenzii depășește ce se poate înregistra. Împarte comanda în mai multe.', 422, 'total_too_big');
+    }
     return [$priced, $total];
 }
 
@@ -422,7 +701,20 @@ function order_variant_of(array $priced): string
 }
 
 /** Atașează pozițiile la comenzi, printr-o singură interogare. */
-function attach_items(array $orders): array
+/**
+ * @param bool $cuRecomandare Trece și `referralCode` în JSON.
+ *
+ * Implicit NU, fiindcă printre apelanți e și lista clientului. Cine l-a
+ * adus în casă și cât câștigă acela din el e o înțelegere între patron și
+ * agent — aceeași regulă ca la `commission`, doar că aici steagul e pe
+ * funcție, nu un câmp adăugat pe urmă de rută.
+ *
+ * Pus pe adevăr, câmpul e cerut de formularul de editare: fără el pagina
+ * nu putea nici măcar ARĂTA codul scris pe comandă, darămite să-l
+ * corecteze. Lipsește (rămâne null) pe o instalare fără migrarea 008 —
+ * coloana nu există, iar `$o[...] ?? null` o trece fără să se plângă.
+ */
+function attach_items(array $orders, bool $cuRecomandare = false): array
 {
     $orders = array_values(array_filter($orders));
     if (!$orders) {
@@ -450,7 +742,7 @@ function attach_items(array $orders): array
         ];
     }
 
-    return array_map(static function (array $o) use ($byOrder) {
+    return array_map(static function (array $o) use ($byOrder, $cuRecomandare) {
         return [
             'id'           => (int) $o['id'],
             'seq'          => (int) $o['seq'],
@@ -473,6 +765,7 @@ function attach_items(array $orders): array
             'stockSynced'  => !empty($o['stock_synced']),
             'variant'      => $o['variant'] ?? 'copt',
             'requestId'    => $o['request_id'] === null ? null : (int) $o['request_id'],
+            'referralCode' => $cuRecomandare ? ($o['referral_code'] ?? null) : null,
             'createdAt'    => $o['created_at'],
             'updatedAt'    => $o['updated_at'],
             'items'        => $byOrder[(int) $o['id']] ?? [],
@@ -498,12 +791,13 @@ function attach_items(array $orders): array
  * ecran de neexplicat. Așa rămâne scris rând cu rând ce a ieșit și ce s-a
  * întors, cu motivul alături.
  *
- * Ce se întoarce se recalculează din pozițiile comenzii, cu exact aceeași
- * potrivire poziție → articol de depozit ca la scădere (`route_stock_sync`).
- * Nu ne legăm de textul din `note` („#1042 Restaurant Bistro"): și referința,
- * și numele clientului se schimbă din același formular care cere returul, deci
- * căutarea după ele n-ar mai găsi nimic de întors tocmai când e nevoie. De
- * aceea funcția trebuie chemată ÎNAINTE ca pozițiile să fie rescrise.
+ * Ce se întoarce se citește din REGISTRU, pe `stock_moves.order_id`: marfa se
+ * întoarce exact în raftul din care a ieșit, oricât s-ar fi schimbat depozitul
+ * între timp. Nu ne legăm de textul din `note` („#1042 Restaurant Bistro"): și
+ * referința, și numele clientului se schimbă din același formular care cere
+ * returul. Pentru comenzile scăzute înainte de reparație, care n-au `order_id`
+ * în registru, mai există o plasă care recalculează din pozițiile comenzii —
+ * numai pentru ea funcția trebuie chemată ÎNAINTE ca pozițiile să fie rescrise.
  *
  * Se cheamă din tranzacția apelantului: rândul comenzii se blochează cu
  * `FOR UPDATE`, ca două salvări simultane pe aceeași comandă — două tablete,
@@ -522,27 +816,98 @@ function stock_unsync_order(int $orderId, string $motiv, ?int $userId): int
         return 0;
     }
 
-    // Aceeași alegere ca la scădere, literă cu literă (`route_stock_sync`):
-    // dacă scăderea ia un articol și returul altul, marfa iese dintr-un raft și
-    // se întoarce în altul — două cifre greșite în loc de una. De aceea nici
-    // aici nu se lasă legătura să prindă două rânduri, iar articolele scoase din
-    // depozit trec la urmă.
-    $items = all(
-        'SELECT oi.qty, oi.name, si.id AS item_id, si.name AS item_name
-           FROM order_items oi
-           LEFT JOIN stock_items si
-                  ON si.id = (
-                       SELECT s.id
-                         FROM stock_items s
-                        WHERE (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
-                           OR (s.product_id IS NULL AND s.name = oi.name)
-                        ORDER BY (s.active = 0), (s.product_id IS NULL), s.id
-                        LIMIT 1
-                     )
-          WHERE oi.order_id = ?',
-        [$orderId]
+    // Întâi întrebăm registrul dacă ȘTIE comanda asta.
+    //
+    // Nu ne uităm la sold, ci la existența unei ieșiri însemnate: un sold zero
+    // înseamnă „s-a întors deja", nu „nu știu nimic". Confundate, comenzile
+    // scăzute înainte de reparație ar fi căzut pe ghicit la FIECARE ciclu, la
+    // nesfârșit — ieșirea lor veche n-are `order_id`, deci perechea s-ar aduna
+    // mereu la zero. (Din același motiv returul de pe plasă se scrie nemarcat,
+    // mai jos: un picior însemnat și celălalt nu ar strica tocmai socoteala.)
+    $stieRegistrul = (bool) scalar(
+        'SELECT 1 FROM stock_moves WHERE order_id = ? AND reason = ? LIMIT 1',
+        [$orderId, 'Comandă client']
     );
 
+    if ($stieRegistrul) {
+        // De unde se întoarce marfa: din REGISTRU, nu din pozițiile comenzii.
+        //
+        // Până acum returul refăcea potrivirea poziție → articol cu aceeași
+        // subinterogare ca scăderea. Aceeași literă, dar la alt moment:
+        // scăderea se apasă marți, iar comanda iese din „Predată" joi. Între
+        // cele două zile depozitul se schimbă la o corectură obișnuită —
+        // articolul fusese făcut cu unitatea greșită, depozitarul îl scoate din
+        // listă și pune altul pe același produs. La retur, ordonarea îl trimitea
+        // pe cel vechi la urmă și alegea raftul NOU: opt croasante ieșeau
+        // dintr-un raft și se întorceau în altul. Rămâneau două cifre greșite pe
+        // vecie, iar `stock_synced = 0` spunea pe ecran că registrul s-a
+        // îndreptat. Nici de găsit nu se mai puteau: cele două rânduri nu erau
+        // legate prin nimic.
+        //
+        // Se întoarce SOLDUL comenzii pe fiecare articol — ieșirile „Comandă
+        // client" minus retururile deja scrise pe ea — așa că o comandă scăzută,
+        // întoarsă și scăzută din nou iese la socoteală corect, iar o a doua
+        // trecere nu mai are ce întoarce (`HAVING qty > 0`). Suma e pe DECIMAL,
+        // deci exactă.
+        //
+        // Filtrul pe `reason` nu e de fason: laboratorul scrie și el cu
+        // `order_id` („Producție laborator", „Consum în producție", „Corecție
+        // producție" — vezi `route_order_production`), iar acelea sunt materie
+        // primă consumată și marfă făcută, nu marfă vândută. Luate în socoteală,
+        // returul unei comenzi ar scoate făina din rafturi. Motivul returului nu
+        // se poate scrie ca listă fixă, fiindcă se compune din numele etapei
+        // luat din Setări — de aceea `LIKE 'Retur:%'`.
+        //
+        // `GROUP BY m.item_id` adună pe RAFT, nu pe poziție: o comandă cu
+        // același produs în două variante scrie două ieșiri pe același articol
+        // și primește un singur rând de retur, cu totalul. E mai aproape de
+        // adevăr decât două rânduri jumătate-jumătate, dar înseamnă că
+        // `$intoarse` numără de acum rafturi atinse, nu poziții.
+        $items = all(
+            'SELECT m.item_id,
+                    COALESCE(MAX(si.name), MAX(m.name)) AS item_name,
+                    SUM(m.qty * -m.direction)           AS qty
+               FROM stock_moves m
+               LEFT JOIN stock_items si ON si.id = m.item_id
+              WHERE m.order_id = ?
+                AND m.item_id IS NOT NULL
+                AND (m.reason = ? OR m.reason LIKE ?)
+              GROUP BY m.item_id
+             HAVING qty > 0',
+            [$orderId, 'Comandă client', 'Retur:%']
+        );
+    } else {
+        // Plasa pentru comenzile scăzute ÎNAINTE de reparație: mișcările lor au
+        // `order_id` gol, deci registrul n-are ce răspunde. Numai pentru ele se
+        // mai ghicește raftul, cu potrivirea de dinainte — e tot ce se poate
+        // face, iar alternativa (să nu se întoarcă nimic) ar lăsa marfă ieșită
+        // din evidență pe comenzi vechi și adevărate. Aici filtrul pe `active`
+        // NU se pune, dinadins: ce desface un fapt deja scris trebuie să ajungă
+        // și la un raft stins între timp, altfel comanda ar rămâne agățată la
+        // „Predată" pe vecie. Ramura se stinge singură la prima scădere nouă a
+        // comenzii; se poate scoate de tot după o migrare care completează
+        // `order_id` retroactiv.
+        $items = all(
+            'SELECT oi.qty, oi.name, si.id AS item_id, si.name AS item_name
+               FROM order_items oi
+               LEFT JOIN stock_items si
+                      ON si.id = (
+                           SELECT s.id
+                             FROM stock_items s
+                            WHERE (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
+                               OR (s.product_id IS NULL AND s.name = oi.name)
+                            ORDER BY (s.active = 0), (s.product_id IS NULL), s.id
+                            LIMIT 1
+                         )
+              WHERE oi.order_id = ?',
+            [$orderId]
+        );
+    }
+
+    // Poarta de mai jos mușcă de acum NUMAI pe ramura-plasă: citit din registru,
+    // articolul e mereu acolo — chiar și scos din listă — și exact acolo trebuie
+    // să se întoarcă marfa, fiindcă de acolo a plecat.
+    //
     // Comanda e unitatea de lucru și la retur, exact ca la scădere: dacă vreo
     // poziție nu-și mai găsește articolul de depozit, nu se întoarce NIMIC și
     // marcajul rămâne pus. Altfel marfa aceea nu s-ar mai întoarce niciodată,
@@ -583,10 +948,18 @@ function stock_unsync_order(int $orderId, string $motiv, ?int $userId): int
     foreach ($items as $it) {
         // `name` păstrează denumirea articolului la momentul mișcării, ca la
         // scădere: registrul vechi rămâne lizibil după o redenumire.
+        //
+        // `order_id` se scrie numai când ieșirea lui e la rândul ei însemnată.
+        // Pus și pe returul de pe plasă, un picior al perechii ar fi însemnat și
+        // celălalt nu: soldul pe comandă ar ieși negativ, `HAVING qty > 0` l-ar
+        // arunca, și de-atunci înainte comanda aceea ar cădea pe ghicit la
+        // fiecare ciclu — tăcut, pe vecie. Perechea se însemnează întreagă sau
+        // deloc.
         q(
-            'INSERT INTO stock_moves (item_id, name, qty, direction, reason, note, user_id)
-             VALUES (?, ?, ?, 1, ?, ?, ?)',
-            [(int) $it['item_id'], (string) $it['item_name'], (float) $it['qty'], $motiv, $note, $userId]
+            'INSERT INTO stock_moves (item_id, name, qty, direction, reason, note, user_id, order_id)
+             VALUES (?, ?, ?, 1, ?, ?, ?, ?)',
+            [(int) $it['item_id'], (string) $it['item_name'], (float) $it['qty'], $motiv, $note, $userId,
+                $stieRegistrul ? $orderId : null]
         );
         $n++;
     }
@@ -627,8 +1000,11 @@ function stock_unsync_order(int $orderId, string $motiv, ?int $userId): int
  * același filtru pe status, nu trei bucăți de cod.
  *
  * Potrivirea poziție → articol e copiată literă cu literă din
- * `route_stock_sync`: promisiunea trebuie să cadă pe raftul din care se va face
- * și scăderea, altfel „Rezervat" ar arăta pe un articol, iar ieșirea pe altul.
+ * `route_stock_sync`, filtrul pe `active` inclusiv: promisiunea trebuie să cadă
+ * pe raftul din care se va face și scăderea, altfel „Rezervat" ar arăta pe un
+ * articol, iar ieșirea pe altul. Un raft scos din depozit nu mai primește
+ * promisiuni: marfa lui nu mai e de vândut, iar „Disponibil"-ul depozitarului
+ * ar fi scăzut pentru o comandă care oricum nu se mai poate scădea de acolo.
  *
  * Se cheamă din tranzacția apelantului, după ce pozițiile sunt scrise.
  *
@@ -646,9 +1022,12 @@ function stock_reserve_order(int $orderId): int
                   ON si.id = (
                        SELECT s.id
                          FROM stock_items s
-                        WHERE (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
-                           OR (s.product_id IS NULL AND s.name = oi.name)
-                        ORDER BY (s.active = 0), (s.product_id IS NULL), s.id
+                        WHERE (
+                                (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
+                                OR (s.product_id IS NULL AND s.name = oi.name)
+                              )
+                          AND s.active = 1
+                        ORDER BY (s.product_id IS NULL), s.id
                         LIMIT 1
                      )
           WHERE oi.order_id = ?

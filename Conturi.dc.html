@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conturi · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,7 @@
 <x-dc>
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -22,14 +28,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-ct=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
 [data-ct=nav]{display:none!important}
 [data-ct=sidefoot]{display:none!important}
-[data-ct=phoneback]{display:flex!important}
 [data-ct=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
 [data-ct=topbar] h1{font-size:20px!important}
+[data-ct=topbar]>div:last-child{width:100%!important;margin-left:0!important}
+[data-ct=topbar]>div:last-child>a{flex:1 1 auto!important;justify-content:center!important}
 [data-ct=newbtn]{width:100%!important}
 [data-ct=body]{padding:14px 14px 26px!important;gap:14px!important}
 [data-ct=g2]{grid-template-columns:1fr!important}
 [data-ct=cardfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
 [data-ct=cardfoot]>button{width:100%!important}
+[data-ct=editfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
+[data-ct=editfoot]>button{width:100%!important;margin-left:0!important;min-width:0!important}
 }
 </style>
 </helmet>
@@ -88,18 +97,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7">Conturi</span>
 </div>
-<a data-ct="phoneback" href="Administrare%20Comenzi.dc.html" title="Administrare" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
 <div data-ct="nav" style="display:flex;flex-direction:column;gap:6px">
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
-<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
-<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
-<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
-<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Conturi</span>
-<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
-<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
-<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
 </div>
 <div data-ct="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
 <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
@@ -113,6 +121,39 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Parolele sunt criptate pe server și nu pot fi citite de nimeni — nici de tine, nici de mine. Dacă un coleg și-o uită, generezi una nouă.</p>
 </div>
 </div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
 
 <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
 
@@ -130,7 +171,15 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
 <div class="{{ msgCls }}" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:ct-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+<button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
 </div>
 </sc-if>
 
@@ -141,7 +190,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <h2 class="h-h4" style="margin:0;font-size:19px">Cont nou</h2>
 <div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Nume afișat
-<input class="h-input" value="{{ nName }}" onChange="{{ onNName }}" placeholder="Ana · tura de seară" style="height:48px;font-size:15px">
+<input autoFocus="{{ true }}" class="h-input" value="{{ nName }}" onChange="{{ onNName }}" placeholder="Ana · tura de seară" style="height:48px;font-size:15px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Utilizator
 <input class="h-input" value="{{ nUser }}" onChange="{{ onNUser }}" placeholder="ana" autoComplete="off" style="height:48px;font-size:15px">
@@ -165,12 +214,25 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele clientului din comenzi
 <input class="h-input" value="{{ nCust }}" onChange="{{ onNCust }}" placeholder="Hotel Belvedere" style="height:48px;font-size:15px">
 </label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Adresa firmei
+<input class="h-input" value="{{ nAddr }}" onChange="{{ onNAddr }}" placeholder="ex. Calea Victoriei 63, et. 2" style="height:48px;font-size:15px">
+</label>
+<sc-if value="{{ zoneReady }}" hint-placeholder-val="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Zona
+<select class="h-input" value="{{ nZone }}" onChange="{{ onNZone }}" style="height:48px;font-size:15px">
+<sc-for list="{{ zoneOpts }}" as="z" hint-placeholder-count="9">
+<option value="{{ z.v }}">{{ z.l }}</option>
+</sc-for>
+</select>
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ nZoneHint }}</span>
+</label>
+</sc-if>
 </sc-if>
 </div>
 <sc-if value="{{ nErr }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--danger" style="border-radius:12px;padding:11px 13px;font-size:14px">{{ nErr }}</div>
 </sc-if>
-<div style="display:flex;gap:10px;flex-wrap:wrap">
+<div data-ct="editfoot" style="display:flex;gap:10px;flex-wrap:wrap">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onFormCancel }}" style="min-height:46px;font-size:15px">Renunță</button>
 <button type="button" class="h-btn h-btn--primary" onClick="{{ onFormSave }}" disabled="{{ nBusy }}" style="margin-left:auto;min-height:46px;min-width:180px;font-size:15px">{{ nSaveLabel }}</button>
 </div>
@@ -185,10 +247,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">Se cere o dată pe ecran, la deschiderea paginii „Intrare", și dă acces la laborator, rută și depozit. Nu înlocuiește conturile.</p>
 <div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Codul de acum
-<div style="display:flex;gap:8px">
-<input class="h-input h-numeric" type="{{ pType }}" value="{{ pShown }}" readOnly="{{ true }}" style="flex:1;min-width:0;height:46px;font-size:15px;background:var(--h-bg-sunk)">
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onPReveal }}" style="flex:none;min-height:46px;min-width:96px;font-size:14px">{{ pRevealLabel }}</button>
-</div>
+<input class="h-input h-numeric" type="text" value="{{ pShown }}" readOnly="{{ true }}" style="height:46px;font-size:15px;background:var(--h-bg-sunk)">
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Stocat criptat pe server, deci nu poate fi arătat. Dacă l-ai uitat, scrie unul nou alături.</span>
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cod nou
 <div style="display:flex;gap:8px">
@@ -261,9 +321,26 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <sc-if value="{{ a.isClient }}" hint-placeholder-val="{{ false }}">
+<div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele clientului din comenzi
 <input class="h-input" value="{{ a.custEdit }}" onChange="{{ a.onCust }}" onBlur="{{ a.saveCust }}" onKeyDown="{{ a.onFieldKey }}" placeholder="Hotel Belvedere" style="height:46px;font-size:15px">
 </label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Adresa firmei
+<input class="h-input" value="{{ a.addrEdit }}" onChange="{{ a.onAddr }}" onBlur="{{ a.saveAddr }}" onKeyDown="{{ a.onFieldKey }}" placeholder="ex. Calea Victoriei 63, et. 2" style="height:46px;font-size:15px">
+</label>
+<sc-if value="{{ zoneReady }}" hint-placeholder-val="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Zona
+<select class="h-input" value="{{ a.zona }}" onChange="{{ a.onZona }}" style="height:46px;font-size:15px">
+<sc-for list="{{ zoneOpts }}" as="z" hint-placeholder-count="9">
+<option value="{{ z.v }}">{{ z.l }}</option>
+</sc-for>
+</select>
+<sc-if value="{{ a.zonaHint }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ a.zonaHint }}</span>
+</sc-if>
+</label>
+</sc-if>
+</div>
 </sc-if>
 
 <sc-if value="{{ a.notSystem }}" hint-placeholder-val="{{ true }}">
@@ -281,6 +358,32 @@ Notează parola acum: <strong>{{ a.freshPass }}</strong> — nu mai poate fi afi
 </sc-if>
 </sc-if>
 
+<sc-if value="{{ a.pinShown }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cod de pontaj</span>
+<span class="{{ a.pinCls }}">{{ a.pinEt }}</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onPinEdit }}" style="min-height:40px;font-size:14px;margin-left:auto">{{ a.pinBtn }}</button>
+<sc-if value="{{ a.pinHas }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onPinClear }}" style="min-height:40px;font-size:14px;color:{{ a.pinClearFg }}">{{ a.pinClearLabel }}</button>
+</sc-if>
+</div>
+<sc-if value="{{ a.pinEditing }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);animation:ct-pop .18s var(--h-ease-out)">
+<div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
+<label style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Codul nou
+<input autoFocus="{{ true }}" class="h-input h-numeric" type="text" inputMode="numeric" value="{{ a.pinDraft }}" onChange="{{ a.onPinDraft }}" onKeyDown="{{ a.onPinKey }}" placeholder="patru cifre, nu 1234" style="height:46px;font-size:18px;letter-spacing:3px">
+</label>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ a.onPinSave }}" style="min-height:46px;font-size:14px;flex:none">Salvează codul</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onPinCancel }}" style="min-height:46px;font-size:14px;flex:none">Renunț</button>
+</div>
+<sc-if value="{{ a.pinErr }}" hint-placeholder-val="{{ false }}">
+<p class="h-alert h-alert--danger" style="margin:0;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.4">{{ a.pinErr }}</p>
+</sc-if>
+<span style="font-size:13px;line-height:1.55;color:var(--h-fg-muted)">{{ a.pinNota }}</span>
+</div>
+</sc-if>
+</sc-if>
+
 <sc-if value="{{ a.isSystem }}" hint-placeholder-val="{{ false }}">
 <div style="padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);font-size:13px;line-height:1.55;color:var(--h-fg-muted)">
 Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, comun întregii echipe. Codul se schimbă din <strong>Setări → Acces</strong>.
@@ -291,7 +394,7 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 <div style="display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);animation:ct-pop .18s var(--h-ease-out)">
 <div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parolă nouă
-<input class="h-input" type="text" value="{{ a.n1 }}" onChange="{{ a.onN1 }}" onKeyDown="{{ a.onKey }}" autoComplete="new-password" placeholder="minim {{ minLen }} caractere" style="height:48px;font-size:16px">
+<input autoFocus="{{ true }}" class="h-input" type="text" value="{{ a.n1 }}" onChange="{{ a.onN1 }}" onKeyDown="{{ a.onKey }}" autoComplete="new-password" placeholder="minim {{ minLen }} caractere" style="height:48px;font-size:16px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Confirmă parola
 <input class="h-input" type="text" value="{{ a.n2 }}" onChange="{{ a.onN2 }}" onKeyDown="{{ a.onKey }}" autoComplete="new-password" placeholder="scrie din nou" style="height:48px;font-size:16px">
@@ -300,7 +403,7 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 <sc-if value="{{ a.err }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--danger" style="border-radius:12px;padding:11px 13px;font-size:14px">{{ a.err }}</div>
 </sc-if>
-<div style="display:flex;gap:10px;flex-wrap:wrap">
+<div data-ct="editfoot" style="display:flex;gap:10px;flex-wrap:wrap">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onCancel }}" style="min-height:46px;font-size:15px">Renunță</button>
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onSuggest }}" style="min-height:46px;font-size:14px">Propune o parolă</button>
 <button type="button" class="h-btn h-btn--primary" onClick="{{ a.onSave }}" style="margin-left:auto;min-height:46px;min-width:180px;font-size:15px">Salvează parola</button>
@@ -326,13 +429,51 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 </sc-if>
 <sc-if value="{{ a.refMissing }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<span style="flex:1;min-width:220px;font-size:13px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Contul e mai vechi decât recomandările, deci n-a primit niciun cod. Se face din prenume — „{{ a.refPreview }}" — și nu se mai schimbă după aceea.</span>
+<span style="flex:1;min-width:220px;font-size:13px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Contul e mai vechi decât recomandările, deci n-a primit niciun cod. „Dă-i un cod" îl face din prenume — „{{ a.refPreview }}"; cu „Alege codul" îl scrii tu.</span>
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onRefMake }}" style="min-height:46px;font-size:14px;flex:none">Dă-i un cod</button>
 </div>
 </sc-if>
 <sc-if value="{{ a.refFrom }}" hint-placeholder-val="{{ false }}">
 <span style="font-size:13px;line-height:1.5;color:var(--h-fg-subtle)">Adus de <strong>{{ a.refFrom }}</strong>{{ a.refWhen }}.</span>
 </sc-if>
+
+<sc-if value="{{ a.refCanEdit }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onRefEdit }}" style="min-height:46px;font-size:14px;align-self:flex-start">{{ a.refEditLabel }}</button>
+</sc-if>
+
+<sc-if value="{{ a.refEditing }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:14px;background:var(--h-bg);border:1px solid var(--h-accent);animation:ct-pop .18s var(--h-ease-out)">
+<div data-ct="g2" style="display:grid;grid-template-columns:{{ a.refCols }};gap:12px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cod
+<input autoFocus="{{ true }}" class="h-input" type="text" value="{{ a.refCodDraft }}" onChange="{{ a.onRefCodDraft }}" onKeyDown="{{ a.onRefKey }}" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" placeholder="{{ a.refPreview }}" style="height:48px;font-size:16px">
+</label>
+<sc-if value="{{ a.refMoneyOn }}" hint-placeholder-val="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Procent
+<input class="h-input h-numeric" type="text" inputMode="decimal" value="{{ a.refRateDraft }}" onChange="{{ a.onRefRateDraft }}" onKeyDown="{{ a.onRefKey }}" placeholder="{{ a.refRatePh }}" style="height:48px;font-size:16px">
+</label>
+</sc-if>
+</div>
+<span style="font-size:13px;line-height:1.55;color:var(--h-fg-subtle);text-wrap:pretty">{{ a.refNote }}</span>
+<sc-if value="{{ a.refErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:12px;padding:11px 13px;font-size:14px">{{ a.refErr }}</div>
+</sc-if>
+<div data-ct="editfoot" style="display:flex;gap:10px;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onRefCancel }}" style="min-height:46px;font-size:15px">Renunță</button>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ a.onRefSave }}" style="margin-left:auto;min-height:46px;min-width:180px;font-size:15px;background:{{ a.refSaveBg }}">{{ a.refSaveLabel }}</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ a.selfShown }}" hint-placeholder-val="{{ false }}">
+<div data-ct="origine" style="display:flex;flex-direction:column;gap:9px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid {{ a.vouchLine }}">
+<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
+<span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cont făcut de pe site</span>
+<span class="{{ a.vouchBadge }}" style="font-size:12px">{{ a.vouchEt }}</span>
+</div>
+<span style="font-size:13px;line-height:1.55;color:var(--h-fg-subtle);text-wrap:pretty">{{ a.vouchNota }}</span>
+<button type="button" class="{{ a.vouchCls }}" onClick="{{ a.onVouch }}" style="min-height:46px;font-size:14px;align-self:flex-start">{{ a.vouchBtn }}</button>
 </div>
 </sc-if>
 
@@ -340,8 +481,21 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 <sc-if value="{{ a.canEditPass }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--primary" onClick="{{ a.onEdit }}" style="min-height:46px;font-size:15px">Schimbă parola</button>
 </sc-if>
-<label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
-<select class="h-input" value="{{ a.role }}" onChange="{{ a.onRole }}" title="{{ a.roleHint }}" style="height:46px;font-size:14px;width:auto;min-width:170px">
+<!-- Contul de sistem „panou" nu are rol de schimbat și nu se șterge (serverul
+     refuză ambele cu 422): controalele nu se desenează, ca să nu promită ceva
+     ce se termină în „Eroare". -->
+<sc-if value="{{ a.notSystem }}" hint-placeholder-val="{{ true }}">
+<!-- Lista de roluri trebuie să se strângă, nu să dicteze ea lățimea. Cu
+     `width:auto` era largă cât cea mai lungă opțiune — numele unui rol cu
+     toată explicația lui, 325px — iar pe telefon eticheta ieșea 367px într-un
+     părinte de 305: pagina se revărsa cu 12px și se trăgea lateral în gol.
+     `max-width:100%` singur n-a schimbat nimic, fiindcă acel 100% se măsoară
+     din etichetă, a cărei lățime o dădea chiar lista: un cerc. `flex:1 1 170px`
+     cu `min-width:0` îl rupe — baza e 170px, crește când are loc și scade când
+     nu are. Pe 1440 iese tot 325px, ca înainte; pe 390 iese 263px, iar pagina
+     nu mai are ce derula lateral. -->
+<label style="display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
+<select class="h-input" value="{{ a.role }}" onChange="{{ a.onRole }}" title="{{ a.roleHint }}" style="height:46px;font-size:14px;flex:1 1 170px;min-width:0;max-width:100%">
 <sc-for list="{{ roleOpts }}" as="o" hint-placeholder-count="5">
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
@@ -351,6 +505,7 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onDelCancel }}" style="margin-left:auto;min-height:46px;font-size:14px">Renunț la ștergere</button>
 </sc-if>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onDelete }}" style="margin-left:{{ a.delGap }};min-height:46px;font-size:14px;color:{{ a.delFg }}">{{ a.delLabel }}</button>
+</sc-if>
 </div>
 
 </div>
@@ -412,16 +567,22 @@ const fromApi = (x) => ({
   mail: x.email || "",
   role: x.role,
   cust: x.customerName || "",
+  // Unde livrăm și în ce zonă. Serverul le trimite de la migrarea 016 încoace;
+  // pe o instalare fără ea, `zone` lipsește din răspuns și rămâne gol — caseta
+  // nu se desenează, iar pagina nu se strică între urcarea fișierelor și
+  // importul din phpMyAdmin.
+  addr: x.address || "",
+  zona: x.zone || "",
   active: x.active !== false,
   // Contul de sistem al tabletelor. Nu se intră în el cu parolă, deci pagina
   // nu trebuie să ofere butoane de parolă pentru el.
   sys: x.isSystem === true,
-  at: x.lastLogin ? Date.parse(x.lastLogin + "Z") || 0 : 0,
+  at: gp.utc(x.lastLogin),
   // Momentul în care omul și-a schimbat SINGUR parola, și steagul care spune
   // că pe cont e încă parola pusă de administrator. Pagina afișa în locul lor
   // `lastLogin`, sub eticheta „parolă schimbată": un cont care intrase azi cu
   // parola primită pe WhatsApp apărea ca și cum și-ar fi pus parolă proprie.
-  pwAt: x.passwordChangedAt ? Date.parse(x.passwordChangedAt + "Z") || 0 : 0,
+  pwAt: gp.utc(x.passwordChangedAt),
   temp: x.mustChangePassword === true,
   // Recomandări. Rămân goale pe o instalare pe care migrarea 007 n-a fost încă
   // rulată — serverul nu trimite câmpurile, iar pagina nu desenează secțiunea
@@ -430,7 +591,30 @@ const fromApi = (x) => ({
   refCode: x.referralCode || "",
   refLink: x.referralLink || "",
   refFrom: x.referredByName || "",
-  refAt: x.referredAt ? Date.parse(x.referredAt + "Z") || 0 : 0
+  // `null` = „ia procentul global", `0` = „nu câștigă nimic". Nu se topesc
+  // într-un `|| 0`: ar face din fiecare cont fără procent propriu un cont care
+  // nu câștigă niciodată nimic, iar ridicarea procentului global n-ar mai
+  // atinge pe nimeni. Vezi comentariul coloanei din sql/008.
+  refRate: (x.referralRate === null || x.referralRate === undefined) ? null : Number(x.referralRate),
+  refAt: gp.utc(x.referredAt),
+  // De unde vine contul, și dacă a garantat casa pentru el.
+  //
+  // `self` e un FAPT — contul s-a născut la „Fă-ți cont" — iar `vouchAt` o
+  // HOTĂRÂRE a unui om. Ținute separat dinadins (vezi sql/010): recunoașterea
+  // n-are voie să șteargă faptul, altfel peste un an nimeni n-ar mai putea
+  // afla care conturi au venit de pe internet.
+  //
+  // Rămân goale pe o instalare fără migrarea 010 — serverul nu trimite
+  // câmpurile, iar blocul din card nu se desenează deloc (`S.origine`).
+  self: x.selfRegistered === true,
+  vouchAt: gp.utc(x.vouchedAt),
+  vouchBy: x.vouchedByName || "",
+  // ARE sau N-ARE cod de pontaj — niciodată CARE e. Serverul nu-l trimite
+  // înapoi nici lui, nici nimănui (vezi `public_user()`, api/lib/auth.php):
+  // codul e păstrat ca hash, deci nici el nu-l mai știe. `null` înseamnă „n-am
+  // de unde ști" (bază fără migrarea 014) și e fals la fel ca `false`, deci
+  // butonul nu se desenează pe o instalare neactualizată.
+  labPin: x.hasLabPin === true
 });
 const roleOf = (x) => x.role || (x.u === "admin" ? "admin" : "angajat");
 // Etichetele rolurilor. Ordinea din ROLE_OPTS e cea din ENUM-ul coloanei
@@ -438,31 +622,50 @@ const roleOf = (x) => x.role || (x.u === "admin" ? "admin" : "angajat");
 // poziția, nu textul, iar una strecurată la mijloc ar schimba în tăcere rolul
 // conturilor de după ea.
 const ROLE_L = {
+  fondator: "fondator",
   admin: "administrator",
   angajat: "angajat",
   client: "client",
   manager: "manager",
-  agent_vanzari: "agent de vânzări"
+  agent_vanzari: "agent de vânzări",
+  utilizator_lab: "om de laborator"
 };
 // Butonul care ciclează prin roluri a fost înlocuit cu o listă: cu trei valori
 // mergea, cu cinci ar fi însemnat patru apăsări ca să ajungi de la „client" la
 // „administrator", fără să vezi vreodată lista întreagă.
 const ROLE_OPTS = [
-  { v: "admin",         l: "Administrator · tot" },
-  { v: "manager",       l: "Manager · panourile de lucru" },
-  { v: "agent_vanzari", l: "Agent de vânzări · panourile de lucru" },
-  { v: "angajat",       l: "Angajat · laborator, rută, depozit" },
+  { v: "fondator",      l: "Fondator · tot, plus statistici și rolurile celorlalți" },
+  // „tot, fără statistici", nu „tot": de când există pagina Statistici,
+  // administratorul nu mai are chiar tot. Eticheta asta e primul loc în care
+  // omul care împarte rolurile citește deosebirea — dacă ea minte, o alege pe
+  // cea greșită și află abia peste o lună, când fondatorul întreabă de cifre.
+  { v: "admin",         l: "Administrator · tot, fără statistici" },
+  { v: "manager",       l: "Manager · comenzi, laborator, rută, depozit, pontaj" },
+  { v: "agent_vanzari", l: "Agent de vânzări · recomandări și comenzi" },
+  { v: "angajat",       l: "Angajat · laborator, rută, depozit, pontaj" },
+  { v: "utilizator_lab", l: "Om de laborator · doar pontajul" },
   { v: "client",        l: "Client · doar comanda lui" }
 ];
-// Ce vede fiecare rol. Textul spune ce face serverul, nu ce ascunde pagina:
-// manager și agent au exact drepturile angajatului (GP_STAFF_ROLES din
-// api/lib/auth.php) — conturile, catalogul, setările și jurnalul rămân numai
-// ale administratorului.
+// Ce vede fiecare rol.
+//
+// Textele astea spuneau că managerul și agentul au „aceleași drepturi ca
+// angajații: comenzi, rută, depozit" — adevărat despre server (GP_STAFF_ROLES
+// din api/lib/auth.php le deschide aceleași uși), dar fals despre ce vede omul
+// pe ecran de când meniul are noțiune de rol. Agentul nu primește nici rută,
+// nici depozit; managerul nu primește recomandări. Cine citea aici își făcea o
+// idee greșită despre contul pe care tocmai îl crea.
+//
+// Sursa adevărului e `gp.PANOURI_ROL` (shared/gp-api.js). Textul de aici e o
+// repovestire pentru om, nu a doua matrice: dacă se schimbă acolo, se schimbă
+// și aici — iar `.claude/check-meniu.mjs` compară matricea cu ea însăși în
+// două exemplare tocmai ca abaterea să se vadă.
 const ROLE_HINT = {
-  admin: "Administratorii intră în comenzi, depozit, conturi, catalog, jurnal și setări.",
-  angajat: "Angajații văd comenzile zilei, le avansează și lucrează în depozit.",
-  manager: "Managerii au aceleași drepturi ca angajații: comenzi, rută, depozit. Conturile, catalogul, jurnalul și setările rămân doar la administrator.",
-  agent_vanzari: "Agenții de vânzări au aceleași drepturi ca angajații: comenzi, rută, depozit. Nu ajung la conturi, catalog, jurnal sau setări.",
+  fondator: "Fondatorul are tot ce are un administrator, plus două lucruri pe care un administrator nu le are: dă și ia rolurile de administrator și de fondator, și vede „Statistici” — cifrele casei, banii și comenzile pe interval. Rolul ăsta nu se dă de aici — omul îl cere din contul lui, iar linkul de confirmare pleacă pe adresa firmei.",
+  admin: "Administratorii intră în comenzi, depozit, conturi, catalog, pontaj, jurnal și setări. Statisticile casei nu le sunt deschise: alea sunt numai ale fondatorului.",
+  angajat: "Angajații lucrează în laborator, pe rută și în depozit, și își pontează tura. Comenzile, conturile, catalogul, jurnalul și setările nu le sunt deschise.",
+  manager: "Managerii văd comenzile, laboratorul, ruta, depozitul și raportul de pontaj — orele tuturor, pe zile și pe oameni. În comenzi mută etapele și pot lua o comandă la telefon, dar formularul de editare rămâne al administratorului. Conturile, catalogul, jurnalul, setările și recomandările nu le sunt deschise.",
+  utilizator_lab: "Omul de laborator are o singură ușă: pontajul. Apasă pe numele lui de pe tabletă, tastează codul de patru cifre, și atât — nici comenzile, nici laboratorul, nici depozitul nu-i sunt deschise. Rolul ăsta e pentru cine vine la lucru fără să aibă nevoie de altceva din aplicație. Codul i-l pui tot de aici, de pe cardul lui.",
+  agent_vanzari: "Agenții de vânzări văd recomandările — codul lor, cine au adus și cât au câștigat — și comenzile, ca să știe ce se întâmplă cu ele. Tot din „Recomandări” fac conturi de cumpărători, legate de codul lor. Laboratorul, ruta, depozitul, conturile, catalogul, jurnalul și setările nu le sunt deschise.",
   client: "Clientul își vede doar comenzile lui și comandă din magazin."
 };
 // Codul de recomandare se face din PRENUME, cu aceleași reguli ca pe server
@@ -470,6 +673,9 @@ const ROLE_HINT = {
 // Aici e folosit numai ca să arătăm dinainte ce cod ar primi un cont vechi —
 // codul adevărat îl scrie serverul, care e și singurul care poate garanta
 // unicitatea.
+// Procentul, scris ca peste tot in aplicatie: cu virgula, fara zerouri de
+// umplutura. 10 iese „10%", 7.5 iese „7,5%".
+const procent = (n) => String(Math.round((Number(n) || 0) * 100) / 100).replace(".", ",") + "%";
 const refPreviewOf = (nume) => {
   const prim = String(nume || "").trim().split(/\s+/)[0] || "";
   return prim
@@ -484,7 +690,7 @@ const refPreviewOf = (nume) => {
 // locală de conturi, sau din numele de utilizator — deci putea fi falsificat
 // din consola browserului.
 const authRole = (a) => (a && a.role) || "";
-const isAdmin = (a) => authRole(a) === "admin";
+const isAdmin = (a) => gp.eAdmin(authRole(a));
 const WORDS = ["croissant", "vanilie", "migdale", "caramel", "foietaj", "brioșă", "zmeură", "unt", "cuptor", "tavă"];
 const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -519,7 +725,29 @@ class Component extends DCLogic {
   // fiind input controlat de React fără stare locală — își pierdea litera pe
   // loc și o primea înapoi abia cu răspunsul serverului. Cine scria mai
   // repede decât rețeaua rămânea cu numele trunchiat.
-  state = { users: [], auth: null, resets: [], edit: null, draft: {}, sterg: null, n1: "", n2: "", err: "", fresh: {}, form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "", nBusy: false, pNew: "", pErr: "", pShow: false, pCode: null, msg: "", msgBad: false, offline: "", loaded: false, refReady: false };
+  state = { navOpen: false, users: [], auth: null, resets: [], edit: null, draft: {}, sterg: null, n1: "", n2: "", err: "", fresh: {}, form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "", nBusy: false, pNew: "", pErr: "", pCode: null, pCodeErr: "", msg: "", msgBad: false, offline: "", eroare: "", loaded: false, refReady: false,
+    // Comisioanele stau pe migrarea 008, codurile pe 007: două steaguri, nu
+    // unul. `refDefault` e procentul global din Setări — caseta goală înseamnă
+    // „ia-l pe el", iar propoziția aia trebuie să poată spune cât e.
+    refMoney: false, refDefault: 0,
+    // Editorul de cod: pe ce cont e deschis, ce s-a tastat, ce a refuzat
+    // serverul, și pe ce cont e armată a doua apăsare. `refArm` e separat de
+    // `refEdit` fiindcă armarea se stinge la orice tastare — altfel omul ar
+    // apăsa a doua oară pentru un cod pe care între timp l-a schimbat.
+    refEdit: null, refCod: "", refRate: "", refErr: "", refArm: null,
+    // Codul de pontaj, croit ca editorul de cod de recomandare de deasupra:
+    // pe ce cont e deschis, ce s-a tastat, ce a refuzat serverul, și pe ce cont
+    // e armată a doua apăsare pentru luarea codului înapoi. `pontaj` e steagul
+    // migrării 014, trimis de server — fără el pagina n-ar putea deosebi „nimeni
+    // n-are cod" de „coloana nici nu există", și ar oferi un buton care se
+    // lovește de 503.
+    pontaj: false, pinEdit: null, pinVal: "", pinErr: "", pinArm: null,
+    // Adresa firmei și zona ei, la contul nou. Lipseau amândouă din formular:
+    // un cont de client se năștea fără loc de livrare, iar adresa se scria abia
+    // la prima comandă, de mână, în panoul de comenzi. `zoneReady` spune dacă
+    // lista de zone a sosit de la server — până atunci caseta de zonă rămâne
+    // goală, și nu pretinde că patiseria n-are nicio zonă.
+    nAddr: "", nZone: "", zoneReady: false };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
@@ -545,6 +773,12 @@ class Component extends DCLogic {
     }
     this.setState({ resets: read(RKEY, []) || [] });
 
+    // Zonele de livrare vin din Setări, ca peste tot: patronul le adaugă și le
+    // redenumește din panou. Scrise în pagină, ar rămâne în urmă chiar de la a
+    // doua redenumire. Căderea se înghite: fără liste, caseta de zonă nu se
+    // desenează, dar restul paginii funcționează întreg.
+    gp.lists().then(() => this.setState({ zoneReady: gp.zones().length > 0 })).catch(() => {});
+
     this.intra();
   }
 
@@ -566,13 +800,10 @@ class Component extends DCLogic {
       .then((user) => {
         // Fără sesiune, requireUser a plecat deja spre pagina de intrare.
         if (!user) return null;
-        this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
-        if (user.role !== "admin") return null;
-        // Aflăm doar DACĂ există un cod, nu care este.
-        gp.get('/settings')
-          .then((r) => this.setState({ pCode: r.settings && r.settings.panel_code_set ? "•" : "" }))
-          .catch(() => {});
-        return this.reloadUsers();
+        this.setState({ auth: gp.auth(user) });
+        if (!gp.eAdmin(user)) return null;
+        this.pullPanelCode();
+        return this.pullUsers();
       })
       .catch((e) => {
         // Serverul nu răspunde. Nu trimitem pe nimeni la autentificare: acolo
@@ -585,17 +816,106 @@ class Component extends DCLogic {
       .then(() => this.setState({ loaded: true }));
   }
 
-  /** Reîncarcă lista de conturi de pe server. */
-  reloadUsers(patch) {
+  /**
+   * Aduce lista de conturi de pe server.
+   *
+   * Se numea `reloadUsers`. În restul panourilor metoda care aduce datele
+   * paginii se cheamă `pull…` (vezi „Panou Laborator": `pull`, `pullCounts`),
+   * iar butonul „Încearcă din nou" al casetei de eroare o cheamă pe asta.
+   */
+  pullUsers(patch) {
     return gp.get("/users")
       .then((r) => this.setState(Object.assign({
         users: (r.users || []).map(fromApi),
         // Steagul vine de la server: el știe dacă migrarea 007 e rulată.
         // Fără el, pagina n-ar putea deosebi „niciun cont n-are încă un cod"
         // de „coloanele nici nu există în baza de date".
-        refReady: r.referral === true
+        refReady: r.referral === true,
+        refMoney: r.referralMoney === true,
+        refDefault: Number(r.referralRateDefault || 0),
+        // Același fel de steag, dar pentru migrarea 010: fără el pagina n-ar
+        // putea deosebi „niciun cont nu vine de pe site" de „coloanele nici nu
+        // există", și ar arăta un buton care s-ar lovi de 503.
+        origine: r.origine === true,
+        // Același fel de steag, pentru migrarea 014.
+        pontaj: r.pontaj === true,
+        // Răspunsul bun stinge caseta. Fără rândul ăsta singurul loc care o
+        // stingea era „Încearcă din nou”, iar drumul până la ecranul care se
+        // contrazice singur e scurt: cererea dintâi pică, caseta roșie se
+        // aprinde, butonul „+ Cont nou” rămâne apăsabil, adminul face un cont,
+        // POST-ul reușește, lista vine întreagă — și deasupra ei rămâne scris
+        // că nu s-a încărcat nimic. O minciună la fel de mare ca golul de
+        // dinainte, doar întoarsă pe dos.
+        eroare: "",
+        // Și `loaded`, fiindcă butonul „Încearcă din nou" îl pune pe fals
+        // înainte de a chema cererea asta (vezi `onReincearca`): fără rândul
+        // ăsta, o reîncercare REUȘITĂ ar lăsa pagina cu `loaded: false` pentru
+        // totdeauna, iar subtitlul ar tăcea la nesfârșit peste o listă
+        // încărcată. La încărcarea dintâi îl punea `pull()`, la capătul
+        // lanțului; de-aici încolo îl pune cererea care chiar a adus lista.
+        loaded: true
       }, patch || {})))
-      .catch((e) => this.setState(Object.assign({ msg: e.message, msgBad: true }, patch || {})));
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // Sesiunea expirată are drumul ei; orice alt refuz rămâne pe ecran.
+        // Lacătul cardurilor de gol e `eroare`, nu `loaded`: pagina chiar a
+        // terminat de încercat, iar o roată care se învârte la nesfârșit ar fi
+        // altă minciună. Ce n-a aflat pagina e câte conturi există — iar
+        // „Niciun cont n-are încă un cod" e o afirmație despre lume pe care
+        // n-a apucat s-o verifice. Refuzul pleca până acum în bara trecătoare
+        // de sus, care se închide cu un × și nu se mai întoarce: lista goală și
+        // bara închisă arătau împreună ca o patiserie fără niciun cont.
+        //
+        // `pullUsers` e chemată în două feluri: ca ÎNCĂRCARE (fără `patch`) și
+        // ca REÎMPROSPĂTARE după o faptă reușită de pe cardul unui cont (cu
+        // `patch`, care poartă bara verde). Pe al doilea drum, refuzul aprindea
+        // o casetă care spunea „Conturile nu s-au încărcat." peste o listă
+        // desenată întreagă — și chiar sub bara verde care tocmai anunțase
+        // reușita. Trei propoziții pe același ecran, care se bat cap în cap, și
+        // cardul omului arătând încă starea de dinainte.
+        //
+        // Acum caseta spune care dintre cele două s-a întâmplat, iar când vine
+        // după o faptă reușită o spune pe față: fapta e pe server, lista de pe
+        // ecran e cea veche. Titlul îl alege `eroareTitlu`, mai jos.
+        else {
+          const peEcran = this.state.users.length > 0;
+          const dupaFapta = !!(patch && patch.msg && !patch.msgBad);
+          this.setState(Object.assign({
+            eroare: peEcran
+              ? gp.motiv(e, "lista de conturi")
+                + (dupaFapta
+                  ? " Fapta de mai sus s-a făcut pe server; ce se vede în listă e starea de dinainte."
+                  : " Ce se vede în listă e starea de dinainte.")
+              : gp.motiv(e, "conturile"),
+            loaded: true
+          }, patch || {}));
+        }
+      });
+  }
+
+  /**
+   * Află DACĂ există un cod pentru tablete, nu care e.
+   *
+   * Refuzul era înghițit cu `.catch(() => {})`: `pCode` rămânea `null`, iar
+   * cardul arăta „…” — adică „se verifică” — pe vecie. Trei puncte care nu se
+   * mai schimbă niciodată sunt roata care se învârte la nesfârșit, adică
+   * tăcerea pe care caseta roșie o scoate din restul paginii; și nici
+   * „Încearcă din nou” n-o oprea, fiindcă cerea doar conturile. Acum cererea
+   * are un nume, un motiv scris pe cardul ei și o a doua șansă.
+   */
+  pullPanelCode() {
+    return gp.get('/settings')
+      .then((r) => this.setState({
+        pCode: r.settings && r.settings.panel_code_set ? "•" : "",
+        pCodeErr: ""
+      }))
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // Motivul stă în caseta cardului de cod, nu în caseta paginii: aceea e
+        // a conturilor, iar două cereri deosebite într-un singur mesaj se
+        // sting una pe alta — cine reușește ultima șterge refuzul celeilalte.
+        else this.setState({ pCodeErr: gp.motiv(e, "codul panourilor de lucru") });
+      });
   }
 
   /**
@@ -605,7 +925,7 @@ class Component extends DCLogic {
    */
   patchUser(acc, fields, patch) {
     return gp.patch("/users/" + acc.id, fields)
-      .then(() => this.reloadUsers(patch))
+      .then(() => this.pullUsers(patch))
       .catch((e) => this.setState({ msg: e.message, msgBad: true }));
   }
 
@@ -710,7 +1030,7 @@ class Component extends DCLogic {
       if (a !== b) return set({ err: "Cele două parole nu sunt identice." });
 
       gp.post("/users/" + acc.id + "/password", { password: a })
-        .then(() => this.reloadUsers({
+        .then(() => this.pullUsers({
           edit: null, n1: "", n2: "", err: "",
           msg: "Parola pentru „" + acc.name + "” a fost schimbată."
         }))
@@ -723,10 +1043,98 @@ class Component extends DCLogic {
      * stocate ca hash bcrypt, deci nu mai pot fi citite de nimeni, nici de
      * administrator.
      */
+    /**
+     * Codul și procentul unui cont, scrise dinadins de administrator.
+     *
+     * Trimite numai ce s-a schimbat cu adevărat. Serverul refuză cu 422
+     * „Nimic de modificat" o cerere goală, iar un PATCH cu codul neschimbat ar
+     * rescrie coloana cu aceeași valoare și ar lăsa în Jurnal o urmă despre o
+     * schimbare care n-a avut loc.
+     *
+     * Schimbarea CODULUI cere două apăsări, ca ștergerea contului: e singura de
+     * aici care strică ceva aflat deja în lumea largă — linkuri trimise pe
+     * WhatsApp, un cod dictat la telefon. Procentul se salvează din prima: el
+     * schimbă doar comisioanele de mâine, iar cele vechi stau înghețate în
+     * registru și nu se recalculează.
+     */
+    const salveazaRec = (acc) => {
+      const codNou = String(S.refCod || "").trim();
+      const codVechi = String(acc.refCode || "");
+      const schimbaCod = codNou !== "" && codNou.toLowerCase() !== codVechi.toLowerCase();
+
+      const rataScrisa = String(S.refRate || "").trim().replace(",", ".");
+      const rataVeche = acc.refRate === null ? "" : String(acc.refRate);
+      const schimbaRata = S.refMoney && rataScrisa !== rataVeche;
+
+      if (!schimbaCod && !schimbaRata) {
+        return set({ refErr: "Nu ai schimbat nimic. Scrie alt cod sau alt procent." });
+      }
+      // Aceleași praguri ca `referral_code_set()` din api/lib/referral.php,
+      // spuse înainte de drumul la server. Serverul rămâne cel care hotărăște —
+      // el e și singurul care poate ști dacă un cod e deja luat de altcineva.
+      if (schimbaCod && codNou.replace(/[^a-zA-Z0-9]/g, "").length < 2) {
+        return set({ refErr: "Codul trebuie să aibă cel puțin două litere sau cifre." });
+      }
+      if (schimbaRata && rataScrisa !== "" && !(Number(rataScrisa) >= 0 && Number(rataScrisa) <= 100)) {
+        return set({ refErr: "Procentul trebuie să fie un număr între 0 și 100." });
+      }
+      if (schimbaCod && codVechi !== "" && S.refArm !== acc.u) {
+        return set({
+          refArm: acc.u,
+          msg: "Schimbi codul lui „" + acc.name + "” din „" + codVechi + "” în „" + codNou
+            + "”? Apasă încă o dată pe „Salvează”. Linkurile trimise cu codul vechi nu mai recomandă pe nimeni.",
+          msgBad: true
+        });
+      }
+
+      const date = {};
+      if (schimbaCod) date.code = codNou;
+      // `null`, nu `0`: caseta goală înseamnă „ia procentul global". Trimis ca
+      // zero, contul ar rămâne pe veci fără comision, iar ridicarea procentului
+      // din Setări nu l-ar mai atinge.
+      if (schimbaRata) date.rate = rataScrisa === "" ? null : Number(rataScrisa);
+
+      gp.userReferralEdit(acc.id, date)
+        .then((r) => this.pullUsers({
+          refEdit: null, refCod: "", refRate: "", refErr: "", refArm: null,
+          msg: "„" + acc.name + "”: cod „" + (r.referralCode || "—") + "”, procent "
+            + (r.referralRate === null || r.referralRate === undefined
+                ? "implicit (" + procent(S.refDefault) + ")"
+                : procent(r.referralRate)) + "."
+        }))
+        .catch((e) => set({ refErr: e.message, refArm: null }));
+    };
+
+    /**
+     * Pune sau schimbă codul de pontaj al unui om.
+     *
+     * Codul NU se scrie niciodată în mesajul de izbândă. Nu fiindcă ar fi un
+     * secret mare — patru cifre nu sunt — ci fiindcă ecranul de Conturi stă
+     * deschis pe biroul din față, iar mesajul rămâne acolo până la următoarea
+     * apăsare. Cine tocmai l-a tastat îl știe; ceilalți n-au de ce.
+     */
+    const salveazaPin = (acc) => {
+      const cod = String(S.pinVal || "").trim();
+      // Aceeași regulă ca pe server (api/routes/users.php), pusă și aici numai
+      // ca omul să nu aștepte un drum până la server pentru o greșeală care se
+      // vede din pagină. Refuzurile adevărate — codurile prea ușoare, contul de
+      // sistem — rămân ale serverului, care e singurul care le poate garanta.
+      if (!/^[0-9]{4}$/.test(cod)) {
+        return set({ pinErr: "Codul are exact patru cifre." });
+      }
+      gp.post("/users/" + acc.id + "/lab-pin", { pin: cod })
+        .then(() => this.pullUsers({
+          pinEdit: null, pinVal: "", pinErr: "", pinArm: null,
+          msg: "„" + acc.name + "” are acum cod de pontaj. Spune-i-l pe loc — "
+            + "nu se mai poate citi de nicăieri, nici de aici, nici din jurnal."
+        }))
+        .catch((e) => set({ pinErr: e.message }));
+    };
+
     const genPass = (acc) => {
       const pass = this.suggest();
       gp.post("/users/" + acc.id + "/password", { password: pass })
-        .then(() => this.reloadUsers({
+        .then(() => this.pullUsers({
           fresh: Object.assign({}, S.fresh, { [acc.u]: pass }),
           msg: "Parolă nouă pentru „" + acc.name + "”. Notează-o acum — nu mai poate fi afișată."
         }))
@@ -768,6 +1176,30 @@ class Component extends DCLogic {
         custEdit: draftVal(acc, "cust", acc.cust || ""),
         onCust: onTasta(acc, "cust"),
         saveCust: laIesire(acc, "cust", "customerName", acc.cust || ""),
+        // Adresa de livrare, aceeași cale ca numele firmei: ciornă în pagină,
+        // salvare la ieșirea din câmp. Fără caseta asta, o adresă scrisă greșit
+        // la facerea contului nu se mai putea corecta decât din contul
+        // clientului — adică deloc, de la un telefon primit la patiserie.
+        addrEdit: draftVal(acc, "addr", acc.addr || ""),
+        onAddr: onTasta(acc, "addr"),
+        saveAddr: laIesire(acc, "addr", "address", acc.addr || ""),
+        // Zona NU merge pe aceeași cale. O listă nu se „tastează": alegerea e
+        // gata în clipa în care s-a făcut, iar o ciornă care așteaptă ieșirea
+        // din câmp ar fi o salvare amânată fără motiv. Se trimite pe loc, ca
+        // schimbarea de rol de mai jos.
+        zona: acc.zona || "",
+        onZona: (e) => {
+          const v = e && e.target ? String(e.target.value) : (acc.zona || "");
+          if (v === (acc.zona || "")) return;
+          this.patchUser(acc, { zone: v }, { msg: v
+            ? "„" + acc.name + "” livrează în " + v + "."
+            : "Zona lui „" + acc.name + "” a fost ștearsă." });
+        },
+        // Vestea se dă pe cardul contului, nu la prima comandă care întârzie.
+        // Întrebarea e pusă hărții — „are zona asta punct?" — nu numelui ei.
+        zonaHint: gp.zoneFaraPunct(acc.zona || "")
+          ? "Zonă din afara orașului: nu intră pe ruta șoferului, iar ora livrării se confirmă la telefon."
+          : "",
         // Lista înlocuiește butonul care ciclează. Pazele rămân exact aceleași —
         // nu-ți schimbi propriul acces, iar ultimul administrator nu poate fi
         // retrogradat — plus una nouă, cerută de listă: alegerea aceleiași
@@ -777,8 +1209,8 @@ class Component extends DCLogic {
           const nextRole = e && e.target ? String(e.target.value) : rl;
           if (nextRole === rl) return;
           if (isMe) return set({ msg: "Nu-ți poți schimba propriul drept de acces — cere altui administrator.", msgBad: true });
-          const admins = S.users.filter(x => roleOf(x) === "admin").length;
-          if (rl === "admin" && admins <= 1) return set({ msg: "Trebuie să rămână cel puțin un administrator.", msgBad: true });
+          const admins = S.users.filter(x => gp.eAdmin(roleOf(x))).length;
+          if (gp.eAdmin(rl) && !gp.eAdmin(nextRole) && admins <= 1) return set({ msg: "Trebuie să rămână cel puțin un administrator.", msgBad: true });
           this.patchUser(acc, { role: nextRole }, { msg: "„" + acc.name + "” e acum " + (ROLE_L[nextRole] || nextRole) + "." });
         },
         // --- recomandări ---
@@ -792,15 +1224,142 @@ class Component extends DCLogic {
         refPreview: refPreviewOf(acc.name) || acc.u,
         refFrom: acc.refFrom,
         refWhen: acc.refAt ? " pe " + dataOra(acc.refAt) : "",
+        // --- de unde vine contul, și ce atârnă de asta ---
+        //
+        // Un cont făcut pe site nu capătă comenzile luate la telefon pe numele
+        // lui până nu apasă cineva din casă „Recunosc clientul"
+        // (`client_by_name()`, api/lib/orders.php). Regula are bani în ea, deci
+        // trebuie să se VADĂ: altfel patronul ar sta să se întrebe de ce
+        // clientul nu-și găsește comanda, fără niciun semn în pagină.
+        //
+        // Blocul apare numai pe conturile de pe site: pe restul n-ar avea ce
+        // spune, iar un buton fără rost e un buton apăsat din greșeală.
+        selfShown: S.origine && acc.self,
+        vouchEt: acc.vouchAt ? "Recunoscut" : "Nerecunoscut",
+        vouchBadge: acc.vouchAt ? "h-badge h-badge--honey" : "h-badge h-badge--warning",
+        vouchLine: acc.vouchAt ? "var(--h-line)" : "var(--h-accent)",
+        vouchNota: acc.vouchAt
+          ? "Recunoscut de " + (acc.vouchBy || "cineva din casă") + " pe " + dataOra(acc.vouchAt)
+              + ". Comenzile luate la telefon pe numele „" + (acc.cust || acc.name) + "” i se leagă de cont."
+          : "Numele de pe cont l-a scris omul singur, la înscriere, și nimeni nu l-a comparat cu nimic — deci nu e o dovadă a nimic. Până îl recunoști, comenzile luate la telefon pe numele „"
+              + (acc.cust || acc.name) + "” NU i se leagă de contul acesta, iar el nu le vede în „Comanda mea”.",
+        vouchBtn: acc.vouchAt ? "Retrag recunoașterea" : "Recunosc clientul",
+        vouchCls: acc.vouchAt ? "h-btn h-btn--ghost" : "h-btn h-btn--secondary",
+        // Se poate și scoate, ca bifa de plată din „Recomandări": e afirmația
+        // unui om, iar o afirmație greșită trebuie să se poată retrage fără
+        // phpMyAdmin. Retragerea nu dezleagă comenzile deja legate.
+        onVouch: () => {
+          gp.post("/users/" + acc.id + "/vouch", { vouched: !acc.vouchAt })
+            .then(() => this.pullUsers({
+              msg: acc.vouchAt
+                ? "Recunoașterea a fost scoasă de pe „" + acc.name + "”. Comenzile noi pe numele acesta nu i se mai leagă de cont."
+                : "„" + acc.name + "” e recunoscut. De acum comenzile luate la telefon pe numele lui i se leagă de contul lui."
+            }))
+            .catch((e) => set({ msg: e.message, msgBad: true }));
+        },
         // Selectarea întregului link la un clic: e de copiat, nu de citit.
         onRefPick: (e) => { try { e.target.select(); } catch (err) {} },
         onRefCopy: () => copiaza(acc.refLink, acc.name),
         onRefMake: () => {
           gp.post("/users/" + acc.id + "/referral")
-            .then((r) => this.reloadUsers({
+            .then((r) => this.pullUsers({
               msg: "„" + acc.name + "” are acum codul „" + r.referralCode + "”."
             }))
             .catch((e) => set({ msg: e.message, msgBad: true }));
+        },
+        // --- codul și procentul, schimbate dinadins ---
+        // Altă rută decât „Dă-i un cod": aceea DĂ unul contului care n-are,
+        // asta SUPRASCRIE. Urmarea o poartă avertismentul de sub casete:
+        // linkurile deja trimise cu codul vechi nu mai recomandă pe nimeni.
+        refCanEdit: !acc.sys && S.refReady,
+        refMoneyOn: S.refMoney,
+        refCols: S.refMoney ? "1fr 1fr" : "1fr",
+        refEditLabel: (acc.refCode ? "Schimbă codul" : "Alege codul")
+          + (S.refMoney ? " și procentul" : ""),
+        refEditing: S.refEdit === acc.u,
+        refCodDraft: S.refCod,
+        refRateDraft: S.refRate,
+        refRatePh: "implicit " + procent(S.refDefault),
+        refNote: [
+          acc.refCode
+            ? "Codul vechi moare pe loc: linkurile deja trimise cu „" + acc.refCode + "” nu mai recomandă pe nimeni."
+            : "",
+          S.refMoney
+            ? "Procentul lăsat gol înseamnă cel din Setări (" + procent(S.refDefault)
+                + "). Scrie 0 dacă vrei ca omul ăsta să nu câștige nimic."
+            : ""
+        ].filter(Boolean).join(" "),
+        // Eroarea e a contului deschis, nu a paginii: fără filtrul ăsta, un
+        // refuz rămas de la un card s-ar arăta în oricare altul deschis după el.
+        refErr: S.refEdit === acc.u ? S.refErr : "",
+        refSaveLabel: S.refArm === acc.u ? "Apasă din nou: schimb codul" : "Salvează",
+        refSaveBg: S.refArm === acc.u ? "var(--h-danger)" : "",
+        onRefEdit: () => set({
+          refEdit: S.refEdit === acc.u ? null : acc.u,
+          // Casetele pornesc de la ce e pe cont, nu goale: de obicei se schimbă
+          // o cifră, nu se rescrie tot. Procentul se arată cu virgulă, ca
+          // peste tot în aplicație.
+          refCod: acc.refCode || "",
+          refRate: acc.refRate === null ? "" : String(acc.refRate).replace(".", ","),
+          refErr: "", refArm: null
+        }),
+        onRefCancel: () => set({ refEdit: null, refCod: "", refRate: "", refErr: "", refArm: null }),
+        // Orice tastare dezarmează: a doua apăsare trebuie să fie pentru codul
+        // citit în avertisment, nu pentru altul scris între timp.
+        onRefCodDraft: (e) => set({ refCod: e.target.value, refErr: "", refArm: null }),
+        onRefRateDraft: (e) => set({ refRate: e.target.value, refErr: "", refArm: null }),
+        onRefKey: (e) => { if (e.key === "Enter") { e.preventDefault(); salveazaRec(acc); } },
+        onRefSave: () => salveazaRec(acc),
+        // --- codul de pontaj ---
+        //
+        // DE CE NU SE OFERĂ PE UN CONT DE CLIENT. Serverul primește un cod pe
+        // orice cont care nu e de sistem, și bine face: tableta din laborator
+        // arată „cine are cod", nu „cine are rolul cutare" (vezi
+        // `route_lab_people()`) — o singură listă, nu două care se pot
+        // depărta. Dar un buton pus pe cardul unui client e o invitație la
+        // greșeala care i-ar scrie numele pe tableta brutarilor. Așa că pagina
+        // nu-l OFERĂ acolo — însă îl arată dacă un cod există deja, ca unul dat
+        // din greșeală să se poată lua înapoi de unde a fost dat.
+        pinShown: S.pontaj && !acc.sys && (rl !== "client" || acc.labPin),
+        pinHas: acc.labPin,
+        pinEt: acc.labPin ? "pus" : "nepus",
+        pinCls: acc.labPin ? "h-badge h-badge--success" : "h-badge h-badge--warning",
+        pinBtn: acc.labPin ? "Schimbă codul" : "Pune un cod",
+        pinEditing: S.pinEdit === acc.u,
+        pinDraft: S.pinEdit === acc.u ? S.pinVal : "",
+        // Eroarea e a contului deschis, nu a paginii — aceeași pază ca la
+        // `refErr`: fără ea, un refuz rămas de la un card s-ar arăta în
+        // oricare altul deschis după el.
+        pinErr: S.pinEdit === acc.u ? S.pinErr : "",
+        pinClearLabel: S.pinArm === acc.u ? "Apasă din nou: îi iau codul" : "Ia-i codul",
+        pinClearFg: S.pinArm === acc.u ? "var(--h-danger)" : "",
+        pinNota: "Codul se tastează pe tableta din laborator, după numele omului. "
+          + "Patru cifre, și nu dintre cele care se ghicesc din prima — 1234, 0000 "
+          + "și frații lor sunt refuzate de server.",
+        onPinEdit: () => set({
+          pinEdit: S.pinEdit === acc.u ? null : acc.u, pinVal: "", pinErr: "", pinArm: null
+        }),
+        onPinCancel: () => set({ pinEdit: null, pinVal: "", pinErr: "" }),
+        // Se curăță la tastare, nu la salvare: pe o tastatură de telefon
+        // degetul prinde litere, iar o casetă care le primește și abia apoi le
+        // refuză îl pune pe om să ghicească ce a scris greșit.
+        onPinDraft: (e) => set({
+          pinVal: String(e.target.value).replace(/[^0-9]/g, "").slice(0, 4), pinErr: ""
+        }),
+        onPinKey: (e) => { if (e.key === "Enter") { e.preventDefault(); salveazaPin(acc); } },
+        onPinSave: () => salveazaPin(acc),
+        // Luarea codului înapoi se armează, ca ștergerea contului: omul căruia
+        // i se ia codul în mijlocul turei nu-și mai poate ponta plecarea, iar
+        // tura lui rămâne roșie în raport până o scrie cineva de mână.
+        onPinClear: () => {
+          if (S.pinArm !== acc.u) return set({ pinArm: acc.u, pinErr: "" });
+          gp.post("/users/" + acc.id + "/lab-pin", { pin: "" })
+            .then(() => this.pullUsers({
+              pinEdit: null, pinVal: "", pinErr: "", pinArm: null,
+              msg: "„" + acc.name + "” nu mai are cod de pontaj și a ieșit de pe "
+                + "tableta din laborator. Turele lui de până acum rămân în raport."
+            }))
+            .catch((e) => set({ msg: e.message, msgBad: true, pinArm: null }));
         },
         changed: desprePar(acc),
         // Ultima intrare rămâne vizibilă, dar sub numele ei adevărat. Era
@@ -844,7 +1403,8 @@ class Component extends DCLogic {
         // Se salvează la ieșirea din câmp, nu la fiecare tastă. Cât timp există
         // o ciornă nesalvată, rândul o spune — altfel omul ar pleca de pe
         // pagină convins că a salvat.
-        dirty: [cheie(acc.u, "name"), cheie(acc.u, "mail"), cheie(acc.u, "cust")].some(k => k in dr),
+        dirty: [cheie(acc.u, "name"), cheie(acc.u, "mail"), cheie(acc.u, "cust"),
+          cheie(acc.u, "addr")].some(k => k in dr),
         editing, notEditing: !editing,
         // Serverul refuză parola pe contul de sistem; butoanele nu trebuie să
         // promită ceva ce se termină cu o eroare.
@@ -884,7 +1444,7 @@ class Component extends DCLogic {
             });
           }
           gp.del("/users/" + acc.id)
-            .then(() => this.reloadUsers({ edit: null, sterg: null, msg: "Contul „" + acc.name + "” a fost șters." }))
+            .then(() => this.pullUsers({ edit: null, sterg: null, msg: "Contul „" + acc.name + "” a fost șters." }))
             .catch((e) => set({ msg: e.message, msgBad: true, sterg: null }));
         }
       };
@@ -920,13 +1480,20 @@ class Component extends DCLogic {
       gp.post("/users", {
         username: u, password: p, name: n, role: S.nRole,
         customerName: String(S.nCust || "").trim(),
-        email: String(S.nMail).trim()
+        email: String(S.nMail).trim(),
+        // Adresa și zona pleacă numai pentru un client: un angajat n-are
+        // adresă de livrare, iar o zonă pe contul lui n-ar însemna nimic.
+        // Casetele nici nu se desenează pentru alt rol, deci ce-ar fi rămas
+        // scris într-ele dintr-o alegere de rol schimbată pe parcurs nu pleacă.
+        address: S.nRole === "client" ? String(S.nAddr || "").trim() : "",
+        zone: S.nRole === "client" ? String(S.nZone || "").trim() : ""
       })
         .then(() => {
           this.__saving = false;
-          return this.reloadUsers({
+          return this.pullUsers({
             form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "",
-            pNew: "", pErr: "", pShow: false, nBusy: false,
+            nAddr: "", nZone: "",
+            pNew: "", pErr: "", nBusy: false,
             msg: "Contul „" + n + "” a fost creat ca " + (ROLE_L[S.nRole] || S.nRole) + "."
           });
         })
@@ -942,6 +1509,38 @@ class Component extends DCLogic {
     const provizorii = S.users.filter(x => x.temp && !x.sys).length;
 
     return {
+      // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
+      // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
+      // există — bara e acum un șablon peste lista de aici, ca nu cumva un
+      // buton scos dintr-un meniu să rămână în celălalt.
+      //
+      // `gp.meniu()` (shared/gp-api.js) taie din listă panourile pe care
+      // rolul ăsta n-are voie să le deschidă. Până sosește sesiunea, `S.auth`
+      // e null și lista iese goală — dinadins: mai bine nicio intrare o
+      // clipă decât intrări care dispar sub deget. Le compară
+      // `.claude/check-meniu.mjs`.
+      meniu: gp.meniu("Conturi", S.auth),
+      navHere: "Conturi",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      // Apăsarea pe foaie nu are voie să ajungă la fundal, care închide.
+      onNavKeep: (e) => e.stopPropagation(),
+      // Două steaguri, nu unul negat, fiindcă `sc-if` primește o valoare, nu o
+      // expresie. Marcajul sertarului rămâne identic în toate panourile; ce se
+      // arată din el se hotărăște de aici.
+      //
+      // Numele apare NUMAI dacă se știe al cui e. Până răspunde serverul, și în
+      // paginile unde un cont fără drepturi rămâne pe ecran cu un mesaj de
+      // refuz în loc să fie trimis la intrare, `S.auth` e gol — iar un rând care
+      // scrie „conectat" sub un nume gol ar minți. Atunci nu se arată niciunul.
+      navWho: !!S.auth,
+      navAnon: false,
       locked: S.loaded && !S.auth,
       denied: S.loaded && !!S.auth && !isAdmin(S.auth),
       deniedClient: !!S.auth && authRole(S.auth) === "client",
@@ -968,16 +1567,21 @@ class Component extends DCLogic {
         gp.logout().finally(() => { set({ auth: null, users: [] }); gp.toLogin(); });
       },
 
-      pType: S.pShow ? "text" : "password",
       // Codul e stocat criptat pe server și nu se returnează în clar, deci nu
       // poate fi afișat. Dacă îl uiți, pui unul nou — ca la parole.
       // Trei stări, nu două: până răspunde serverul nu știm dacă există un cod,
       // iar „neconfigurat" afișat pe încredere ar trimite administratorul să
       // pună unul nou peste unul bun. Punctele înseamnă „se verifică".
-      pShown: S.pCode === null ? "…" : (S.pCode ? "••••••••" : "neconfigurat"),
-      pRevealLabel: "",
-      onPReveal: () => set({ msg: "Codul nu poate fi afișat — este stocat criptat. Dacă l-ai uitat, scrie unul nou mai jos." }),
-      pNew: S.pNew, pErr: S.pErr,
+      // A patra stare: am întrebat și am fost refuzați. Fără ea, un refuz la
+      // /settings lăsa cardul pe „…” pentru totdeauna — pagina părea că mai
+      // caută, deși nu mai caută nimeni.
+      pShown: S.pCodeErr ? "nu s-a putut verifica"
+        : S.pCode === null ? "…" : (S.pCode ? "••••••••" : "neconfigurat"),
+      pNew: S.pNew,
+      // Caseta cardului poartă și refuzul cererii, și refuzul salvării. Cel de
+      // la salvare se stinge la prima tastă; motivul cererii picate rămâne până
+      // când serverul chiar răspunde.
+      pErr: S.pErr || S.pCodeErr,
       onPNew: (e) => set({ pNew: e.target.value, pErr: "" }),
       onPSave: () => {
         const v = String(S.pNew).trim();
@@ -985,23 +1589,97 @@ class Component extends DCLogic {
         // un cod de 4–5 caractere trecea de casetă și se lovea de server cu un
         // mesaj de eroare roșu — refuz după drum dus-întors, pentru ceva ce se
         // știa dinainte.
+        // Punctele de deasupra sunt masca, nu codul. Copiate în casetă, ar
+        // pleca spre server, care le-ar arunca („•" în față înseamnă „lasă
+        // valoarea cum e", api/lib/settings.php:326-327) — și pagina ar fi
+        // scris verde peste o ușă rămasă deschisă.
+        if (v.indexOf("•") === 0) {
+          return set({ pErr: "Acelea sunt punctele care ascund codul, nu codul. Scrie unul nou." });
+        }
         if (v.length < 6) return set({ pErr: "Codul trebuie să aibă minim 6 caractere." });
 
         gp.put('/settings', { panel_code: v })
-          .then(() => set({
-            // Acum sigur există un cod: cardul de deasupra trebuie să arate
+          .then((r) => {
+            // Un 200 nu înseamnă „s-a scris". `settings_save()` sare tăcut
+            // peste cheile pe care nu le are în tabel și răspunde totuși
+            // ok=true; iar un secret criptat cu o cheie de criptare schimbată
+            // între timp SE scrie, dar la citire nu se mai poate decoda și
+            // iese gol. Amândouă arată la fel de aici: mesaj verde, cardul
+            // mutat pe „••••••••" din propria noastră presupunere, și codul
+            // vechi rămas în bază.
+            //
+            // Motivul obișnuit pentru care se schimbă codul e că a plecat
+            // cineva din echipă. Minciuna asta ține ușa deschisă exact în ziua
+            // în care omul crede că a închis-o, iar starea reală se citește o
+            // singură dată, la încărcarea paginii — deci nici reîmprospătarea
+            // imediată nu-l contrazice. Setările verifică de mult același
+            // răspuns pe aceeași rută (Setari.dc.html · `save()`); aici lipsea.
+            //
+            // Un server mai vechi nu trimite `changed`; atunci nu inventăm o
+            // alarmă, ca la Setări.
+            const scris = !Array.isArray(r && r.changed) || r.changed.indexOf('panel_code') >= 0;
+            const citibil = !r || !r.settings || r.settings.panel_code_set !== false;
+            if (!scris || !citibil) {
+              return set({ pErr: "Codul NU s-a schimbat: tabletele cer în continuare codul vechi. "
+                + "Scrie-l din nou, fără să lipești punctele afișate deasupra. Dacă nici așa nu ține, "
+                + "setarea lipsește din baza de date și trebuie rulate migrările." });
+            }
+            // Abia acum sigur există un cod: cardul de deasupra poate arăta
             // „••••••••", nu „neconfigurat".
-            pNew: "", pErr: "", pShow: false, pCode: "•",
-            msg: "Codul panourilor a fost schimbat. Tabletele cer codul nou la următoarea deschidere."
-          }))
+            set({
+              pNew: "", pErr: "", pCode: "•", pCodeErr: "",
+              msg: "Codul panourilor a fost schimbat. Tabletele cer codul nou la următoarea deschidere."
+            });
+          })
           .catch((e) => set({ pErr: e.message }));
       },
-      sub: S.users.length + (S.users.length === 1 ? " cont" : " conturi") + " · "
-        + (provizorii === 0 ? "toate cu parolă proprie" : provizorii + " cu parolă provizorie"),
+      // Subtitlul numără conturi ȘI dă o asigurare despre parole — două
+      // afirmații despre date, la doi centimetri deasupra casetei roșii. Cu
+      // lista goală scria „0 conturi · toate cu parolă proprie”: adică
+      // patiseria n-are niciun cont și nimeni nu mai umblă cu parolă dictată de
+      // administrator — o liniștire despre securitate pe care pagina n-a apucat
+      // s-o verifice. Tace și cât ține prima cerere, din același motiv pentru
+      // care `lockedLine` scrie „Se verifică sesiunea…”: „0 conturi” nu e ce
+      // știe pagina, e ce n-a aflat încă.
+      sub: (S.eroare || !S.loaded) ? ""
+        : S.users.length + (S.users.length === 1 ? " cont" : " conturi") + " · "
+          + (provizorii === 0 ? "toate cu parolă proprie" : provizorii + " cu parolă provizorie"),
       minLen: String(ml),
       msg: S.msg,
       msgCls: S.msgBad ? "h-alert h-alert--danger" : "h-alert h-alert--success",
       onMsgClose: () => set({ msg: "" }),
+      eroare: S.eroare,
+      // Titlul casetei era scris fix în marcaj, „Conturile nu s-au încărcat." —
+      // adevărat la prima încărcare, fals la o reîmprospătare picată, când
+      // lista întreagă se vede chiar sub el. Vezi catch-ul lui `pullUsers`.
+      eroareTitlu: S.users.length
+        ? "Lista de conturi nu s-a reîmprospătat."
+        : "Conturile nu s-au încărcat.",
+      // `set`-ul paginii ăsteia primește un singur argument, deci ar fi
+      // înghițit funcția de după: eroarea s-ar fi stins, dar reîncercarea
+      // n-ar fi plecat niciodată. Aici se cheamă `setState` de-a dreptul.
+      onReincearca: () => {
+        // Butonul reface tot drumul picat, nu doar jumătatea lui: codul
+        // tabletelor vine din altă cerere, iar dacă ea a picat, cardul lui ar
+        // fi rămas cu „nu s-a putut verifica” oricât ai fi apăsat.
+        //
+        // Trei câmpuri, nu unul, și fiecare are motivul lui:
+        //
+        // `loaded: false` — lacătul subtitlului e `(S.eroare || !S.loaded)`, iar
+        // butonul ăsta tocmai stinge `eroare`. Fără el, în clipa apăsării
+        // subtitlul se reaprindea cu exact minciuna pentru care omul apăsase:
+        // „0 conturi · toate cu parolă proprie", peste o pagină goală. Și nu e
+        // o clipire — `gp.get` n-are nici termen, nici anulare, deci pe un
+        // server care atârnă rămânea acolo minute în șir. Tiparul e cel scris
+        // în `Jurnal.dc.html`.
+        //
+        // `pCodeErr: ""` — cealaltă casetă de pe ecran, a cardului „Cod pentru
+        // panourile de lucru". Butonul cheamă și cererea ei, dar nu-i golea
+        // motivul, deci cardul spunea la trecut „nu s-a putut verifica" chiar
+        // în clipa în care pagina verifica din nou.
+        this.setState({ eroare: "", pCodeErr: "", loaded: false },
+          () => { this.pullUsers(); this.pullPanelCode(); });
+      },
       accounts,
 
       /* --- linkurile de recomandare, strânse la un loc --- */
@@ -1011,7 +1689,18 @@ class Component extends DCLogic {
       //
       // Panoul apare doar dacă serverul chiar cunoaște recomandările (migrarea
       // 007 rulată); altfel n-ar avea ce lista și ar promite ceva ce nu există.
-      refShowPanel: S.refReady,
+      // Lacătul `&& !S.eroare` stă pe poartă, fiindcă tot ce e înăuntru
+      // vorbește despre LISTA ÎNTREAGĂ: insigna care numără codurile, șirul de
+      // linkuri și propoziția care explică zeroul. Pus doar pe propoziție, el
+      // nu apuca să lucreze pe drumul pentru care fusese scris (cu prima cerere
+      // picată, `refReady` e fals și panoul nici nu se desenează), iar pe
+      // singurul drum pe care chiar se evalua — o încărcare bună urmată de o
+      // reîmprospătare picată, de pildă după „Recunoaște” — făcea rău: insigna
+      // scria mai departe „0 coduri”, dar propoziția care spune ce înseamnă
+      // zero și cum dai un cod dispărea, și adminul rămânea cu un panou care se
+      // contrazice singur. Acum panoul pleacă întreg și se întoarce întreg.
+      // Codurile nu se pierd din ecran: fiecare stă și pe cardul contului lui.
+      refShowPanel: S.refReady && !S.eroare,
       refList: S.users
         .filter(x => !x.sys && x.refCode)
         .map(x => ({
@@ -1022,14 +1711,20 @@ class Component extends DCLogic {
           onPick: (e) => { try { e.target.select(); } catch (err) {} },
           onCopy: () => copiaza(x.refLink, x.name)
         })),
-      refNone: S.refReady && !S.users.some(x => !x.sys && x.refCode),
+      // Lacătul de aici e al doilea zăvor al aceleiași uși — poarta de mai sus
+      // îl face de prisos azi. Rămâne fiindcă „Niciun cont n-are încă un cod”
+      // e o afirmație despre toate conturile patiseriei, iar paza casei
+      // (.claude/check-erori-tacute.mjs) cere lacătul pe chiar cheia de gol:
+      // dacă mâine se umblă la poartă, cardul ăsta tot nu minte.
+      refNone: S.refReady && !S.users.some(x => !x.sys && x.refCode) && !S.eroare,
       refCount: (() => {
         const n = S.users.filter(x => !x.sys && x.refCode).length;
         return n === 1 ? "1 cod" : n + " coduri";
       })(),
       refPanelHint: "Agenții de vânzări primesc un cod din clipa în care li se face contul. "
         + "Oricărui alt cont — un client fidel, de pildă — îi dai unul de la butonul „Dă-i un cod” "
-        + "de pe cardul lui. Codul se face din prenume și nu se mai schimbă după aceea.",
+        + "de pe cardul lui. Codul se face din prenume, iar de pe cardul contului îl poți "
+        + "și rescrie — cu grija că linkurile trimise cu cel vechi nu mai recomandă pe nimeni.",
 
       formOpen: S.form,
       // Semaforul se stinge la deschiderea și la închiderea formularului: o
@@ -1055,6 +1750,22 @@ class Component extends DCLogic {
       nIsClient: S.nRole === "client",
       nCust: S.nCust,
       onNCust: (e) => set({ nCust: e.target.value, nErr: "" }),
+      // Adresa firmei și zona ei. Numele casetelor e același ca la înscrierea
+      // din „Intrare": omul care le-a văzut o dată nu le mai caută a doua oară.
+      nAddr: S.nAddr,
+      onNAddr: (e) => set({ nAddr: e.target.value, nErr: "" }),
+      nZone: S.nZone,
+      onNZone: (e) => set({ nZone: e.target.value, nErr: "" }),
+      // Caseta de zonă se desenează numai după ce lista chiar a sosit. Una
+      // goală ar spune „patiseria n-are nicio zonă", ceea ce e altceva decât
+      // „încă n-am aflat" — și l-ar pune pe administrator să salveze un cont
+      // fără zonă crezând că n-are ce alege.
+      zoneReady: S.zoneReady,
+      zoneOpts: [{ v: "", l: "Alege zona (nu e obligatoriu)" }]
+        .concat(gp.zones().map((z) => ({ v: z, l: z }))),
+      nZoneHint: gp.zoneFaraPunct(S.nZone)
+        ? "Zonă din afara orașului: nu intră pe ruta șoferului, iar ora livrării se confirmă la telefon."
+        : "Sectorul sau zona în care livrăm. Se alege singură la fiecare comandă a clientului.",
       onNName: (e) => set({ nName: e.target.value, nErr: "" }),
       onNUser: (e) => set({ nUser: e.target.value, nErr: "" }),
       onNPass: (e) => set({ nPass: e.target.value, nErr: "" }),

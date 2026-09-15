@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Intrare · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -59,7 +64,7 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 <p style="margin:0;font-size:14px;line-height:1.55;color:rgba(255,255,255,.62);text-wrap:pretty">{{ sessionLine }}</p>
 <a href="{{ sessionHref }}" style="display:flex;align-items:center;justify-content:center;min-height:54px;border-radius:16px;background:var(--h-accent);color:#1B120B;font-size:17px;font-weight:700;text-decoration:none;text-align:center">{{ sessionCta }}</a>
 <sc-if value="{{ sessionAlt }}" hint-placeholder-val="{{ false }}">
-<a href="Client.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:14px;border:1px solid rgba(255,255,255,.24);background:transparent;color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none;text-align:center" style-hover="background:rgba(255,255,255,.10)">Vezi comanda mea</a>
+<a href="Site%20Public.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;border-radius:14px;border:1px solid rgba(255,255,255,.24);background:transparent;color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none;text-align:center" style-hover="background:rgba(255,255,255,.10)">Intră în magazin</a>
 </sc-if>
 <button type="button" onClick="{{ onLogout }}" style="min-height:50px;border:1px solid rgba(255,255,255,.24);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
 <p style="margin:0;font-size:13px;line-height:1.5;color:rgba(255,255,255,.5);text-wrap:pretty">{{ sessionHint }}</p>
@@ -96,6 +101,30 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 </div>
 </sc-if>
 
+<sc-if value="{{ showFond }}" hint-placeholder-val="{{ false }}">
+<div style="padding:22px 20px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:14px">
+<sc-if value="{{ fondDone }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px"><span class="h-badge h-badge--success">gata</span><span style="font-size:16px;font-weight:600;color:var(--h-cream-100)">{{ fondDoneTitlu }}</span></div>
+<p style="margin:0;font-size:14px;line-height:1.55;color:rgba(255,255,255,.62);text-wrap:pretty">{{ fondDoneText }}</p>
+<button type="button" onClick="{{ onFondOk }}" style="min-height:54px;border:0;border-radius:16px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:17px;font-weight:700;cursor:pointer">Mai departe</button>
+</sc-if>
+<sc-if value="{{ fondOpen }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:16px;font-weight:600;color:var(--h-cream-100)">Cerere de drept de fondator</span>
+<span style="font-size:13px;line-height:1.5;color:rgba(255,255,255,.55)">{{ fondWho }}</span>
+</div>
+<div style="padding:12px 14px;border-radius:14px;background:rgba(242,166,59,.14);border:1px solid rgba(242,166,59,.42);color:#F6EDE1;font-size:13px;line-height:1.55">Fondatorul poate face și desface administratori și alți fondatori. Dacă nu recunoști contul de mai sus, închide pagina: fără confirmare nu se schimbă nimic.</div>
+<sc-if value="{{ fondErr }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;border-radius:14px;background:rgba(232,160,175,.16);border:1px solid rgba(232,160,175,.5);color:#F6EDE1;font-size:14px">{{ fondErr }}</div>
+</sc-if>
+<sc-if value="{{ fondCanDo }}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{ onFondDa }}" disabled="{{ fondBusy }}" style="min-height:54px;border:0;border-radius:16px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:17px;font-weight:700;cursor:pointer">{{ fondLabel }}</button>
+</sc-if>
+<button type="button" onClick="{{ onFondNu }}" style="min-height:46px;border:0;border-radius:12px;background:transparent;color:rgba(255,255,255,.55);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">Renunț</button>
+</sc-if>
+</div>
+</sc-if>
+
 <sc-if value="{{ showForgot }}" hint-placeholder-val="{{ false }}">
 <div style="padding:22px 20px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:14px">
 <div style="display:flex;flex-direction:column;gap:4px">
@@ -104,7 +133,7 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 </div>
 <sc-if value="{{ forgotOpen }}" hint-placeholder-val="{{ true }}">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Utilizator sau e-mail
-<input type="text" autoComplete="username" value="{{ fu }}" onChange="{{ onFu }}" onKeyDown="{{ onForgotKey }}" placeholder="ex. cafeneaua-veche" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<input autoFocus="{{ true }}" type="text" autoComplete="username" value="{{ fu }}" onChange="{{ onFu }}" onKeyDown="{{ onForgotKey }}" placeholder="ex. cafeneaua-veche" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
 </label>
 <sc-if value="{{ ferr }}" hint-placeholder-val="{{ false }}">
 <div style="padding:12px 14px;border-radius:14px;background:rgba(232,160,175,.16);border:1px solid rgba(232,160,175,.5);color:#F6EDE1;font-size:14px">{{ ferr }}</div>
@@ -131,7 +160,7 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 
 <sc-if value="{{ regOpen }}" hint-placeholder-val="{{ true }}">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Numele tău
-<input type="text" autoComplete="name" value="{{ gn }}" onChange="{{ onGn }}" onKeyDown="{{ onRegKey }}" placeholder="ex. Ana Popescu" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<input autoFocus="{{ true }}" type="text" autoComplete="name" value="{{ gn }}" onChange="{{ onGn }}" onKeyDown="{{ onRegKey }}" placeholder="ex. Ana Popescu" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Utilizator
 <input type="text" autoComplete="username" value="{{ gu }}" onChange="{{ onGu }}" onKeyDown="{{ onRegKey }}" placeholder="{{ guHint }}" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
@@ -144,11 +173,27 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Telefon
 <input type="tel" autoComplete="tel" value="{{ gph }}" onChange="{{ onGph }}" onKeyDown="{{ onRegKey }}" placeholder="07xx xxx xxx" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
 </label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Adresa firmei
+<input type="text" autoComplete="street-address" value="{{ gad }}" onChange="{{ onGad }}" onKeyDown="{{ onRegKey }}" placeholder="ex. Calea Victoriei 63, et. 2" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:rgba(255,255,255,.45);text-wrap:pretty">Unde ducem marfa. Se completează singură la fiecare comandă, și o poți schimba atunci.</span>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Zona
+<select value="{{ gzone }}" onChange="{{ onGzone }}" style="height:52px;padding:0 12px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<sc-for list="{{ zoneOpts }}" as="z" hint-placeholder-count="9">
+<option value="{{ z.v }}">{{ z.l }}</option>
+</sc-for>
+</select>
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:rgba(255,255,255,.45);text-wrap:pretty">{{ gzoneHint }}</span>
+</label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Parolă
 <div style="display:flex;gap:8px">
 <input type="{{ gtype }}" autoComplete="new-password" value="{{ gpw }}" onChange="{{ onGpw }}" onKeyDown="{{ onRegKey }}" placeholder="minim 8 caractere" style="flex:1;min-width:0;height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
 <button type="button" onClick="{{ onGShow }}" style="flex:none;min-width:80px;height:52px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">{{ gShowLabel }}</button>
 </div>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:rgba(255,255,255,.72)">Cod de recomandare (dacă ai unul)
+<input type="text" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" value="{{ gref2 }}" onChange="{{ onGref2 }}" onKeyDown="{{ onRegKey }}" placeholder="ex. ana" style="height:52px;padding:0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.22);background:rgba(0,0,0,.25);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:17px">
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:rgba(255,255,255,.45);text-wrap:pretty">{{ refHint }}</span>
 </label>
 <sc-if value="{{ gerr }}" hint-placeholder-val="{{ false }}">
 <div style="padding:12px 14px;border-radius:14px;background:rgba(232,160,175,.16);border:1px solid rgba(232,160,175,.5);color:#F6EDE1;font-size:14px;line-height:1.55">{{ gerr }}</div>
@@ -281,7 +326,9 @@ const logAct = () => {};
 const RO_DAYS = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
 const RO_MONTHS = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie",
   "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
-const NOW = new Date();
+// Ceasul patiseriei, nu al aparatului: ecranul ăsta e prima poartă, iar
+// ziua scoasă aici ajunge în eticheta de sus și în sita de la `:599`.
+const NOW = gp.acumLaPatiserie();
 const p2 = (n) => (n < 10 ? "0" : "") + n;
 const TODAY_ISO = NOW.getFullYear() + "-" + p2(NOW.getMonth() + 1) + "-" + p2(NOW.getDate());
 const TODAY_LABEL = RO_DAYS[NOW.getDay()] + " " + NOW.getDate() + " " + RO_MONTHS[NOW.getMonth()];
@@ -321,10 +368,29 @@ class Component extends DCLogic {
   state = { stats: null, auth: null, loaded: false, next: "", open: false, view: "client", code: "", cerr: "", cshow: false, shakes: 0, lu: "", lp: "", lshow: false, lerr: "", lshakes: 0, lbusy: false,
     forgot: false, fu: "", fmsg: "", ferr: "", fbusy: false,
     rtoken: "", rp: "", rshow: false, rerr: "", rbusy: false, rdone: false,
+    // ftoken — tokenul de fondator, tot din e-mail. Stări proprii, nu
+    // împrumutate de la resetare: cele două linkuri pot ajunge în aceeași
+    // cutie poștală, iar un „Renunț" apăsat pe unul n-are voie să-l stingă
+    // pe celălalt. fname/fuser sunt cine ar fi ridicat în rang, ca omul de la
+    // cutia firmei să nu confirme în orb.
+    fdTok: "", fdNume: "", fdUser: "", fdErr: "", fdBusy: false, fdGata: false, fdEra: false,
     // Contul nou. `gref` e codul de recomandare cu care a venit omul („?ref=ana"),
     // citit din adresă la prima încărcare a magazinului și ținut în
     // sessionStorage până aici — vezi gp.referralCode() din shared/gp-api.js.
-    reg: false, gu: "", gn: "", gpw: "", gm: "", gph: "", gshow: false, gerr: "", gbusy: false, gref: "" };
+    // `gad` și `gzone` — adresa firmei și zona ei. Erau amândouă promise în
+    // capul formularului („îți ține adresa și telefonul") și nu se cerea
+    // niciuna: adresa n-avea casetă, iar zona n-avea nici măcar coloană în bază
+    // (vezi sql/016_zona_cont.sql). Zona pornește goală dinadins — o zonă
+    // ghicită se scrie pe cont și se completează pe urmă singură la fiecare
+    // comandă, adică minciuna s-ar repeta fără să fie nimeni întrebat.
+    reg: false, gu: "", gn: "", gpw: "", gm: "", gph: "", gad: "", gzone: "", gshow: false, gerr: "", gbusy: false, gref: "",
+    // Două stări pentru un singur cod, dinadins. `gref` e FAPTUL — omul a venit
+    // pe linkul cuiva — și el hotărăște bannerul galben de sus. `gref2` e ce
+    // scrie în casetă, precompletat din `gref` și schimbabil. Cu o singură
+    // stare, ștergerea casetei ar fi stins și bannerul, iar scrierea altui cod
+    // l-ar fi făcut să mintă: ar fi spus „ai ajuns aici prin recomandarea"
+    // unui om pe al cărui link nimeni n-a intrat.
+    gref2: "" };
 
   componentDidMount() {
     /**
@@ -391,6 +457,25 @@ class Component extends DCLogic {
       }
     } catch (e) { /* adresă neobișnuită — mergem mai departe fără token */ }
 
+    // Același drum pentru linkul de fondator, din același motiv: tokenul se
+    // citește o dată și se șterge imediat din bara de adrese, ca să nu rămână
+    // în istoric și să nu plece mai departe ca „referrer". Numele celui care
+    // a cerut se aduce separat, de la server — în adresă nu e decât tokenul.
+    try {
+      const t = new URLSearchParams(location.search).get("fondator") || "";
+      if (/^[0-9a-f]{64}$/.test(t)) {
+        this.setState({ fdTok: t, view: "client" });
+        const curat = location.pathname + location.search.replace(/[?&]fondator=[0-9a-f]{64}/, "").replace(/^&/, "?");
+        history.replaceState(null, "", curat);
+        gp.founderInvite(t)
+          .then((d) => {
+            const i = (d && d.invite) || {};
+            this.setState({ fdNume: i.name || "", fdUser: i.username || "", fdEra: i.already === true });
+          })
+          .catch((e) => this.setState({ fdErr: e.message || "Linkul nu mai e bun." }));
+      }
+    } catch (e) { /* adresă neobișnuită — mergem mai departe fără token */ }
+
     // Panourile nu-și mai țin fiecare formularul lui de autentificare — el e
     // aici, într-un singur loc. Ca omul să nu-și piardă locul, panoul lasă în
     // adresă pagina din care a plecat, iar după autentificare îl ducem exact
@@ -421,7 +506,9 @@ class Component extends DCLogic {
     // „?next=" de mai sus, din același motiv. Nu aruncă niciodată.
     try {
       const ref = gp.referralCode();
-      if (ref) this.setState({ gref: ref });
+      // Și în casetă, nu doar în banner: omul trebuie să vadă ce se trimite în
+      // numele lui și să poată schimba, dacă a nimerit pe linkul altcuiva.
+      if (ref) this.setState({ gref: ref, gref2: ref });
     } catch (e) { /* fără recomandare — înscrierea merge la fel */ }
 
     this.setState({ loaded: true });
@@ -435,6 +522,13 @@ class Component extends DCLogic {
         // Contul de sistem „panou" înseamnă tabletă deschisă cu cod.
         if (user.username === "panou") {
           this.setState({ open: true });
+        } else if (user.mustChangePassword === true) {
+          // Sesiune veche, cu parola provizorie încă pe cont: cardul „Ești
+          // deja autentificat" l-ar fi trimis în magazin sau în panou, unde
+          // serverul refuză cu 403 fiecare cerere. Aceeași regulă ca la
+          // intrarea proaspătă (goAfterLogin): întâi parola.
+          location.href = "Parola.dc.html";
+          return;
         } else {
           this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
         }
@@ -463,13 +557,39 @@ class Component extends DCLogic {
     Promise.all([
       gp.get('/orders?from=' + today + '&to=' + days[6].iso).catch(() => null),
       gp.get('/routes?day=' + today).catch(() => null),
-      gp.get('/stock/moves?from=' + today).catch(() => null),
+      // `to` pe lângă `from`: fără el fereastra rămâne deschisă la capătul de
+      // sus, deci pe o zi rămasă în urmă cardul numără mai multe zile la un
+      // loc — măsurat 53 de mișcări în loc de 20. Cu ziua reparată nu se mai
+      // întâmplă des, dar o fereastră deschisă la un capăt e tot o fereastră
+      // greșită: cine citește „Mișcări azi" citește o cifră despre azi.
+      gp.get('/stock/moves?from=' + today + '&to=' + today).catch(() => null),
     ]).then(([o, r, m]) => {
       if (!o && !r && !m) return;
       this.setState({
         stats: {
+          // Ziua CU CARE S-A CERUT, dusă împreună cu datele.
+          //
+          // `TODAY_ISO` se socotește o dată, la încărcarea paginii; `pullStats`
+          // poate rula oricând după aceea — se cheamă din `tryUnlock`, iar
+          // „Blochează panoul" nu reîncarcă pagina. Peste miezul nopții,
+          // cererea pleca pe ziua nouă și sita de mai jos tăia pe ziua veche:
+          // cardul Laborator scria „0 · 0 bucăți de făcut azi", iar „Foaia de
+          // rută" de lângă el arăta corect opririle aceleiași zile. Aceeași
+          // pagină se contrazicea singură.
+          //
+          // Tiparul e cel din `treziZiua()` (`Administrare Comenzi.dc.html`)
+          // și `refreshDays()` (`Ruta Sofer.dc.html`): ziua nu se reia din
+          // ceas la citire, ci se ia de unde a plecat cererea.
+          day: today,
           orders: o ? (o.orders || []).map(gp.toPageOrder) : null,
-          stops: r ? (r.stops || []).map(gp.toPageOrder).filter((x) => x.chan === 'Livrare') : null,
+          // Fără filtru aici: `GET /routes` a scos deja modurile de ridicare,
+          // pe lista din Setări (api/routes/orders.php:1481-1485 →
+          // `pickup_fulfillments()`). A doua sită era mai strâmtă decât prima:
+          // cerea numele scris exact „Livrare", deci o patiserie care își
+          // botează modul „Curier" sau „Tur A" vedea „0 opriri" pe ecranul de
+          // start, cu șoferul deja plecat. Pagina vecină, „Ruta Sofer", doar
+          // mapează (:332) — la fel se face și aici.
+          stops: r ? (r.stops || []).map(gp.toPageOrder) : null,
           moves: m ? (m.moves || []).length : null,
         }
       });
@@ -487,6 +607,27 @@ class Component extends DCLogic {
     const S = this.state;
     const st = S.stats;
 
+    /**
+     * Întoarcerea cerută de un panou, dacă rolul chiar poate deschide
+     * pagina aceea.
+     *
+     * `paginaAplicatiei()` de la montare se uită la FORMA adresei — să nu
+     * fie o cale spre alt sit, cu „..", „/" sau „http". Aici se pune
+     * cealaltă întrebare, care abia acum are răspuns: al cui e panoul
+     * cerut. Rolul nu se știe la încărcare, ci după autentificare.
+     *
+     * Fără asta, un agent de vânzări trimis aici de pe „Depozit" s-ar
+     * întoarce pe „Depozit" — o pagină care nu-i e în meniu și care i-ar
+     * răspunde cu un ecran gol. Răspunsul se citește din matricea
+     * meniului, ca să nu existe două liste care se ceartă.
+     */
+    const inapoiPermis = (cerut, rol) => {
+      if (!cerut) return "";
+      const permise = gp.PANOURI_ROL[rol] || [];
+      const intrare = gp.MENIU.find((x) => decodeURIComponent(x.href) === cerut);
+      return intrare && permise.indexOf(intrare.et) >= 0 ? cerut : "";
+    };
+
     // Ordinea opririlor vine deja aranjată de server (routeSeq), deci aici se
     // calculează doar distanța.
     const stops = (st && st.stops) || [];
@@ -499,7 +640,9 @@ class Component extends DCLogic {
     });
 
     const all = (st && st.orders) || [];
-    const today = all.filter(o => o.date === TODAY_ISO);
+    // Ziua venită cu datele, nu ceasul de acum și nu cel de la încărcare.
+    // `TODAY_ISO` rămâne căderea pentru desenarea de dinaintea primei cereri.
+    const today = all.filter(o => o.date === ((st && st.day) || TODAY_ISO));
     const open = today.filter(o => o.status !== gp.done());
     const pieces = open.reduce((a, o) => a + o.items.reduce((x, i) => x + gp.qty(i.q), 0), 0);
     const left = stops.filter(o => o.status !== gp.done()).length;
@@ -591,9 +734,16 @@ class Component extends DCLogic {
         const r = await gp.register({
           username: u, name: nume, password: p,
           email: m, phone: String(S.gph).trim(),
-          // Codul de recomandare, dacă omul a venit pe un link. Unul greșit nu
-          // oprește nimic: serverul face contul oricum, doar fără recomandant.
-          ref: String(S.gref || "")
+          // Adresa și zona firmei. Amândouă pot fi goale — cine își face cont
+          // seara, de pe telefon, n-are întotdeauna la îndemână adresa exactă a
+          // punctului de lucru, iar un refuz aici ar pierde clientul înainte de
+          // prima comandă. Se completează oricând din „Comanda mea".
+          address: String(S.gad || "").trim(),
+          zone: String(S.gzone || ""),
+          // Codul de recomandare — cel din casetă, care poate fi tastat de mână
+          // sau venit din link. Unul greșit nu oprește nimic: serverul face
+          // contul oricum, doar fără recomandant.
+          ref: String(S.gref2 || "").trim()
         });
         this.__reg = false;
         // Codul s-a consumat: dacă omul se întoarce pe pagină, nu mai are ce
@@ -601,7 +751,7 @@ class Component extends DCLogic {
         gp.forgetReferral();
         // Sesiunea e deja deschisă de server, deci mergem exact pe drumul pe
         // care ar fi mers după o autentificare obișnuită.
-        this.setState({ auth: r.user, reg: false, gbusy: false, gpw: "", gref: "" });
+        this.setState({ auth: r.user, reg: false, gbusy: false, gpw: "", gref: "", gref2: "" });
         goAfterLogin(r.user);
       } catch (e) {
         this.__reg = false;
@@ -669,6 +819,37 @@ class Component extends DCLogic {
     };
 
     /**
+     * Confirmarea cererii de fondator, cu tokenul din linkul primit pe e-mail.
+     *
+     * Sora lui puneParolaNoua() de deasupra, cu o deosebire care se vede în
+     * ultima linie: acolo se uită și sesiunea, fiindcă serverul tocmai a
+     * închis-o odată cu parola veche. Aici nu se închide nimic — rolul se
+     * citește din `users` la fiecare cerere (api/lib/auth.php:30) — deci cine
+     * era conectat rămâne conectat, doar cu drepturi mai multe.
+     *
+     * Nu cere token CSRF, și n-ar avea de unde: linkul se deschide într-o filă
+     * nouă, pornită din clientul de mail, iar tokenul CSRF stă în
+     * sessionStorage, care e al filei. Ruta e scutită dinadins — vezi
+     * csrf_exempt() din api/lib/auth.php.
+     */
+    const confirmFondator = async () => {
+      if (S.fdBusy || !S.fdTok) return;
+      this.setState({ fdBusy: true, fdErr: "" });
+      try {
+        const r = await gp.founderAccept(S.fdTok);
+        // Numele vine înapoi de la server, nu din starea paginii: dacă cineva
+        // a deschis linkul fără să apuce să se încarce cererea, ecranul de
+        // „gata" trebuie totuși să spună pe cine a ridicat în rang.
+        this.setState({
+          fdBusy: false, fdGata: true, fdTok: "",
+          fdNume: (r && r.name) || S.fdNume
+        });
+      } catch (e) {
+        this.setState({ fdBusy: false, fdErr: e.message || "Nu am putut confirma." });
+      }
+    };
+
+    /**
      * Unde ajunge fiecare după autentificare.
      *
      * Trimitea pe toată lumea în panoul clientului, indiferent de rol: un
@@ -686,21 +867,24 @@ class Component extends DCLogic {
         location.href = "Parola.dc.html" + (location.search || "");
         return;
       }
-      // Unde a vrut omul să ajungă, dacă l-a trimis aici un panou. Pentru
-      // contul de client se ignoră: panourile patiseriei nu-l primesc oricum,
-      // iar acolo n-ar găsi decât un ecran care îi spune că a greșit ușa.
-      const cerut = role === "client" ? "" : this.state.next;
+      // Unde a vrut omul să ajungă, dacă l-a trimis aici un panou — și dacă
+      // rolul lui poate deschide pagina aceea. Cerute și refuzate, ajungea
+      // pe un panou care i se închidea în față.
+      const cerut = inapoiPermis(this.state.next, role);
       if (cerut) {
         location.href = encodeURI(cerut) + (location.search || "");
         return;
       }
-      // Clientul se întoarce în magazin, autentificat: acolo comandă. Panoul
-      // „Comanda mea" rămâne la un clic distanță, din meniul contului.
-      // Îl trimiteam direct în panou, iar ca să comande trebuia să găsească
-      // singur drumul înapoi la magazin — și acolo să-și scrie din nou numele,
-      // deși tocmai se autentificase.
-      const dest = role === "client" ? "Site%20Public.dc.html" : "Administrare%20Comenzi.dc.html";
-      location.href = dest + (location.search || "");
+      // Altfel, prima pagină a rolului: clientul în magazin — acolo comandă,
+      // iar „Comanda mea" rămâne la un clic, în sertar — agentul în
+      // Recomandări, angajatul în laborator, restul în administrare.
+      //
+      // Până acum aici scria „client → magazin, oricine altcineva →
+      // administrare", iar administrarea îi refuza pe manager și pe agent:
+      // singurul lucru pe care îl puteau face cu contul lor era să vadă un
+      // ecran care le spune că n-au voie. Lista stă acum în `gp.ACASA_ROL`,
+      // lângă meniu, ca să nu se depărteze de el.
+      location.href = gp.primaPagina(role) + (location.search || "");
     };
     // Parola se verifică pe server. Pagina nu o vede niciodată comparată cu
     // ceva local, iar sesiunea vine ca un cookie HttpOnly — nu se poate
@@ -714,14 +898,27 @@ class Component extends DCLogic {
       try {
         const user = await gp.login(u, p);
 
-        // Angajații au propriul flux, prin „Panouri de lucru".
-        // Angajații intră în panourile de lucru, nu în administrare: acolo se
-        // folosește codul comun al tabletelor, nu contul individual.
-        if (user.role === "angajat") {
+        // Contul tabletei nu se deschide cu parolă, ci cu codul de sub
+        // formular: e comun întregii ture, nu are stăpân, iar cine ar intra cu
+        // el pe ușa asta ar ajunge, cu `must_change_password`, să schimbe o
+        // parolă a nimănui.
+        //
+        // Aici scria până acum `user.role === "angajat"`, deci refuzul cădea pe
+        // TOȚI angajații, nu doar pe tabletă. Era un rest de pe vremea când
+        // angajatul n-avea panouri pe numele lui. Azi are patru
+        // (`gp.PANOURI_ROL.angajat`), serverul i le deschide (măsurat: intrare
+        // 200, comenzile laboratorului 200, ruta 200), iar `gp.ACASA_ROL` îi
+        // promite laboratorul ca primă pagină. Refuzul contrazicea și butonul
+        // de deasupra lui — „Intră în panouri" — și exemplul de utilizator,
+        // „ex. ana.popescu", care e un om, nu o tură.
+        //
+        // Deosebirea căutată de comentariul vechi era `is_system`, nu rolul:
+        // `public_user()` o trimite ca `isSystem` (`api/lib/auth.php:1255`).
+        if (user.isSystem === true) {
           await gp.logout();
           return this.setState({
             lbusy: false,
-            lerr: "Contul „" + user.name + "” e cont de angajat. Apasă „Panouri de lucru” și deschide cu codul din laborator.",
+            lerr: "Contul „" + user.name + "” e contul comun al tabletelor. Apasă „Panouri de lucru” și deschide-l cu codul din laborator.",
             lshakes: S.lshakes + 1
           });
         }
@@ -755,7 +952,7 @@ class Component extends DCLogic {
       // Pe clienti.goldenpastry.ro nu are ce căuta intrarea pentru personal:
       // acolo rămâne doar formularul de client, fără selector. GP_SITE e pus de
       // scriptul de publicare, în fișierul fiecărui subdomeniu.
-      showModeToggle: window.GP_SITE !== "clienti" && !S.auth && !S.rtoken && !S.rdone && !S.forgot && !S.reg,
+      showModeToggle: window.GP_SITE !== "clienti" && !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && !S.reg,
       isClientMode: !eEchipa,
       isStaffMode: eEchipa,
       tabClient: eEchipa ? tabAltul : tabAles,
@@ -765,7 +962,7 @@ class Component extends DCLogic {
         : "Intră în cont · comenzile și livrările tale",
       // Codul tabletelor apare sub formularul echipei, nu în locul lui.
       showPanelCode: eEchipa && window.GP_SITE !== "clienti"
-        && !S.auth && !S.rtoken && !S.rdone && !S.forgot && !S.reg,
+        && !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && !S.reg,
 
       // Un singur ecran de intrare. Ecranul separat pentru „staff" a dispărut:
       // el arăta DOAR caseta de cod, fără niciun formular de cont, deci un
@@ -845,26 +1042,49 @@ class Component extends DCLogic {
       // a deschis linkul din e-mail ca să-și pună parola nouă, nu ca să afle
       // că telefonul lui are deja o sesiune (uneori chiar pe alt cont, al
       // altcuiva din casă).
-      showSession: !!S.auth && !S.rtoken && !S.rdone,
+      showSession: !!S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata,
 
       // Cu sesiune deschisă, pagina arăta tot un formular gol de utilizator și
       // parolă. Apăsai „Administrare" și intrai fără să ți se ceară nimic —
       // corect (cookie-ul e valabil, serverul îl verifică la fiecare cerere),
       // dar din afară arăta exact ca o parolă sărită. Acum pagina spune cine
       // ești, unde intri și cum ieși.
-      notSignedIn: !S.auth && !S.rtoken && !S.rdone && !S.forgot && !S.reg,
+      notSignedIn: !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && !S.reg,
 
       /* --- cont nou --- */
       // Aceleași condiții ca la formularul de intrare, plus steagul propriu:
       // cele două cartonașe se înlocuiesc, nu se suprapun.
-      showRegister: !S.auth && !S.rtoken && !S.rdone && !S.forgot && S.reg,
+      showRegister: !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && S.reg,
       regOpen: true,
       // Butonul spune de la început dacă omul a venit pe un link de recomandare.
       regCta: S.gref ? "Fă-ți cont — ai venit pe o invitație" : "Fă-ți cont",
+      // Bannerul spune de unde ai venit; caseta de mai jos spune ce se trimite.
+      // De aceea nu mai promite („o păstrăm"), ci arată unde e codul: dacă omul
+      // îl schimbă sau îl șterge, promisiunea ar fi fost falsă.
       regInvite: S.gref
-        ? "Ai ajuns aici prin recomandarea cuiva („" + S.gref + "”). O păstrăm pe contul tău la înscriere."
+        ? "Ai ajuns aici prin recomandarea cuiva. Codul „" + S.gref + "” e trecut mai jos — îl poți schimba sau șterge."
         : "",
+      gref2: S.gref2,
+      refHint: S.gref
+        ? "Vine de pe linkul pe care ai intrat. Rămâne pe contul tău la înscriere."
+        : "Dacă ți l-a dat cineva, scrie-l aici. Nu e obligatoriu.",
+      onGref2: (e) => this.setState({ gref2: e.target.value, gerr: "" }),
       gu: S.gu, gn: S.gn, gpw: S.gpw, gm: S.gm, gph: S.gph, gerr: S.gerr, gbusy: S.gbusy,
+      gad: S.gad, gzone: S.gzone,
+      // Zonele vin din Setări, nu scrise aici: patronul le adaugă și le
+      // redenumește din panou, iar o listă scrisă în pagină ar rămâne în urmă.
+      // Prima opțiune e goală fiindcă zona chiar e neobligatorie.
+      zoneOpts: [{ v: "", l: "Alege zona (nu e obligatoriu)" }]
+        .concat(gp.zones().map((z) => ({ v: z, l: z }))),
+      // Vestea se dă aici, nu după prima comandă: cine e din afara orașului o
+      // află în clipa în care alege, nu în ziua în care așteaptă mașina.
+      // Întrebarea e „are zona asta punct pe hartă", nu „cum o cheamă" — vezi
+      // gp.zoneFaraPunct().
+      gzoneHint: gp.zoneFaraPunct(S.gzone)
+        ? "Pentru livrările din afara Bucureștiului și Ilfovului ora e orientativă: o confirmăm la telefon."
+        : "Sectorul sau zona în care livrăm. Se alege singură la fiecare comandă.",
+      onGad: (e) => this.setState({ gad: e.target.value, gerr: "" }),
+      onGzone: (e) => this.setState({ gzone: e.target.value, gerr: "" }),
       gtype: S.gshow ? "text" : "password",
       gShowLabel: S.gshow ? "Ascunde" : "Arată",
       regLabel: S.gbusy ? "Se creează…" : "Creează contul",
@@ -886,7 +1106,7 @@ class Component extends DCLogic {
       /* --- parola uitată --- */
       // Serverul răspunde la fel indiferent dacă acel cont există; pagina nu
       // are ce adăuga, deci arată exact ce a spus el.
-      showForgot: !S.auth && !S.rtoken && !S.rdone && S.forgot,
+      showForgot: !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && S.forgot,
       forgotOpen: !S.fmsg,
       fu: S.fu, ferr: S.ferr, fmsg: S.fmsg, fbusy: S.fbusy,
       forgotLabel: S.fbusy ? "Se trimite…" : "Trimite-mi linkul",
@@ -905,7 +1125,28 @@ class Component extends DCLogic {
       // răspundea gp.me(), și dispărea de tot. Rămâneau cardul „conectat” și
       // un e-mail care promitea altceva, iar tokenul fusese deja scos din
       // adresă — nici reîncărcarea, nici linkul apăsat din nou nu mai ajutau.
-      showReset: !!S.rtoken || S.rdone,
+      showReset: (!!S.rtoken || S.rdone) && !S.fdTok && !S.fdGata,
+
+      /* --- confirmarea de fondator --- */
+      showFond: !!S.fdTok || S.fdGata,
+      fondDone: S.fdGata,
+      fondOpen: !S.fdGata,
+      // Numele vine de la server, nu din adresă. Cât nu a ajuns încă — sau
+      // dacă linkul e mort — nu se scrie un nume inventat, se spune ce se știe.
+      fondWho: S.fdNume
+        ? "Contul „" + S.fdNume + "” (" + S.fdUser + ") ar deveni fondator."
+        : (S.fdErr ? "Nu am putut citi cererea." : "Se citește cererea…"),
+      // Butonul lipsește cât nu știm pe cine confirmăm, și după ce linkul a
+      // fost găsit mort: altfel omul apasă pe ceva care sigur nu merge.
+      fondCanDo: !!S.fdNume && !S.fdEra,
+      fondBusy: S.fdBusy,
+      fondLabel: S.fdBusy ? "Se confirmă…" : "Confirm — fă-l fondator",
+      fondErr: S.fdErr || (S.fdEra ? "Contul e deja fondator. Nu mai e nimic de confirmat." : ""),
+      fondDoneTitlu: S.fdNume ? "„" + S.fdNume + "” e fondator" : "Gata",
+      fondDoneText: "Rolul e pus. Dacă omul era conectat, îl vede la următoarea reîncărcare a paginii — nu trebuie să intre din nou în cont.",
+      onFondDa: () => confirmFondator(),
+      onFondNu: () => this.setState({ fdTok: "", fdNume: "", fdUser: "", fdErr: "", fdGata: false, fdEra: false }),
+      onFondOk: () => this.setState({ fdTok: "", fdNume: "", fdUser: "", fdErr: "", fdGata: false, fdEra: false }),
       resetOpen: !S.rdone,
       resetDone: S.rdone,
       // Spunem pe față de ce se vede și cardul de sesiune, ca omul să nu creadă
@@ -932,17 +1173,26 @@ class Component extends DCLogic {
         : "",
       // Cu sesiune deschisă și o întoarcere cerută, butonul duce acolo, nu în
       // pagina implicită: omul a apăsat pe „Depozit", nu pe „Administrare".
-      // Se întâmplă când sesiunea e a unui cont fără drepturi pe pagina cerută
-      // și tot vrea să încerce, sau când s-a autentificat între timp în alt tab.
-      sessionHref: S.auth && S.auth.role !== "client" && S.next
+      // Se întâmplă când s-a autentificat între timp în alt tab.
+      //
+      // Aceeași poartă ca după autentificare: dacă pagina cerută nu e a
+      // rolului, butonul nu promite ce nu se poate. Înainte promitea — și
+      // asta era chiar cazul pentru care fusese scris rândul: „sesiunea e a
+      // unui cont fără drepturi pe pagina cerută și tot vrea să încerce".
+      sessionHref: S.auth && inapoiPermis(S.next, S.auth.role)
         ? encodeURI(S.next)
-        : (S.auth && S.auth.role === "client"
-            ? "Site%20Public.dc.html" : "Administrare%20Comenzi.dc.html"),
-      sessionCta: S.auth && S.auth.role !== "client" && S.next
+        : (S.auth ? gp.primaPagina(S.auth.role) : "Administrare%20Comenzi.dc.html"),
+      sessionCta: S.auth && inapoiPermis(S.next, S.auth.role)
         ? "Înapoi la pagina cerută"
         : (S.auth && S.auth.role === "client"
-            ? "Intră în magazin" : "Intră în administrare"),
-      // Al doilea drum, pentru clientul care vrea starea comenzii, nu produse.
+            ? "Vezi comanda mea" : "Mergi la panoul tău"),
+      // Al doilea drum, pentru clientul care vrea produse, nu starea comenzii.
+      //
+      // Butonul mare îl duce unde îl duce și intrarea cu parolă — la comanda
+      // lui — iar ăsta e magazinul. Erau invers până azi; când `ACASA_ROL.client`
+      // a devenit „Comanda mea", butonul mare ar fi rămas cu numele
+      // „Intră în magazin" și ar fi dus tot în „Comanda mea": două butoane
+      // spre aceeași pagină, unul cu numele celeilalte.
       sessionAlt: !!(S.auth && S.auth.role === "client"),
       sessionHint: (() => {
         const d = gp.sessionDays();

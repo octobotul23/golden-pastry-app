@@ -36,7 +36,7 @@ declare(strict_types=1);
  */
 function route_items_list(): void
 {
-    require_staff();
+    require_ops();
 
     // Cele două agregări stau în subinterogări, nu în același GROUP BY: unite,
     // fiecare mișcare s-ar înmulți cu fiecare rezervare a articolului, iar
@@ -58,12 +58,18 @@ function route_items_list(): void
                  WHERE o.status <> ? AND o.status <> ?
                  GROUP BY r.item_id
            ) rez ON rez.item_id = i.id
-          WHERE i.active = 1
+          WHERE (i.active = 1 OR ?)
           ORDER BY i.category, i.sort, i.name",
         // Etapele vin din Setări. Neconfigurate, ies ca text gol, care nu se
         // potrivește cu niciun status — deci nu se stinge nicio rezervare, ceea
         // ce e alegerea prudentă: mai bine promis prea mult decât prea puțin.
-        [status_done(), status_cancelled()]
+        // `?all=1` aduce și articolele scoase din depozit, ca pagina să le poată
+        // repune. Nu e o listă separată: numele ocupat de un articol stins e o
+        // pricină pe care depozitarul o întâlnește tocmai când scrie unul nou,
+        // deci ieșirea trebuie să stea în aceeași pagină. Restul cererilor —
+        // panourile, comenzile, formularul de mișcare — cer lista fără steag și
+        // primesc exact ce primeau și înainte.
+        [status_done(), status_cancelled(), !empty($_GET['all']) ? 1 : 0]
     );
 
     json_out([
@@ -95,13 +101,18 @@ function stock_item_public(array $r): array
         // în raft, exact lucrul pe care depozitarul trebuie să-l vadă.
         'available' => round($qty - $rez, 4),
         'productId' => $r['product_id'] === null ? null : (int) $r['product_id'],
+        // Lipsea cu totul, deși ruta primea de mult `active` la scriere: nicio
+        // pagină nu putea deosebi un articol viu de unul scos, deci nici nu-l
+        // putea repune. `?? 1` fiindcă pe aici trec și rândurile proaspăt
+        // scrise (creare, modificare), care nu citesc coloana înapoi.
+        'active'    => (int) ($r['active'] ?? 1) === 1,
     ];
 }
 
 /** POST /stock/items — articol nou. */
 function route_items_create(): void
 {
-    require_staff();
+    require_ops();
     $b = body();
 
     // Lungimile se verifică aici, unde încă se poate spune ce e greșit.
@@ -122,11 +133,43 @@ function route_items_create(): void
     // `min_qty` e DECIMAL(10,2): peste 99.999.999,99 MySQL răspunde 1264, tot
     // ca „Eroare internă". Iar `(float)` nu refuză nimic — pe un tablou dă 1.0
     // — deci un câmp completat greșit intra tăcut ca prag de o bucată.
+    //
+    // Ramura implicită trece prin aceeași poartă ca cea tastată: pragul din
+    // Setări e verificat de acum la salvare (api/routes/settings.php), dar
+    // bazele scrise înainte de reparație, și orice import direct, pot avea încă
+    // acolo un „0,5" sau un număr peste coloană. Mesajul spune anume „din
+    // Setări", altfel depozitarul ar primi un refuz despre o casetă pe care a
+    // lăsat-o goală dinadins.
     $min = isset($b['minQty'])
         ? num_field($b['minQty'], 'Pragul minim', 0, 99999999.99, 'bad_min')
-        : (float) setting('stock_min_default', '0');
-    if (scalar('SELECT 1 FROM stock_items WHERE name = ?', [$name])) {
-        fail('Există deja un articol cu numele „' . $name . '”.', 409, 'name_taken');
+        : num_field(
+            str_replace(',', '.', trim(setting('stock_min_default', '0'))) ?: '0',
+            'Pragul minim implicit din Setări',
+            0,
+            99999999.99,
+            'bad_min'
+        );
+    // Numele e apărat de un index unic pe TOATĂ tabela (uq_stock_items_name),
+    // iar articolul cu istoric nu se șterge, se stinge (route_items_delete()
+    // mai jos, cazul 2). Cele două laolaltă lăsau numele ocupat de un articol
+    // pe care listele nu-l mai arătau: depozitarul scria din nou „Făină 000",
+    // primea „există deja" și nu-l găsea nicăieri. Ieșirea la îndemână era să
+    // scrie „Faina 000 nou" — și de-atunci registrul avea două nume pentru
+    // același lucru, iar socotelile se despărțeau în două.
+    //
+    // Refuzul spune acum care din cele două cazuri e, fiindcă ieșirea e alta:
+    // la unul schimbi numele, la celălalt repui articolul.
+    $ciocnire = one('SELECT id, active FROM stock_items WHERE name = ?', [$name]);
+    if ($ciocnire) {
+        fail(
+            (int) $ciocnire['active'] === 1
+                ? 'Există deja un articol cu numele „' . $name . '”.'
+                : 'Articolul „' . $name . '” a fost scos din depozit, dar numele lui rămâne al său, '
+                  . 'ca registrul să nu se despartă în două. Repune-l în depozit din josul paginii, '
+                  . 'de la „Scoase din depozit”.',
+            409,
+            'name_taken'
+        );
     }
 
     // Produsul de care ține articolul, dacă ține de unul.
@@ -184,7 +227,7 @@ function route_items_create(): void
 /** PATCH /stock/items/{id} — denumire, categorie, unitate, prag, produs. */
 function route_items_update(string $id): void
 {
-    require_staff();
+    require_ops();
     $b  = body();
     $id = (int) $id;
 
@@ -196,6 +239,9 @@ function route_items_update(string $id): void
     $sets = [];
     $vals = [];
     $numeFinal = (string) $item['name'];
+    // Id-urile de produs, traduse în nume pentru jurnal. Se umple doar dacă se
+    // atinge legătura, mai jos.
+    $numeProduse = [];
 
     if (array_key_exists('name', $b)) {
         // Aceeași măsură ca la creare, plus unicitatea. Crearea răspundea
@@ -204,8 +250,20 @@ function route_items_update(string $id): void
         // „Eroare internă": aceeași greșeală omenească, două răspunsuri
         // diferite, după ușa pe care ai intrat.
         $numeFinal = text_field($b['name'] ?? null, 'Numele articolului', 160, true);
-        if (scalar('SELECT 1 FROM stock_items WHERE name = ? AND id <> ?', [$numeFinal, $id])) {
-            fail('Există deja un articol cu numele „' . $numeFinal . '”.', 409, 'name_taken');
+        // Aceeași lămurire ca la creare: cine se lovește de numele unui articol
+        // scos din depozit trebuie să afle că îl poate repune, nu să inventeze
+        // un al doilea nume pentru același lucru.
+        $ciocnire = one('SELECT id, active FROM stock_items WHERE name = ? AND id <> ?', [$numeFinal, $id]);
+        if ($ciocnire) {
+            fail(
+                (int) $ciocnire['active'] === 1
+                    ? 'Există deja un articol cu numele „' . $numeFinal . '”.'
+                    : 'Articolul „' . $numeFinal . '” a fost scos din depozit, dar numele lui rămâne al '
+                      . 'său, ca registrul să nu se despartă în două. Repune-l în depozit din josul '
+                      . 'paginii, de la „Scoase din depozit”.',
+                409,
+                'name_taken'
+            );
         }
         $sets[] = 'name = ?';
         $vals[] = $numeFinal;
@@ -244,6 +302,9 @@ function route_items_update(string $id): void
     // răspunde altfel după ușa pe care ai intrat nu e o poartă, e o loterie.
     if (array_key_exists('productId', $b)) {
         $productId = null;
+        // `$produs` rămâne nul pe drumul de dezlegare; jurnalul de mai jos îl
+        // citește pe amândouă drumurile, deci trebuie să existe pe amândouă.
+        $produs    = null;
         // Gol înseamnă dezlegat: un articol legat greșit trebuie să poată fi și
         // desprins, nu doar mutat pe altul.
         if ($b['productId'] !== null && $b['productId'] !== '') {
@@ -270,12 +331,36 @@ function route_items_update(string $id): void
         }
         $sets[] = 'product_id = ?';
         $vals[] = $productId;
+        // Pentru jurnal: „produs legat: 12 → 15" nu spune nimic omului care
+        // citește. Numele vechi se cere o singură dată, aici, unde se știe că
+        // legătura chiar se atinge — nu la fiecare salvare de articol.
+        //
+        // Nu e o pedanterie: legătura asta e cea pe care se scade materia primă
+        // la fiecare comandă. Mutată pe alt produs, stocul începe să scadă din
+        // alt raft, iar inventarul de seară nu mai iese fără să se știe de ce.
+        if ((int) ($item['product_id'] ?? 0) !== (int) $productId) {
+            $vechiNume = $item['product_id']
+                ? scalar('SELECT name FROM products WHERE id = ?', [(int) $item['product_id']])
+                : null;
+            $numeProduse = [
+                (string) ($item['product_id'] ?? '') => (string) ($vechiNume ?? '—'),
+                (string) ($productId ?? '')          => (string) ($produs['name'] ?? '—'),
+            ];
+        }
     }
 
     if (!$sets) {
         fail('Nimic de modificat.', 422, 'nothing_to_update');
     }
 
+    $schimbari = audit_diff($sets, $vals, $item, [
+        'name'       => 'nume',
+        'category'   => 'categorie',
+        'unit'       => 'unitate',
+        'min_qty'    => 'prag minim',
+        'active'     => ['în depozit', ['1' => 'da', '0' => 'nu']],
+        'product_id' => ['produs legat', $numeProduse],
+    ]);
     $vals[] = $id;
     q_unique(
         'UPDATE stock_items SET ' . implode(', ', $sets) . ' WHERE id = ?',
@@ -283,7 +368,8 @@ function route_items_update(string $id): void
         'Există deja un articol cu numele „' . $numeFinal . '”.',
         'name_taken'
     );
-    audit('stock_item_update', 'stock_item', (string) $id, $item['name']);
+    audit('stock_item_update', 'stock_item', (string) $id,
+        $item['name'] . ($schimbari === '' ? '' : ' · ' . $schimbari));
 
     json_out(['ok' => true]);
 }
@@ -343,13 +429,13 @@ function stock_local_day_utc(string $day, int $plusZile = 0): string
  * Răspunsul spune ce s-a întâmplat (`mode`), ca pagina să nu ghicească și să
  * poată explica omului de ce articolul cu istoric n-a dispărut de tot.
  *
- * `require_staff()`, ca restul depozitului: cine poate face intrări și ieșiri
+ * `require_ops()`, ca restul depozitului: cine poate face intrări și ieșiri
  * poate și să scoată un articol din listă — putea deja, prin PATCH cu
  * `active: false`. Ștergerea adevărată se face doar acolo unde n-are ce strica.
  */
 function route_items_delete(string $id): void
 {
-    require_staff();
+    require_ops();
     $id = (int) $id;
 
     $item = one('SELECT id, name, active FROM stock_items WHERE id = ?', [$id]);
@@ -391,7 +477,9 @@ function route_items_delete(string $id): void
                 . 'Nu s-a șters de tot fiindcă are ' . $miscari . ' '
                 . ($miscari === 1 ? 'mișcare' : 'mișcări') . ' în registru'
                 . ($rezervat > 0 ? ' și marfă rezervată pentru comenzi' : '')
-                . ' — istoricul rămâne întreg.',
+                . ' — istoricul rămâne întreg. Atenție: de acum comenzile care se potriveau pe el '
+                . 'nu se mai scad din depozit până nu are produsul un alt articol. Îl poți repune '
+                . 'oricând din josul paginii, de la „Scoase din depozit”.',
         ]);
     }
 
@@ -407,7 +495,7 @@ function route_items_delete(string $id): void
 
 function route_moves_list(): void
 {
-    require_staff();
+    require_ops();
 
     $where  = [];
     $params = [];
@@ -445,7 +533,14 @@ function route_moves_list(): void
         . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
         . ' ORDER BY m.created_at DESC, m.id DESC LIMIT 1000';
 
-    json_out(['moves' => array_map(static fn($r) => [
+    $rows = all($sql, $params);
+    json_out([
+        // Lista e tăiată la 1000 de rânduri. Pagina Depozit își face din ea
+        // registrul și totalurile pe articol; fără semnul ăsta, după câteva
+        // zile de producție (o mișcare pe fiecare linie de rețetă, la fiecare
+        // raport) cifrele ieșeau greșite fără niciun avertisment.
+        'truncated' => count($rows) >= 1000,
+        'moves' => array_map(static fn($r) => [
         'id'        => (int) $r['id'],
         'itemId'    => $r['item_id'] === null ? null : (int) $r['item_id'],
         'name'      => $r['name'],
@@ -457,13 +552,13 @@ function route_moves_list(): void
         'note'      => $r['note'],
         'user'      => $r['user_name'],
         'createdAt' => $r['created_at'],
-    ], all($sql, $params))]);
+    ], $rows)]);
 }
 
 /** POST /stock/moves — intrare (direction 1) sau ieșire (-1). */
 function route_moves_create(): void
 {
-    $u = require_staff();
+    $u = require_ops();
     $b = body();
 
     $qty = num_field($b['qty'] ?? null, 'Cantitatea', 0, 1000000, 'bad_qty');
@@ -473,7 +568,9 @@ function route_moves_create(): void
     $direction = (int) ($b['direction'] ?? 1) >= 0 ? 1 : -1;
 
     $itemId = isset($b['itemId']) ? (int) $b['itemId'] : 0;
-    $item   = $itemId ? one('SELECT id, name FROM stock_items WHERE id = ?', [$itemId]) : null;
+    // `min_qty` și `unit` se iau odată cu numele, nu într-o a doua interogare
+    // de mai jos: le trebuie anunțului de prag, iar articolul e deja căutat aici.
+    $item   = $itemId ? one('SELECT id, name, min_qty, unit FROM stock_items WHERE id = ?', [$itemId]) : null;
     if (!$item) {
         fail('Articol de depozit inexistent.', 422, 'bad_item');
     }
@@ -495,6 +592,34 @@ function route_moves_create(): void
         'stock_move', 'stock', (string) $id,
         sprintf('%s %s × %s', $direction > 0 ? 'Intrare' : 'Ieșire', $qty, $item['name'])
     );
+
+    // ------------------------------------------- a coborât sub prag? --
+    //
+    // Stocul nu e o coloană, e o sumă: `SUM(qty * direction)` peste `stock_moves`
+    // (vezi `route_items_list()`). Deci „cât e acum" se află dintr-o singură
+    // interogare, iar „cât era înainte" se scade din ea — mișcarea tocmai
+    // scrisă e cunoscută.
+    //
+    // Anunțul se dă la TRECERE, nu la stare. O zi de producție înseamnă o
+    // mișcare pe fiecare linie de rețetă, la fiecare raport din laborator: fără
+    // condiția „era deasupra", telefonul ar suna de douăzeci de ori pentru
+    // aceeași făină, iar al douăzeci și unulea anunț — cel care chiar conta,
+    // despre alt articol — s-ar fi pierdut printre ele. Iar patronul ar fi
+    // tăcut canalul, ceea ce e mai rău decât dacă n-ar fi existat deloc.
+    $prag = (float) $item['min_qty'];
+    if ($prag > 0 && $direction < 0 && notify_channels_for('stock_low')) {
+        $acum   = (float) (scalar('SELECT COALESCE(SUM(qty * direction), 0) FROM stock_moves WHERE item_id = ?', [(int) $item['id']]) ?? 0);
+        $inainte = $acum + $qty;        // mișcarea asta a fost o ieșire
+        if ($inainte >= $prag && $acum < $prag) {
+            json_out_early(['id' => $id], 201);
+            try {
+                notify_stock_low((string) $item['name'], $acum, $prag, (string) ($item['unit'] ?: 'buc'));
+            } catch (Throwable $e) {
+                error_log('[gp] anunț de prag nedus pentru „' . $item['name'] . '": ' . $e->getMessage());
+            }
+            exit;
+        }
+    }
 
     json_out(['id' => $id], 201);
 }
@@ -537,7 +662,7 @@ function route_moves_create(): void
  */
 function route_stock_sync(): void
 {
-    $u    = require_staff();
+    $u    = require_ops();
     $done = status_done();
     if ($done === '') {
         fail('Nu este configurată etapa care încheie comanda.', 409, 'no_done_status');
@@ -577,13 +702,33 @@ function route_stock_sync(): void
         // id: întâi cel legat prin `product_id` (numele se schimbă, produsul
         // nu), și abia dacă nu există niciunul căutăm după nume — ramura pe
         // nume rămâne pentru articolele care chiar n-au produs în catalog:
-        // ambalaje, făină, cutii. Articolele scoase din depozit trec la urmă:
-        // unul cu numele vechi, scos din listă după redenumire, nu mai apare
-        // nicăieri în aplicație — dacă tocmai el ar prinde scăderea, singurul
-        // articol pe care îl vede depozitarul n-ar mai coborî niciodată, iar
-        // lipsa s-ar descoperi abia la inventar. La egalitate ia articolul cel
-        // mai vechi, ca două rulări să scadă din același loc, nu din câte unul
-        // pe rând.
+        // ambalaje, făină, cutii. La egalitate ia articolul cel mai vechi, ca
+        // două rulări să scadă din același loc, nu din câte unul pe rând.
+        //
+        // Articolele scoase din depozit sunt SĂRITE, nu doar trimise la urmă.
+        //
+        // Ștergerea unui articol cu istoric nu-l șterge, îl stinge
+        // (`route_items_delete`, cazul 2), iar din clipa aceea nu mai apare
+        // nicăieri în aplicație. Cât timp `active` era doar cheie de ordonare,
+        // asta ținea numai dacă mai exista un candidat viu: când articolul stins
+        // era SINGURUL, `LIMIT 1` îl întorcea tot pe el. Marfa ieșea atunci
+        // dintr-un raft pe care nu-l vede nimeni, plasa `missing`/`skipped` de
+        // mai jos nu se aprindea (fiindcă `item_id` nu era null), iar comanda se
+        // marca `stock_synced` — adică nu se mai putea relua niciodată. Lipsa
+        // se descoperea la inventar, la săptămâni distanță.
+        //
+        // Cu filtrul, aceeași comandă rămâne întreagă și NEscăzută, iar ruta o
+        // spune pe față. Depozitarul are ce face: numele articolului stins e
+        // ținut de el (uq_stock_items_name), iar refuzul de la creare îi arată
+        // ieșirea — se repune din „Scoase din depozit”, în josul paginii
+        // Depozit, sau se face alt articol pe același produs.
+        //
+        // Filtrul stă în afara lui OR, cu paranteze: pus înăuntru, `AND` are
+        // precedență mai mare și ar fi legat numai a doua ramură, deci
+        // articolele stinse ar fi trecut mai departe pe `product_id` — adică
+        // exact drumul obișnuit. `(s.active = 0)` iese din ORDER BY: după filtru
+        // toate rândurile rămase au `active = 1`, iar o cheie constantă e o
+        // minciună pentru cine citește.
         //
         // Costul: subinterogarea se reface pentru fiecare poziție (`EXPLAIN`
         // arată DEPENDENT SUBQUERY cu filesort). La scara unei zile de comenzi
@@ -597,9 +742,12 @@ function route_stock_sync(): void
                       ON si.id = (
                            SELECT s.id
                              FROM stock_items s
-                            WHERE (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
-                               OR (s.product_id IS NULL AND s.name = oi.name)
-                            ORDER BY (s.active = 0), (s.product_id IS NULL), s.id
+                            WHERE (
+                                    (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
+                                    OR (s.product_id IS NULL AND s.name = oi.name)
+                                  )
+                              AND s.active = 1
+                            ORDER BY (s.product_id IS NULL), s.id
                             LIMIT 1
                          )
               WHERE oi.order_id IN ($marks)",
@@ -628,12 +776,30 @@ function route_stock_sync(): void
             $note = trim((string) ($o['ref'] ?? '') . ' ' . (string) ($o['customer_name'] ?? ''));
             // `name` păstrează denumirea articolului la momentul mișcării: dacă
             // articolul se redenumește mai târziu, registrul vechi rămâne lizibil.
+            //
+            // `order_id` se scrie de aici înainte. Coloana există de la migrarea
+            // 006 și până acum o completa doar laboratorul
+            // (`route_order_production`), adică tocmai singurul loc unde nu era
+            // nevoie de ea. Fără ea, returul din `stock_unsync_order()` n-avea de
+            // unde ști pe ce raft căzuse ieșirea și îl ghicea din nou, cu aceeași
+            // potrivire, dar la alt moment — de multe ori peste zile. Între timp
+            // depozitul se schimbă la o operație cât se poate de obișnuită:
+            // articolul fusese făcut cu unitatea greșită, depozitarul îl scoate
+            // din listă și pune altul pe același produs. La retur, marfa se
+            // întorcea în raftul NOU: două cifre greșite pe vecie, una în minus
+            // acolo unde marfa chiar a plecat, una în plus pe un raft care n-a
+            // văzut-o niciodată.
+            //
+            // Rândul ăsta e singura legătură care nu se poate rupe între o ieșire
+            // și intrarea ei de retur. `note` („#1042 Restaurant Bistro”) nu e o
+            // legătură: și referința, și numele clientului se rescriu din chiar
+            // formularul care cere returul.
             q(
-                'INSERT INTO stock_moves (item_id, name, qty, direction, reason, note, user_id)
-                 VALUES (?, ?, ?, -1, ?, ?, ?)',
+                'INSERT INTO stock_moves (item_id, name, qty, direction, reason, note, user_id, order_id)
+                 VALUES (?, ?, ?, -1, ?, ?, ?, ?)',
                 [
                     (int) $it['item_id'], (string) $it['item_name'], (float) $it['qty'],
-                    'Comandă client', $note, (int) $u['id'],
+                    'Comandă client', $note, (int) $u['id'], (int) $it['order_id'],
                 ]
             );
             $pieces += (float) $it['qty'];

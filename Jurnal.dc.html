@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jurnal · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,11 +15,11 @@
 <x-dc>
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
 a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
-@keyframes jr-fade{from{opacity:0}to{opacity:1}}
 @media (max-width:1000px){
 [data-jr=row]{grid-template-columns:74px minmax(0,1fr)!important;gap:4px 10px!important}
 [data-jr=row]>[data-jr=who]{grid-column:2/3!important}
@@ -27,13 +32,26 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-jr=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
 [data-jr=nav]{display:none!important}
 [data-jr=sidefoot]{display:none!important}
-[data-jr=phoneback]{display:flex!important}
 [data-jr=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
 [data-jr=topbar] h1{font-size:20px!important}
+/* Bara de sus se rupe pe două rânduri, iar căutarea rămâne singură pe al
+   doilea. Fără regulile astea, `margin-left:auto` o lipea de marginea dreaptă
+   și lăsa 67px de gol în stânga ei — un câmp de scris nu se aliniază ca un
+   buton, ci se întinde. Tiparul e cel din Comenzi (`data-adm=search`) și din
+   Depozit (`data-dep=search`); Jurnalul îl sărise. `width:100%` singur n-ar
+   ajunge: părintele e `display:flex`, deci baza elastică trebuie spusă
+   separat, altfel câmpul rămâne la cei 280px scriși în marcaj. */
+[data-jr=topbar]>div:last-child{width:100%!important;margin-left:0!important}
+[data-jr=search]{width:100%!important;flex:1 1 100%!important}
 [data-jr=body]{padding:14px 14px 26px!important;gap:12px!important}
-[data-jr=filters]{width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
-[data-jr=filters]::-webkit-scrollbar{display:none}
-[data-jr=filters]>button{flex:none!important}
+/* Filtrele „Cont" și „Zonă" erau, pe telefon, două fâșii trase cu degetul,
+   fără bară de derulare. La zonă mai trecea — sunt vreo opt. La cont nu: e un
+   buton pe fiecare cont din jurnal, iar lista crește cu fiecare angajat și cu
+   fiecare client care a atins ceva. Și contul căutat, și cel deja ales puteau
+   sta în afara ecranului, deci filtrul părea nepus. Butoanele se ascund, și
+   rămân listele derulante — care țin oricâte conturi pe un singur rând. */
+[data-jr=filters]{display:none!important}
+[data-jr=filtersel]{display:block!important}
 }
 </style>
 </helmet>
@@ -66,30 +84,71 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7">Jurnal</span>
 </div>
-<a data-jr="phoneback" href="Conturi.dc.html" title="Conturi" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
 <div data-jr="nav" style="display:flex;flex-direction:column;gap:6px">
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
-<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
-<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
-<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
-<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
-<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Jurnal</span>
-<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
-<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
 </div>
 <div data-jr="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<!-- Pastila cu numele se arată numai când se știe al cui e numele. Fără
+     lacăt, cât ținea cererea /auth/me pe monitor se vedea o pastilă goală cu
+     „administrator" scris sub ea — pagina afirma cine se uită la ea înainte
+     să fi aflat. Sertarul de telefon avea de mult paza asta (`navWho`); bara
+     de pe monitor rămăsese fără ea, exact asimetria găsită și la Produse și
+     la Setări. -->
+<sc-if value="{{ sideWho }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
 <div style="display:flex;flex-direction:column;min-width:0;flex:1">
 <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
 <span style="font-size:12px;opacity:.6">administrator</span>
 </div>
 </div>
+</sc-if>
 <a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
 <p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Jurnalul ține minte tot ce s-a întâmplat pe server: cine a intrat, ce comandă a schimbat, ce mișcare de stoc a trecut — de pe orice dispozitiv, nu doar de pe acesta.</p>
 </div>
 </div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
+
 
 <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
 
@@ -99,14 +158,15 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
 </div>
 <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
-<input class="h-input" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Caută acțiune, comandă, produs" style="width:280px;max-width:100%;height:44px;font-size:15px">
+<input data-jr="search" class="h-input" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Caută acțiune, comandă, produs" style="width:280px;max-width:100%;height:44px;font-size:15px">
 </div>
 </div>
 
-<sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
-<div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:jr-fade .25s var(--h-ease-out)">
-<p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
 </div>
 </sc-if>
 
@@ -114,6 +174,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div style="display:flex;flex-direction:column;gap:8px">
 <span class="h-eyebrow" style="font-size:12px">Cont</span>
+<select data-jr="filtersel" class="h-input" value="{{ whoPick }}" onChange="{{ onWhoPick }}" style="display:none;width:100%;height:46px;font-size:15px">
+<sc-for list="{{ whoOpts }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
 <div data-jr="filters" style="display:flex;flex-wrap:wrap;gap:6px">
 <sc-for list="{{ whoFilters }}" as="w" hint-placeholder-count="3">
 <button type="button" class="{{ w.cls }}" onClick="{{ w.onClick }}" style="height:42px;font-size:14px;border-radius:12px;display:flex;align-items:center;gap:8px">
@@ -126,6 +191,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div style="display:flex;flex-direction:column;gap:8px">
 <span class="h-eyebrow" style="font-size:12px">Zonă</span>
+<select data-jr="filtersel" class="h-input" value="{{ pagePick }}" onChange="{{ onPagePick }}" style="display:none;width:100%;height:46px;font-size:15px">
+<sc-for list="{{ pageOpts }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
 <div data-jr="filters" style="display:flex;flex-wrap:wrap;gap:6px">
 <sc-for list="{{ pageFilters }}" as="p" hint-placeholder-count="4">
 <button type="button" class="{{ p.cls }}" onClick="{{ p.onClick }}" style="height:42px;font-size:14px;border-radius:12px;display:flex;align-items:center;gap:8px">
@@ -174,6 +244,18 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ hasMore }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onMore }}" style="min-height:44px;font-size:14px">{{ moreLabel }}</button>
 </sc-if>
+<!-- Motivul feliei vechi stă AICI, la capătul listei, nu sus în caseta mare:
+     butonul apăsat e la capătul de jos al unui jurnal care poate avea sute de
+     rânduri, iar o casetă lipită de bara de titlu n-o vede nimeni de acolo.
+     Rândul lui în rând e întreg (`flex:1 0 100%`), ca să cadă sub buton, nu
+     lângă el. Reîncercarea e chiar butonul de deasupra, deci n-are nevoie de
+     unul al ei. -->
+<sc-if value="{{ eroareMai }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="flex:1 0 100%;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:14px;font-weight:700">Acțiunile mai vechi n-au venit. Cele de pe ecran sunt întregi.</p>
+<p style="margin:0;font-size:14px;line-height:1.45">{{ eroareMai }}</p>
+</div>
+</sc-if>
 
 </div>
 </sc-if>
@@ -216,7 +298,7 @@ class Component extends DCLogic {
   // diferite: între apăsarea tastei și răspuns trece timp, iar un răspuns
   // întârziat despre altă căutare trebuie recunoscut și aruncat, ca omul să nu
   // vadă rezultatele cuvântului pe care tocmai l-a șters.
-  state = { log: [], pg: 1, pages: 1, total: 0, auth: null, who: "Toate", page: "Toate", search: "", q: "", msg: "", loaded: false };
+  state = { navOpen: false, log: [], pg: 1, pages: 1, total: 0, auth: null, who: "Toate", page: "Toate", search: "", q: "", eroare: "", eroareMai: "", loaded: false };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
@@ -234,18 +316,50 @@ class Component extends DCLogic {
         location.href = h + q;
       }, true);
     }
+    // `gp.me()` are DOUĂ feluri de „fără cont", iar pagina asta le lega pe
+    // amândouă la același capăt. Unul e serverul care răspunde lămurit „nu
+    // ești conectat" (promisiune împlinită, cu `null`). Celălalt e serverul la
+    // care nu s-a ajuns deloc — rețea căzută, PHP picat: `gp.me()` ARUNCĂ
+    // (shared/gp-api.js, `await request(...)`), iar catch-ul de aici punea
+    // `loaded: true` și întorcea tot `null`. Rândul de mai jos citea `null`-ul
+    // acela ca „n-are sesiune" și trimitea omul la pagina de intrare — fără
+    // nicio casetă, fără niciun motiv, ba chiar aruncându-i în față, cât ține
+    // redesenarea, învinuirea „contul tău n-are acces la jurnal". Pagina nu
+    // aflase nimic despre contul lui.
+    //
+    // `NEAFLAT` desparte cele două. Pe el pagina rămâne unde e, cu caseta
+    // roșie și cu butonul „Încearcă din nou" — adică fix cei patru pași ai
+    // casei: spune ce s-a întâmplat, spune de ce, nu afirma nimic despre ce
+    // n-ai aflat, și lasă o cale înapoi.
+    const NEAFLAT = {};
     gp.me()
       .then((user) => {
-        if (user) this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
+        if (user) this.setState({ auth: gp.auth(user) });
+        return user;
       })
-      .catch(() => this.setState({ loaded: true }))
+      .catch((e) => {
+        this.setState({ eroare: gp.motiv(e, "jurnalul"), loaded: true });
+        return NEAFLAT;
+      })
       // gp.poll() aduce prima pagină imediat și o reia din cinci în cinci
       // secunde. Față de un cronometru propriu, se oprește cât timp fila e
       // ascunsă și nu lasă două ture să se suprapună, deci un răspuns întârziat
       // nu mai poate pune pe ecran o listă mai veche decât cea deja afișată.
       // Pornește abia după ce știm cine e conectat, ca administratorului să nu
       // i se arate o clipă ecranul „nu ai acces la jurnal”.
-      .then(() => { this.stopPoll = gp.poll(() => this.pull(1), 5000); });
+      // …și doar pentru administrator: pentru oricine altcineva serverul
+      // răspunde 403 la /log, iar ecranul „nu ai acces" nu are ce
+      // reîmprospăta — pornea totuși, cu un refuz la fiecare 5 secunde.
+      // Utilizatorul vine din promisiune, nu din `this.state`: setState-ul de
+      // mai sus e amânat de React, deci aici starea ar fi încă goală.
+      .then((user) => {
+        // Prima ramură e cea nouă: nu s-a aflat nimic, deci nu se face nimic.
+        // Caseta e deja pe ecran, cu motivul ei și cu butonul de reîncercare.
+        if (user === NEAFLAT) return;
+        if (!user) gp.toLogin();
+        else if (gp.eAdmin(user)) this.stopPoll = gp.poll(() => this.pull(1), 5000);
+        else this.setState({ loaded: true });
+      });
     this.onStore = () => this.pull(1);
     window.addEventListener("storage", this.onStore);
   }
@@ -280,7 +394,7 @@ class Component extends DCLogic {
 
         const fresh = (r.entries || []).map((e) => ({
           id: e.id,
-          at: e.createdAt ? Date.parse(e.createdAt + 'Z') || 0 : 0,
+          at: gp.utc(e.createdAt),
           u: e.user || '—',
           name: e.user || 'Sistem',
           role: e.role || '',
@@ -298,6 +412,17 @@ class Component extends DCLogic {
         this.setState({
           log: merged,
           loaded: true,
+          // Jurnalul se reîmprospătează din cinci în cinci secunde. Dacă
+          // răspunsul bun n-ar stinge caseta, ea ar rămâne deasupra unei liste
+          // proaspete — o minciună la fel de mare ca golul de dinainte, doar
+          // întoarsă pe dos.
+          eroare: "",
+          // …dar NU și `eroareMai`: reîmprospătarea cere mereu pagina 1, iar
+          // reușita ei nu dovedește nimic despre felia veche care n-a venit.
+          // Ștearsă aici, motivul apăsării de acum cinci secunde ar dispărea
+          // singur de pe ecran, iar omul ar rămâne cu un buton care pare că nu
+          // face nimic. Se stinge numai când chiar sosește o pagină mai veche.
+          eroareMai: wanted > 1 ? "" : this.state.eroareMai,
           // Reîmprospătarea cere mereu pagina 1, dar nu are voie să dea cursorul
           // înapoi acolo: dacă îl dă, „Încarcă mai vechi” cere din nou pagina
           // tocmai adusă, deduplicarea de mai sus o aruncă întreagă și jurnalul
@@ -311,7 +436,38 @@ class Component extends DCLogic {
       })
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
-        else this.setState({ msg: e.message, loaded: true });
+        // Aceeași pază ca la răspunsul bun, de mai sus: un refuz care aparține
+        // unei căutări deja șterse nu are voie să aprindă caseta peste
+        // rezultatele bune ale căutării de acum. Fără ea, cele două ramuri ale
+        // aceleiași promisiuni se purtau diferit cu același răspuns întârziat.
+        else if (termen !== this.state.q) return;
+        // „Încarcă mai vechi” cere o pagină > 1. Când doar felia aceea nu vine,
+        // jurnalul de pe ecran E încărcat, deci caseta mare — care spune tare
+        // „Jurnalul nu s-a încărcat.” — ar minți despre rândurile pe care omul
+        // le are sub ochi. Motivul pleacă în a doua cheie, desenată jos, lângă
+        // butonul apăsat.
+        else if (wanted > 1) this.setState({ eroareMai: gp.motiv(e, "acțiunile mai vechi") });
+        // Reîmprospătarea de la cinci secunde cere MEREU pagina 1, deci cădea
+        // pe ramura de mai jos și aprindea caseta mare — „Jurnalul nu s-a
+        // încărcat." — peste cincizeci de rânduri care se văd, întregi, chiar
+        // sub ea, cu două contoare dedesubt care le numără. Când pica și felia
+        // veche, ecranul purta două casete roșii care se contraziceau.
+        //
+        // Măsura adevărată nu e ce pagină s-a cerut, ci dacă e ceva pe ecran:
+        // `log.length`. Când e, motivul se scrie despre RÂNDURILE NOI, iar
+        // titlul casetei (`eroareTitlu`) spune „nu s-a reîmprospătat", nu „nu
+        // s-a încărcat". Aceleași patru rânduri de casetă, cu adevărul în ele.
+        else if (this.state.log.length) this.setState({ eroare: gp.motiv(e, "rândurile noi ale jurnalului"), loaded: true });
+        // Refuzul se scria în bara trecătoare de sus: omul o închidea cu un ×
+        // și nu se mai întorcea niciodată, deci rămânea cu un jurnal gol și
+        // fără niciun motiv. Acum rămâne pe ecran, în caseta de eroare.
+        //
+        // `loaded` rămâne adevărat, ca pagina să nu se învârtă la nesfârșit —
+        // asta ar fi altă minciună. Lacătul care oprește cardul de gol să
+        // spună „Nicio acțiune pe filtrele alese” e `eroare`, nu `loaded`:
+        // cardul acela e o afirmație despre TOT jurnalul de pe server, iar
+        // pagina n-a apucat s-o verifice.
+        else this.setState({ eroare: gp.motiv(e, "jurnalul"), loaded: true });
       });
   }
 
@@ -325,7 +481,13 @@ class Component extends DCLogic {
   cauta(text) {
     const term = (text || "").trim();
     if (term === this.state.q) return;
-    this.setState({ q: term, log: [], pg: 1, pages: 1, total: 0, loaded: false });
+    // Căutarea nouă stinge și motivul vechi. Lista se golește anume, deci
+    // caseta rămasă pe ecran ar vorbi despre o cerere care nu mai există, peste
+    // un ecran gol de la o cerere care încă n-a răspuns. Dacă și cea nouă pică,
+    // catch-ul o aprinde la loc, cu motivul ei. `eroareMai` pleacă odată cu ea:
+    // cursorul se întoarce la prima pagină, deci felia veche care lipsea nu mai
+    // e a nimănui.
+    this.setState({ q: term, log: [], pg: 1, pages: 1, total: 0, eroare: "", eroareMai: "", loaded: false });
     return this.pull(1, term);
   }
 
@@ -333,7 +495,7 @@ class Component extends DCLogic {
     const S = this.state, set = (x) => this.setState(x);
     const auth = S.auth;
     const role = auth ? (auth.role || "") : "";
-    const isAdmin = role === "admin";
+    const isAdmin = gp.eAdmin(role);
 
     const all = S.log.slice().sort((a, b) => b.at - a.at);
     // Căutarea nu se mai repetă aici: a făcut-o serverul, peste tot jurnalul,
@@ -366,7 +528,9 @@ class Component extends DCLogic {
           return {
             time: z(dt.getHours()) + ":" + z(dt.getMinutes()),
             name: e.name || e.u || "—",
-            role: rl === "admin" ? "admin" : rl === "client" ? "client" : rl === "angajat" ? "angajat" : "—",
+            // Rolurile noi (manager, agent_vanzari, din migrarea 007) se
+            // arată cu numele lor, nu cu o liniuță.
+            role: rl === "agent_vanzari" ? "agent vânzări" : (rl || "—"),
             roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
             page: ZLAB[e.page] || e.page || "—",
             pageCls: PCLS[e.page] || "h-badge",
@@ -384,15 +548,111 @@ class Component extends DCLogic {
     const rang = (k) => { const i = ZONES.findIndex(zn => zn.key === k); return i < 0 ? ZONES.length : i; };
     const zones = Array.from(new Set(all.map(e => e.page).filter(Boolean))).sort((a, b) => rang(a) - rang(b));
 
+    // Cele două filtre se calculează o dată și se îmbracă în două feluri:
+    // rânduri de butoane pe monitor, liste derulante pe telefon. Scrise de
+    // două ori s-ar fi depărtat unul de altul — iar cel rămas în urmă ar fi
+    // fost tocmai cel de pe telefon, pe care nu-l vede nimeni de la birou.
+    //
+    // Numărul de lângă fiecare filtru e o AFIRMAȚIE despre date, ca subtitlul
+    // de sus — și tace pe același drum pe care tace și el. Fără lacăt, pe o
+    // cerere picată pe ecran rămâneau „Toate conturile · 0" și „Toate zonele ·
+    // 0": două cifre false, la doi centimetri sub caseta roșie. Mai rău, cât
+    // ține reîncercarea (`loaded: false`, iar `gp.get` n-are nici termen, nici
+    // anulare) caseta e stinsă, subtitlul tace, nu e niciun rând pe ecran — și
+    // atunci zerourile alea erau SINGURELE cifre de pe ecran, minute în șir.
+    //
+    // Lacătul ia numărul, nu filtrul: butoanele rămân pe ecran și se pot
+    // apăsa. Un filtru fără număr nu minte; un filtru cu „0" mint, iar cine îl
+    // citește pleacă crezând că patiseria n-a făcut nimic azi.
+    const numar = (n) => ((!S.loaded || S.eroare) ? "" : String(n));
+    const conturi = ["Toate"].concat(accounts).map(u => ({
+      v: u,
+      label: u === "Toate" ? "Toate conturile" : ((all.find(e => e.u === u) || {}).name || u),
+      count: numar(u === "Toate" ? all.length : all.filter(e => e.u === u).length)
+    }));
+    const zonele = ["Toate"].concat(zones).map(p => ({
+      v: p,
+      label: p === "Toate" ? "Toate zonele" : (ZLAB[p] || p),
+      count: numar(p === "Toate" ? all.length : all.filter(e => e.page === p).length)
+    }));
+    // Eticheta din listă poartă și numărul, fiindcă pe telefon nu mai e rândul
+    // de butoane care îl arăta lângă fiecare nume. Un filtru fără număr e orb:
+    // nu-ți spune dacă merită apăsat.
+    // Când numărul tace (cerere picată, sau încă neîncărcat), tace și punctul
+    // dintre el și nume: altfel pe telefon ar rămâne „Toate conturile · ", o
+    // frază retezată care arată ca o stricăciune, nu ca o tăcere aleasă.
+    const optiune = (x) => ({ v: x.v, l: x.count ? x.label + " · " + x.count : x.label });
+
     return {
-      blocked: S.loaded && !isAdmin,
-      allowed: !S.loaded || isAdmin,
-      blockedLine: auth
-        ? "Contul „" + auth.name + "” nu are acces la jurnal. Doar administratorii văd ce a schimbat fiecare cont."
-        : "Intră cu un cont de administrator din pagina de conturi ca să vezi jurnalul.",
+      // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
+      // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
+      // există — bara e acum un șablon peste lista de aici, ca nu cumva un
+      // buton scos dintr-un meniu să rămână în celălalt.
+      //
+      // `gp.meniu()` (shared/gp-api.js) taie din listă panourile pe care
+      // rolul ăsta n-are voie să le deschidă. Până sosește sesiunea, `S.auth`
+      // e null și lista iese goală — dinadins: mai bine nicio intrare o
+      // clipă decât intrări care dispar sub deget. Le compară
+      // `.claude/check-meniu.mjs`.
+      meniu: gp.meniu("Jurnal", S.auth),
+      navHere: "Jurnal",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      // Apăsarea pe foaie nu are voie să ajungă la fundal, care închide.
+      onNavKeep: (e) => e.stopPropagation(),
+      // Două steaguri, nu unul negat, fiindcă `sc-if` primește o valoare, nu o
+      // expresie. Marcajul sertarului rămâne identic în toate panourile; ce se
+      // arată din el se hotărăște de aici.
+      //
+      // Numele apare NUMAI dacă se știe al cui e. Până răspunde serverul, și în
+      // paginile unde un cont fără drepturi rămâne pe ecran cu un mesaj de
+      // refuz în loc să fie trimis la intrare, `auth` e gol — iar un rând care
+      // scrie „conectat" sub un nume gol ar minți. Atunci nu se arată niciunul.
+      navWho: !!auth,
+      navAnon: false,
+      // Geamănul de pe monitor. Și `isAdmin`, nu doar `!!auth`: cuvântul de
+      // sub nume e scris fix în marcaj („administrator"), iar `pull()` poate
+      // desena o clipă învelișul întreg peste un cont fără drept — atunci
+      // pastila ar fi scris „administrator" peste numele unui șofer. Forma e
+      // cea din `Setari.dc.html:sideWho`.
+      sideWho: !!auth && isAdmin,
+      // „Ieși din cont" lipsea cu totul din pagina asta — și de pe monitor,
+      // nu doar de pe telefon. Sertarul îl arată în toate panourile, deci
+      // trebuie să existe în toate. Sesiunea se închide pe SERVER, apoi
+      // pagina pleacă la intrare, ca omul să nu rămână pe un ecran mort.
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+      // Ecranul de refuz vorbește despre CONTUL omului, deci nu se aprinde
+      // până nu se știe al cui e. Forma e cea din `Setari.dc.html`, cu toate
+      // patru lacătele, fiindcă acolo e scrisă întreagă și cu motivul ei; până
+      // acum pagina asta avea numai `S.loaded && !isAdmin`, adică exact
+      // combinația în care un `gp.me()` picat ridica un refuz inventat peste
+      // un om despre care nu se aflase nimic.
+      blocked: S.loaded && !!auth && !isAdmin && !S.eroare,
+      allowed: !S.loaded || !auth || isAdmin || !!S.eroare,
+      // O singură frază, nu două pe ramuri: de când `blocked` cere `!!auth`,
+      // ecranul ăsta se aprinde NUMAI peste un cont știut. Ramura „intră cu un
+      // cont de administrator" era cod la care nu se mai putea ajunge pe
+      // niciun drum, iar un mesaj care nu se poate reproduce e mai rău decât
+      // unul lipsă: cine îl caută mâine îl găsește în fișier și nu-l poate
+      // scoate pe ecran. Cine n-are sesiune nu ajunge aici — îl duce
+      // `gp.toLogin()`.
+      blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces la jurnal. Doar administratorii văd ce a schimbat fiecare cont.",
       authName: auth ? auth.name : "",
 
-      sub: all.length + (all.length === 1 ? " acțiune înregistrată" : " acțiuni înregistrate") + " · " + accounts.length + (accounts.length === 1 ? " cont" : " conturi"),
+      // Subtitlul numără ce a venit de la server, deci e o AFIRMAȚIE despre
+      // date, nu o etichetă de antet. Fără lacăt, pe o cerere picată scria „0
+      // acțiuni înregistrate · 0 conturi” chiar deasupra casetei roșii: două
+      // propoziții care se bat cap în cap, iar omul pleacă crezând cifra —
+      // adică exact minciuna pe care caseta o repară. Tace și până la primul
+      // răspuns, din același motiv: zero nu e un răspuns, e o așteptare. Tace
+      // de tot (șir gol), fiindcă orice altă frază ar repeta ce scrie caseta.
+      sub: (!S.loaded || S.eroare) ? "" : all.length + (all.length === 1 ? " acțiune înregistrată" : " acțiuni înregistrate") + " · " + accounts.length + (accounts.length === 1 ? " cont" : " conturi"),
       search: S.search,
       onSearch: (e) => {
         const text = e.target.value;
@@ -402,23 +662,57 @@ class Component extends DCLogic {
         clearTimeout(this.tCauta);
         this.tCauta = setTimeout(() => this.cauta(text), 300);
       },
-      msg: S.msg,
-      onMsgClose: () => set({ msg: "" }),
+      // „msg”, caseta verde de sub bara de sus și „onMsgClose” au fost scoase.
+      // Singurul loc care scria în ele era catch-ul cererii; de când refuzul se
+      // duce în `eroare`, nimeni nu le mai punea nimic — rămăsese o casetă care
+      // nu se mai putea aprinde niciodată și un „×” care o închidea. Animația
+      // `jr-fade` a plecat odată cu ele: nimic altceva n-o folosea.
+      eroare: S.eroare,
+      // Titlul casetei era scris fix în marcaj, „Jurnalul nu s-a încărcat.", și
+      // nu se uita la ce e pe ecran. Când jurnalul E încărcat și numai
+      // reîmprospătarea a picat, prima propoziție de pe ecran era falsă, iar
+      // dedesubtul ei stăteau rândurile adevărate. Acum titlul spune care
+      // dintre cele două s-a întâmplat. Măsura e `S.log`, ce a venit de la
+      // server — nu `rows`, lista filtrată, care poate fi goală pe bună
+      // dreptate când omul a ales un filtru fără potriviri.
+      eroareTitlu: S.log.length ? "Jurnalul nu s-a reîmprospătat." : "Jurnalul nu s-a încărcat.",
+      eroareMai: S.eroareMai,
+      // Bloc cu acolade, nu săgeată scurtă, și nu din întâmplare: `set` din
+      // pagina asta ia un singur argument, deci ar înghiți callback-ul.
+      // Reîncercarea pleacă din `this.setState`, ca datele să fie cerute abia
+      // DUPĂ ce eroarea s-a stins — altfel un răspuns venit repede ar fi
+      // acoperit înapoi de caseta veche. `pull(1)` cere iar prima pagină, cu
+      // căutarea care e acum pe ecran.
+      onReincearca: () => {
+        // `loaded: false` nu e de prisos: lacătul cardului de gol e
+        // `S.loaded && rows.length === 0 && !S.eroare`, deci în clipa în care
+        // caseta se stinge toate trei devin adevărate și pe ecran sare tocmai
+        // minciuna pentru care omul apăsa butonul — „Nicio acțiune înregistrată
+        // încă”, cu „Șterge filtrele” sub ea. Și nu e o clipire: `gp.get` n-are
+        // nici termen, nici anulare, deci pe un server care atârnă cardul fals
+        // rămâne minute întregi. Cu `loaded: false` pagina spune adevărul — a
+        // întrebat din nou și încă nu știe — exact ca `cauta`.
+        //
+        // `eroareMai` NU se stinge aici: butonul ăsta cere iar prima pagină, nu
+        // felia veche care lipsește, deci n-are dreptul să șteargă un motiv pe
+        // care nu-l repară.
+        this.setState({ eroare: "", loaded: false }, () => this.pull(1));
+      },
 
-      whoFilters: ["Toate"].concat(accounts).map(u => {
-        const label = u === "Toate" ? "Toate conturile" : ((all.find(e => e.u === u) || {}).name || u);
-        return {
-          label, count: String(u === "Toate" ? all.length : all.filter(e => e.u === u).length),
-          cls: S.who === u ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
-          onClick: () => set({ who: u })
-        };
-      }),
-      pageFilters: ["Toate"].concat(zones).map(p => ({
-        label: p === "Toate" ? "Toate zonele" : (ZLAB[p] || p),
-        count: String(p === "Toate" ? all.length : all.filter(e => e.page === p).length),
-        cls: S.page === p ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
-        onClick: () => set({ page: p })
+      whoFilters: conturi.map(x => Object.assign({}, x, {
+        cls: S.who === x.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ who: x.v })
       })),
+      whoPick: S.who,
+      whoOpts: conturi.map(optiune),
+      onWhoPick: (e) => set({ who: e.target.value }),
+      pageFilters: zonele.map(x => Object.assign({}, x, {
+        cls: S.page === x.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ page: x.v })
+      })),
+      pagePick: S.page,
+      pageOpts: zonele.map(optiune),
+      onPagePick: (e) => set({ page: e.target.value }),
 
       groups,
       // Subsolul și „Încarcă mai vechi” țin de câte intrări s-au adus, nu de
@@ -427,7 +721,12 @@ class Component extends DCLogic {
       // ce era încărcat, iar butonul care ar fi adus restul jurnalului se
       // ascundea odată cu contorul care spunea că se vede doar o felie.
       hasRows: S.log.length > 0,
-      empty: S.loaded && rows.length === 0,
+      // Lacătul `&& !S.eroare`: „Nicio acțiune pe filtrele alese” e o
+      // afirmație despre tot jurnalul de pe server, iar cât timp caseta de
+      // eroare e pe ecran pagina n-a primit niciun răspuns pe care s-o poată
+      // face. Cardul acela mai poartă și butonul „Șterge filtrele”, care ar
+      // trimite omul să caute vina în filtrele lui.
+      empty: S.loaded && rows.length === 0 && !S.eroare,
       // Cu căutarea pe server, o listă goală nu mai înseamnă „jurnalul e gol”,
       // ci „nimic din tot jurnalul nu conține textul căutat”. Textul vechi ar fi
       // spus „nicio acțiune înregistrată încă” peste mii de acțiuni înregistrate.
@@ -441,7 +740,29 @@ class Component extends DCLogic {
         : "Jurnalul se scrie pe server, la fiecare operație.",
       hasMore: S.pg < S.pages,
       moreLabel: "Încarcă mai vechi",
-      onMore: () => this.pull(S.pg + 1),
+      // Motivul vechi se stinge ÎNAINTE de cerere, ca a doua apăsare să nu pară
+      // că n-a făcut nimic: fără asta, o a doua picare ar lăsa pe ecran exact
+      // aceleași vorbe, iar omul n-ar ști dacă butonul a mai încercat o dată.
+      //
+      // Aici fără callback, spre deosebire de „Încearcă din nou”: butonul ăsta
+      // trebuie să ÎNTOARCĂ promisiunea cererii, iar dintr-un callback n-ar
+      // mai avea ce întoarce.
+      //
+      // Cine o așteaptă, exact: NUMAI proba casei (.claude/check-panouri.mjs
+      // face `await v.onMore()`). Pagina care rulează n-o așteaptă — `onClick`
+      // din DSL ajunge de-a dreptul în React (support.js, EVENT_MAP `onclick`
+      // → `onClick`), iar React aruncă ce întoarce un ascultător. Scris aici
+      // fiindcă e ușor de crezut pe dos: cine scoate `return`-ul nu strică
+      // butonul pentru om, ci înroșește patru probe; iar cine îl scoate „ca la
+      // «Încearcă din nou»" le înroșește fără să înțeleagă de ce.
+      //
+      // Ordinea rămâne bună și fără callback: stingerea intră în redesenarea de
+      // acum, iar un refuz vine cel mai devreme în tura următoare a buclei,
+      // deci n-o poate acoperi.
+      onMore: () => {
+        this.setState({ eroareMai: "" });
+        return this.pull(S.pg + 1);
+      },
 
       onClearFilters: () => {
         clearTimeout(this.tCauta);

@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tabla laboratorului · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 </head>
 <body>
@@ -139,7 +144,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ detail.ref }} · interval {{ detail.slot }}</span>
 <span style="font-family:var(--h-font-display);font-size:23px;font-weight:600;line-height:1.15">{{ detail.cust }}</span>
 </div>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px;flex:none">×</button>
+<button type="button" aria-label="Închide fișa comenzii" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px;flex:none">×</button>
 </div>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <span class="{{ detail.chanCls }}" style="font-size:12px">{{ detail.chan }}</span>
@@ -644,7 +649,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ detail.ref }} · interval {{ detail.slot }}</span>
 <span style="font-family:var(--h-font-display);font-size:24px;font-weight:600;line-height:1.15">{{ detail.cust }}</span>
 </div>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px">×</button>
+<button type="button" aria-label="Închide fișa comenzii" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px">×</button>
 </div>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <span class="{{ detail.chanCls }}" style="font-size:13px">{{ detail.chan }}</span>
@@ -694,7 +699,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p class="h-alert__title" style="font-size:15px;color:var(--h-fg);margin:0">2 comenzi noi de la 06:00</p>
 <p class="h-alert__body" style="font-size:14px;margin:2px 0 0">#1047 Studio Arta · #1050 Cafeneaua Lumina</p>
 </div>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onToastClose }}" style="height:44px;width:44px;padding:0;font-size:18px;border-radius:12px;flex:none">×</button>
+<button type="button" aria-label="Închide anunțul" class="h-btn h-btn--ghost" onClick="{{ onToastClose }}" style="height:44px;width:44px;padding:0;font-size:18px;border-radius:12px;flex:none">×</button>
 </div>
 </sc-if>
 </div>

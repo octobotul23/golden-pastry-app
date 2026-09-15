@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalog · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,7 @@
 <x-dc>
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -25,9 +31,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-pr=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
 [data-pr=nav]{display:none!important}
 [data-pr=sidefoot]{display:none!important}
-[data-pr=phoneback]{display:flex!important}
 [data-pr=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
 [data-pr=topbar] h1{font-size:20px!important}
+[data-pr=topbar]>div:last-child{width:100%!important;margin-left:0!important}
+[data-pr=topbar]>div:last-child>input{flex:1 1 100%!important;width:auto!important}
+[data-pr=topbar]>div:last-child>button{flex:1 1 auto!important}
 [data-pr=body]{padding:14px 14px 26px!important;gap:12px!important}
 [data-pr=grid2]{grid-template-columns:1fr!important}
 [data-pr=row]{flex-wrap:wrap!important}
@@ -64,30 +72,73 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7">Catalog</span>
 </div>
-<a data-pr="phoneback" href="Administrare%20Comenzi.dc.html" title="Comenzi" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
 <div data-pr="nav" style="display:flex;flex-direction:column;gap:6px">
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
-<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
-<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
-<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Catalog</span>
-<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
-<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
-<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
-<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
 </div>
 <div data-pr="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<!-- Pastila cu numele stă sub lacăt fiindcă spune cine ești, iar pagina n-are
+     voie s-o spună până nu a aflat. Poarta `allowed` ține acum învelișul pe
+     ecran și când sesiunea n-a putut fi citită — dinadins, ca să se vadă
+     caseta roșie — așa că fără lacăt bara ar scrie „administrator” sub un nume
+     gol, la un lat de palmă de caseta care spune că pagina nu știe nimic. Și
+     n-ar mai clipi o clipă, cât ține încărcarea, ci ar sta cât ține eroarea.
+     Lacătul e al ei, `sideWho`, nu cel al sertarului de pe telefon: sertarul
+     scrie „conectat", adevărat pentru orice cont, pe când aici scrie
+     „administrator". -->
+<sc-if value="{{ sideWho }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
 <div style="display:flex;flex-direction:column;min-width:0;flex:1">
 <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
 <span style="font-size:12px;opacity:.6">administrator</span>
 </div>
 </div>
+</sc-if>
 <a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
 <p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Ce salvezi aici se vede imediat pe goldenpastry.ro și în formularul de comandă.</p>
 </div>
 </div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
 
 <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
 
@@ -98,20 +149,35 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <input class="h-input" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Caută produs" style="width:220px;max-width:100%;height:44px;font-size:15px">
+<!-- Butonul se retrage cât e caseta roșie pe ecran: fără catalog, lista
+     „Grupa” din formular n-are nicio opțiune, deci produsul nu poate fi
+     salvat. O unealtă care nu poate lucra, întinsă omului la o secundă după
+     ce i s-a spus că nu s-a încărcat nimic, îl pune să descopere singur că
+     e stricată. Drumul de ieșire e „Încearcă din nou”, din casetă. -->
+<sc-if value="{{ potAdauga }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" style="height:44px;font-size:15px;font-weight:700">+ Produs nou</button>
+</sc-if>
 </div>
 </div>
 
 <sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pr-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+<button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
 </div>
 </sc-if>
 <sc-if value="{{ err }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pr-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ err }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onErrClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+<button type="button" aria-label="Închide mesajul de eroare" class="h-btn h-btn--ghost" onClick="{{ onErrClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Catalogul nu s-a încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
 </div>
 </sc-if>
 
@@ -154,6 +220,14 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ p.hidden }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge" style="font-size:10px">scos din catalog</span>
 </sc-if>
+<!-- Semnul roșu al produsului fără preț. Stă lângă nume, nu în coloana de
+     prețuri, fiindcă acolo scrie de mult „—" — un semn pe care ochiul care
+     derulează treizeci de rânduri nu-l deosebește de o cifră. Vezi
+     `faraPret` în renderVals(): textul spune care preț lipsește, fiindcă
+     asta e chiar reparația de făcut. -->
+<sc-if value="{{ p.faraPret }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger" style="font-size:10px" title="{{ p.faraPretTitlu }}">{{ p.faraPretText }}</span>
+</sc-if>
 </div>
 <span style="font-size:13px;color:var(--h-fg-subtle)">{{ p.sub }}</span>
 </div>
@@ -162,7 +236,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-size:12px;color:var(--h-fg-faint)">{{ p.priceAlt }}</span>
 </div>
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ p.onEdit }}" style="height:40px;font-size:14px;flex:none">Editează</button>
-<button type="button" data-pr="mini" onClick="{{ p.onToggle }}" title="{{ p.toggleTitle }}">{{ p.toggleIcon }}</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ p.onPauza }}" title="{{ p.pauzaTitlu }}" style="height:40px;font-size:14px;flex:none">{{ p.pauzaText }}</button>
+<button type="button" data-pr="mini" onClick="{{ p.onSterge }}" title="Șterge produsul din catalog">×</button>
 </div>
 </sc-for>
 </div>
@@ -222,7 +297,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div style="display:flex;align-items:center;gap:12px">
 <span style="font-family:var(--h-font-display);font-size:21px;font-weight:600;flex:1">{{ formTitle }}</span>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="height:40px;width:40px;padding:0;font-size:20px">×</button>
+<button type="button" aria-label="Închide formularul produsului" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="height:40px;width:40px;padding:0;font-size:20px">×</button>
 </div>
 
 <sc-if value="{{ formErr }}" hint-placeholder-val="{{ false }}">
@@ -312,7 +387,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="flex:1;min-width:150px;font-size:14px">{{ r.nameLine }}</span>
 <input class="h-input h-numeric" value="{{ r.qty }}" onChange="{{ r.onQty }}" placeholder="0,005" style="height:42px;width:110px;font-size:14px">
 <span style="width:46px;font-size:13px;color:var(--h-fg-faint)">{{ r.unit }}</span>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onDel }}" style="height:42px;width:42px;padding:0;font-size:18px">×</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onDel }}" title="Scoate ingredientul din rețetă" aria-label="Scoate ingredientul din rețetă" style="height:42px;width:42px;padding:0;font-size:18px">×</button>
 </div>
 </sc-for>
 
@@ -340,6 +415,28 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!-- Confirmarea ștergerii. Are două fețe, fiindcă întrebarea are două
+     răspunsuri adevărate: un produs fără istoric chiar dispare (cu fotografie
+     cu tot), iar unul cu istoric nu se poate șterge nicicum. A doua față nu
+     oferă deloc butonul roșu — oferă fapta care se poate face. -->
+<sc-if value="{{ stergeOpen }}" hint-placeholder-val="{{ false }}">
+<div data-pr="scrim" onClick="{{ onStergeInchide }}" style="align-items:center">
+<div class="h-card" onClick="{{ stop }}" style="width:100%;max-width:480px;padding:24px;border-radius:20px;display:flex;flex-direction:column;gap:14px;animation:pr-fade .2s var(--h-ease-out)">
+<span style="font-family:var(--h-font-display);font-size:21px;font-weight:600">{{ stergeTitlu }}</span>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">{{ stergeText }}</p>
+<div style="display:flex;gap:10px;margin-top:6px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onStergeInchide }}" style="flex:1;height:48px;font-size:15px">{{ stergeNu }}</button>
+<sc-if value="{{ stergePoate }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--danger" onClick="{{ onStergeDa }}" style="flex:1;height:48px;font-size:15px">Șterge definitiv</button>
+</sc-if>
+<sc-if value="{{ stergeAreIstoric }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onStergeScoate }}" style="flex:1;height:48px;font-size:15px">Scoate din catalog</button>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-if>
+
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
 /**
@@ -356,22 +453,66 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
  * dar comenzile vechi și mișcările de depozit rămân întregi. Cel adăugat din
  * greșeală, pe care nu-l ține niciun istoric, dispare de tot — altfel lista se
  * umple cu rânduri care nu se mai pot scoate de nicăieri, iar fotografia urcată
- * din greșeală rămâne pe disc pentru totdeauna. Care dintre cele două se
- * întâmplă alege serverul, la DELETE /products/{id}.
+ * din greșeală rămâne pe disc pentru totdeauna.
+ *
+ * Astea sunt DOUĂ fapte, deci au două butoane. Multă vreme au avut unul singur:
+ * × cerea ștergerea, iar serverul alegea el, tăcut, între cele două, după cât
+ * istoric avea produsul. Cine voia doar să oprească vânzarea pentru o săptămână
+ * apăsa un buton de ștergere și spera. Acum rândul are „Scoate din catalog",
+ * care nu șterge niciodată nimic, iar × cere ștergere și atât — cu o fereastră
+ * care spune dinainte care din două urmează, fiindcă lista îi aduce paginii și
+ * cifrele („inOrders", „inStock").
  */
 
-const FOTO_LIPSA = "assets/logo-auriu.png";
+/* Rozeta pusă în locul fotografiei care lipsește.
+ *
+ * Fișierul se cheamă „alb" și are cerneala AURIE. Numele celor două sigle sunt
+ * pe dos — e o fișă deschisă în `docs/06`: `assets/logo-alb.png` e aurie
+ * (`#BD9749`), `assets/logo-auriu.png` e albă (`#FEFEFE`).
+ *
+ * Aici scria până acum „auriu" — firesc pentru cineva care voia aur pe
+ * cartonașul deschis la culoare — și ieșea alb pe crem. Pătratul din spatele
+ * fotografiei are fundalul `--h-bg-sunk`, iar tema casei îl schimbă după
+ * ochelarii calculatorului: crem `#F1E6D4` ziua, ciocolatiu `#130E0B` noaptea
+ * (`hearth.css`, `@media (prefers-color-scheme: dark)`). Măsurat pe amândouă:
+ *
+ *     cerneală     pe crem     pe ciocolatiu
+ *     aurie        2,21:1      7,02:1
+ *     albă         1,22:1     19,01:1
+ *
+ * Albul e orbitor noaptea și nu există ziua: 1,22:1 înseamnă un pătrat gol, nu
+ * o siglă. Aurul e singura cerneală care se vede în amândouă temele. Pe crem e
+ * o filigranare, nu un desen apăsat — și e bine așa: ține locul unei
+ * fotografii, nu se dă drept una.
+ *
+ * Nu redenumim fișierele de aici: cele 33 de trimiteri din pagini cer toate
+ * „alb" ca să capete aur, iar redenumirea e o hotărâre a patronului.
+ * `.claude/check-sigle.mjs` măsoară cerneala chiar din fișierele PNG și nu mai
+ * lasă pe nimeni să pună albul pe un fundal deschis fără să afle.
+ */
+const FOTO_LIPSA = "assets/logo-alb.png";
 const lei = (v) => (v === null || v === undefined || v === "" ? "—" : Number(v).toFixed(2).replace(".", ",") + " lei");
+/** „1 comandă" / „3 comenzi" — româna cere forma, nu doar cifra. */
+const bucati = (n, unu, multe) => n + " " + (n === 1 ? unu : multe);
 
 class Component extends DCLogic {
   state = {
+    navOpen: false,
     auth: null, loaded: false, tab: "produse",
     products: [], cats: [], search: "",
     form: null, formErr: "", saving: false, pendingPhoto: null,
+    // Produsul pentru care s-a apăsat ×, cu tot ce trebuie ca fereastra să
+    // scrie adevărul: numele, dacă chiar se poate șterge, și de ce nu.
+    sterge: null,
     // Articolele de depozit se citesc o singură dată, la prima deschidere a
     // formularului: rețeta are nevoie de ele, restul catalogului nu.
     stockItems: [], stockLoaded: false, stockErr: "",
-    msg: "", err: ""
+    msg: "", err: "",
+    // Refuzul cererii de catalog stă aici, nu în bara trecătoare de sus.
+    // O bară care se închide cu un × și nu se mai întoarce nu e un răspuns:
+    // dedesubt rămânea aprins cardul „Catalogul e gol", adică o afirmație
+    // despre lume pe care pagina n-apucase s-o verifice.
+    eroare: ""
   };
 
   componentDidMount() {
@@ -391,14 +532,42 @@ class Component extends DCLogic {
       }, true);
     }
 
-    gp.me()
+    this.pullTot();
+  }
+
+  /**
+   * Sesiunea și, dacă are dreptul, catalogul — drumul întreg de la care
+   * pornește pagina.
+   *
+   * Stă într-o metodă, nu desfăcut în `componentDidMount`, fiindcă „Încearcă
+   * din nou” trebuie să reia drumul ÎNTREG. Reluat doar cu `pull()`, cererea
+   * de catalog reușea, produsele apăreau și caseta roșie se stingea — dar
+   * `S.auth` rămânea gol, fiindcă nimeni nu mai cerea sesiunea a doua oară.
+   * Din `S.auth` se face meniul (`gp.meniu`), așa că bara laterală și sertarul
+   * de pe telefon rămâneau cu un singur rând mort: niciun drum spre Comenzi,
+   * Depozit, Conturi sau Setări, și nici numele, nici „Ieși”. Omul rămânea
+   * închis în pagină până reîncărca din browser — cu un ecran care arăta
+   * reparat. Butonul trebuie să poată repara chiar starea pentru care a fost
+   * pus. Același tipar ca `pullTot()` din „Setări”.
+   */
+  pullTot() {
+    return gp.me()
       .then((user) => {
         if (!user) { gp.toLogin(); return; }
-        this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
-        if (user.role !== "admin") { this.setState({ loaded: true }); return; }
+        this.setState({ auth: gp.auth(user) });
+        if (!gp.eAdmin(user)) { this.setState({ loaded: true }); return; }
         return this.pull();
       })
-      .catch(() => this.setState({ loaded: true }));
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // Sesiunea n-a putut fi citită, deci pagina nu știe nici cine e omul,
+        // nici ce e în catalog. Până acum tăcea, iar poarta de mai jos aprindea
+        // ecranul „n-ai acces la catalog" — un verdict despre un cont pe care
+        // pagina nu-l cunoștea. Lacătul e `eroare`, nu `loaded`:
+        // `loaded` rămâne adevărat ca pagina să nu se învârtă la
+        // nesfârșit, iar cardul de gol se stinge pe `eroare`.
+        else this.setState({ eroare: gp.motiv(e, "catalogul"), loaded: true });
+      });
   }
 
   /** Catalogul complet, inclusiv produsele scoase — pe acelea le poți repune. */
@@ -407,11 +576,23 @@ class Component extends DCLogic {
       .then((r) => this.setState({
         products: r.products || [],
         cats: r.categories || [],
-        loaded: true
+        loaded: true,
+        // Răspunsul bun stinge caseta roșie. pull() se cheamă și după fiecare
+        // salvare, deci ăsta e și drumul pe care ecranul își revine singur
+        // după o cădere trecătoare a rețelei.
+        eroare: ""
       }))
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
-        else this.setState({ err: e.message, loaded: true });
+        // `loaded` rămâne adevărat, ca pagina să nu se învârtă la nesfârșit —
+        // asta ar fi altă minciună. Lacătul care oprește cardul de gol să
+        // pretindă că nu e nimic în catalog e `eroare`, nu `loaded`:
+        // „Catalogul e gol" e o afirmație despre lume, iar pagina n-a apucat
+        // s-o verifice. Refuzul nu mai pleacă în bara trecătoare `err`,
+        // care se închide cu un × și nu se mai întoarce; `err` rămâne a
+        // SALVĂRILOR, unde o bară trecătoare chiar e potrivită. Mesajul îl
+        // scrie gp.motiv(), nu pagina.
+        else this.setState({ eroare: gp.motiv(e, "catalogul"), loaded: true });
       });
   }
 
@@ -525,6 +706,12 @@ class Component extends DCLogic {
   save() {
     const f = this.state.form;
     if (!f) return;
+    // Zăvor sincron, ca în celelalte panouri: `saving` din stare se vede abia
+    // la următoarea randare, iar două apăsări rapide plecau ca două POST-uri —
+    // a doua se întorcea cu „există deja un produs cu adresa…" pentru produsul
+    // tocmai creat de prima.
+    if (this.__saving) return;
+    this.__saving = true;
 
     // Verificăm aici ce poate fi verificat aici, ca să nu plece o cerere doar
     // ca să se întoarcă cu aceeași eroare. Serverul verifică oricum din nou.
@@ -535,6 +722,7 @@ class Component extends DCLogic {
     if (!f.descEn.trim())  lipsa.push("descrierea în engleză");
     if (!f.category)       lipsa.push("grupa");
     if (lipsa.length) {
+      this.__saving = false;
       this.setState({ formErr: "Lipsește " + lipsa.join(", ") + "." });
       return;
     }
@@ -595,7 +783,8 @@ class Component extends DCLogic {
             : e.message
         });
         if (creat) this.pull();
-      });
+      })
+      .finally(() => { this.__saving = false; });
   }
 
   /** Fotografia pleacă separat: e fișier, nu JSON. */
@@ -605,16 +794,12 @@ class Component extends DCLogic {
 
     const fd = new FormData();
     fd.append("photo", file);
-    return fetch(gp.base + "/products/" + id + "/photo", {
-      method: "POST",
-      credentials: "include",
-      headers: { "X-CSRF-Token": (() => { try { return sessionStorage.getItem("gp-csrf") || ""; } catch (e) { return ""; } })() },
-      body: fd
-    }).then(async (res) => {
-      if (res.ok) return;
-      const d = await res.json().catch(() => null);
-      throw new Error((d && d.error && d.error.message) || "Fotografia nu a putut fi încărcată.");
-    });
+    // Prin clientul comun, nu printr-un fetch de mână: așa primește tokenul
+    // CSRF (și din memorie, când sessionStorage e blocat), reîncercarea la
+    // token vechi și aceleași mesaje de eroare ca restul paginii.
+    return gp.upload("/products/" + id + "/photo", fd)
+      .then(() => undefined)
+      .catch((e) => { throw new Error((e && e.message) || "Fotografia nu a putut fi încărcată."); });
   }
 
   /**
@@ -658,19 +843,25 @@ class Component extends DCLogic {
   }
 
   /**
-   * × pe rândul unui produs — cere ștergerea, nu dezactivarea.
+   * Ștergerea, cerută anume — nu „vezi tu ce iese".
    *
-   * Pagina nu știe dacă produsul a apucat să intre într-o comandă sau într-un
-   * articol de depozit; serverul știe, și tot el alege între ștergerea de tot
-   * (cu fotografie cu tot) și simpla scoatere din catalog. De aceea mesajul
-   * afișat e al lui: dacă l-ar scrie pagina, i-ar spune omului „a fost scos din
-   * catalog” exact atunci când produsul a dispărut definitiv — sau invers, iar
-   * el ar căuta zadarnic rândul în listă ca să-l repună.
+   * „mod=doar-sterge" spune serverului că pagina NU vrea căderea pe scoaterea
+   * din catalog. Fără steag, ruta ar face asta singură, tăcut; iar omul tocmai
+   * a citit o fereastră care-i promitea că produsul dispare definitiv. Dacă
+   * între citirea listei și apăsare produsul a intrat într-o comandă, serverul
+   * răspunde 409 și nu face nimic — adică promisiunea se rupe cu un mesaj, nu
+   * cu o faptă nepotrivită.
+   *
+   * Mesajul de izbândă rămâne al serverului: el a făcut fapta, el o numește.
    */
   removeProduct(p) {
-    gp.del("/products/" + p.id)
+    gp.del("/products/" + p.id + "?mod=doar-sterge")
       .then((r) => this.pull().then(() => this.setState({
-        msg: (r && r.message) || "„" + p.name + "” a fost scos din catalog."
+        // Mesajul serverului spune ce s-a întâmplat de fapt. Cel de rezervă
+        // vorbește despre ȘTERGERE, fiindcă acum numai ștergerea se poate
+        // întâmpla pe drumul ăsta: cu „mod=doar-sterge", scoaterea din catalog
+        // vine ca refuz, nu ca faptă.
+        msg: (r && r.message) || "„" + p.name + "” a fost șters din catalog."
       })))
       .catch((e) => this.setState({ err: e.message }));
   }
@@ -678,7 +869,9 @@ class Component extends DCLogic {
   renderVals() {
     const S = this.state, self = this;
     const set = (x) => this.setState(x);
-    const isAdmin = S.auth && S.auth.role === "admin";
+    const isAdmin = !!S.auth && gp.eAdmin(S.auth);
+    // Produsul pentru care s-a apăsat ×, dacă s-a apăsat.
+    const st = S.sterge;
 
     const q = S.search.trim().toLowerCase();
     const visible = S.products.filter((p) =>
@@ -698,14 +891,58 @@ class Component extends DCLogic {
           hidden: !p.active,
           priceMain: lei(p.priceFrozen),
           priceAlt: p.priceBaked === null ? "" : "raft " + lei(p.priceBaked),
+          // Semnul roșu. Lipsa unui preț nu e o părere a paginii: serverul
+          // refuză poziția la salvarea comenzii („api/lib/orders.php",
+          // missing_price), iar magazinul nu mai arată deloc produsul — nici
+          // în browser, nici pe pagina scrisă de server, nici pe harta
+          // sitului. Rândul din Catalog e singurul loc din toată aplicația
+          // unde produsul se mai vede, deci e singurul loc unde greșeala se
+          // mai poate afla.
+          //
+          // Textul spune CARE preț lipsește, fiindcă asta e reparația. Și nu
+          // spune același lucru în cele două cazuri: fără amândouă prețurile
+          // produsul nu se vinde nicicum, iar cu unul singur lipsă se ascunde
+          // din magazin, dar personalul îl mai poate pune pe o comandă luată
+          // la telefon, în varianta care are preț.
+          faraPret: p.priceFrozen === null || p.priceBaked === null,
+          faraPretText: p.priceFrozen === null && p.priceBaked === null
+            ? "fără preț — nu se vinde"
+            : (p.priceFrozen === null ? "fără preț HoReCa" : "fără preț de raft")
+              + " — ascuns din magazin",
+          faraPretTitlu: p.priceFrozen === null && p.priceBaked === null
+            ? "Produsul n-are niciun preț: nu apare în magazin și nu se poate pune pe o comandă. Apasă „Editează” și completează amândouă prețurile."
+            : "Magazinul arată numai produsele cu amândouă prețurile, fiindcă cumpărătorul alege singur varianta. Apasă „Editează” și completează prețul care lipsește.",
           onEdit: () => self.openForm(p),
-          toggleIcon: p.active ? "×" : "↩",
-          toggleTitle: p.active
-            ? "Șterge produsul — dacă apare în comenzi sau în depozit, rămâne doar scos din catalog"
-            : "Repune în catalog",
-          onToggle: () => (p.active
-            ? self.removeProduct(p)
-            : self.patchProduct(p, { active: true }, "„" + p.name + "” e din nou în catalog."))
+
+          // Comutatorul. Nu șterge niciodată nimic: mută „active" într-o parte
+          // și-n alta, atât. Până acum singurul buton de pe rând era ×, care
+          // cerea ȘTERGEREA — adică omul care voia doar să oprească vânzarea
+          // pentru o săptămână apăsa un buton de ștergere și spera.
+          //
+          // Numele faptei e cel pe care-l folosește deja tot restul aplicației
+          // („scos din catalog" — pe eticheta rândului, în mesajul serverului,
+          // în refuzul de la adăugarea pe o comandă). Un al doilea nume pentru
+          // aceeași stare ar fi fost o îmbunătățire care încurcă.
+          pauzaText: p.active ? "Scoate din catalog" : "Repune în catalog",
+          pauzaTitlu: p.active
+            ? "Nu se mai vinde nici în magazin, nici pe o comandă nouă. Rămâne aici și se poate repune oricând."
+            : "Intră la loc în magazin și în formularul de comandă.",
+          onPauza: () => self.patchProduct(p, { active: !p.active }, p.active
+            ? "„" + p.name + "” a fost scos din catalog. Rămâne în listă și se poate repune oricând."
+            : "„" + p.name + "” e din nou în catalog."),
+
+          // × înseamnă ștergere și atât. Cifrele vin din listă (vezi
+          // „inOrders"/„inStock" în api/routes/products.php), deci fereastra
+          // știe dinainte care din două întrebări are de pus.
+          onSterge: () => set({ sterge: {
+            id: p.id,
+            name: p.name,
+            poate: !(p.inOrders > 0 || p.inStock > 0),
+            unde: [
+              p.inOrders > 0 ? bucati(p.inOrders, "comandă", "comenzi") : "",
+              p.inStock > 0 ? bucati(p.inStock, "articol de depozit", "articole de depozit") : ""
+            ].filter(Boolean).join(" și în ")
+          } })
         }))
       };
     }).filter((g) => g.rows.length > 0 || !q);
@@ -784,25 +1021,136 @@ class Component extends DCLogic {
     const active = S.products.filter((p) => p.active).length;
 
     return {
-      blocked: S.loaded && !isAdmin,
-      allowed: !S.loaded || isAdmin,
-      blockedLine: S.auth
-        ? "Contul „" + S.auth.name + "” nu are acces la catalog. Prețurile și produsele le schimbă doar administratorii."
-        : "Intră cu un cont de administrator ca să editezi catalogul.",
+      // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
+      // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
+      // există — bara e acum un șablon peste lista de aici, ca nu cumva un
+      // buton scos dintr-un meniu să rămână în celălalt.
+      //
+      // `gp.meniu()` (shared/gp-api.js) taie din listă panourile pe care
+      // rolul ăsta n-are voie să le deschidă. Până sosește sesiunea, `S.auth`
+      // e null și lista iese goală — dinadins: mai bine nicio intrare o
+      // clipă decât intrări care dispar sub deget. Le compară
+      // `.claude/check-meniu.mjs`.
+      meniu: gp.meniu("Catalog", S.auth),
+      navHere: "Catalog",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      // Apăsarea pe foaie nu are voie să ajungă la fundal, care închide.
+      onNavKeep: (e) => e.stopPropagation(),
+      // Două steaguri, nu unul negat, fiindcă `sc-if` primește o valoare, nu o
+      // expresie. Marcajul sertarului rămâne identic în toate panourile; ce se
+      // arată din el se hotărăște de aici.
+      //
+      // Numele apare NUMAI dacă se știe al cui e. Până răspunde serverul, și în
+      // paginile unde un cont fără drepturi rămâne pe ecran cu un mesaj de
+      // refuz în loc să fie trimis la intrare, `S.auth` e gol — iar un rând care
+      // scrie „conectat" sub un nume gol ar minți. Atunci nu se arată niciunul.
+      navWho: !!S.auth,
+      navAnon: false,
+      // Bara de pe monitor cere mai mult decât sertarul de pe telefon, fiindcă
+      // spune mai mult: sertarul scrie „conectat", adevărat pentru orice cont,
+      // dar bara scrie „administrator", scris fix în marcaj. `pullTot()` pune
+      // `auth` și `loaded` în două setState-uri deosebite, deci între ele un
+      // cont fără drept se desenează cu învelișul întreg — și pastila ar fi
+      // scris „administrator" peste numele unui șofer. Forma e cea din
+      // `Setari.dc.html`, cheia `sideWho`.
+      sideWho: !!S.auth && isAdmin,
+      // „Ieși din cont" lipsea cu totul din pagina asta — și de pe monitor,
+      // nu doar de pe telefon. Sertarul îl arată în toate panourile, deci
+      // trebuie să existe în toate. Sesiunea se închide pe SERVER, apoi
+      // pagina pleacă la intrare, ca omul să nu rămână pe un ecran mort.
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+      // „Contul n-are acces la catalog" e un verdict despre un cont anume:
+      // pagina n-are voie să-l dea până nu știe al cui e contul. Când
+      // sesiunea n-a putut fi citită se arată caseta de eroare, nu ecranul de
+      // refuz, care altfel ar și acoperi-o.
+      //
+      // Poarta are AMÂNDOUĂ lacătele, ca în sora cea mai apropiată — „Setări",
+      // același înveliș, aceeași pereche, același lanț `gp.me()`→`pull()`
+      // (Setari.dc.html, cheia `blocked`). Un răstimp o scriere de aici a
+      // păstrat numai `!S.eroare`, pe socoteala că „fără sesiune catch-ul
+      // aprinde `eroare`, deci niciun ecran nu le desparte". Le desparte, și
+      // chiar butonul de reîncercare o făcea: el stingea `eroare` înainte să
+      // plece cererea, iar în clipa dintre apăsare și răspuns starea era
+      // `loaded: true`, `auth: null`, `eroare: ""` — adică fix ecranul de refuz,
+      // gol, fără casetă și fără buton, din care nu se mai ieșea. Pe un server
+      // care atârnă (iar `gp.get` n-are nici termen, nici anulare), acolo
+      // rămânea.
+      //
+      // Deci: `!!S.auth` fiindcă ecranul ăsta vorbește despre CONTUL omului și
+      // nu se poate aprinde peste un om nestiut; `!S.eroare` fiindcă un motiv
+      // pe ecran înseamnă că pagina n-a aflat. Butonul, mai jos, pune și
+      // `loaded: false`, ca lacătul să țină și cât ține reîncercarea.
+      blocked: S.loaded && !!S.auth && !isAdmin && !S.eroare,
+      allowed: !S.loaded || !S.auth || isAdmin || !!S.eroare,
+      // O singură frază, nu o ramură goală: de când `blocked` cere `!!S.auth`,
+      // ecranul se aprinde numai peste un cont știut. Ramura cu șirul gol
+      // însemna un ecran de refuz fără nicio propoziție pe el — exact ce s-a
+      // și văzut pe drumul de mai sus.
+      blockedLine: "Contul „" + (S.auth ? S.auth.name : "") + "” nu are acces la catalog. Prețurile și produsele le schimbă doar administratorii.",
       authName: S.auth ? S.auth.name : "",
 
-      sub: active + (active === 1 ? " produs în catalog" : " produse în catalog")
-        + " · " + S.cats.length + (S.cats.length === 1 ? " grupă" : " grupe"),
+      // Subtitlul numără, deci afirmă. Cât nu s-a întors nimic — sau cât e
+      // caseta roșie pe ecran — `S.products` și `S.cats` sunt goale, iar
+      // antetul ar fi scris „0 produse în catalog · 0 grupe" chiar deasupra
+      // propoziției „Catalogul nu s-a încărcat.": pagina s-ar contrazice
+      // singură, și omul care se uită la cifră ar pleca crezând că patiseria
+      // n-are niciun produs. Lacătul e același ca la cardul `empty`.
+      sub: S.loaded && !S.eroare
+        ? active + (active === 1 ? " produs în catalog" : " produse în catalog")
+          + " · " + S.cats.length + (S.cats.length === 1 ? " grupă" : " grupe")
+        : "",
       search: S.search,
       onSearch: (e) => set({ search: e.target.value }),
       onNew: () => self.openForm(null),
+      // Vezi comentariul de lângă buton, în marcaj: fără catalog, formularul
+      // de produs nou n-are din ce să facă lista „Grupa". Un singur steag, nu
+      // o pereche: în locul butonului nu se pune nimic altceva.
+      //
+      // `S.loaded` lângă `!S.eroare`, aceeași pereche ca la `sub` de mai sus:
+      // motivul scris în marcaj („fără catalog, lista «Grupa» n-are nicio
+      // opțiune") e la fel de adevărat cât se ÎNCARCĂ pagina, nu doar când a
+      // picat. Pe o legătură înceată butonul era apăsabil înainte să răspundă
+      // `GET /products?all=1`, formularul se deschidea cu „Grupa" goală, iar
+      // salvarea răspundea „Lipsește grupa." — un refuz pentru o listă pe care
+      // pagina n-o adusese încă.
+      potAdauga: S.loaded && !S.eroare,
 
       msg: S.msg, onMsgClose: () => set({ msg: "" }),
       err: S.err, onErrClose: () => set({ err: "" }),
 
+      eroare: S.eroare,
+      // `set` din pagina asta ia un singur argument, deci un al doilea —
+      // „după ce s-a scris starea, cheamă pull" — s-ar pierde pe drum, iar
+      // butonul ar stinge doar mesajul fără să ceară nimic. Runtime-ul scrie
+      // starea pe loc (support.js:970), așa că cele două rânduri ajung.
+      //
+      // `pullTot()`, nu `pull()`: caseta se aprinde și când a picat `gp.me()`,
+      // iar atunci catalogul singur nu repară nimic — sesiunea ar rămâne
+      // necitită, cu meniul gol în urma ei. Vezi `pullTot()` mai sus.
+      // `loaded: false` nu e de prisos: lacătele paginii — poarta de refuz,
+      // subtitlul, insignele filelor, cardul de gol — se sprijină pe `eroare`,
+      // iar butonul ăsta tocmai o stinge. Fără el, în clipa dintre apăsare și
+      // răspuns pagina se poartă ca și cum ar ști tot ce n-a aflat. Cu el,
+      // spune adevărul: încă întreabă. Tiparul e cel din `Jurnal.dc.html`.
+      onReincearca: () => {
+        set({ eroare: "", loaded: false });
+        this.pullTot();
+      },
+
+      // Insignele filelor numără, deci afirmă, la fel ca subtitlul de mai sus:
+      // deasupra casetei „Catalogul nu s-a încărcat." filele scriau „Produse 0"
+      // și „Grupe 0". Cifra se retrage, eticheta rămâne — fila se apasă mai
+      // departe, doar că nu mai pretinde că a numărat.
       tabs: [
-        { k: "produse", l: "Produse", c: String(S.products.length) },
-        { k: "grupe", l: "Grupe", c: String(S.cats.length) }
+        { k: "produse", l: "Produse", c: S.loaded && !S.eroare ? String(S.products.length) : "" },
+        { k: "grupe", l: "Grupe", c: S.loaded && !S.eroare ? String(S.cats.length) : "" }
       ].map((t) => ({
         label: t.l, count: t.c,
         cls: S.tab === t.k ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
@@ -812,7 +1160,7 @@ class Component extends DCLogic {
       isCategories: S.tab === "grupe",
 
       groups,
-      empty: S.loaded && visible.length === 0,
+      empty: S.loaded && visible.length === 0 && !S.eroare,
       emptyLine: S.products.length === 0
         ? "Catalogul e gol. Apasă „+ Produs nou”."
         : "Niciun produs nu se potrivește căutării.",
@@ -866,10 +1214,45 @@ class Component extends DCLogic {
       onBackdrop: () => set({ form: null, formErr: "", pendingPhoto: null }),
       stop: (e) => { e.stopPropagation(); },
 
+      /* --- fereastra de ștergere --- */
+      // Cele două fețe nu sunt o părere a paginii: „poate" vine din cifrele
+      // trimise de server odată cu lista. Fereastra care nu poate șterge nici
+      // nu arată butonul roșu — arată fapta care chiar se poate face.
+      stergeOpen: !!st,
+      stergePoate: !!st && st.poate,
+      stergeAreIstoric: !!st && !st.poate,
+      stergeTitlu: st
+        ? (st.poate ? "Ștergi „" + st.name + "”?" : "„" + st.name + "” nu se poate șterge")
+        : "",
+      stergeText: st
+        ? (st.poate
+          ? "Dispare definitiv din catalog, cu fotografia lui cu tot. Nu apare în nicio comandă și n-are articol în depozit, deci nu se rupe nimic. Ștergerea nu se poate desface."
+          : "Apare în " + st.unde + ". Dacă l-am șterge, comenzile de atunci n-ar mai ști ce s-a livrat. Poți să-l scoți din catalog: nu se mai vinde nici în magazin, nici pe o comandă nouă, dar istoricul rămâne întreg.")
+        : "",
+      stergeNu: st && st.poate ? "Renunță" : "Închide",
+      onStergeInchide: () => set({ sterge: null }),
+      onStergeDa: () => { set({ sterge: null }); self.removeProduct(st); },
+      onStergeScoate: () => {
+        set({ sterge: null });
+        self.patchProduct(st, { active: false },
+          "„" + st.name + "” a fost scos din catalog. Rămâne în listă și se poate repune oricând.");
+      },
+
       /* --- rețeta --- */
-      recCount: rec.length === 0
-        ? "fără materii prime"
-        : rec.length + (rec.length === 1 ? " materie primă" : " materii prime"),
+      // Numărătoarea de lângă titlul rețetei afirmă, deci tace până se știe.
+      // `rec` iese din `S.form.recipe`, care rămâne goală și când cererea
+      // `/products/{id}/recipe` a picat — și atunci scria „fără materii
+      // prime", o afirmație despre un produs a cărui rețetă pagina n-a putut
+      // s-o citească. Miza nu e mică: rețeta hotărăște ce se scade din depozit
+      // la producție, iar omul putea pleca crezând că produsul n-are una.
+      // Lacătul e `recipeReady`, același pe care îl are de mult sora ei de trei
+      // rânduri mai jos, `recEmpty` — asimetria aceea arăta o scăpare, nu o
+      // hotărâre.
+      recCount: !(S.form && S.form.recipeReady)
+        ? ""
+        : (rec.length === 0
+          ? "fără materii prime"
+          : rec.length + (rec.length === 1 ? " materie primă" : " materii prime")),
       recRows,
       recEmpty: !!(S.form && S.form.recipeReady && rec.length === 0),
       recPick: !!(S.form && S.form.recipeReady && S.stockLoaded),
@@ -877,9 +1260,17 @@ class Component extends DCLogic {
       // e mereu "", iar randarea o readuce acolo. Așa se poate adăuga a doua
       // materie primă fără să mai treci prin altă apăsare.
       recAdd: "",
+      // Prima opțiune afirmă și ea: „Nu mai e ce adăuga din depozit" e o
+      // vorbă despre depozit. `libere` se face din `S.stockItems`, pe care
+      // catch-ul cererii de articole îl golește — deci propoziția se scria și
+      // atunci când depozitul nu s-a putut citi deloc. `S.stockErr` spune care
+      // dintre cele două s-a întâmplat; rândul de ajutor de sub listă
+      // (`recHint`) dă motivul întreg.
       recAddOpts: [{
         v: "",
-        l: libere.length ? "+ Adaugă o materie primă…" : "Nu mai e ce adăuga din depozit"
+        l: S.stockErr
+          ? "Depozitul nu s-a putut citi"
+          : (libere.length ? "+ Adaugă o materie primă…" : "Nu mai e ce adăuga din depozit")
       }].concat(libere.map((it) => ({ v: String(it.id), l: it.name + " · " + it.unit }))),
       onRecAdd: (e) => {
         const id = Number(e.target.value);

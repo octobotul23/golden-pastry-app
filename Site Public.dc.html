@@ -3,8 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="ext-resource-dependency" content=".image-slots.state.json" data-resource-id="slots" />
-<meta name="ext-resource-dependency" content="products/trial-pack.png" data-resource-id="trialpack" />
+<meta name="ext-resource-dependency" content="assets/img/trial-pack.jpg" data-resource-id="trialpack" />
 <meta name="ext-resource-dependency" content="products/prod-1.jpg" data-resource-id="prod1" />
 <meta name="ext-resource-dependency" content="products/prod-2.jpg" data-resource-id="prod2" />
 <meta name="ext-resource-dependency" content="products/prod-3.jpg" data-resource-id="prod3" />
@@ -57,7 +61,7 @@
 
   <div style="position:sticky;top:0;z-index:100;padding:1rem clamp(1.25rem,4vw,3rem) 0;background:linear-gradient(180deg,var(--h-bg-page) 55%,transparent)">
     <header class="h-header" style="max-width:1740px;margin-inline:auto;position:relative">
-      <a class="h-logo" href="#" onClick="{{ goHome }}" style="gap:0.6rem">
+      <a class="h-logo" href="{{ hrefHome }}" data-spa="1" onClick="{{ goHome }}" style="gap:0.6rem">
         <img src="./ratio-1x1-golden-pastryuntitled-design-3-mt7jbr2f-anx6.png" alt="Golden Pastry" style="width: 2.1rem; height: 2.1rem; object-fit: contain">
         <span style="display:flex;flex-direction:column;line-height:1.05">
           <span style="font-family:var(--h-font-display);font-size:1.0625rem;font-weight:700;letter-spacing:0.01em">Golden Pastry</span>
@@ -66,11 +70,11 @@
       </a>
       <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
       <nav class="h-nav" aria-label="Main">
-        <a class="h-nav__link" href="#" aria-current="{{ curHome }}" onClick="{{ goHome }}">{{ navHome }}</a>
-        <a class="h-nav__link" href="#" aria-current="{{ curCat }}" onClick="{{ goCat }}">{{ navCat }}</a>
-        <a class="h-nav__link" href="#" aria-current="{{ curDist }}" onClick="{{ goDist }}">{{ navDist }}</a>
-        <a class="h-nav__link" href="#" aria-current="{{ curAbout }}" onClick="{{ goAbout }}">{{ navAbout }}</a>
-        <a class="h-nav__link" href="#" aria-current="{{ curContact }}" onClick="{{ goContact }}">{{ navContact }}</a>
+        <a class="h-nav__link" href="{{ hrefHome }}" data-spa="1" aria-current="{{ curHome }}" onClick="{{ goHome }}">{{ navHome }}</a>
+        <a class="h-nav__link" href="{{ hrefCat }}" data-spa="1" aria-current="{{ curCat }}" onClick="{{ goCat }}">{{ navCat }}</a>
+        <a class="h-nav__link" href="{{ hrefDist }}" data-spa="1" aria-current="{{ curDist }}" onClick="{{ goDist }}">{{ navDist }}</a>
+        <a class="h-nav__link" href="{{ hrefAbout }}" data-spa="1" aria-current="{{ curAbout }}" onClick="{{ goAbout }}">{{ navAbout }}</a>
+        <a class="h-nav__link" href="{{ hrefContact }}" data-spa="1" aria-current="{{ curContact }}" onClick="{{ goContact }}">{{ navContact }}</a>
       </nav>
       </sc-if>
       <sc-if value="{{ mob }}">
@@ -131,6 +135,9 @@
             <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ accRole }}</p>
           </div>
           <a href="{{ accPanelHref }}" style="{{ mLink }}">{{ accPanelLabel }}</a>
+          <sc-if value="{{ accRef }}" hint-placeholder-val="{{ false }}">
+          <a href="Recomandari.dc.html" style="{{ mLink }}">{{ ctaReferral }}</a>
+          </sc-if>
           <a href="Parola.dc.html" style="{{ mLink }}">{{ ctaPassword }}</a>
           <button type="button" onClick="{{ doLogout }}" style="{{ mBtn }}">{{ ctaLogout }}</button>
         </div>
@@ -138,11 +145,11 @@
     </header>
     <sc-if value="{{ menuOpen }}">
       <nav aria-label="Main" style="max-width:1740px;margin:0.65rem auto 0;padding:0.75rem;background:var(--h-bg-raised);border:1px solid var(--h-line);border-radius:20px;box-shadow:var(--h-shadow-3);display:flex;flex-direction:column;gap:0.15rem">
-        <a href="#" aria-current="{{ curHome }}" onClick="{{ goHome }}" style="{{ mLink }}">{{ navHome }}</a>
-        <a href="#" aria-current="{{ curCat }}" onClick="{{ goCat }}" style="{{ mLink }}">{{ navCat }}</a>
-        <a href="#" aria-current="{{ curDist }}" onClick="{{ goDist }}" style="{{ mLink }}">{{ navDist }}</a>
-        <a href="#" aria-current="{{ curAbout }}" onClick="{{ goAbout }}" style="{{ mLink }}">{{ navAbout }}</a>
-        <a href="#" aria-current="{{ curContact }}" onClick="{{ goContact }}" style="{{ mLink }}">{{ navContact }}</a>
+        <a href="{{ hrefHome }}" data-spa="1" aria-current="{{ curHome }}" onClick="{{ goHome }}" style="{{ mLink }}">{{ navHome }}</a>
+        <a href="{{ hrefCat }}" data-spa="1" aria-current="{{ curCat }}" onClick="{{ goCat }}" style="{{ mLink }}">{{ navCat }}</a>
+        <a href="{{ hrefDist }}" data-spa="1" aria-current="{{ curDist }}" onClick="{{ goDist }}" style="{{ mLink }}">{{ navDist }}</a>
+        <a href="{{ hrefAbout }}" data-spa="1" aria-current="{{ curAbout }}" onClick="{{ goAbout }}" style="{{ mLink }}">{{ navAbout }}</a>
+        <a href="{{ hrefContact }}" data-spa="1" aria-current="{{ curContact }}" onClick="{{ goContact }}" style="{{ mLink }}">{{ navContact }}</a>
         <button type="button" class="h-btn h-btn--primary h-btn--block" style="margin-top:0.5rem;min-height:2.75rem" onClick="{{ goContact }}">{{ ctaQuote }}</button>
         <a class="h-btn h-btn--block" href="{{ waHelloHref }}" target="_blank" rel="noopener" style="margin-top:0.4rem;min-height:2.75rem;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-1);gap:0.5rem;text-decoration:none">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
@@ -151,6 +158,16 @@
       </nav>
     </sc-if>
   </div>
+
+  <sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:1740px;margin:1.1rem auto 0;padding:0 clamp(1.25rem,4vw,3rem)">
+  <div class="h-alert h-alert--danger" role="alert" style="border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+  <p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
+  <p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+  <button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ eroareCta }}</button>
+  </div>
+  </div>
+  </sc-if>
 
   <sc-if value="{{ onHome }}" hint-placeholder-val="{{ true }}">
   <main>
@@ -326,6 +343,9 @@
           <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebCatalog }}</p>
           <h1 class="h-h1" style="margin:0 0 1rem">{{ catTitle }}</h1>
           <p class="h-lead" style="margin:0">{{ catLead }}</p>
+          <sc-if value="{{ peGrupa }}">
+            <p class="h-small" style="margin:1rem 0 0"><a href="{{ hrefCat }}" data-spa="1" onClick="{{ goCat }}" style="{{ crumbLink }}">{{ pvTotCta }}</a></p>
+          </sc-if>
         </div>
       </div>
     </section>
@@ -346,14 +366,6 @@
       <div ref="{{ colsRef }}" style="display:flex;flex-wrap:wrap;gap:clamp(1.5rem,3vw,2.5rem);align-items:flex-start">
 
         <div style="flex:1 1 min(44rem,100%);min-width:0;display:flex;flex-direction:column;gap:clamp(1.75rem,3vw,2.75rem)">
-
-          <sc-if value="{{ catBroken }}">
-            <section class="h-card h-card--raised" role="alert" style="border-color:var(--h-danger);box-shadow:0 0 0 2px var(--h-danger-soft),var(--h-shadow-2);display:flex;flex-direction:column;gap:0.5rem;align-items:flex-start">
-              <span class="h-badge h-badge--danger">{{ catErrTitle }}</span>
-              <p class="h-small" style="margin:0;color:var(--h-fg-muted);line-height:1.6;text-wrap:pretty;max-width:52ch">{{ catErrBody }}</p>
-              <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ catErrReload }}">{{ catErrCta }}</button>
-            </section>
-          </sc-if>
 
           <sc-if value="{{ hasCat }}" hint-placeholder-val="{{ true }}">
           <section class="h-card h-card--raised" style="{{ trialCard }}">
@@ -391,7 +403,7 @@
             <section>
               <div style="{{ grpHead }}">
                 <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:0.6rem">
-                  <h2 class="h-h3" style="{{ grpTitle }}">{{ g.title }}</h2>
+                  <h2 class="h-h3" style="{{ grpTitle }}"><a href="{{ g.href }}" data-spa="1" onClick="{{ g.go }}" style="color:inherit;text-decoration:none" style-hover="text-decoration:underline">{{ g.title }}</a></h2>
                   <span class="h-badge">{{ g.count }}</span>
                 </div>
                 <p class="h-small" style="{{ grpNote }}">{{ g.note }}</p>
@@ -407,7 +419,7 @@
                       </sc-if>
                     </div>
                     <div style="{{ prodBody }}">
-                      <h3 class="h-card__title" style="{{ prodTitle }}">{{ pr.name }}</h3>
+                      <h3 class="h-card__title" style="{{ prodTitle }}"><a href="{{ pr.href }}" data-spa="1" onClick="{{ pr.go }}" style="color:inherit;text-decoration:none" style-hover="text-decoration:underline">{{ pr.name }}</a></h3>
                       <p class="h-small" style="{{ prodDesc }}">{{ pr.desc }}</p>
                       <div style="{{ prodPriceRow }}">
                         <div style="display:flex;flex-direction:column;gap:0.05rem;min-width:0">
@@ -424,7 +436,7 @@
                         <div style="{{ prodQtyRow }}">
                           <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
                             <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ lessLabel }}" onClick="{{ pr.dec }}">−</button>
-                            <span class="h-stepper__value" style="{{ stepVal }}">{{ pr.qty }}</span>
+                            <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ pr.qty }}" onChange="{{ pr.set }}" onBlur="{{ pr.blur }}" onFocus="{{ pr.pick }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
                             <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ moreLabel }}" onClick="{{ pr.inc }}">+</button>
                           </div>
                           <span style="{{ lineTotalStyle }}">{{ pr.lineTotal }}</span>
@@ -448,7 +460,16 @@
           </div>
         </div>
 
+        <sc-if value="{{ cosJos }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ inchideCos }}" aria-hidden="true" style="position:fixed;left:0;right:0;top:0;bottom:0;z-index:149;background:rgba(0,0,0,0.55)"></div>
+        </sc-if>
         <aside ref="{{ asideRef }}" style="{{ asideStyle }}">
+          <sc-if value="{{ cosJos }}" hint-placeholder-val="{{ false }}">
+            <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;margin:0 -1rem;padding:0.55rem 1rem;background:var(--h-bg-page);border-bottom:1px solid var(--h-line)">
+              <span aria-hidden="true" style="flex:none;width:2.5rem;height:0.25rem;border-radius:999px;background:var(--h-line-strong)"></span>
+              <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideCos }}" style="flex:none;min-height:2.25rem">{{ ctaInchide }}</button>
+            </div>
+          </sc-if>
           <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
           <div class="h-card h-card--flat">
             <p class="h-caption" style="margin:0 0 0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ catSwitchLabel }}</p>
@@ -490,11 +511,16 @@
                       <sc-if value="{{ row.steppable }}" hint-placeholder-val="{{ true }}">
                         <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
                           <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ lessLabel }}" onClick="{{ row.dec }}">−</button>
-                          <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ row.qty }}" onChange="{{ row.set }}" onBlur="{{ row.blur }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
+                          <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ row.qty }}" onChange="{{ row.set }}" onBlur="{{ row.blur }}" onFocus="{{ row.pick }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
                           <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ moreLabel }}" onClick="{{ row.inc }}">+</button>
                         </div>
                       </sc-if>
-                      <span style="{{ lineTotalStyle }}">{{ row.lineTotal }}</span>
+                      <div style="display:flex;align-items:baseline;gap:0.4rem;flex-wrap:wrap;justify-content:flex-end">
+                        <span style="{{ lineTotalStyle }}">{{ row.lineTotal }}</span>
+                        <sc-if value="{{ row.hasWas }}">
+                          <span class="h-small" style="color:var(--h-fg-subtle);text-decoration:line-through">{{ row.lineWas }}</span>
+                        </sc-if>
+                      </div>
                     </div>
                   </div>
                 </sc-for>
@@ -506,7 +532,12 @@
                 </div>
                 <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem">
                   <span style="font-weight:700">{{ totalLabel }}</span>
-                  <span style="font-family:var(--h-font-display);font-size:1.375rem;font-weight:700;line-height:1.1">{{ totalMoney }}</span>
+                  <span style="display:inline-flex;align-items:baseline;gap:0.4rem;flex-wrap:wrap;justify-content:flex-end">
+                    <span style="font-family:var(--h-font-display);font-size:1.375rem;font-weight:700;line-height:1.1">{{ totalMoney }}</span>
+                    <sc-if value="{{ hasTotalWas }}">
+                      <span class="h-small" style="color:var(--h-fg-subtle);text-decoration:line-through">{{ totalWas }}</span>
+                    </sc-if>
+                  </span>
                 </div>
                 <p class="h-caption" style="margin:0.15rem 0 0;color:var(--h-fg-subtle);line-height:1.5">{{ totalNote }}</p>
               </div>
@@ -524,14 +555,16 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
                 {{ ctaWaOrder }}
               </a>
-              <button type="button" class="h-btn h-btn--secondary h-btn--block" style="margin-top:0.5rem;min-height:2.75rem" onClick="{{ goContact }}">{{ ctaContinue }}</button>
+              <button type="button" class="h-btn h-btn--secondary h-btn--block" style="margin-top:0.5rem;min-height:2.75rem" onClick="{{ deschideFinal }}">{{ ctaContinue }}</button>
             </sc-if>
           </div>
+          <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
           <div class="h-card h-card--flat">
             <p class="h-caption" style="margin-bottom:0.5rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ askLabel }}</p>
             <p class="h-small" style="margin:0 0 0.75rem;color:var(--h-fg-muted)">{{ askBody }}</p>
             <a class="h-link h-small" href="{{ mailHref }}">{{ emailText }}</a>
           </div>
+          </sc-if>
         </aside>
 
       </div>
@@ -539,16 +572,113 @@
   </main>
   </sc-if>
 
+  <sc-if value="{{ onProd }}">
+  <main>
+    <section style="max-width:1180px;margin:0 auto;padding:clamp(1.5rem,4vw,2.5rem) clamp(1.25rem,4vw,3rem) clamp(3rem,6vw,5rem)">
+      <nav aria-label="{{ crumbLabel }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.4rem;margin-bottom:clamp(1.25rem,3vw,2rem);font-size:0.8125rem;color:var(--h-fg-muted)">
+        <a href="{{ hrefHome }}" data-spa="1" onClick="{{ goHome }}" style="{{ crumbLink }}">{{ navHome }}</a>
+        <span aria-hidden="true">›</span>
+        <a href="{{ hrefCat }}" data-spa="1" onClick="{{ goCat }}" style="{{ crumbLink }}">{{ navCat }}</a>
+        <span aria-hidden="true">›</span>
+        <sc-if value="{{ pvAreGrupa }}">
+        <a href="{{ pvGrupaHref }}" data-spa="1" onClick="{{ pvGoGrupa }}" style="{{ crumbLink }}">{{ pvGrupaNume }}</a>
+        <span aria-hidden="true">›</span>
+        </sc-if>
+        <span style="color:var(--h-fg)">{{ pvName }}</span>
+      </nav>
+
+      <sc-if value="{{ pvGasit }}" hint-placeholder-val="{{ true }}">
+        <div style="{{ pvWrap }}">
+          <div style="{{ pvMedia }}">
+            <image-slot id="{{ pvSlot }}" src="{{ pvPhoto }}" fit="cover" shape="rect" placeholder="{{ pvName }}"></image-slot>
+            <sc-if value="{{ pvSpecial }}">
+              <span class="h-badge" style="{{ specialBadge }}">{{ tagSpecial }}</span>
+            </sc-if>
+          </div>
+
+          <div style="min-width:0">
+            <p class="h-eyebrow" style="margin:0 0 0.6rem">{{ pvGrupaNume }}</p>
+            <h1 class="h-h1" style="margin:0 0 0.85rem">{{ pvName }}</h1>
+            <p class="h-lead" style="margin:0 0 clamp(1.25rem,3vw,1.75rem)">{{ pvDesc }}</p>
+
+            <dl style="{{ pvFapte }}">
+              <div style="{{ pvFapt }}">
+                <dt style="{{ pvFaptEt }}">{{ pvEtGramaj }}</dt>
+                <dd style="{{ pvFaptVal }}">{{ pvGramaj }}</dd>
+              </div>
+              <div style="{{ pvFapt }}">
+                <dt style="{{ pvFaptEt }}">{{ pvEtCongelat }}</dt>
+                <dd style="{{ pvFaptVal }}">{{ pvPretFrozen }}</dd>
+              </div>
+              <div style="{{ pvFapt }}">
+                <dt style="{{ pvFaptEt }}">{{ pvEtCopt }}</dt>
+                <dd style="{{ pvFaptVal }}">{{ pvPretBaked }}</dd>
+              </div>
+            </dl>
+
+            <p class="h-small" style="margin:0 0 1.25rem;color:var(--h-fg-muted)">{{ pvLivrare }}</p>
+
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:clamp(1.5rem,3vw,2rem)">
+              <sc-if value="{{ pvNone }}" hint-placeholder-val="{{ true }}">
+                <button type="button" class="h-btn h-btn--primary" onClick="{{ pvAdd }}" style="min-height:2.9rem;padding-inline:1.4rem">{{ addLabel }}</button>
+              </sc-if>
+              <sc-if value="{{ pvSome }}">
+                <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
+                  <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ lessLabel }}" onClick="{{ pvDec }}">−</button>
+                  <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ pvQty }}" onChange="{{ pvSet }}" onBlur="{{ pvBlur }}" onFocus="{{ pvPick }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
+                  <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ moreLabel }}" onClick="{{ pvInc }}">+</button>
+                </div>
+              </sc-if>
+              <button type="button" class="h-btn h-btn--secondary" onClick="{{ goContact }}" style="min-height:2.9rem;padding-inline:1.2rem">{{ ctaQuote }}</button>
+            </div>
+
+            <p class="h-small" style="margin:0">
+              <a href="{{ pvGrupaHref }}" data-spa="1" onClick="{{ pvGoGrupa }}" style="{{ crumbLink }}">{{ pvGrupaCta }}</a>
+              <span aria-hidden="true" style="opacity:.4"> · </span>
+              <a href="{{ hrefCat }}" data-spa="1" onClick="{{ goCat }}" style="{{ crumbLink }}">{{ pvTotCta }}</a>
+            </p>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pvLipsa }}">
+        <div style="max-width:34rem">
+          <h1 class="h-h2" style="margin:0 0 0.75rem">{{ pvLipsaTitlu }}</h1>
+          <p class="h-lead" style="margin:0 0 1.5rem">{{ pvLipsaText }}</p>
+          <a class="h-btn h-btn--primary" href="{{ hrefCat }}" data-spa="1" onClick="{{ goCat }}" style="text-decoration:none">{{ pvTotCta }}</a>
+        </div>
+      </sc-if>
+    </section>
+  </main>
+  </sc-if>
+
   <sc-if value="{{ mobBar }}">
-    <div style="position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;align-items:center;gap:0.75rem;padding:0.7rem clamp(1rem,4vw,1.5rem) calc(0.7rem + env(safe-area-inset-bottom));background:var(--h-bg-raised);border-top:1px solid var(--h-line);box-shadow:0 -8px 24px rgba(0,0,0,0.18)">
-      <div style="min-width:0">
-        <p style="margin:0;font-family:var(--h-font-display);font-size:1.0625rem;font-weight:700;line-height:1.2">{{ totalMoney }}</p>
-        <p style="margin:0;font-size:0.75rem;color:var(--h-fg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ barTitle }} · {{ totalPieces }}</p>
-      </div>
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;flex-wrap:wrap;align-items:center;column-gap:0.75rem;row-gap:0;padding:0.7rem clamp(1rem,4vw,1.5rem) calc(0.7rem + env(safe-area-inset-bottom));background:var(--h-bg-raised);border-top:1px solid var(--h-line);box-shadow:0 -8px 24px rgba(0,0,0,0.18)">
+      <button type="button" onClick="{{ arataCos }}" aria-expanded="{{ cosJosStr }}" aria-label="{{ ctaVeziCos }}" style="min-width:0;flex:1 1 auto;display:block;text-align:left;background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;cursor:pointer">
+        <div style="display:flex;align-items:baseline;gap:0.4rem;min-width:0">
+          <p style="margin:0;font-family:var(--h-font-display);font-size:1.0625rem;font-weight:700;line-height:1.2">{{ totalMoney }}</p>
+          <sc-if value="{{ hasTotalWas }}">
+            <span class="h-small" style="color:var(--h-fg-subtle);text-decoration:line-through">{{ totalWas }}</span>
+          </sc-if>
+        </div>
+      </button>
       <a class="h-btn" href="{{ waOrderHref }}" target="_blank" rel="noopener" aria-label="{{ ctaWaOrder }}" style="margin-left:auto;flex:none;width:2.75rem;height:2.75rem;padding:0;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-1);text-decoration:none">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
       </a>
-      <button type="button" class="h-btn h-btn--primary" style="flex:none;min-height:2.75rem;padding-inline:1rem" onClick="{{ goContact }}">{{ ctaBarGo }}</button>
+      <button type="button" class="h-btn h-btn--primary" style="flex:none;min-height:2.75rem;padding-inline:1rem" onClick="{{ deschideFinal }}">{{ ctaBarGo }}</button>
+      <!-- Dunga și cuvintele ei stau pe un rând al lor, întins cât toată bara
+           (`flex:1 0 100%`), nu în coloana sumei. În coloana sumei încăpeau
+           vreo 150 px, iar propoziția cerută — „Comandă minimă 700 RON · încă
+           529,00 RON" — se tăia la „înc…", adică tocmai cifra pentru care s-a
+           cerut rândul. Bara se împachetează (`flex-wrap:wrap`), iar golul
+           dintre rânduri e zero (`row-gap:0`), fiindcă distanța de deasupra
+           dungii o dă chiar marginea ei de 0.3rem. -->
+      <div style="flex:1 0 100%;min-width:0">
+        <div style="margin:0.3rem 0 0;height:4px;border-radius:999px;background:var(--h-line);overflow:hidden">
+          <div style="{{ minBar }}"></div>
+        </div>
+        <p style="margin:0.26rem 0 0;font-size:0.6875rem;line-height:1.25;color:var(--h-fg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ barMin }}</p>
+      </div>
     </div>
   </sc-if>
 
@@ -583,11 +713,11 @@
           <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebCoverage }}</p>
           <sc-if value="{{ ro }}" hint-placeholder-val="{{ true }}">
             <h2 class="h-h2" style="margin:0 0 1rem">Acoperire</h2>
-            <p class="h-lead" style="margin:0 0 1.75rem">Depozitul e în sectorul 4, pe Șoseaua Olteniței. De acolo pleacă tot ce livrăm.</p>
+            <p class="h-lead" style="margin:0 0 1.75rem">Depozitul e la {{ addrFull }}. De acolo pleacă tot ce livrăm.</p>
           </sc-if>
           <sc-if value="{{ en }}">
             <h2 class="h-h2" style="margin:0 0 1rem">Coverage</h2>
-            <p class="h-lead" style="margin:0 0 1.75rem">The warehouse is in sector 4, on Șoseaua Olteniței. Everything we deliver leaves from there.</p>
+            <p class="h-lead" style="margin:0 0 1.75rem">The warehouse is at {{ addrFull }}. Everything we deliver leaves from there.</p>
           </sc-if>
           <div class="h-list" style="max-width:26rem">
             <div class="h-list__row"><div class="h-list__main"><p class="h-list__title">{{ cov1t }}</p><p class="h-list__meta">{{ cov1b }}</p></div><span class="h-badge h-badge--success">24h</span></div>
@@ -599,7 +729,7 @@
           <iframe title="{{ mapTitle }}" src="https://www.openstreetmap.org/export/embed.html?bbox=26.1155%2C44.3880%2C26.1315%2C44.3975&amp;layer=mapnik&amp;marker=44.39235%2C26.12385" style="width:100%;height:20rem;border:0;display:block"></iframe>
           <div style="padding:0.75rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;justify-content:space-between">
             <p class="h-caption" style="margin:0">{{ mapCaption }}</p>
-            <a class="h-link h-caption" href="https://www.google.com/maps/search/?api=1&amp;query=ICTCM%20Soseaua%20Oltenitei%20103%20Bucuresti" target="_blank" rel="noopener">Google Maps</a>
+            <a class="h-link h-caption" href="{{ mapUrl }}" target="_blank" rel="noopener">Google Maps</a>
           </div>
         </div>
       </div>
@@ -706,8 +836,26 @@
   </main>
   </sc-if>
 
-  <sc-if value="{{ onContact }}">
-  <main>
+  <!-- Fereastra de finalizare NU e o copie a formularului de mai jos: e chiar
+       el. Poarta paginii de contact s-a lărgit (`contactVizibil`), iar ce se
+       schimbă e numai hainele lui `<main>` — `contactMainStyle` îl scoate din
+       curgerea paginii și-l face fereastră. Un al doilea formular, copiat, ar
+       fi însemnat două câmpuri „Cod de recomandare" cu același `name`, două
+       `ref="{{ formRef }}"` și două locuri de reparat la fiecare schimbare.
+       E același tertip cu care foaia coșului (`asideStyle`, :2183) e tot
+       coloana din dreapta, doar altfel așezată. -->
+  <sc-if value="{{ finalizare }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ inchideFinal }}" aria-hidden="true" style="position:fixed;left:0;right:0;top:0;bottom:0;z-index:159;background:rgba(0,0,0,0.6)"></div>
+  </sc-if>
+  <sc-if value="{{ contactVizibil }}">
+  <main style="{{ contactMainStyle }}">
+    <sc-if value="{{ finalizare }}" hint-placeholder-val="{{ false }}">
+      <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem clamp(1rem,4vw,1.5rem);background:var(--h-bg-page);border-bottom:1px solid var(--h-line)">
+        <p class="h-h4" style="margin:0;font-family:var(--h-font-display)">{{ finalTitlu }}</p>
+        <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideFinal }}" style="flex:none;min-height:2.25rem">{{ ctaInchide }}</button>
+      </div>
+    </sc-if>
+    <sc-if value="{{ onContact }}">
     <section style="max-width:1740px;margin:0 auto;padding:clamp(2rem,5vw,3.5rem) clamp(1.25rem,4vw,3rem) 0">
       <div style="max-width:44rem">
         <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebContact }}</p>
@@ -715,11 +863,19 @@
         <p class="h-lead" style="margin:0">{{ contactLead }}</p>
       </div>
     </section>
+    </sc-if>
 
-    <section style="max-width:1740px;margin:0 auto;padding:2.5rem clamp(1.25rem,4vw,3rem) clamp(3rem,7vw,5rem)">
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr));gap:1.5rem;align-items:start">
+    <section style="{{ contactSectionStyle }}">
+      <div style="{{ contactGridStyle }}">
 
-        <div style="display:flex;flex-direction:column;gap:1.5rem">
+        <div style="{{ contactLateralStyle }}">
+          <!-- Cartonașele cu telefon, e-mail, WhatsApp și hartă rămân ale
+               paginii. În fereastra de finalizare omul a ales deja calea: a
+               apăsat „Finalizare comandă", nu caută un număr de telefon.
+               Cartonașul cu produsele alese, de mai jos, rămâne în AMBELE:
+               `contactLead` chiar asta îi spune — „Produsele alese sunt mai
+               jos. Verifică adresa… și trimite." -->
+          <sc-if value="{{ onContact }}">
           <div class="h-card">
             <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebDirect }}</p>
             <div class="h-list">
@@ -736,15 +892,18 @@
 
           <div class="h-card">
             <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ ebWarehouse }}</p>
-            <p class="h-h4" style="font-family:var(--h-font-display);margin:0 0 0.5rem">Șos. Olteniței 103</p>
+            <p class="h-h4" style="font-family:var(--h-font-display);margin:0 0 0.5rem">{{ addrStreet }}</p>
             <p class="h-body h-muted" style="margin:0 0 1.25rem">{{ addrHint }}</p>
-            <div class="h-hours">
-              <div class="h-hours__row" style="{{ rowWeek }}"><span class="h-hours__day">{{ dayWeek }}</span><span class="h-hours__time">07:00 – 21:00</span></div>
-              <div class="h-hours__row" style="{{ rowSat }}"><span class="h-hours__day">{{ daySat }}</span><span class="h-hours__time">07:00 – 17:00</span></div>
-              <div class="h-hours__row" style="{{ rowSun }}"><span class="h-hours__day">{{ daySun }}</span><span class="h-hours__time">{{ closedWord }}</span></div>
-            </div>
-            <a class="h-btn h-btn--ghost h-btn--sm" style="margin-top:1.25rem;padding-inline:0" href="https://www.google.com/maps/search/?api=1&amp;query=ICTCM%20Soseaua%20Oltenitei%20103%20Bucuresti" target="_blank" rel="noopener">{{ ctaOpenMaps }} →</a>
+            <sc-if value="{{ areOrar }}">
+              <div class="h-hours">
+                <sc-for list="{{ orar }}" as="rand" hint-placeholder-count="3">
+                  <div class="h-hours__row" style="{{ rand.stil }}"><span class="h-hours__day">{{ rand.nume }}</span><span class="h-hours__time">{{ rand.ore }}</span></div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <a class="h-btn h-btn--ghost h-btn--sm" style="margin-top:1.25rem;padding-inline:0" href="{{ mapUrl }}" target="_blank" rel="noopener">{{ ctaOpenMaps }} →</a>
           </div>
+          </sc-if>
 
           <sc-if value="{{ hasPicks }}">
             <div class="h-card h-card--flat">
@@ -758,7 +917,7 @@
                     <sc-if value="{{ row.steppable }}" hint-placeholder-val="{{ true }}">
                       <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
                         <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ lessLabel }}" onClick="{{ row.dec }}">−</button>
-                        <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ row.qty }}" onChange="{{ row.set }}" onBlur="{{ row.blur }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
+                        <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ row.qty }}" onChange="{{ row.set }}" onBlur="{{ row.blur }}" onFocus="{{ row.pick }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
                         <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ moreLabel }}" onClick="{{ row.inc }}">+</button>
                       </div>
                     </sc-if>
@@ -766,13 +925,23 @@
                       <p class="h-list__title" style="margin:0;text-wrap:pretty">{{ row.name }}</p>
                       <p class="h-list__meta" style="margin:2px 0 0">{{ row.meta }}</p>
                     </div>
-                    <span style="{{ lineTotalStyle }}">{{ row.lineTotal }}</span>
+                    <div style="display:flex;align-items:baseline;gap:0.4rem;flex-wrap:wrap;justify-content:flex-end">
+                      <span style="{{ lineTotalStyle }}">{{ row.lineTotal }}</span>
+                      <sc-if value="{{ row.hasWas }}">
+                        <span class="h-small" style="color:var(--h-fg-subtle);text-decoration:line-through">{{ row.lineWas }}</span>
+                      </sc-if>
+                    </div>
                   </div>
                 </sc-for>
               </div>
               <div style="display:flex;align-items:baseline;justify-content:space-between;gap:1rem;padding-top:0.8rem">
                 <span style="font-weight:700">{{ totalLabel }} · {{ totalPieces }}</span>
-                <span style="font-family:var(--h-font-display);font-size:1.375rem;font-weight:700;line-height:1.1">{{ totalMoney }}</span>
+                <span style="display:inline-flex;align-items:baseline;gap:0.4rem;flex-wrap:wrap;justify-content:flex-end">
+                  <span style="font-family:var(--h-font-display);font-size:1.375rem;font-weight:700;line-height:1.1">{{ totalMoney }}</span>
+                  <sc-if value="{{ hasTotalWas }}">
+                    <span class="h-small" style="color:var(--h-fg-subtle);text-decoration:line-through">{{ totalWas }}</span>
+                  </sc-if>
+                </span>
               </div>
               <button type="button" class="h-btn h-btn--ghost h-btn--sm" style="margin-top:0.75rem;padding-inline:0" onClick="{{ goCat }}">{{ ctaEditPicks }} →</button>
             </div>
@@ -784,17 +953,78 @@
             <h2 class="h-h4" style="font-family:var(--h-font-display);margin:0 0 0.35rem">{{ formTitle }}</h2>
             <p class="h-small h-muted" style="margin:0">{{ formSub }}</p>
           </div>
+          <!-- PENTRU CE CLIENT E COMANDA.
+               Se desenează numai pentru cine are ogradă la `GET /clients`:
+               administratorul și fondatorul caută printre toți clienții,
+               agentul de vânzări numai printre cei aduși de codul lui.
+               Managerul și angajatul n-o văd deloc — serverul le-ar răspunde
+               403, iar o casetă care promite ce serverul refuză e mai rea
+               decât lipsa ei. Paza adevărată stă în `client_scope_for()`
+               (api/lib/orders.php); rândurile de aici sunt oglinda ei. -->
+          <sc-if value="{{ cautaClient }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:0.6rem;padding:0.9rem 1rem;border-radius:16px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+              <sc-if value="{{ cautCaseta }}" hint-placeholder-val="{{ true }}">
+                <div class="h-field" style="margin:0"><label class="h-label" for="q-client">{{ lblCauta }}</label>
+                  <input class="h-input" id="q-client" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" value="{{ cautQ }}" onChange="{{ onCauta }}" placeholder="{{ phCauta }}">
+                  <p class="h-caption" style="margin:0.4rem 0 0">{{ cautNota }}</p>
+                </div>
+                <sc-for list="{{ cautLista }}" as="c" hint-placeholder-count="2">
+                  <button type="button" onClick="{{ c.alege }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:0.15rem;width:100%;min-height:2.75rem;padding:0.55rem 0.75rem;border:1px solid var(--h-line);border-radius:12px;background:var(--h-bg-surface);color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer" style-hover="border-color:var(--h-accent);background:var(--h-accent-soft)">
+                    <span style="font-weight:600;line-height:1.3">{{ c.titlu }}</span>
+                    <span style="font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.35">{{ c.sub }}</span>
+                    <sc-if value="{{ c.areSemn }}" hint-placeholder-val="{{ false }}">
+                      <span style="font-size:0.75rem;color:var(--h-fg-muted)">{{ c.semn }}</span>
+                    </sc-if>
+                  </button>
+                </sc-for>
+              </sc-if>
+              <sc-if value="{{ clientAles }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:0.75rem">
+                  <div style="flex:1 1 10rem;min-width:0">
+                    <p style="margin:0;font-size:0.75rem;letter-spacing:0.04em;text-transform:uppercase;color:var(--h-fg-muted)">{{ lblPentru }}</p>
+                    <p style="margin:0.15rem 0 0;font-weight:700;line-height:1.3;text-wrap:pretty">{{ alesNume }}</p>
+                    <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ alesContact }}</p>
+                    <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-muted);line-height:1.45;text-wrap:pretty">{{ alesNota }}</p>
+                  </div>
+                  <button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onSchimbaClient }}" style="flex:none;min-height:2.75rem;margin-left:auto">{{ ctaSchimbaClient }}</button>
+                </div>
+              </sc-if>
+            </div>
+          </sc-if>
           <sc-if value="{{ asClient }}" hint-placeholder-val="{{ false }}">
-            <div style="display:flex;align-items:flex-start;gap:0.75rem;padding:0.9rem 1rem;border-radius:16px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+            <div style="display:flex;flex-wrap:wrap;align-items:flex-start;gap:0.75rem;padding:0.9rem 1rem;border-radius:16px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
               <span style="{{ accDot }}">{{ accInitials }}</span>
-              <div style="flex:1;min-width:0">
+              <div style="flex:1 1 10rem;min-width:0">
                 <p style="margin:0;font-weight:700;line-height:1.3;text-wrap:pretty">{{ accName }}</p>
                 <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ accContact }}</p>
+                <sc-if value="{{ rezumatStrans }}" hint-placeholder-val="{{ true }}">
+                  <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ accLivrare }}</p>
+                  <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ accCand }}</p>
+                  <sc-if value="{{ accCod }}" hint-placeholder-val="{{ false }}">
+                    <p style="margin:0.2rem 0 0;font-size:0.8125rem;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ accCod }}</p>
+                  </sc-if>
+                </sc-if>
+                <sc-if value="{{ zoneSfatSus }}" hint-placeholder-val="{{ false }}">
+                  <p style="margin:0.45rem 0 0;font-size:0.8125rem;color:var(--h-fg-muted);line-height:1.45;text-wrap:pretty">{{ zoneSfat }}</p>
+                </sc-if>
               </div>
+              <sc-if value="{{ rezumatStrans }}" hint-placeholder-val="{{ true }}">
+                <button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onModifica }}" style="flex:none;min-height:2.75rem;margin-left:auto">{{ ctaModifica }}</button>
+              </sc-if>
             </div>
+          </sc-if>
+          <sc-if value="{{ campuriLivrare }}" hint-placeholder-val="{{ false }}">
             <div class="h-field"><label class="h-label" for="q-addr">{{ lblAddr }}</label>
               <input class="h-input" id="q-addr" name="Adresa" value="{{ addr }}" onChange="{{ onAddr }}" placeholder="{{ phAddr }}">
               <p class="h-caption" style="margin:0.4rem 0 0">{{ addrNote }}</p>
+            </div>
+            <div class="h-field"><label class="h-label" for="q-zone">{{ lblZone }}</label>
+              <select class="h-select" id="q-zone" value="{{ zone }}" onChange="{{ onZone }}">
+                <sc-for list="{{ zoneOpts }}" as="z" hint-placeholder-count="9">
+                  <option value="{{ z.v }}">{{ z.l }}</option>
+                </sc-for>
+              </select>
+              <p class="h-caption" style="margin:0.4rem 0 0">{{ zoneNote }}</p>
             </div>
           </sc-if>
           <sc-if value="{{ asGuest }}" hint-placeholder-val="{{ true }}">
@@ -803,7 +1033,7 @@
             <div class="h-field"><label class="h-label" for="q-name">{{ lblName }}</label><input class="h-input" id="q-name" name="Persoana de contact" required="{{ true }}" placeholder="{{ phName }}"></div>
           </div>
           <div style="{{ fieldPair }}">
-            <div class="h-field"><label class="h-label" for="q-email">{{ lblEmail }}</label><input class="h-input" id="q-email" name="Email" type="email" required="{{ true }}" placeholder="nume@companie.ro"></div>
+            <div class="h-field"><label class="h-label" for="q-email">{{ lblEmail }}</label><input class="h-input" id="q-email" name="Email" type="email" required="{{ true }}" placeholder="{{ phEmail }}"></div>
             <div class="h-field"><label class="h-label" for="q-phone">{{ lblPhone }}</label><input class="h-input" id="q-phone" name="Telefon" type="tel" required="{{ phoneReq }}" placeholder="07xx xxx xxx"></div>
           </div>
           <div class="h-field"><label class="h-label" for="q-segment">{{ lblSegment }}</label>
@@ -824,6 +1054,7 @@
               <option>{{ vol4 }}</option>
             </select>
           </div>          </sc-if>
+          <sc-if value="{{ campuriJos }}" hint-placeholder-val="{{ true }}">
           <div class="h-field"><label class="h-label">{{ lblWhen }}</label>
             <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
               <button type="button" class="{{ asapCls }}" onClick="{{ setAsap }}" style="flex:1 1 12rem;min-height:2.75rem">{{ ctaAsap }}</button>
@@ -836,8 +1067,34 @@
               <input type="hidden" name="Data dorită" value="{{ asapText }}">
             </sc-if>
             <p class="h-caption" style="margin:0.45rem 0 0">{{ whenNote }}</p>
+            <sc-if value="{{ zoneSfatJos }}" hint-placeholder-val="{{ false }}">
+              <p class="h-caption" style="margin:0.35rem 0 0;color:var(--h-fg-muted)">{{ zoneSfat }}</p>
+            </sc-if>
           </div>
           <div class="h-field"><label class="h-label" for="q-msg">{{ lblMsg }}</label><textarea class="h-textarea" id="q-msg" name="Mesaj" placeholder="{{ phMsg }}"></textarea></div>
+          <!-- Caseta codului dispare când clientul a fost ALES ANUME. Nu e o
+               ascunzătoare de comoditate: serverul chiar NU mai scrie codul
+               din formular pe o cerere legată de un cont
+               (`!$alesAnume`, api/routes/requests.php), fiindcă socoteala
+               citește atunci `users.referred_by` — adevărul de pe contul
+               clientului. O casetă rămasă pe ecran ar fi cerut omului un cod
+               pe care nimeni nu l-ar mai fi folosit. Ce se întâmplă cu banii
+               scrie în schimb în fâșia clientului ales, la vedere. -->
+          <sc-if value="{{ campRef }}" hint-placeholder-val="{{ true }}">
+          <div class="h-field"><label class="h-label" for="q-ref">{{ lblRef }}</label>
+            <sc-if value="{{ refAsezat }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;align-items:center;gap:0.5rem">
+                <span class="h-input" style="flex:1 1 auto;display:flex;align-items:center;min-height:2.75rem;font-weight:600">{{ refCod }}</span>
+                <button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onRefModifica }}" style="flex:none;min-height:2.75rem">{{ ctaModifica }}</button>
+              </div>
+              <input type="hidden" name="Cod de recomandare" value="{{ refCod }}">
+            </sc-if>
+            <sc-if value="{{ refCaseta }}" hint-placeholder-val="{{ true }}">
+              <input class="h-input" id="q-ref" name="Cod de recomandare" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" value="{{ refCod }}" onChange="{{ onRefCod }}" placeholder="{{ phRef }}">
+            </sc-if>
+            <p class="h-caption" style="margin:0.4rem 0 0">{{ noteRef }}</p></div>
+          </sc-if>
+          </sc-if>
           <sc-if value="{{ asGuest }}" hint-placeholder-val="{{ true }}">
           <label class="h-check"><input type="checkbox" name="Vreau catalogul PDF" checked="{{ wantCatalog }}" onChange="{{ toggleCatalog }}"><span>{{ lblWantCatalog }}</span></label>
           </sc-if>
@@ -880,8 +1137,10 @@
         </div>
         <div>
           <p style="margin:0 0 0.75rem;font-size:0.6875rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ ebWarehouse }}</p>
-          <p style="margin:0 0 0.5rem;font-size:0.9375rem;color:var(--h-fg)">Șos. Olteniței 103<br>Sector 4, București</p>
-          <p style="margin:0;font-size:0.9375rem;color:var(--h-fg-muted)">{{ hoursLong }}</p>
+          <p style="margin:0 0 0.5rem;font-size:0.9375rem;color:var(--h-fg)">{{ addrStreet }}<br>{{ addrCity }}</p>
+          <sc-if value="{{ areHoursLong }}">
+            <p style="margin:0;font-size:0.9375rem;color:var(--h-fg-muted)">{{ hoursLong }}</p>
+          </sc-if>
         </div>
         <div>
           <p style="margin:0 0 0.75rem;font-size:0.6875rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ footContact }}</p>
@@ -912,19 +1171,161 @@
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;defaultLang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ro&quot;,&quot;en&quot;],&quot;default&quot;:&quot;ro&quot;,&quot;tsType&quot;:&quot;'ro' | 'en'&quot;,&quot;section&quot;:&quot;Site&quot;},&quot;audienceFocus&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;both&quot;,&quot;retail&quot;,&quot;horeca&quot;],&quot;default&quot;:&quot;both&quot;,&quot;tsType&quot;:&quot;'both' | 'retail' | 'horeca'&quot;,&quot;section&quot;:&quot;Site&quot;}}">
+/* ------------------------------------------------------------- adrese -- */
+
+/**
+ * Harta adreselor magazinului — primită de la server, nu ținută aici.
+ *
+ * Până acum, tot magazinul era adresa „/". Butoanele din meniu schimbau ce
+ * vezi, dar nu și adresa din bară, deci pentru un motor de căutare site-ul
+ * avea o singură pagină: un titlu, o descriere, o intrare în index. Nu se
+ * putea ieși în căutări după „catalog patiserie congelată" cu o pagină care se
+ * numește, oficial, doar „Golden Pastry".
+ *
+ * Tabelul e scris o singură dată, în `seo/adrese.php`, și îl folosesc trei
+ * cititori: pagina servită, harta pentru motoare, și codul de aici.
+ * `seo/index.php` îl pune în pagină ca `GP_ADRESE` înainte ca aplicația să
+ * pornească. Dacă l-am fi scris și aici, cele două copii s-ar fi depărtat una
+ * de alta la prima adresă adăugată — meniul ar fi trimis spre pagini pe care
+ * serverul nu le servește, sau invers, tăcut.
+ *
+ * Când lipsește — canvasul de proiectare deschide pagina fără PHP — totul
+ * rămâne exact ca înainte: legăturile din meniu sunt „#", navigarea e doar
+ * schimbare de stare, iar adresa din bară nu se atinge.
+ */
+const GP_HARTA = (typeof window !== 'undefined' && window.GP_ADRESE) || null;
+
+/** Ce pagină cere adresa din bara browserului. `null` = adresă necunoscută. */
+function rutaDinAdresa() {
+  if (!GP_HARTA || typeof location === 'undefined') return null;
+  let cale = String(location.pathname || '/');
+  // O cale poate veni codificată („/produs/covrig%2Dcu%2Dsusan"); fără
+  // decodare, potrivirea de mai jos ar rata și omul ar vedea pagina de start
+  // în locul produsului.
+  try { cale = decodeURIComponent(cale); } catch (err) { /* rămâne cum a venit */ }
+  cale = cale.replace(/^\/+/, '').replace(/\/+$/, '');
+
+  let lang = 'ro';
+  const pre = GP_HARTA.prefixEn;
+  if (cale === pre || cale.indexOf(pre + '/') === 0) {
+    lang = 'en';
+    cale = cale.slice(pre.length).replace(/^\/+/, '').replace(/\/+$/, '');
+  }
+
+  const bucati = cale === '' ? [] : cale.split('/');
+  if (bucati.length === 0) return { page: 'home', lang: lang, fel: 'pagina', cheie: '' };
+
+  if (bucati.length === 1) {
+    const stari = Object.keys(GP_HARTA.pagini);
+    for (let i = 0; i < stari.length; i++) {
+      const seg = GP_HARTA.pagini[stari[i]][lang];
+      if (seg && seg === bucati[0]) return { page: stari[i], lang: lang, fel: 'pagina', cheie: '' };
+    }
+    return null;
+  }
+
+  if (bucati.length === 2) {
+    const feluri = Object.keys(GP_HARTA.cuCheie);
+    for (let i = 0; i < feluri.length; i++) {
+      const r = GP_HARTA.cuCheie[feluri[i]];
+      if (r[lang] === bucati[0]) return { page: r.stare, lang: lang, fel: feluri[i], cheie: bucati[1] };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Adresa unei stări, gata de pus în `href`.
+ *
+ * Fără hartă întoarce „#", adică exact legătura de dinainte: butonul rămâne
+ * buton, `onClick` face toată treaba, nimic nu se strică în canvas.
+ */
+function caleaCatre(page, lang, fel, cheie) {
+  if (!GP_HARTA) return '#';
+  const pre = lang === 'en' ? '/' + GP_HARTA.prefixEn : '';
+  if (fel && fel !== 'pagina' && GP_HARTA.cuCheie[fel]) {
+    // Fără cheie nu există adresa unei grupe sau a unui produs — rămâne
+    // catalogul. Așa o legătură incompletă duce undeva folositor, nu la
+    // pagina de start, care n-are nicio legătură cu produsul cerut.
+    if (cheie) return pre + '/' + GP_HARTA.cuCheie[fel][lang] + '/' + cheie;
+    page = 'catalog';
+  }
+  const r = GP_HARTA.pagini[page] || GP_HARTA.pagini.home;
+  const seg = r ? r[lang] : '';
+  return seg === '' ? (pre === '' ? '/' : pre + '/') : pre + '/' + seg;
+}
+
+/**
+ * De unde pornește pagina.
+ *
+ * Răspunsul serverului (`GP_RUTA`) bate citirea adresei: serverul a verificat
+ * deja cheia în baza de date, deci știe că produsul chiar există. Citirea
+ * adresei rămâne pentru butonul „înapoi" al browserului, unde n-avem de unde
+ * întreba serverul.
+ */
+const GP_RUTA_INITIALA = (function () {
+  const s = typeof window !== 'undefined' ? window.GP_RUTA : null;
+  if (s && s.pagina) return { page: s.pagina, lang: s.lang, fel: s.fel, cheie: s.cheie };
+  return rutaDinAdresa();
+})();
+
+// CELE ȘAPTE CÂMPURI PE CARE FEREASTRA LE UITĂ.
+//
+// Formularul de ofertă e „necontrolat": React nu-i ține valorile nicăieri, ele
+// trăiesc numai în nodurile din pagină, iar `submitQuote` le culege abia la
+// apăsare, cu `new FormData(e.target)`. Iar fereastra de finalizare ESTE
+// `<main>`-ul paginii de Contact, pornit de `contactVizibil`. Când steagul se
+// stinge — sau când omul trece pe altă pagină — `<main>` iese din arbore,
+// nodurile se distrug, și cu ele tot ce scrisese. Nu se pierdea o stare: nu
+// exista niciuna.
+//
+// Lista NU cuprinde toate câmpurile formularului, dinadins. Ziua cerută
+// (`whenDate`), „cât mai repede" (`asap`), bifa de catalog (`wantCatalog`) și
+// codul de recomandare (`refCod`) SUNT deja stare React, deci trec neatinse
+// prin închidere. Codul de recomandare mai are un motiv să lipsească de aici:
+// caseta lui e controlată de React (`value` + `onChange`), iar scrierea peste
+// `.value` din afară ar dezlipi-o de stare.
+//
+// Ciorna stă în memorie, pe instanță — NU în `localStorage`, unde stă de mult
+// coșul (`gp-cart-v1`). Coșul e o listă de produse; astea sunt numele, e-mailul
+// și telefonul omului. Ele țin cât ține fila deschisă, și se duc odată cu ea.
+const CIORNA_CAMPURI = ['Companie', 'Persoana de contact', 'Email',
+  'Telefon', 'Segment', 'Volum estimat', 'Mesaj'];
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.asideRef = React.createRef();
     this.colsRef = React.createRef();
-    this.formRef = React.createRef();
+    // Nu mai e un `React.createRef()`, ci o pereche: cutia pe care o citește
+    // `sendWa` a rămas, dar în marcaj pleacă FUNCȚIA, fiindcă numai ea e
+    // chemată de React și la montare, și la desprindere. Legată o singură dată
+    // aici: o funcție nouă la fiecare desenare ar fi însemnat o desprindere și
+    // o prindere la fiecare literă scrisă în pagină.
+    this.formRef = { current: null };
+    this.legaForm = this.legaForm.bind(this);
+    // Ciorna: ce a scris omul, ținut cât ține fila.
+    this.__ciorna = {};
+    // Adevărat cât timp foaia coșului sau fereastra de finalizare are o intrare
+    // a ei în istoricul browserului. Stă pe instanță, nu în stare, fiindcă
+    // trebuie citit SINCRON: la două apăsări iuți pe „înapoi", `this.state` n-a
+    // apucat încă să se schimbe, iar a doua apăsare ar fi înghițită degeaba.
+    this.__foaieInIstoric = false;
     this.state = {
       asap: true,
       whenDate: '',
       mob: typeof window !== 'undefined' && window.innerWidth < 1080,
       menuOpen: false,
-      page: 'home',
-      lang: props.defaultLang === 'en' ? 'en' : 'ro',
+      // Pagina și limba vin din adresă, nu din cod. Cine deschide
+      // „/en/catalogue" trebuie să vadă catalogul în engleză din prima
+      // desenare: dacă am fi pornit pe „home/ro" și am fi corectat după aceea,
+      // un motor de căutare ar fi prins pagina de start pe adresa catalogului.
+      page: GP_RUTA_INITIALA ? GP_RUTA_INITIALA.page : 'home',
+      lang: GP_RUTA_INITIALA ? GP_RUTA_INITIALA.lang : (props.defaultLang === 'en' ? 'en' : 'ro'),
+      // Ce fel de adresă e deschisă: o pagină, o grupă din catalog, un produs.
+      fel: GP_RUTA_INITIALA ? GP_RUTA_INITIALA.fel : 'pagina',
+      cheie: GP_RUTA_INITIALA ? GP_RUTA_INITIALA.cheie : '',
       qty: {},
       tier: 'frozen',
       // Catalogul vine de la server. Era scris în pagină, într-o listă
@@ -933,7 +1334,21 @@ class Component extends DCLogic {
       // sumă și ar fi fost taxat cu alta.
       prod: null,
       groups: null,
-      catErr: '',
+      // Reducerile, tot de la server. Cât timp e `null`, pachetul de test nici
+      // nu se arată: o reducere pe care serverul n-o cunoaște e o reducere pe
+      // care el o va refuza, iar clientul ar afla asta abia după ce completează
+      // tot formularul.
+      promos: null,
+      // Motivul pentru care serverul n-a dat catalogul, în vorbele lui
+      // `gp.motiv()`. Cât timp e plin, tot ce afirmă pagina despre catalog
+      // tace: a întrebat și a fost refuzată, deci despre ce e azi în catalog
+      // nu știe nimic — nici măcar că ar fi gol.
+      eroare: "",
+      // Același motiv, în engleză. Magazinul e singura pagină bilingvă din
+      // casă, iar omul poate apăsa EN după ce caseta e deja pe ecran: ținem
+      // amândouă variantele, ca schimbarea limbii să nu lase o frază
+      // românească în mijlocul unei pagini englezești.
+      eroareEn: "",
       // Telefonul și e-mailul publice, din Setări. Erau scrise în pagină, deci
       // numărul schimbat din panou nu ajungea niciodată la vizitator. Rămâne
       // `null` până răspunde serverul, moment în care pagina se redesenează.
@@ -944,6 +1359,70 @@ class Component extends DCLogic {
       // deci nu se putea debifa, iar cererea pleca mereu cu „vrea catalogul",
       // inclusiv de la cine tocmai îl refuzase.
       wantCatalog: true,
+      // Codul de recomandare din coș.
+      //
+      // NU MAI PORNEȘTE DE LA COOKIE, și tocmai asta e reparația. Pe un
+      // browser pe care s-a deschis o singură dată un link „?ref=ples", codul
+      // acela se lipea de FIECARE cerere trimisă de acolo în următoarele
+      // treizeci de zile — inclusiv de pe telefonul patronului, arătat unui
+      // client nou. Așa a ajuns „ples" scris în dreptul mai multor oameni
+      // deodată, fără ca vreunul să-l fi tastat.
+      //
+      // Acum codul se alege după CINE e la tastatură (`codRecomandare()`),
+      // iar cookie-ul e ultima sursă, nu prima: pentru omul fără cont.
+      refCod: '',
+      // De unde vine codul din casetă: '' (de nicăieri), 'staff' (e chiar
+      // codul celui conectat), 'cont' (scrie pe contul clientului) sau
+      // 'link'. Nota de sub casetă spune adevărul după steagul ăsta — o notă
+      // care pretinde că un cod scris de mână „vine de pe link" e o minciună
+      // mică și grea de descoperit.
+      refSursa: '',
+      // Codul adus de link, ținut deoparte. `gp.referralCode()` se cheamă tot
+      // la montare, fiindcă el CURĂȚĂ și adresa — „?ref=" n-are ce căuta în
+      // istoricul browserului. Doar rezultatul lui nu mai intră de-a dreptul
+      // în casetă.
+      refDinCookie: '',
+      // Omul a apăsat „Modifică": caseta se deschide. Cât e `false`, codul e
+      // așezat ca un lucru hotărât, nu ca o întrebare pusă din nou.
+      refDeschis: false,
+      // A scris el însuși în casetă. De aici încolo nu i se mai schimbă nimic
+      // sub degete, nici când sosește sesiunea câteva sutimi mai târziu.
+      refAtins: false,
+      // --- CLIENTUL ALES ANUME ------------------------------------------
+      //
+      // Cine scrie cererea în numele altuia îl ALEGE dintr-o listă, nu îi
+      // scrie numele. Deosebirea nu e de comoditate: un nume tastat se
+      // potrivea cu contul prin `client_by_name()`, adică prin asemănare —
+      // „Cafeneaua Veche" și „Cafeneaua veche SRL" sunt doi oameni pentru
+      // socoteală și unul singur pentru ochi. Aici pleacă `customerId`, un
+      // număr, iar serverul ia de pe contul acela și numele, ca panoul să nu
+      // arate două adevăruri despre aceeași cerere.
+      //
+      // Contul întreg întors de `GET /clients` (numai datele de livrare —
+      // nimic despre bani nu pleacă pe ruta aceea).
+      clientAles: null,
+      // Ce s-a tastat în caseta de căutare, și ce a răspuns serverul.
+      cautQ: '',
+      cautLista: [],
+      // Starea căutării, în cuvinte, fiindcă nota de sub casetă trebuie să
+      // spună adevărul: '' (n-a căutat încă), 'scurt' (prea puține litere),
+      // 'caut', 'gol' (n-a găsit pe nimeni), 'gata', 'multi' (sunt mai mulți
+      // decât încap) și 'eroare'. Un singur text pentru toate șapte ar fi
+      // mințit în șase cazuri din șapte.
+      cautStare: '',
+      cautEroare: '',
+      // Foaia coșului, pe telefon. Pe calculator coșul stă lângă catalog și
+      // se vede tot timpul; pe 390 px stătea sub listă, adică la vreo zece
+      // ecrane de produsul tocmai adăugat — omul nu-l găsea. Acum iese de
+      // jos, la atingerea sumei din bară, peste ce se uită deja.
+      cosJos: false,
+      // Fereastra de finalizare. Nu e o pagină: adresa nu se schimbă, iar
+      // săgeata „înapoi" a telefonului duce tot unde ducea. De-aia stă în
+      // stare, nu în `page` — o comandă pe jumătate scrisă n-are ce căuta în
+      // istoricul de navigare, și nici în legătura pe care o dă omul mai
+      // departe. Se stinge singură la orice schimbare de pagină (`nav()`) și
+      // la golirea coșului (`clearPicks`).
+      finalizare: false,
       sent: false,
       sending: false,
       sendErr: '',
@@ -960,6 +1439,15 @@ class Component extends DCLogic {
       // întârziat al serverului să nu suprascrie ce tocmai a tastat.
       addr: '',
       addrTouched: false,
+      // Zona de livrare, la fel: vine de pe cont și se poate schimba pentru
+      // comanda curentă. Fără ea, oprirea nu se așază pe ruta șoferului.
+      zone: '',
+      zoneTouched: false,
+      // Rezumatul strâns al clientului intrat. Cât timp e `false`, formularul
+      // arată câteva rânduri și butonul de trimitere; „Modifică" îl deschide
+      // întreg. Se deschide o singură dată, și nu se mai strânge: strângerea
+      // ar desființa casetele, iar ce a scris omul în ele s-ar pierde.
+      detalii: false,
       // Cheia și textul brut din căsuța de cantitate care se editează acum:
       // cât timp e goală, rândul rămâne în coș cu cantitatea de dinainte.
       editKey: '',
@@ -982,17 +1470,43 @@ class Component extends DCLogic {
           x.category, x.id, x.name, x.nameEn || x.name,
           x.grams || 0, x.priceFrozen, x.priceBaked,
           x.description || '', x.descriptionEn || x.description || '',
-          x.isNew ? 1 : 0, x.photo || ''
+          // Cheia produsului („strudel-cu-mere") era trimisă de API și
+          // aruncată aici. De când fiecare produs are adresa lui, ea e
+          // singurul lucru care leagă „/produs/strudel-cu-mere" de rândul din
+          // catalog: fără ea, pagina n-ar ști ce produs să deschidă.
+          x.isNew ? 1 : 0, x.photo || '', x.slug || ''
         ]);
         const groups = (r.categories || []).map((c) => [
           c.slug, c.name, c.nameEn || c.name, c.note || '', c.noteEn || c.note || ''
         ]);
-        this.setState({ prod, groups, catErr: '' });
+        this.setState({ prod, groups, promos: r.promos || null, eroare: '', eroareEn: '' });
       })
-      .catch((e) => this.setState({
-        prod: [], groups: [],
-        catErr: 'Catalogul nu a putut fi încărcat. Reîncarcă pagina sau scrie-ne.'
-      }));
+      .catch((e) => {
+        // Lacătul care oprește pagina să afirme ceva despre catalog e
+        // `eroare`, nu o stare de „încărcat”: „Produsul acesta nu mai e
+        // în catalog” e o afirmație despre lume, iar pagina n-a apucat
+        // s-o verifice. Mesajul nu și-l mai scrie pagina singură —
+        // `gp.motiv()` dă motivul adevărat al refuzului, în aceleași
+        // vorbe ca în celelalte cincisprezece ecrane.
+        //
+        // Aici, spre deosebire de panouri, sesiunea expirată NU duce la
+        // `gp.toLogin()`: e vitrina, iar cine se uită la ea n-are cont de
+        // pierdut. `Intrare.dc.html` e ușa personalului — un cumpărător
+        // anonim aruncat acolo pentru un 401 al serverului ar pierde
+        // magazinul cu totul, în loc să citească de ce n-a mers. Refuzul
+        // se arată ca oricare altul, în caseta de sus.
+        //
+        // Motivul se cere în amândouă limbile deodată: caseta se desenează
+        // în limba paginii, iar limba se poate schimba și după ce caseta e
+        // pe ecran.
+        const motiv = gp.motiv(e, {
+          ro: "produsele din magazin", en: "the shop products"
+        });
+        this.setState({
+          prod: [], groups: [], promos: null,
+          eroare: motiv.ro, eroareEn: motiv.en
+        });
+      });
   }
 
   /**
@@ -1005,14 +1519,182 @@ class Component extends DCLogic {
    * Ce vine de aici e doar pentru afișare. Dreptul de a face ceva îl dă
    * cookie-ul, verificat de server la fiecare cerere.
    */
+  /**
+   * Ce cod de recomandare se așază singur în casetă — și de la cine vine.
+   *
+   * Ordinea nu e o preferință de gust, e chiar reparația defectului „ples":
+   *
+   *   1. OMUL DIN ECHIPĂ își vede PROPRIUL cod. Agentul de vânzări care ia
+   *      comanda la client e chiar recomandantul ei — n-are rost să și-l mai
+   *      scrie de fiecare dată. Același tipar există deja în panou, la
+   *      „Administrare Comenzi".
+   *   2. CLIENTUL CU CONT vede ce scrie pe CONTUL lui, nu ce a rămas în
+   *      browser. Contul e adevărul: acolo stă cine l-a adus, iar un cod
+   *      străin tastat peste el nu s-ar transforma în bani, ci într-un
+   *      conflict pe care ar trebui să-l descâlcească patronul cu mâna.
+   *   3. ABIA APOI linkul. Cookie-ul „gp-ref" trăiește treizeci de zile pe
+   *      TOT domeniul, deci e cea mai slabă mărturie dintre toate: spune ce
+   *      s-a deschis odată pe dispozitivul ăsta, nu cine e acum la tastatură.
+   *      Rămâne folositor exact acolo unde nu există nimic mai bun — la omul
+   *      fără cont, venit chiar acum pe linkul cuiva.
+   *
+   * Codul propriu se citește din două locuri fiindcă `/auth/me` NU îl pune pe
+   * utilizator: `current_user()` are listă fixă de coloane și nu cere
+   * `referral_code` (motivul e scris la api/routes/auth.php), deci codul vine
+   * alături, ca `referral`, iar `gp.me()` îl lipește ca `user.referral`.
+   * Aceeași citire dublă o face și `shared/gp-api.js` la :784.
+   */
+  codRecomandare(u, dinCookie) {
+    const rol = String((u && u.role) || '');
+    const propriu = String((u && (u.referralCode || (u.referral && u.referral.code))) || '').trim();
+
+    // OMUL DIN ECHIPĂ NU AJUNGE NICIODATĂ LA COOKIE, nici când n-are cod.
+    // Un angajat fără cod de agent, pe tableta din magazin pe care s-a
+    // deschis cândva un link „?ref=ples", ar fi lipit codul acela pe fiecare
+    // cerere scrisă pentru un client venit la tejghea. E același defect, pe
+    // altă ușă — de-aceea ramura se închide aici, cu cod sau fără.
+    if (rol && rol !== 'client') {
+      return propriu ? { cod: propriu, sursa: 'staff' } : { cod: '', sursa: '' };
+    }
+
+    // CLIENTUL CU CONT SE OPREȘTE AICI, și asta e partea care taie defectul.
+    // Pentru el contul hotărăște — și când spune „nu l-a adus nimeni". Nu se
+    // cade pe cookie, fiindcă serverul citește oricum `users.referred_by` la
+    // socoteală: un cod străin rămas în browser nu s-ar face bani, ci un
+    // CONFLICT („in_asteptare") pe care ar trebui să-l descâlcească patronul
+    // cu mâna, rând cu rând. Caseta e o oglindă a contului, nu o a doua părere.
+    //
+    // `referredByCode` vine de la server (`referral_referred_by_code()`, pus în
+    // răspunsul lui `/auth/me`) și e lipit pe utilizator de `gp.me()`
+    // (shared/gp-api.js). `null` are aici DOUĂ înțelesuri care se desenează la
+    // fel — „nu l-a adus nimeni" și „instalarea n-are migrarea 007" — iar în
+    // amândouă caseta rămâne goală, fiindcă socoteala citește oricum
+    // `users.referred_by` de-a dreptul.
+    if (rol === 'client') {
+      const adus = String((u && u.referredByCode) || '').trim();
+      return adus ? { cod: adus, sursa: 'cont' } : { cod: '', sursa: '' };
+    }
+
+    // Abia aici, și numai aici, contează cookie-ul: OMUL FĂRĂ CONT. Pentru
+    // el linkul e singura urmă a celui care l-a trimis, iar caseta rămâne
+    // deschisă — o poate schimba sau goli cu „Modifică".
+    const link = String(dinCookie || '').trim();
+    return link ? { cod: link, sursa: 'link' } : { cod: '', sursa: '' };
+  }
+
+  /**
+   * Codul e „așezat": îl avem, știm de unde vine, și omul n-a cerut să-l
+   * schimbe. Atunci caseta nu se mai desenează: codul stă scris ca un lucru
+   * hotărât, cu un buton „Modifică" lângă el. Deosebirea nu e de înfățișare —
+   * o casetă goală e o întrebare pusă omului, iar un cod scris într-o casetă
+   * editabilă arată ca ceva ce el a tastat. Niciuna nu e adevărată pentru un
+   * cod venit de pe cont sau de pe link.
+   */
+  refAsezat() {
+    return !!String(this.state.refCod || '').trim()
+      && !!this.state.refSursa
+      && !this.state.refDeschis;
+  }
+
+  /**
+   * Caută clientul pentru care se scrie cererea (`GET /clients`).
+   *
+   * Două griji, amândouă venite din rețea, nu din formular:
+   *
+   * 1. RĂSPUNSURILE NU SOSESC ÎN ORDINEA ÎN CARE AU PLECAT. Cine tastează
+   *    „cafeneaua" trimite opt cereri; a treia se poate întoarce după a opta,
+   *    iar lista ar rămâne pe „caf" — omul ar alege un client dintr-o listă
+   *    care răspunde la altceva decât scrie în casetă. De-aceea fiecare
+   *    cerere își ia un număr, și numai răspunsul ULTIMULUI număr are voie
+   *    să scrie în stare.
+   * 2. NU SE TRIMITE LA FIECARE LITERĂ. Un fir de 250 ms lasă omul să termine
+   *    cuvântul; firul dinainte se taie, ca să nu plece două.
+   *
+   * Poarta nu e aici. Serverul refuză cu 403 pe oricine n-are ogradă, chiar
+   * dacă i-ar scrie cineva adresa de mână.
+   */
+  cautaClienti(q) {
+    const text = String(q || '').trim();
+    if (this.__cautFir) { clearTimeout(this.__cautFir); this.__cautFir = null; }
+    // Numărul crește și când nu se trimite nimic: un răspuns pornit înainte
+    // ca omul să șteargă litera n-are voie să umple lista la loc.
+    const nr = this.__cautNr = (this.__cautNr || 0) + 1;
+    if (text.length < 2) {
+      return this.setState({
+        cautLista: [], cautStare: text ? 'scurt' : '', cautEroare: '' });
+    }
+    this.setState({ cautStare: 'caut', cautEroare: '' });
+    this.__cautFir = setTimeout(() => {
+      gp.get('/clients?q=' + encodeURIComponent(text))
+        .then((r) => {
+          if (nr !== this.__cautNr) return;
+          const randuri = (r && r.rows) || [];
+          this.setState({
+            cautLista: randuri,
+            cautStare: randuri.length ? ((r && r.more) ? 'multi' : 'gata') : 'gol'
+          });
+        })
+        .catch((err) => {
+          if (nr !== this.__cautNr) return;
+          this.setState({
+            cautLista: [],
+            cautStare: 'eroare',
+            cautEroare: (err && err.message) || ''
+          });
+        });
+    }, 250);
+  }
+
+  /**
+   * Omul a ales un client din listă.
+   *
+   * Adresa și zona se iau de pe contul ales — dar NUMAI când contul chiar are
+   * ceva scris. Un cont fără adresă n-are voie să șteargă ce a apucat să
+   * tasteze agentul în prăvălia clientului: gol înseamnă „nu știu", nu
+   * „nimic". Nu se pune `addrTouched`: rămâne o semănare, nu o hotărâre a
+   * omului, iar el o poate schimba mai departe.
+   */
+  alegeClient(c) {
+    if (this.__cautFir) { clearTimeout(this.__cautFir); this.__cautFir = null; }
+    this.__cautNr = (this.__cautNr || 0) + 1;
+    this.setState((st) => ({
+      clientAles: c,
+      cautQ: '',
+      cautLista: [],
+      cautStare: '',
+      cautEroare: '',
+      addr: String((c && c.address) || '').trim() || st.addr,
+      zone: String((c && c.zone) || '').trim() || st.zone
+    }));
+  }
+
   pullAuth() {
+    // `refAtins` e piedica: dacă omul a scris deja ceva în casetă, sesiunea
+    // care sosește cu o clipă mai târziu n-are voie să i-o rescrie sub degete.
+    // Aceeași grijă ca la `addrTouched` și `zoneTouched` de mai jos.
+    const aseaza = (st, u) => {
+      const r = this.codRecomandare(u, st.refDinCookie);
+      return {
+        refCod: st.refAtins ? st.refCod : r.cod,
+        refSursa: st.refAtins ? st.refSursa : r.sursa
+      };
+    };
     gp.me()
-      .then((u) => this.setState((st) => ({
+      .then((u) => this.setState((st) => Object.assign({
         auth: u,
         authReady: true,
-        addr: st.addrTouched ? st.addr : ((u && u.address) || '')
-      })))
-      .catch(() => this.setState({ auth: null, authReady: true }));
+        // Semănate de pe cont NUMAI la client. Un administrator care are
+        // adresa patiseriei scrisă pe contul lui ar fi găsit-o gata pusă în
+        // caseta de livrare a clientului — și, cum caseta e plină, n-ar fi
+        // avut de ce s-o citească. Comanda clientului ar fi plecat spre
+        // laborator. Gol e mai bine decât greșit pe tăcute.
+        addr: st.addrTouched ? st.addr
+          : ((u && u.role === 'client' && u.address) || ''),
+        zone: st.zoneTouched ? st.zone
+          : ((u && u.role === 'client' && u.zone) || '')
+      }, aseaza(st, u))))
+      .catch(() => this.setState((st) => Object.assign(
+        { auth: null, authReady: true }, aseaza(st, null))));
   }
 
   /**
@@ -1030,6 +1712,13 @@ class Component extends DCLogic {
   }
 
   componentDidMount() {
+    // Magazinul e închis la culoare, hotărât, ca Intrarea și Ruta șoferului.
+    // Era singura pagină din cele șaisprezece care nu-și fixa tema, deci se
+    // lua după setarea telefonului: pe un telefon pus pe întuneric magazinul
+    // se făcea negru și restul aplicației rămânea deschis la culoare — două
+    // înfățișări pentru același om, în funcție de un buton din Android.
+    document.documentElement.setAttribute("data-theme", "dark");
+
     // Codul de recomandare, dacă omul a ajuns aici pe un link „…/?ref=ana".
     // Se citește ÎNAINTE de orice altceva, fiindcă gp.referralCode() curăță și
     // adresa: parametrul n-are de ce să rămână în istoricul browserului și să
@@ -1040,7 +1729,14 @@ class Component extends DCLogic {
     // catalog și e găsit de formularul de cont nou, pe pagina de intrare.
     // Funcția nu aruncă niciodată: pe un browser cu stocarea blocată se pierde
     // recomandarea, nu magazinul.
-    try { gp.referralCode(); } catch (e) { /* fără recomandare — mergem mai departe */ }
+    // Rezultatul nu se mai aruncă, dar NICI nu mai intră de-a dreptul în
+    // casetă: se pune deoparte, ca ultimă sursă. Cine are cont — client sau om
+    // din echipă — primește codul de pe contul lui, nu pe cel rămas în browser
+    // de la un link deschis acum trei săptămâni. Vezi `codRecomandare()`.
+    try {
+      const cod = gp.referralCode();
+      if (cod) this.setState({ refDinCookie: cod });
+    } catch (e) { /* fără recomandare — mergem mai departe */ }
 
     this.pullCatalog();
     this.pullAuth();
@@ -1051,6 +1747,14 @@ class Component extends DCLogic {
         const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
         if (!a) return;
         if (a.getAttribute("target")) return;
+        // Legăturile magazinului sunt purtate de aplicație, nu de browser:
+        // `duLa()` schimbă pagina și scrie adresa, ducând singur șirul de
+        // interogare mai departe. Fără rândul ăsta, un vizitator venit cu
+        // „?utm_source=…" ar fi făcut reîncărcare completă la fiecare clic pe
+        // meniu — 170 KB și tot catalogul, de fiecare dată. La construire,
+        // filtrul de mai jos se lărgește la ORICE adresă fără două puncte,
+        // deci ar fi prins și „/catalog", și „/produs/…".
+        if (a.hasAttribute("data-spa")) return;
         const h = a.getAttribute("href") || "";
         if (!/\.dc\.html$/i.test(h)) return;
         const q = location.search;
@@ -1059,6 +1763,32 @@ class Component extends DCLogic {
         location.href = h + q;
       }, true);
     }
+
+    // Butonul „înapoi" al browserului. Cu `pushState` fără ascultătorul ăsta,
+    // adresa s-ar schimba dar pagina ar rămâne pe loc — cea mai supărătoare
+    // formă de site stricat, fiindcă pare că nu răspunde.
+    this._onPop = () => {
+      // PRIMA APĂSARE ÎNCHIDE FOAIA SAU FEREASTRA ȘI LASĂ PAGINA PE LOC.
+      //
+      // Pe Android „înapoi" e gestul cu care se închide orice s-a deschis peste
+      // ecran — nu cel cu care se pleacă din magazin. Până azi, apăsat cu
+      // fereastra de finalizare deschisă, el ducea la pagina dinainte: omul
+      // pierdea și fereastra, și comanda pe jumătate scrisă din ea, dintr-o
+      // singură mișcare pe care o face din obișnuință.
+      //
+      // Se întreabă steagul de pe instanță, nu `this.state`: două apăsări iuți
+      // ajung amândouă înainte ca React să fi redesenat, iar pe stare a doua ar
+      // vedea tot o fereastră deschisă și s-ar pierde. A DOUA apăsare schimbă
+      // pagina, ca până acum.
+      if (this.__foaieInIstoric) {
+        this.__foaieInIstoric = false;
+        this.setState({ cosJos: false, finalizare: false });
+        return;
+      }
+      const r = rutaDinAdresa();
+      if (r) this.setState({ page: r.page, lang: r.lang, fel: r.fel, cheie: r.cheie, menuOpen: false });
+    };
+    window.addEventListener('popstate', this._onPop);
     try {
       const raw = window.localStorage.getItem('gp-cart-v1');
       const d = raw ? JSON.parse(raw) : null;
@@ -1076,7 +1806,34 @@ class Component extends DCLogic {
       const a = this.asideRef.current, w = this.colsRef.current;
       if (!a || !w) return;
       const col = w.firstElementChild;
-      const stacked = !col || a.offsetTop > col.offsetTop + 24 || a.offsetHeight + 140 > window.innerHeight * 1.6;
+      // COȘUL CARE NU ARE CUTIE DE AȘEZARE NU SE PLUTEȘTE.
+      //
+      // `offsetParent === null` înseamnă ori că e ascuns (`display:none` pe el
+      // sau pe un părinte), ori că e scos din curgere cu `position:fixed` —
+      // exact cele două înfățișări pe care le ia coșul pe telefon: ascuns când
+      // foaia e închisă, lipit de marginea de jos când e deschisă
+      // (`asideStyle`). În amândouă, plutirea n-are niciun rost.
+      //
+      // Fără întrebarea asta, bucla se învârtea LA NESFÂRȘIT. Pe un coș ascuns
+      // toate măsurile ies zero, deci `base` ajunge `-this._off` și ținta
+      // `104 + this._off`: pasul de 14,56 px pe cadru urcă `this._off`, dar
+      // ținta urcă odată cu el, așa că distanța rămâne 104 pe veci și
+      // `this._off !== target` nu se face niciodată fals. Măsurat pe serverul
+      // local, la 375 px lățime: aproape 1650 px pe secundă, fără capăt — o
+      // cerere de cadru la fiecare a șaisprezecea milisecundă, în buzunarul
+      // omului. Iar cine se întorcea la lățime de calculator după câteva minute
+      // găsea coloana coșului mutată cu zeci de mii de pixeli, adică lipsă.
+      //
+      // Se ajungea acolo oricând se strâmta fereastra cu plutirea pornită: un
+      // telefon rotit, o tabletă întoarsă, o fereastră trasă de colț.
+      //
+      // Întrebarea stă ÎNAINTEA celorlalte, dinadins: pe măsuri zero, cele două
+      // de după răspund liniștit „nu-i stivuit" — `0 > 0 + 24` e fals, și
+      // `140 > înălțime × 1,6` la fel — adică tocmai mint acolo unde nu e nimic
+      // de măsurat.
+      const stacked = !col || a.offsetParent === null || a.offsetHeight === 0
+        || a.offsetTop > col.offsetTop + 24
+        || a.offsetHeight + 140 > window.innerHeight * 1.6;
       if (stacked) { a.style.transform = ''; this._off = 0; return; }
       const aRect = a.getBoundingClientRect();
       const base = aRect.top - this._off;
@@ -1098,7 +1855,101 @@ class Component extends DCLogic {
     this._onScroll();
   }
 
+  /**
+   * Singurul semnal pe care îl avem: nodul la montare, `null` la desprindere.
+   *
+   * Închiderea ferestrei nu se anunță nicăieri — e o desenare ca oricare alta,
+   * în care `contactVizibil` s-a făcut fals. `componentDidUpdate` vine prea
+   * târziu, după ce nodurile au fost scoase, iar `getSnapshotBeforeUpdate`, care
+   * ar fi fost cârligul potrivit, nu e chemat de gazdă (v. capul plasturelui).
+   * React însă cheamă funcția de `ref` cu `null` chiar când desprinde nodul, și
+   * nodul acela, scos din pagină, își ține mai departe valorile: de acolo se
+   * culege ciorna.
+   */
+  legaForm(nod) {
+    if (nod) {
+      this.formRef.current = nod;
+      this.puneCiorna(nod);
+      return;
+    }
+    this.iaCiorna(this.formRef.current);
+    this.formRef.current = null;
+  }
+
+  /** Ce a scris omul, cules din nodul care tocmai se desprinde. */
+  iaCiorna(nod) {
+    if (!nod) return;
+    try {
+      const fd = new FormData(nod);
+      CIORNA_CAMPURI.forEach((n) => {
+        if (fd.has(n)) this.__ciorna[n] = String(fd.get(n) || '');
+      });
+    } catch (err) { /* browser fără FormData(form) — pagina merge oricum */ }
+  }
+
+  /**
+   * Ciorna, pusă înapoi într-un formular proaspăt montat.
+   *
+   * Se scrie de-a dreptul în noduri, nu prin stare, fiindcă exact așa le ține
+   * și omul când scrie în ele: câmpurile sunt necontrolate.
+   *
+   * Cele două liste (`Segment`, `Volum estimat`) au opțiuni fără `value`, deci
+   * valoarea lor E chiar textul tradus. Cine schimbă limba cu fereastra închisă
+   * s-ar întoarce la o valoare care nu mai există în listă; de-aia se pune
+   * numai dacă se găsește o opțiune care s-o poarte, altfel lista rămâne pe
+   * prima ei intrare, ca acum.
+   */
+  puneCiorna(nod) {
+    if (!nod || !nod.elements) return;
+    CIORNA_CAMPURI.forEach((n) => {
+      const v = this.__ciorna[n];
+      if (!v) return;
+      const el = nod.elements[n];
+      if (!el || typeof el.value !== 'string') return;
+      if (el.tagName === 'SELECT'
+        && !Array.prototype.some.call(el.options, (o) => o.value === v)) return;
+      el.value = v;
+    });
+  }
+
+  /**
+   * Foaia coșului și fereastra de finalizare își au intrarea lor în istoric.
+   *
+   * Nu se pune la deschidere și nu se ia la închidere din fiecare buton în
+   * parte — sunt șase drumuri pe care se închid (✕, fundalul, „Golește",
+   * scoaterea ultimei bucăți, schimbarea paginii, „înapoi") și ar fi trebuit
+   * ținute minte toate. Se potrivește aici, o dată după fiecare desenare,
+   * comparând ce e pe ecran cu ce e în istoric. Un singur loc de greșit.
+   *
+   * Închiderea de la buton cheamă `history.back()`, nu doar stinge steagul:
+   * altfel intrarea ar rămâne pe stivă, iar prima apăsare pe „înapoi" de după ar
+   * fi una moartă — omul apasă și nu se întâmplă nimic. Apăsarea aceea de
+   * program ajunge tot în `_onPop`, care găsește steagul deja stins și trece la
+   * ramura de pagină: adresa e aceeași, deci nu se mișcă nimic.
+   *
+   * Drumul prin `duLa()` nu ajunge aici: acolo intrarea foii e ÎNLOCUITĂ de
+   * pagina nouă, nu scoasă, ca să nu se ceară o întoarcere peste o navigare
+   * tocmai împinsă în istoric.
+   */
+  potrivesteIstoricul() {
+    const deschis = !!(this.state.cosJos || this.state.finalizare);
+    if (deschis === this.__foaieInIstoric) return;
+    if (typeof history === 'undefined' || !history.pushState) return;
+    if (deschis) {
+      // Aceeași adresă, dinadins: se adaugă un pas în istoric fără ca bara de
+      // adrese să se schimbe, fiindcă foaia nu e o pagină.
+      try {
+        history.pushState({ gpFoaie: 1 }, '', location.href);
+        this.__foaieInIstoric = true;
+      } catch (err) { /* browser fără istoric scriibil — pagina merge oricum */ }
+      return;
+    }
+    this.__foaieInIstoric = false;
+    try { history.back(); } catch (err) { /* noop */ }
+  }
+
   componentDidUpdate() {
+    this.potrivesteIstoricul();
     if (this._onScroll) this._onScroll();
     try {
       window.localStorage.setItem('gp-cart-v1', JSON.stringify({ qty: this.state.qty, tier: this.state.tier }));
@@ -1110,14 +1961,86 @@ class Component extends DCLogic {
     window.removeEventListener('scroll', this._onScroll);
     window.removeEventListener('resize', this._onScroll);
     window.removeEventListener('resize', this._onResize);
+    if (this._onPop) window.removeEventListener('popstate', this._onPop);
   }
 
-  nav(page) {
+  /**
+   * Schimbă pagina ȘI adresa din bara browserului.
+   *
+   * `pushState` e ce face ca magazinul să aibă adrese: fără el, catalogul
+   * rămâne „/", deci nu poate fi trimis nimănui, nu poate fi pus la favorite,
+   * și nu poate intra în rezultatele căutării ca pagină de sine stătătoare.
+   *
+   * Șirul de interogare se duce mai departe pe adresa nouă. Codul de
+   * recomandare („?ref=ana") e scos din adresă la pornire și ținut în
+   * sessionStorage, dar ce vine din reclame („?utm_source=…") rămâne acolo, și
+   * ar fi pierdut la primul clic pe meniu — adică exact pentru vizitatorul
+   * plătit.
+   *
+   * Nu derulează sus: schimbarea limbii cheamă tot funcția asta, iar acolo
+   * omul se uită la un anumit rând din pagină și n-are de ce să fie zvârlit la
+   * început. De derulat derulează `nav()`, care e navigare adevărată.
+   */
+  duLa(page, lang, fel, cheie) {
+    this.setState({
+      page: page, lang: lang, fel: fel || 'pagina', cheie: cheie || '', menuOpen: false
+    });
+    if (!GP_HARTA || typeof history === 'undefined' || !history.pushState) return;
+    const cale = caleaCatre(page, lang, fel, cheie) + (location.search || '');
+    try {
+      // `replaceState` când adresa e aceeași: altfel un clic pe pagina în care
+      // ești deja umple istoricul cu aceeași intrare, și „înapoi" nu mai iese
+      // din ea.
+      //
+      // Și când foaia coșului își are intrarea pe stivă: pagina nouă o
+      // ÎNLOCUIEȘTE. Altfel ar rămâne o intrare a unei foi care nu mai e
+      // deschisă, iar `potrivesteIstoricul()` ar cere o întoarcere peste
+      // navigarea tocmai împinsă — adică „înapoi" ar anula pagina la care omul
+      // abia a ajuns.
+      if (this.__foaieInIstoric || location.pathname + location.search === cale) {
+        history.replaceState(null, '', cale);
+        this.__foaieInIstoric = false;
+      } else history.pushState(null, '', cale);
+    } catch (err) { /* browser fără istoric scriibil — pagina merge oricum */ }
+  }
+
+  nav(page, fel, cheie) {
     return (e) => {
       if (e && e.preventDefault) e.preventDefault();
-      this.setState({ page: page, menuOpen: false });
+      // Foaia coșului nu trece dintr-o pagină în alta: e legată de catalog.
+      // Nici fereastra de finalizare — altfel „Modifică selecția" din ea ar
+      // duce la catalog CU fereastra încă deasupra, adică omul ar apăsa pe
+      // produse printr-un geam.
+      this.setState({ cosJos: false, finalizare: false });
+      this.duLa(page, this.state.lang, fel || 'pagina', cheie || '');
       try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (err) { /* noop */ }
     };
+  }
+
+  /**
+   * Coșul golit din mâna omului stinge și steagul de finalizare.
+   *
+   * `finalizare` era o stare care se aprindea la „Finalizare comandă" și se
+   * stingea numai la închidere, la `clearPicks` sau la schimbarea paginii.
+   * Scoțând produsele unul câte unul din chiar fereastra deschisă, coșul
+   * ajungea gol cu steagul încă aprins: fereastra dispărea de pe ecran —
+   * `finalizare` cel socotit (:2291) o stinge la desenare —, dar ARMA rămânea
+   * pusă. La următorul produs adăugat în catalog, fereastra sărea singură
+   * peste ecran, fără ca nimeni s-o fi cerut.
+   *
+   * `s.sent` e scutirea: trimiterea reușită golește ea coșul (`qty: {}`), iar
+   * atunci fereastra TREBUIE să rămână, fiindcă are de spus „Mulțumim, cererea
+   * ta a intrat la noi în platformă". Aici nu se ajunge pe drumul acela —
+   * trimiterea nu trece prin `setQty` —, dar paza stă scrisă, ca mutarea
+   * următoare a cuiva să n-o strice fără să bage de seamă.
+   *
+   * Paza de la desenare rămâne la locul ei: ea stinge fereastra în aceeași
+   * clipă cu ultima bucată scoasă, fără să depindă de ordinea în care se cheamă
+   * cârligele, și tot ea ține fereastra aprinsă după trimitere.
+   */
+  dezarmeaza(s, q) {
+    if (Object.keys(q).length || s.sent) return { qty: q };
+    return { qty: q, finalizare: false };
   }
 
   setQty(key, n) {
@@ -1125,7 +2048,7 @@ class Component extends DCLogic {
     this.setState((s) => {
       const q = Object.assign({}, s.qty);
       if (v > 0) q[key] = v; else delete q[key];
-      return { qty: q };
+      return this.dezarmeaza(s, q);
     });
   }
 
@@ -1134,8 +2057,46 @@ class Component extends DCLogic {
       const q = Object.assign({}, s.qty);
       const v = Math.max(0, Math.min(9999, (q[key] || 0) + d));
       if (v > 0) q[key] = v; else delete q[key];
-      return { qty: q };
+      return this.dezarmeaza(s, q);
     });
+  }
+
+  /**
+   * Cifra scrisă de mână în steper.
+   *
+   * Căsuța asta exista de mult, dar NUMAI în coș. Pe cardul din catalog și în
+   * fereastra produsului cifra era un `<span>`, deci o sută de bucăți se cereau
+   * cu o sută de apăsări pe „+". Acum sunt toate trei aceeași căsuță — de-aceea
+   * regulile stau într-un singur loc, aici, în loc să fie scrise de trei ori.
+   *
+   * Se ține și textul brut (`editText`), nu doar numărul: fără el, ștergerea
+   * cifrei ca s-o rescrii ar goli rândul sub degete, iar tasta următoare ar
+   * merge la alt produs. Scoaterea din coș rămâne treaba lui „×" și a lui „−".
+   *
+   * Tăierea la patru cifre nu e o a doua pază, ci sinceritate: `setQty()` taie
+   * oricum la 9999, deci fără ea omul ar fi văzut „12345" în căsuță și ar fi
+   * citit totalul socotit pentru 9999.
+   */
+  scrieCant(key, e) {
+    const cifre = String(e.target.value).replace(/[^0-9]/g, '').slice(0, 4);
+    this.setState({ editKey: key, editText: cifre });
+    if (Number(cifre) > 0) this.setQty(key, cifre);
+  }
+
+  terminaCant() {
+    this.setState({ editKey: '', editText: '' });
+  }
+
+  /**
+   * Atingerea alege cifra dinainte, ca scrisul s-o înlocuiască.
+   *
+   * Fără asta, cine atinge un „1" și scrie „100" primește **1100** — adică fix
+   * greșeala pe care căsuța trebuia s-o șteargă. `select()` cade tăcut pe un
+   * element care nu-l are (nu se întâmplă aici, dar handlerul e legat de trei
+   * căsuțe și e mai ieftin să fie de neclintit decât să fie verificat).
+   */
+  alegeCant(e) {
+    try { e.target.select(); } catch (err) { /* fără selecție, tot se poate scrie */ }
   }
 
   renderVals() {
@@ -1143,14 +2104,61 @@ class Component extends DCLogic {
     const t = (a, b) => (ro ? a : b);
     const p = this.state.page;
     const mob = !!this.state.mob;
-    const dow = new Date().getDay();
-
     // Contul, o singură dată: îl folosesc antetul, meniul și formularul.
     // `mine` înseamnă „client cu cont", singurul caz în care formularul se
     // scurtează. Un angajat care comandă de pe site o face pentru altcineva,
     // deci lui i se cer în continuare datele clientului.
     const A = this.state.auth;
     const mine = !!A && A.role === 'client';
+    // Personalul intrat pe site: administrator, fondator, manager, agent de
+    // vânzări, angajat. Formularul lui rămâne cel de vizitator — el scrie
+    // datele CLIENTULUI, nu pe ale lui — dar una din casete îi lipsea, și
+    // tocmai aceea fără de care comanda n-are unde ajunge: adresa.
+    //
+    // Serverul o primea de la oricine dintotdeauna (`api/routes/requests.php:147`,
+    // `text_field($b['address'] ?? '', …)`, fără nicio poartă de rol). Pagina
+    // n-o trimitea: `address: mine ? … : ''`, iar caseta stătea în spatele lui
+    // `clientDetalii`, care cere `mine`. Agentul de vânzări care lua comanda
+    // la client, în prăvălia lui, o trimitea fără loc de livrare — iar în
+    // panoul de comenzi rândul „Adresa" ieșea gol, fără ca nimic să spună de ce.
+    const staff = !!A && !!A.role && A.role !== 'client';
+    // Clientul ales anume din căutare. Cât timp e `null`, formularul se poartă
+    // exact cum se purta până acum. Ales, el rebazează jumătate de formular:
+    // datele de contact nu se mai cer (le are contul), codul de recomandare
+    // dispare (serverul nu-l mai scrie), iar cererea pleacă legată de un
+    // NUMĂR de cont, nu de un nume care s-ar putea potrivi cu altcineva.
+    const cl = this.state.clientAles;
+    // Cine are voie să caute: oglinda lui `client_scope_for()` de pe server.
+    // Managerul și angajatul sunt personal, dar n-au ogradă — lor caseta nici
+    // nu li se desenează. `gp.eAdmin()` ține la un loc administratorul și
+    // fondatorul, ca peste tot în casă.
+    const cautaClient = staff && (gp.eAdmin(A) || A.role === 'agent_vanzari');
+    // 29-b · FORMULARUL CLIENTULUI INTRAT.
+    //
+    // Până acum trecea prin același formular ca un străin: pe telefon se
+    // derula mult până la butonul care trimite comanda. Acum datele lui stau
+    // strânse în patru rânduri, iar „Modifică" deschide casetele.
+    //
+    // Se deschide singur când contul n-are adresă: un rezumat care arată un
+    // rând gol nu e un rezumat, e o cursă. Și tot atunci trebuie completată
+    // adresa, altfel comanda pleacă fără loc de livrare.
+    const faraAdresa = mine && !String(this.state.addr || '').trim();
+    const detaliiDeschise = !!this.state.detalii || faraAdresa;
+    // Rezumatul e strâns numai pentru client, și numai cât timp n-a deschis.
+    const rezumatStrans = mine && !detaliiDeschise;
+    // Ziua, scrisă pe înțelesul omului. Cât timp rezumatul e strâns, caseta de
+    // dată nu e pe ecran, deci rândul ăsta e SINGURUL loc în care apare ziua
+    // cerută — iar „2026-09-20" nu e o zi, e un număr de inventar. Dacă
+    // browserul nu știe s-o scrie, rămâne cum a venit: mai bine crudă decât
+    // „Invalid Date".
+    const ziScrisa = (iso) => {
+      const d = new Date(String(iso) + 'T00:00:00');
+      if (isNaN(d.getTime())) return String(iso);
+      try {
+        return d.toLocaleDateString(ro ? 'ro-RO' : 'en-GB',
+          { day: 'numeric', month: 'long', year: 'numeric' });
+      } catch (err) { return String(iso); }
+    };
     const accName = A ? (A.customerName || A.name || '') : '';
     const initials = (n) => String(n).trim().split(' ').filter(Boolean)
       .slice(0, 2).map((w) => w[0].toUpperCase()).join('') || '·';
@@ -1187,6 +2195,37 @@ class Component extends DCLogic {
     const contact = this.state.contact || gp.contact();
     const phoneText = contact.phone;
     const emailText = contact.email;
+
+    /*
+     * Programul, gata strâns pe rânduri de `gp.program()`. Erau trei rânduri
+     * scrise de mână aici — „Luni – Vineri 07:00 – 21:00", „Sâmbătă 07:00 –
+     * 17:00", „Duminică Închis" — și un al patrulea, scurt, în subsol. Niciunul
+     * nu se potrivea cu ce afla Google din aceleași Setări („Luni–Sâmbătă
+     * 05:00–21:00"): site-ul spunea două programe deodată, iar unul din cei doi
+     * clienți venea la ușă închisă.
+     *
+     * Câte rânduri are tabelul nu mai e hotărât aici: le numără patronul, din
+     * caseta „Program de lucru". Zilele alăturate cu aceleași ore se strâng
+     * într-un rând, deci pentru programul de azi ies exact cele trei de mai
+     * sus, iar pentru „Lu-Sâ 05:00-21:00" ies două.
+     *
+     * Cât timp serverul n-a răspuns, lista e GOALĂ și caseta nu se desenează:
+     * un tabel cu ore de rezervă, scrise în cod, e chiar paguba de reparat.
+     */
+    const orar = gp.program(ro).map((r) => ({
+      nume: r.nume,
+      ore: r.orele ? r.orele[0] + ' – ' + r.orele[1] : t('Închis', 'Closed'),
+      stil: r.azi ? hi : '',
+    }));
+
+    // Coada adresei, pentru subsol, unde strada stă pe rândul ei. Vine tot din
+    // adresa întreagă: se taie din ea strada și rămâne restul, ca să nu fie un
+    // al doilea loc unde scrie „Sector 4, București".
+    const coada = (intreaga, strada) =>
+      String(intreaga || '').startsWith(strada) ? String(intreaga).slice(strada.length).replace(/^,\s*/, '') : '';
+    const mareLaInceput = (x) => (x ? x.charAt(0).toUpperCase() + x.slice(1) : x);
+    const orasSiSector = mareLaInceput(coada(contact.addressFull, contact.address));
+    const orasSiSectorEn = mareLaInceput(coada(contact.addressFullEn, contact.address));
     const phoneDigits = phoneText.replace(/[^0-9]/g, '').replace(/^00/, '').replace(/^0/, '40');
     const telHref = 'tel:+' + phoneDigits;
     const mailHref = 'mailto:' + emailText;
@@ -1242,12 +2281,24 @@ class Component extends DCLogic {
           unit: t('pe bucată', 'per piece'),
           alt: tierName(other) + ': ' + money(other === 'frozen' ? r[5] : r[6]),
           special: !!r[9],
-          qty: String(n),
+          // Cât timp se scrie în căsuță se arată textul brut, nu numărul din
+          // coș — vezi `scrieCant()`. Aceeași expresie ca pe rândul din coș,
+          // fiindcă e aceeași căsuță.
+          qty: key === this.state.editKey ? String(this.state.editText) : String(n),
           none: n === 0,
           some: n > 0,
           add: () => this.bump(key, 1),
           inc: () => this.bump(key, 1),
           dec: () => this.bump(key, -1),
+          set: (e) => this.scrieCant(key, e),
+          blur: () => this.terminaCant(),
+          pick: (e) => this.alegeCant(e),
+          // Numele produsului duce la pagina lui. Aici se închide lanțul de
+          // legături pe care îl urmărește un motor de căutare: start →
+          // catalog → grupă → produs. O pagină la care nu duce nicio legătură
+          // din site e socotită neimportantă chiar și când e găsită din hartă.
+          href: caleaCatre('product', this.state.lang, 'product', r[11] || ''),
+          go: this.nav('product', 'product', r[11] || ''),
           lineTotal: money(n * unitPrice),
           card: cardBase + (n > 0 ? cardOn : '')
         };
@@ -1256,22 +2307,101 @@ class Component extends DCLogic {
         key: g[0],
         title: t(g[1], g[2]),
         note: t(g[3], g[4]),
+        // Titlul grupei e legătura către pagina ei. Un motor de căutare
+        // urmărește `href`: fără legăturile astea, cele șase pagini de grupă
+        // ar exista doar în harta trimisă separat, iar o pagină spre care nu
+        // duce nicio legătură din site e o pagină pe care Google o socotește
+        // neimportantă chiar dacă o găsește.
+        href: caleaCatre('catalog', this.state.lang, 'group', g[0]),
+        go: this.nav('catalog', 'group', g[0]),
         count: items.length + ' ' + t('produse', 'products'),
         items: items
       };
     });
 
-    const TRIAL_EACH = 3;
-    const TRIAL_OFF = 0.2;
+    /*
+     * Adresa unei grupe arată NUMAI grupa aceea.
+     *
+     * Dacă „/catalog/strudel" ar fi arătat tot catalogul, cele șase pagini de
+     * grupă ar fi avut exact același conținut. Pentru un motor de căutare asta
+     * nu înseamnă șase pagini, ci una singură repetată de șase ori: alege una,
+     * le lasă pe celelalte afară, și încrederea în tot site-ul scade.
+     */
+    const grupaCeruta = this.state.fel === 'group' ? this.state.cheie : '';
+    const groupsAratate = grupaCeruta ? groups.filter((g) => g.key === grupaCeruta) : groups;
+    const grupaAsta = grupaCeruta ? groups.filter((g) => g.key === grupaCeruta)[0] : null;
+
+    /* ------------------------------------------------- pagina unui produs -- */
+
+    // Catalogul vine de la server după ce pagina s-a desenat o dată. Până
+    // sosește, `PROD` e gol — deci „negăsit" nu se poate spune încă, altfel
+    // fiecare produs ar clipi o dată prin ecranul „nu există".
+    const catalogSosit = (this.state.prod || []).length > 0;
+    const prodCerut = this.state.fel === 'product' ? this.state.cheie : '';
+    const randProd = prodCerut ? PROD.filter((r) => r[11] === prodCerut)[0] : null;
+    const grupaProd = randProd ? GROUPS.filter((g) => g[0] === randProd[0])[0] : null;
+    const cheiaProd = randProd ? tier + ':' + randProd[1] : '';
+    const nProd = randProd ? (QTY[cheiaProd] || 0) : 0;
+
+    // Reducerea vine de la server (`promo_public()`, api/lib/promo.php); nu mai
+    // stă scrisă aici. Cifrele astea erau, până acum, singurul loc din care
+    // pagina afla ce reducere să arate — iar serverul nu știa de ele deloc, deci
+    // ecranul putea spune −20% pe o cerere înregistrată la preț întreg. Venind
+    // din același loc din care se și aplică, ele nu mai POT să se depărteze.
+    //
+    // Rezerva de dedesubt ține doar clipa dintre desenarea paginii și sosirea
+    // catalogului: cât timp reducerea lipsește, `promoGata` e fals, pachetul nu
+    // se arată, și nimeni nu apucă să vadă cifrele acelea.
+    const PROMO = (this.state.promos && this.state.promos['pachet-test']) || null;
+    const TRIAL_EACH = PROMO ? Number(PROMO.each) : 3;
+    const TRIAL_PCT = PROMO ? Math.round(Number(PROMO.off)) : 20;
     const TRIAL_PIECES = PROD.length * TRIAL_EACH;
+    // Prețurile reduse, bucată cu bucată, așa cum le-a socotit serverul
+    // (`promo_units()`). Pagina nu mai scade niciun procent: adună.
+    //
+    // Nu e pedanterie. Rotunjirea era ultimul loc în care ecranul și banii mai
+    // socoteau același lucru de două ori, iar `Math.round` și `round()` din
+    // PHP nu cad la fel pe jumătatea exactă — la −20% niciodată, la −5% pe
+    // unul din șase prețuri. Adică exact felul de defect care nu se vede până
+    // în ziua în care cineva schimbă procentul.
+    const promoUnit = {};
+    ((PROMO && Array.isArray(PROMO.units)) ? PROMO.units : []).forEach((u) => { promoUnit[u.id] = u; });
+    // Pachetul se arată numai dacă serverul a dat un preț pentru fiecare
+    // produs de pe ecran. Cele două liste vin din același răspuns, deci
+    // condiția nu poate pica azi — dar ea e ce face imposibil ca vreodată să
+    // apară pe ecran un pachet socotit altfel decât îl va socoti serverul.
+    const promoGata = !!PROMO && PROD.length > 0 && PROD.every((r) => promoUnit[r[1]]);
     const trialList = (tr) => PROD.reduce((s, r) => s + TRIAL_EACH * (tr === 'frozen' ? r[5] : r[6]), 0);
-    const trialNet = (tr) => trialList(tr) * (1 - TRIAL_OFF);
+    // Rezerva e prețul ÎNTREG, nu unul socotit aici: dacă vreodată lipsește un
+    // preț redus, ecranul cere mai mult, niciodată mai puțin. `promoGata` a
+    // ascuns oricum pachetul până atunci.
+    const trialUnit = (r, tr) => {
+      const u = promoUnit[r[1]];
+      const catalog = tr === 'frozen' ? r[5] : r[6];
+      return u && u[tr] != null ? Number(u[tr]) : catalog;
+    };
+    const trialNet = (tr) => PROD.reduce((s, r) => s + TRIAL_EACH * trialUnit(r, tr), 0);
     // Româna cere „de" de la 20 în sus: 1 pachet, 2 pachete, 20 de pachete.
     const pachete = (k) => k === 1
       ? t('1 pachet', '1 pack')
       : k + ' ' + (k % 100 === 0 || k % 100 > 19 ? t('de pachete', 'packs') : t('pachete', 'packs'));
     const trialKey = 'trial:' + tier;
-    const trialN = QTY[trialKey] || 0;
+    // Pachetul din coș, oricare i-ar fi varianta.
+    //
+    // Cardul se uita la fila deschisă („trial:" + tier), nu la coș. Un pachet
+    // pus de pe fila „congelat" dispărea de pe card când omul trecea pe
+    // „copt": butonul redevenea „Adaugă pachetul de test", deși pachetul era
+    // în cerere, iar cifra de pe card era a celeilalte variante decât rândul
+    // din coș. Aceeași contradicție reclamată — cardul spune una, coșul alta —
+    // doar pornită din alt loc. `trialAdd` scoate oricum cealaltă variantă
+    // (`trialAdd`, mai jos), deci în coș nu poate sta decât un pachet, iar
+    // cardul are ce urmări.
+    const trialInCos = (QTY['trial:frozen'] || 0) > 0 ? 'frozen'
+      : (QTY['trial:baked'] || 0) > 0 ? 'baked' : null;
+    const trialN = trialInCos ? (QTY['trial:' + trialInCos] || 0) : 0;
+    // Cardul arată pachetul din coș cât timp e unul; altfel pe cel al filei
+    // deschise, fiindcă atunci e o reclamă, nu o chitanță.
+    const trialTier = trialInCos || tier;
     const trialName = (tr) => t(
       'Pachet de test — ' + PROD.length + ' produse × ' + TRIAL_EACH + ' buc',
       'Trial pack — ' + PROD.length + ' products × ' + TRIAL_EACH + ' pcs'
@@ -1279,13 +2409,12 @@ class Component extends DCLogic {
 
     let totPieces = 0;
     let totMoney = 0;
-    // Două sume, fiindcă în coș sunt două întrebări diferite, iar până acum le
-    // răspundea aceeași variabilă:
-    //   `totMoney` — cât scrie pe ecran și cât pleacă în cerere. Preț de listă,
-    //     fiindcă API-ul nu are noțiunea de reducere (vezi pachetul de test mai
-    //     jos): ecranul și oferta trebuie să spună aceeași cifră.
-    //   `totNet`   — cât plătește clientul, cu −20% deja scăzut pe pachetul de
-    //     test. Numai ea are voie să decidă dacă s-a atins comanda minimă.
+    // Două sume, fiindcă în coș sunt două întrebări diferite:
+    //   `totMoney` — cât ar costa la preț de catalog. E cifra TĂIATĂ de pe
+    //     ecran, cea care arată de unde s-a scăzut. Nu mai pleacă nicăieri.
+    //   `totNet`   — cât plătește clientul. De când reducerea e reală pe server
+    //     (api/lib/promo.php), ea e și cifra pe care o înregistrează cererea,
+    //     și baza din care se socotește comisionul agentului.
     // Cu o singură sumă, un coș în care intra pachetul trecea pragul la preț de
     // listă deși net rămânea sub el: cardul se făcea verde „Comandă minimă
     // atinsă" pentru o comandă care nu era minimă.
@@ -1297,10 +2426,9 @@ class Component extends DCLogic {
         const n = QTY[k];
         if (parts[0] === 'trial') {
           const tr = parts[1] === 'baked' ? 'baked' : 'frozen';
-          // Coșul socotește pachetul la prețul de listă, iar reducerea se
-          // scrie ca promisiune separată. Înainte aduna aici prețul redus, pe
-          // când cererea ajungea pe server fără nicio reducere — API-ul nici
-          // nu are noțiunea — deci pe ecran scria o sumă și în ofertă alta.
+          // `totMoney` rămâne la preț de catalog fiindcă e cifra tăiată, cea
+          // care arată de unde s-a scăzut; `totNet` e cea plătită, și tot ea e
+          // cea pe care o înregistrează serverul de când reducerea e reală.
           const unitPrice = trialList(tr);
           // Toate cifrele se înmulțesc cu `n`. Înainte pachetul intra în coș ca
           // și cum ar fi mereu unul singur: cantitatea era citită din coș, dar
@@ -1314,13 +2442,20 @@ class Component extends DCLogic {
             trial: tr,
             name: trialName(tr),
             meta: (n * TRIAL_PIECES) + ' ' + t('buc', 'pcs') + ' · '
-              + t('−20% aplicat de laborator la confirmarea ofertei',
-                  '−20% applied by the bakery when the quote is confirmed'),
+              + t('−' + TRIAL_PCT + '% deja scăzut din preț',
+                  '−' + TRIAL_PCT + '% already deducted'),
             qty: String(n),
             fixed: true,
             steppable: false,
             fixedLabel: pachete(n),
-            lineTotal: money(n * unitPrice),
+            // Rândul arată cifra de plată, iar lista rămâne lângă ea, tăiată —
+            // aceeași pereche ca pe card. Până acum rândul arăta doar lista,
+            // adică exact cifra tăiată de pe card: omul punea în coș „165,72"
+            // și citea „207,15". `totMoney` rămâne la listă fiindcă e cifra
+            // tăiată de sub total, nu ce se plătește.
+            lineTotal: money(n * trialNet(tr)),
+            lineWas: money(n * unitPrice),
+            hasWas: true,
             remove: () => this.setQty(k, 0)
           };
         }
@@ -1345,17 +2480,19 @@ class Component extends DCLogic {
           // afișăm textul brut, iar în coș rămâne cantitatea de dinainte.
           qty: k === this.state.editKey ? String(this.state.editText) : String(n),
           lineTotal: money(n * unitPrice),
+          // Produsele obișnuite n-au reducere, deci n-au nici preț tăiat.
+          lineWas: '',
+          hasWas: false,
           inc: () => this.bump(k, 1),
           dec: () => this.bump(k, -1),
-          set: (e) => {
-            const cifre = String(e.target.value).replace(/[^0-9]/g, '');
-            this.setState({ editKey: k, editText: cifre });
-            // Din căsuță se schimbă doar cantitatea. Scos din coș se face cu
-            // „×" sau cu „−", nu ștergând cifra — altfel rândul dispărea de
-            // sub cursor, iar tasta următoare mergea la alt produs.
-            if (Number(cifre) > 0) this.setQty(k, cifre);
-          },
-          blur: () => this.setState({ editKey: '', editText: '' }),
+          // Regulile stăteau scrise aici, în singurul loc care avea căsuță. De
+          // când o au și cardul din catalog, și fereastra produsului, stau în
+          // `scrieCant()` — o dată, nu de trei ori. Purtarea e aceeași: din
+          // căsuță se schimbă doar cantitatea, scoaterea din coș se face cu „×"
+          // sau cu „−", nu ștergând cifra.
+          set: (e) => this.scrieCant(k, e),
+          blur: () => this.terminaCant(),
+          pick: (e) => this.alegeCant(e),
           remove: () => this.setQty(k, 0)
         };
       });
@@ -1369,22 +2506,49 @@ class Component extends DCLogic {
     // ca o greșeală de socoteală, nu ca o reducere deja scăzută.
     const minRedus = totNet < totMoney;
 
+    // Foaia e deschisă numai pe telefon și numai cât are ce arăta. Ultima
+    // condiție nu e de prisos: dacă omul scoate din foaie și ultimul produs,
+    // bara de jos dispare odată cu coșul, iar foaia ar rămâne deschisă peste
+    // un catalog, fără nimic în ea și fără bara din care s-o închidă.
+    const cosJos = mob && !!this.state.cosJos && picks.length > 0;
+
+    // Fereastra de finalizare, cu aceeași pază de la coadă și din același
+    // motiv: dacă omul scoate ultimul produs din chiar cartonașul care se
+    // vede în fereastră, formularul ar rămâne deschis peste o comandă goală.
+    // Spre deosebire de foaie, NU e legată de telefon — butonul care o
+    // deschide stă și în coșul de pe calculator (`:558`).
+    //
+    // `|| this.state.sent` NU e o slăbire a pazei, e chiar pricina pentru care
+    // paza există. Trimiterea reușită golește coșul (`qty: {}`, :3155), deci
+    // fără rândul ăsta fereastra se stingea EXACT în clipa în care avea de
+    // spus singurul lucru care conta — „Mulțumim! Cererea ta a intrat la noi
+    // în platformă". Omul apăsa „Trimite comanda", vedea fereastra
+    // dispărându-i de sub deget și rămânea cu catalogul gol în față, fără să
+    // afle dacă a plecat ceva. Prins la proba de pe 8100, nu la citire.
+    const finalizare = !!this.state.finalizare && (picks.length > 0 || !!this.state.sent);
+
     const piecesText = totPieces + ' ' + t('buc', 'pcs');
     const orderText = (extra) => {
       const L = [t('Comandă / cerere de ofertă — Golden Pastry', 'Order / quote request — Golden Pastry'), ''];
       picks.forEach((row) => { L.push(row.qty + ' × ' + row.name + ' (' + row.meta + ') = ' + row.lineTotal); });
       L.push('');
-      L.push(t('Total: ', 'Total: ') + piecesText + ' · ' + money(totMoney));
-      L.push(minOk
-        ? t('Comanda atinge minimul de 700 RON (București și Ilfov).', 'Order meets the 700 RON minimum (Bucharest and Ilfov).')
-        : t('Sub comanda minimă de 700 RON — mai lipsesc ' + money(minLeft) + '. În restul țării livrăm la cerere.',
-            'Below the 700 RON minimum — ' + money(minLeft) + ' short. Elsewhere in Romania we deliver on request.'));
-      // Cine primește oferta pe WhatsApp nu are cardul lângă el: dacă în text
-      // apar două cifre diferite, textul trebuie să spună singur de ce.
+      // Totalul ofertei e cifra de plată, aceeași cu cea de pe ecran. Înainte
+      // pleca prețul de listă, deși rândurile de deasupra fuseseră deja scrise
+      // cu reducerea scăzută: cine primea oferta aduna rândurile și obținea
+      // altceva decât Totalul de sub ele.
+      L.push(t('Total: ', 'Total: ') + piecesText + ' · ' + money(totNet));
+      // Cine primește oferta pe WhatsApp nu are ecranul lângă el: dacă totalul
+      // e cel cu reducerea scăzută, textul trebuie să spună singur de unde vine
+      // și să scrie pe față prețul de catalog — chiar cel cu care se va
+      // înregistra cererea, deci cel pe care îl vede laboratorul.
       if (minRedus) {
-        L.push(t('La prag socotim ' + money(totNet) + ' — cu reducerea de 20% a pachetului de test scăzută.',
-                 'Towards the minimum we count ' + money(totNet) + ' — with the trial pack 20% discount deducted.'));
+        L.push(t('Preț de catalog: ' + money(totMoney) + ' — reducerea de ' + TRIAL_PCT + '% a pachetului de test e deja scăzută din total.',
+                 'Catalogue price: ' + money(totMoney) + ' — the trial pack ' + TRIAL_PCT + '% discount is already deducted from the total.'));
       }
+      L.push(minOk
+        ? t('Comanda atinge minimul de ' + MIN_ORDER + ' RON (București și Ilfov).', 'Order meets the ' + MIN_ORDER + ' RON minimum (Bucharest and Ilfov).')
+        : t('Sub comanda minimă de ' + MIN_ORDER + ' RON — mai lipsesc ' + money(minLeft) + '. În restul țării livrăm la cerere.',
+            'Below the ' + MIN_ORDER + ' RON minimum — ' + money(minLeft) + ' short. Elsewhere in Romania we deliver on request.'));
       if (extra && extra.length) { L.push(''); extra.forEach((x) => { L.push(x); }); }
       return L.join('\n');
     };
@@ -1392,21 +2556,35 @@ class Component extends DCLogic {
     return {
       ro, en: !ro, isRo: String(ro), isEn: String(!ro),
       roBtn: langBtn(ro), enBtn: langBtn(!ro),
-      setRo: () => this.setState({ lang: 'ro' }),
-      setEn: () => this.setState({ lang: 'en' }),
+      // Limba schimbă și adresa: româna și engleza sunt două pagini diferite
+      // („/catalog" și „/en/catalogue"), legate între ele cu `hreflang`. Cât
+      // stăteau la aceeași adresă, Google primea un singur document cu două
+      // limbi în el și nu putea arăta niciuna la locul ei.
+      setRo: () => this.duLa(this.state.page, 'ro', this.state.fel, this.state.cheie),
+      setEn: () => this.duLa(this.state.page, 'en', this.state.fel, this.state.cheie),
       // Era scris direct în antet, în română, pe toate paginile — inclusiv pe
       // versiunea în engleză. Valoarea asta exista deja, dar nu o folosea
       // nimeni: textul din markup n-o citea.
       logoKicker: t('Patiserie artizanală', 'Artisan pastry'),
-      mapTitle: t('Depozit — incinta ICTCM, Șoseaua Olteniței 103',
-                  'Warehouse — ICTCM site, Șoseaua Olteniței 103'),
+      // Reperul („incinta ICTCM", metroul) rămâne scris aici: e o lămurire de
+      // drum, nu adresa. Strada, în schimb, vine din Setări ca peste tot.
+      mapTitle: t('Depozit — incinta ICTCM, ' + contact.address,
+                  'Warehouse — ICTCM site, ' + contact.address),
       mapCaption: t(
-        'Incinta ICTCM · Șos. Olteniței 103, sector 4 · vis-à-vis de metrou Piața Sudului',
-        'ICTCM site · Șos. Olteniței 103, district 4 · opposite Piața Sudului metro station'
+        'Incinta ICTCM · ' + contact.addressFull + ' · vis-à-vis de metrou Piața Sudului',
+        'ICTCM site · ' + contact.addressFullEn + ' · opposite Piața Sudului metro station'
       ),
 
       onHome: p === 'home', onCat: p === 'catalog', onDist: p === 'distribution',
-      onAbout: p === 'about', onContact: p === 'contact',
+      onAbout: p === 'about', onContact: p === 'contact', onProd: p === 'product',
+      // Adresele din meniu. Un motor de căutare urmărește `href`, nu `onClick`:
+      // cât timp legăturile erau „#", singura cale spre catalog era harta
+      // trimisă separat, iar paginile nu se legau între ele deloc.
+      hrefHome: caleaCatre('home', this.state.lang, 'pagina', ''),
+      hrefCat: caleaCatre('catalog', this.state.lang, 'pagina', ''),
+      hrefDist: caleaCatre('distribution', this.state.lang, 'pagina', ''),
+      hrefAbout: caleaCatre('about', this.state.lang, 'pagina', ''),
+      hrefContact: caleaCatre('contact', this.state.lang, 'pagina', ''),
       curHome: p === 'home' ? 'page' : null,
       curCat: p === 'catalog' ? 'page' : null,
       curDist: p === 'distribution' ? 'page' : null,
@@ -1448,7 +2626,9 @@ class Component extends DCLogic {
         + (mob ? ';font-size:0.5rem;padding:0.2rem 0.4rem;letter-spacing:0.04em' : ''),
       addStyle: unselBtn + (mob ? ';min-height:2.75rem;font-size:0.875rem' : ''),
       stepBtn: mob ? 'width:2.6rem;height:2.6rem;font-size:1.125rem' : 'width:2.25rem;height:2.25rem',
-      stepVal: mob ? 'min-width:2.1rem;font-size:1rem' : 'min-width:2.25rem',
+      // `stepVal` a stat aici cât timp cifra din steper era un `<span>` pe card
+      // și în fereastra produsului. Acum toate patru steperele sunt aceeași
+      // căsuță, deci toate poartă `qtyInput` — nu mai are cine să-l ceară.
       qtyInput: 'width:2.75rem;min-width:2.75rem;border:0;background:transparent;color:var(--h-fg);text-align:center;font-family:var(--h-font-body);font-weight:700;font-variant-numeric:tabular-nums;padding:0;outline:none;font-size:'
         + (mob ? '1rem;height:2.6rem' : '0.9375rem;height:2.25rem'),
       lineTotalStyle: 'font-family:var(--h-font-display);font-weight:700;white-space:nowrap;font-size:' + (mob ? '0.9375rem' : '0.9375rem'),
@@ -1467,9 +2647,62 @@ class Component extends DCLogic {
         ? 'display:flex;flex-direction:column;gap:0.4rem;padding:0.7rem 0.75rem 0.8rem;flex:1'
         : 'display:flex;flex-direction:column;gap:0.55rem;padding:1rem 1.1rem 1.1rem;flex:1',
       asideRef: this.asideRef, colsRef: this.colsRef,
-      asideStyle: mob
-        ? 'flex:1 1 100%;width:100%;position:relative;display:flex;flex-direction:column;gap:0.9rem'
-        : 'flex:0 1 21rem;min-width:min(18rem,100%);position:relative;will-change:transform;max-height:calc(100vh - 8rem);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:1rem',
+      // Coșul: aceeași casetă, trei așezări.
+      //
+      // MARCAJUL NU SE DUBLEAZĂ. Rândurile, butoanele „+" și „−", totalul,
+      // dunga pragului și butonul de WhatsApp sunt aceleași noduri, mutate
+      // de CSS. O a doua copie a coșului, scrisă pentru telefon, ar fi
+      // însemnat două locuri de reparat la fiecare schimbare — și, cum arată
+      // toată istoria fișierului ăstuia, unul dintre ele uitat.
+      asideStyle: !mob
+        ? 'flex:0 1 21rem;min-width:min(18rem,100%);position:relative;will-change:transform;max-height:calc(100vh - 8rem);overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:1rem'
+        : cosJos
+        ? 'position:fixed;left:0;right:0;bottom:0;z-index:150;max-height:82vh;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:0.9rem;padding:0 1rem calc(1rem + env(safe-area-inset-bottom));background:var(--h-bg-page);border-top:1px solid var(--h-line);border-radius:18px 18px 0 0;box-shadow:0 -12px 32px rgba(0,0,0,0.32)'
+        : 'display:none',
+
+      // Fereastra de finalizare: același tertip, altă casetă.
+      //
+      // `contactVizibil` e poarta de desenare a paginii de contact, în locul
+      // lui `onContact`. Formularul rămâne UNUL singur în tot fișierul —
+      // altfel ar fi existat în pagină două câmpuri cu `name="Cod de
+      // recomandare"`, două `ref="{{ formRef }}"` (al doilea l-ar fi șters pe
+      // primul) și două locuri de reparat la fiecare schimbare de formular.
+      contactVizibil: p === 'contact' || finalizare,
+      finalizare: finalizare,
+      finalTitlu: t('Finalizare comandă', 'Checkout'),
+      // Fereastra vine de jos, ca foaia coșului: pe telefon degetul e acolo,
+      // iar pe calculator ochiul a rămas pe butonul de jos al coșului.
+      // `max-height:92vh` lasă o dungă din pagina de dedesubt vizibilă —
+      // semnul că e o fereastră, nu o pagină nouă.
+      contactMainStyle: finalizare
+        ? 'position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:160;width:min(64rem,100%);max-height:92vh;overflow-y:auto;overscroll-behavior:contain;background:var(--h-bg-page);border:1px solid var(--h-line);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,0.38)'
+        : '',
+      contactSectionStyle: finalizare
+        ? 'max-width:none;margin:0;padding:1rem clamp(1rem,4vw,1.5rem) calc(1.5rem + env(safe-area-inset-bottom))'
+        : 'max-width:1740px;margin:0 auto;padding:2.5rem clamp(1.25rem,4vw,3rem) clamp(3rem,7vw,5rem)',
+      contactGridStyle: finalizare
+        ? 'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr));gap:1rem;align-items:start'
+        : 'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr));gap:1.5rem;align-items:start',
+      // În pagina de contact coloana cu produsele stă întâi, fiindcă omul a
+      // venit din meniu și trebuie să afle ÎNTÂI că site-ul îi ține minte
+      // coșul. În fereastră a apăsat chiar „Finalizare comandă": știe ce a
+      // ales, vrea căsuțele. Pe 390 px grila are o singură coloană, deci
+      // `order:2` înseamnă „lista trece sub formular" — altfel formularul
+      // începea la al patrulea ecran de derulare.
+      contactLateralStyle: finalizare
+        ? 'display:flex;flex-direction:column;gap:1rem;order:2'
+        : 'display:flex;flex-direction:column;gap:1.5rem',
+      // Deschiderea nu duce nicăieri: nu schimbă `page`, deci nici adresa.
+      // Închide foaia coșului, fiindcă altfel pe telefon ar fi rămas una
+      // peste alta — două foi venite de jos, una ascunzând-o pe cealaltă.
+      // `sent: false` și `sendErr: ''` la fiecare deschidere: altfel a doua
+      // comandă din aceeași vizită s-ar fi deschis cu „Mulțumim, cererea ta a
+      // intrat" scris deasupra casetelor goale — răspunsul de la comanda
+      // dinainte, citit ca răspuns la asta.
+      deschideFinal: () => this.setState({
+        finalizare: true, cosJos: false, sent: false, sendErr: '' }),
+      inchideFinal: () => this.setState({ finalizare: false }),
+
       goHome: this.nav('home'), goCat: this.nav('catalog'), goDist: this.nav('distribution'),
       goAbout: this.nav('about'), goContact: this.nav('contact'),
 
@@ -1500,9 +2733,21 @@ class Component extends DCLogic {
         : '',
       accContact: [A && A.phone, A && A.email].filter(Boolean).join(' · ')
         || t('Fără telefon pe cont — scrie-l în mesaj.', 'No phone on the account — add it in the message.'),
-      accPanelHref: A && A.role === 'client' ? 'Client.dc.html' : 'Administrare%20Comenzi.dc.html',
+      // Panoul omului. Pentru client e „Comanda mea"; pentru restul era
+      // scris „Administrare Comenzi", ceea ce pentru un agent de vânzări sau
+      // pentru un angajat însemna un ecran de refuz. `gp.primaPagina()` dă
+      // aceeași pagină în care îl duce și autentificarea.
+      accPanelHref: A && A.role === 'client' ? 'Client.dc.html'
+        : (A ? gp.primaPagina(A) : 'Administrare%20Comenzi.dc.html'),
       accPanelLabel: A && A.role === 'client'
         ? t('Comanda mea', 'My order') : t('Panoul de lucru', 'Work panel'),
+      // „Recomandări" în meniul contului, pentru cine chiar recomandă.
+      // Întrebarea nu se pune aici pe rol, ci tot meniului: aceeași listă
+      // hotărăște și în sertarul panourilor cine vede intrarea, iar clientul
+      // o capătă numai dacă are cod. Două răspunsuri diferite la aceeași
+      // întrebare, în două pagini, ar însemna că una din ele minte.
+      accRef: !!A && gp.meniu('', A).some((x) => x.et === 'Recomandări'),
+      ctaReferral: t('Recomandări', 'Referrals'),
       accMenuLabel: t('Contul meu', 'My account'),
       // Meniul contului avea o singură intrare în afară de panou: „Ieși din
       // cont". Clientul primea parola de la administrator, cu mesajul „schimb-o
@@ -1515,19 +2760,196 @@ class Component extends DCLogic {
       doLogout: () => {
         // Sesiunea se închide și pe server, nu doar în pagină: altfel
         // cookie-ul ar rămâne valabil pentru cine ajunge la același telefon.
-        gp.logout().finally(() => this.setState({
-          auth: null, accMenu: false, addr: '', addrTouched: false
-        }));
+        // Codul de recomandare se reașază și el: era al omului care tocmai a
+        // plecat. Fără rândul ăsta, agentul care se deconectează de pe tableta
+        // din magazin ar lăsa codul lui scris în caseta următorului venit —
+        // exact defectul pe care tocmai l-am reparat, intrat pe altă ușă.
+        gp.logout().finally(() => this.setState((st) => Object.assign({
+          auth: null, accMenu: false, addr: '', addrTouched: false,
+          zone: '', zoneTouched: false, detalii: false,
+          refDeschis: false, refAtins: false,
+          // Și clientul ales pleacă odată cu omul care l-a ales: era din
+          // ograda LUI. Altfel agentul care se deconectează de pe tableta din
+          // magazin ar lăsa legat, pentru următorul venit, un cont pe care
+          // acela n-are dreptul nici măcar să-l vadă în listă — iar caseta de
+          // căutare nici nu i se mai desenează, ca să-l poată schimba.
+          clientAles: null, cautQ: '', cautLista: [], cautStare: '', cautEroare: ''
+        }, (() => {
+          const r = this.codRecomandare(null, st.refDinCookie);
+          return { refCod: r.cod, refSursa: r.sursa };
+        })())));
       },
 
       asClient: mine,
-      asGuest: !mine,
+      // Vizitatorul își scrie datele; clientul intrat le are pe cont; iar cine
+      // scrie pentru un client ALES le are tot pe cont — al clientului.
+      // De-aceea stă aici `!cl`: blocul „Companie · Persoană · Email ·
+      // Telefon · Segment · Volum" cere exact ce serverul ia oricum de pe
+      // contul ales, iar bifa „Vreau catalogul PDF", care atârnă de același
+      // steag, n-are nici ea rost când comanda o scrie omul din casă.
+      asGuest: !mine && !cl,
+
+      // --- 3 · clientul ales anume ---------------------------------------
+      cautaClient,
+      // Cele două fețe ale casetei, complementare: ori cauți, ori ai ales.
+      // `<sc-if>` primește o valoare, nu o expresie — de-aceea sunt două.
+      cautCaseta: !cl,
+      clientAles: !!cl,
+      cautQ: this.state.cautQ,
+      onCauta: (e) => {
+        const v = e.target.value;
+        this.setState({ cautQ: v });
+        this.cautaClienti(v);
+      },
+      lblCauta: t('Pentru ce client e comanda', 'Which customer is this order for'),
+      phCauta: t('nume, firmă, telefon sau e-mail', 'name, company, phone or e-mail'),
+      // Nota de sub casetă spune, de fiecare dată, exact ce s-a întâmplat.
+      // „Niciun client" e scris altfel pentru agent decât pentru administrator,
+      // fiindcă ograda lor e altfel: agentul caută numai printre cei aduși de
+      // codul lui, deci „nu se potrivește nimeni" înseamnă la el „nu e clientul
+      // tău", iar drumul mai departe e să-i facă un cont din Recomandări.
+      cautNota: this.state.cautStare === 'scurt'
+        ? t('Încă o literă: căutarea pornește de la două.',
+            'One more letter: the search starts at two.')
+        : this.state.cautStare === 'caut'
+        ? t('Caut…', 'Searching…')
+        : this.state.cautStare === 'gol'
+        ? (gp.eAdmin(A)
+            ? t('Niciun client nu se potrivește. Scrie altfel, sau lasă caseta goală și completează datele de mai jos.',
+                'No customer matches. Try another spelling, or leave this empty and fill in the details below.')
+            : t('Niciun client adus de tine nu se potrivește. Fă-i cont din Recomandări, apoi întoarce-te aici.',
+                'No customer of yours matches. Create an account from Referrals, then come back here.'))
+        : this.state.cautStare === 'multi'
+        ? t('Sunt mai mulți decât încap aici. Scrie mai mult din nume sau telefon.',
+            'There are more than fit here. Type more of the name or phone.')
+        : this.state.cautStare === 'gata'
+        ? t('Alege clientul din listă.', 'Pick the customer from the list.')
+        : this.state.cautStare === 'eroare'
+        ? (this.state.cautEroare
+            || t('Căutarea n-a răspuns. Încearcă din nou.', 'The search did not answer. Try again.'))
+        : t('Scrie două litere din nume, firmă, telefon sau e-mail. Lasă gol dacă e un client nou.',
+            'Type two letters of the name, company, phone or e-mail. Leave empty for a new customer.'),
+      cautLista: (this.state.cautLista || []).map((c) => ({
+        titlu: String((c && c.company) || (c && c.name) || '').trim()
+          || t('(fără nume pe cont)', '(no name on the account)'),
+        sub: [c && c.phone, c && c.zone, c && c.address]
+          .map((x) => String(x || '').trim()).filter(Boolean).join(' · ')
+          || t('fără telefon și adresă pe cont', 'no phone or address on the account'),
+        // Contul făcut de om însuși, pe care încă nu l-a recunoscut nimeni din
+        // casă. Nu-l ascundem — poate fi chiar clientul căutat — dar se spune,
+        // fiindcă altfel comanda ar pleca spre un cont pe care nu l-a văzut
+        // nimeni. Steagul vine de pe server (`nerecunoscut`), nu se ghicește.
+        areSemn: !!(c && c.unverified),
+        semn: t('cont nerecunoscut încă', 'account not vouched for yet'),
+        alege: () => this.alegeClient(c)
+      })),
+      lblPentru: t('Comandă pentru', 'Order for'),
+      alesNume: cl
+        ? (String(cl.company || cl.name || '').trim()
+            || t('(fără nume pe cont)', '(no name on the account)'))
+        : '',
+      alesContact: cl
+        ? ([cl.phone, cl.email].map((x) => String(x || '').trim()).filter(Boolean).join(' · ')
+            || t('Fără telefon și e-mail pe cont.', 'No phone or e-mail on the account.'))
+        : '',
+      // Rândul ăsta e singurul loc în care se vede ce se întâmplă cu banii, de
+      // când caseta codului nu se mai desenează. Serverul nu scrie codul din
+      // formular pe o cerere legată de cont: comisionul cade pe ramura a doua
+      // din `referral_commission_sync()`, care citește `users.referred_by`.
+      // Adică merge la cine l-a ADUS pe client, nu la cine scrie cererea.
+      alesNota: cl
+        ? t('Comisionul merge la cine l-a adus pe acest client, nu la cine scrie comanda.',
+            'The commission goes to whoever brought this customer in, not to whoever writes the order.')
+        : '',
+      ctaSchimbaClient: t('Schimbă clientul', 'Change customer'),
+      onSchimbaClient: () => this.setState({
+        clientAles: null, cautQ: '', cautLista: [], cautStare: '', cautEroare: '' }),
+
       addr: this.state.addr,
       onAddr: (e) => this.setState({ addr: e.target.value, addrTouched: true }),
       lblAddr: t('Adresa de livrare', 'Delivery address'),
       phAddr: t('ex. Calea Victoriei 63', 'e.g. 63 Calea Victoriei'),
-      addrNote: t('Rămâne salvată pe cont pentru comanda următoare.',
-        'We keep it on your account for next time.'),
+      // Textul de sub casetă nu e o formalitate: el spune UNDE ajunge ce
+      // scrii. Pentru client, adresa se lipește de contul lui
+      // (`api/routes/requests.php:332`, `UPDATE users SET address`) — și
+      // ramura aceea e a clientului, `$isClient`. Pentru personal NU se
+      // lipește nicăieri: rămâne pe cererea asta. Un singur text pentru
+      // amândoi ar fi mințit pe unul din ei.
+      addrNote: staff
+        ? t('Adresa clientului la care ajunge comanda. Rămâne pe cerere, nu pe contul tău.',
+            'The address this order goes to. It stays on this request, not on your account.')
+        : t('Rămâne salvată pe cont pentru comanda următoare.',
+            'We keep it on your account for next time.'),
+
+      // --- 29 · zona de livrare, pe formularul clientului ---------------
+      zone: this.state.zone,
+      onZone: (e) => this.setState({ zone: e.target.value, zoneTouched: true }),
+      lblZone: t('Zona de livrare', 'Delivery zone'),
+      // Lista vine de la server (`gp.zones()`), nu scrisă aici: patronul
+      // adaugă și redenumește zone din Setări, iar o listă scrisă în pagină
+      // ar rămâne în urmă de la prima schimbare.
+      zoneOpts: [{ v: '', l: t('Alege zona', 'Pick a zone') }]
+        .concat(gp.zones().map((z) => ({ v: z, l: z }))),
+      zoneNote: staff
+        ? t('Sectorul sau zona în care livrăm. Fără ea, comanda nu intră pe nicio rută.',
+            'The sector or zone we deliver to. Without it the order lands on no route.')
+        : t('Sectorul sau zona în care livrăm. Rămâne pe cont, ca adresa.',
+            'The sector or zone we deliver to. It stays on your account, like the address.'),
+      // Avertizarea pentru zonele fără punct pe hartă. Ziua NU se ascunde și
+      // nu se cere altfel: clientul alege când vrea comanda ca oricare altul.
+      // Doar că ora unei livrări care nu intră pe rută n-are cum să fie ținută
+      // de rută, iar asta se spune înainte, nu după.
+      //
+      // Întrebarea se pune hărții, nu numelui zonei: `gp.zoneFaraPunct()`.
+      zoneSfat: gp.zoneFaraPunct(this.state.zone)
+        ? t('Livrăm și în afara Bucureștiului și Ilfovului. Ora e orientativă acolo: o confirmăm la telefon.',
+            'We deliver outside Bucharest and Ilfov too. The hour is indicative there: we confirm it by phone.')
+        : '',
+      // Același rând, două locuri: în rezumat cât timp e strâns, sub „Când
+      // vrei comanda" după ce s-a deschis. Nu în amândouă odată.
+      zoneSfatSus: rezumatStrans && gp.zoneFaraPunct(this.state.zone),
+      zoneSfatJos: !rezumatStrans && gp.zoneFaraPunct(this.state.zone),
+
+      // --- 29-b · rezumatul strâns --------------------------------------
+      rezumatStrans,
+      // Casetele de livrare — adresa și zona. Pentru client se deschid odată
+      // cu „Modifică" (sau singure, când contul n-are încă adresă). Pentru
+      // personal sunt mereu pe ecran: el n-are ce „modifica", fiindcă adresa
+      // nu e a lui, ci a clientului la care a ajuns. Sunt ACELEAȘI două
+      // casete, nu o a doua pereche scrisă pentru personal — o pereche
+      // copiată ar fi însemnat două `id="q-addr"` în aceeași pagină.
+      campuriLivrare: (mine && detaliiDeschise) || staff,
+      // Casetele de jos (ziua, mențiunile, codul) le vede vizitatorul
+      // întotdeauna, iar clientul numai după ce a apăsat „Modifică".
+      campuriJos: !mine || detaliiDeschise,
+      // Caseta codului de recomandare, separat de restul casetelor de jos:
+      // ziua și mențiunile rămân, codul se duce. Vezi comentariul din marcaj —
+      // serverul chiar nu-l mai scrie când cererea e legată de un cont.
+      campRef: !cl,
+      ctaModifica: t('Modifică', 'Edit'),
+      // Butonul deschide, nu comută: o a doua apăsare ar desființa casetele,
+      // iar mențiunile scrise în ele s-ar pierde fără ca nimeni să fi cerut
+      // asta. Cine a deschis, rămâne deschis până trimite.
+      onModifica: () => this.setState({ detalii: true }),
+      // Unde livrăm, într-un rând: adresa și zona de pe cont. Rândul de rezervă
+      // nu se vede niciodată — fără adresă, `faraAdresa` deschide casetele și
+      // rezumatul nu se mai desenează. Stă aici ca rândul să nu iasă gol dacă
+      // vreodată se schimbă condiția de deasupra.
+      accLivrare: [String(this.state.addr || '').trim(), String(this.state.zone || '').trim()]
+        .filter(Boolean).join(' · ')
+        || t('Fără adresă pe cont — apasă „Modifică” și scrie-o.',
+             'No address on the account — press “Edit” and add one.'),
+      accCand: this.state.asap
+        ? t('Cât de repede se poate', 'As soon as possible')
+        : (this.state.whenDate
+            ? t('Pentru ', 'For ') + ziScrisa(this.state.whenDate)
+            : t('Ziua nu e aleasă încă', 'No day picked yet')),
+      // Codul de recomandare, cât timp casetele sunt strânse. Un cod venit pe
+      // link („?ref=ana") pleacă odată cu comanda fără ca omul să-l fi scris:
+      // dacă nu i-l arătăm aici, nu-l vede nicăieri. Gol, rândul nu apare.
+      accCod: String(this.state.refCod || '').trim()
+        ? t('Cod de recomandare: ', 'Referral code: ') + String(this.state.refCod).trim()
+        : '',
       ctaQuote: t('Cere ofertă', 'Get a quote'),
       ctaQuoteLong: t('Cere ofertă pentru volume', 'Request volume pricing'),
       ctaCatalog: t('Vezi catalogul', 'See the catalogue'),
@@ -1543,19 +2965,41 @@ class Component extends DCLogic {
             'Your selection is below. Check the address, tell us when you need it, and send.')
         : t('Spune-ne ce vinzi și cât ai nevoie. Trimitem catalogul complet, cu gramaje, unități per cutie și prețuri pe volum, în aceeași zi lucrătoare.',
             'Tell us what you sell and how much you need. We send the full catalogue — weights, units per case, volume pricing — the same working day.'),
-      catTitle: t('Catalog de produse', 'Product catalogue'),
-      catLead: mine
+      // Pe adresa unei grupe, titlul e numele grupei. Două pagini cu același
+      // titlu sunt, pentru un motor de căutare, un semn că una e de prisos —
+      // iar titlul e și primul lucru pe care îl citește omul venit din
+      // rezultate, deci trebuie să-i confirme că a nimerit unde voia.
+      catTitle: grupaAsta ? grupaAsta.title : t('Catalog de produse', 'Product catalogue'),
+      catLead: grupaAsta
+        ? (grupaAsta.note || t('Toate sortimentele din grupa aceasta, cu gramaje și prețuri en-gros.',
+                               'Every line in this group, with weights and wholesale prices.'))
+        : mine
         ? t('Alege varianta de livrare — congelate sau gata de servire — și adaugă produsele în comandă.',
             'Pick the delivery format — frozen or ready to serve — and add products to your order.')
         : t('Patiserie artizanală preparată zilnic în laboratorul nostru. Alege varianta de livrare — congelate sau gata de servire — și adaugă produsele în cererea de ofertă.',
             'Artisan pastry made fresh every day in our own kitchen. Pick the delivery format — frozen or ready to serve — and add products to your quote request.'),
-      ctaContinue: mine
-        ? t('Continuă spre comandă', 'Continue to the order')
-        : t('Continuă spre ofertă', 'Continue to the quote'),
+      // „Continuă spre ofertă" spunea unde te duce, nu ce se întâmplă — și
+      // te ducea într-adevăr: schimba pagina, lăsând coșul în urmă. Acum nu
+      // mai pleacă nimeni nicăieri; formularul vine el, ca fereastră peste
+      // catalog. Cuvântul e cel al patronului și e același pentru cumpărător
+      // și pentru vizitator, deși ce pleacă spre patiserie e o comandă la
+      // unul și o cerere de ofertă la celălalt: omul care a umplut un coș
+      // vrea să-l TERMINE, iar deosebirea o face butonul de trimitere din
+      // fereastră („Trimite comanda" / „Trimite cererea", `sendLabel`).
+      ctaContinue: t('Finalizare comandă', 'Checkout'),
       ctaEditPicks: t('Modifică selecția', 'Edit selection'),
+      // TREI ETICHETE, NU DOUĂ. Până azi butonul deosebea numai CINE trimite:
+      // clientul cu cont trimite o comandă, vizitatorul o cerere. De când
+      // coșul gol nu mai e un refuz (hotărârea din 14 septembrie 2026, vezi
+      // `POST /requests`), mai hotărăște ceva și COȘUL: fără produse pleacă o
+      // întrebare — un mesaj — oricine ar fi cel care apasă. Butonul e primul
+      // loc în care omul poate citi ce se întâmplă când îl apasă.
       sendLabel: this.state.sending
         ? t('Se trimite…', 'Sending…')
-        : (mine ? t('Trimite comanda', 'Send the order') : t('Trimite cererea', 'Send the request')),
+        : (!picks.length
+            ? t('Trimite mesajul', 'Send the message')
+            : (mine ? t('Trimite comanda', 'Send the order')
+                    : t('Trimite cererea', 'Send the request'))),
 
       heroBadge: t('Producător și distribuitor · București', 'Producer and distributor · Bucharest'),
       heroLead: this.props.audienceFocus === 'horeca'
@@ -1563,14 +3007,14 @@ class Component extends DCLogic {
         : this.props.audienceFocus === 'retail'
           ? t('Furnizăm magazine de proximitate, benzinării și lanțuri de retail cu patiserie românească congelată, la gramaje și ambalaje pentru raft.', 'We supply convenience stores, forecourts and retail chains with frozen Romanian pastry, in shelf-ready weights and packaging.')
           : t('Producem patiserie românească și o livrăm congelată către retail, HoReCa și benzinării. Bake-off pentru cuptorul tău sau produs finit, gata de vânzare.', 'We produce Romanian pastry and deliver it frozen to retail, HoReCa and forecourts. Bake-off for your own oven, or finished product ready to sell.'),
-      heroFoot: t('Livrare în lanț frigorific · comandă minimă 700 RON în București și Ilfov', 'Unbroken cold chain · 700 RON minimum order in Bucharest and Ilfov'),
+      heroFoot: t('Livrare în lanț frigorific · comandă minimă ' + MIN_ORDER + ' RON în București și Ilfov', 'Unbroken cold chain · ' + MIN_ORDER + ' RON minimum order in Bucharest and Ilfov'),
 
       // Numărul era scris în pagină. Catalogul se editează din panou, deci la
       // primul produs adăugat site-ul ar fi anunțat un număr fals despre el
       // însuși. Până răspunde serverul punem o linie, nu o cifră inventată.
       // …iar când catalogul nu s-a încărcat deloc, tot o linie: „0" ar fi
       // spus că patiseria nu mai are produse, ceea ce e altceva.
-      st1n: this.state.prod && !this.state.catErr ? String(this.state.prod.length) : '—',
+      st1n: this.state.prod && !this.state.eroare ? String(this.state.prod.length) : '—',
       st1: t('Referințe în catalog', 'References in the catalogue'),
       st2: t('Lanț frigorific', 'Cold chain'),
       st3: t('Termen de livrare', 'Delivery lead time'),
@@ -1619,23 +3063,129 @@ class Component extends DCLogic {
       h2t: t('Ofertă pe volum', 'Volume quote'),
       h2b: t('Prețul depinde de cantitate și frecvență. Îl stabilim o dată și îl ținem.', 'Price depends on quantity and frequency. We set it once and hold it.'),
       h3t: t('Prima comandă', 'First order'),
-      h3b: t('Comandă minimă 700 RON în București și Ilfov. Sau ia pachetul de test, cu 3 bucăți din fiecare produs, la −20%.', 'Minimum order 700 RON in Bucharest and Ilfov. Or take the trial pack — three pieces of every product, at 20% off.'),
+      h3b: t('Comandă minimă ' + MIN_ORDER + ' RON în București și Ilfov. Sau ia pachetul de test, cu 3 bucăți din fiecare produs, la −20%.', 'Minimum order ' + MIN_ORDER + ' RON in Bucharest and Ilfov. Or take the trial pack — three pieces of every product, at 20% off.'),
       h4t: t('Livrare recurentă', 'Recurring delivery'),
       h4b: t('Stabilim un grafic fix săptămânal și livrăm fără să mai fie nevoie să comanzi.', 'We agree a fixed weekly schedule and deliver without you having to re-order.'),
 
-      groups, picks,
+      groups: groupsAratate, picks,
+      peGrupa: !!grupaAsta,
+
+      /* --------------------------------------------- pagina unui produs -- */
+      crumbLabel: t('Unde te afli', 'Breadcrumb'),
+      crumbLink: 'color:var(--h-fg-muted);text-decoration:none;border-bottom:1px solid var(--h-line-strong)',
+      pvGasit: !!randProd,
+      // Cât nu a sosit catalogul, nu spunem nici „uite produsul", nici „nu
+      // există": am fi mințit o clipă, la fiecare deschidere.
+      // Al doilea lacăt nu schimbă nimic azi: catch-ul golește lista, deci
+      // `catalogSosit` e oricum fals cât e `eroare` plină. E scris ca
+      // afirmația să atârne de eroare pe față, nu prin lista golită — dacă
+      // mâine cererea picată va lăsa pe ecran catalogul vechi, în loc să-l
+      // șteargă, lacătul ăsta e singurul care mai ține.
+      pvLipsa: !randProd && catalogSosit && !this.state.eroare,
+      pvName: randProd ? t(randProd[2], randProd[3]) : (grupaProd ? '' : t('Produs', 'Product')),
+      pvDesc: randProd ? t(randProd[7], randProd[8]) : '',
+      pvSlot: randProd ? 'pf-fisa-' + randProd[1] : 'pf-fisa-0',
+      pvPhoto: randProd && randProd[10] ? res('fisa' + randProd[1], randProd[10]) : '',
+      pvSpecial: !!(randProd && randProd[9]),
+      pvGrupaNume: grupaProd ? t(grupaProd[1], grupaProd[2]) : '',
+      // Treapta de grupă din firimituri se arată doar când produsul chiar are
+      // o grupă. Fără steagul ăsta, un produs scos din catalog ar afișa o
+      // legătură fără nume, care duce înapoi la catalogul întreg.
+      pvAreGrupa: !!grupaProd,
+      pvGrupaHref: caleaCatre('catalog', this.state.lang, 'group', grupaProd ? grupaProd[0] : ''),
+      pvGoGrupa: this.nav('catalog', 'group', grupaProd ? grupaProd[0] : ''),
+      pvGrupaCta: grupaProd
+        ? t('Vezi toată grupa ', 'See all ') + t(grupaProd[1], grupaProd[2]).toLowerCase()
+        : t('Vezi grupa', 'See the group'),
+      pvTotCta: t('Vezi tot catalogul', 'See the full catalogue'),
+      pvWrap: 'display:grid;gap:clamp(1.5rem,4vw,3rem);align-items:start;'
+        + (mob ? 'grid-template-columns:1fr' : 'grid-template-columns:minmax(0,5fr) minmax(0,6fr)'),
+      pvMedia: 'position:relative;aspect-ratio:4/3;border-radius:20px;overflow:hidden;'
+        + 'background:var(--h-bg-sunk);border:1px solid var(--h-line)',
+      pvFapte: 'display:grid;gap:0.75rem;margin:0 0 1.25rem;'
+        + (mob ? 'grid-template-columns:1fr' : 'grid-template-columns:repeat(3,minmax(0,1fr))'),
+      pvFapt: 'margin:0;padding:0.85rem 1rem;background:var(--h-bg-raised);border:1px solid var(--h-line);border-radius:14px',
+      pvFaptEt: 'margin:0 0 0.2rem;font-size:0.6875rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--h-fg-muted)',
+      pvFaptVal: 'margin:0;font-family:var(--h-font-display);font-size:1.0625rem;font-weight:700',
+      pvEtGramaj: t('Gramaj', 'Weight'),
+      pvEtCongelat: t('Congelat', 'Frozen'),
+      pvEtCopt: t('Gata de servire', 'Ready to serve'),
+      pvGramaj: randProd ? randProd[4] + ' g' : '—',
+      pvPretFrozen: randProd && randProd[5] !== null ? money(randProd[5]) : '—',
+      pvPretBaked: randProd && randProd[6] !== null ? money(randProd[6]) : '—',
+      pvLivrare: t(
+        'Preț en-gros pe bucată · livrare în lanț frigorific în București și Ilfov · comandă minimă ' + MIN_ORDER + ' RON',
+        'Wholesale price per piece · unbroken cold chain in Bucharest and Ilfov · ' + MIN_ORDER + ' RON minimum order'
+      ),
+      // Ca pe card și ca în coș: cât timp se scrie, se arată textul brut.
+      pvQty: cheiaProd && cheiaProd === this.state.editKey
+        ? String(this.state.editText) : String(nProd),
+      pvNone: nProd === 0,
+      pvSome: nProd > 0,
+      pvAdd: () => { if (cheiaProd) this.bump(cheiaProd, 1); },
+      pvInc: () => { if (cheiaProd) this.bump(cheiaProd, 1); },
+      pvDec: () => { if (cheiaProd) this.bump(cheiaProd, -1); },
+      pvSet: (e) => { if (cheiaProd) this.scrieCant(cheiaProd, e); },
+      pvBlur: () => this.terminaCant(),
+      pvPick: (e) => this.alegeCant(e),
+      pvLipsaTitlu: t('Produsul acesta nu mai e în catalog', 'This product is no longer in the catalogue'),
+      pvLipsaText: t(
+        'Poate a fost scos sau redenumit. Catalogul întreg e mai jos — sau scrie-ne și îți spunem cu ce se înlocuiește.',
+        'It may have been withdrawn or renamed. The full catalogue is below — or write to us and we will tell you what replaces it.'
+      ),
+
       mobBar: mob && p === 'catalog' && picks.length > 0,
       showFab: !(mob && p === 'catalog' && picks.length > 0),
-      barTitle: picks.length + ' ' + (picks.length === 1 ? t('produs', 'product') : t('produse', 'products')),
-      ctaBarGo: t('Cerere', 'Request'),
+      // Bara de jos, pe telefon, spune ACUM cât mai lipsește până la comanda
+      // minimă, nu câte produse stau în coș. „3 produse · 47 buc" era o cifră
+      // pe care omul o vedea și singur, derulând; cât mai are până la prag nu
+      // se vede de nicăieri, și tocmai de ea atârnă dacă îi ducem comanda sau
+      // nu. Dunga de sub total e aceeași cu cea din coșul de pe calculator
+      // (`minBar`), ca să nu ajungă două socoteli pentru același prag.
+      //
+      // Textul stă ACUM sub dungă, pe rândul lui, și spune amândouă lucrurile:
+      // care e pragul și cât mai lipsește până la el. Cât timp a stat lângă
+      // dungă scria doar „încă 313,80 RON" — o cifră fără numele ei, din care
+      // omul nu afla NICIODATĂ că pragul e 700. Mutat jos, încape întreg, iar
+      // dunga capătă toată lățimea înapoi.
+      barMin: minOk
+        ? t('Comandă minimă ' + MIN_ORDER + ' RON · atinsă',
+            'Minimum order ' + MIN_ORDER + ' RON · met')
+        : t('Comandă minimă ' + MIN_ORDER + ' RON · încă ' + money(minLeft),
+            'Minimum order ' + MIN_ORDER + ' RON · ' + money(minLeft) + ' to go'),
+      // Un cuvânt, nu două: pe 390 px bara ține suma, dunga pragului, iconul
+      // de WhatsApp și butonul ăsta. „Finalizare comandă" l-ar fi rupt în
+      // două rânduri sau ar fi împins suma afară din ecran. Duce în ACEEAȘI
+      // fereastră ca butonul lung din coș — de-aia poartă același cuvânt de
+      // început, nu unul despre altă treabă („Cerere", cum scria).
+      ctaBarGo: t('Finalizare', 'Checkout'),
+      cosJos: cosJos,
+      cosJosStr: String(cosJos),
+      // Butonul de deschidere e CHIAR SUMA, nu o etichetă pusă lângă ea.
+      // Suma e singurul lucru din bară la care omul se uită oricum, și e
+      // destul de lată cât să nimerească degetul din prima.
+      arataCos: () => this.setState((st) => ({ cosJos: !st.cosJos })),
+      inchideCos: () => this.setState({ cosJos: false }),
+      ctaInchide: t('Închide', 'Close'),
+      ctaVeziCos: t('Vezi coșul', 'View cart'),
       totalPieces: piecesText,
-      totalMoney: money(totMoney),
+      // Totalul e cifra de plată; prețul de catalog stă lângă ea, tăiat, și
+      // numai când chiar diferă. Până acum totalul arăta lista, adică exact
+      // cifra tăiată de pe cardul pachetului: aceeași comandă avea două
+      // prețuri pe același ecran, la două degete distanță.
+      totalMoney: money(totNet),
+      totalWas: minRedus ? money(totMoney) : '',
+      hasTotalWas: minRedus,
       totalLabel: mine ? t('Total', 'Total') : t('Total estimativ', 'Estimated total'),
       totalPiecesLabel: t('Total bucăți', 'Total pieces'),
-      totalNote: mine
+      totalNote: (mine
         ? t('Preț pe bucată din catalog. Comanda intră în producție după ce o confirmăm.',
             'Catalogue price per piece. The order enters production once we confirm it.')
-        : t('Preț pe bucată din catalog. Confirmăm oferta finală în funcție de volum.', 'Catalogue price per piece. We confirm final pricing based on volume.'),
+        : t('Preț pe bucată din catalog. Confirmăm oferta finală în funcție de volum.', 'Catalogue price per piece. We confirm final pricing based on volume.'))
+        + (minRedus
+          ? ' ' + t('Cifra tăiată e prețul de catalog; reducerea de ' + TRIAL_PCT + '% a pachetului de test e deja scăzută, și cu ea se înregistrează cererea.',
+                    'The struck-through figure is the catalogue price; the ' + TRIAL_PCT + '% trial pack discount is already deducted, and the request is recorded with it.')
+          : ''),
 
       minBox: 'margin-top:0.9rem;padding:0.7rem 0.8rem;border-radius:14px;background:'
         + (minOk ? 'var(--h-success-soft)' : 'var(--h-bg-raised)')
@@ -1646,49 +3196,78 @@ class Component extends DCLogic {
         + ';width:' + Math.min(100, Math.round((totNet / MIN_ORDER) * 100)) + '%',
       minTitle: minOk
         ? t('Comandă minimă atinsă', 'Minimum order met')
-        : t('Comandă minimă: 700 RON', 'Minimum order: 700 RON'),
-      minBody: (minOk
-        ? t('Livrăm în București și Ilfov cu flota proprie. În restul țării, la cerere.', 'We deliver in Bucharest and Ilfov with our own fleet. Elsewhere in Romania, on request.')
-        : t('Mai adaugă ' + money(minLeft) + ' pentru livrare în București și Ilfov. În restul țării livrăm la cerere, indiferent de valoare.',
-            'Add ' + money(minLeft) + ' more for delivery in Bucharest and Ilfov. Elsewhere in Romania we deliver on request, whatever the value.'))
-        + (minRedus
-          ? ' ' + t('La prag socotim ' + money(totNet) + ', nu ' + money(totMoney) + ': reducerea de 20% a pachetului de test e deja scăzută.',
-                    'Towards the minimum we count ' + money(totNet) + ', not ' + money(totMoney) + ': the 20% trial pack discount is already deducted.')
-          : ''),
+        : t('Comandă minimă: ' + MIN_ORDER + ' RON', 'Minimum order: ' + MIN_ORDER + ' RON'),
+      // Aici nu mai are ce să se lămurească: pragul se măsoară în `totNet`, iar
+      // `totNet` e chiar cifra scrisă deasupra, la Total. Fraza „La prag
+      // socotim X, nu Y" era necesară cât timp totalul arăta lista — două
+      // cifre una peste alta, fără nicio vorbă între ele. Explicația prețului
+      // tăiat s-a mutat lângă el, în `totalNote`.
+      //
+      // Pe TELEFON explicația lungă nu se mai scrie. În foaia coșului, ridicată
+      // de jos, rândurile pline de vorbe împing butonul de trimis afară din
+      // ecran, iar omul derulează ca să-l găsească — pe un ecran unde tocmai
+      // apăsase ca să vadă coșul. Cele două lucruri de care are nevoie ca să
+      // se hotărască (pragul și cât mai lipsește) stau deja în `minTitle` și
+      // în rândul de sub dungă; unde livrăm scrie oricum pe eroul paginii
+      // (`heroFoot`) și pe cardul de preț (`h3b`). Pe calculator, unde caseta
+      // n-are pe cine îngusta, fraza rămâne întreagă.
+      minBody: mob
+        ? (minOk
+          ? t('Livrăm în București și Ilfov.', 'We deliver in Bucharest and Ilfov.')
+          : t('încă ' + money(minLeft), money(minLeft) + ' to go'))
+        : (minOk
+          ? t('Livrăm în București și Ilfov cu flota proprie. În restul țării, la cerere.', 'We deliver in Bucharest and Ilfov with our own fleet. Elsewhere in Romania, on request.')
+          : t('Mai adaugă ' + money(minLeft) + ' pentru livrare în București și Ilfov. În restul țării livrăm la cerere, indiferent de valoare.',
+              'Add ' + money(minLeft) + ' more for delivery in Bucharest and Ilfov. Elsewhere in Romania we deliver on request, whatever the value.')),
 
-      // Catalogul nu s-a încărcat: se spunea doar în starea componentei, care
-      // nu ajungea în nicio legătură din pagină. Catalogul rămânea gol fără
-      // explicație, iar cardul pachetului de test își calcula prețul peste o
-      // listă goală și oferea „0 produse, 0,00 RON".
-      catBroken: !!this.state.catErr,
-      catErrTitle: t('Catalogul nu s-a încărcat', 'The catalogue did not load'),
-      catErrBody: t(
-        'Nu am putut lua lista de produse de pe server. Reîncarcă pagina; dacă tot nu merge, scrie-ne sau sună — preluăm comanda direct.',
-        'We could not fetch the product list from the server. Reload the page; if it still fails, write or call us — we will take the order directly.'
-      ),
-      catErrCta: t('Reîncarcă pagina', 'Reload the page'),
-      catErrReload: () => { try { window.location.reload(); } catch (err) { /* noop */ } },
-      // Pachetul de test are sens doar peste un catalog încărcat.
-      hasCat: PROD.length > 0,
+      // Motivul refuzului, cu casetă proprie sus, deasupra tuturor
+      // paginilor magazinului. Stătea doar în starea componentei, iar
+      // cardul care îl arăta era legat de pagina de catalog: cine intra
+      // direct pe fișa unui produs sau pe formularul de cerere vedea un
+      // magazin gol, fără nicio explicație. Butonul cere din nou
+      // catalogul, nu reîncarcă pagina: cu rețeaua căzută, o reîncărcare
+      // duce omul la ecranul de eroare al browserului, de unde nu se mai
+      // întoarce singur în magazin.
+      //
+      // Caseta vorbește limba paginii, ca tot restul ecranului: mesajul stă
+      // în stare în amândouă variantele, iar aici se alege una. Scris cu
+      // `gp.motiv()` direct în română, vizitatorul de pe „/en/" primea trei
+      // propoziții românești în mijlocul unei pagini englezești — singurul
+      // text din pagină care nu trecea prin `t()`.
+      // `|| this.state.eroare`: dacă vreodată cineva scrie doar varianta
+      // română, omul vede tot ceva — nu o casetă care se stinge singură.
+      eroare: this.state.eroare ? t(this.state.eroare, this.state.eroareEn || this.state.eroare) : '',
+      eroareTitlu: t('Produsele nu s-au încărcat.', 'The products could not be loaded.'),
+      eroareCta: t('Încearcă din nou', 'Try again'),
+      onReincearca: () => {
+        this.setState({ eroare: "", eroareEn: "" }, () => this.pullCatalog());
+      },
+      // Pachetul de test are sens doar peste un catalog încărcat ȘI peste o
+      // bază care știe de reducere. Fără migrarea 011, `promo_public()`
+      // răspunde `false`: atunci cardul nu se arată deloc, în loc să ofere o
+      // reducere pe care `POST /requests` ar refuza-o abia la trimitere, după
+      // ce omul a completat tot formularul.
+      hasCat: PROD.length > 0 && promoGata,
 
       trialCard: 'display:flex;flex-wrap:wrap;gap:clamp(1rem,3vw,2rem);align-items:center;justify-content:space-between;background:var(--h-bg-raised);border-color:var(--h-accent);box-shadow:0 0 0 2px var(--h-accent-soft),var(--h-shadow-2)',
       trialBuy: 'flex:0 1 15rem;min-width:min(13rem,100%);display:flex;flex-direction:column;gap:0.2rem',
-      trialPhoto: res('trialpack', 'products/trial-pack.png'),
+      trialPhoto: res('trialpack', 'assets/img/trial-pack.jpg'),
       trialMedia: mob
         ? 'flex:1 1 100%;position:relative;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:var(--h-grad-warm)'
         : 'flex:0 1 18rem;min-width:min(15rem,100%);position:relative;aspect-ratio:4/3;border-radius:16px;overflow:hidden;background:var(--h-grad-warm)',
-      trialBadge: t('Pachet promoțional −20%', 'Trial pack −20%'),
-      trialTierLabel: tierName(tier),
-      trialTitle: t('Comandă de test: 3 bucăți din fiecare produs', 'Trial order: 3 pieces of every product'),
+      trialBadge: t('Pachet promoțional −' + TRIAL_PCT + '%', 'Trial pack −' + TRIAL_PCT + '%'),
+      trialTierLabel: tierName(trialTier),
+      trialTitle: t('Comandă de test: ' + TRIAL_EACH + ' bucăți din fiecare produs',
+                    'Trial order: ' + TRIAL_EACH + ' pieces of every product'),
       trialBody: t(
-        'Toate cele ' + PROD.length + ' produse din gamă, câte 3 bucăți, cu 20% reducere. Îl pui în vitrină o săptămână și vezi ce se vinde, fără să te blochezi pe stoc.',
-        'All ' + PROD.length + ' products in the range, three pieces each, at 20% off. Put it on the counter for a week and see what sells, without locking up stock.'
+        'Toate cele ' + PROD.length + ' produse din gamă, câte ' + TRIAL_EACH + ' bucăți, cu ' + TRIAL_PCT + '% reducere. Îl pui în vitrină o săptămână și vezi ce se vinde, fără să te blochezi pe stoc.',
+        'All ' + PROD.length + ' products in the range, ' + TRIAL_EACH + ' pieces each, at ' + TRIAL_PCT + '% off. Put it on the counter for a week and see what sells, without locking up stock.'
       ),
-      trialPrice: money(trialNet(tier)),
-      trialWas: money(trialList(tier)),
+      trialPrice: money(trialNet(trialTier)),
+      trialWas: money(trialList(trialTier)),
       trialMeta: TRIAL_PIECES + ' ' + t('buc', 'pcs') + ' · '
-        + t('o singură dată per client · reducerea se confirmă în ofertă',
-            'one per customer · the discount is confirmed in the quote'),
+        + t('o singură dată per client · reducerea e deja scăzută din preț',
+            'one per customer · the discount is already deducted'),
       trialNone: trialN === 0,
       trialSome: trialN > 0,
       trialAdded: t('✓ Adăugat în cerere', '✓ Added to request'),
@@ -1699,7 +3278,7 @@ class Component extends DCLogic {
         q[trialKey] = 1;
         return { qty: q };
       }),
-      trialRemove: () => this.setQty(trialKey, 0),
+      trialRemove: () => this.setQty('trial:' + trialTier, 0),
       ctaRemove: t('Scoate', 'Remove'),
       trialCta: t('Adaugă pachetul de test', 'Add the trial pack'),
       addLabel: mob
@@ -1717,7 +3296,9 @@ class Component extends DCLogic {
       waFormNote: t('WhatsApp trimite datele din formular împreună cu produsele și cantitățile selectate.', 'WhatsApp sends the form details together with the selected products and quantities.'),
       waHelloHref: waLink(helloText),
       waOrderHref: waLink(picks.length ? orderText() : helloText),
-      formRef: this.formRef,
+      // Pleacă funcția, nu cutia: `ref="{{ formRef }}"` din marcaj rămâne
+      // neschimbat, dar React are acum pe cine chema la desprindere.
+      formRef: this.legaForm,
       sendWa: () => {
         const extra = [];
         const f = this.formRef && this.formRef.current;
@@ -1750,7 +3331,10 @@ class Component extends DCLogic {
 
       hasPicks: picks.length > 0,
       noPicks: picks.length === 0,
-      clearPicks: () => this.setState({ qty: {} }),
+      // Golirea închide și foaia: fără produse, bara de jos dispare, iar o
+      // foaie rămasă deschisă peste catalog n-ar mai avea din ce să se
+      // închidă în afară de fundal.
+      clearPicks: () => this.setState({ qty: {}, cosJos: false, finalizare: false }),
       reqTitle: mine ? t('Comanda ta', 'Your order') : t('Cererea ta', 'Your request'),
       reqEmpty: mine
         ? t('Alege produsele și cantitățile. Le trimiți cu un buton — datele tale le avem deja.',
@@ -1760,14 +3344,14 @@ class Component extends DCLogic {
       askLabel: t('Ai o rețetă a ta?', 'Got your own recipe?'),
       askBody: t('Producem și pe specificația clientului, în marcă privată. Scrie-ne ce ai în minte.', 'We also produce to customer specification, under private label. Tell us what you have in mind.'),
 
-      noteTitle: t('Prețuri pe bucată, în RON · comandă minimă 700 RON', 'Prices per piece, in RON · 700 RON minimum order'),
-      noteBody: t('Comanda minimă este 700 RON pentru București și Ilfov; comanzi exact ce îți trebuie. În restul țării livrăm la cerere. Pentru volume mari, livrare recurentă sau marcă privată trimitem ofertă dedicată.', 'The minimum order is 700 RON for Bucharest and Ilfov; you order exactly what you need. Elsewhere in Romania we deliver on request. For high volumes, recurring delivery or private label we send a dedicated quote.'),
+      noteTitle: t('Prețuri pe bucată, în RON · comandă minimă ' + MIN_ORDER + ' RON', 'Prices per piece, in RON · ' + MIN_ORDER + ' RON minimum order'),
+      noteBody: t('Comanda minimă este ' + MIN_ORDER + ' RON pentru București și Ilfov; comanzi exact ce îți trebuie. În restul țării livrăm la cerere. Pentru volume mari, livrare recurentă sau marcă privată trimitem ofertă dedicată.', 'The minimum order is ' + MIN_ORDER + ' RON for Bucharest and Ilfov; you order exactly what you need. Elsewhere in Romania we deliver on request. For high volumes, recurring delivery or private label we send a dedicated quote.'),
 
       d1e: t('Temperatură', 'Temperature'),
       d1t: '−18°C',
       d1b: t('Produsele pleacă congelate și rămân congelate. Lanțul nu se întrerupe nici la încărcare.', 'Product leaves frozen and stays frozen. The chain does not break, not even at loading.'),
       d2e: t('Comandă minimă', 'Minimum order'),
-      d2t: t('700 RON', '700 RON'),
+      d2t: t(MIN_ORDER + ' RON', MIN_ORDER + ' RON'),
       d2b: t('Pentru București și Ilfov. Comanzi exact produsele și cantitățile de care ai nevoie. În restul țării, la cerere.', 'For Bucharest and Ilfov. You order exactly the products and quantities you need. Elsewhere in Romania, on request.'),
       d3e: t('Frecvență', 'Frequency'),
       d3t: t('Săptămânal sau la comandă', 'Weekly or on demand'),
@@ -1777,7 +3361,7 @@ class Component extends DCLogic {
       d4b: t('Cutii etichetate cu lot și termen, dimensionate pentru congelatorul din locație.', 'Cases labelled with batch and best-before, sized for the freezer on site.'),
 
       cov1t: t('București și Ilfov', 'Bucharest and Ilfov'),
-      cov1b: t('Flotă proprie, livrare în ziua următoare · minim 700 RON', 'Own fleet, next-day delivery · 700 RON minimum'),
+      cov1b: t('Flotă proprie, livrare în ziua următoare · minim ' + MIN_ORDER + ' RON', 'Own fleet, next-day delivery · ' + MIN_ORDER + ' RON minimum'),
       cov2t: t('Restul țării', 'Rest of Romania'),
       cov2b: t('Curier frigorific partener, în colet izolat, la cerere', 'Partner refrigerated courier, insulated parcel, on request'),
       cov3t: t('Export în UE', 'Export within the EU'),
@@ -1800,21 +3384,21 @@ class Component extends DCLogic {
       v3t: t('Trasabilitate pe lot', 'Batch traceability'),
       v3b: t('Lot și dată pe fiecare cutie, până la tura în care s-a produs.', 'Batch and date on every case, back to the shift that produced it.'),
 
-      addrHint: t('Incinta ICTCM, sector 4, București · vis-à-vis de metrou Piața Sudului', 'ICTCM compound, sector 4, Bucharest · opposite Piața Sudului metro'),
+      addrStreet: contact.address,
+      addrCity: t(orasSiSector, orasSiSectorEn),
+      addrFull: ro ? contact.addressFull : contact.addressFullEn,
+      mapUrl: contact.mapUrl,
+      addrHint: t('Incinta ICTCM · vis-à-vis de metrou Piața Sudului', 'ICTCM compound · opposite Piața Sudului metro station'),
       emailMeta: t('Răspundem în aceeași zi lucrătoare', 'We reply the same working day'),
-      phoneMeta: t('Luni–Sâmbătă, în program', 'Monday–Saturday, during working hours'),
+      phoneMeta: t('În program', 'During working hours'),
       phoneText,
       telHref,
       emailText,
       mailHref,
-      dayWeek: t('Luni – Vineri', 'Monday – Friday'),
-      daySat: t('Sâmbătă', 'Saturday'),
-      daySun: t('Duminică', 'Sunday'),
-      closedWord: t('Închis', 'Closed'),
-      rowWeek: dow >= 1 && dow <= 5 ? hi : '',
-      rowSat: dow === 6 ? hi : '',
-      rowSun: dow === 0 ? hi : '',
-      hoursLong: t('Lun–Vin 07:00–21:00 · Sâm 07:00–17:00', 'Mon–Fri 07:00–21:00 · Sat 07:00–17:00'),
+      orar,
+      areOrar: orar.length > 0,
+      hoursLong: ro ? contact.hours.ro : contact.hours.en,
+      areHoursLong: (ro ? contact.hours.ro : contact.hours.en) !== '',
 
       lblWhen: t('Când vrei comanda?', 'When do you need it?'),
       ctaAsap: t('Cât de repede se poate', 'As soon as possible'),
@@ -1859,9 +3443,60 @@ class Component extends DCLogic {
       lblVolume: t('Volum estimat pe lună', 'Estimated monthly volume'),
       lblMsg: mine ? t('Mențiuni pentru comandă', 'Notes for this order') : t('Detalii', 'Details'),
       lblWantCatalog: t('Trimiteți-mi și catalogul PDF complet', 'Send me the full PDF catalogue as well'),
+      lblRef: this.refAsezat()
+        ? t('Cod de recomandare', 'Referral code')
+        : t('Cod de recomandare (dacă ai unul)', 'Referral code (if you have one)'),
+      phRef: t('ex. ana', 'e.g. ana'),
+      // Nota spune de unde vine codul, și spune adevărul: de-aceea sunt patru
+      // texte, nu unul. Un singur text ar minți în trei cazuri din patru.
+      noteRef: this.state.refSursa === 'staff'
+        ? t('E codul tău. Comanda asta se trece pe recomandarea ta.',
+            'This is your own code. The order will be credited to you.')
+        : this.state.refSursa === 'cont'
+        ? t('Scrie pe contul tău: el te-a adus la Golden Pastry.',
+            'It is on your account: they brought you to Golden Pastry.')
+        : this.state.refSursa === 'link'
+        ? t('Vine de pe linkul pe care ai intrat. Îl poți schimba sau șterge.',
+            'It came from the link you arrived on. You can change or clear it.')
+        : t('Dacă ți-a recomandat cineva Golden Pastry, scrie codul lui aici.',
+            'If someone recommended Golden Pastry to you, enter their code here.'),
+      refCod: this.state.refCod,
+      refAsezat: this.refAsezat(),
+      refCaseta: !this.refAsezat(),
+      // „Modifică" nu șterge codul, doar deschide caseta cu el înăuntru: omul
+      // vrea de obicei să-l schimbe, nu să-l rescrie de la zero. Și marchează
+      // `refAtins`, ca sesiunea sosită între timp să nu i-l pună la loc.
+      onRefModifica: () => this.setState({ refDeschis: true, refAtins: true }),
+      // PRIMA UȘĂ A STINGERII. Cine tastează peste codul venit pe link a
+      // spus, cu degetul lui, că linkul acela nu e al lui — fie scrie alt
+      // cod, fie golește caseta. Din clipa aia cookie-ul „gp-ref" n-are ce
+      // căuta pe dispozitiv: altfel ar sta treizeci de zile și s-ar așeza
+      // singur la următorul om fără cont, care l-ar vedea ca pe un lucru
+      // hotărât, cu „Modifică" lângă el — nu ca pe o întrebare.
+      //
+      // Nu se stinge la „Modifică": deschiderea casetei singură nu e o
+      // hotărâre, omul poate doar să se uite la cod și să-l lase așa. Se
+      // stinge la prima tastă, fiindcă atunci a schimbat ceva.
+      //
+      // `refDinCookie` se golește odată cu el, ca a doua ușă (stingerea la
+      // trimitere) să nu mai aibă ce stinge, și ca ieșirea din cont să nu
+      // reașeze un cod care tocmai a fost respins.
+      onRefCod: (e) => {
+        if (this.state.refSursa === 'link' || this.state.refDinCookie) {
+          try { gp.forgetReferral(); } catch (er) { /* cookie-uri blocate */ }
+        }
+        this.setState({ refCod: e.target.value, refSursa: '', refAtins: true, refDinCookie: '' });
+      },
       wantCatalog: this.state.wantCatalog,
       toggleCatalog: (e) => this.setState({ wantCatalog: !!(e && e.target && e.target.checked) }),
       phCompany: t('Numele firmei', 'Company name'),
+      // Singurul placeholder din formular care rămăsese scris de-a dreptul în
+      // marcaj, în română, pe singura pagină bilingvă a casei: vizitatorul de
+      // pe „/en/” citea eticheta „Email” și, în căsuță, „nume@companie.ro”,
+      // între „Company name” și „Your name”, amândouă traduse. Nicio probă
+      // nu-l vedea: proba de rulare caută diacritice, iar textul acela n-are
+      // niciun ă, â, î, ș sau ț.
+      phEmail: t('nume@companie.ro', 'name@company.com'),
       phName: t('Numele tău', 'Your name'),
       phMsg: mine
         ? t('Ora la care ești deschis, unde lăsăm marfa, orice altceva trebuie să știm la livrare.',
@@ -1886,10 +3521,17 @@ class Component extends DCLogic {
         ? t('Comanda a ajuns la noi. Intră în producție după ce o confirmăm — o vezi în „Comanda mea", din meniul contului.',
             'Your order has reached us. It enters production once we confirm it — follow it under “My order”, in the account menu.')
         : t('Cererea ta a intrat la noi în platformă. O confirmăm sau te sunăm pentru detalii în aceeași zi lucrătoare.', 'Your request has arrived in our platform. We confirm it or call you for details the same working day.'),
-      formNote: mine
-        ? t('Comanda intră în producție numai după ce o confirmăm.',
-            'The order enters production only after we confirm it.')
-        : t('Datele tale se folosesc doar pentru a răspunde acestei cereri.', 'Your details are used only to answer this request.'),
+      // Nota de sub buton spune ACELAȘI lucru ca eticheta lui, cu alte cuvinte
+      // — și, la coș gol, spune și cum se ajunge la cealaltă variantă. Fără
+      // rândul dintâi, un om care a intrat pe „Cere catalogul PDF” ar trimite
+      // un mesaj crezând că a comandat.
+      formNote: !picks.length
+        ? t('Coșul e gol, deci pleacă o întrebare, nu o comandă. Pune produse în coș dacă vrei o ofertă pentru o zi anume.',
+            'Your basket is empty, so this sends a question, not an order. Add products to the basket if you want a quote for a specific day.')
+        : (mine
+          ? t('Comanda intră în producție numai după ce o confirmăm.',
+              'The order enters production only after we confirm it.')
+          : t('Datele tale se folosesc doar pentru a răspunde acestei cereri.', 'Your details are used only to answer this request.')),
 
       submitQuote: (e) => {
         e.preventDefault();
@@ -1924,11 +3566,17 @@ class Component extends DCLogic {
           // cont o repetă pe cea din marcaj (`asGuest`): căsuța se arată doar
           // vizitatorilor fără cont, iar ce nu se vede pe ecran nu are voie să
           // plece în cerere.
+          // `!cl` repetă și el marcajul: cu un client ales, bifa nu e pe ecran,
+          // iar ce nu se vede n-are voie să plece. Fără rândul ăsta, un agent
+          // care bifase catalogul pentru o comandă de vizitator îl trimitea mai
+          // departe pe fiecare comandă scrisă pentru clienții lui.
           catalog: !(this.state.auth && this.state.auth.role === 'client')
-            && !!this.state.wantCatalog,
+            && !cl && !!this.state.wantCatalog,
           items: picks.map((row) => ({ q: String(row.qty), n: row.name, meta: row.meta })),
           pieces: piecesText,
-          total: money(totMoney),
+          // Cât se plătește, nu cât ar fi costat la catalog: de când reducerea
+          // e reală, asta e cifra pe care o înregistrează serverul.
+          total: money(totNet),
           status: 'nou',
           source: 'site'
         };
@@ -1954,10 +3602,27 @@ class Component extends DCLogic {
             });
           }
         });
-        if (!linii.length) {
+        // OPRITORUL A RĂMAS NUMAI PE DRUMUL DE FINALIZARE.
+        //
+        // Pe formularul obișnuit — pagina de Contact, sau cel de sub catalog —
+        // coșul gol înseamnă de azi „o întrebare”, nu „o greșeală”: același
+        // formular, două înțelesuri, hotărâte de coș. Butonul și nota de sub
+        // el spun care din două pleacă.
+        //
+        // Pe drumul de finalizare însă omul a apăsat anume „Finalizare
+        // comandă”: acolo o comandă fără produse chiar n-are niciun înțeles,
+        // iar un coș golit între timp e o greșeală, nu o alegere.
+        //
+        // Se întreabă `this.state.finalizare`, STEAGUL, nu `finalizare` cel
+        // socotit la randare: al doilea se stinge singur când coșul se golește
+        // (`picks.length > 0` în el), deci n-ar fi adevărat tocmai în clipa
+        // pentru care e pusă paza. Steagul rămâne aprins — de-aia ajunge
+        // fereastra să se redeschidă peste catalog la produsul următor, ceea
+        // ce e o altă hotărâre, [H], care încă își așteaptă rândul.
+        if (!linii.length && this.state.finalizare) {
           return this.setState({ sendErr: t(
-            'Alege cel puțin un produs din catalog înainte de a trimite cererea.',
-            'Pick at least one product from the catalogue before sending the request.'
+            'Alege cel puțin un produs din catalog înainte de a trimite comanda.',
+            'Pick at least one product from the catalogue before sending the order.'
           ) });
         }
 
@@ -1981,20 +3646,52 @@ class Component extends DCLogic {
           // intra pe numele altui client fiindcă a fost scris în formular.
           // Telefonul și e-mailul lipsesc din formular și se completează tot
           // de acolo, deci le trimitem goale.
-          customerName: mine ? '' : (req.company || req.person || 'Vizitator site'),
-          phone: req.phone,
-          email: req.email,
+          // CONTUL ALES, ca număr. E singura legătură care nu se poate greși:
+          // un nume se potrivea prin asemănare (`client_by_name()`), iar două
+          // firme scrise aproape la fel erau un singur client pentru ochi și
+          // doi pentru socoteală. Serverul îl trece prin aceeași ogradă ca
+          // lista care l-a arătat (`client_in_scope()`), deci un număr scris de
+          // mână nu deschide nimic în plus.
+          customerId: cl ? cl.id : '',
+          customerName: mine ? ''
+            : (cl ? String(cl.company || cl.name || '').trim()
+                  : (req.company || req.person || 'Vizitator site')),
+          // Telefonul și e-mailul clientului ales pleacă de pe CONTUL lui, nu
+          // din formular: casetele nu mai sunt pe ecran, iar `FormData` ar da
+          // gol. Serverul nu le completează singur decât pentru clientul care
+          // comandă pentru el (`$isClient`), deci fără rândurile astea cererea
+          // ar ajunge în panou fără niciun număr de telefon la care să sune
+          // cineva.
+          phone: cl ? String(cl.phone || '').trim() : req.phone,
+          email: cl ? String(cl.email || '').trim() : req.email,
           day: req.wantDate || '',
-          address: mine ? String(this.state.addr || '').trim() : '',
+          // `mine || staff`, nu doar `mine`: de când personalul are caseta de
+          // adresă pe ecran, ce scrie el trebuie și să plece. Rămâne goală
+          // pentru vizitatorul fără cont, care n-are caseta — iar acolo gol
+          // chiar înseamnă gol, nu „ia-o de pe cont", fiindcă n-are cont.
+          address: (mine || staff) ? String(this.state.addr || '').trim() : '',
+          // Zona, de pe cont sau schimbată acum. Goală, serverul o ia tot de
+          // pe cont (`user_zone()` din `POST /requests`) — deci un client care
+          // n-a deschis „Modifică" își păstrează zona, nu o pierde.
+          zone: (mine || staff) ? String(this.state.zone || '').trim() : '',
           notes: [req.person, req.segment, req.volume, req.msg,
-            // Reducerea o aplică laboratorul la confirmare: API-ul nu are
-            // noțiunea de reducere, deci ea trebuie măcar spusă, nu pierdută.
-            cuTest ? t('PACHET DE TEST −20%: ' + PROD.length + ' produse × ' + TRIAL_EACH
+            // Nota nu mai cere nimic nimănui: reducerea e făcută, iar cererea
+            // se înregistrează cu ea (câmpul `promo`, mai jos). Spunea până
+            // acum „aplică reducerea la confirmare", fiindcă reducerea chiar
+            // era o promisiune scrisă în mențiuni, pe care o ținea minte un om.
+            //
+            // Rămâne fiindcă panoul de comenzi nu deschide cererea ca să vadă
+            // `promo`: fără rândul ăsta, laboratorul citește un total sub
+            // catalog fără nimic care să-i spună de ce. Amândouă cifrele stau
+            // scrise, ca nimeni să n-aibă de socotit.
+            cuTest ? t('PACHET DE TEST −' + TRIAL_PCT + '%: ' + PROD.length + ' produse × ' + TRIAL_EACH
                        + ' buc (' + tierName(cuTest === 'congelat' ? 'frozen' : 'baked')
-                       + ') — aplică reducerea la confirmare',
-                       'TRIAL PACK −20%: ' + PROD.length + ' products × ' + TRIAL_EACH
+                       + ') — reducerea e deja scăzută: ' + money(totNet) + ' în loc de '
+                       + money(totMoney) + ' la catalog',
+                       'TRIAL PACK −' + TRIAL_PCT + '%: ' + PROD.length + ' products × ' + TRIAL_EACH
                        + ' pcs (' + tierName(cuTest === 'congelat' ? 'frozen' : 'baked')
-                       + ') — apply the discount on confirmation') : '',
+                       + ') — the discount is already deducted: ' + money(totNet) + ' instead of '
+                       + money(totMoney) + ' at catalogue price') : '',
             req.catalog ? t('Vrea catalogul PDF', 'Wants the PDF catalogue') : '']
             .filter((x) => String(x || '').trim()).join(' · '),
           // Varianta merge acum pe fiecare poziție, fiindcă în coș pot sta
@@ -2003,13 +3700,101 @@ class Component extends DCLogic {
           // tabului deschis, iar serverul recalcula totul la prețul ei — pe
           // ecran scria o sumă, în cerere se înregistra alta.
           variant: tier === 'frozen' ? 'congelat' : 'copt',
+          // Codul, curățat de spații. Restul curățeniei o face serverul cu
+          // `referral_normalize_code()`, ca la înscriere: „GOLD 2025" scris
+          // oricum ajunge tot „gold2025". Unul greșit nu oprește cererea —
+          // rămâne fără recomandant, exact ca la un cont nou.
+          //
+          // Se citește din STARE, nu din formular. De când clientul intrat
+          // poate trimite comanda cu casetele strânse, caseta codului nu mai e
+          // în pagină la apăsarea butonului, iar `FormData` ar da gol: codul
+          // venit pe link („?ref=ana") s-ar pierde tăcut, și odată cu el
+          // comisionul celui care l-a adus. Starea îl ține oricum, fiindcă
+          // caseta e legată prin `value`/`onChange`.
+          referralCode: String(this.state.refCod || '').trim(),
+          // REDUCEREA, SPUSĂ SERVERULUI.
+          //
+          // Rândul ăsta e reparația propriu-zisă. Până acum pachetul pleca
+          // desfăcut în pozițiile lui, la prețul de catalog, iar reducerea
+          // rămânea o frază în mențiuni: ecranul spunea 244,89, cererea se
+          // înregistra cu 306,15, iar comisionul agentului se socotea din cifra
+          // mare. Cu el, `route_requests_create()` tarifează pozițiile prin
+          // `promo_slices()` și scrie în bază exact ce a citit clientul.
+          //
+          // Nu e o cerere de încredere: serverul verifică singur că în coș chiar
+          // stă pachetul întreg și că omul nu l-a mai luat o dată. Trimis pe un
+          // coș incomplet, răspunde 422, nu −20%.
+          //
+          // Codul vine din `PROMO.code`, nu scris aici: e ortografia
+          // serverului, singura pe care el o recunoaște.
+          promo: (cuTest && PROMO) ? PROMO.code : '',
           items: linii
         })
           .then(() => {
             this.__trimit = false;
-            return this.setState(mine
-              ? { sent: true, sending: false, sendErr: '', qty: {} }
-              : { sent: true, sending: false, sendErr: '' });
+            // Coșul se golește pentru oricine a trimis, nu doar pentru clientul
+            // cu cont: cererea e la noi, iar un coș plin sub „Mulțumim" cu
+            // butonul aprins la loc însemna aceeași cerere trimisă a doua oară
+            // la următoarea atingere. Câmpurile de contact rămân completate —
+            // omul vrea uneori să mai comande ceva, nu să-și rescrie telefonul.
+            // Codul venit pe LINK și-a făcut treaba: a plecat odată cu cererea.
+            // Dacă ar rămâne în browser, s-ar lipi de cererea următoare trimisă
+            // de pe același dispozitiv — și de următoarea, treizeci de zile la
+            // rând. Asta e a doua jumătate a reparației „ples": prima alege
+            // codul potrivit, asta îl lasă să se stingă după ce a fost folosit.
+            //
+            // Codul omului din echipă NU se stinge, fiindcă nu vine din cookie:
+            // e pe contul lui și trebuie să fie acolo și la comanda următoare.
+            // De-aceea se cere `refSursa === 'link'`, nu „avem un cod".
+            //
+            // A DOUA UȘĂ. `refSursa` singur nu era de-ajuns: `onRefCod` îl
+            // golește la prima tastă, deci omul care apăsa „Modifică", scria
+            // alt cod și trimitea ieșea pe aici cu `refSursa === ''` și
+            // pleca lăsând cookie-ul întreg. Măsurat viu pe 14 septembrie:
+            // intrat pe „?ref=mihai", schimbat în „radu", trimis — cererea a
+            // intrat cu „radu" în bază, dar „gp-ref=mihai" a rămas, iar
+            // următorul om fără cont îl vedea așezat în casetă.
+            //
+            // Acum se întreabă și browserul, nu doar caseta: dacă dispozitivul
+            // purta un cod de link, el se stinge la plecarea cererii, orice ar
+            // fi rămas scris în casetă.
+            //
+            // DAR SUNT DOUĂ TREBURI, NU UNA, și au răspunsuri diferite. Prima
+            // dată le-am pus sub același steag, iar proba de mai jos a prins
+            // paguba pe loc: agentul de vânzări care ia comanda de pe tableta
+            // din magazin POATE avea un cookie vechi pe ea — și atunci un
+            // singur steag i-ar fi stins, odată cu cookie-ul, și codul LUI din
+            // casetă, deși el nu vine din browser, ci de pe cont.
+            //
+            //   stingeCookie → cookie-ul de pe dispozitiv e gunoi și moare,
+            //                  oricine ar fi la tastatură;
+            //   golesteCaseta → numai codul care CHIAR venea din link pleacă
+            //                  de pe ecran. Al agentului rămâne, fiindcă e al
+            //                  lui și la comanda următoare.
+            const stingeCookie = this.state.refSursa === 'link' || !!this.state.refDinCookie;
+            const golesteCaseta = this.state.refSursa === 'link';
+            if (stingeCookie) {
+              try { gp.forgetReferral(); } catch (e) { /* cookie-uri blocate */ }
+            }
+            return this.setState(Object.assign(
+              { sent: true, sending: false, sendErr: '', qty: {},
+                // Clientul ales se dezleagă odată cu coșul. Coșul se golește,
+                // „Mulțumim" rămâne pe ecran, iar butonul se aprinde la loc:
+                // dacă legătura ar rămâne, următorul coș pus de pe aceeași
+                // tabletă ar pleca TĂCUT pe contul clientului dinainte, cu
+                // comisionul la omul dinainte. Adresa și zona rămân
+                // completate, ca și celelalte câmpuri — dar ele sunt pe ecran,
+                // deci se văd; legătura nu se vedea decât în fâșie.
+                clientAles: null, cautQ: '', cautLista: [],
+                cautStare: '', cautEroare: '' },
+              // Cookie-ul stins se șterge din stare oricine ar fi la tastatură:
+              // altfel `codRecomandare()` l-ar mai citi o dată dintr-o valoare
+              // care nu mai există nicăieri pe dispozitiv.
+              stingeCookie ? { refDinCookie: '' } : {},
+              golesteCaseta
+                ? { refCod: '', refSursa: '', refDeschis: false, refAtins: false }
+                : {}
+            ));
           })
           .catch((e) => {
             // Refuzul aprinde butonul la loc: cererea completată trebuie să

@@ -14,12 +14,60 @@
 
 declare(strict_types=1);
 
+/*
+ * Lățimile coloanelor din `sql/001_schema.sql`, scrise o singură dată.
+ *
+ * Catalogul era singurul loc din API care nu trecea textele prin
+ * `text_field()`: lua `trim((string) …)` gol-goluț și le dădea mai departe lui
+ * MySQL. Un nume de produs de 300 de caractere — o lipire greșită din Word, nu
+ * un atac — ieșea ca „Eroare internă", fiindcă `slug`-ul făcut din el nu
+ * încăpea în coloană. Aceeași lecție ca la depozit
+ * (`.claude/test-reparat-depozit-refuzuri.mjs`): datele prea lungi ies ca refuz
+ * lămurit, nu ca eroare de server.
+ */
+const CAT_NUME_MAX  = 96;    // product_categories.name / name_en
+const CAT_NOTA_MAX  = 160;   // product_categories.note / note_en
+const CAT_CHEIE_MAX = 64;    // product_categories.slug
+const PROD_NUME_MAX = 160;   // products.name / name_en
+const PROD_DESC_MAX = 4000;  // products.description — coloana e TEXT (65535 OCTEȚI,
+                             // adică vreo 32000 de caractere cu diacritice); 4000
+                             // e cu mult peste orice descriere de patiserie și
+                             // lasă coloanei aer chiar și în cel mai rău caz.
+const PROD_CHEIE_MAX = 96;   // products.slug
+
+/**
+ * Taie cheia de adresă la lățimea coloanei, pe ultima cratimă.
+ *
+ * Cheia se face din nume, iar numele are voie să fie lung: „Croissant cu unt
+ * franțuzesc și fistic de Bronte, ediție limitată" trece lejer de 64 de
+ * caractere. Numele îl păstrăm întreg — cheia o scurtăm, fiindcă ea e doar
+ * adresa din bara browserului. Tăiem pe cratimă ca adresa să rămână citibilă,
+ * nu retezată la mijlocul unui cuvânt.
+ *
+ * Rezultatul e verificat de apelant pentru unicitate, deci două nume lungi care
+ * ajung la aceeași cheie scurtă primesc refuzul obișnuit „cheia e deja luată",
+ * nu una peste alta.
+ */
+function slug_scurt(string $slug, int $max): string
+{
+    // `slugify()` întoarce numai [a-z0-9-], deci octeții sunt caractere.
+    if (strlen($slug) <= $max) {
+        return $slug;
+    }
+    $t      = substr($slug, 0, $max);
+    $ultima = strrpos($t, '-');
+    if ($ultima !== false && $ultima >= (int) ($max / 2)) {
+        $t = substr($t, 0, $ultima);
+    }
+    return trim($t, '-');
+}
+
 /* ------------------------------------------------------------- categorii -- */
 
 /** GET /categories — grupele din catalog. Public. */
 function route_categories_list(): void
 {
-    $all = isset($_GET['all']) && current_user() && current_user()['role'] === 'admin';
+    $all = isset($_GET['all']) && e_admin(current_user() ?? '');
     $rows = all(
         'SELECT * FROM product_categories' . ($all ? '' : ' WHERE active = 1') . ' ORDER BY sort, id'
     );
@@ -28,16 +76,21 @@ function route_categories_list(): void
 
 function route_categories_create(): void
 {
-    require_role('admin');
+    require_admin();
     $b = body();
 
-    $name   = trim((string) ($b['name'] ?? ''));
-    $nameEn = trim((string) ($b['nameEn'] ?? ''));
+    $name   = text_field($b['name'] ?? null, 'Numele grupei', CAT_NUME_MAX);
+    $nameEn = text_field($b['nameEn'] ?? null, 'Numele grupei în engleză', CAT_NUME_MAX);
+    $nota   = text_field($b['note'] ?? null, 'Mențiunea grupei', CAT_NOTA_MAX);
+    $notaEn = text_field($b['noteEn'] ?? null, 'Mențiunea grupei în engleză', CAT_NOTA_MAX);
     if ($name === '' || $nameEn === '') {
         fail('Numele grupei este obligatoriu în ambele limbi.', 422, 'missing_name');
     }
 
-    $slug = slugify(trim((string) ($b['slug'] ?? '')) ?: $name);
+    // Cheia scrisă cu mâna se refuză dacă e prea lungă — omul a ales-o și o
+    // poate scurta. Cea făcută din nume o scurtăm noi: nu el a scris-o.
+    $cheieData = text_field($b['slug'] ?? null, 'Cheia grupei', CAT_CHEIE_MAX);
+    $slug      = $cheieData !== '' ? slugify($cheieData) : slug_scurt(slugify($name), CAT_CHEIE_MAX);
     if ($slug === '') {
         fail('Nu pot construi o cheie din numele dat. Scrie una manual.', 422, 'bad_slug');
     }
@@ -48,8 +101,7 @@ function route_categories_create(): void
     $sort = (int) scalar('SELECT COALESCE(MAX(sort), 0) + 10 FROM product_categories');
     q(
         'INSERT INTO product_categories (slug, name, name_en, note, note_en, sort) VALUES (?, ?, ?, ?, ?, ?)',
-        [$slug, $name, $nameEn, trim((string) ($b['note'] ?? '')) ?: null,
-         trim((string) ($b['noteEn'] ?? '')) ?: null, $sort]
+        [$slug, $name, $nameEn, $nota ?: null, $notaEn ?: null, $sort]
     );
     $id = (int) db()->lastInsertId();
 
@@ -59,7 +111,7 @@ function route_categories_create(): void
 
 function route_categories_update(string $id): void
 {
-    require_role('admin');
+    require_admin();
     $id  = (int) $id;
     $cat = one('SELECT * FROM product_categories WHERE id = ?', [$id]);
     if (!$cat) {
@@ -72,7 +124,7 @@ function route_categories_update(string $id): void
 
     foreach (['name' => 'name', 'nameEn' => 'name_en'] as $in => $col) {
         if (array_key_exists($in, $b)) {
-            $v = trim((string) $b[$in]);
+            $v = text_field($b[$in], $in === 'name' ? 'Numele grupei' : 'Numele grupei în engleză', CAT_NUME_MAX);
             if ($v === '') {
                 fail('Numele grupei nu poate rămâne gol.', 422, 'missing_name');
             }
@@ -83,7 +135,7 @@ function route_categories_update(string $id): void
     foreach (['note' => 'note', 'noteEn' => 'note_en'] as $in => $col) {
         if (array_key_exists($in, $b)) {
             $sets[] = "$col = ?";
-            $vals[] = trim((string) $b[$in]) ?: null;
+            $vals[] = text_field($b[$in], $in === 'note' ? 'Mențiunea grupei' : 'Mențiunea grupei în engleză', CAT_NOTA_MAX) ?: null;
         }
     }
     if (array_key_exists('sort', $b)) {
@@ -113,10 +165,19 @@ function route_categories_update(string $id): void
         fail('Nu ai trimis nimic de schimbat.', 422, 'nothing_to_update');
     }
 
+    $schimbari = audit_diff($sets, $vals, $cat, [
+        'name'    => 'nume',
+        'name_en' => 'nume EN',
+        'note'    => 'mențiune',
+        'note_en' => 'mențiune EN',
+        'sort'    => 'ordine',
+        'active'  => ['în catalog', ['1' => 'da', '0' => 'nu']],
+    ]);
     $vals[] = $id;
     q('UPDATE product_categories SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
 
-    audit('category_update', 'category', (string) $id, $cat['name']);
+    audit('category_update', 'category', (string) $id,
+        $cat['name'] . ($schimbari === '' ? '' : ' · ' . $schimbari));
     json_out(['ok' => true]);
 }
 
@@ -129,7 +190,7 @@ function route_categories_update(string $id): void
  */
 function route_categories_delete(string $id): void
 {
-    require_role('admin');
+    require_admin();
     $id  = (int) $id;
     $cat = one('SELECT * FROM product_categories WHERE id = ?', [$id]);
     if (!$cat) {
@@ -155,13 +216,16 @@ function route_categories_delete(string $id): void
 
 function route_products_create(): void
 {
-    require_role('admin');
+    require_admin();
     $b = body();
 
     [$name, $nameEn, $desc, $descEn] = product_texts($b, true);
     $category = product_category($b);
 
-    $slug = slugify(trim((string) ($b['slug'] ?? '')) ?: $name);
+    // Vezi `slug_scurt()`: adresa scrisă cu mâna se refuză dacă nu încape,
+    // cea făcută din nume se scurtează singură.
+    $cheieData = text_field($b['slug'] ?? null, 'Adresa produsului', PROD_CHEIE_MAX);
+    $slug      = $cheieData !== '' ? slugify($cheieData) : slug_scurt(slugify($name), PROD_CHEIE_MAX);
     if ($slug === '') {
         fail('Nu pot construi o adresă din numele dat. Scrie una manual.', 422, 'bad_slug');
     }
@@ -195,7 +259,7 @@ function route_products_create(): void
 
 function route_products_update(string $id): void
 {
-    require_role('admin');
+    require_admin();
     $id = (int) $id;
     $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
     if (!$p) {
@@ -208,12 +272,18 @@ function route_products_update(string $id): void
 
     // La modificare, câmpurile lipsă rămân neatinse — dar cele trimise goale
     // sunt refuzate: catalogul e bilingv, iar un nume gol n-are ce căuta.
+    $etichete = [
+        'name'          => ['Numele produsului', PROD_NUME_MAX],
+        'nameEn'        => ['Numele produsului în engleză', PROD_NUME_MAX],
+        'description'   => ['Descrierea produsului', PROD_DESC_MAX],
+        'descriptionEn' => ['Descrierea produsului în engleză', PROD_DESC_MAX],
+    ];
     foreach (['name' => 'name', 'nameEn' => 'name_en',
               'description' => 'description', 'descriptionEn' => 'description_en'] as $in => $col) {
         if (!array_key_exists($in, $b)) {
             continue;
         }
-        $v = trim((string) $b[$in]);
+        $v = text_field($b[$in], $etichete[$in][0], $etichete[$in][1]);
         if ($v === '') {
             fail('Câmpul „' . $in . '” nu poate rămâne gol: catalogul este bilingv.', 422, 'missing_text');
         }
@@ -251,10 +321,29 @@ function route_products_update(string $id): void
         fail('Nu ai trimis nimic de schimbat.', 422, 'nothing_to_update');
     }
 
+    // Prețul e motivul pentru care rândul ăsta există. Până acum jurnalul
+    // scria „Croissant" și atât: la o reclamație despre o factură se vedea că
+    // produsul a fost atins marți, dar nu dacă i s-a mișcat prețul, gramajul
+    // ori o virgulă din descriere — iar comenzile date înainte se livrează la
+    // prețul convenit atunci (vezi „preț onorat" din api/routes/orders.php).
+    $schimbari = audit_diff($sets, $vals, $p, [
+        'name'           => 'nume',
+        'name_en'        => 'nume EN',
+        'description'    => 'descriere',
+        'description_en' => 'descriere EN',
+        'category'       => 'grupă',
+        'grams'          => 'grame',
+        'price_frozen'   => 'preț HoReCa',
+        'price_baked'    => 'preț raft',
+        'is_new'         => ['nou', ['1' => 'da', '0' => 'nu']],
+        'active'         => ['în catalog', ['1' => 'da', '0' => 'nu']],
+        'sort'           => 'ordine',
+    ]);
     $vals[] = $id;
     q('UPDATE products SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
 
-    audit('product_update', 'product', (string) $id, $p['name']);
+    audit('product_update', 'product', (string) $id,
+        $p['name'] . ($schimbari === '' ? '' : ' · ' . $schimbari));
     json_out(['ok' => true]);
 }
 
@@ -272,16 +361,50 @@ function route_products_update(string $id): void
  */
 function route_products_delete(string $id): void
 {
-    require_role('admin');
+    require_admin();
     $id = (int) $id;
     $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
     if (!$p) {
         fail('Produsul nu există.', 404, 'not_found');
     }
 
-    $inOrders = (int) scalar('SELECT COUNT(*) FROM order_items WHERE product_id = ?', [$id])
-        + (int) scalar('SELECT COUNT(*) FROM order_request_items WHERE product_id = ?', [$id]);
+    // Se numără COMENZI, nu poziții: aceeași comandă poate avea produsul și
+    // congelat, și copt (`sql/001_schema.sql:158`). Cu `COUNT(*)` refuzul ar fi
+    // spus „apare în 2 comenzi” despre una singură, iar omul ar fi plecat s-o
+    // caute pe a doua. Zero rămâne zero în amândouă felurile, deci poarta de mai
+    // jos se poartă întocmai ca înainte.
+    $inOrders = (int) scalar('SELECT COUNT(DISTINCT order_id) FROM order_items WHERE product_id = ?', [$id])
+        + (int) scalar('SELECT COUNT(DISTINCT request_id) FROM order_request_items WHERE product_id = ?', [$id]);
     $inStock  = (int) scalar('SELECT COUNT(*) FROM stock_items WHERE product_id = ?', [$id]);
+
+    // „Numai ștergere", cerut anume de pagină.
+    //
+    // Fără steagul ăsta ruta face ce-a făcut dintotdeauna: produsul cu istoric
+    // se scoate din catalog în loc să fie șters. Purtarea aceea era singura
+    // scăpare pe vremea când × era singurul buton de pe rând.
+    //
+    // Acum rândul are comutatorul lui, iar × înseamnă ștergere și atât. Pagina
+    // arată o confirmare scrisă pe cifrele pe care i le-a dat lista — citite
+    // acum o clipă, ori acum zece minute. Dacă între timp produsul a intrat
+    // într-o comandă, confirmarea a mințit: spunea „dispare definitiv". Aici se
+    // termină minciuna aceea cu un refuz lămurit, nu cu o faptă pe care omul
+    // n-a cerut-o. Refuzul nu schimbă nimic: nici nu șterge, nici nu scoate.
+    if (($_GET['mod'] ?? '') === 'doar-sterge' && ($inOrders > 0 || $inStock > 0)) {
+        $unde = [];
+        if ($inOrders > 0) {
+            $unde[] = $inOrders . ($inOrders === 1 ? ' comandă' : ' comenzi');
+        }
+        if ($inStock > 0) {
+            $unde[] = $inStock . ($inStock === 1 ? ' articol de depozit' : ' articole de depozit');
+        }
+        fail(
+            'Produsul „' . $p['name'] . '” apare în ' . implode(' și în ', $unde)
+            . '. Dacă l-am șterge, comenzile de atunci n-ar mai ști ce s-a livrat.'
+            . ' Scoate-l din catalog: nu se mai vinde, dar istoricul rămâne întreg.',
+            409,
+            'are_istoric'
+        );
+    }
 
     if ($inOrders === 0 && $inStock === 0) {
         // Fotografia urcată din panou nu mai folosește nimănui.
@@ -320,7 +443,7 @@ function route_products_delete(string $id): void
  */
 function route_products_photo(string $id): void
 {
-    require_role('admin');
+    require_admin();
     $id = (int) $id;
     $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
     if (!$p) {
@@ -423,10 +546,10 @@ function is_uploaded_photo(string $photo): bool
 /** Textele obligatorii ale unui produs, în ambele limbi. */
 function product_texts(array $b, bool $required): array
 {
-    $name   = trim((string) ($b['name'] ?? ''));
-    $nameEn = trim((string) ($b['nameEn'] ?? ''));
-    $desc   = trim((string) ($b['description'] ?? ''));
-    $descEn = trim((string) ($b['descriptionEn'] ?? ''));
+    $name   = text_field($b['name'] ?? null, 'Numele produsului', PROD_NUME_MAX);
+    $nameEn = text_field($b['nameEn'] ?? null, 'Numele produsului în engleză', PROD_NUME_MAX);
+    $desc   = text_field($b['description'] ?? null, 'Descrierea produsului', PROD_DESC_MAX);
+    $descEn = text_field($b['descriptionEn'] ?? null, 'Descrierea produsului în engleză', PROD_DESC_MAX);
 
     if ($required) {
         $missing = [];
@@ -525,7 +648,7 @@ function slugify(string $text): string
 /** GET /products/{id}/recipe — liniile rețetei, plus articolul finit al produsului. */
 function route_product_recipe_get(string $id): void
 {
-    require_role('admin');
+    require_admin();
     $id = (int) $id;
 
     $produs = one('SELECT id, name FROM products WHERE id = ?', [$id]);
@@ -578,7 +701,7 @@ function route_product_recipe_get(string $id): void
  */
 function route_product_recipe_put(string $id): void
 {
-    require_role('admin');
+    require_admin();
     $b  = body();
     $id = (int) $id;
 
@@ -640,18 +763,54 @@ function route_product_recipe_put(string $id): void
     // cel pe care l-a văzut adminul când a apăsat „Salvează".
     $pdo = db();
     $pdo->beginTransaction();
+    $rescrise = 0;
     try {
         q('DELETE FROM product_recipes WHERE product_id = ?', [$id]);
         foreach ($curate as $itemId => $qty) {
             q('INSERT INTO product_recipes (product_id, item_id, qty) VALUES (?, ?, ?)', [$id, $itemId, $qty]);
         }
+
+        // Promisiunile comenzilor deschise se rescriu după rețeta nouă.
+        //
+        // Rezervările de materie primă se calculează la acceptare, din rețeta
+        // de ATUNCI (bucăți × cantitatea pe piesă), și rămâneau așa până
+        // cineva corecta pozițiile comenzii. Rețeta schimbată de la 100 g la
+        // 120 g de făină lăsa „Rezervat" pe cifra veche pentru toate comenzile
+        // din lucru, iar producția — care scade după rețeta nouă — împingea
+        // `consumed` peste `qty`. Rescrierea e aceeași cu cea de la corectarea
+        // pozițiilor (stock_reserve_order), doar comenzile care au deja rânduri
+        // de rezervare pe produsul ăsta și nu sunt predate ori anulate (acelea
+        // nu mai promit nimic, stock.php le lasă oricum deoparte). Rândul se
+        // blochează, ca un raport de producție de pe tabletă să nu scrie în
+        // același timp.
+        $deschise = all(
+            'SELECT DISTINCT r.order_id
+               FROM stock_reservations r
+               JOIN order_items oi ON oi.id = r.order_item_id
+               JOIN orders o       ON o.id  = r.order_id
+              WHERE oi.product_id = ? AND o.status <> ? AND o.status <> ?',
+            [$id, status_done(), status_cancelled()]
+        );
+        foreach ($deschise as $rand) {
+            $oid = (int) $rand['order_id'];
+            one('SELECT id FROM orders WHERE id = ? FOR UPDATE', [$oid]);
+            stock_reserve_order($oid);
+            $rescrise++;
+        }
+
         $pdo->commit();
     } catch (Throwable $e) {
         $pdo->rollBack();
         throw $e;
     }
 
-    audit('product_recipe', 'product', (string) $id, $produs['name'] . ' · ' . count($curate) . ' linii');
+    audit(
+        'product_recipe',
+        'product',
+        (string) $id,
+        $produs['name'] . ' · ' . count($curate) . ' linii'
+            . ($rescrise > 0 ? ' · rezervări rescrise pe ' . $rescrise . ' comenzi' : '')
+    );
 
-    json_out(['ok' => true, 'lines' => count($curate)]);
+    json_out(['ok' => true, 'lines' => count($curate), 'ordersUpdated' => $rescrise]);
 }

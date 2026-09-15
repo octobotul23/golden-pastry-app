@@ -1,7 +1,8 @@
 # Publicarea pe un VPS Hostinger (Ubuntu + Apache)
 
-Varianta pentru VPS a ghidului `03-publicare-cpanel.md`. Aceleași patru adrese,
-aceeași bază de date — doar că aici tu ești administratorul mașinii.
+Ghidul de instalare de la zero, pe un server al tău. Patru adrese, o singură
+bază de date, și tu ești administratorul mașinii — nu există panou de găzduire
+care să facă vreun pas în locul tău.
 
 | Adresă | Folder pe server | Ce conține |
 |---|---|---|
@@ -37,9 +38,11 @@ Opțiuni: `--dir` (implicit `/var/www/gp`), `--no-ssl`, `--db-name`, `--db-user`
 La final îți scrie pe ecran parola bazei și codul de instalare, plus cele trei
 adrese de urmat: `verifica.php`, `setup.php`, panoul.
 
-**Se rulează de câte ori vrei.** A doua oară e o actualizare: nu atinge
+**Se rulează de câte ori vrei**, dar e scris pentru prima oară: nu atinge
 `api/config.php`, nu reimportă baza și nu șterge pozele urcate din panoul
-Catalog.
+Catalog — însă nici nu aplică migrările și nici nu face copie de siguranță
+înainte. Pentru actualizări e `actualizeaza-vps.sh`, cu ghidul lui,
+`09-actualizare-vps.md`.
 
 Restul ghidului rămâne util pentru ce face scriptul pas cu pas, și obligatoriu
 dacă alegi CyberPanel în loc de Ubuntu curat.
@@ -54,8 +57,8 @@ dacă alegi CyberPanel în loc de Ubuntu curat.
   depozitele oficiale, fără panou care să stea în drum.
 - **CyberPanel** (template disponibil) — dacă vrei interfață grafică pentru mai
   multe site-uri: phpMyAdmin, File Manager, SSL cu un buton, foarte aproape de
-  cPanel. Pașii din `03-publicare-cpanel.md` se aplică aproape identic; sari
-  peste secțiunile 2 și 4 de mai jos.
+  un panou de găzduire obișnuit. Pașii de mai jos se aplică aproape identic;
+  sari peste secțiunile 2 și 4, pe care le face panoul.
 - **CloudPanel** — nginx. Nu îl alege pentru aplicația asta.
 
 Restul ghidului presupune Ubuntu 24.04 curat și conectare prin SSH ca `root`
@@ -87,7 +90,7 @@ Așteaptă să se propage înainte de pasul cu certificatele. Verifici cu
 apt update && apt upgrade -y
 apt install -y apache2 mysql-server unzip \
   php php-mysql php-mbstring php-curl php-xml php-zip php-gd libapache2-mod-php
-a2enmod rewrite headers
+a2enmod rewrite headers expires
 systemctl restart apache2
 
 ufw allow OpenSSH
@@ -98,6 +101,24 @@ ufw --force enable
 Verifici versiunea: `php -v` trebuie să arate 8.3 sau mai nou (aplicația cere
 minim 8.0). Extensiile obligatorii: `pdo_mysql`, `openssl`, `mbstring`, `curl`,
 `json`, `filter`.
+
+Cele trei module Apache nu sunt de formă:
+
+| Modul | Fără el |
+|---|---|
+| `rewrite` | adresele fără `.html` nu mai merg, iar API-ul nu-și mai găsește rutele: 404 pe aproape tot |
+| `headers` | cad antetele de securitate, `noindex`-ul panourilor și oprirea memorării paginilor în browser |
+| `expires` | pozele, `.css`-ul și `.js`-ul pleacă fără termen de păstrare și se cer din nou la fiecare deschidere |
+
+`expires` e singurul care lipsește des: pe Debian și Ubuntu nu e aprins din
+oficiu, iar `.htaccess`-ul își ține tot capitolul de memorare sub
+`<IfModule mod_expires.c>`. „IfModule" e o condiție, nu un titlu — fără modul,
+Apache sare peste blocul întreg **în tăcere**, fără nicio eroare și fără niciun
+rând în jurnal. De-aia `actualizeaza-vps.sh` se uită după el la fiecare rulare
+și te avertizează pe galben dacă nu-l găsește; ce înseamnă avertismentul e
+scris în [09-actualizare-vps.md](09-actualizare-vps.md).
+
+Verifici oricând ce e aprins cu `apache2ctl -M`.
 
 Parola de root la MySQL, o singură dată:
 
@@ -201,8 +222,49 @@ mysql --default-character-set=utf8mb4 -u root -p gp < /root/deploy/sql/001_schem
 mysql --default-character-set=utf8mb4 -u root -p gp < /root/deploy/sql/002_seed.sql
 ```
 
-Migrările `003`–`007` **nu** se importă la o instalare nouă: schema le conține
-deja. Verifici: 17 tabele, iar `products` cu 22 de rânduri.
+Migrările `003`–`007` n-au ce face la o instalare nouă: schema le conține
+deja. Cele de după ele, **`008`–`018`, sunt cele care contează** — schema nu le
+are (cea mai nouă e `018_adresa_si_program.sql`). Bucla de mai jos le rulează pe toate, de la `003` în sus, și e bine așa:
+fiecare se uită întâi în `information_schema` și, dacă are deja ce caută, nu
+face nimic. Nu le alege pe sprânceană — o listă scrisă cu mâna e exact felul în
+care se uită o migrare.
+
+```bash
+for f in /root/deploy/sql/[0-9][0-9][0-9]_*.sql; do
+  case "$(basename "$f")" in 001_*|002_*) continue;; esac
+  mysql --default-character-set=utf8mb4 -u root -p gp < "$f"
+done
+```
+
+Verifici: **21 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
+puține, numele care lipsește îți spune care migrare n-a intrat:
+`referral_commissions` e din `008`, `lab_shifts` din `014`, `lab_messages`
+din `015`. Fără primul, pagina „Recomandări" răspunde „Eroare internă"; fără
+celelalte două, „Pontaj" și tabla de anunțuri din Panoul Laborator răspund
+lămurit că lipsește migrarea — vezi `lab_supported()` și
+`lab_board_supported()`. (`instaleaza-vps.sh` face bucla asta singur.)
+
+`017_procent_recomandare.sql` nu se vede nici în tabele, nici în coloane: ea
+scrie o setare, atât. O verifici în **Setări → Procent de recomandare**, unde
+pe o instalare nouă trebuie să scrie **5**. Dacă scrie `0`, recomandările
+merg — se leagă, se numără — dar nu aduc niciun ban, și nimic din aplicație
+nu te anunță despre asta.
+
+`018_adresa_si_program.sql` e la fel ca `017`: nu se vede nici în tabele, nici
+în coloane, fiindcă scrie două setări — adresa publică și programul. O verifici
+în **Setări → Adresa publică** și **Program de lucru**: pe o instalare nouă
+trebuie să scrie „Șos. Olteniței 103", respectiv „Lu-Vi 07:00-21:00, Sâ 07:00-17:00". Dacă
+amândouă casetele sunt goale, migrarea n-a intrat — și atunci ele nu se pot
+scrie deloc: salvarea răspunde cu un refuz care numește cheia lipsă
+(`unknown_setting`), fiindcă setările se scriu peste rânduri care există.
+
+`016_zona_cont.sql` nu se vede în numărul de tabele: ea aduce o **coloană**
+(`users.zone`) și încă o zonă în lista de livrare. O verifici în aplicație, nu
+în `SHOW TABLES` — Setări → Zone trebuie să aibă „În afara Bucureștiului și
+Ilfovului" la coada listei, **fără coordonate**, iar formularul de cont nou din
+„Conturi" trebuie să aibă caseta „Zona". Fără ea, zona de pe cont răspunde 503
+cu un mesaj care spune limpede ce lipsește, iar restul aplicației merge mai
+departe.
 
 ---
 
@@ -317,31 +379,170 @@ nimeni nu se poate autentifica. Reînnoirea e automată (`certbot.timer`).
 
 ---
 
-## 8. Verificarea și primul cont
+## 8. Verificarea
 
-1. `https://api.goldenpastry.ro/verifica.php` — trebuie să iasă totul verde.
-   Apoi **șterge fișierul**: `rm /var/www/gp/api/verifica.php`.
-2. `https://api.goldenpastry.ro/setup.php` — formularul cere codul de instalare
-   din `config.php` și creează primul administrator. Apoi
-   `rm /var/www/gp/api/setup.php`.
-3. `https://lab.goldenpastry.ro` — intri cu contul creat.
+Deschide **`https://api.goldenpastry.ro/verifica.php`**.
+
+Trebuie să iasă totul verde. Dacă nu:
+
+| Ce scrie | Ce faci |
+|---|---|
+| `pdo_mysql` sau `openssl` lipsesc | `apt install -y php8.3-mysql php8.3-curl`, apoi `systemctl reload apache2` |
+| Fără drept de scriere în `products/` | `chown -R www-data:www-data /var/www/gp/public_html/products` și `chmod 755` pe el |
+| Conectarea la baza de date a eșuat | numele bazei, utilizatorul și parola din `api/config.php` — pasul 6 |
+| Lipsesc tabele | reia importul din pasul 3; dacă baza e mai veche, rulează migrarea care lipsește din `sql/` |
+| Cheia de criptare | în `config.php` nu sunt exact 64 de caractere hexazecimale |
+| Conexiune HTTPS: nu | `certbot` n-a terminat (pasul 7), sau `.htaccess` lipsește din folder |
+
+**Șterge `verifica.php` după ce totul e verde:**
+
+```bash
+rm /var/www/gp/api/verifica.php
+```
+
+Dacă uiți, nu rămâne deschisă pentru oricine: din clipa în care există un cont
+de administrator (pasul următor), pagina răspunde 404, ca și cum ar fi fost
+ștearsă. Până atunci e deschisă, așa că nu lăsa instalarea neterminată peste
+noapte.
+
+---
+
+## 8b. Primul cont de administrator
+
+Baza de date pornește **fără niciun cont de om**. Singurul cont existent este
+`panou`, contul de sistem al tabletelor din laborator, în care nu se intră cu
+parolă. Până creezi un administrator, nimeni nu poate intra nicăieri.
+
+Deschide **`https://api.goldenpastry.ro/setup.php`** și completează formularul.
+Primul câmp este **codul de instalare** — cel pe care l-ai pus la pasul 6 în
+`config.php`, la `install_code`. Fără el pagina nu creează nimic, oricâte
+încercări ar veni de pe internet. Restul: alegi singur utilizatorul și parola.
+Parola trebuie să aibă minimum 10 caractere; e contul cu drepturi depline peste
+comenzi, conturi și setări, deci nu o refolosi de altundeva.
+
+Dacă pagina îți spune că nu e pus niciun cod de instalare, deschide
+`/var/www/gp/api/config.php`, completează `install_code` cu un cod de cel puțin
+12 caractere, salvează și reîncarcă.
+
+Pagina merge **o singură dată**. Din clipa în care există un administrator
+activ, `setup.php` răspunde 404 — la fel ca `verifica.php`. Nu mai spune nici
+măcar că există: pentru cine trece pe acolo, adresa arată ca și cum fișierul ar
+fi fost deja șters. Ștergerea rămâne de făcut, dar dacă uiți, pagina nu mai
+poate crea niciun cont.
+
+> **Notează codul tabletelor.** După ce creezi contul, pagina afișează, într-o
+> casetă galbenă, un cod de opt caractere generat atunci, pe loc. Cu el se
+> deschid panourile de lucru de pe tabletele din laborator, fără cont
+> individual. Se păstrează criptat, deci **nu mai poate fi afișat niciodată** —
+> nici de pagina asta, nici din Setări. Dacă îl pierzi, pui pur și simplu altul
+> din *Setări → Acces*.
+>
+> Codul nu mai e o valoare fixă, aceeași la orice instalare: una fixă ar fi
+> însemnat că oricine a citit proiectul poate deschide panourile tale.
+
+**Șterge `setup.php` imediat după:**
+
+```bash
+rm /var/www/gp/api/setup.php
+```
+
+---
+
+## 8c. Proba de foc
+
+În ordine:
+
+1. `https://goldenpastry.ro` — se vede catalogul, se poate trimite o cerere.
+2. `https://lab.goldenpastry.ro` — pagina de intrare.
+3. Intră cu contul de administrator → **Comenzi** → cererea trimisă la punctul 1
+   trebuie să fie acolo.
+4. Acceptă cererea → devine comandă.
+5. `https://clienti.goldenpastry.ro` — intră cu un cont de client, vezi comanda.
+
+Dacă pasul 3 merge, partea grea e gata: datele chiar circulă între dispozitive.
+
+---
+
+## 8d. Primele setări
+
+**`lab.goldenpastry.ro/setari`**, cu contul de administrator.
+
+- **General** — numele firmei, telefonul, adresa de contact.
+- **Notificări** — adresa pe care vrei să primești comenzile noi, apoi
+  **Trimite e-mail de test**. Pentru WhatsApp, pașii sunt în
+  [02-panoul-de-setari.md](02-panoul-de-setari.md).
+- **Acces** — aici schimbi codul tabletelor. Cel de la instalare merge deja;
+  pune altul când pleacă cineva din echipă, sau dacă l-ai pierdut. Codul nu se
+  poate afișa — se păstrează criptat — deci câmpul arată doar dacă există unul.
+  Cât timp nu e configurat niciunul, tabletele nu pot deschide panoul: serverul
+  răspunde „Codul panoului nu este configurat", adică poarta stă închisă, nu
+  deschisă.
+- **Liste** — etapele, intervalele și zonele, dacă ale tale diferă.
+
+**`lab.goldenpastry.ro/conturi`** — creează conturile echipei. Fiecare client
+care trebuie să-și vadă comenzile are nevoie de un cont cu rolul „client":
+serverul îi arată exclusiv comenzile lui, filtrarea nu se face în browser.
+
+Nu există conturi implicite în afara celui creat de tine la pasul 8b — nici
+demo, nici de test. Cele din prototip (`admin`/`goldenpastry`,
+`sofia`/`patiserie`) au fost șterse: parolele lor erau scrise în sursa
+paginilor, vizibile oricui.
+
+**Depozitul pornește de la zero.** Toate articolele apar sub prag până faci un
+inventar real: `lab.goldenpastry.ro/depozit` → **+ Mișcare** → **Intrare** →
+„Corecție inventar", cu cantitățile de pe raft.
 
 ---
 
 ## 9. Actualizări
 
-După o modificare, pe calculatorul tău `node .claude/build-deploy.mjs`, apoi:
+De la a doua publicare încolo ai un al doilea script, `actualizeaza-vps.sh`, și
+un ghid numai pentru asta: `09-actualizare-vps.md`. Pe scurt, pe calculatorul
+tău `node .claude/build-deploy.mjs`, apoi:
 
 ```powershell
-scp -r deploy root@IP_VPS:/root/
+scp -r deploy sql actualizeaza-vps.sh root@IP_VPS:/root/
 ```
 
-Pe server, aceleași `cp -a`. Ce **nu** se atinge niciodată la o actualizare:
-`api/config.php` (nu e în pachet) și `public_html/products/` (pozele urcate din
-panou). Restul pașilor și migrările de bază de date: `docs/07-actualizari.md`.
-
-Copie de siguranță înainte de orice actualizare:
+și pe server:
 
 ```bash
-mysqldump -u root -p --default-character-set=utf8mb4 gp > /root/gp-$(date +%F).sql
+sudo bash /root/actualizeaza-vps.sh
 ```
+
+Face singur copia de siguranță a bazei, aplică migrările care lipsesc, copiază
+cele patru foldere și repornește Apache. Ce **nu** se atinge niciodată:
+`api/config.php` (nu e în pachet) și folderul pozelor urcate din panoul Catalog.
+
+`instaleaza-vps.sh` se poate rula și el a doua oară, dar nu aplică migrările —
+pe o bază care are deja tabele nu importă nimic dinadins
+(`instaleaza-vps.sh:205`). Prima oară instalarea, de atunci încolo actualizarea.
+
+---
+
+## Ce merge prost cel mai des
+
+**„Nu mă pot autentifica" pe un singur subdomeniu.**
+`cookie_domain` din `config.php` nu începe cu punct.
+
+**Paginile arată nestilizat, fără fonturi.**
+Folderul `_ds` n-a ajuns întreg pe server. Fiecare subdomeniu are nevoie de
+propria lui copie — `rsync` cu `-a`, nu fișiere alese pe sprânceană.
+
+**API-ul răspunde cu 404 la orice.**
+`.htaccess` lipsește din `/var/www/gp/api/` — e fișier ascuns, deci o urcare
+care nu-l cuprinde arată „terminată" și lasă serverul fără rescriere. Verifică
+și că `AllowOverride All` e pus pe gazda virtuală (pasul 4).
+
+**„Eroare internă" fără detalii.**
+Normal pe `env => 'prod'`. Cauza adevărată e în jurnalul Apache:
+
+```bash
+tail -20 /var/log/apache2/gp-api-error.log
+```
+
+Cel mai des e o migrare care n-a intrat — vezi numărul de tabele de la pasul 3.
+
+**O comandă nouă nu ajunge pe e-mail.**
+Panoul de Setări → butonul de test spune de ce. Cel mai des, adresa
+expeditoare nu e pe domeniul tău și serverul refuză să trimită.

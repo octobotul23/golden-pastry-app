@@ -1,0 +1,656 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * Ce cere laboratorul de la server: pontajul turei și tabla de anunțuri.
+ *
+ * Două lucrări deosebite, puse în același fișier fiindcă fișierul e al familiei
+ * de adrese `/lab/*`, nu al uneia din ele — cine urmărește o adresă o caută
+ * într-un singur loc. Se citesc pe rând, mai jos; ce au în comun e mesele din
+ * laborator.
+ *
+ * ── I. PONTAJUL (migrarea 014) ───────────────────────────────────────────
+ *
+ * CONTEXTUL, care explică tot ce urmează. Tabletele din laborator se deschid cu
+ * UN SINGUR cont — `panou`, `is_system = 1` — cu un cod știut de toată tura
+ * (`api/routes/auth.php:321`). E o alegere bună pentru ecranul de comenzi:
+ * nimeni nu-și pierde minutele cu parola când are mâinile în aluat. Dar
+ * înseamnă că sesiunea din fața tabletei NU spune cine e omul. De-aia pontajul
+ * nu se poate sprijini pe `current_user()`, cum face restul aplicației: aici
+ * sesiunea spune doar „sunt o tabletă a casei", iar cine pontează se dovedește
+ * cu un cod scurt, propriu (`users.lab_pin`, migrarea 014).
+ *
+ * CELE DOUĂ PORȚI, deosebite dinadins:
+ *
+ *   · tableta — `require_clock()`. Poate cere lista de nume și poate ponta.
+ *     Atât. Nu vede nicio oră a nimănui în afară de cea pe care tocmai a
+ *     scris-o, și nu vede nicio zi trecută.
+ *   · raportul — `require_shifts()`, adică administrator, fondator și manager.
+ *     Orele oamenilor sunt date de personal; managerul le capătă fiindcă el
+ *     conduce tura, și e singurul lucru de personal pe care îl vede.
+ *
+ * Corectura unui rând uitat deschis e a treia poartă, cea mai strâmtă:
+ * `require_admin()`. Managerul citește statul de plată, nu îl scrie.
+ *
+ * ── II. TABLA DE ANUNȚURI (migrarea 015) ─────────────────────────────────
+ *
+ * Anunțul stă deasupra comenzilor zilei, pe Panoul Laborator. Aici sesiunea
+ * spune cine e omul și asta ajunge: scrie cine conduce tura (`require_shifts()`
+ * — aceiași cu raportul, fiindcă sunt aceiași oameni), citește oricine ține
+ * ecranul deschis (`require_ops()`, adică și contul `panou` al tabletei).
+ *
+ * DE CE NU SE SPRIJINĂ ȘI ASTA PE CODUL DE PONTAJ, ca partea de sus: n-are pe
+ * cine legitima. Anunțul se citește de toată lumea din laborator — e chiar
+ * rostul lui — iar cine îl pune nu stă la tabletă, ci la biroul lui, într-o
+ * sesiune cu numele pe ea.
+ */
+
+/* ------------------------------------------------------- ajutoare -- */
+//
+// `lab_supported()`, `require_lab()` și `lab_attempt_key()` stau în
+// api/lib/auth.php, nu aici: de ele are nevoie și pagina Conturi, care pune și
+// șterge codurile, iar fișierele din routes/ nu se încarcă unul pe altul.
+
+/** Tura deschisă a unui om, sau null. */
+function lab_open_shift(int $userId): ?array
+{
+    return one(
+        'SELECT id, day, started_at FROM lab_shifts
+          WHERE user_id = ? AND ended_at IS NULL
+          ORDER BY started_at DESC LIMIT 1',
+        [$userId]
+    );
+}
+
+/** Forma în care pleacă o tură spre pagină. */
+function lab_shift_public(array $r): array
+{
+    return [
+        'id'        => (int) $r['id'],
+        'userId'    => (int) $r['user_id'],
+        'name'      => $r['name'] ?? '',
+        'day'       => $r['day'],
+        'startedAt' => $r['started_at'],
+        'endedAt'   => $r['ended_at'],
+        // Cine a scris ora de plecare, când n-a scris-o omul. Gol = rând curat.
+        'endedBy'   => $r['ended_by_name'] ?? null,
+        'note'      => $r['note'],
+    ];
+}
+
+/* --------------------------------------------------------- rutele -- */
+
+/**
+ * GET /lab/people — cine poate ponta, și cine e în tură acum.
+ *
+ * Lista NU e „toți utilizatorii de laborator": e „toți cei care au cod de
+ * pontaj". Așa se face singură, din cine a primit cod, fără o a doua listă de
+ * ținut în acord cu prima — iar un om căruia i s-a luat codul dispare de pe
+ * tabletă în aceeași clipă, fără să i se schimbe rolul.
+ *
+ * Ce pleacă de aici: numele, și dacă e în tură de la ce oră. Nimic altceva —
+ * nici rol, nici e-mail, nici telefon. Tableta stă la vedere într-un laborator.
+ */
+function route_lab_people(): void
+{
+    require_clock();
+    require_lab();
+
+    $rows = all(
+        "SELECT u.id, u.name, s.started_at, s.day
+           FROM users u
+           LEFT JOIN lab_shifts s
+             ON s.user_id = u.id AND s.ended_at IS NULL
+          WHERE u.lab_pin IS NOT NULL AND u.active = 1 AND u.is_system = 0
+          ORDER BY u.name"
+    );
+
+    $oameni = [];
+    foreach ($rows as $r) {
+        $oameni[] = [
+            'id'        => (int) $r['id'],
+            'name'      => $r['name'],
+            'open'      => $r['started_at'] !== null,
+            'startedAt' => $r['started_at'],
+            // Tura deschisă pe o zi trecută înseamnă că omul a uitat să plece.
+            // Tableta o spune, ca să nu ponteze „venit" peste o venire veche.
+            'stale'     => $r['started_at'] !== null && (string) $r['day'] < today_local(),
+        ];
+    }
+
+    json_out(['people' => $oameni]);
+}
+
+/**
+ * POST /lab/clock — omul a venit, sau pleacă.
+ *
+ * Un singur buton, nu două: dacă are tură deschisă, apăsarea o închide; dacă
+ * nu, o deschide. Două butoane ar fi însemnat că se poate apăsa cel greșit, iar
+ * pe un ecran cu mâinile în făină greșeala aia se face. Răspunsul spune ce s-a
+ * întâmplat (`action`), ca ecranul să scrie „Bun venit" sau „Spor la odihnă"
+ * fără să ghicească.
+ *
+ * DE CE NU SE POATE PONTA ÎN LOCUL ALTUIA. Codul se cere la fiecare apăsare,
+ * și la venire, și la plecare. Ar fi fost mai comod să se ceară doar la venire
+ * — dar atunci oricine trecea pe lângă tabletă putea închide tura altuia, iar
+ * ora de plecare e chiar cea care face banii.
+ */
+function route_lab_clock(): void
+{
+    require_clock();
+    require_lab();
+
+    $b   = body();
+    $id  = (int) ($b['userId'] ?? 0);
+    $pin = trim((string) ($b['pin'] ?? ''));
+    $ip  = client_ip();
+
+    if ($id <= 0 || $pin === '') {
+        fail('Alege numele și tastează codul.', 422, 'missing_fields');
+    }
+
+    // Pragul se verifică ÎNAINTE de citirea contului, ca ghicitul să nu poată
+    // afla din viteza răspunsului dacă omul există.
+    if (login_rate_limited($ip, lab_attempt_key($id))) {
+        fail('Prea multe încercări. Mai așteaptă câteva minute.', 429, 'rate_limited');
+    }
+
+    $u = one(
+        'SELECT id, name, lab_pin FROM users
+          WHERE id = ? AND active = 1 AND is_system = 0 AND lab_pin IS NOT NULL',
+        [$id]
+    );
+    if (!$u || !password_verify($pin, (string) $u['lab_pin'])) {
+        record_attempt($ip, lab_attempt_key($id), false);
+        // Același text pentru „nu există" și „cod greșit": altfel lista de nume
+        // de pe tabletă ar deveni o listă de conturi de ghicit.
+        //
+        // DE CE 422 ȘI NU 401, deși e vorba de o cheie care nu se potrivește.
+        // În aplicația asta 401 e deja un cuvânt cu înțeles hotărât, și nu ăsta:
+        // înseamnă „sesiunea a murit". `shared/gp-api.js` aruncă tokenul CSRF
+        // la orice 401 (`if (res.status === 401) setCsrf('')`), iar toate cele
+        // șaisprezece pagini au același tipar în catch —
+        // `if (e.isAuth) gp.toLogin();` — adică pleacă la ecranul de intrare.
+        //
+        // Aici sesiunea e vie și cu acte în regulă: e cea a tabletei, care a
+        // trecut de `require_clock()` cu două rânduri mai sus. Ce s-a dovedit
+        // greșit e cheia PERSONALĂ din corpul cererii — un câmp trimis, nu o
+        // legitimație. Cu 401, o cifră tastată strâmb cu mâinile în făină ar fi
+        // închis tableta întregii ture și ar fi cerut codul de panou, pe care
+        // nimeni din laborator nu-l știe pe dinafară.
+        //
+        // 422 e codul casei pentru „cererea e întreagă, valoarea e refuzată" —
+        // același pe care îl dă și punerea unui cod prea ușor de ghicit
+        // (api/routes/users.php). `gp.motiv()` întoarce pentru el chiar textul
+        // de mai jos, deci omul citește „Cod greșit." și rămâne pe ecran.
+        fail('Cod greșit.', 422, 'bad_pin');
+    }
+    record_attempt($ip, lab_attempt_key($id), true);
+
+    $acum      = now_local();
+    $deschisa  = lab_open_shift($id);
+
+    if ($deschisa) {
+        // O tură rămasă deschisă de ieri NU se închide la ora de azi: ar scrie
+        // pe statul de plată o tură de douăzeci de ore, care n-a existat. Se
+        // lasă pe seama administratorului, iar omul își începe ziua curat.
+        if ((string) $deschisa['day'] < today_local()) {
+            fail(
+                'Ai o tură rămasă deschisă din ' . $deschisa['day'] . '. '
+                  . 'Spune-i unui administrator s-o încheie; până atunci nu poți ponta.',
+                409,
+                'stale_shift'
+            );
+        }
+        q('UPDATE lab_shifts SET ended_at = ? WHERE id = ?', [$acum, (int) $deschisa['id']]);
+        audit(
+            'lab_clock_out',
+            'lab_shift',
+            (string) $deschisa['id'],
+            'Plecare pontată la ' . $acum,
+            $id,
+            (string) $u['name']
+        );
+        json_out([
+            'action'    => 'out',
+            'name'      => $u['name'],
+            'startedAt' => $deschisa['started_at'],
+            'endedAt'   => $acum,
+        ]);
+    }
+
+    q(
+        'INSERT INTO lab_shifts (user_id, day, started_at) VALUES (?, ?, ?)',
+        [$id, today_local(), $acum]
+    );
+    $nou = (int) db()->lastInsertId();
+    audit('lab_clock_in', 'lab_shift', (string) $nou, 'Venire pontată la ' . $acum, $id, (string) $u['name']);
+
+    json_out(['action' => 'in', 'name' => $u['name'], 'startedAt' => $acum, 'endedAt' => null]);
+}
+
+/**
+ * GET /lab/shifts?from=&to=&user= — raportul, pe zi și pe om.
+ *
+ * Fără interval, ultimele paisprezece zile: cât ține o tură de brutărie în
+ * minte. Intervalul e mărginit la un an, ca o adresă tastată greșit să nu ceară
+ * bazei toate turele de la deschiderea patiseriei.
+ */
+function route_lab_shifts(): void
+{
+    require_shifts();
+    require_lab();
+
+    $azi  = today_local();
+    $to   = valid_day(trim((string) ($_GET['to'] ?? '')) ?: $azi);
+    $from = valid_day(trim((string) ($_GET['from'] ?? ''))
+        ?: (new DateTimeImmutable($to))->modify('-13 days')->format('Y-m-d'));
+    if ($to < $from) {
+        [$from, $to] = [$to, $from];
+    }
+    if ((new DateTimeImmutable($from))->modify('+1 year')->format('Y-m-d') < $to) {
+        fail('Intervalul cerut e mai lung de un an.', 422, 'range_too_long');
+    }
+
+    $cond   = ['s.day BETWEEN ? AND ?'];
+    $params = [$from, $to];
+    $cine   = (int) ($_GET['user'] ?? 0);
+    if ($cine > 0) {
+        $cond[]   = 's.user_id = ?';
+        $params[] = $cine;
+    }
+
+    $rows = all(
+        'SELECT s.*, u.name, c.name AS ended_by_name
+           FROM lab_shifts s
+           JOIN users u ON u.id = s.user_id
+           LEFT JOIN users c ON c.id = s.ended_by
+          WHERE ' . implode(' AND ', $cond) . '
+          ORDER BY s.day DESC, u.name, s.started_at',
+        $params
+    );
+
+    $ture  = [];
+    $peOm  = [];
+    foreach ($rows as $r) {
+        $t = lab_shift_public($r);
+        // Minutele se socotesc AICI, nu în pagină. Pagina primește deja cifra,
+        // deci două ecrane nu pot ajunge la două totaluri deosebite, iar o zi
+        // fără plecare pontată nu se poate socoti din greșeală ca zero.
+        //
+        // DE CE POATE IEȘI UN NUMĂR NEGATIV, deși plecarea vine după venire.
+        // Orele se scriu ca ceas de perete (`now_local()`), iar ceasul de
+        // perete dă înapoi o dată pe an: în ultima duminică din octombrie,
+        // 04:00 devine 03:00. Un brutar venit la 03:30 și plecat la 03:10 a
+        // lucrat patruzeci de minute, dar scăderea celor două șiruri spune
+        // minus douăzeci. Laboratorul lucrează nopțile: fereastra asta nu e
+        // una teoretică pentru el.
+        //
+        // Un minus pe o foaie de ore nu e o ciudățenie de citit, e o scădere
+        // din plata omului. Deci rândul nu primește o cifră mincinoasă: nu
+        // primește niciuna, și spune de ce. Pontarea de pe tabletă NU se
+        // refuză din pricina asta — omul care pleacă trebuie să poată pleca,
+        // iar ora lui adevărată rămâne scrisă, de citit cu ochii.
+        $brut = $t['endedAt'] === null
+            ? null
+            : (int) round((strtotime((string) $t['endedAt']) - strtotime((string) $t['startedAt'])) / 60);
+        $t['backwards'] = $brut !== null && $brut < 0;
+        $t['minutes']   = $t['backwards'] ? null : $brut;
+        // Deschis pe ziua de azi e firesc; deschis pe o zi trecută e o uitare.
+        $t['open']    = $t['endedAt'] === null;
+        $t['stale']   = $t['endedAt'] === null && (string) $t['day'] < $azi;
+        $ture[] = $t;
+
+        $k = (int) $r['user_id'];
+        if (!isset($peOm[$k])) {
+            $peOm[$k] = [
+                'userId' => $k, 'name' => $r['name'],
+                'shifts' => 0, 'minutes' => 0, 'open' => 0, 'backwards' => 0,
+            ];
+        }
+        $peOm[$k]['shifts']++;
+        $peOm[$k]['minutes'] += (int) ($t['minutes'] ?? 0);
+        if ($t['stale']) {
+            $peOm[$k]['open']++;
+        }
+        if ($t['backwards']) {
+            $peOm[$k]['backwards']++;
+        }
+    }
+
+    usort($peOm, static fn (array $a, array $b): int => strcmp((string) $a['name'], (string) $b['name']));
+
+    json_out(['from' => $from, 'to' => $to, 'shifts' => $ture, 'people' => array_values($peOm)]);
+}
+
+/**
+ * PATCH /lab/shifts/# — administratorul scrie ora de plecare pe care omul a uitat-o.
+ *
+ * Numai pe un rând rămas deschis, și numai spre închidere. O tură deja încheiată
+ * nu se poate rescrie de aici: ora pontată de om e o mărturie, iar o mărturie
+ * care se poate schimba pe tăcute nu mai e una. Rândul ține minte cine a scris
+ * ora (`ended_by`) și de ce (`note`), plus un rând în jurnal.
+ */
+function route_lab_shift_update(string $idTxt): void
+{
+    $cine = require_admin();
+    require_lab();
+
+    $id = (int) $idTxt;
+    $s  = one('SELECT s.*, u.name FROM lab_shifts s JOIN users u ON u.id = s.user_id WHERE s.id = ?', [$id]);
+    if (!$s) {
+        fail('Tura nu există.', 404, 'not_found');
+    }
+    if ($s['ended_at'] !== null) {
+        fail(
+            'Tura are deja ora de plecare pontată de om. Ora pontată nu se rescrie de aici.',
+            409,
+            'already_closed'
+        );
+    }
+
+    $b    = body();
+    $ora  = trim((string) ($b['endedAt'] ?? ''));
+    $nota = text_field((string) ($b['note'] ?? ''), 'Motivul', 255, false);
+    if ($nota === '') {
+        fail('Scrie de ce închizi tura de mână — rândul trebuie să-și spună povestea peste o lună.', 422, 'note_required');
+    }
+
+    $dt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $ora)
+        ?: DateTimeImmutable::createFromFormat('Y-m-d H:i', $ora);
+    if (!$dt) {
+        fail('Ora de plecare se scrie ca „2026-09-13 14:30".', 422, 'bad_time');
+    }
+    $final = $dt->format('Y-m-d H:i:s');
+
+    if ($final <= (string) $s['started_at']) {
+        fail('Ora de plecare e înaintea celei de venire (' . $s['started_at'] . ').', 422, 'ends_before_start');
+    }
+    if ($final > now_local()) {
+        fail('Ora de plecare e în viitor.', 422, 'in_the_future');
+    }
+
+    q(
+        'UPDATE lab_shifts SET ended_at = ?, ended_by = ?, note = ? WHERE id = ?',
+        [$final, (int) $cine['id'], $nota, $id]
+    );
+    audit(
+        'lab_shift_close',
+        'lab_shift',
+        (string) $id,
+        'Tura lui ' . $s['name'] . ' din ' . $s['day'] . ', deschisă la ' . $s['started_at']
+          . ', încheiată de mână la ' . $final . ' — ' . $nota,
+        (int) $s['user_id'],
+        (string) $s['name']
+    );
+
+    $r = one('SELECT s.*, u.name, c.name AS ended_by_name
+                FROM lab_shifts s JOIN users u ON u.id = s.user_id
+                LEFT JOIN users c ON c.id = s.ended_by WHERE s.id = ?', [$id]);
+    json_out(['shift' => lab_shift_public($r ?: [])]);
+}
+
+/* ------------------------------ tabla de anunțuri (migrarea 015) -- */
+
+/**
+ * Câte anunțuri pot sta deodată pe ecran.
+ *
+ * Ecranul acela e al comenzilor zilei; anunțurile stau deasupra lor. Fără o
+ * margine, a zecea hârtie lipită pe geam ar împinge tocmai lucrul pentru care
+ * se uită brutarul la ecran sub marginea de jos — și nimeni n-ar fi apăsat
+ * nimic ca să se întâmple asta. Cinci e cât încape deasupra fără să împingă;
+ * al șaselea e refuzat cu numele lucrului de făcut: ia unul jos.
+ */
+const GP_LAB_MESSAGES_MAX = 5;
+
+/** Câte anunțuri mai țin acum. Aceeași întrebare ca filtrul de la citire. */
+function lab_messages_live(): int
+{
+    return (int) scalar(
+        'SELECT COUNT(*) FROM lab_messages WHERE until IS NULL OR until > ?',
+        [now_local()]
+    );
+}
+
+/**
+ * Cine poate lua jos anunțul ăsta.
+ *
+ * Regula stă scrisă o dată și se citește de două ori: la `DELETE`, ca pază, și
+ * la `GET`, ca pagina să știe pe care anunț desenează butonul. Scrisă în două
+ * locuri, s-ar fi depărtat exact în ziua în care ecranul ar fi arătat un buton
+ * care răspunde „n-ai voie".
+ *
+ * Un `created_by` gol — contul celui care l-a pus s-a șters între timp — nu se
+ * potrivește cu nimeni: `(int) null` e 0, iar un `id` de om nu e niciodată 0.
+ * Anunțul orfan rămâne al administratorilor. Altfel ar fi rămas nemuritor pe
+ * ecran, fiindcă singurul om care avea voie să-l ia jos nu mai există.
+ *
+ * PRIMA ÎNTREBARE E CEA DE LA UȘĂ, deși pare de prisos aici: ruta cere oricum
+ * `require_shifts()` înaintea acestei funcții. Dar răspunsul pleacă și spre
+ * pagină, ca `canDelete`, iar acolo nu mai trece prin nicio ușă. Un manager
+ * scoborât la „angajat" și-ar fi văzut anunțurile vechi cu butonul „Ia jos" pe
+ * ele — un buton care răspunde 403, adică tocmai lucrul pentru care s-a scris
+ * funcția asta într-un singur loc.
+ */
+function lab_message_deletable(array $cine, array $rand): bool
+{
+    if (!leads_shifts($cine)) {
+        return false;
+    }
+    return e_admin($cine) || (int) ($rand['created_by'] ?? 0) === (int) $cine['id'];
+}
+
+/** Forma în care pleacă un anunț spre pagină. */
+function lab_message_public(array $r, array $cine): array
+{
+    return [
+        'id'        => (int) $r['id'],
+        'body'      => $r['body'],
+        'until'     => $r['until'],
+        'createdAt' => $r['created_at'],
+        // Numele se citește prin JOIN, nu se ține copiat în rând: gol după
+        // ștergerea contului, și mereu cel de azi după o redenumire.
+        'author'    => $r['author_name'] ?? null,
+        'canDelete' => lab_message_deletable($cine, $r),
+    ];
+}
+
+/**
+ * Ora locală până la care ține anunțul. Gol înseamnă fără termen.
+ *
+ * Ceas de perete față de ceas de perete — vezi preambulul migrării 015. Nu se
+ * cheamă `CONVERT_TZ` nicăieri: pe o instalare fără tabelele de fusuri
+ * încărcate în MySQL, acela întoarce NULL, iar un anunț cu termenul NULL e
+ * unul fără termen. Adică exact greșeala care nu s-ar fi văzut.
+ */
+function lab_message_until(string $ora): ?string
+{
+    if ($ora === '') {
+        return null;
+    }
+    $dt = DateTimeImmutable::createFromFormat('Y-m-d H:i:s', $ora)
+        ?: DateTimeImmutable::createFromFormat('Y-m-d H:i', $ora);
+    if (!$dt) {
+        fail('Ora până la care ține anunțul se scrie ca „2026-09-13 14:30".', 422, 'bad_time');
+    }
+    $pana = $dt->format('Y-m-d H:i:s');
+    $acum = now_local();
+    if ($pana <= $acum) {
+        fail(
+            'Ora aceea a trecut deja (la patiserie e acum ' . substr($acum, 0, 16)
+              . '). Anunțul s-ar stinge înainte să apuce cineva să-l citească.',
+            422,
+            'in_the_past'
+        );
+    }
+    if ($pana > (new DateTimeImmutable($acum))->modify('+1 year')->format('Y-m-d H:i:s')) {
+        fail(
+            'Un an e cel mai lung termen. Pentru un anunț care ține până îl ia cineva jos, '
+              . 'lasă ora goală.',
+            422,
+            'too_far'
+        );
+    }
+    return $pana;
+}
+
+/**
+ * GET /lab/messages — ce mai ține acum pe ecranul laboratorului.
+ *
+ * POARTA E `require_ops()`, adică și contul `panou` al tabletei (rol
+ * `angajat`): anunțul e scris ca să-l citească toată tura, iar tura se uită la
+ * ecran prin contul acela. Omul de laborator (`utilizator_lab`) nu intră aici —
+ * el n-are decât Pontajul, iar o poartă lărgită „că oricum nu strică" e chiar
+ * felul în care s-a născut defectul de la comenzi (`orders_readable()`).
+ *
+ * CE NU PLEACĂ DE AICI: anunțurile cărora le-a trecut termenul. Rândurile rămân
+ * în tabel, ca urmă a ceea ce s-a spus laboratorului și când, dar ecranul arată
+ * numai ce ține acum — un anunț de marțea trecută, citit miercuri, e mai rău
+ * decât niciunul.
+ *
+ * ORDINEA E DUPĂ `id`, nu după oră: două anunțuri puse în aceeași secundă au
+ * aceeași oră, iar o ordine care se schimbă de la o rotire a panoului la alta
+ * face ecranul să pâlpâie sub ochii oamenilor. `id`-ul crește întotdeauna.
+ */
+function route_lab_messages(): void
+{
+    $cine = require_ops();
+    require_lab_board();
+
+    $rows = all(
+        'SELECT m.*, u.name AS author_name
+           FROM lab_messages m
+           LEFT JOIN users u ON u.id = m.created_by
+          WHERE m.until IS NULL OR m.until > ?
+          ORDER BY m.id DESC',
+        [now_local()]
+    );
+
+    $mesaje = [];
+    foreach ($rows as $r) {
+        $mesaje[] = lab_message_public($r, $cine);
+    }
+
+    json_out([
+        'messages' => $mesaje,
+        // Pagina nu ține o copie a listei de roluri: întreabă serverul la
+        // fiecare citire și desenează butonul după răspuns. Vezi leads_shifts().
+        'canPost'  => leads_shifts($cine),
+        'max'      => GP_LAB_MESSAGES_MAX,
+    ]);
+}
+
+/**
+ * POST /lab/messages — se lipește o hârtie pe ecran.
+ */
+function route_lab_message_new(): void
+{
+    $cine = require_shifts();
+    require_lab_board();
+
+    $b = body();
+    // `text_field()` strânge rândurile noi la un singur spațiu, și bine face:
+    // pe un ecran privit de la doi metri, cu mâinile în aluat, un anunț e o
+    // propoziție, nu o pagină. Cine are de spus două lucruri pune două
+    // anunțuri — și atunci poate lua jos numai pe cel care s-a împlinit.
+    $text = text_field($b['body'] ?? '', 'Anunțul', 500, true);
+    $pana = lab_message_until(trim((string) ($b['until'] ?? '')));
+
+    // Numărătoarea se face ÎNAINTE de scriere, nu se taie ecranul după. Două
+    // apăsări în aceeași clipă ar putea trece amândouă — o dată la câțiva ani,
+    // și atunci ecranul are șase anunțuri până ia cineva unul jos. O încuietoare
+    // pe tabel ar costa mai mult decât paguba pe care o oprește.
+    if (lab_messages_live() >= GP_LAB_MESSAGES_MAX) {
+        fail(
+            'Pe ecran stau deja ' . GP_LAB_MESSAGES_MAX . ' anunțuri — cât încape deasupra '
+              . 'comenzilor fără să le împingă din ecran. Ia unul jos și pune-l pe ăsta.',
+            409,
+            'board_full'
+        );
+    }
+
+    $acum = now_local();
+    q(
+        'INSERT INTO lab_messages (body, until, created_at, created_by) VALUES (?, ?, ?, ?)',
+        [$text, $pana, $acum, (int) $cine['id']]
+    );
+    $id = (int) db()->lastInsertId();
+
+    // ANUNȚUL INTRĂ ÎN JURNAL CU TOT CU TEXT, spre deosebire de un cod sau de o
+    // cheie de setare: e tocmai lucrul scris ca să-l citească toată tura, deci
+    // n-are ce ascunde. Iar peste o lună, întrebarea „ce le-am spus despre
+    // livrarea de marți?" are unde să-și caute răspunsul.
+    audit(
+        'lab_message_post',
+        'lab_message',
+        (string) $id,
+        'Anunț pus pe ecranul laboratorului'
+          . ($pana === null ? ', fără termen' : ', până la ' . $pana) . ': ' . $text
+    );
+
+    $r = one(
+        'SELECT m.*, u.name AS author_name FROM lab_messages m
+           LEFT JOIN users u ON u.id = m.created_by WHERE m.id = ?',
+        [$id]
+    );
+    json_out(['message' => lab_message_public($r ?: [], $cine)], 201);
+}
+
+/**
+ * DELETE /lab/messages/# — anunțul se ia jos.
+ *
+ * NU ȘTERGE RÂNDUL: îi pune termenul pe clipa asta. Ecranul îl pierde pe loc,
+ * fiindcă e același filtru ca la citire, iar locul de pe tablă se eliberează
+ * tot pe loc — dar urma a ceea ce s-a spus laboratorului rămâne, cum scrie în
+ * preambulul migrării 015. Un rând șters ar fi luat cu el și răspunsul la
+ * „când le-am spus?".
+ *
+ * POARTA ARE DOUĂ STRATURI. Ia jos cine conduce tura (`require_shifts()`), dar
+ * numai anunțul lui — afară de administratori și fondatori, care pot lua jos
+ * orice anunț, inclusiv al altuia. A doua îngustare e cerută anume de patron,
+ * și are un rost limpede: managerul plecat în concediu cu un anunț uitat pe
+ * ecran nu ține tabla ocupată până se întoarce.
+ */
+function route_lab_message_delete(string $idTxt): void
+{
+    $cine = require_shifts();
+    require_lab_board();
+
+    $id = (int) $idTxt;
+    $m  = one('SELECT * FROM lab_messages WHERE id = ?', [$id]);
+    if (!$m) {
+        fail('Anunțul nu există.', 404, 'not_found');
+    }
+
+    $acum = now_local();
+    // Deja stins — sau i-a trecut termenul singur, sau l-a luat altcineva jos
+    // între rotirea panoului și apăsarea butonului. Răspunsul spune amândouă
+    // înțelesurile, fiindcă de pe ecran nu se pot deosebi, iar omul are nevoie
+    // să știe un singur lucru: nu mai e acolo, și nu din vina apăsării lui.
+    if ($m['until'] !== null && (string) $m['until'] <= $acum) {
+        fail(
+            'Anunțul nu mai e pe ecran: ori i-a trecut termenul, ori l-a luat altcineva jos.',
+            409,
+            'already_down'
+        );
+    }
+    if (!lab_message_deletable($cine, $m)) {
+        fail(
+            'Anunțul e pus de altcineva. Îl poate lua jos cine l-a scris, un administrator '
+              . 'sau un fondator.',
+            403,
+            'forbidden'
+        );
+    }
+
+    q('UPDATE lab_messages SET until = ? WHERE id = ?', [$acum, $id]);
+    audit(
+        'lab_message_down',
+        'lab_message',
+        (string) $id,
+        'Anunț luat de pe ecranul laboratorului, pus la ' . $m['created_at'] . ': ' . $m['body']
+    );
+
+    json_out(['ok' => true]);
+}

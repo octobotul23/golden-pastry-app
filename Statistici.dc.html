@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statistici · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+
+/* CULORILE DATELOR NU SUNT CULORILE CASEI.
+   Paleta „Hearth" e făcută să se poarte bine cu ea însăși: cremă, cacao,
+   miere, dulceață — vecine pe roata culorilor, fiindcă o pagină în care
+   nimic nu țipă se citește mai ușor. Tocmai de-aia e nepotrivită pentru un
+   inel: opt felii din aceeași familie caldă nu se pot deosebi una de alta,
+   iar un grafic în care nu știi care felie e care nu e grafic, e podoabă.
+   Culorile de mai jos sunt alese pe dos: cât mai depărtate între ele. Se
+   folosesc NUMAI pe date — nicio ramă, niciun buton, niciun fundal. */
+:root{
+--viu-rosu:#FF3D00;--viu-chihlimbar:#FFAB00;--viu-verde:#00C853;--viu-zmeura:#FF0F7B;
+--viu-violet:#A100FF;--viu-albastru:#2979FF;--viu-lime:#93C900;--viu-copt:#FF6A00;
+--viu-ghiata:#00C6FF;
+--st-gol:rgba(43,29,19,.17);
+}
+
+/* Golul din inel — partea nefolosită a cercului — e singura culoare din
+   pagină care trebuie să se întoarcă pe dos odată cu tema: pe hârtie albă e o
+   umbră cafenie, pe noapte e o lumină slabă. Culorile „viu" de mai sus NU se
+   schimbă: ele sunt ale datelor, iar o felie care își schimbă culoarea când
+   omul apasă alt buton nu mai e aceeași felie. */
+:root[data-theme="dark"]{--st-gol:rgba(255,255,255,.13)}
+
+/* ======================================================================== */
+/*  CE E LA FEL ÎN TOATE TREI                                               */
+/* ======================================================================== */
+
+/* Lățimea foii. Schița avea 1220px cu margini proprii; aici marginile le dă
+   deja `[data-st=body]`, deci vederea ia numai lățimea. Fără ea, pe un ecran
+   de 1920 rândurile de text ar fi ajuns la 1500px — de necitit. */
+.st-foaie{width:100%;max-width:1220px;margin:0 auto;min-width:0}
+
+.st-eticheta{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--h-fg-subtle)}
+
+/* Cutia. În zi e crema cea mai deschisă peste fundalul de pagină; noaptea,
+   tokenul se întoarce singur (`--h-bg-raised` e #2E2119 pe întuneric), deci
+   nu e nevoie de nicio ramură scrisă de mână. */
+.st-card{background:var(--h-bg-raised);border:1px solid var(--h-cream-400);border-radius:18px}
+:root[data-theme="dark"] .st-card{background:var(--h-bg-surface);border-color:var(--c-linie,rgba(246,237,225,.12))}
+
+/* ------------------------------------------------------------- inelul --- */
+
+/* Inelul e DUBLU, ca în schiță: pe cercul din afară felul mărfii, pe cel
+   dinăuntru categoriile. Două povești despre aceleași bucăți, una în jurul
+   celeilalte — se citesc dintr-o privire fiindcă au același centru.
+
+   Grosimea stă în CSS, nu pe felie, fiindcă mărirea de sub deget se face
+   tocmai din ea; raza stă în JS, fiindcă din ea se socotește circumferința,
+   adică lungimea fiecărei felii. Ce rămâne pe felie e numai ce o deosebește
+   de celelalte: culoarea și bucata de circumferință. */
+.st-felie{transition:stroke-width .16s ease}
+.st-felie--afara{stroke-width:19px}
+.st-felie--afara:hover{stroke-width:25px}
+.st-felie--in{stroke-width:14px}
+.st-felie--in:hover{stroke-width:19px}
+.st-felie--mic{stroke-width:18px}
+.st-felie--mic:hover{stroke-width:23px}
+@media (prefers-reduced-motion:reduce){.st-felie{transition:none}}
+
+.st-inelbox{position:relative;width:100%;max-width:330px;margin:0 auto}
+.st-inelbox svg{display:block;width:100%;height:auto;overflow:visible}
+.st-inelmij{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+.st-mare{font-family:var(--h-font-display);font-size:34px;font-weight:700;line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.st-mic{font-size:12px;color:var(--h-fg-subtle);margin-top:6px;letter-spacing:.04em}
+
+/* Legenda. Fiecare rând e un buton: apăsat, deschide foaia cu cifrele
+   feliei. Pastila de culoare e singurul loc din pagină în care culoarea
+   spune ceva — restul rândului e text obișnuit, ca să rămână citibil și
+   pentru cine nu deosebește roșul de verde. */
+.st-leg{display:flex;flex-direction:column;gap:7px;width:100%}
+.st-legrand{display:flex;align-items:center;gap:9px;width:100%;padding:4px 5px;border:0;border-radius:8px;background:transparent;font-family:inherit;font-size:13.5px;color:inherit;text-align:left;cursor:pointer}
+.st-legrand:hover{background:var(--h-bg-sunk)}
+.st-pastila{width:12px;height:12px;border-radius:3px;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.18)}
+.st-legnume{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-legval{font-weight:800;font-variant-numeric:tabular-nums}
+.st-legpct{color:var(--h-fg-subtle);font-size:12px;width:44px;text-align:right;font-variant-numeric:tabular-nums}
+
+/* ------------------------------------------------------------- mesele --- */
+
+/* UN SINGUR MOTOR DE TABEL, TREI CROIELI. Vederea A are șapte coloane, B are
+   cinci la clienți și șase la produse, C are opt. Scrise ca patru grile
+   deosebite, s-ar fi depărtat una de alta la prima redenumire de coloană.
+   Aici rândul citește croiala dintr-o variabilă pusă pe masă (`--st-col`),
+   deci reașezarea de sub 1150px se scrie o dată și le prinde pe toate.
+
+   DE CE NU E UN `<table>`. Fiindcă nu poate fi: cititorul de HTML al
+   browserului scoate afară din tabel orice etichetă care nu-i e rudă, iar
+   `<sc-for>` nu-i e — pus între `<tr>`-uri, ajunge înaintea tabelului, gol,
+   și tabelul rămâne cu rândul-șablon în el. Nu se plânge nimeni; pur și
+   simplu ies alte rânduri decât cele scrise. Restul casei desenează de mult
+   tabelele cu `grid` (vezi `data-jr=row` din Jurnal), din același motiv. */
+.st-masa{width:100%;overflow-x:auto}
+.st-tbl{min-width:var(--st-min,700px)}
+.st-rand{display:grid;grid-template-columns:var(--st-col);gap:12px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--h-cream-300)}
+:root[data-theme="dark"] .st-rand{border-bottom-color:rgba(58,42,30,.6)}
+.st-rand:last-child{border-bottom:0}
+.st-rand--dat:hover{background:var(--h-bg-surface)}
+:root[data-theme="dark"] .st-rand--dat:hover{background:rgba(255,255,255,.035)}
+.st-rand--cap{padding:0 12px 9px;border-bottom:1px solid var(--h-cream-400);align-items:end}
+:root[data-theme="dark"] .st-rand--cap{border-bottom-color:var(--c-linie,rgba(246,237,225,.12))}
+.st-rand--cap:hover{background:transparent}
+/* Rândul de sumă. Linia de deasupra e groasă dinadins: în registrul de hârtie
+   al vederii B asta desparte socoteala de rândurile din care s-a făcut. */
+.st-rand--jos{border-bottom:0;border-top:2px solid var(--h-cocoa-800);font-weight:800;padding-top:12px}
+:root[data-theme="dark"] .st-rand--jos{border-top-color:var(--h-cream-400)}
+.st-capbtn{min-height:34px;padding:0;border:0;background:transparent;font-family:inherit;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--h-fg-subtle);text-align:left;white-space:nowrap;cursor:pointer}
+.st-capbtn:hover{color:var(--h-accent-fg)}
+.st-capbtn--on{color:var(--h-accent-fg)}
+.st-capbtn--on:hover{color:var(--h-accent)}
+.st-cap{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--h-fg-subtle);white-space:nowrap}
+.st-cel{font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-slab{color:var(--h-fg-subtle)}
+.st-tare{font-weight:700}
+.st-nrcol{text-align:right;font-variant-numeric:tabular-nums}
+
+/* Bara „cât din vârf". Nu e o cifră în plus, e aceeași cifră desenată: ochiul
+   găsește vârful listei fără să citească opt numere unul câte unul. */
+.st-bara{height:7px;border-radius:99px;background:var(--h-cream-300);overflow:hidden;min-width:56px;display:block}
+:root[data-theme="dark"] .st-bara{background:var(--h-cocoa-900)}
+.st-bara i{display:block;height:100%;border-radius:99px;background:var(--viu-rosu)}
+:root[data-theme="dark"] .st-bara i{background:var(--viu-chihlimbar)}
+.st-micvar{display:inline-flex;gap:5px;align-items:center;min-width:0;font-size:12px;color:var(--h-fg-subtle)}
+.st-micvar span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Semnele de copt și congelat, numai în tabloul de noapte: acolo cifrele sunt
+   dese și mici, iar două numere alăturate fără nimic între ele se încurcă. */
+.st-sem{display:inline-block;font-size:10.5px;font-weight:800;letter-spacing:.05em;padding:2px 7px;border-radius:99px;font-variant-numeric:tabular-nums}
+.st-sem--copt{background:rgba(242,166,59,.16);color:var(--h-honey-300)}
+.st-sem--cong{background:rgba(127,163,99,.18);color:var(--h-pist-400)}
+
+/* ======================================================================== */
+/*  A · Inelul zilei — cremă, un inel mare, patru plăci                     */
+/* ======================================================================== */
+.st-a{display:flex;flex-direction:column;gap:20px}
+
+/* Capul vederii A. În schiță avea la stânga titlul „Statistici" și sub el
+   intervalul — dar aceea e tocmai bara de sus a panoului, care le scrie deja
+   pe amândouă. Ce aducea capul în plus era alegerea perioadei, și numai ea a
+   rămas. Un al doilea „Statistici" la șaizeci de pixeli sub primul n-ar fi
+   fost fidelitate față de schiță, ar fi fost o repetiție. */
+.st-acap{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.st-azile{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--h-bg-raised);border:1px solid var(--h-cream-400);border-radius:13px;padding:7px 9px}
+.st-azile select,.st-azile input{font-family:inherit;font-size:13.5px;color:var(--h-fg);background:transparent;border:0;padding:6px;border-radius:8px;min-height:34px}
+.st-azile input{border:1px solid var(--h-cream-400);background:var(--h-bg-surface)}
+.st-azile .st-sep{color:var(--h-fg-subtle);font-size:13px}
+
+.st-afiltre{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+.st-agrup{display:flex;flex-direction:column;gap:7px;min-width:0}
+.st-chipuri{display:flex;gap:6px;flex-wrap:wrap}
+.st-chip{appearance:none;font-family:inherit;font-size:13px;font-weight:700;min-height:34px;padding:6px 12px;border-radius:999px;cursor:pointer;background:var(--h-bg-raised);border:1px solid var(--h-cream-400);color:var(--h-fg-muted)}
+.st-chip:hover{border-color:var(--h-crust-300);color:var(--h-fg)}
+.st-chip--on{background:var(--h-accent);border-color:var(--h-accent);color:var(--h-fg-on-accent)}
+/* Starea trebuie să bată `:hover`, care are cu o treaptă mai mult decât ea.
+   Fără rândul ăsta, chipul ales se stinge tocmai când pui degetul pe el. */
+.st-chip--on:hover{background:var(--h-accent-hover);border-color:var(--h-accent-hover);color:var(--h-fg-on-accent)}
+
+.st-asus{display:grid;grid-template-columns:minmax(300px,420px) minmax(0,1fr);gap:20px;align-items:stretch}
+@media (max-width:1100px){.st-asus{grid-template-columns:minmax(0,1fr)}}
+.st-ainel{padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px}
+.st-akpi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:620px){.st-akpi{grid-template-columns:minmax(0,1fr)}}
+.st-kpi{padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:3px;align-items:stretch;text-align:left;font-family:inherit;color:inherit;cursor:pointer;min-width:0}
+.st-kpi:hover{border-color:var(--h-line-strong)}
+.st-kpi .st-cif{font-family:var(--h-font-display);font-size:29px;font-weight:700;line-height:1.05;letter-spacing:-.01em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.st-kpi .st-den{font-size:13px;color:var(--h-fg-muted)}
+.st-kpi .st-fin{font-size:11.5px;color:var(--h-fg-subtle)}
+/* Placa banilor e singura plină. O singură deosebire de rang: dacă s-ar
+   aprinde două, nu s-ar mai vedea care e întâia. */
+.st-kpi--bani{background:var(--h-accent);border-color:var(--h-accent);color:var(--h-fg-on-accent)}
+.st-kpi--bani:hover{border-color:var(--h-accent-hover)}
+.st-kpi--bani .st-den{color:var(--h-crust-100)}
+.st-kpi--bani .st-fin{color:rgba(251,227,214,.78)}
+/* Un nume de produs sau de client nu e o cifră: nici nu se scrie la fel de
+   mare, nici nu are nevoie de cifre de aceeași lățime. */
+.st-cif--nume{font-size:20px;font-variant-numeric:normal}
+
+.st-ajos{padding:20px}
+.st-ajos h3{font-family:var(--h-font-display);font-size:20px;font-weight:600;margin:0 0 4px}
+.st-ajos .st-sub{margin:0 0 12px;font-size:13px;color:var(--h-fg-muted)}
+.st-t{--st-col:minmax(0,2fr) minmax(0,1.2fr) 82px 110px 72px 86px 106px;--st-min:700px}
+
+/* ======================================================================== */
+/*  B · Registrul — hârtie, întrebări numerotate, o fișă care se ține       */
+/* ======================================================================== */
+.st-b{display:grid;grid-template-columns:266px minmax(0,1fr);gap:26px;align-items:start}
+@media (max-width:1040px){.st-b{grid-template-columns:minmax(0,1fr)}}
+
+/* Fișa. Colțurile ei sunt de 4px, nu de 18: e singurul loc din pagină care
+   vrea să arate a hârtie, nu a card. Umbra e trasă în jos și aproape stinsă —
+   o foaie pusă pe masă, nu o fereastră ridicată deasupra ei. */
+.st-bfisa{position:sticky;top:14px;background:var(--h-bg-raised);border:1px solid var(--h-cream-400);border-radius:4px;padding:20px 18px;box-shadow:0 1px 0 var(--h-cream-400),0 14px 30px -26px rgba(43,29,19,.5)}
+@media (max-width:1040px){.st-bfisa{position:static}}
+.st-bfisa h3{font-family:var(--h-font-display);font-size:17px;font-weight:600;margin:0 0 2px}
+.st-bfisa .st-sub{font-size:12px;color:var(--h-fg-subtle);margin:0 0 16px;font-style:italic}
+.st-bcamp{margin-bottom:15px;display:block}
+.st-bcamp>span{display:block;margin-bottom:6px}
+/* `:not([type="radio"])` nu e o mofturi de stil: fără el, regula de mai jos
+   prindea și bulinele de la „Data socotită" și le făcea cutii de 40 de pixeli
+   pe toată lățimea fișei, care împingeau scrisul pe două rânduri. O bulină nu
+   e un câmp de scris, chiar dacă poartă tot numele „input". */
+.st-bcamp input:not([type="radio"]),.st-bcamp select{width:100%;box-sizing:border-box;font-family:inherit;font-size:13.5px;color:var(--h-fg);background:var(--h-bg-surface);border:1px solid var(--h-cream-400);border-radius:3px;padding:9px;min-height:40px}
+.st-brad{display:flex;flex-direction:column;gap:5px;font-size:13.5px}
+.st-brad label{display:flex;align-items:center;gap:8px;cursor:pointer;min-height:30px}
+/* `accent-color` scoate albastrul de sistem și pune coaja casei în bulină —
+   o singură linie în locul unei buline desenate de mână. */
+.st-brad input[type="radio"]{flex:none;width:15px;height:15px;margin:0;accent-color:var(--h-accent);cursor:pointer}
+.st-brad label>span{line-height:1.35}
+.st-aplica{width:100%;margin-top:6px;appearance:none;border:0;cursor:pointer;background:var(--h-cocoa-800);color:var(--h-cream-100);font-family:inherit;font-size:13.5px;font-weight:700;padding:12px;border-radius:3px;min-height:44px}
+.st-aplica:hover{background:var(--h-accent-hover)}
+/* Butonul se aprinde numai când fișa are ceva neaplicat. Un buton mereu
+   aprins n-ar mai spune nimic; unul care se aprinde e o întrebare pusă. */
+.st-aplica--nou{background:var(--h-accent)}
+.st-zise{margin:14px 0 0;padding-top:13px;border-top:1px dashed var(--h-cream-500);font-size:12px;color:var(--h-fg-subtle);line-height:1.5}
+
+.st-bcoloana{min-width:0;display:flex;flex-direction:column}
+.st-bantet{border-bottom:2px solid var(--h-cocoa-800);padding-bottom:14px;margin-bottom:6px}
+:root[data-theme="dark"] .st-bantet{border-bottom-color:var(--h-cream-400)}
+.st-bantet h2{font-family:var(--h-font-display);font-size:38px;font-weight:600;line-height:1.05;letter-spacing:-.015em;margin:0;text-wrap:balance}
+@media (max-width:560px){.st-bantet h2{font-size:28px}}
+.st-bantet .st-rand2{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:var(--h-fg-muted)}
+
+.st-bintrebare{padding:26px 0;border-bottom:1px solid var(--h-cream-400)}
+.st-bintrebare:last-child{border-bottom:0}
+/* Numărul întrebării e scris cu litera de titlu, nu cu cea de text: în
+   registrul de hârtie el e o pagină, nu o etichetă. */
+.st-bnr{font-family:var(--h-font-display);font-size:12px;font-weight:700;color:var(--h-accent-fg);letter-spacing:.14em;display:block;margin-bottom:3px}
+.st-bintrebare h3{font-family:var(--h-font-display);font-size:23px;font-weight:600;line-height:1.2;margin:0 0 3px;text-wrap:balance}
+.st-bintrebare .st-sub{margin:0 0 16px;font-size:13px;color:var(--h-fg-muted);max-width:62ch;line-height:1.5}
+.st-bdoua{display:grid;grid-template-columns:186px minmax(0,1fr);gap:26px;align-items:center}
+@media (max-width:700px){.st-bdoua{grid-template-columns:minmax(0,1fr)}}
+.st-bdoua .st-inelbox{max-width:186px}
+.st-bdoua .st-mare{font-size:26px}
+.st-blista{display:flex;flex-direction:column;gap:9px}
+.st-blin{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;align-items:baseline;width:100%;border:0;background:transparent;padding:2px 0;font-family:inherit;color:inherit;text-align:left;cursor:pointer}
+.st-blin:hover .st-blnm{color:var(--h-accent-fg)}
+.st-blnm{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-blvl{font-weight:800;font-variant-numeric:tabular-nums;font-size:14px}
+.st-blbr{grid-column:1/-1;height:5px;border-radius:99px;background:var(--h-cream-300);overflow:hidden}
+:root[data-theme="dark"] .st-blbr{background:var(--h-cocoa-900)}
+.st-blbr i{display:block;height:100%;border-radius:99px}
+.st-btrei{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+@media (max-width:700px){.st-btrei{grid-template-columns:minmax(0,1fr);gap:16px}}
+.st-bmare{font-family:var(--h-font-display);font-size:52px;font-weight:700;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums;display:block;overflow-wrap:anywhere}
+@media (max-width:560px){.st-bmare{font-size:40px}}
+.st-bmare small{display:block;font-family:var(--h-font-body);font-size:13px;font-weight:600;color:var(--h-fg-subtle);letter-spacing:.02em;margin-top:7px;overflow-wrap:normal}
+.st-bcifra{display:block;width:100%;border:0;background:transparent;padding:0;font-family:inherit;color:inherit;text-align:left;cursor:pointer}
+.st-bcifra:hover .st-bmare{color:var(--h-accent-fg)}
+.st-tb{--st-col:minmax(0,2fr) minmax(0,1.1fr) 80px 86px 106px;--st-min:600px}
+.st-tbp{--st-col:minmax(0,2fr) minmax(0,1.2fr) 72px 86px 84px 106px;--st-min:620px}
+
+/* ======================================================================== */
+/*  C · Tabloul de dimineață — noapte, dens, pentru ecranul mare            */
+/* ======================================================================== */
+
+/* Cele trei culori ale nopții, scrise o dată. Două din ele sunt chiar tokenii
+   întunecați ai temei (`--h-bg-surface` e #241A14, `--h-cocoa-900` e #1B120B),
+   deci le iau de-acolo; rama de #3A2A1E n-are token, și numai ea se scrie în
+   clar. Pusă pe `.st-c`, o moștenesc și `.st-card` și `.st-rand` dinăuntru. */
+.st-c{display:flex;flex-direction:column;gap:18px;--c-linie:#3A2A1E}
+
+/* CUTIA TABLOULUI A DISPĂRUT, ȘI BINE A FĂCUT. Cât timp pagina era albă,
+   tabloul era o fereastră întunecată tăiată în ea. Acum pagina întreagă e
+   noapte (vezi `tema()` din logică), deci n-are ce cutie să mai fie: rămâne un
+   vraf, iar cutiile adevărate sunt cele dinăuntru — bara, inelul, plăcile și
+   masa — exact ca în schiță, unde secțiunea C era fundalul, nu un card. */
+.st-cbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:var(--h-bg-surface);border:1px solid var(--c-linie)}
+.st-cseg{display:flex;background:var(--h-cocoa-900);border:1px solid var(--c-linie);border-radius:10px;overflow:hidden}
+.st-cseg button{appearance:none;border:0;background:transparent;color:var(--h-cocoa-300);cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;padding:7px 12px;min-height:38px}
+.st-cseg button:hover{color:var(--h-cream-100);background:rgba(255,255,255,.05)}
+.st-cseg .st-segon{background:var(--h-honey-400);color:var(--h-cocoa-900)}
+.st-cseg .st-segon:hover{background:var(--h-honey-300);color:var(--h-cocoa-900)}
+.st-cbar input,.st-cbar select{font-family:inherit;font-size:12.5px;color:var(--h-cream-100);background:var(--h-cocoa-900);border:1px solid var(--c-linie);border-radius:9px;padding:8px 9px;min-height:38px;max-width:100%}
+.st-cdr{margin-left:auto;display:flex;gap:8px;align-items:center;font-size:12px;color:var(--h-cocoa-300)}
+
+.st-csus{display:grid;grid-template-columns:352px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:1100px){.st-csus{grid-template-columns:minmax(0,1fr)}}
+.st-ccard{background:var(--h-bg-surface);border:1px solid var(--c-linie);border-radius:16px;padding:18px}
+.st-ccard .st-inelbox{max-width:100%}
+.st-ccard .st-mare{color:var(--h-honey-300)}
+.st-ccard .st-mic{color:var(--h-cocoa-300)}
+.st-ccard .st-legrand{color:var(--h-cream-300)}
+.st-ccard .st-legpct{color:var(--h-cocoa-400)}
+
+.st-ctile{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:880px){.st-ctile{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.st-ctile{grid-template-columns:minmax(0,1fr)}}
+.st-tile{background:var(--h-bg-surface);border:1px solid var(--c-linie);border-radius:14px;padding:15px 16px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;text-align:left;font-family:inherit;color:inherit;cursor:pointer;min-width:0}
+.st-tile:hover{border-color:var(--h-cocoa-600)}
+.st-tile .st-den{font-size:11.5px;color:var(--h-cocoa-300);letter-spacing:.05em;text-transform:uppercase;font-weight:800}
+.st-tile .st-cif{font-family:var(--h-font-display);font-size:24px;font-weight:700;color:var(--h-cream-50);line-height:1.15;margin-top:5px;letter-spacing:-.015em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.st-tile .st-fin{font-size:12px;color:var(--h-cocoa-400);margin-top:3px;line-height:1.4}
+.st-tile--pun{border-color:var(--h-honey-600);background:linear-gradient(180deg,var(--h-bg-raised),var(--h-bg-surface))}
+.st-tile--pun:hover{border-color:var(--h-honey-400)}
+.st-tile--pun .st-cif{color:var(--h-honey-300)}
+.st-sus{color:var(--h-pist-400);font-weight:700}
+.st-jos{color:#E8A0AF;font-weight:700}
+
+/* Graficul zi cu zi stă ÎNĂUNTRUL plăcii de bani, nu pe un rând al lui.
+   Acolo l-a pus schița, și are dreptate: un grafic de bani lângă cifra
+   banilor se citește dintr-o privire, iar pe un rând separat cere o a doua
+   privire ca să-ți amintești ce număr desenează.
+
+   E din dungi, nu din SVG. Un SVG întins peste toată lățimea
+   (`preserveAspectRatio="none"`) subțiază dungile când sunt multe și le
+   îngrașă când sunt puține — aceeași lună arăta altfel decât același an. Cu
+   `flex:1` fiecare dungă își ia partea ei din lățime, la orice număr de zile,
+   iar înălțimea vine în procente, deci nu are nevoie de cutie de desen.
+   Spațiul dintre ele vine din logică: la treizeci de zile e de 3px, la un an
+   se face zero, fiindcă altfel dungile ar fi mai subțiri decât golul. */
+.st-spark{display:flex;align-items:flex-end;height:38px;margin-top:10px}
+.st-spark i{flex:1;background:var(--h-honey-600);border-radius:2px 2px 0 0;min-height:2px;display:block}
+.st-spark i.ult{background:var(--h-honey-300)}
+
+.st-cjos{background:var(--h-bg-surface);border:1px solid var(--c-linie);border-radius:16px;padding:18px}
+.st-cjos h3{font-family:var(--h-font-display);font-size:17px;font-weight:600;color:var(--h-cream-50);margin:0}
+.st-cjos .st-sub{margin:2px 0 14px;font-size:12.5px;color:var(--h-cocoa-300)}
+.st-tc{--st-col:minmax(0,2fr) minmax(0,1.2fr) 78px 120px 76px 86px 102px 96px;--st-min:800px}
+
+/* ======================================================================== */
+/*  Ce e peste toate trei: lupa, vederile, marginile                        */
+/* ======================================================================== */
+
+/* Foaia de lupă: cifrele feliei apăsate, mari, peste pagină. Fundalul se
+   apasă ca să se închidă — ca sertarul de meniu, fiindcă e același gest. */
+.st-lupafund{position:fixed;inset:0;z-index:60;background:rgba(27,18,11,.55);display:flex;align-items:center;justify-content:center;padding:18px}
+.st-lupafoaie{width:100%;max-width:470px;max-height:86vh;overflow-y:auto;background:var(--h-bg-surface);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;box-shadow:var(--h-shadow-3)}
+.st-lupacap{display:flex;align-items:flex-start;gap:12px}
+.st-lupax{margin-left:auto;flex:none;width:38px;height:38px;border-radius:12px;border:1px solid var(--h-line);background:transparent;font-size:20px;line-height:1;color:var(--h-fg-subtle);cursor:pointer}
+.st-lupax:hover{background:var(--h-bg-sunk);color:var(--h-fg)}
+.st-luparand{display:flex;align-items:baseline;gap:12px;padding:9px 0;border-top:1px solid var(--h-line)}
+.st-luparand span:last-child{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.st-nr{font-family:var(--h-font-display);font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+
+/* Bara de vederi. Trei ferestre spre aceeași masă de date, nu trei pagini:
+   apăsarea lor nu cere nimic de la server. */
+.st-vedere{display:flex;flex-wrap:wrap;gap:6px}
+.st-vbtn{min-height:42px;padding:0 16px;border-radius:12px;border:1px solid var(--h-line);background:var(--h-bg-surface);font-family:inherit;font-size:14px;font-weight:600;color:var(--h-fg-muted);cursor:pointer}
+.st-vbtn:hover{background:var(--h-bg-sunk)}
+.st-vbtn--on{background:var(--h-accent);border-color:var(--h-accent);color:var(--h-fg-on-accent);font-weight:700}
+/* BUTONUL ALES TREBUIE SĂ-ȘI ȚINĂ CULOAREA ȘI SUB DEGET. `.st-vbtn:hover` are
+   două trepte de tărie (clasă + pseudo-clasă), `.st-vbtn--on` are una — deci
+   la trecerea cu mouse-ul peste butonul deja ales câștiga fundalul de „adânc"
+   și butonul se stingea, ca și cum n-ar mai fi fost ales. Pe alb se vedea ca o
+   pâlpâire; pe noapte, `--h-bg-sunk` fiind aproape negru, butonul dispărea cu
+   totul, rămânând numai rama și un text închis pe fundal închis. Rândul ăsta
+   pune starea înapoi deasupra, cu aceleași două trepte. */
+.st-vbtn--on:hover{background:var(--h-accent-hover);border-color:var(--h-accent-hover);color:var(--h-fg-on-accent)}
+
+/* Filtrele spuse, în bara de sus. Vederile nu arată toate aceleași filtre —
+   zona se pune din fișa vederii B, dar se numără și în A, care n-are unde s-o
+   scrie. Rândul ăsta le spune pe toate, în orice vedere, ca nimeni să nu se
+   uite la cifre tăiate de un filtru pe care nu-l vede nicăieri. */
+.st-spuse{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--h-fg-subtle)}
+.st-sterge{min-height:30px;padding:0 10px;border-radius:9px;border:1px solid var(--h-line);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--h-fg-muted);cursor:pointer}
+.st-sterge:hover{background:var(--h-bg-sunk);color:var(--h-fg)}
+
+/* SUB 1150px MESELE SE AȘAZĂ PE MAI MULTE RÂNDURI, ÎN LOC SĂ SE TRAGĂ.
+
+   PRAGUL NU E ALES DIN OCHI, E SOCOTIT. Bara din stânga și marginile iau 325px
+   din fereastră (măsurat: la 1000 mesei îi rămân 675, la 1024 îi rămân 699),
+   iar masa cea mai lată — cea din tabloul de noapte, cu opt coloane — are
+   nevoie de 800. Deci abia de la vreo 1125 în sus încape întreagă. Am rotunjit
+   la 1150: mai jos se stivuiește, mai sus se desfășoară, și nicăieri nu se
+   trage cu degetul. Un prag rotund ales pe simțite — 1000, cum are Jurnalul —
+   lăsa tocmai 1024, lățimea tabletei în lung, cu peste o sută de pixeli de
+   tras și nume de produs tăiate.
+
+   Măsurat, pe cele două lățimi care doare:
+
+     · la 820 (tabletă) bara din stânga rămâne — așa fac toate panourile casei
+       — deci mesei îi rămân 495px din 820 de conținut: o treime se citea
+       trăgând cu degetul, iar șase nume de produs se tăiau cu trei puncte;
+     · la 390 (telefon) în fereastra ei încăpeau numai numele și categoria:
+       toate cifrele, adică tot rostul mesei, rămâneau afară din ecran.
+
+   Am încercat întâi să string coloanele. Dragul a scăzut, dar numele lungi —
+   „Croissant cu vanilie și zmeură" — tot se tăiau. O masă care minte despre
+   numele produsului e mai rea decât una lungă.
+
+   DE CE NU ASCUND COLOANE. Fiindcă masa e singurul loc din pagină unde scrie
+   copt și congelat PE FIECARE PRODUS; inelele le spun doar adunate. O coloană
+   ascunsă aici ar fi o cifră pe care fondatorul n-o mai are de unde lua.
+
+   DE CE NU PUN ETICHETE ÎN MARCAJ. Fiindcă antetul e și el un `.st-rand` —
+   aceeași grilă, aceleași celule. Când grila se reașază, capetele se reașază
+   odată cu cifrele și rămân exact deasupra lor, iar numele coloanelor vin mai
+   departe dintr-un singur loc. Scrise a doua oară în CSS, s-ar fi depărtat de
+   el la prima redenumire. Așa rămâne adevărat și îndemnul „apasă pe un cap de
+   coloană ca să sortezi": capetele nu pleacă nicăieri. */
+@media (max-width:1150px){
+.st-tbl{min-width:0}
+.st-rand{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px;padding:12px 10px}
+.st-rand>:nth-child(1),.st-rand>:nth-child(2){grid-column:1/-1}
+.st-rand>:nth-child(1){white-space:normal;font-weight:600}
+.st-rand--cap{padding:10px}
+.st-nrcol{text-align:left}
+.st-capbtn{min-height:0;line-height:1.6}
+}
+
+@media (max-width:760px){
+[data-st=shell]{flex-direction:column!important}
+[data-st=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-st=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-st=nav]{display:none!important}
+[data-st=sidefoot]{display:none!important}
+[data-st=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-st=topbar] h1{font-size:20px!important}
+[data-st=body]{padding:14px 14px 26px!important;gap:12px!important}
+/* Pe telefon degetul are nevoie de mai mult decât ochiul: chipurile și
+   scurtăturile din bară cresc, fiindcă un buton de 30px se ratează. */
+.st-chip{min-height:40px;padding:8px 14px}
+.st-cseg button{padding:9px 13px;min-height:42px}
+.st-azile{width:100%}
+.st-azile select,.st-azile input{min-height:40px}
+.st-cdr{margin-left:0;width:100%}
+.st-ainel,.st-ajos,.st-ccard,.st-cjos,.st-bfisa{padding:16px 14px}
+.st-cbar{padding:12px 12px}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
+<div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Cifrele casei</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
+</div>
+<!-- DOUĂ IEȘIRI, AMÂNDOUĂ CALCULATE, NICIUNA SCRISĂ DE MÂNĂ. Ecranul ăsta
+     se aprinde peste orice cont din casă în afară de fondator — deci și
+     peste un angajat, și peste un client. Butoanele scrise pe litere („vezi
+     Conturi", „vezi Comenzi") ar fi fost, pentru jumătate dintre ei, alte
+     uși închise: refuz după refuz. Prima duce la panoul de acasă al rolului
+     (`gp.primaPagina`), a doua la ieșirea lui obișnuită (`gp.iesire`) —
+     amândouă din aceleași tabele din care se face meniul, deci nu se pot
+     depărta de el. -->
+<div style="width:100%;display:grid;grid-template-columns:1fr;gap:8px">
+<a href="{{ acasaHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">{{ acasaEt }}</a>
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">{{ navBack.et }}</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
+<div data-st="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-st="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-st="sidehead" style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Statistici</span>
+</div>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
+</div>
+<div data-st="nav" style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+</div>
+<div data-st="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<!-- Cuvântul de sub nume scrie „fondator", nu „administrator" ca în
+     celelalte panouri, și nu din cochetărie: pagina asta e singura în care
+     administratorul nu intră, deci un rând care i-ar spune fondatorului
+     „administrator" ar fi scris exact pe ecranul care dovedește contrariul.
+     Lacătul rămâne același: pastila se arată numai după ce se știe al cui e
+     numele (`sideWho`), altfel cât ține cererea /auth/me s-ar vedea o
+     pastilă goală cu un rang scris sub ea. -->
+<sc-if value="{{ sideWho }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">fondator</span>
+</div>
+</div>
+</sc-if>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<!-- Nota din bară spune CE E pagina, ca la Jurnal (`Jurnal:115`). Aici
+     scria, dintr-o scăpare, chiar nota despre cum se socotesc banii — care e
+     scrisă oricum sub tabel, în `{{ subsol }}`. Erau două lucruri rele
+     deodată: aceeași frază de două ori pe același ecran, și aceeași frază în
+     două locuri care nu se pot ține de mână — unul în marcaj, celălalt în
+     logică. La prima îndreptare a uneia, cealaltă ar fi rămas să mintă. -->
+<p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Statisticile se citesc din comenzile casei, pe ziua livrării. Cifrele se schimbă odată cu filtrele de sus — nu sunt un raport închis, ci o întrebare pusă altfel.</p>
+</div>
+</div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
+
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-st="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface);flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<h1 class="h-h3" style="margin:0;font-size:24px">Statistici</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+<!-- FILTRELE SPUSE STAU AICI, NU ÎN VEDERI, FIINDCĂ VEDERILE NU LE ARATĂ PE
+     TOATE. Inelul zilei are patru cete de chipuri, registrul are o fișă cu
+     șapte câmpuri, tabloul de noapte are o bară cu cinci: un filtru pus într-o
+     vedere se poate întoarce într-alta care n-are unde să-l scrie. Rândul ăsta
+     e deasupra tuturor trei, deci nimeni nu se uită la cifre tăiate de ceva ce
+     nu vede nicăieri. -->
+<sc-if value="{{ areFiltre }}" hint-placeholder-val="{{ false }}">
+<div class="st-spuse">
+<span>Se numără: {{ filtreSpuse }}</span>
+<button type="button" class="st-sterge" onClick="{{ onSterge }}">Șterge filtrele</button>
+</div>
+</sc-if>
+</div>
+<div class="st-vedere" style="margin-left:auto">
+<sc-for list="{{ vederi }}" as="v" hint-placeholder-count="3">
+<button type="button" class="{{ v.cls }}" onClick="{{ v.onClick }}">{{ v.et }}</button>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<div data-st="body" style="flex:1;display:flex;flex-direction:column;gap:14px;padding:20px 28px 30px;min-width:0">
+
+<!-- ======================================= A · Inelul zilei =============== -->
+<sc-if value="{{ vedereA }}" hint-placeholder-val="{{ true }}">
+<div class="st-foaie st-a">
+
+<div class="st-acap">
+<div class="st-azile">
+<select class="h-sr-none" aria-label="Perioada" value="{{ perioada }}" onChange="{{ onPerioada }}">
+<sc-for list="{{ optPerioade }}" as="o" hint-placeholder-count="6">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<span class="st-sep">·</span>
+<input type="date" value="{{ from }}" onChange="{{ onFrom }}" aria-label="De la">
+<span class="st-sep">→</span>
+<input type="date" value="{{ to }}" onChange="{{ onTo }}" aria-label="Până la">
+</div>
+</div>
+
+<!-- Cele patru cete de chipuri. Nu sunt patru liste scrise de mână: fiecare
+     ceată își știe eticheta, filtrul pe care-l pune și rândurile lui, iar
+     categoriile vin de la server, socotite pe interval. -->
+<div class="st-afiltre">
+<sc-for list="{{ cete }}" as="g" hint-placeholder-count="4">
+<div class="st-agrup">
+<span class="st-eticheta">{{ g.et }}</span>
+<div class="st-chipuri">
+<sc-for list="{{ g.chipuri }}" as="c" hint-placeholder-count="3">
+<button type="button" class="{{ c.cls }}" onClick="{{ c.onClick }}">{{ c.et }}</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div class="st-asus">
+<div class="st-card st-ainel">
+<div class="st-inelbox">
+<svg viewBox="0 0 220 220" role="img" aria-label="{{ inelAlt }}">
+<circle cx="110" cy="110" r="96" fill="none" stroke="var(--st-gol)" stroke-width="19"></circle>
+<sc-for list="{{ inelAfara }}" as="f" hint-placeholder-count="2">
+<circle class="st-felie st-felie--afara" cx="110" cy="110" r="96" fill="none" stroke="{{ f.culoare }}" stroke-dasharray="{{ f.dash }}" stroke-dashoffset="{{ f.off }}" stroke-linecap="round" transform="rotate(-90 110 110)"><title>{{ f.spus }}</title></circle>
+</sc-for>
+<circle cx="110" cy="110" r="72" fill="none" stroke="var(--st-gol)" stroke-width="14"></circle>
+<sc-for list="{{ inelIn }}" as="f" hint-placeholder-count="6">
+<circle class="st-felie st-felie--in" cx="110" cy="110" r="72" fill="none" stroke="{{ f.culoare }}" stroke-dasharray="{{ f.dash }}" stroke-dashoffset="{{ f.off }}" stroke-linecap="round" transform="rotate(-90 110 110)"><title>{{ f.spus }}</title></circle>
+</sc-for>
+</svg>
+<div class="st-inelmij">
+<span class="st-mare">{{ inelMijloc }}</span>
+<span class="st-mic">{{ inelMijlocSub }}</span>
+</div>
+</div>
+<div class="st-leg">
+<sc-for list="{{ inelIn }}" as="f" hint-placeholder-count="6">
+<button type="button" class="st-legrand" onClick="{{ f.onClick }}">
+<span class="st-pastila" style="background:{{ f.culoare }}"></span>
+<span class="st-legnume">{{ f.nume }}</span>
+<span class="st-legval">{{ f.scris }}</span>
+<span class="st-legpct">{{ f.pct }}</span>
+</button>
+</sc-for>
+<sc-if value="{{ feliiGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:10px 5px;font-size:14px;color:var(--h-fg-subtle)">Nimic de desenat pe intervalul ăsta.</p>
+</sc-if>
+</div>
+</div>
+
+<div class="st-akpi">
+<sc-for list="{{ kpiuri }}" as="k" hint-placeholder-count="4">
+<button type="button" class="{{ k.cls }}" onClick="{{ k.onClick }}">
+<span class="{{ k.cifCls }}">{{ k.cif }}</span>
+<span class="st-den">{{ k.den }}</span>
+<span class="st-fin">{{ k.fin }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div class="st-card st-ajos">
+<h3>Ce s-a vândut, bucată cu bucată</h3>
+<p class="st-sub">{{ tabelSub }}</p>
+<div class="st-masa">
+<div class="st-tbl st-t">
+<div class="st-rand st-rand--cap">
+<sc-for list="{{ capA }}" as="h" hint-placeholder-count="7">
+<button type="button" class="{{ h.cls }}" onClick="{{ h.onClick }}" title="{{ h.titlu }}">{{ h.et }}</button>
+</sc-for>
+</div>
+<sc-for list="{{ randuri }}" as="r" hint-placeholder-count="8">
+<div class="st-rand st-rand--dat">
+<!-- `title` ca numele tăiat cu trei puncte să se poată citi la trecerea cu
+     mouse-ul: între 1150 și vreo 1250 coloana lui tot e mai strâmtă decât cel
+     mai lung nume din casă („Croissant cu vanilie și zmeură"). -->
+<span class="st-cel" title="{{ r.nume }}">{{ r.nume }}</span>
+<span class="st-micvar"><span class="st-pastila" style="background:{{ r.culoare }}"></span><span>{{ r.categorie }}</span></span>
+<span class="st-cel st-nrcol st-tare">{{ r.bucati }}</span>
+<span class="st-bara"><i style="width:{{ r.varf }}"></i></span>
+<span class="st-cel st-nrcol">{{ r.copt }}</span>
+<span class="st-cel st-nrcol">{{ r.congelat }}</span>
+<span class="st-cel st-nrcol">{{ r.bani }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ tabelGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:26px 8px;text-align:center;font-size:15px;color:var(--h-fg-muted)">{{ tabelGolLinie }}</p>
+</sc-if>
+</div>
+
+</div>
+</sc-if>
+
+<!-- ======================================= B · Registrul ================== -->
+<sc-if value="{{ vedereB }}" hint-placeholder-val="{{ false }}">
+<div class="st-foaie st-b">
+
+<!-- FIȘA SCRIE ÎNTÂI ÎNTR-O CIORNĂ, NU DE-A DREPTUL ÎN FILTRE.
+     Peste tot altundeva în pagină un filtru pleacă la server în clipa în care
+     se schimbă. Aici nu, fiindcă fișa are șapte câmpuri: cine schimbă
+     intervalul, felul și zona ar fi trimis trei cereri și ar fi văzut de două
+     ori cifre pe care nu le-a cerut nimeni. „Alegerile se văd în tot
+     registrul, DEODATĂ" — asta e propoziția care cere ciorna, și butonul de
+     jos e locul unde ea devine adevărată. -->
+<aside class="st-bfisa">
+<h3>Ce vrei să afli</h3>
+<p class="st-sub">Alegerile se văd în tot registrul, deodată.</p>
+
+<label class="st-bcamp"><span class="st-eticheta">De la</span>
+<input type="date" value="{{ cFrom }}" onChange="{{ onCFrom }}"></label>
+
+<label class="st-bcamp"><span class="st-eticheta">Până la</span>
+<input type="date" value="{{ cTo }}" onChange="{{ onCTo }}"></label>
+
+<div class="st-bcamp"><span class="st-eticheta">Data socotită</span>
+<div class="st-brad">
+<label><input type="radio" name="st-baza" checked="{{ cLivrare }}" onChange="{{ onCLivrare }}"><span>ziua livrării</span></label>
+<label><input type="radio" name="st-baza" checked="{{ cComanda }}" onChange="{{ onCComanda }}"><span>ziua în care s-a comandat</span></label>
+</div>
+</div>
+
+<label class="st-bcamp"><span class="st-eticheta">Felul mărfii</span>
+<select value="{{ cVariant }}" onChange="{{ onCVariant }}">
+<sc-for list="{{ optFel }}" as="o" hint-placeholder-count="3">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select></label>
+
+<label class="st-bcamp"><span class="st-eticheta">Categoria</span>
+<select value="{{ cCategorie }}" onChange="{{ onCCategorie }}">
+<sc-for list="{{ optCategorii }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select></label>
+
+<label class="st-bcamp"><span class="st-eticheta">Zona</span>
+<select value="{{ cZona }}" onChange="{{ onCZona }}">
+<sc-for list="{{ optZone }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select></label>
+
+<label class="st-bcamp"><span class="st-eticheta">Clientul</span>
+<input type="search" value="{{ cClient }}" onChange="{{ onCClient }}" placeholder="numele sau firma…"></label>
+
+<button type="button" class="{{ aplicaCls }}" onClick="{{ onAplica }}">{{ aplicaEt }}</button>
+<p class="st-zise">Comenzile anulate nu intră la bani. Cele neîncheiate se numără aparte, ca să se vadă ce mai e de făcut.</p>
+</aside>
+
+<div class="st-bcoloana">
+
+<div class="st-bantet">
+<h2>{{ bTitlu }}</h2>
+<div class="st-rand2">
+<span>{{ bInterval }}</span>
+<span>{{ bNumarate }}</span>
+</div>
+</div>
+
+<section class="st-bintrebare">
+<span class="st-bnr">ÎNTÂIA</span>
+<h3>Câți bani au intrat?</h3>
+<p class="st-sub">Numai din comenzile neanulate, la prețul de pe rândul comenzii, cu reducerile deja scăzute.</p>
+<div class="st-btrei">
+<sc-for list="{{ bTrei }}" as="t" hint-placeholder-count="3">
+<button type="button" class="st-bcifra" onClick="{{ t.onClick }}">
+<span class="st-bmare">{{ t.val }}<small>{{ t.sub }}</small></span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<section class="st-bintrebare">
+<span class="st-bnr">A DOUA</span>
+<h3>Congelate ori gata de mâncat?</h3>
+<p class="st-sub">Aceeași marfă, două feluri de a o cumpăra. Congelatele se coc la client, deci se vând altfel.</p>
+<div class="st-bdoua">
+<div class="st-inelbox">
+<svg viewBox="0 0 160 160" role="img" aria-label="Inel: cât e gata de mâncat și cât e congelat">
+<circle cx="80" cy="80" r="66" fill="none" stroke="var(--st-gol)" stroke-width="18"></circle>
+<sc-for list="{{ bFel }}" as="f" hint-placeholder-count="2">
+<circle class="st-felie st-felie--mic" cx="80" cy="80" r="66" fill="none" stroke="{{ f.culoare }}" stroke-dasharray="{{ f.dash }}" stroke-dashoffset="{{ f.off }}" stroke-linecap="round" transform="rotate(-90 80 80)"><title>{{ f.spus }}</title></circle>
+</sc-for>
+</svg>
+<div class="st-inelmij">
+<span class="st-mare">{{ bFelMijloc }}</span>
+<span class="st-mic">bucăți</span>
+</div>
+</div>
+<div class="st-blista">
+<sc-for list="{{ bFel }}" as="f" hint-placeholder-count="2">
+<button type="button" class="st-blin" onClick="{{ f.onClick }}">
+<span class="st-blnm">{{ f.nume }}</span>
+<span class="st-blvl">{{ f.scris }} · {{ f.pct }}</span>
+<span class="st-blbr"><i style="width:{{ f.lat }};background:{{ f.culoare }}"></i></span>
+</button>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section class="st-bintrebare">
+<span class="st-bnr">A TREIA</span>
+<h3>Din ce categorie se vinde cel mai mult?</h3>
+<p class="st-sub">Bucăți, nu bani: un covrig e ieftin, dar se ia des.</p>
+<div class="st-bdoua">
+<div class="st-inelbox">
+<svg viewBox="0 0 160 160" role="img" aria-label="Inel: bucăți vândute pe categorii">
+<circle cx="80" cy="80" r="66" fill="none" stroke="var(--st-gol)" stroke-width="18"></circle>
+<sc-for list="{{ bCat }}" as="f" hint-placeholder-count="6">
+<circle class="st-felie st-felie--mic" cx="80" cy="80" r="66" fill="none" stroke="{{ f.culoare }}" stroke-dasharray="{{ f.dash }}" stroke-dashoffset="{{ f.off }}" stroke-linecap="round" transform="rotate(-90 80 80)"><title>{{ f.spus }}</title></circle>
+</sc-for>
+</svg>
+<div class="st-inelmij">
+<span class="st-mare">{{ bCatMijloc }}</span>
+<span class="st-mic">{{ bCatMijlocSub }}</span>
+</div>
+</div>
+<div class="st-blista">
+<sc-for list="{{ bCat }}" as="f" hint-placeholder-count="6">
+<button type="button" class="st-blin" onClick="{{ f.onClick }}">
+<span class="st-blnm">{{ f.nume }}</span>
+<span class="st-blvl">{{ f.scris }} · {{ f.pct }}</span>
+<span class="st-blbr"><i style="width:{{ f.lat }};background:{{ f.culoare }}"></i></span>
+</button>
+</sc-for>
+</div>
+</div>
+</section>
+
+<section class="st-bintrebare">
+<span class="st-bnr">A PATRA</span>
+<h3>Cine cumpără cel mai mult?</h3>
+<p class="st-sub">După banii aduși în perioada aleasă, nu de la începutul lumii.</p>
+<div class="st-masa">
+<div class="st-tbl st-tb">
+<div class="st-rand st-rand--cap">
+<sc-for list="{{ capClienti }}" as="h" hint-placeholder-count="5">
+<span class="{{ h.cls }}">{{ h.et }}</span>
+</sc-for>
+</div>
+<sc-for list="{{ clienti }}" as="c" hint-placeholder-count="8">
+<div class="st-rand st-rand--dat" onClick="{{ c.onClick }}" style="cursor:pointer">
+<span class="st-cel" title="{{ c.nume }}">{{ c.nume }}</span>
+<span class="st-cel st-slab">{{ c.cont }}</span>
+<span class="st-cel st-nrcol">{{ c.comenzi }}</span>
+<span class="st-cel st-nrcol">{{ c.bucati }}</span>
+<span class="st-cel st-nrcol st-tare">{{ c.bani }}</span>
+</div>
+</sc-for>
+<div class="st-rand st-rand--jos">
+<span class="st-cel">{{ clientiSub }}</span>
+<span class="st-cel"></span>
+<span class="st-cel st-nrcol">{{ clientiComenzi }}</span>
+<span class="st-cel st-nrcol">{{ clientiBucati }}</span>
+<span class="st-cel st-nrcol">{{ clientiBani }}</span>
+</div>
+</div>
+</div>
+<sc-if value="{{ clientiGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:18px 0;font-size:14px;color:var(--h-fg-subtle)">Nicio comandă pe intervalul ăsta.</p>
+</sc-if>
+</section>
+
+<section class="st-bintrebare">
+<span class="st-bnr">A CINCEA</span>
+<h3>Ce s-a vândut, bucată cu bucată</h3>
+<p class="st-sub">Lista întreagă a produselor din perioada aleasă.</p>
+<div class="st-masa">
+<div class="st-tbl st-tbp">
+<div class="st-rand st-rand--cap">
+<sc-for list="{{ capB }}" as="h" hint-placeholder-count="6">
+<span class="{{ h.cls }}">{{ h.et }}</span>
+</sc-for>
+</div>
+<sc-for list="{{ randuri }}" as="r" hint-placeholder-count="8">
+<div class="st-rand st-rand--dat">
+<span class="st-cel" title="{{ r.nume }}">{{ r.nume }}</span>
+<span class="st-cel st-slab">{{ r.categorie }}</span>
+<span class="st-cel st-nrcol">{{ r.copt }}</span>
+<span class="st-cel st-nrcol">{{ r.congelat }}</span>
+<span class="st-cel st-nrcol st-tare">{{ r.bucati }}</span>
+<span class="st-cel st-nrcol">{{ r.bani }}</span>
+</div>
+</sc-for>
+<div class="st-rand st-rand--jos">
+<span class="st-cel">Toate produsele din perioadă</span>
+<span class="st-cel"></span>
+<span class="st-cel st-nrcol">{{ totCopt }}</span>
+<span class="st-cel st-nrcol">{{ totCongelat }}</span>
+<span class="st-cel st-nrcol">{{ totBucati }}</span>
+<span class="st-cel st-nrcol">{{ totBani }}</span>
+</div>
+</div>
+</div>
+<sc-if value="{{ tabelGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:18px 0;font-size:14px;color:var(--h-fg-subtle)">{{ tabelGolLinie }}</p>
+</sc-if>
+</section>
+
+</div>
+</div>
+</sc-if>
+
+<!-- ======================================= C · Tabloul de dimineață ======= -->
+<sc-if value="{{ vedereC }}" hint-placeholder-val="{{ false }}">
+<div class="st-foaie st-c">
+
+<div class="st-cbar">
+<div class="st-cseg">
+<sc-for list="{{ scurte }}" as="s" hint-placeholder-count="4">
+<button type="button" class="{{ s.cls }}" onClick="{{ s.onClick }}">{{ s.et }}</button>
+</sc-for>
+</div>
+<input type="date" value="{{ from }}" onChange="{{ onFrom }}" aria-label="De la">
+<input type="date" value="{{ to }}" onChange="{{ onTo }}" aria-label="Până la">
+<select value="{{ variant }}" onChange="{{ onVariant }}" aria-label="Felul mărfii">
+<sc-for list="{{ optFelC }}" as="o" hint-placeholder-count="3">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<select value="{{ categorie }}" onChange="{{ onCategorie }}" aria-label="Categoria">
+<sc-for list="{{ optCategorii }}" as="o" hint-placeholder-count="5">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<select value="{{ zona }}" onChange="{{ onZona }}" aria-label="Zona">
+<sc-for list="{{ optZone }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<span class="st-cdr">{{ bazaSpus }}</span>
+</div>
+
+<div class="st-csus">
+<div class="st-ccard">
+<span class="st-eticheta" style="display:block;margin-bottom:12px">Bucăți vândute</span>
+<div class="st-inelbox">
+<svg viewBox="0 0 220 220" role="img" aria-label="{{ inelAlt }}">
+<circle cx="110" cy="110" r="96" fill="none" stroke="var(--st-gol)" stroke-width="19"></circle>
+<sc-for list="{{ inelAfara }}" as="f" hint-placeholder-count="2">
+<circle class="st-felie st-felie--afara" cx="110" cy="110" r="96" fill="none" stroke="{{ f.culoare }}" stroke-dasharray="{{ f.dash }}" stroke-dashoffset="{{ f.off }}" stroke-linecap="round" transform="rotate(-90 110 110)"><title>{{ f.spus }}</title></circle>
+</sc-for>
+<circle cx="110" cy="110" r="72" fill="none" stroke="var(--st-gol)" stroke-width="14"></circle>
+<sc-for list="{{ inelIn }}" as="f" hint-placeholder-count="6">
+<circle class="st-felie st-felie--in" cx="110" cy="110" r="72" fill="none" stroke="{{ f.culoare }}" stroke-dasharray="{{ f.dash }}" stroke-dashoffset="{{ f.off }}" stroke-linecap="round" transform="rotate(-90 110 110)"><title>{{ f.spus }}</title></circle>
+</sc-for>
+</svg>
+<div class="st-inelmij">
+<span class="st-mare">{{ inelMijloc }}</span>
+<span class="st-mic">{{ inelMijlocSubC }}</span>
+</div>
+</div>
+<div class="st-leg" style="margin-top:14px">
+<sc-for list="{{ inelIn }}" as="f" hint-placeholder-count="6">
+<button type="button" class="st-legrand" onClick="{{ f.onClick }}">
+<span class="st-pastila" style="background:{{ f.culoare }}"></span>
+<span class="st-legnume">{{ f.nume }}</span>
+<span class="st-legval">{{ f.scris }}</span>
+<span class="st-legpct">{{ f.pct }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div>
+<div class="st-ctile">
+<sc-for list="{{ placi }}" as="p" hint-placeholder-count="6">
+<button type="button" class="{{ p.cls }}" onClick="{{ p.onClick }}">
+<span class="st-den">{{ p.den }}</span>
+<span class="{{ p.cifCls }}">{{ p.cif }}</span>
+<span class="st-fin"><span class="{{ p.tareCls }}">{{ p.tare }}</span>{{ p.fin }}</span>
+<sc-if value="{{ p.areSpark }}" hint-placeholder-val="{{ true }}">
+<div class="st-spark" style="gap:{{ sparkGol }}">
+<sc-for list="{{ p.spark }}" as="b" hint-placeholder-count="30">
+<i class="{{ b.cls }}" style="height:{{ b.h }}"></i>
+</sc-for>
+</div>
+</sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+
+<div class="st-cjos">
+<h3>Produsele, rând cu rând</h3>
+<p class="st-sub">{{ tabelSub }}</p>
+<div class="st-masa">
+<div class="st-tbl st-tc">
+<div class="st-rand st-rand--cap">
+<sc-for list="{{ capC }}" as="h" hint-placeholder-count="8">
+<button type="button" class="{{ h.cls }}" onClick="{{ h.onClick }}" title="{{ h.titlu }}">{{ h.et }}</button>
+</sc-for>
+</div>
+<sc-for list="{{ randuri }}" as="r" hint-placeholder-count="8">
+<div class="st-rand st-rand--dat">
+<span class="st-cel" title="{{ r.nume }}">{{ r.nume }}</span>
+<span class="st-micvar"><span class="st-pastila" style="background:{{ r.culoare }}"></span><span>{{ r.categorie }}</span></span>
+<span class="st-cel st-nrcol st-tare">{{ r.bucati }}</span>
+<span class="st-bara"><i style="width:{{ r.varf }}"></i></span>
+<span class="st-nrcol"><span class="st-sem st-sem--copt">{{ r.copt }}</span></span>
+<span class="st-nrcol"><span class="st-sem st-sem--cong">{{ r.congelat }}</span></span>
+<span class="st-cel st-nrcol">{{ r.bani }}</span>
+<span class="st-cel st-nrcol st-slab">{{ r.pretMediu }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ tabelGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:26px 8px;text-align:center;font-size:15px;color:var(--h-cocoa-300)">{{ tabelGolLinie }}</p>
+</sc-if>
+</div>
+
+</div>
+</sc-if>
+
+<p style="margin:0;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty;max-width:1220px;width:100%;margin-left:auto;margin-right:auto">{{ subsol }}</p>
+</div>
+</div>
+
+<!-- ============================================ foaia de lupă ============= -->
+<sc-if value="{{ lupa }}" hint-placeholder-val="{{ false }}">
+<div class="st-lupafund" onClick="{{ onLupaClose }}">
+<div class="st-lupafoaie" onClick="{{ onLupaKeep }}">
+<div class="st-lupacap">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<span class="h-eyebrow" style="font-size:11px">{{ lupaEyebrow }}</span>
+<span style="font-family:var(--h-font-display);font-size:22px;font-weight:600;line-height:1.2">{{ lupaTitlu }}</span>
+</div>
+<button class="st-lupax" type="button" title="Închide" aria-label="Închide" onClick="{{ onLupaClose }}">×</button>
+</div>
+<span class="st-nr" style="font-size:38px">{{ lupaMare }}</span>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ lupaCifre }}" as="c" hint-placeholder-count="4">
+<div class="st-luparand"><span style="font-size:14px;color:var(--h-fg-subtle)">{{ c.et }}</span><span style="font-size:15px">{{ c.val }}</span></div>
+</sc-for>
+</div>
+<p style="margin:0;font-size:13px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">{{ lupaText }}</p>
+</div>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+/* CULORILE, ÎN ACEEAȘI ORDINE DE FIECARE DATĂ.
+   Feliile se colorează după LOCUL din listă, iar lista vine de la server
+   sortată descrescător. Așa cea mai mare felie e mereu roșie, a doua mereu
+   chihlimbar — iar omul care se uită la pagină în fiecare dimineață învață
+   culorile o dată, nu în fiecare zi. O culoare legată de numele produsului
+   ar fi părut mai deșteaptă și ar fi fost mai rea: la un catalog care crește,
+   două produse vecine ar fi nimerit aceeași nuanță. */
+const VIU = ["#FF3D00", "#FFAB00", "#00C853", "#FF0F7B", "#A100FF", "#2979FF", "#93C900", "#FF6A00", "#00C6FF"];
+const CULOARE_ALTELE = "#8D7B6C";
+
+/* RAZELE CELOR TREI INELE, SCRISE O DATĂ.
+   Inelul mare e DUBLU: pe cercul din afară felul mărfii, pe cel dinăuntru
+   categoriile. Cel din vederea B e simplu și mic. Razele trebuie să fie
+   ACELEAȘI cu cele din marcaj — circumferința se socotește din ele, iar o rază
+   schimbată într-un singur loc ar da un inel care nu se închide. Grosimile,
+   în schimb, stau numai în foaia de stil: din ele se face mărirea de sub
+   deget, care nu se poate face dintr-un atribut scris pe felie. */
+const RAZA_AFARA = 96;
+const RAZA_IN = 72;
+const RAZA_MIC = 66;
+/* Spațiul dintre felii, în unități de circumferință. Cu o singură felie nu
+   se pune: un inel întreg tăiat cu o crestătură ar arăta ca 99%, nu ca 100%. */
+const RUPTURA = 5;
+
+const LUNI = ["ian.", "feb.", "mar.", "apr.", "mai", "iun.", "iul.", "aug.", "sept.", "oct.", "nov.", "dec."];
+/* Lunile întregi, pentru titlul registrului. Sub un grafic încape „sept."; ca
+   titlu de pagină, „Registrul lunii sept." e o prescurtare care nu economisește
+   nimic — rândul are patruzeci de pixeli lățime și tot atâția îi rămân. */
+const LUNI_LUNGI = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+
+const nr = (v) => Number(v) || 0;
+const lei = (v) => (Math.round(nr(v) * 100) / 100).toFixed(2).replace(".", ",") + " lei";
+const buc = (v) => {
+  const n = Math.round(nr(v) * 100) / 100;
+  return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
+};
+const pct = (parte, tot) => (tot ? Math.round((nr(parte) / nr(tot)) * 1000) / 10 : 0).toString().replace(".", ",") + "%";
+
+/**
+ * Ziua mutată cu atâtea zile, socotită în UTC.
+ *
+ * Perechea din pagină a lui `zi_mutata()` de pe server (api/lib/http.php),
+ * dar cu o deosebire scrisă dinadins: acolo socoteala se face în ora
+ * patisierei, aici în UTC. Motivul e că fusul BROWSERULUI nu e neapărat al
+ * patisierei — un fondator care se uită la cifre din altă țară ar fi văzut
+ * intervalul mutat cu o zi. În UTC nu există oră de vară, deci „minus șase
+ * zile" înseamnă șase zile și pe 29 martie.
+ *
+ * Capetele intervalului nu se inventează niciodată aici: ziua de plecare e
+ * `interval.panaLa` din răspuns, adică ziua de azi după ceasul SERVERULUI.
+ */
+const ziMutata = (zi, cate) => {
+  const p = String(zi || "").split("-");
+  const d = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1, Number(p[2])));
+  if (isNaN(d.getTime())) return "";
+  d.setUTCDate(d.getUTCDate() + cate);
+  return d.toISOString().slice(0, 10);
+};
+
+/**
+ * Întâi ale lunii, mutată cu atâtea luni. `0` dă întâi ale lunii curente.
+ *
+ * Tot în UTC, din același motiv ca `ziMutata`: „luna trecută" socotită în fusul
+ * browserului ar fi început cu o zi mai devreme pentru un fondator care se uită
+ * la cifre din altă țară, iar registrul ar fi cuprins o zi din august.
+ */
+const mutaLuna = (zi, câte) => {
+  const p = String(zi || "").split("-");
+  const d = new Date(Date.UTC(Number(p[0]), Number(p[1]) - 1 + câte, 1));
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+};
+
+/** Ultima zi a lunii din care face parte ziua dată. „Ziua zero" a lunii
+    următoare e chiar ultima zi a lunii dinainte — și așa februarie iese de
+    29 în anii bisecți fără nicio ramură scrisă de mână. */
+const ultimaZiLunii = (zi) => {
+  const p = String(zi || "").split("-");
+  const d = new Date(Date.UTC(Number(p[0]), Number(p[1]), 0));
+  if (isNaN(d.getTime())) return "";
+  return d.toISOString().slice(0, 10);
+};
+
+/** Cifră întreagă, cu spațiu subțire la mii: „18 430". Se folosește numai la
+    cele trei numere de 52 de pixeli din registru, unde bănuții de după virgulă
+    n-ar fi citiți de nimeni, dar ar lungi numărul cu o treime. */
+const intreg = (v) => String(Math.round(nr(v))).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+/** În românește, „de" se pune numai după numeralele al căror rest la 100 e 0
+    sau cel puțin 20: „7 zile", dar „30 de zile"; „101 zile", dar „120 de zile".
+    Zero nu-l ia niciodată. Fără regula asta pagina scrie „7 de zile" într-o
+    săptămână și „1 comenzi" la clientul cu o singură comandă. */
+const cuDe = (n) => {
+  const a = Math.abs(Math.round(nr(n)));
+  if (a === 0) return false;
+  const r = a % 100;
+  return r === 0 || r >= 20;
+};
+
+/** Numără ceva în cuvinte: `numarat(1, "zi", "zile")` → „1 zi”, `numarat(30, …)`
+    → „30 de zile". Una singură pentru toate cele trei vederi, ca să nu se
+    depărteze una de alta. */
+const numarat = (n, unu, multe) =>
+  Math.round(nr(n)) + " " + (Math.abs(Math.round(nr(n))) === 1 ? unu : (cuDe(n) ? "de " : "") + multe);
+
+const deZile = (n) => numarat(n, "zi", "zile");
+const deComenzi = (n) => numarat(n, "comandă", "comenzi");
+
+/** „2026-09-14" → „14 sept." Scurt, fiindcă stă sub un grafic, nu într-o frază. */
+const ziScurta = (zi) => {
+  const p = String(zi || "").split("-");
+  if (p.length !== 3) return String(zi || "");
+  return String(Number(p[2])) + " " + (LUNI[Number(p[1]) - 1] || "");
+};
+
+const ziLunga = (zi) => {
+  const p = String(zi || "").split("-");
+  if (p.length !== 3) return String(zi || "");
+  return String(Number(p[2])) + " " + (LUNI[Number(p[1]) - 1] || "") + " " + p[0];
+};
+
+/**
+ * Feliile inelului: din valori, în bucăți de circumferință.
+ *
+ * Se desenează cu `stroke-dasharray`, nu cu felii de plăcintă, fiindcă asta a
+ * fost cerut: numai conturul din afară, nu discul plin. Fiecare felie e un
+ * cerc întreg din care se vede o singură bucată — `dasharray` spune „atâta
+ * linie, apoi atâta gol", iar `dashoffset` negativ o rotește la locul ei.
+ *
+ * Lista vine deja sortată; ce trece peste `câte` se strânge într-o felie
+ * „restul", care NU e a nimănui și de-aceea nu primește o culoare din paletă.
+ * O listă tăiată fără rândul ăla ar fi mințit despre întreg: un inel din care
+ * lipsesc 30% arată ca și cum n-ar mai fi fost nimic altceva.
+ *
+ * `rază` nu e o podoabă: din ea iese circumferința, adică lungimea fiecărei
+ * felii. Pagina are trei inele de raze deosebite — cercul din afară al
+ * inelului dublu, cel dinăuntru, și inelele mici din registru — iar o
+ * circumferință ținută într-o constantă ar fi desenat două din trei greșit:
+ * feliile cercului interior ar fi ieșit cu o treime mai lungi decât cercul pe
+ * care stau, deci ultima ar fi trecut peste prima.
+ */
+function felii(lista, câte, rază) {
+  const CIRC = 2 * Math.PI * (rază || RAZA_AFARA);
+  const tot = lista.reduce((s, x) => s + nr(x.val), 0);
+  const capul = lista.slice(0, câte);
+  const coada = lista.slice(câte);
+  const rest = coada.reduce((s, x) => s + nr(x.val), 0);
+  const toate = rest > 0
+    ? capul.concat([{ nume: "restul (" + coada.length + ")", val: rest, rest: true, ale: coada }])
+    : capul;
+
+  let pornit = 0;
+  return toate.map((x, i) => {
+    const parte = tot ? nr(x.val) / tot : 0;
+    const plin = parte * CIRC;
+    // Ruptura se scade numai când sunt mai multe felii — și niciodată sub
+    // zero, fiindcă o felie foarte mică ar ieși cu lungime negativă, iar SVG
+    // desenează atunci linia întreagă: cel mai mic produs ar fi umplut inelul.
+    const lung = Math.max(0, toate.length > 1 ? plin - RUPTURA : plin);
+    const f = {
+      nume: x.nume,
+      val: nr(x.val),
+      rest: !!x.rest,
+      ale: x.ale || null,
+      // Rândul întreg de la server, purtat mai departe. Fără el, foaia de
+      // lupă n-ar fi putut spune despre o felie decât ce se vede deja pe
+      // ecran — procentul ei — iar o foaie care repetă ce scrie sub deget nu
+      // merită apăsată.
+      od: x.od || null,
+      culoare: x.rest ? CULOARE_ALTELE : VIU[i % VIU.length],
+      dash: lung.toFixed(2) + " " + (CIRC - lung).toFixed(2),
+      off: (-pornit).toFixed(2),
+      pct: pct(x.val, tot),
+      // Aceeași parte, scrisă ca lățime de bară. Registrul din vederea B pune
+      // sub fiecare rând o dungă în loc de o felie — e aceeași cifră, desenată
+      // drept în loc de rotund, deci n-are rost socotită a doua oară acolo.
+      lat: (tot ? (nr(x.val) / tot) * 100 : 0).toFixed(2) + "%",
+    };
+    pornit += plin;
+    return f;
+  });
+}
+
+class Component extends DCLogic {
+  /**
+   * Ce ține pagina minte.
+   *
+   * `date` e RĂSPUNSUL ÎNTREG al serverului, o singură dată, iar cele trei
+   * vederi se desenează toate din el. Nu sunt trei pagini: apăsarea pe „B" nu
+   * cere nimic de la server, fiindcă ar fi aceeași cerere. Asta ține și cele
+   * trei povești legate una de alta — dacă vederile ar fi cerut fiecare pentru
+   * ea, două ferestre ale aceleiași zile ar fi putut arăta cifre deosebite,
+   * ceea ce într-o pagină de bani e mai rău decât o pagină lipsă.
+   *
+   * `from`/`to` pornesc GOALE dinadins: ziua de azi o hotărăște serverul, nu
+   * ceasul telefonului. Se umplu din primul răspuns.
+   *
+   * `ciorna` e fișa vederii B înainte de „Fă socoteala". NULL înseamnă „fișa
+   * arată exact filtrele care lucrează acum" — nu se ține o copie a lor, ca să
+   * nu fie două adevăruri despre același lucru. Se umple abia când omul
+   * schimbă ceva în fișă și se golește la loc când apasă butonul.
+   */
+  state = {
+    navOpen: false, auth: null, loaded: false, eroare: "", date: null,
+    vedere: "A", lupa: "", lupaDate: null, ciorna: null,
+    sortCol: "bani", sortDesc: true,
+    from: "", to: "", baza: "livrare", variant: "", categorie: "",
+    canal: "", onorare: "", zona: "", client: "",
+  };
+
+  /**
+   * Tema paginii ține de vederea aleasă.
+   *
+   * Toate panourile casei scriu o dată `data-theme` la montare și nu se mai
+   * ating de el (`Jurnal:304`, `Conturi:749`); paginile care se vor întunecate
+   * scriu „dark" în același loc (`Intrare:432`, `Ruta Sofer:330`,
+   * `Site Public:1720`). Pagina asta e singura care îl mută în timpul vieții
+   * ei, fiindcă e singura care are înăuntru două lumini: registrul se citește
+   * pe hârtie, tabloul de dimineață se citește pe noapte.
+   *
+   * DE CE PE `<html>` ȘI NU PE O CUTIE. Fiindcă tokenii Hearth sunt scriși pe
+   * `:root[data-theme="dark"]` (`hearth.css:412`). O clasă pusă pe o cutie
+   * dinăuntru ar fi întunecat numai ce e sub ea, iar bara de sus, marginile și
+   * umbrele ar fi rămas de zi — exact despărțitura care se vedea înainte.
+   *
+   * DE CE SE ÎNTOARCE LA LUMINĂ. Atributul stă pe documentul întreg, nu pe
+   * pagina asta. Fără rândul din `componentWillUnmount`, cine pleacă din
+   * tabloul de dimineață spre alt panou ar duce noaptea cu el până când pagina
+   * următoare apucă să-și scrie tema ei — o licărire neagră între două pagini
+   * albe.
+   */
+  tema(vedere) {
+    document.documentElement.setAttribute("data-theme", vedere === "C" ? "dark" : "light");
+  }
+
+  componentDidMount() {
+    this.tema(this.state.vedere);
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    // Escape închide foaia de lupă. Ascultătorul stă pe document, nu pe foaie:
+    // foaia se naște și moare la fiecare deschidere, iar un ascultător legat
+    // de ea s-ar pierde odată cu ea.
+    this.peTasta = (e) => { if (e.key === "Escape" && this.state.lupa) this.setState({ lupa: "", lupaDate: null }); };
+    document.addEventListener("keydown", this.peTasta);
+
+    // `NEAFLAT` desparte cele două feluri de „fără cont": serverul care spune
+    // lămurit „nu ești conectat" (`null`) și serverul la care nu s-a ajuns
+    // deloc (`gp.me()` aruncă). Fără el, al doilea era citit ca primul și omul
+    // era trimis la pagina de intrare fără niciun motiv scris pe ecran — iar
+    // în drum i se arăta, o clipă, învinuirea că n-are acces la o pagină
+    // despre care pagina nu aflase nimic. Tiparul e cel din `Jurnal.dc.html`.
+    const NEAFLAT = {};
+    gp.me()
+      .then((user) => {
+        if (user) this.setState({ auth: gp.auth(user) });
+        return user;
+      })
+      .catch((e) => {
+        this.setState({ eroare: gp.motiv(e, "statisticile"), loaded: true });
+        return NEAFLAT;
+      })
+      .then((user) => {
+        if (user === NEAFLAT) return;
+        if (!user) gp.toLogin();
+        // Cererea pleacă NUMAI pentru cine are voie. Pentru oricine altcineva
+        // serverul răspunde 403, iar ecranul de refuz n-are ce reîmprospăta:
+        // ar fi fost un refuz cerut de pagină, peste un refuz deja desenat.
+        else if (gp.eStats(user)) this.cere();
+        else this.setState({ loaded: true });
+      });
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.peTasta);
+    // Noaptea rămâne în pagina asta. Vezi `tema()` pentru de ce.
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+
+  /** Coada de adresă, din filtrele de pe ecran. Goalele nu se trimit. */
+  coada() {
+    const S = this.state;
+    const q = [];
+    const pune = (k, v) => { if (v) q.push(k + "=" + encodeURIComponent(v)); };
+    pune("from", S.from);
+    pune("to", S.to);
+    // „livrare" e și așteptarea serverului: n-are rost trimis, dar trimis nu
+    // strică. Se trimite numai celălalt, ca adresa să rămână scurtă.
+    if (S.baza === "comanda") q.push("baza=comanda");
+    pune("variant", S.variant);
+    pune("categorie", S.categorie);
+    pune("canal", S.canal);
+    pune("onorare", S.onorare);
+    pune("zona", S.zona);
+    pune("client", S.client);
+    return q.length ? "?" + q.join("&") : "";
+  }
+
+  /**
+   * Cifrele de la server.
+   *
+   * O singură cerere pentru toată pagina. Serverul întoarce și listele de
+   * filtre — socotite pe INTERVAL, nu pe filtrele puse — deci alegerea unei
+   * categorii nu golește lista de canale. Dacă ar fi fost socotite pe tot,
+   * omul care alege un filtru greșit ar fi rămas cu meniurile goale și fără
+   * cale înapoi în afară de reîncărcarea paginii.
+   */
+  cere() {
+    const cerut = this.coada();
+    this.ultima = cerut;
+    return gp.get("/stats" + cerut)
+      .then((r) => {
+        // Între cerere și răspuns omul mai apasă un filtru. Un răspuns despre
+        // alt interval decât cel de acum n-are voie să ajungă pe ecran: ar
+        // scrie cifrele unei luni sub titlul alteia.
+        if (cerut !== this.ultima) return;
+        const noua = { date: r, loaded: true, eroare: "" };
+        // Capetele intervalului se umplu din RĂSPUNS, nu din ceasul de aici:
+        // prima cerere pleacă fără ele tocmai ca ziua de azi s-o spună
+        // serverul. Pe urmă butoanele scurte socotesc din ce a spus el.
+        if (!this.state.from) noua.from = r.interval.deLa;
+        if (!this.state.to) noua.to = r.interval.panaLa;
+        this.setState(noua);
+      })
+      .catch((e) => {
+        if (cerut !== this.ultima) return;
+        this.setState({ eroare: gp.motiv(e, "statisticile"), loaded: true });
+      });
+  }
+
+  /** Un filtru schimbat: se scrie în stare, apoi pleacă cererea. */
+  pune(camp, val) {
+    // Cererea pleacă din callback-ul lui `setState`, nu după el: altfel
+    // `coada()` ar citi starea veche și ar cere cu filtrul de dinainte.
+    this.setState({ [camp]: val }, () => this.cere());
+  }
+
+  /** Interval scurt, socotit din ziua serverului, nu din a browserului. */
+  interval(zile) {
+    const azi = (this.state.date && this.state.date.interval.panaLa) || this.state.to;
+    if (!azi) return;
+    this.setState({ to: azi, from: ziMutata(azi, -(zile - 1)) }, () => this.cere());
+  }
+
+  /**
+   * Valorile pe care le citește marcajul.
+   *
+   * SE CHEAMĂ `renderVals`, NU `render`. Deosebirea nu se vede: `DCLogic` are
+   * un `renderVals()` de bază care întoarce `{}`, iar `support.js` îl cheamă
+   * pe ăla și amestecă rezultatul peste proprietăți. O metodă botezată
+   * `render()` nu supără pe nimeni — rămâne doar nechemată. Urmarea e o
+   * pagină albă, fără nicio eroare în consolă și fără nimic în jurnalul
+   * serverului: toate `sc-if`-urile primesc `undefined`, adică fals, deci
+   * marcajul se desenează întreg și nu arată nimic. Prima formă a paginii
+   * ăsteia a pățit exact asta.
+   */
+  renderVals() {
+    const S = this.state;
+    const D = S.date;
+    const auth = S.auth;
+    const areVoie = gp.eStats(auth);
+
+    const rez = (D && D.rezumat) || {};
+    const fata = (D && D.fata) || {};
+    const produse = (D && D.produse) || [];
+    const categorii = (D && D.categorii) || [];
+    const zile = (D && D.zile) || [];
+    const clienti = (D && D.clienti) || [];
+    const fel = (D && D.fel) || [];
+    const onorareRanduri = (D && D.onorare) || [];
+    const filtre = (D && D.filtre) || { categorii: [], canale: [], onorare: [], zone: [] };
+    const etape = (D && D.etape) || { predata: "", anulata: "" };
+    const zileCerute = (D && D.interval.zile) || 0;
+    const azi = (D && D.interval.panaLa) || "";
+
+    /* ------------------------------------------------ foaia de lupă ------- */
+
+    const lupa = (cheie, date) => () => this.setState({ lupa: cheie, lupaDate: date || null });
+
+    /* ------------------------------------------------ inelul dublu -------- */
+
+    /* DOUĂ CERCURI, NU UNUL. Pe cel din afară stă felul mărfii — două felii,
+       copt și congelat; pe cel dinăuntru stau categoriile. E aceeași marfă
+       numărată în două feluri, iar cercurile concentrice o spun fără niciun
+       cuvânt: partea de afară e întregul tăiat o dată, partea dinăuntru
+       același întreg tăiat altfel. Două inele alăturate n-ar fi spus asta —
+       ar fi părut două măsurători deosebite.
+
+       CULORILE CELOR DOUĂ CERCURI NU SE AMESTECĂ. Felul mărfii are două
+       culori ținute deoparte anume (portocaliu copt, albastru de gheață);
+       categoriile se rotesc prin celelalte șapte. De-aia cercul de categorii
+       se taie la șapte felii, nu la opt: a opta ar fi nimerit tocmai
+       portocaliul coptului, iar omul ar fi citit o categorie ca pe un fel. */
+    const CULOARE_FEL = { copt: "#FF6A00", congelat: "#00C6FF" };
+    const numeFel = (c) => c === "copt" ? "gata de mâncat" : (c === "congelat" ? "congelate" : (c || "nespus"));
+
+    const inelAfara = felii(
+      fel.map((f) => ({ nume: numeFel(f.cheie), val: nr(f.bucati), od: f })), 4, RAZA_AFARA,
+    ).map((f, i) => Object.assign(f, {
+      culoare: f.rest ? CULOARE_ALTELE : (CULOARE_FEL[(fel[i] || {}).cheie] || CULOARE_ALTELE),
+      eticheta: "Felul mărfii",
+      scris: buc(f.val) + " buc",
+      spus: f.nume + " · " + buc(f.val) + " buc (" + f.pct + ")",
+      onClick: lupa("felie", null),
+    }));
+
+    const inelIn = felii(
+      categorii.map((c) => ({ nume: c.nume || "—", val: nr(c.bucati), od: c })), 7, RAZA_IN,
+    ).map((f) => Object.assign(f, {
+      eticheta: "Categorie",
+      scris: buc(f.val) + " buc",
+      spus: f.nume + " · " + buc(f.val) + " buc (" + f.pct + ")",
+    }));
+    inelIn.forEach((f) => { f.onClick = lupa("felie", f); });
+    inelAfara.forEach((f) => { f.onClick = lupa("felie", f); });
+
+    /* Culoarea categoriei, luată din inel și dusă în tabele. Scrisă a doua
+       oară acolo, s-ar fi depărtat de inel la prima categorie nouă: pastila
+       din dreptul produsului ar fi arătat altă culoare decât felia lui. */
+    const culoriCat = {};
+    inelIn.forEach((f) => { if (!f.rest) culoriCat[f.nume] = f.culoare; });
+
+    const totalBucati = inelIn.reduce((s, f) => s + f.val, 0);
+    const totalFel = inelAfara.reduce((s, f) => s + f.val, 0);
+
+    /* ------------------------------------------------ vederile ------------ */
+
+    // Tema se pune ÎNAINTE de `setState`, nu după și nu din `componentDidUpdate`.
+    // Motivul e ce vede omul: atributul de pe `<html>` schimbă culorile în
+    // aceeași clipă în care React desenează vederea nouă. Pus după, pagina
+    // apucă să deseneze tabloul de noapte peste fundal alb — o licărire care
+    // se vede cu ochiul liber la fiecare apăsare.
+    const vedereBtn = (cod, et) => ({
+      et,
+      cls: S.vedere === cod ? "st-vbtn st-vbtn--on" : "st-vbtn",
+      onClick: () => { this.tema(cod); this.setState({ vedere: cod }); },
+    });
+
+    /* ------------------------------------------------ mesele -------------- */
+
+    const sorteaza = (c) => () => this.setState((v) => ({
+      sortCol: c,
+      // Aceeași coloană apăsată a doua oară întoarce sensul; o coloană nouă
+      // începe de la mare la mic, fiindcă asta se caută într-un registru de
+      // vânzări — cine e primul, nu cine e ultimul.
+      sortDesc: v.sortCol === c ? !v.sortDesc : true,
+    }));
+
+    /* Capetele, dintr-un singur loc. `cod` e coloana după care se așază;
+       când lipsește, capul nu se aprinde niciodată — e cazul barei „cât din
+       vârf", care sortează tot după bucăți, fiindcă asta desenează. */
+    const capete = (lista, cuButon) => lista.map((h) => {
+      const pe = !!h.cod && S.sortCol === h.cod;
+      const clase = (pe ? "st-capbtn st-capbtn--on" : (cuButon ? "st-capbtn" : "st-cap")) + (h.nrcol ? " st-nrcol" : "");
+      return {
+        et: h.et + (pe ? (S.sortDesc ? " ↓" : " ↑") : ""),
+        cls: clase,
+        titlu: "Așază lista după " + h.et.toLowerCase(),
+        onClick: sorteaza(h.sort || h.cod || "bucati"),
+      };
+    });
+
+    const capA = capete([
+      { cod: "nume", et: "Produs" },
+      { cod: "categorie", et: "Categorie" },
+      { cod: "bucati", et: "Bucăți", nrcol: true },
+      { et: "Cât din vârf", sort: "bucati" },
+      { cod: "copt", et: "Gata", nrcol: true },
+      { cod: "congelat", et: "Congelat", nrcol: true },
+      { cod: "bani", et: "Bani", nrcol: true },
+    ], true);
+
+    const capC = capete([
+      { cod: "nume", et: "Produs" },
+      { cod: "categorie", et: "Categorie" },
+      { cod: "bucati", et: "Bucăți", nrcol: true },
+      { et: "Cât din vârf", sort: "bucati" },
+      { cod: "copt", et: "Gata", nrcol: true },
+      { cod: "congelat", et: "Congelat", nrcol: true },
+      { cod: "bani", et: "Bani", nrcol: true },
+      { cod: "pret", et: "Preț mediu", nrcol: true },
+    ], true);
+
+    const capB = capete([
+      { et: "Produs" }, { et: "Categorie" },
+      { et: "Gata", nrcol: true }, { et: "Congelat", nrcol: true },
+      { et: "Bucăți", nrcol: true }, { et: "Bani", nrcol: true },
+    ], false);
+
+    const capClienti = capete([
+      { et: "Client" }, { et: "Cum e trecut" },
+      { et: "Comenzi", nrcol: true }, { et: "Bucăți", nrcol: true }, { et: "Bani", nrcol: true },
+    ], false);
+
+    // Vârful listei: din el iese lățimea barei „cât din vârf". Se socotește
+    // pe bucăți, nu pe bani, fiindcă bara stă lângă coloana de bucăți.
+    const varfBuc = produse.reduce((m, p) => Math.max(m, nr(p.bucati)), 0);
+
+    const randuri = produse
+      .map((p) => Object.assign({}, p, { pret: nr(p.bucati) ? nr(p.bani) / nr(p.bucati) : 0 }))
+      .sort((a, b) => {
+        const c = S.sortCol;
+        const x = a[c], y = b[c];
+        const cmp = (typeof x === "string" || typeof y === "string")
+          ? String(x || "").localeCompare(String(y || ""), "ro")
+          : nr(x) - nr(y);
+        return S.sortDesc ? -cmp : cmp;
+      })
+      .map((p) => ({
+        nume: p.nume || "—",
+        categorie: p.categorie || "—",
+        culoare: culoriCat[p.categorie] || CULOARE_ALTELE,
+        bucati: buc(p.bucati),
+        copt: buc(p.copt),
+        congelat: buc(p.congelat),
+        bani: lei(p.bani),
+        pretMediu: nr(p.bucati) ? lei(p.pret) : "—",
+        varf: (varfBuc ? (nr(p.bucati) / varfBuc) * 100 : 0).toFixed(1) + "%",
+      }));
+
+    // Suma de sub registru se face din RÂNDURILE DE DEASUPRA ei, nu din
+    // rezumatul serverului. Cele două sunt aceeași cifră, dar dacă vreodată
+    // n-ar mai fi, un total care nu se potrivește cu ce e scris deasupra lui e
+    // mai rău decât niciun total: pune la îndoială tot tabelul.
+    const sumar = produse.reduce((a, p) => ({
+      copt: a.copt + nr(p.copt), cong: a.cong + nr(p.congelat),
+      buc: a.buc + nr(p.bucati), bani: a.bani + nr(p.bani),
+    }), { copt: 0, cong: 0, buc: 0, bani: 0 });
+
+    /* ------------------------------------------------ zi cu zi ------------ */
+
+    // Graficul are O DUNGĂ pe zi, inclusiv pe zilele goale: seria vine deja
+    // plină de la server. Un grafic desenat numai din zilele cu vânzare minte
+    // despre formă — adică tocmai despre lucrul pentru care se face.
+    const varfZi = zile.reduce((m, z) => Math.max(m, nr(z.bani)), 0);
+    const spark = zile.map((z, i) => ({
+      cls: i === zile.length - 1 ? "ult" : "",
+      h: (varfZi ? (nr(z.bani) / varfZi) * 100 : 0).toFixed(1) + "%",
+    }));
+    // Golul dintre dungi se strânge când zilele se înmulțesc: la un an, trei
+    // pixeli de gol ar fi mai lați decât dunga dintre ei, iar graficul s-ar
+    // citi ca un gard, nu ca o formă.
+    const sparkGol = zile.length > 90 ? "0px" : (zile.length > 45 ? "1px" : "3px");
+    const ziVarf = zile.reduce((m, z) => (nr(z.bani) > nr(m.bani) ? z : m), { bani: 0, zi: "" });
+
+    /* ------------------------------------------------ vorbele ------------- */
+
+    const pas = (v) => (v === null || v === undefined) ? "" : (v >= 0 ? "+" : "") + String(v).replace(".", ",") + "%";
+    const pasBani = pas(fata.pasBani);
+    const pasComenzi = pas(fata.pasComenzi);
+    const semnCls = (p) => p.charAt(0) === "-" ? "st-jos" : "st-sus";
+    const celMaiCerut = produse.length ? produse.slice().sort((a, b) => nr(b.bucati) - nr(a.bucati))[0] : null;
+    const celMaiBun = clienti.length ? clienti[0] : null;
+
+    const optiuni = (lista, tot) => [{ v: "", l: tot }].concat(lista.map((x) => ({ v: x, l: x })));
+    const optCategorii = optiuni(filtre.categorii || [], "toate categoriile");
+    const optZone = optiuni(filtre.zone || [], "toate zonele");
+
+    const spuse = [];
+    if (S.variant) spuse.push(numeFel(S.variant));
+    if (S.categorie) spuse.push(S.categorie);
+    if (S.canal) spuse.push("canal " + S.canal);
+    if (S.onorare) spuse.push(S.onorare);
+    if (S.zona) spuse.push("zona " + S.zona);
+    if (S.client) spuse.push("client „" + S.client + "”");
+
+    /* ------------------------------------------------ A: chipurile -------- */
+
+    const numeCanal = (c) => c === "site" ? "De pe site" : (c === "panou" ? "Din panou" : c);
+    const ceata = (et, camp, randuriCetei) => ({
+      et,
+      chipuri: randuriCetei.map((x) => ({
+        et: x[1],
+        cls: S[camp] === x[0] ? "st-chip st-chip--on" : "st-chip",
+        onClick: () => this.pune(camp, x[0]),
+      })),
+    });
+    const cete = [
+      ceata("Felul mărfii", "variant", [["", "Toate"], ["copt", "Gata de mâncat"], ["congelat", "Congelate"]]),
+      ceata("Categoria", "categorie", [["", "Toate"]].concat((filtre.categorii || []).map((c) => [c, c]))),
+      ceata("Cum a venit", "canal", [["", "Toate"]].concat((filtre.canale || []).map((c) => [c, numeCanal(c)]))),
+      ceata("Cum a plecat", "onorare", [["", "Toate"]].concat((filtre.onorare || []).map((c) => [c, c]))),
+    ];
+
+    /* Perioada, din cele două capete. Nu se ține în stare: ar fi fost a doua
+       părere despre același lucru, iar cine mută o dată cu mâna capătul „de
+       la" ar fi rămas cu „Ultimele 30 de zile" scris peste un alt interval. */
+    const perioada = (() => {
+      if (!D || S.to !== azi) {
+        if (D && S.from === mutaLuna(azi, -1) && S.to === ultimaZiLunii(mutaLuna(azi, -1))) return "trecuta";
+        return "";
+      }
+      if (S.from === ziMutata(azi, -6)) return "7";
+      if (S.from === ziMutata(azi, -29)) return "30";
+      if (S.from === mutaLuna(azi, 0)) return "luna";
+      if (S.from === azi.slice(0, 4) + "-01-01") return "an";
+      return "";
+    })();
+
+    const onPerioada = (e) => {
+      const v = e.target.value;
+      if (!azi) return;
+      if (v === "7") return this.interval(7);
+      if (v === "30") return this.interval(30);
+      if (v === "luna") return this.setState({ from: mutaLuna(azi, 0), to: azi }, () => this.cere());
+      if (v === "trecuta") {
+        const î = mutaLuna(azi, -1);
+        return this.setState({ from: î, to: ultimaZiLunii(î) }, () => this.cere());
+      }
+      if (v === "an") return this.setState({ from: azi.slice(0, 4) + "-01-01", to: azi }, () => this.cere());
+    };
+
+    /* ------------------------------------------------ B: ciorna fișei ----- */
+
+    /* Fișa scrie într-o ciornă și abia butonul o trece în filtre. Vezi
+       comentariul din marcaj pentru de ce; aici e numai mecanica. `S.ciorna`
+       null înseamnă „fișa e la zi", deci se citește de-a dreptul din filtre —
+       fără să se țină o copie a lor, care s-ar fi putut depărta. */
+    const CAMPURI_FISA = ["from", "to", "baza", "variant", "categorie", "zona", "client"];
+    const cio = S.ciorna || CAMPURI_FISA.reduce((a, k) => { a[k] = S[k]; return a; }, {});
+    const neaplicat = CAMPURI_FISA.some((k) => cio[k] !== S[k]);
+    const puneCio = (k) => (e) => this.setState({
+      ciorna: Object.assign({}, cio, { [k]: (e && e.target) ? e.target.value : e }),
+    });
+    const cioBaza = (v) => () => this.setState({ ciorna: Object.assign({}, cio, { baza: v }) });
+
+    const bFel = felii(
+      fel.map((f) => ({ nume: numeFel(f.cheie), val: nr(f.bucati), od: f })), 4, RAZA_MIC,
+    ).map((f, i) => Object.assign(f, {
+      culoare: f.rest ? CULOARE_ALTELE : (CULOARE_FEL[(fel[i] || {}).cheie] || CULOARE_ALTELE),
+      eticheta: "Felul mărfii",
+      scris: buc(f.val) + " buc",
+      spus: f.nume + " · " + buc(f.val) + " buc (" + f.pct + ")",
+    }));
+    bFel.forEach((f) => { f.onClick = lupa("felie", f); });
+
+    const bCat = felii(
+      categorii.map((c) => ({ nume: c.nume || "—", val: nr(c.bucati), od: c })), 7, RAZA_MIC,
+    ).map((f) => Object.assign(f, {
+      eticheta: "Categorie",
+      scris: buc(f.val) + " buc",
+      spus: f.nume + " · " + buc(f.val) + " buc (" + f.pct + ")",
+    }));
+    bCat.forEach((f) => { f.onClick = lupa("felie", f); });
+
+    /* Titlul registrului spune LUNA când intervalul e chiar o lună întreagă,
+       și capetele când nu e. O pagină care scrie „Registrul lunii septembrie"
+       peste opt zile din septembrie ar fi o minciună mică și convingătoare. */
+    const bTitlu = (() => {
+      if (!D) return "Registrul";
+      const a = D.interval.deLa, b = D.interval.panaLa;
+      if (a.slice(0, 7) === b.slice(0, 7) && a.slice(8) === "01" && b === ultimaZiLunii(a)) {
+        return "Registrul lunii " + (LUNI_LUNGI[Number(a.slice(5, 7)) - 1] || "");
+      }
+      if (a.slice(0, 4) === b.slice(0, 4) && a.slice(5) === "01-01" && b === a.slice(0, 4) + "-12-31") {
+        return "Registrul anului " + a.slice(0, 4);
+      }
+      return "Registrul de la " + ziScurta(a) + " la " + ziScurta(b);
+    })();
+
+    const cliRanduri = clienti.map((c) => ({
+      nume: c.nume || "—",
+      cont: c.cont ? "are cont" : "scris pe comandă",
+      comenzi: String(c.comenzi),
+      bucati: buc(c.bucati),
+      bani: lei(c.bani),
+      onClick: lupa("felie", {
+        nume: c.nume || "—", val: nr(c.bani), rest: false, ale: null,
+        peBani: true, od: c, pct: pct(c.bani, rez.bani), eticheta: "Client",
+      }),
+    }));
+    const cliSum = clienti.reduce((a, c) => ({
+      com: a.com + nr(c.comenzi), buc: a.buc + nr(c.bucati), bani: a.bani + nr(c.bani),
+    }), { com: 0, buc: 0, bani: 0 });
+
+    /* ------------------------------------------------ cifrele foii -------- */
+
+    const FOI = {
+      bani: {
+        eyebrow: "Banii intrați",
+        titlu: "Cât a intrat în casă",
+        mare: lei(rez.bani),
+        cifre: [
+          { et: "Pe zi, în medie", val: lei(rez.baniPeZi) },
+          { et: "Încă de încasat", val: lei(rez.baniDeIncasat) },
+          { et: "Pierdut prin anulări", val: lei(rez.baniAnulati) },
+          { et: "Perioada dinainte", val: lei(fata.bani) + (pasBani ? " · " + pasBani : "") },
+        ],
+        text: "Suma e făcută din pozițiile comenzilor — cantitate × preț de pe rând — nu din totalul scris pe comandă. Numai așa se poate spune cât a adus fiecare produs în parte. Comenzile în etapa „" + (etape.anulata || "anulată") + "” nu intră la socoteală, dar se numără separat, ca să se vadă cât s-a pierdut.",
+      },
+      comenzi: {
+        eyebrow: "Comenzile",
+        titlu: "Câte comenzi au trecut",
+        mare: String(rez.comenzi || 0),
+        cifre: [
+          { et: "Predate", val: String(rez.predate || 0) },
+          { et: "Încă în lucru", val: String(rez.nepredate || 0) },
+          { et: "Anulate", val: String(rez.anulate || 0) },
+          { et: "Pe zi, în medie", val: String(rez.comenziPeZi || 0).replace(".", ",") },
+        ],
+        text: "„Predate” sunt comenzile ajunse în etapa „" + (etape.predata || "predată") + "”. Restul sunt încă undeva pe drum — în laborator, în depozit sau în mașină. Anulatele nu intră nici la comenzi, nici la bani.",
+      },
+      bucati: {
+        eyebrow: "Marfa",
+        titlu: "Câte bucăți au ieșit",
+        mare: buc(rez.bucati) + " buc",
+        cifre: [
+          { et: "Pe comandă, în medie", val: buc(rez.bucatiPeComanda) },
+          { et: "Produse deosebite", val: String(produse.length) },
+          { et: "Categorii", val: String(categorii.length) },
+          { et: "Cel mai cerut", val: celMaiCerut ? celMaiCerut.nume : "—" },
+        ],
+        text: "Se numără pozițiile, nu comenzile: o comandă cu douăzeci de croasante și una cu unul singur sunt amândouă o comandă, dar nu aceeași cantitate de muncă în laborator.",
+      },
+      cos: {
+        eyebrow: "Coșul",
+        titlu: "Cât lasă o comandă",
+        mare: lei(rez.cos),
+        cifre: [
+          { et: "Bucăți pe comandă", val: buc(rez.bucatiPeComanda) },
+          { et: "Comenzi", val: String(rez.comenzi || 0) },
+          { et: "Bani", val: lei(rez.bani) },
+        ],
+        text: "Media, nu comanda obișnuită: o singură comandă mare pentru un eveniment ridică cifra asta pentru toată luna. Se citește lângă numărul de comenzi, nu singură.",
+      },
+      client: {
+        eyebrow: "Clientul",
+        titlu: celMaiBun ? celMaiBun.nume : "Niciun client",
+        mare: celMaiBun ? lei(celMaiBun.bani) : "—",
+        cifre: celMaiBun ? [
+          { et: "Comenzi", val: String(celMaiBun.comenzi) },
+          { et: "Bucăți", val: buc(celMaiBun.bucati) },
+          { et: "Din tot ce a intrat", val: pct(celMaiBun.bani, rez.bani) },
+          { et: "Are cont", val: celMaiBun.cont ? "da" : "nu, comandă scrisă pe nume" },
+        ] : [],
+        text: "Clienții fără cont se strâng după numele scris pe comandă. Două scrieri deosebite ale aceluiași nume sunt, pentru socoteala asta, doi oameni — de-aia lista de sus are mai multă dreptate decât coada ei.",
+      },
+      fel: {
+        eyebrow: "Felul mărfii",
+        titlu: "Copt și congelat",
+        mare: buc(rez.bucati) + " buc",
+        cifre: fel.map((f) => ({ et: numeFel(f.cheie), val: buc(f.bucati) + " buc · " + lei(f.bani) })),
+        text: "Felul stă pe POZIȚIE, nu pe comandă: o comandă poate avea și copt, și congelat, iar pe ea scrie atunci „mixt”. De-aia cele două cifre de aici se adună exact la total, lucru care nu s-ar fi întâmplat dacă s-ar fi numărat comenzile.",
+      },
+      onorare: {
+        eyebrow: "Cum pleacă marfa",
+        titlu: "Livrare, ridicare, angro",
+        mare: buc(rez.bucati) + " buc",
+        cifre: onorareRanduri.map((f) => ({ et: f.nume || "nespus", val: buc(f.bucati) + " buc · " + lei(f.bani) })),
+        text: "Felul în care pleacă marfa stă pe COMANDĂ, nu pe poziție: toate bucățile unei comenzi pleacă la fel. De-aia rândurile de aici se adună la totalul de bucăți fără niciun rest.",
+      },
+      zile: {
+        eyebrow: "Zi cu zi",
+        titlu: "Ziua cea mai bună",
+        mare: ziVarf.zi ? lei(ziVarf.bani) : "—",
+        cifre: [
+          { et: "Când", val: ziVarf.zi ? ziLunga(ziVarf.zi) : "—" },
+          { et: "Zile în interval", val: String(zileCerute) },
+          { et: "Zile cu vânzare", val: String(zile.filter((z) => nr(z.bani) > 0).length) },
+          { et: "Media zilei", val: lei(rez.baniPeZi) },
+        ],
+        text: "Media se împarte la TOATE zilele intervalului, nu doar la cele lucrate: duminicile închise trag media în jos, și așa trebuie — ele fac parte din lună la fel ca celelalte.",
+      },
+      felie: null,
+    };
+
+    const foaie = S.lupa === "felie" && S.lupaDate
+      ? (() => {
+        const f = S.lupaDate;
+        const inLei = f.peBani === true;
+        const od = f.od || {};
+        // Rândurile se aleg după CE ARE rândul de la server, nu după ce
+        // credem că e pe inel: produsele au copt/congelat, categoriile au
+        // câte produse cuprind, clienții au cont sau n-au. Scrise pe ramuri
+        // de „ce e pe inel acum”, foaia deschisă din lista de clienți a
+        // vederii B ar fi mințit ori de câte ori inelul stătea pe categorii.
+        const cifre = [];
+        if (od.bucati !== undefined) cifre.push({ et: "Bucăți", val: buc(od.bucati) });
+        if (od.bani !== undefined) cifre.push({ et: "Bani", val: lei(od.bani) });
+        if (od.comenzi !== undefined) cifre.push({ et: "Comenzi", val: String(od.comenzi) });
+        if (od.copt !== undefined) cifre.push({ et: "Copt · congelat", val: buc(od.copt) + " · " + buc(od.congelat) });
+        if (od.produse !== undefined) cifre.push({ et: "Produse în ea", val: String(od.produse) });
+        if (od.cont !== undefined) cifre.push({ et: "Are cont", val: od.cont ? "da" : "nu, comandă scrisă pe nume" });
+        cifre.push({ et: "Din inel", val: f.pct });
+        return {
+          eyebrow: f.rest ? "Restul inelului" : (f.eticheta || "Felie"),
+          titlu: f.nume,
+          mare: inLei ? lei(f.val) : buc(f.val) + " buc",
+          cifre: f.rest
+            ? (f.ale || []).slice(0, 8).map((x) => ({ et: x.nume, val: inLei ? lei(x.val) : buc(x.val) + " buc" }))
+            : cifre,
+          text: f.rest
+            ? "Feliile prea mici ca să se vadă, strânse la un loc. Nu sunt un produs: rândul ăsta există ca inelul să spună adevărul despre întreg. Tabelul de dedesubt le are pe toate, rând cu rând."
+            : "Apasă pe altă felie ca s-o compari. Tabelul de sub inel are toate rândurile din care e făcută felia asta.",
+        };
+      })()
+      : (FOI[S.lupa] || null);
+
+    /* ------------------------------------------------ ce se desenează ----- */
+
+    return {
+      meniu: gp.meniu("Statistici", S.auth),
+      navHere: "Statistici",
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      onNavKeep: (e) => e.stopPropagation(),
+      navWho: !!auth,
+      navAnon: false,
+      // Și `areVoie`, nu doar `!!auth`: rangul de sub nume e scris fix în
+      // marcaj („fondator”), iar între `gp.me()` și răspuns pagina poate
+      // desena o clipă învelișul întreg peste un cont fără drept — atunci
+      // pastila ar fi scris „fondator” peste numele unui șofer.
+      sideWho: !!auth && areVoie,
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+
+      // Ecranul de refuz vorbește despre CONTUL omului, deci nu se aprinde
+      // până nu se știe al cui e. Toate patru lacătele, ca în celelalte
+      // panouri: fără `!!auth` un `gp.me()` picat ar fi ridicat un refuz
+      // inventat peste un om despre care nu se aflase nimic.
+      blocked: S.loaded && !!auth && !areVoie && !S.eroare,
+      allowed: !S.loaded || !auth || areVoie || !!S.eroare,
+      blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces la statistici. Cifrele casei se deschid numai fondatorului — nici măcar administratorului, care conduce patiseria zi de zi.",
+      acasaHref: gp.primaPagina(auth),
+      acasaEt: "← Înapoi la panoul meu",
+      authName: auth ? auth.name : "",
+
+      // Subtitlul e o AFIRMAȚIE despre date, deci tace până când sunt date și
+      // tace pe eroare: „0 lei · 30 de zile” scris deasupra unei casete roșii
+      // sunt două propoziții care se bat cap în cap, iar omul pleacă crezând
+      // cifra — adică exact minciuna pe care caseta o repară.
+      sub: (!D || S.eroare) ? "" :
+        ziScurta(D.interval.deLa) + " – " + ziScurta(D.interval.panaLa)
+        + " · " + deZile(zileCerute)
+        + " · după " + (D.interval.baza === "comanda" ? "ziua comenzii" : "ziua livrării"),
+
+      areFiltre: spuse.length > 0,
+      filtreSpuse: spuse.join(" · "),
+      onSterge: () => this.setState({
+        variant: "", categorie: "", canal: "", onorare: "", zona: "", client: "", ciorna: null,
+      }, () => this.cere()),
+
+      vederi: [
+        vedereBtn("A", "Inelul zilei"),
+        vedereBtn("B", "Registrul"),
+        vedereBtn("C", "Tabloul de dimineață"),
+      ],
+      vedereA: S.vedere === "A",
+      vedereB: S.vedere === "B",
+      vedereC: S.vedere === "C",
+
+      eroare: S.eroare,
+      // Titlul spune care dintre cele două s-a întâmplat. Măsura e ce e deja
+      // pe ecran: când cifrele SUNT încărcate și numai reîmprospătarea a
+      // picat, „statisticile nu s-au încărcat” ar fi o propoziție falsă scrisă
+      // chiar deasupra unor cifre adevărate.
+      eroareTitlu: D ? "Cifrele nu s-au reîmprospătat." : "Statisticile nu s-au încărcat.",
+      onReincearca: () => {
+        // `eroare` se stinge ÎNAINTE de cerere, într-un `setState` cu
+        // callback: altfel un răspuns venit repede ar fi acoperit înapoi de
+        // caseta veche, iar butonul ar părea că n-a făcut nimic.
+        this.setState({ eroare: "" }, () => this.cere());
+      },
+
+      /* ---------------------------------------------- inelul, în A și în C */
+      inelAlt: "Inel dublu: pe cercul din afară felul mărfii, pe cel dinăuntru categoriile",
+      inelAfara,
+      inelIn,
+      inelMijloc: buc(totalBucati || totalFel),
+      inelMijlocSub: "bucăți vândute",
+      inelMijlocSubC: D ? "în " + deZile(zileCerute) : "bucăți",
+      feliiGol: !!D && inelIn.length === 0 && inelAfara.length === 0,
+
+      /* ---------------------------------------------- A · Inelul zilei ---- */
+      perioada, onPerioada,
+      optPerioade: [
+        { v: "30", l: "Ultimele 30 de zile" },
+        { v: "7", l: "Ultimele 7 zile" },
+        { v: "luna", l: "Luna aceasta" },
+        { v: "trecuta", l: "Luna trecută" },
+        { v: "an", l: "Anul acesta" },
+        { v: "", l: "Între două date…" },
+      ],
+      from: S.from, to: S.to,
+      onFrom: (e) => this.pune("from", e.target.value),
+      onTo: (e) => this.pune("to", e.target.value),
+      cete,
+      kpiuri: [
+        {
+          cls: "st-card st-kpi st-kpi--bani", cifCls: "st-cif",
+          cif: lei(rez.bani), den: "intrat din comenzi",
+          fin: lei(rez.baniPeZi) + " pe zi, în " + deZile(zileCerute),
+          onClick: lupa("bani"),
+        },
+        {
+          cls: "st-card st-kpi", cifCls: "st-cif",
+          // Cifra mare e `comenzi`, nu `predate`, fiindcă rândul de dedesubt e
+          // socotit pe `comenzi`: serverul împarte la toate comenzile neanulate,
+          // nu la cele predate (`api/routes/stats.php:229-231`). Cu `predate`
+          // sus, cardul ajungea să scrie „0 comenzi predate / 0,57 pe zi" —
+          // două cifre despre două mulțimi diferite, lipite una sub alta.
+          // Câte au fost predate se vede la un clic, în lupă.
+          cif: String(rez.comenzi || 0), den: "comenzi luate",
+          fin: String(rez.comenziPeZi || 0).replace(".", ",") + " pe zi · " + lei(rez.cos) + " una",
+          onClick: lupa("comenzi"),
+        },
+        {
+          cls: "st-card st-kpi", cifCls: "st-cif st-cif--nume",
+          cif: celMaiCerut ? celMaiCerut.nume : "—", den: "cel mai cerut produs",
+          fin: celMaiCerut ? buc(celMaiCerut.bucati) + " buc · " + lei(celMaiCerut.bani) : "nicio poziție pe interval",
+          onClick: lupa("bucati"),
+        },
+        {
+          cls: "st-card st-kpi", cifCls: "st-cif st-cif--nume",
+          cif: celMaiBun ? celMaiBun.nume : "—", den: "clientul care a adus cei mai mulți bani",
+          fin: celMaiBun ? deComenzi(celMaiBun.comenzi) + " · " + lei(celMaiBun.bani) : "nicio comandă pe interval",
+          onClick: lupa("client"),
+        },
+      ],
+
+      /* ---------------------------------------------- B · Registrul ------- */
+      cFrom: cio.from, onCFrom: puneCio("from"),
+      cTo: cio.to, onCTo: puneCio("to"),
+      cLivrare: cio.baza !== "comanda", onCLivrare: cioBaza("livrare"),
+      cComanda: cio.baza === "comanda", onCComanda: cioBaza("comanda"),
+      cVariant: cio.variant, onCVariant: puneCio("variant"),
+      cCategorie: cio.categorie, onCCategorie: puneCio("categorie"),
+      cZona: cio.zona, onCZona: puneCio("zona"),
+      cClient: cio.client, onCClient: puneCio("client"),
+      optFel: [{ v: "", l: "toate" }, { v: "copt", l: "gata de mâncat" }, { v: "congelat", l: "congelate" }],
+      optFelC: [{ v: "", l: "Toată marfa" }, { v: "copt", l: "Gata de mâncat" }, { v: "congelat", l: "Congelate" }],
+      optCategorii, optZone,
+      aplicaCls: neaplicat ? "st-aplica st-aplica--nou" : "st-aplica",
+      aplicaEt: neaplicat ? "Fă socoteala" : "Socoteala e la zi",
+      onAplica: () => {
+        if (!neaplicat) return;
+        this.setState(Object.assign({}, cio, { ciorna: null }), () => this.cere());
+      },
+
+      bTitlu,
+      bInterval: D ? ziScurta(D.interval.deLa) + " – " + ziScurta(D.interval.panaLa) + " · " + deZile(zileCerute) : "",
+      bNumarate: D
+        ? (rez.predate || 0) + " comenzi predate · " + (rez.anulate || 0) + " anulate · "
+          + (rez.nepredate || 0) + " încă nepredate"
+        : "",
+      bTrei: [
+        { val: intreg(rez.bani), sub: "lei, în " + deZile(zileCerute), onClick: lupa("bani") },
+        { val: intreg(rez.baniPeZi), sub: "lei pe zi, în medie", onClick: lupa("zile") },
+        { val: intreg(rez.cos), sub: "lei o comandă", onClick: lupa("cos") },
+      ],
+      bFel, bFelMijloc: buc(totalFel),
+      bCat, bCatMijloc: String(categorii.length),
+      bCatMijlocSub: categorii.length === 1 ? "categorie" : "categorii",
+
+      capClienti,
+      clienti: cliRanduri,
+      clientiSub: D
+        ? (D.clientiTotal > clienti.length
+          ? "Primii " + clienti.length + ", din " + D.clientiTotal + " clienți"
+          : "Toți cei " + clienti.length + (clienti.length === 1 ? " client" : " clienți"))
+        : "",
+      clientiComenzi: String(cliSum.com),
+      clientiBucati: buc(cliSum.buc),
+      clientiBani: lei(cliSum.bani),
+      clientiGol: !!D && clienti.length === 0,
+
+      capB,
+      totCopt: buc(sumar.copt), totCongelat: buc(sumar.cong),
+      totBucati: buc(sumar.buc), totBani: lei(sumar.bani),
+
+      /* ---------------------------------------------- C · Tabloul --------- */
+      scurte: [7, 30, 90, 365].map((z) => ({
+        et: z === 365 ? "1 an" : z + " z",
+        cls: zileCerute === z ? "st-segon" : "",
+        onClick: () => this.interval(z),
+      })),
+      variant: S.variant, onVariant: (e) => this.pune("variant", e.target.value),
+      categorie: S.categorie, onCategorie: (e) => this.pune("categorie", e.target.value),
+      zona: S.zona, onZona: (e) => this.pune("zona", e.target.value),
+      bazaSpus: "după " + (S.baza === "comanda" ? "ziua comenzii" : "ziua livrării"),
+      sparkGol,
+      placi: [
+        {
+          cls: "st-tile st-tile--pun", cifCls: "st-cif",
+          den: "Bani intrați", cif: lei(rez.bani),
+          tare: pasBani, tareCls: semnCls(pasBani),
+          fin: pasBani ? " față de perioada dinainte" : "prima perioadă măsurată",
+          areSpark: true, spark, onClick: lupa("bani"),
+        },
+        {
+          cls: "st-tile", cifCls: "st-cif",
+          // Aceeași pricină ca la cardul din inelul zilei: și pasul, și „pe zi"
+          // sunt socotite pe comenzile neanulate (`stats.php:230`, `:259`), deci
+          // cifra mare trebuie să fie tot aceea. Predatele rămân scrise în coada
+          // rândului, unde dala are loc pentru ele.
+          den: "Comenzi luate", cif: String(rez.comenzi || 0),
+          tare: pasComenzi, tareCls: semnCls(pasComenzi),
+          fin: (pasComenzi ? " · " : "") + String(rez.comenziPeZi || 0).replace(".", ",")
+            + " pe zi · " + (rez.predate || 0) + " predate",
+          areSpark: false, spark: [], onClick: lupa("comenzi"),
+        },
+        {
+          cls: "st-tile", cifCls: "st-cif",
+          den: "Coșul mediu", cif: lei(rez.cos),
+          tare: "", tareCls: "st-sus",
+          fin: buc(rez.bucatiPeComanda) + " bucăți o comandă",
+          areSpark: false, spark: [], onClick: lupa("cos"),
+        },
+        {
+          cls: "st-tile", cifCls: "st-cif st-cif--nume",
+          den: "Cel mai cerut", cif: celMaiCerut ? celMaiCerut.nume : "—",
+          tare: "", tareCls: "st-sus",
+          fin: celMaiCerut ? buc(celMaiCerut.bucati) + " buc · " + lei(celMaiCerut.bani) : "nicio poziție pe interval",
+          areSpark: false, spark: [], onClick: lupa("bucati"),
+        },
+        {
+          cls: "st-tile", cifCls: "st-cif st-cif--nume",
+          den: "Cel mai bun client", cif: celMaiBun ? celMaiBun.nume : "—",
+          tare: "", tareCls: "st-sus",
+          fin: celMaiBun ? deComenzi(celMaiBun.comenzi) + " · " + lei(celMaiBun.bani) : "nicio comandă pe interval",
+          areSpark: false, spark: [], onClick: lupa("client"),
+        },
+        {
+          cls: "st-tile", cifCls: "st-cif",
+          den: "Anulate", cif: String(rez.anulate || 0),
+          tare: pct(rez.anulate, nr(rez.comenzi) + nr(rez.anulate)), tareCls: "st-jos",
+          fin: " din comenzi · " + lei(rez.baniAnulati),
+          areSpark: false, spark: [], onClick: lupa("comenzi"),
+        },
+      ],
+
+      /* ---------------------------------------------- mesele -------------- */
+      capA, capC, randuri,
+      tabelSub: produse.length
+        ? produse.length + (produse.length === 1 ? " produs" : " produse") + " · apasă pe un cap de coloană ca să așezi lista după el"
+        : "",
+      tabelGol: !!D && produse.length === 0,
+      tabelGolLinie: spuse.length
+        ? "Niciun produs nu trece de filtrele puse. Șterge-le și se întorc toate."
+        : "Nicio poziție de comandă pe intervalul ăsta.",
+      subsol: D
+        ? "Banii se socotesc din pozițiile comenzilor (cantitate × preț de pe rând), deci o comandă fără nicio poziție nu se numără nicăieri. Felul mărfii — copt sau congelat — stă pe poziție, nu pe comandă. Comenzile din etapa „"
+          + (etape.anulata || "anulată") + "” sunt scoase din toate cifrele în afară de cele două care le numără anume."
+        : "",
+
+      /* ---------------------------------------------- lupa ---------------- */
+      lupa: !!foaie,
+      lupaEyebrow: foaie ? foaie.eyebrow : "",
+      lupaTitlu: foaie ? foaie.titlu : "",
+      lupaMare: foaie ? foaie.mare : "",
+      lupaCifre: foaie ? foaie.cifre : [],
+      lupaText: foaie ? foaie.text : "",
+      onLupaClose: () => this.setState({ lupa: "", lupaDate: null }),
+      onLupaKeep: (e) => e.stopPropagation(),
+    };
+  }
+}
+</script>
+</body>
+</html>

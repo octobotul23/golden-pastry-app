@@ -162,11 +162,18 @@ tabletele din laborator deschid mai departe. În sens invers, o tabletă care
 intră cu codul bun nu mai șterge greșelile strânse de altcineva: altfel fiecare
 intrare de dimineață i-ar fi dat celui de afară încă douăzeci de încercări.
 
-Schimbă-l când pleacă cineva din echipă: cine îl are vede fluxul de comenzi al
-zilei. **Salvarea codului nou închide pe loc tabletele deja deschise** — altfel
-schimbarea n-ar fi oprit nimic: sesiunea deschisă cu codul vechi ține șapte
-zile, deci exact omul de care te fereai ar fi văzut mai departe comenzile.
-Tabletele care rămân în laborator cer codul din nou, o singură dată.
+**Sesiunea tabletei nu se închide de la sine.** Tableta stă în laborator,
+pornită, și e folosită în fiecare zi; un ecran care cere codul în mijlocul turei
+oprește lucrul exact când nimeni n-are mâinile libere. Termenul ei e un an
+(`session_days_panou` din `api/config.php`), iar cât timp e folosită se împinge
+singur înainte — o tabletă din laborator nu ajunge practic niciodată la capăt.
+Una lăsată nefolosită un an cere codul din nou.
+
+Tocmai de-aceea, schimbă codul când pleacă cineva din echipă: cine îl are vede
+fluxul de comenzi al zilei. **Salvarea codului nou închide pe loc tabletele deja
+deschise** — și asta e acum SINGURA cale prin care se închide o tabletă, de
+vreme ce sesiunea ei nu mai expiră singură. Tabletele care rămân în laborator
+cer codul din nou, o singură dată.
 
 Comutatorul **Activ / Dezactivat** închide complet accesul cu cod, fără să
 ștergi codul — și, la fel, scoate afară sesiunile deja deschise.

@@ -2,7 +2,7 @@
 
 Aplicație multi-utilizator pentru o patiserie: site public de unde se comandă,
 panou de clienți, și panourile interne — laborator, șofer, depozit,
-administrare, setări.
+administrare, pontaj, setări, și statisticile casei.
 
 Datele stau pe server, într-o bază MySQL. O comandă plasată de pe telefonul
 unui client ajunge pe ecranul din laborator, pe alt dispozitiv — lucru care în
@@ -43,10 +43,10 @@ După orice modificare:
 node .claude/verifica-tot.mjs
 ```
 
-Rulează douăsprezece verificări statice și nouă suite pe serverul local — peste
-nouă sute de probe, în câteva minute. Se poate rula de câte ori vrei: la final,
-`curata-probe` scoate din baza de
-date produsele, cererile și comenzile de probă. Fără el, pagina Catalog se
+Rulează 30 de verificări statice și 71 de suite pe serverul
+local — peste patru mii de probe, în câteva minute. Se poate rula de câte ori
+vrei: la final, `curata-probe` scoate din baza de date produsele, cererile și
+comenzile de probă. Fără el, pagina Catalog se
 umple de „Ștrudel de probă · SCOS DIN CATALOG", fila „Cereri de pe site" de
 cereri de la „Proba varianta", iar registrul de comenzi ajunge la cinci sute de
 rânduri, toate din aceeași zi. Rulează și separat:
@@ -56,6 +56,14 @@ node .claude/curata-probe.mjs
 ```
 
 Refuză să pornească pe altă bază decât cea de dezvoltare.
+
+**Dă-i probei tale nume care începe cu „Probă ".** Atât: curățenia îl șterge
+fiindcă așa se numește, fără să mai trebuiască trecut în vreo listă. Numele care
+nu țin convenția se scriu de mână în `curata-probe.mjs`, iar dacă uiți, scriptul
+îți spune la sfârșit ce n-a putut lua. Nu e o formalitate: trei probe își
+scriau numele printr-un parametru, curățenia nu le vedea, și s-au strâns tăcut
+1746 de comenzi — destule cât o zi să treacă de tăietura de 500 de rânduri pe
+pagină și o probă despre cu totul altceva să înceapă să pice.
 
 Probele pentru pagina publică au nevoie de pachetul construit și servit; fără
 el sunt sărite, nu raportate ca eșec:
@@ -81,7 +89,7 @@ probele cer adresa IPv4. Pornit greșit, serverul răspunde în browser, dar
 | `check-secrets` | parole sau tokenuri rămase în paginile care ajung în browser |
 | `check-dates` | date calendaristice scrise în cod |
 | `check-meniu` | meniul lateral diferit de la un panou la altul |
-| `check-site-public` | reparațiile din pagina publică: coșul, telefonul, catalogul, traducerile |
+| `check-site-public` | reparațiile din pagina publică: coșul, cantitatea scrisă de mână, telefonul, catalogul, traducerile |
 | `check-poze` | sloturile de poze: atingerea pe telefon, slotul gol, trasul cu mouse-ul — și în sursă, și în pachet |
 | `check-setari` | butonul de test din Setări nu mai șterge modificările nesalvate |
 | `check-deploy` | pachetul de publicare: `.htaccess`, `robots.txt`, rescrierile din pagini |
@@ -99,6 +107,7 @@ clientului anunța „3 zile până la comandă" pentru o comandă de azi.
 |---|---|
 | `test-instalare.php` | instalarea de la zero: schema, primul cont, codul tabletelor |
 | `test-api` | drepturi pe roluri, sesiuni, CSRF, limitarea autentificărilor, CORS |
+| `test-sesiune-tableta` | tableta din laborator nu se deconectează de la sine, dar sesiunea unui om se închide ca până acum, iar schimbarea codului o scoate afară pe loc |
 | `test-flow` | cererea de pe site devine comandă și ajunge în laborator |
 | `test-parola` | parola uitată: linkul de pe e-mail, tokenul de unică folosință, sesiunile închise |
 | `test-settings` | setări, liste editabile, ruta șoferului, scăderea din depozit |
@@ -117,8 +126,8 @@ node .claude/build-deploy.mjs
 
 Construiește `deploy/`, cu câte un folder pentru fiecare subdomeniu. Legăturile
 din același subdomeniu rămân relative, cele care trec dintr-unul în altul devin
-adrese complete. Pașii de urcat pe cPanel sunt în
-[docs/03-publicare-cpanel.md](docs/03-publicare-cpanel.md).
+adrese complete. Pașii de urcat pe server sunt în
+[docs/08-publicare-vps-hostinger.md](docs/08-publicare-vps-hostinger.md).
 
 Pachetul se poate proba local, ca și cum ar fi pe server:
 
@@ -136,8 +145,10 @@ de conectare.
 
 - [docs/01-instalare-locala.md](docs/01-instalare-locala.md) — mediul de test
 - [docs/02-panoul-de-setari.md](docs/02-panoul-de-setari.md) — WhatsApp, liste, cod tablete
-- [docs/03-publicare-cpanel.md](docs/03-publicare-cpanel.md) — publicarea, pas cu pas
+- [docs/08-publicare-vps-hostinger.md](docs/08-publicare-vps-hostinger.md) — instalarea de la zero pe un VPS, pas cu pas
+- [docs/09-actualizare-vps.md](docs/09-actualizare-vps.md) — actualizarea VPS-ului cu un singur script
 - [docs/04-catalogul-de-produse.md](docs/04-catalogul-de-produse.md) — produse, grupe, prețuri, ce vede Google
 - [docs/05-conturile-de-client.md](docs/05-conturile-de-client.md) — comanda de pe cont, istoricul, comanda luată la telefon
-- [docs/06-defecte-de-reparat.md](docs/06-defecte-de-reparat.md) — **168 de defecte găsite**, toate reparate, fiecare cu proba ei
+- [docs/06-defecte-de-reparat.md](docs/06-defecte-de-reparat.md) — **305 de defecte găsite**, 303 reparate, fiecare cu proba ei
 - [docs/07-actualizari.md](docs/07-actualizari.md) — cum publici o modificare **după** ce site-ul merge deja, fără să pierzi date
+- [docs/10-trecerea-cu-ochii.md](docs/10-trecerea-cu-ochii.md) — **proba de dinaintea publicării**: ce apeși și ce trebuie să vezi, în douăzeci de minute

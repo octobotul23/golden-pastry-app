@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comanda mea · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,7 @@
 <x-dc>
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -23,6 +29,24 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 }
 </style>
 </helmet>
+
+<!-- Cererea de date a căzut. Caseta stă în afara celor DOUĂ vederi ale paginii
+     — și a ecranului de intrare, și a paginii cu comenzi — ca să se vadă
+     oricare dintre ele s-ar desena dedesubt. Iar la o cerere căzută se
+     desenează vederea cu comenzi: pagina n-a aflat dacă omul are sesiune,
+     deci ecranul de intrare tace (`locked` cere `S.sesiuneStiuta`, adică un
+     răspuns primit de la server). Pusă înăuntrul unei vederi, caseta ar fi lipsit tocmai
+     de pe ecranul care se desenează atunci, iar omul ar fi crezut că i-a
+     expirat parola, când de fapt serverul tace. -->
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div data-cl="phone" style="padding:14px 16px 0">
+<div class="h-alert h-alert--danger" style="border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:46px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</div>
+</sc-if>
 
 <sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.18), transparent 70%)">
@@ -49,7 +73,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p style="margin:0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">Vezi doar comanda ta: în câte zile vine și, în ziua livrării, câte opriri mai sunt până la tine.</p>
 </div>
 <div style="display:grid;grid-template-columns:1fr;gap:8px">
-<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.10);color:var(--h-cream-100)">← Ești din echipă? Alege panoul</a>
+<a href="{{ staffHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.10);color:var(--h-cream-100)">← Ești din echipă? Alege panoul</a>
 </div>
 </div>
 </div>
@@ -64,9 +88,42 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:17px;font-weight:600">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ clientName }}</span>
 </div>
-<a href="Parola.dc.html" title="Schimbă-ți parola" style="flex:none;display:flex;align-items:center;min-height:40px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:11px;color:var(--h-cream-100);font-size:13px;font-weight:600;text-decoration:none">Parola</a>
-<button type="button" onClick="{{ onLogout }}" style="flex:none;min-height:40px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:11px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:13px;font-weight:600;cursor:pointer">Ieși</button>
+<button class="gp-burger gp-burger--mereu" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
+
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
 
 <!-- Contul are încă parola pusă de administrator. Steagul se scria în baza de date
      la fiecare cont creat sau resetat și nu-l citea nicio pagină: clientul
@@ -279,20 +336,25 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
-<sc-if value="{{ hasReferral }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ hasReferral }}" hint-placeholder-val="{{ true }}">
 <div class="h-card" style="padding:18px;border-radius:20px;display:flex;flex-direction:column;gap:12px">
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <span class="h-eyebrow" style="font-size:12px">Recomandă Golden Pastry</span>
+<sc-if value="{{ refHasCode }}" hint-placeholder-val="{{ true }}">
 <span class="h-badge h-badge--honey h-numeric" style="font-size:11px;margin-left:auto">{{ refCode }}</span>
+</sc-if>
 </div>
-<p style="margin:0;font-size:14px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">Trimite linkul de mai jos cuiva care ar comanda de la noi. Când își face cont pe el, rămâne trecut că a venit de la tine.</p>
+<p style="margin:0;font-size:14px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">{{ refText }}</p>
+<sc-if value="{{ refHasCode }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <input class="h-input h-numeric" type="text" value="{{ refLink }}" readOnly="{{ true }}" onFocus="{{ onRefPick }}" style="flex:1;min-width:200px;height:46px;font-size:13px;background:var(--h-bg-sunk)">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onRefCopy }}" style="min-height:46px;font-size:14px;flex:none">Copiază</button>
 </div>
+</sc-if>
 <sc-if value="{{ refMsg }}" hint-placeholder-val="{{ false }}">
 <span style="font-size:13px;line-height:1.5;color:var(--h-fg-subtle)">{{ refMsg }}</span>
 </sc-if>
+<a class="h-btn h-btn--secondary" href="Recomandari.dc.html" style="min-height:46px;font-size:14px;align-self:flex-start;text-decoration:none">{{ refGoLabel }}</a>
 </div>
 </sc-if>
 
@@ -312,6 +374,23 @@ const GPDAYS = gp.days(7);
 const TODAY = GPDAYS[0].v;
 const DAYS = GPDAYS.map(d => ({ v: d.v, l: d.long }));
 const CH = { Ridicare: "h-badge h-badge--honey", Livrare: "h-badge h-badge--accent", Angro: "h-badge h-badge--jam" };
+// Cine vine cu mașina și cine vine la ușa laboratorului.
+//
+// Pagina asta întreba, în șapte locuri, dacă modul se cheamă chiar „Livrare"
+// sau chiar „Ridicare". Dar modurile se scriu din Setări: patiseria care își
+// botează cursa „Curier" sau „Tur A" primea, pe pagina clientului, „se
+// livrează" pentru o comandă pe care omul trebuia s-o ridice — și „Livrată"
+// pe una ridicată de el. Un „Angro" livrat era numit tot livrare din
+// întâmplare, fiindcă nu se chema „Ridicare"; unul de ridicat, la fel.
+//
+// Regula adevărată e lista `fulfillment_pickup` din Setări, aceeași după care
+// serverul umple ruta șoferului (`GET /routes`: fulfillment NOT IN pickup).
+// Copiată cuvânt cu cuvânt din „Administrare Comenzi.dc.html":1092, ca cele
+// două pagini să nu se despartă la prima corectură.
+//
+// Rezerva `chan === "Livrare"` acoperă clipa dinainte ca `gp.lists()` (:424) să
+// se întoarcă; după aceea pagina se redesenează oricum, cu `listsReady`.
+const CU_MASINA = (chan) => { const p = gp.pickupFulfillments(); return p.length ? p.indexOf(chan) < 0 : chan === "Livrare"; };
 const CLIENT_ST = {
   "În așteptare": { l: "Programată", c: "h-badge" },
   "La dospit": { l: "Se prepară", c: "h-badge h-badge--warning" },
@@ -367,11 +446,33 @@ const qty = (o) => (o.items || []).reduce((a, i) => a + gp.qty(i.q), 0);
 const logAct = () => {};
 
 class Component extends DCLogic {
-  state = { orders: [], requests: [], auth: null, users: [], pick: "", lu: "", lp: "", lerr: "", loaded: false,
+  state = { navOpen: false, orders: [], requests: [], auth: null, users: [], pick: "", lu: "", lp: "", lerr: "", loaded: false, eroare: "",
+    // A RĂSPUNS serverul la întrebarea „am sesiune?" — oricare ar fi fost
+    // răspunsul. Nu e același lucru cu `loaded` (care spune doar că lanțul
+    // s-a terminat, și e adevărat și după o picare) și nici cu lipsa unui
+    // motiv pe ecran, care a fost lacătul de până acum. Deosebirea se vede pe
+    // vizitatorul care chiar N-ARE sesiune: serverul îi răspunde `user: null`,
+    // ecranul de intrare se desenează, el începe să tasteze ce scrie pe hârtia
+    // de la patiserie — iar la următoarea tură a buclei de cinci secunde o
+    // singură cerere pierdută aprindea `eroare` și îi lua formularul de sub
+    // degete, cu tot cu tastatura de pe telefon. Cu steagul ăsta, un răspuns
+    // primit o dată nu se mai uită.
+    sesiuneStiuta: false,
+    // Cererile neconfirmate vin din altă cerere decât comenzile, iar refuzul
+    // ei era înghițit în tăcere (`.catch(() => [])`) — ceea ce ȘTERGEA și
+    // cererile aduse cu bine în tura de dinainte, și lăsa cardul „Nicio
+    // comandă activă" să se aprindă peste ele. Adică exact defectul pe care
+    // pagina asta a fost scrisă să-l repare: omul suna, sau comanda a doua
+    // oară. Aici stă motivul lui, ca să nu se mai piardă.
+    cerEroare: "",
     // Istoricul: care comandă e desfăcută și dacă s-au cerut toate.
     openPast: {}, pastAll: false,
     // Mesajul de sub linkul de recomandare („Link copiat.").
-    refMsg: "" };
+    refMsg: "",
+    // Fereastra spre ruta de azi, așa cum o dă `GET /routes/mine`. `null`
+    // înseamnă „încă nu se știe" — și atunci cartonașul de rută nu se
+    // desenează deloc, în loc să inventeze un număr.
+    ruta: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -423,16 +524,49 @@ class Component extends DCLogic {
     return gp.me()
       .then((user) => {
         if (!user) {
-          return this.setState({ auth: null, orders: [], requests: [], loaded: true });
+          // „N-ai sesiune" e un RĂSPUNS al serverului, nu o tăcere a lui.
+          // Două urmări, amândouă scrise aici:
+          //
+          // `sesiuneStiuta: true` — de acum ecranul de intrare se desenează
+          // fiindcă s-a AFLAT că omul n-are cont deschis, nu fiindcă nu s-a
+          // aprins nicio casetă. Așa nu i-l mai poate lua de sub degete o tură
+          // picată a buclei de cinci secunde.
+          //
+          // `eroare: ""` — motivul unei ture de dinainte nu mai e adevărat:
+          // serverul tocmai a răspuns. Fără el, o cădere de rețea urmată de o
+          // revenire ar lăsa caseta aprinsă peste ecranul de intrare. (Nu
+          // formularul ar fi lipsit — butonul „Încearcă din nou" stinge
+          // `eroare` și l-ar fi scos la iveală — ci omul ar fi citit un motiv
+          // stins de mult, lângă un formular care merge.)
+          return this.setState({ auth: null, orders: [], requests: [], loaded: true, eroare: "", sesiuneStiuta: true });
+        }
+        // Cu parola provizorie, serverul refuză cu 403 ORICE altă cerere decât
+        // schimbarea parolei. Pagina asta o lăsa pe om înăuntru, cererea de
+        // comenzi pica tăcut și ecranul zicea „Nicio comandă activă" — fals.
+        // Îl ducem unde poate face singurul lucru care merge: Parola.
+        if (user.mustChangePassword === true) {
+          location.href = "Parola.dc.html";
+          return new Promise(() => {});
         }
         this.setState({
-          auth: { u: user.username, name: user.customerName || user.name, role: user.role,
+          // `gp.auth()` dă forma pe care o cere meniul — rol, cod de
+          // recomandare, cont de tură — iar peste ea se pun cele trei
+          // câmpuri ale paginii. Numele se schimbă dinadins: pe ecranul
+          // clientului contează firma pe care o vede pe bon, nu numele
+          // contului cu care a intrat.
+          auth: Object.assign({}, gp.auth(user), {
+            name: user.customerName || user.name,
             // Steagul spune ca pe cont e inca parola pusa de administrator.
             temp: user.mustChangePassword === true,
             // Codul de recomandare al contului, cu linkul gata de trimis.
             // Lipsește pe o instalare fără migrarea 007 — atunci cardul de
             // recomandare pur și simplu nu se desenează.
-            ref: user.referral || null }
+            ref: user.referral || null,
+            // De unde vine contul. `null` pe o instalare fără migrarea 010 —
+            // și atunci ecranul gol își păstrează textul de dinainte, fiindcă
+            // regula nici nu se aplică acolo.
+            origine: user.origine || null,
+          })
         });
         // Cererile se cer numai pentru clienți: personalului serverul i le dă
         // pe toate ale laboratorului, iar aici ar însemna cinci sute de rânduri
@@ -443,18 +577,57 @@ class Component extends DCLogic {
         // singurul care nu-l afla. Filtrul rămâne pe server — un client vede
         // oricum doar cererile lui, `route_requests_list` le taie pe
         // `customer_id`.
+        //
+        // Refuzul nu se mai înghite: `.catch(() => [])` întorcea o listă
+        // GOALĂ, care ștergea și cererile aduse cu bine în tura de dinainte,
+        // iar cardul „Nicio comandă activă" se aprindea peste ele — fără
+        // niciun motiv pe ecran, fiindcă `eroare` rămânea stinsă. Clientul
+        // care tocmai trimisese o comandă din magazin își vedea cartonașul
+        // dispărând și citea „sună-ne să o adăugăm". Acum se întoarce o
+        // pereche: ori lista, ori motivul.
         const cereri = user.role === 'client'
           ? gp.get('/requests?status=nou,respinsa')
-              .then((r) => (r.requests || []).map(gp.toPageRequest))
-              .catch(() => [])
-          : Promise.resolve([]);
-        return Promise.all([gp.get('/orders'), cereri]).then(([r, cer]) => this.setState({
+              .then((r) => ({ ok: true, lista: (r.requests || []).map(gp.toPageRequest) }))
+              .catch((e) => ({ ok: false, motiv: gp.motiv(e, "cererile tale trimise din magazin") }))
+          : Promise.resolve({ ok: true, lista: [] });
+        // Fereastra spre ruta de azi. Numai pentru clienți: personalul are
+        // ecranul șoferului întreg, iar serverul i-ar întoarce oricum zero
+        // opriri „ale lui" — adică o cerere la fiecare cinci secunde,
+        // degeaba. Un eșec n-are voie să ascundă comenzile, cum n-au voie
+        // nici cererile: rămâne `null`, adică „nu se știe".
+        const ruta = user.role === 'client'
+          ? gp.get('/routes/mine').catch(() => null)
+          : Promise.resolve(null);
+        return Promise.all([gp.get('/orders'), cereri, ruta]).then(([r, cer, rt]) => this.setState({
           orders: (r.orders || []).map(gp.toPageOrder),
-          requests: cer,
-          loaded: true
+          // Cererile picate NU se șterg de pe ecran: rămân cele de dinainte,
+          // iar motivul spune că n-au putut fi împrospătate.
+          requests: cer.ok ? cer.lista : this.state.requests,
+          cerEroare: cer.ok ? "" : cer.motiv,
+          ruta: rt,
+          loaded: true,
+          sesiuneStiuta: true,
+          // O tură reușită stinge caseta: dacă serverul tocmai a răspuns, ce
+          // scria în ea nu mai e adevărat. Numai pe a ei: motivul cererilor
+          // are câmpul lui, scris de rândul de mai sus.
+          eroare: ""
         }));
       })
-      .catch(() => this.setState({ loaded: true }));
+      // O eroare de rețea sau de server NU înseamnă „n-ai comenzi". Comenzile
+      // deja aduse rămân pe ecran, iar lipsa lor se spune ca ce e: nu s-au
+      // putut citi. Înainte, orice cădere a serverului arăta clientului „Nu
+      // găsim nicio comandă pe numele tău… sună-ne" — și omul chiar suna.
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // Sesiunea expirată are drumul ei, deci aici rămân doar căderile
+        // adevărate: rețeaua, serverul, adresa necunoscută. `loaded` rămâne
+        // adevărat — o pagină care se învârte la nesfârșit e altă minciună.
+        // Lacătul care oprește cardul „Nicio comandă activă" e `eroare`, nu
+        // `loaded`: cardul acela e o afirmație despre comenzile omului, iar
+        // pagina n-a apucat s-o verifice. Vorbele le scrie `gp.motiv()`,
+        // aceleași ca în restul casei — pagina nu-și mai scrie mesajul ei.
+        else this.setState({ eroare: gp.motiv(e, "comenzile tale"), loaded: true });
+      });
   }
 
   renderVals() {
@@ -466,7 +639,7 @@ class Component extends DCLogic {
       const hit = (S.users || []).find(x => x.u === auth.u);
       return hit ? roleOf(hit) : (auth.role || "client");
     })() : "";
-    const isPreview = role === "admin";
+    const isPreview = gp.eAdmin(role);
 
     const custOf = (u) => {
       const hit = (S.users || []).find(x => x.u === u);
@@ -475,7 +648,18 @@ class Component extends DCLogic {
     const custList = Array.from(new Set(S.orders.map(o => o.cust))).sort((a, b) => a.localeCompare(b, "ro"));
     const cust = isPreview ? (S.pick || custList[0] || "") : (custOf(auth ? auth.u : "") || (auth ? auth.name : ""));
 
-    const staffBlocked = role === "angajat";
+    // Orice cont care nu e de client (și nu e adminul în previzualizare) e
+    // personal: serverul îi dă TOATE comenzile laboratorului, iar ecranul
+    // ăsta le-ar arăta drept „Comanda ta". Înainte se oprea doar „angajat";
+    // managerul și agentul de vânzări vedeau comanda altcuiva ca pe a lor.
+    const staffBlocked = !!role && role !== "client" && !gp.eAdmin(role);
+    // Contul făcut singur pe site, pe care casa nu l-a recunoscut încă. Până
+    // atunci comenzile luate la telefon pe numele lui nu i se leagă de cont
+    // (`client_by_name()`, api/lib/orders.php), deci ecranul ăsta chiar E gol —
+    // și omul trebuie să afle DE CE, altfel textul de dinainte („sună-ne să o
+    // adăugăm") îl trimite să ceară a doua oară o comandă pe care casa o are.
+    const nerecunoscut = !!(auth && auth.origine
+      && auth.origine.self === true && auth.origine.vouched === false);
     // Serverul îi trimite clientului exclusiv comenzile contului lui: filtrul
     // stă în interogarea SQL, pe `customer_id`. Filtrarea încă o dată, după
     // numele afișat, punea față în față numele viu al contului și numele
@@ -533,26 +717,35 @@ class Component extends DCLogic {
     const stIstoric = (o) => anulata(o)
       ? { l: "Anulată", c: "h-badge h-badge--danger" }
       : o.status === gp.done()
-        ? { l: o.chan === "Ridicare" ? "Ridicată" : "Livrată", c: "h-badge h-badge--success" }
+        ? { l: CU_MASINA(o.chan) ? "Livrată" : "Ridicată", c: "h-badge h-badge--success" }
         : (CLIENT_ST[o.status] || { l: o.status, c: "h-badge" });
 
-    // Poziția pe ruta zilei o știe numai serverul: ordinea se stabilește în
-    // Administrare și se scrie pe comandă, în `route_seq`. Pagina clientului
-    // primește de la /orders exclusiv comenzile lui, deci lista de „opriri" pe
-    // care și-o construia singură avea un singur element — al lui — și de acolo
-    // ieșea, în fiecare dimineață, „Ești următoarea oprire", chiar dacă era a
-    // noua din douăsprezece; textul rămânea neschimbat oricâte opriri făcea
-    // șoferul înaintea lui. Acum pagina folosește singurul lucru adevărat pe
-    // care îl are: locul comenzii în ruta zilei, numărat de la zero. Cât timp
-    // ruta nu e aranjată, câmpul lipsește — și atunci pagina spune că nu se
-    // știe încă, în loc să inventeze un număr.
+    // Câte opriri mai are șoferul până la tine — cifra o dă serverul, nu
+    // pagina. `GET /orders` îi dă clientului exclusiv comenzile LUI, deci
+    // lista de „opriri" pe care pagina și-o construia singură avea un singur
+    // element — al lui — și de acolo ieșea, în fiecare dimineață, „Ești
+    // următoarea oprire", chiar dacă era a noua din douăsprezece.
+    //
+    // Nici `route_seq` nu era răspunsul, deși pare: el e locul din ruta
+    // AȘEZATĂ, nu numărul opririlor rămase. Unui client de pe locul nouă i
+    // se spunea „opt opriri înaintea ta" și după ce șoferul predase deja
+    // cinci comenzi — cifra nu se mișca toată ziua. `GET /routes/mine`
+    // numără numai opririle NELIVRATE, deci scade pe măsură ce mașina se
+    // apropie: face exact ce crede omul că face.
     let route = { show: false };
-    if (first && days === 0 && first.chan === "Livrare") {
-      const livrata = first.status === gp.done();
-      const poz = typeof first.routeSeq === "number" ? first.routeSeq : null;
+    const rt = S.ruta;
+    const rand = first && rt && Array.isArray(rt.mine)
+      ? rt.mine.filter((m) => m.id === first.id)[0] || null
+      : null;
+    if (rand && days === 0 && CU_MASINA(first.chan)) {
+      const livrata = rand.delivered === true;
+      // Serverul dă `stopsBefore` pentru fiecare oprire nelivrată, deci
+      // `null` aici înseamnă ori „livrată", ori un răspuns pe care pagina
+      // nu-l înțelege. În al doilea caz nu se inventează o cifră.
+      const poz = typeof rand.stopsBefore === "number" ? rand.stopsBefore : null;
       const unde = [
-        first.zone ? "zona " + first.zone : "",
-        first.slot ? "intervalul " + first.slot : ""
+        rand.zone ? "zona " + rand.zone : "",
+        rand.slot ? "intervalul " + rand.slot : ""
       ].filter(Boolean).join(", ");
       route = {
         show: true,
@@ -560,20 +753,21 @@ class Component extends DCLogic {
         label: livrata
           ? "Comanda ta a fost livrată"
           : poz === null
-            ? "Ordinea opririlor nu e stabilită încă"
+            ? "Nu se știe încă a câta oprire ești"
             : poz === 0
-              ? "Ești prima oprire a zilei"
+              ? "Ești următoarea oprire"
               : poz === 1
                 ? "o oprire înaintea ta"
                 : poz + " opriri înaintea ta",
         driver: !showZone ? "" : livrata
           ? "Mulțumim! Ne vedem la comanda următoare."
-          : poz === null
-            ? "Îți spunem aici a câta oprire ești, imediat ce se aranjează ruta zilei."
-            : unde ? "Livrarea ta e trecută pe " + unde + "." : "",
-        badge: livrata ? "Livrată" : poz === null ? "Ruta se aranjează" : "Pe rută",
+          : unde ? "Livrarea ta e trecută pe " + unde + "." : "",
+        badge: livrata ? "Livrată" : poz === null ? "Se socotește" : "Pe rută",
         cls: livrata ? "h-badge h-badge--success" : poz === null ? "h-badge" : "h-badge h-badge--accent",
-        total: poz === null ? "" : "tu ești oprirea " + (poz + 1) + " de azi"
+        // Ziua întreagă, nu doar comanda ta: câte opriri mai are șoferul și
+        // în ce zone. Fraza o scrie `gp.rutaRezumat()`, aceeași și pe
+        // ecranul agentului — două copii s-ar fi depărtat la prima corectură.
+        total: gp.rutaRezumat(rt)
       };
     }
 
@@ -584,9 +778,19 @@ class Component extends DCLogic {
 
       try {
         const user = await gp.login(u, p);
-        if (user.role === "angajat") {
-          await gp.logout();
-          return set({ lerr: "Contul „" + user.name + "” e cont de angajat — folosește panourile de lucru." });
+        if (user.mustChangePassword === true) {
+          location.href = "Parola.dc.html";
+          return;
+        }
+        // Ecranul ăsta e al clientului. Cine își scrie aici contul de lucru a
+        // nimerit ușa greșită — dar parola lui a fost bună, iar serverul i-a
+        // deschis deja sesiunea. Până acum i-o ștergeam înapoi și îi arătam un
+        // refuz, adică îl pedepseam pentru o legătură apăsată greșit: se logase,
+        // și tot „nu te poți loga" scria pe ecran. Acum îl ducem unde îi e
+        // locul, pe aceeași listă care duce pe toată lumea acasă după intrare.
+        if (user.role !== "client" && !gp.eAdmin(user)) {
+          location.href = gp.primaPagina(user);
+          return;
         }
         set({ lu: "", lp: "", lerr: "" });
         this.pull();
@@ -596,12 +800,68 @@ class Component extends DCLogic {
     };
 
     return {
-      locked: S.loaded && !auth, unlocked: !S.loaded || !!auth,
+      // Sertarul de meniu, același ca în panouri. Pagina asta n-a avut
+      // niciunul: din ea se ieșea doar cu „Ieși" și cu legătura spre
+      // parolă, iar clientul care recomandă n-avea de unde ajunge la
+      // câștigul lui decât derulând sub toată lista de comenzi.
+      //
+      // Ce vede în el ține de rol: un client fără cod de recomandare
+      // n-are intrarea „Recomandări", fiindcă i s-ar deschide o pagină
+      // goală. Hotărăște `gp.meniu()`, nu pagina.
+      meniu: gp.meniu("Comanda mea", auth),
+      navHere: "Comanda mea",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => set({ navOpen: true }),
+      onNavClose: () => set({ navOpen: false }),
+      onNavKeep: (e) => e.stopPropagation(),
+      navWho: !!auth,
+      navAnon: false,
+      authName: auth ? auth.name : "",
+      // Lacătul e `sesiuneStiuta`, nu lipsa unui motiv pe ecran: „omul ăsta
+      // n-are sesiune" e o afirmație, și se poate face numai după ce serverul
+      // a răspuns. Când `gp.me()` pică de rețea, catch-ul pune `loaded: true`
+      // și lasă `auth` gol — fără lacăt, ecranul de intrare îi cerea
+      // utilizatorul și parola tocmai clientului care E conectat, doar că
+      // serverul tace. El își căuta pe hârtie ce i s-a dat la deschiderea
+      // contului, `doLogin` pica și ea, iar sub prima eroare se aduna a doua.
+      //
+      // De ce nu `!S.eroare`, cum era până acum: `eroare` se aprinde la ORICE
+      // tură picată, inclusiv după ce pagina a aflat deja răspunsul. Pe
+      // vizitatorul care chiar n-are sesiune, o singură cerere pierdută din
+      // bucla de cinci secunde îi lua formularul de sub degete și punea în
+      // locul lui o casetă roșie peste o pagină goală. Adică minciuna se muta
+      // de pe clientul conectat pe omul căruia patiseria tocmai îi dăduse
+      // datele de intrare pe hârtie. `sesiuneStiuta` nu se stinge niciodată
+      // înapoi, deci răspunsul primit o dată rămâne bun.
+      //
+      // `unlocked` rămâne perechea negată — `sc-if` primește o valoare, nu o
+      // expresie — ca ecranul să nu rămână nici gol, nici mincinos: cât nu se
+      // știe, sub casetă stă butonul de reîncercare, nu un formular de intrare.
+      locked: S.sesiuneStiuta && !auth,
+      unlocked: !S.sesiuneStiuta || !!auth,
       lu: S.lu, lp: S.lp, lerr: S.lerr,
       onLu: (e) => set({ lu: e.target.value, lerr: "" }),
       onLp: (e) => set({ lp: e.target.value, lerr: "" }),
       onKey: (e) => { if (e.key === "Enter") doLogin(); },
       onLogin: () => doLogin(),
+      // Pe clienti.goldenpastry.ro pagina de intrare ascunde modul de echipă
+      // (GP_SITE === "clienti"), deci legătura trebuie să ducă la lab., nu la
+      // intrarea de aici. Local, unde totul e pe o singură origine, rămâne
+      // Intrare.dc.html.
+      staffHref: (() => {
+        try {
+          const h = location.hostname;
+          if (window.GP_SITE && h && h !== "localhost" && !/^[0-9.]+$/.test(h) && !h.endsWith(".test")) {
+            return location.protocol + "//lab." + h.split(".").slice(-2).join(".") + "/";
+          }
+        } catch (e) { /* noop */ }
+        return "Intrare.dc.html";
+      })(),
       onLogout: () => {
         gp.logout().finally(() => set({ auth: null, orders: [] }));
       },
@@ -610,13 +870,30 @@ class Component extends DCLogic {
       mustChange: !!(auth && auth.temp),
 
       /* --- recomandări --- */
-      // Cardul apare doar dacă serverul a trimis chiar un cod: pe o instalare
-      // fără migrarea 007 câmpul lipsește cu totul. În previzualizarea de
-      // administrator nu-l arătăm — acolo pagina imită contul altcuiva, iar
-      // linkul afișat ar fi al adminului, nu al clientului ales din listă.
-      hasReferral: !isPreview && !!(auth && auth.ref && auth.ref.code && auth.ref.link),
+      // Cardul se arată oricui e conectat cu adevărat, CU sau FĂRĂ cod.
+      //
+      // Până acum cerea `auth.ref.code`, deci tocmai omul care n-avea cod nu-l
+      // vedea. Clientul n-are bară laterală și nici meniul panourilor, așa că
+      // acest card e singura lui ușă către pagina „Recomandări" — adică singurul
+      // loc de unde își poate face un cod. Ascuns exact pentru el, cardul închidea
+      // ușa pe dinăuntru: același defect ca în Partea B, pe altă pagină.
+      //
+      // Serverul nu ne poate spune de ce lipsește codul: `referral_public()`
+      // întoarce `null` și când omul n-are cod, și când migrarea 007 n-a fost
+      // rulată. Nu inventăm o deosebire pe care n-o avem — ușa se arată, iar
+      // pagina „Recomandări" spune ea, acolo, de ce nu se poate face unul.
+      //
+      // În previzualizarea de administrator rămâne ascuns: acolo pagina imită
+      // contul altcuiva, iar codul și linkul afișate ar fi ale adminului, nu ale
+      // clientului ales din listă.
+      hasReferral: !isPreview && !!auth,
+      refHasCode: !!(auth && auth.ref && auth.ref.code && auth.ref.link),
       refCode: auth && auth.ref ? auth.ref.code : "",
       refLink: auth && auth.ref ? auth.ref.link : "",
+      refText: auth && auth.ref && auth.ref.code
+        ? "Trimite linkul de mai jos cuiva care ar comanda de la noi. Când își face cont pe el, rămâne trecut că a venit de la tine — și câștigi din fiecare comandă a lui."
+        : "N-ai încă un cod de recomandare. Îți facem unul din prenumele tău, iar de-atunci câștigi din fiecare comandă a celor pe care îi aduci.",
+      refGoLabel: auth && auth.ref && auth.ref.code ? "Vezi ce ai câștigat →" : "Fă-ți un cod →",
       refMsg: S.refMsg || "",
       // Un clic selectează tot linkul: e de copiat, nu de citit.
       onRefPick: (e) => { try { e.target.select(); } catch (err) {} },
@@ -642,7 +919,44 @@ class Component extends DCLogic {
       custOpts: custList.map(c => ({ v: c, l: c })),
       onPickCust: (e) => set({ pick: e.target.value }),
 
-      hasOrder: !!first, noOrder: S.loaded && !first && !cereri.length,
+      // „Nicio comandă activă" e cea mai costisitoare propoziție din pagină:
+      // sub ea scrie „Dacă ai comandat telefonic, sună-ne să o adăugăm", iar
+      // omul chiar sună — sau comandă a doua oară. Deci tace la ORICE cerere
+      // care n-a răspuns, nu doar la cea a comenzilor: și cererile trimise din
+      // magazin sunt comenzi în ochii lui.
+      hasOrder: !!first, noOrder: S.loaded && !first && !cereri.length && !S.eroare && !S.cerEroare,
+      // Caseta stă în capul paginii, înaintea celor două vederi ale ei (în
+      // marcaj, chiar deasupra lui `<sc-if value="{{ locked }}">` — fără număr
+      // de rând dinadins: numerele se depărtează de cod la primul comentariu
+      // crescut cu două rânduri, și chiar asta s-a și întâmplat aici o dată),
+      // și se arată și când SUB ea au rămas comenzi aduse într-o tură
+      // de dinainte: cifrele acelea sunt vechi, iar omul are dreptul să afle
+      // că nu s-au mai putut împrospăta. Înainte, mesajul se ascundea de
+      // îndată ce exista o comandă pe ecran — adică se pierdea tocmai când
+      // ecranul arăta cifre în care omul chiar avea încredere.
+      //
+      // O casetă pentru cele două cereri, dar nu un singur mesaj: când cad
+      // amândouă, se scriu amândouă motivele. `gp.motiv()` numește el lucrul
+      // care n-a venit, deci omul vede care dintre ele lipsește.
+      eroare: [S.eroare, S.cerEroare].filter(function (m) { return !!m; }).join(" "),
+      // Titlul era scris fix în marcaj, „Comenzile tale nu s-au încărcat." —
+      // fals când a picat numai cererea celor trimise din magazin, iar
+      // comenzile se văd întregi sub el. Acum spune care dintre cele două.
+      eroareTitlu: S.eroare
+        ? "Comenzile tale nu s-au încărcat."
+        : "Comenzile trimise din magazin nu s-au împrospătat.",
+      onReincearca: () => {
+        // `set` de aici e `(x) => this.setState(x)` și pierde funcția de după
+        // stare. Reîncercarea se cere de-a dreptul de la `this.setState`,
+        // altfel butonul ar șterge mesajul fără să mai întrebe serverul.
+        //
+        // Amândouă motivele, fiindcă `pull()` reface drumul întreg. Și
+        // `loaded: false`: lacătul cardului „Nicio comandă activă" e tocmai
+        // `eroare`, pe care butonul o stinge — fără el, în clipa apăsării
+        // cardul se aprindea peste o pagină care încă întreabă. Pe un server
+        // care atârnă (`gp.get` n-are nici termen, nici anulare) rămânea acolo.
+        this.setState({ eroare: "", cerEroare: "", loaded: false }, () => this.pull());
+      },
 
       hasPending: !!cereri.length,
       pendingTitle: cereri.length === 1 ? "Comanda trimisă, în așteptare" : "Comenzi trimise, în așteptare",
@@ -669,15 +983,17 @@ class Component extends DCLogic {
 
       emptyLine: staffBlocked
         ? "Contul „" + (auth ? auth.name : "") + "” e cont de angajat: acest ecran e doar pentru clienți. Folosește panourile de lucru."
-        : "Nu găsim nicio comandă pe numele „" + (cust || "—") + "” în zilele următoare. Dacă ai comandat telefonic, sună-ne să o adăugăm.",
+        : nerecunoscut
+          ? "Contul acesta l-ai făcut singur, de pe site. Comenzile luate la telefon nu se leagă de el până nu te recunoaște cineva din patiserie — numele scris la înscriere nu e, singur, o dovadă. Sună-ne o dată și îți legăm contul; după aceea toate comenzile tale apar aici. Comenzile trimise chiar din magazin, cu contul deschis, se văd oricum."
+          : "Nu găsim nicio comandă pe numele „" + (cust || "—") + "” în zilele următoare. Dacă ai comandat telefonic, sună-ne să o adăugăm.",
 
       nextEyebrow: days === 0 ? "Comanda ta e astăzi" : "Următoarea comandă",
       bigNum: days === 0 ? "azi" : String(days),
-      bigLabel: days === 0 ? (first && first.chan === "Ridicare" ? "o ridici" : "se livrează") : days === 1 ? "zi până la comandă" : "zile până la comandă",
+      bigLabel: days === 0 ? (first && !CU_MASINA(first.chan) ? "o ridici" : "se livrează") : days === 1 ? "zi până la comandă" : "zile până la comandă",
       dayLine: dayLabel,
       nextHint: days === 0
-        ? (first && first.chan === "Ridicare" ? "Te așteptăm la laborator cu comanda ambalată." : "Urmărește mai jos câte opriri mai sunt până la tine.")
-        : (first && first.chan === "Ridicare" ? "O ridici de la laborator în ziua comenzii." : "În ziua livrării vezi aici câte opriri mai sunt până la tine."),
+        ? (first && !CU_MASINA(first.chan) ? "Te așteptăm la laborator cu comanda ambalată." : "Urmărește mai jos câte opriri mai sunt până la tine.")
+        : (first && !CU_MASINA(first.chan) ? "O ridici de la laborator în ziua comenzii." : "În ziua livrării vezi aici câte opriri mai sunt până la tine."),
 
       showRoute: route.show,
       stopsNum: route.num || "",
@@ -688,14 +1004,16 @@ class Component extends DCLogic {
       routeTotal: route.total || "",
 
       orderRef: first ? first.ref : "",
-      chanLabel: first ? (first.chan === "Ridicare" ? "Ridicare" : first.chan === "Livrare" ? "Livrare" : "Angro") : "",
+      // Tipul vine din lista configurabilă din Setări: se afișează cum e,
+      // nu tradus printr-o listă fixă („Angro" pentru orice necunoscut).
+      chanLabel: first ? (first.chan || "") : "",
       chanCls: first ? (CH[first.chan] || "h-badge") : "h-badge",
       showStatus,
       statusLabel: st ? st.l : "",
       statusCls: st ? st.c : "h-badge",
       items: first ? (first.items || []).map(i => ({ q: i.q, n: i.n })) : [],
       totalQty: first ? gp.qtyLabel(qty(first)) : "0",
-      addrLine: first && first.chan === "Livrare" && first.addr ? "Livrare la " + first.addr + " · " + (first.zone || "") : "",
+      addrLine: first && CU_MASINA(first.chan) && first.addr ? "Livrare la " + first.addr + " · " + (first.zone || "") : "",
 
       hasMore: mine.length > 1,
       more: mine.slice(1).map(o => {
@@ -725,7 +1043,7 @@ class Component extends DCLogic {
           items: (o.items || []).map(i => ({ q: i.q, n: i.n })),
           detail: [
             o.ref ? "Comanda " + o.ref : "",
-            o.chan === "Livrare" ? (o.addr ? "livrată la " + o.addr : "livrare") : "ridicată de la laborator"
+            CU_MASINA(o.chan) ? (o.addr ? "livrată la " + o.addr : "livrare") : "ridicată de la laborator"
           ].filter(Boolean).join(" · "),
           toggle: () => set({ openPast: Object.assign({}, S.openPast, { [o.id]: !deschis }) })
         };

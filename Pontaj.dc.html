@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pontaj · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+
+/* Tastele ceasului. Scrise aici, nu în marcaj, fiindcă sunt douăsprezece
+   butoane desenate dintr-un singur `<sc-for>`: stilul scris o dată în clasă
+   e stilul TUTUROR, iar cele două feluri de tastă se deosebesc printr-o a
+   doua clasă, nu printr-un `style` calculat în logică. */
+.pt-tasta{min-height:68px;font-size:26px;font-weight:700;border-radius:18px;display:flex;align-items:center;justify-content:center}
+.pt-tasta--text{font-size:15px;font-weight:600}
+
+/* Cele patru bule care spun câte cifre s-au tastat. Nu se scriu cifrele:
+   tableta stă la vedere pe o masă din laborator, iar codul e al omului. */
+.pt-bula{width:20px;height:20px;border-radius:50%;border:2px solid var(--h-line-strong,#C8A558);background:transparent;display:block}
+.pt-bula--plina{background:var(--h-accent);border-color:var(--h-accent)}
+
+@media (max-width:760px){
+[data-pt=shell]{flex-direction:column!important}
+[data-pt=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-pt=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-pt=nav]{display:none!important}
+[data-pt=sidefoot]{display:none!important}
+[data-pt=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-pt=topbar] h1{font-size:20px!important}
+[data-pt=body]{padding:14px 14px 26px!important;gap:12px!important}
+[data-pt=card]{padding:16px 14px!important;border-radius:16px!important}
+/* Filtrele raportului stau unul sub altul pe telefon. Lăsate pe un rând, cele
+   două câmpuri de dată se strâng sub lățimea la care browserul mai desenează
+   calendarul, iar omul vede o casetă din care nu poate alege nimic. */
+[data-pt=filtru]{flex:1 1 100%!important;min-width:0!important}
+/* Rândul de tură își pierde lățimile minime: pe un ecran îngust ele forțau
+   fiecare rând pe patru linii, cu un cuvânt pe fiecare. */
+[data-pt=rand]>span{min-width:0!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
+<div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Pontajul din laborator</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
+</div>
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;width:100%;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
+<div data-pt="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-pt="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-pt="sidehead" style="display:flex;align-items:center;gap:12px">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Pontaj</span>
+</div>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
+</div>
+<div data-pt="nav" style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+</div>
+<div data-pt="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">{{ authRol }}</span>
+</div>
+</div>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">{{ sidefoot }}</p>
+</div>
+</div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-pt="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">Pontaj</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+</div>
+</div>
+
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Lista de pontaj nu s-a încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<div data-pt="body" style="flex:1;display:flex;flex-direction:column;gap:16px;padding:20px 28px 30px;min-width:0">
+
+<!-- ══════════════════════════ ceasul ══════════════════════════ -->
+
+<div data-pt="card" style="border:1px solid var(--h-line);border-radius:18px;background:var(--h-bg-surface);padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+<span class="h-eyebrow" style="font-size:12px">Ceasul de tură</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ ceasSub }}</span>
+</div>
+
+<sc-if value="{{ pasLista }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ faraOameni }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px dashed var(--h-line);border-radius:14px;padding:22px;text-align:center;display:flex;flex-direction:column;gap:6px">
+<span style="font-size:16px;font-weight:700">Nimeni n-are încă un cod de pontaj.</span>
+<span style="font-size:14px;color:var(--h-fg-subtle);line-height:1.5">{{ faraOameniLinie }}</span>
+</div>
+</sc-if>
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(212px,1fr));gap:10px">
+<sc-for list="{{ lume }}" as="o" hint-placeholder-count="6">
+<button type="button" class="{{ o.cls }}" onClick="{{ o.onClick }}" style="min-height:88px;padding:14px 16px;border-radius:16px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;text-align:left">
+<span style="font-size:18px;font-weight:700;line-height:1.2">{{ o.nume }}</span>
+<span class="{{ o.etCls }}">{{ o.et }}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ pasCod }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:352px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:2px;text-align:center">
+<span style="font-size:13px;color:var(--h-fg-subtle);text-transform:uppercase;letter-spacing:.06em">{{ codTitlu }}</span>
+<span style="font-family:var(--h-font-display);font-size:26px;font-weight:600">{{ codNume }}</span>
+</div>
+<div style="display:flex;justify-content:center;gap:14px;min-height:20px">
+<sc-for list="{{ bule }}" as="b" hint-placeholder-count="4">
+<span class="{{ b.cls }}"></span>
+</sc-for>
+</div>
+<sc-if value="{{ codEroare }}" hint-placeholder-val="{{ false }}">
+<p class="h-alert h-alert--danger" style="margin:0;display:block;border-radius:12px;padding:10px 14px;font-size:15px;line-height:1.4;text-align:center">{{ codEroare }}</p>
+</sc-if>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+<sc-for list="{{ taste }}" as="t" hint-placeholder-count="12">
+<button type="button" class="{{ t.cls }}" onClick="{{ t.onClick }}" disabled="{{ t.blocat }}">{{ t.et }}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ pasGata }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:420px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:10px 0 4px">
+<span style="font-size:46px;line-height:1">{{ gataSemn }}</span>
+<span class="h-h3" style="margin:0;font-size:24px">{{ gataTitlu }}</span>
+<span style="font-size:16px;line-height:1.5;color:var(--h-fg-subtle)">{{ gataRand }}</span>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onGataInchide }}" style="min-height:50px;padding:0 26px;font-size:16px;border-radius:14px;margin-top:6px">Gata</button>
+</div>
+</sc-if>
+
+</div>
+
+<!-- ══════════════════════════ raportul ══════════════════════════ -->
+
+<sc-if value="{{ areRaport }}" hint-placeholder-val="{{ true }}">
+<div data-pt="card" style="border:1px solid var(--h-line);border-radius:18px;background:var(--h-bg-surface);padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+<span class="h-eyebrow" style="font-size:12px">Raportul de pontaj</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ raportSub }}</span>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+<div data-pt="filtru" style="display:flex;flex-direction:column;gap:6px;flex:0 1 168px">
+<span class="h-eyebrow" style="font-size:12px">De la</span>
+<input class="h-input" type="date" value="{{ de }}" onChange="{{ onDe }}" style="height:46px;font-size:15px">
+</div>
+<div data-pt="filtru" style="display:flex;flex-direction:column;gap:6px;flex:0 1 168px">
+<span class="h-eyebrow" style="font-size:12px">Până la</span>
+<input class="h-input" type="date" value="{{ pana }}" onChange="{{ onPana }}" style="height:46px;font-size:15px">
+</div>
+<div data-pt="filtru" style="display:flex;flex-direction:column;gap:6px;flex:1 1 220px;min-width:0">
+<span class="h-eyebrow" style="font-size:12px">Cine</span>
+<select class="h-input" value="{{ cine }}" onChange="{{ onCine }}" style="height:46px;font-size:15px;width:100%">
+<sc-for list="{{ cineOpts }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</div>
+</div>
+
+<sc-if value="{{ eroareRaport }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Raportul nu s-a încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroareRaport }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearcaRaport }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ faraTure }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px dashed var(--h-line);border-radius:14px;padding:22px;text-align:center;display:flex;flex-direction:column;gap:6px">
+<span style="font-size:16px;font-weight:700">Nicio tură în zilele alese.</span>
+<span style="font-size:14px;color:var(--h-fg-subtle);line-height:1.5">Lărgește intervalul sau alege „toată lumea".</span>
+</div>
+</sc-if>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:10px">
+<sc-for list="{{ peOm }}" as="p" hint-placeholder-count="4">
+<div class="{{ p.cls }}" style="border-radius:14px;padding:13px 15px;display:flex;flex-direction:column;gap:3px">
+<span style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.nume }}</span>
+<span class="h-numeric" style="font-size:22px;font-weight:700;line-height:1.15">{{ p.ore }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ p.zile }}</span>
+<sc-if value="{{ p.uitate }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger" style="align-self:flex-start;margin-top:4px">{{ p.uitateEt }}</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ randuri }}" as="r" hint-placeholder-count="8">
+<div data-pt="rand" class="{{ r.cls }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:12px 15px;border-radius:14px">
+<span style="min-width:112px;font-size:15px;font-weight:600">{{ r.zi }}</span>
+<span style="flex:1 1 150px;min-width:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.nume }}</span>
+<span class="h-numeric" style="min-width:132px;font-size:15px;color:var(--h-fg-subtle)">{{ r.interval }}</span>
+<span class="h-numeric" style="min-width:104px;font-size:16px;font-weight:700">{{ r.ore }}</span>
+<sc-if value="{{ r.areEt }}" hint-placeholder-val="{{ false }}">
+<span class="{{ r.etCls }}">{{ r.et }}</span>
+</sc-if>
+<sc-if value="{{ r.poateInchide }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onInchide }}" style="min-height:40px;padding:0 14px;font-size:14px;border-radius:12px;margin-left:auto">Scrie plecarea</button>
+</sc-if>
+<sc-if value="{{ r.areNota }}" hint-placeholder-val="{{ false }}">
+<p style="flex:1 1 100%;margin:0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ r.nota }}</p>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+</div>
+</sc-if>
+
+</div>
+</div>
+</div>
+
+<sc-if value="{{ inchideDeschis }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ onInchideRenunta }}" style="position:fixed;inset:0;z-index:60;background:rgba(27,18,11,.55);display:flex;align-items:center;justify-content:center;padding:18px">
+<div onClick="{{ onInchideKeep }}" style="width:100%;max-width:430px;background:var(--h-bg-surface);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow-y:auto">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span class="h-h3" style="margin:0;font-size:20px">Scrie ora de plecare</span>
+<span style="font-size:14px;line-height:1.5;color:var(--h-fg-subtle)">{{ inchideCine }}</span>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:6px;flex:1 1 150px">
+<span class="h-eyebrow" style="font-size:12px">Ziua</span>
+<input class="h-input" type="date" value="{{ inchideZi }}" onChange="{{ onInchideZi }}" style="height:48px;font-size:16px">
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;flex:1 1 130px">
+<span class="h-eyebrow" style="font-size:12px">Ora</span>
+<input class="h-input h-numeric" type="time" value="{{ inchideOra }}" onChange="{{ onInchideOra }}" style="height:48px;font-size:16px">
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="h-eyebrow" style="font-size:12px">De ce o scrii de mână</span>
+<input class="h-input" value="{{ inchideNota }}" onChange="{{ onInchideNota }}" placeholder="a uitat să ponteze plecarea" style="height:48px;font-size:16px">
+<span style="font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Rândul rămâne cu numele tău lângă el, în raport și în jurnal.</span>
+</div>
+<sc-if value="{{ inchideEroare }}" hint-placeholder-val="{{ false }}">
+<p class="h-alert h-alert--danger" style="margin:0;border-radius:12px;padding:10px 14px;font-size:15px;line-height:1.4">{{ inchideEroare }}</p>
+</sc-if>
+<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onInchideRenunta }}" style="min-height:46px;padding:0 18px;font-size:15px;border-radius:14px">Renunță</button>
+<button type="button" class="{{ inchideCls }}" onClick="{{ onInchideSalveaza }}" disabled="{{ inchideLucru }}" style="min-height:46px;padding:0 20px;font-size:15px;border-radius:14px">Închide tura</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</sc-if>
+</x-dc>
+
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+// Pontajul din laborator: ceasul sus, raportul dedesubt.
+//
+// CELE DOUĂ JUMĂTĂȚI ale paginii au fiecare poarta ei, și nu sunt aceeași:
+//
+//   · CEASUL e al oricui ajunge aici — adică al rolurilor din `GP_CLOCK_ROLES`
+//     (api/lib/auth.php). Pagina nu-și scrie lista aia încă o dată: dacă
+//     serverul răspunde 403 la `/lab/people`, pagina arată ecranul de refuz.
+//     Așa poarta rămâne un singur loc, iar pagina o AFLĂ, nu o ghicește.
+//
+//   · RAPORTUL e al administratorului, al fondatorului și al managerului
+//     (`GP_SHIFTS_ROLES` / `require_shifts()`). Aici întrebarea trebuie pusă
+//     ÎNAINTE de desenare — altfel raportul ar clipi pe ecranul unui angajat
+//     și abia apoi ar dispărea — deci răspunde `gp.eRaportPontaj()`, geamănul
+//     din pagină al listei de pe server, scris o dată în shared/gp-api.js.
+//
+// ORELE NU TREC PRIN `gp.utc()`. Restul aplicației citește momente scrise de
+// MySQL în UTC, iar `gp.utc()` le lipește „Z" și le trece prin `Date`. Turele
+// se scriu altfel: `now_local()` (api/lib/http.php) pune ceasul de perete al
+// patiseriei, fiindcă o foaie de pontaj vorbește despre ora la care omul a
+// intrat pe ușă, nu despre un moment absolut. Trecute prin `gp.utc()`, orele
+// ar fi fost mutate a doua oară — vara cu trei ore — iar „venit la 07:12" ar
+// fi scris „10:12" pe raportul de salarii. De-aia se taie din șir.
+//
+// ZIUA SE ÎNTREABĂ DE FIECARE DATĂ, nu se socotește o dată la încărcare.
+// Aici era `const AZI = …`, adică ziua îngheța în clipa în care s-a deschis
+// fila. Tableta din laborator e tocmai aparatul care rămâne aprins toată
+// noaptea: la 00:01 pagina ar fi scris „azi" peste turele de ieri și „ieri"
+// peste cele de azi, fără ca nimeni s-o fi atins. Aceeași grijă e scrisă și
+// la `gp.days()` (shared/gp-api.js), din același motiv.
+//
+// Și trece prin `gp.acumLaPatiserie()`, nu printr-un `Intl` scris aici: fusul
+// patiseriei stă într-un singur loc, cu portița lui cu tot — pe un dispozitiv
+// fără datele de fusuri `Intl` aruncă, și acolo rămâne ceasul aparatului,
+// fiindcă ziua lui e mai bună decât niciun răspuns.
+const azi = () => {
+  const d = gp.acumLaPatiserie();
+  const p2 = (x) => (x < 10 ? "0" : "") + x;
+  return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
+};
+const MON = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie",
+  "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+
+/** „2026-09-13 07:12:00" → „07:12". Gol dacă n-a venit nimic. */
+const ora = (s) => { const t = String(s == null ? "" : s); return t.length >= 16 ? t.slice(11, 16) : ""; };
+
+/** „2026-09-13" → „azi", „ieri", ori „13 septembrie". */
+const ziEt = (iso) => {
+  const t = String(iso == null ? "" : iso);
+  const a = azi();
+  if (t === a) return "azi";
+  if (t === minusZile(a, 1)) return "ieri";
+  const p = t.split("-");
+  return p.length === 3 ? Number(p[2]) + " " + (MON[Number(p[1]) - 1] || "") : t;
+};
+
+/** Cu o zi în urmă, fără să atingem ora de vară: prânzul nu trece niciodată. */
+const minusZile = (iso, n) => {
+  const d = new Date(iso + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() - n);
+  return d.toISOString().slice(0, 10);
+};
+
+/** 490 → „8 h 10 min". Tura deschisă n-are minute, deci scrie o liniuță. */
+const oreEt = (min) => {
+  if (min == null) return "—";
+  const h = Math.floor(min / 60), m = min % 60;
+  if (!h) return m + " min";
+  return m ? h + " h " + m + " min" : h + " h";
+};
+
+const ROL_ET = {
+  admin: "administrator", fondator: "fondator", manager: "manager",
+  angajat: "angajat", utilizator_lab: "om de laborator",
+  agent_vanzari: "agent de vânzări", client: "client"
+};
+
+class Component extends DCLogic {
+  // „pas" e ce se vede din ceas: lista de nume, tastatura, ori confirmarea.
+  // Trei stări, nu două steaguri, fiindcă sunt trei ecrane care se exclud —
+  // iar `<sc-if>` primește o valoare, nu o expresie, deci din „pas" ies mai
+  // jos trei steaguri complementare.
+  //
+  // „refuzat" e răspunsul serverului la `/lab/people`, nu o părere a paginii:
+  // vezi nota de sus despre cele două porți.
+  state = {
+    navOpen: false, auth: null, loaded: false, refuzat: false, eroare: "",
+    lume: [], pas: "lista", alesId: 0, alesNume: "", alesOpen: false, alesStale: false,
+    cod: "", codEroare: "", verifica: false,
+    gataSemn: "", gataTitlu: "", gataRand: "",
+    de: minusZile(azi(), 13), pana: azi(), cine: "",
+    ture: [], peOm: [], raportGata: false, eroareRaport: "",
+    inchideId: 0, inchideCine: "", inchideZi: "", inchideOra: "", inchideNota: "",
+    inchideEroare: "", inchideLucru: false
+  };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    gp.me()
+      .then((user) => {
+        if (user) this.setState({ auth: gp.auth(user) });
+        return user;
+      })
+      .catch(() => { this.setState({ loaded: true }); return null; })
+      // Lista de pe tabletă se împrospătează din cincisprezece în cincisprezece
+      // secunde, fiindcă în laborator sunt mai multe tablete pe aceleași mese:
+      // cine pontează la una trebuie să apară „în tură" și la cealaltă, fără să
+      // atingă nimeni nimic. `gp.poll()` tace cât fila e ascunsă și nu lasă
+      // două ture de cereri să se suprapună.
+      //
+      // Utilizatorul vine din promisiune, nu din `this.state`: setState-ul de
+      // mai sus e amânat de React, deci aici starea ar fi încă goală.
+      .then((user) => {
+        if (!user) gp.toLogin();
+        else {
+          this.stopPoll = gp.poll(() => this.pull(), 15000);
+          if (gp.eRaportPontaj(user)) this.incarcaRaport();
+        }
+      });
+  }
+
+  componentWillUnmount() {
+    if (this.stopPoll) this.stopPoll();
+    clearTimeout(this.tCod);
+    clearTimeout(this.tGata);
+  }
+
+  /* ─────────────────────────────────────────────── ceasul ───────────── */
+
+  /** Cine poate ponta, și cine e în tură acum. */
+  pull() {
+    return gp.get("/lab/people")
+      .then((r) => this.setState({
+        lume: r.people || [], loaded: true, refuzat: false, eroare: ""
+      }))
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // 403 nu e o defecțiune, e un răspuns: contul ăsta n-are ce căuta la
+        // ceas. Ecranul de refuz o spune întreg, iar o casetă roșie deasupra
+        // lui ar fi a doua explicație pentru același lucru. Restul refuzurilor
+        // trec prin `gp.motiv()`, ca în toate panourile.
+        else if (e.isForbidden) this.setState({ refuzat: true, loaded: true });
+        else this.setState({ eroare: gp.motiv(e, "lista de pontaj"), loaded: true });
+      });
+  }
+
+  /**
+   * Tableta nu rămâne cu numele cuiva pe ecran.
+   *
+   * Cine apasă pe numele lui și pleacă — sună telefonul, se arde ceva — lasă
+   * în urmă o tastatură deschisă sub numele lui. Următorul care trece n-are de
+   * ghicit decât patru cifre, fără să mai treacă prin lista de nume. După o
+   * jumătate de minut de nemișcare ecranul se întoarce singur la listă.
+   */
+  raceste() {
+    clearTimeout(this.tCod);
+    this.tCod = setTimeout(() => this.laLista(), 30000);
+  }
+
+  laLista() {
+    clearTimeout(this.tCod);
+    clearTimeout(this.tGata);
+    this.setState({ pas: "lista", cod: "", codEroare: "", verifica: false });
+  }
+
+  alege(o) {
+    this.setState({
+      pas: "cod", alesId: o.id, alesNume: o.name, alesOpen: !!o.open,
+      alesStale: !!o.stale, cod: "", codEroare: ""
+    });
+    this.raceste();
+  }
+
+  cifra(d) {
+    if (this.state.verifica) return;
+    const cod = (this.state.cod + d).slice(0, 4);
+    this.setState({ cod: cod, codEroare: "" });
+    this.raceste();
+    // Se trimite singur la a patra cifră. Un buton „gata" în plus ar fi încă o
+    // apăsare cu mâinile în făină, și niciun fel de siguranță: codul are patru
+    // cifre, deci a patra e sfârșitul lui, nu o alegere.
+    if (cod.length === 4) this.trimite(cod);
+  }
+
+  sterge() {
+    if (this.state.verifica) return;
+    this.setState({ cod: this.state.cod.slice(0, -1), codEroare: "" });
+    this.raceste();
+  }
+
+  trimite(cod) {
+    clearTimeout(this.tCod);
+    this.setState({ verifica: true });
+    return gp.post("/lab/clock", { userId: this.state.alesId, pin: cod })
+      .then((r) => {
+        const iesire = r.action === "out";
+        const min = iesire
+          ? Math.round((new Date(String(r.endedAt).replace(" ", "T") + "Z") -
+              new Date(String(r.startedAt).replace(" ", "T") + "Z")) / 60000)
+          : null;
+        this.setState({
+          pas: "gata", verifica: false, cod: "",
+          gataSemn: iesire ? "🌙" : "☀️",
+          gataTitlu: (iesire ? "Spor la odihnă, " : "Bun venit, ") + (r.name || "") + "!",
+          gataRand: iesire
+            ? "Ai fost în tură de la " + ora(r.startedAt) + " la " + ora(r.endedAt)
+              + " — " + oreEt(min) + "."
+            : "Venirea s-a pontat la " + ora(r.startedAt) + "."
+        });
+        // Lista de sub confirmare se face la loc pe loc, ca următorul om să-și
+        // vadă colegul „în tură" fără să aștepte reîmprospătarea. Raportul la
+        // fel, dacă e desenat: administratorul care stă cu pagina deschisă în
+        // timp ce lumea pontează ar fi citit altfel un total de acum un sfert
+        // de oră, fără nimic pe ecran care să spună că e vechi.
+        this.pull();
+        if (gp.eRaportPontaj(this.state.auth)) this.incarcaRaport();
+        this.tGata = setTimeout(() => this.laLista(), 6000);
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // Codul greșit vine cu 422, nu cu 401 — anume, ca o cifră tastată
+        // strâmb să nu închidă tableta întregii ture. Vezi comentariul de la
+        // `fail('Cod greșit.', 422, 'bad_pin')` din api/routes/lab.php.
+        else this.setState({ verifica: false, cod: "", codEroare: gp.motiv(e, "pontarea") });
+        this.raceste();
+      });
+  }
+
+  /* ────────────────────────────────────────────── raportul ──────────── */
+
+  incarcaRaport(de, pana, cine) {
+    const a = de === undefined ? this.state.de : de;
+    const b = pana === undefined ? this.state.pana : pana;
+    const c = cine === undefined ? this.state.cine : cine;
+    if (!a || !b) return;
+    // Între cerere și răspuns omul mai schimbă o dată intervalul. Un răspuns
+    // despre alt interval decât cel de acum n-are voie să ajungă pe ecran:
+    // ar arăta zile pe care filtrul de deasupra spune că nu le arată.
+    const cerere = a + "|" + b + "|" + c;
+    this.cerereRaport = cerere;
+    return gp.get("/lab/shifts?from=" + encodeURIComponent(a) + "&to=" + encodeURIComponent(b)
+      + (c ? "&user=" + encodeURIComponent(c) : ""))
+      .then((r) => {
+        if (this.cerereRaport !== cerere) return;
+        this.setState({
+          ture: r.shifts || [], peOm: r.people || [], raportGata: true, eroareRaport: ""
+        });
+      })
+      .catch((e) => {
+        if (this.cerereRaport !== cerere) return;
+        if (e.isAuth) gp.toLogin();
+        else this.setState({
+          ture: [], peOm: [], raportGata: true,
+          eroareRaport: gp.motiv(e, "raportul de pontaj")
+        });
+      });
+  }
+
+  inchide(t) {
+    this.setState({
+      inchideId: t.id, inchideCine: t.name + " · venit " + ora(t.startedAt)
+        + ", " + ziEt(t.day), inchideZi: t.day, inchideOra: "",
+      inchideNota: "", inchideEroare: "", inchideLucru: false
+    });
+  }
+
+  salveazaInchiderea() {
+    const S = this.state;
+    if (!S.inchideZi || !S.inchideOra) {
+      this.setState({ inchideEroare: "Scrie ziua și ora la care a plecat." });
+      return;
+    }
+    this.setState({ inchideLucru: true, inchideEroare: "" });
+    return gp.patch("/lab/shifts/" + S.inchideId, {
+      endedAt: S.inchideZi + " " + S.inchideOra, note: S.inchideNota
+    })
+      .then(() => {
+        this.setState({ inchideId: 0, inchideLucru: false });
+        this.incarcaRaport();
+        this.pull();
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ inchideLucru: false, inchideEroare: gp.motiv(e, "închiderea turei") });
+      });
+  }
+
+  /* ───────────────────────────────────────────── desenarea ──────────── */
+
+  renderVals() {
+    const S = this.state;
+    const auth = S.auth;
+    const role = auth ? (auth.role || "") : "";
+    const vedeRaport = gp.eRaportPontaj(role);
+    const poateCorecta = gp.eAdmin(role);
+
+    /* ------------------------------------------------------- ceasul -- */
+
+    // „În tură acum" înseamnă venit AZI și neplecat încă. O tură rămasă
+    // deschisă de ieri e tot `open` pe server — de-aia există `stale` — dar
+    // omul acela nu e în laborator, ci a uitat să ponteze plecarea. Numărate
+    // la un loc, cele două ar fi făcut din antet o cifră care crește singură
+    // peste noapte și nu scade niciodată.
+    const inTura = S.lume.filter((o) => o.open && !o.stale).length;
+    const uitate = S.lume.filter((o) => o.stale).length;
+    const lume = S.lume.map((o) => ({
+      id: o.id,
+      nume: o.name,
+      cls: "h-btn " + (o.open ? "h-btn--primary" : "h-btn--secondary"),
+      // Ce scrie pe buton e ce se va întâmpla dacă îl apeși, nu o stare
+      // abstractă: „pleci" e o faptă, „în tură" e o etichetă. Omul cu tabletă
+      // în față citește un verb, nu un substantiv.
+      et: o.stale ? "tură nepontată la plecare"
+        : o.open ? "în tură de la " + ora(o.startedAt) : "pontează venirea",
+      etCls: "h-badge " + (o.stale ? "h-badge--danger" : o.open ? "h-badge--solid" : "h-badge--honey"),
+      onClick: () => this.alege(o)
+    }));
+
+    const bule = [0, 1, 2, 3].map((i) => ({
+      cls: "pt-bula" + (i < S.cod.length ? " pt-bula--plina" : "")
+    }));
+
+    const cifra = (d) => ({
+      et: String(d),
+      cls: "h-btn h-btn--secondary pt-tasta",
+      blocat: S.verifica,
+      onClick: () => this.cifra(String(d))
+    });
+    const taste = [1, 2, 3, 4, 5, 6, 7, 8, 9].map(cifra);
+    // Ultimul rând: „Renunț" în stânga, ștergerea în dreapta. Nu invers, și nu
+    // din obișnuință: degetul mare cade singur pe colțul din dreapta-jos, iar
+    // acolo trebuie să stea apăsarea care se poate repara — o cifră ștearsă se
+    // scrie la loc, o renunțare trimite omul înapoi la lista de nume. Cele
+    // două taste poartă cuvinte, nu semne: „⌫" nu există în fontul casei și se
+    // desena ca un pătrat gol, adică o tastă fără nume pe un ecran de tabletă.
+    taste.push({
+      et: "Renunț", cls: "h-btn h-btn--secondary pt-tasta pt-tasta--text", blocat: S.verifica,
+      onClick: () => this.laLista()
+    });
+    taste.push(cifra(0));
+    taste.push({
+      et: "Șterge", cls: "h-btn h-btn--secondary pt-tasta pt-tasta--text", blocat: S.verifica,
+      onClick: () => this.sterge()
+    });
+
+    /* ----------------------------------------------------- raportul -- */
+
+    const ture = S.ture;
+    const randuri = ture.map((t) => {
+      const iesit = t.endedAt !== null && t.endedAt !== undefined;
+      return {
+        zi: ziEt(t.day),
+        nume: t.name,
+        interval: ora(t.startedAt) + " → " + (iesit ? ora(t.endedAt) : "…"),
+        ore: oreEt(t.minutes),
+        // Trei feluri de rând ies din rând, și fiecare are alt leac: cel uitat
+        // vrea o oră scrisă de mână, cel deschis azi vrea doar răbdare, iar
+        // cel cu plecarea înaintea venirii vrea ochii unui om — serverul nu-i
+        // dă minute tocmai fiindcă nu le poate ști.
+        cls: (t.stale || t.backwards) ? "h-alert h-alert--danger" : "h-card",
+        areEt: !!(t.stale || t.backwards || t.open || t.endedBy),
+        et: t.stale ? "plecarea nepontată"
+          : t.backwards ? "plecarea înainte de venire"
+          : t.open ? "în tură acum" : "ora scrisă de mână",
+        etCls: "h-badge " + ((t.stale || t.backwards) ? "h-badge--danger"
+          : t.open ? "h-badge--solid" : "h-badge--warning"),
+        // Butonul apare numai pe rândurile UITATE, nu și pe cele deschise azi:
+        // cine e în tură chiar acum n-are nevoie de corectură, ci de un buton
+        // de plecare — iar ăla e al lui, sus, cu codul lui.
+        poateInchide: poateCorecta && !!t.stale,
+        areNota: !!t.note,
+        nota: t.note ? "Ora scrisă de " + (t.endedBy || "cineva") + ": " + t.note : "",
+        onInchide: () => this.inchide(t)
+      };
+    });
+
+    const peOm = S.peOm.map((p) => {
+      // Turele unui om se despart în trei, fiindcă au trei înțelesuri: una
+      // deschisă AZI e firească și se închide singură deseară; una rămasă
+      // deschisă dintr-o zi trecută e o uitare, și pe ea stă steagul roșu
+      // (`p.open` de pe server numără numai uitările); una cu plecarea
+      // înaintea venirii e o oră de necitit.
+      const alui = ture.filter((t) => t.userId === p.userId);
+      const deschise = alui.filter((t) => t.open && !t.stale).length;
+      const incheiate = alui.filter((t) => !t.open && !t.backwards).length;
+      // Un singur semn roșu pe cartonaș, ca să se citească dintr-o privire.
+      // Uitarea trece înaintea orei încurcate: pe ea se poate face ceva chiar
+      // acum, cu butonul „Scrie plecarea" de pe rândul de dedesubt. Iar ce a
+      // apucat steagul să spună nu se mai repetă în rândul de sub el — două
+      // feluri de a scrie același necaz se citesc ca două necazuri.
+      const steag = p.open > 0
+        ? p.open + (p.open === 1 ? " zi fără plecare" : " zile fără plecare")
+        : p.backwards > 0
+          ? p.backwards + (p.backwards === 1 ? " oră de necitit" : " ore de necitit")
+          : "";
+      const incurcate = (p.backwards > 0 && p.open > 0)
+        ? " · " + p.backwards + (p.backwards === 1 ? " tură încurcată" : " ture încurcate")
+        : "";
+      return {
+        nume: p.name,
+        // Numai turele încheiate cum trebuie dau minute, deci numai ele
+        // îndreptățesc un total. „0 min" scris despre cineva care e în
+        // laborator de la șapte dimineața nu e o cifră lipsă, e o afirmație
+        // falsă. Atunci se scrie o liniuță, iar rândul de dedesubt spune de
+        // ce: cifra vine după ce omul pontează plecarea.
+        ore: incheiate ? oreEt(p.minutes) : "—",
+        zile: p.shifts + (p.shifts === 1 ? " tură" : " ture")
+          + (deschise ? " · " + deschise + (deschise === 1 ? " încă deschisă" : " încă deschise") : "")
+          + incurcate,
+        cls: steag ? "h-alert h-alert--danger" : "h-card",
+        uitate: steag !== "",
+        uitateEt: steag
+      };
+    });
+
+    // Lista de nume din filtru se face din turele venite, nu din tableta de
+    // sus: pe tabletă apare cine ARE cod acum, iar în raport trebuie să se
+    // poată alege și cineva căruia i s-a luat codul între timp — altfel orele
+    // lui de luna trecută n-ar mai fi de găsit.
+    const nume = [];
+    ture.forEach((t) => {
+      if (!nume.some((x) => x.v === String(t.userId))) {
+        nume.push({ v: String(t.userId), l: t.name });
+      }
+    });
+    nume.sort((a, b) => String(a.l).localeCompare(String(b.l), "ro"));
+    const cineOpts = [{ v: "", l: "Toată lumea" }].concat(nume);
+
+    return {
+      // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
+      // date, un singur loc. `gp.meniu()` (shared/gp-api.js) taie din listă
+      // panourile pe care rolul ăsta n-are voie să le deschidă. Până sosește
+      // sesiunea, `S.auth` e null și lista iese goală — dinadins. Le compară
+      // `.claude/check-meniu.mjs`.
+      meniu: gp.meniu("Pontaj", S.auth),
+      navHere: "Pontaj",
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      onNavKeep: (e) => e.stopPropagation(),
+      navWho: !!auth,
+      navAnon: false,
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+
+      blocked: S.loaded && S.refuzat,
+      allowed: !S.loaded || !S.refuzat,
+      blockedLine: auth
+        ? "Contul „" + auth.name + "” nu pontează în laborator. Ceasul e al oamenilor de acolo; raportul, al administratorului și al managerului."
+        : "Intră cu un cont care are treabă în laborator ca să pontezi.",
+      authName: auth ? auth.name : "",
+      authRol: ROL_ET[role] || role,
+      sidefoot: vedeRaport
+        ? "Ceasul e deschis oricui lucrează în laborator; raportul de dedesubt îl vezi tu, ca administrator sau manager."
+        : "Apeși pe numele tău, tastezi codul, și atât. Același buton pontează venirea și plecarea.",
+
+      sub: !S.loaded ? "" : (S.lume.length
+        ? inTura + (inTura === 1 ? " om în tură acum" : " oameni în tură acum")
+          + " · " + S.lume.length + " cu cod de pontaj"
+          + (uitate ? " · " + uitate + (uitate === 1 ? " tură nepontată la plecare"
+            : " ture nepontate la plecare") : "")
+        : ""),
+
+      // Cele trei ecrane ale ceasului, ca steaguri complementare: `<sc-if>`
+      // primește o valoare, nu o expresie.
+      pasLista: S.pas === "lista",
+      pasCod: S.pas === "cod",
+      pasGata: S.pas === "gata",
+
+      ceasSub: S.pas === "cod" ? "Tastează codul tău de patru cifre."
+        : S.pas === "gata" ? ""
+        : "Apasă pe numele tău. Același buton pontează și venirea, și plecarea.",
+      lume: lume,
+      // Cardul „nu e nimeni" e o AFIRMAȚIE despre lume, iar pagina o poate face
+      // doar după ce serverul i-a răspuns. Cât e o eroare pe ecran, tace.
+      faraOameni: S.loaded && !S.eroare && S.lume.length === 0,
+      faraOameniLinie: poateCorecta
+        ? "Codurile se pun din Conturi, pe fiecare om în parte."
+        : "Cere-i administratorului să pună coduri de pontaj din Conturi.",
+
+      codTitlu: S.verifica ? "Se verifică…"
+        : S.alesStale ? "Ai o tură nepontată la plecare"
+        : S.alesOpen ? "Pontează plecarea" : "Pontează venirea",
+      codNume: S.alesNume,
+      bule: bule,
+      taste: taste,
+      codEroare: S.codEroare,
+      onCodRenunta: () => this.laLista(),
+
+      gataSemn: S.gataSemn,
+      gataTitlu: S.gataTitlu,
+      gataRand: S.gataRand,
+      onGataInchide: () => this.laLista(),
+
+      eroare: S.eroare,
+      onReincearca: () => { this.setState({ eroare: "" }); this.pull(); },
+
+      areRaport: vedeRaport,
+      raportSub: !S.raportGata ? "" : ture.length
+        ? ture.length + (ture.length === 1 ? " tură" : " ture") + " · "
+          + S.peOm.length + (S.peOm.length === 1 ? " om" : " oameni")
+        : "",
+      de: S.de,
+      pana: S.pana,
+      cine: S.cine,
+      cineOpts: cineOpts,
+      onDe: (e) => { const v = e.target.value; this.setState({ de: v }); this.incarcaRaport(v); },
+      onPana: (e) => { const v = e.target.value; this.setState({ pana: v }); this.incarcaRaport(undefined, v); },
+      onCine: (e) => { const v = e.target.value; this.setState({ cine: v }); this.incarcaRaport(undefined, undefined, v); },
+      randuri: randuri,
+      peOm: peOm,
+      faraTure: S.raportGata && !S.eroareRaport && ture.length === 0,
+      eroareRaport: S.eroareRaport,
+      onReincearcaRaport: () => { this.setState({ eroareRaport: "" }); this.incarcaRaport(); },
+
+      inchideDeschis: S.inchideId > 0,
+      inchideCine: S.inchideCine,
+      inchideZi: S.inchideZi,
+      inchideOra: S.inchideOra,
+      inchideNota: S.inchideNota,
+      inchideEroare: S.inchideEroare,
+      inchideLucru: S.inchideLucru,
+      inchideCls: "h-btn h-btn--primary" + (S.inchideLucru ? " h-btn--loading" : ""),
+      onInchideZi: (e) => this.setState({ inchideZi: e.target.value }),
+      onInchideOra: (e) => this.setState({ inchideOra: e.target.value }),
+      onInchideNota: (e) => this.setState({ inchideNota: e.target.value }),
+      onInchideKeep: (e) => e.stopPropagation(),
+      onInchideRenunta: () => this.setState({ inchideId: 0, inchideEroare: "" }),
+      onInchideSalveaza: () => this.salveazaInchiderea()
+    };
+  }
+}
+
+</script>
+</body>
+</html>

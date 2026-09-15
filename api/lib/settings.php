@@ -50,6 +50,25 @@ function setting(string $key, string $default = ''): string
     return $v === '' ? $default : $v;
 }
 
+/**
+ * Setarea așa cum stă în bază, fără nicio acoperire: null = RÂNDUL LIPSEȘTE.
+ *
+ * `setting()` nu poate face deosebirea asta, și de obicei e tocmai ce trebuie:
+ * pentru ea „n-am rândul" și „omul a golit caseta" sunt același șir gol, deci
+ * amândouă cad pe rezervă, iar aplicația merge înainte.
+ *
+ * Dar sunt setări unde GOLUL E O HOTĂRÂRE, nu o lipsă — caseta pe care omul a
+ * șters-o dinadins, ca să oprească ceva. Acolo rezerva calcă peste voia lui, în
+ * tăcere, și cu atât mai rău cu cât rezerva e o cifră care pare cuminte.
+ * Procentul de recomandare e prima astfel de setare (api/lib/referral.php ·
+ * `referral_default_rate()`).
+ */
+function setting_raw(string $key): ?string
+{
+    $all = settings_all();
+    return array_key_exists($key, $all) ? (string) $all[$key] : null;
+}
+
 function setting_bool(string $key): bool
 {
     return setting($key) === '1';
@@ -242,6 +261,41 @@ function pickup_fulfillments(): array
     return setting_list('fulfillment_pickup', ['Angro', 'Ridicare']);
 }
 
+/**
+ * Modul de onorare presupus când cererea nu spune niciunul.
+ *
+ * Era scris în cod, „Livrare", în amândouă locurile care nasc o comandă. Dar
+ * modurile se editează din Setări: la o redenumire („Livrare" → „Curier"),
+ * implicitul nu mai era în listă, iar verificarea de imediat după el răspundea
+ * 422 „bad_fulfillment". Paguba nu e formularul din panou — acela trimite
+ * întotdeauna un mod ales — ci butonul „✅ Acceptă" de sub anunțul din
+ * Telegram: el intră cu CORPUL GOL (`api/routes/telegram.php`, apelul cu
+ * `[]`), deci cade mereu pe implicit. După redenumire, butonul de pe telefon
+ * murea pe vecie, cu un refuz pe care nimeni nu-l vedea.
+ *
+ * Nici primul mod din listă nu e un implicit onest: în lista implicită acela e
+ * „Angro", adică en-gros — o comandă luată la telefon ar fi ajuns pe en-gros
+ * și ar fi ieșit de pe ruta șoferului. Deci se caută primul mod care CHIAR
+ * pleacă cu mașina, prin lista pusă pe dos din `pickup_fulfillments()`: cu
+ * setările implicite iese tot „Livrare", iar după redenumire iese „Curier".
+ *
+ * Dacă TOATE modurile sunt de ridicare — se poate, e hotărârea patiseriei —
+ * rămâne primul din listă: un mod adevărat, care trece verificarea.
+ * `fulfillment_types()` nu se poate întoarce goală (`setting_list()` se
+ * încheie cu `?: $fallback`), deci nu e nevoie de altă plasă.
+ */
+function default_fulfillment(): string
+{
+    $tipuri   = fulfillment_types();
+    $ridicari = pickup_fulfillments();
+    foreach ($tipuri as $t) {
+        if (!in_array($t, $ridicari, true)) {
+            return $t;
+        }
+    }
+    return $tipuri[0];
+}
+
 /** Cheile secrete, după coloana is_secret. */
 function secret_keys(): array
 {
@@ -284,14 +338,51 @@ function settings_public(bool $fresh = false): array
  */
 function settings_save(array $incoming, array $user): array
 {
-    $known   = array_keys(settings_all());
+    // Valorile de dinainte de salvare, pentru jurnal. `settings_all()` ține un
+    // cache pe cerere, deci citirea de aici e chiar starea veche, și rămâne așa
+    // și după UPDATE-urile de mai jos — care nu golesc cache-ul.
+    $vechi   = settings_all();
+    $known   = array_keys($vechi);
     $secrets = secret_keys();
     $changed = [];
+    $jurnal  = [];
     $inchide = false;
 
+    // DOUĂ treceri, nu una: întâi se pregătește și se cântărește tot, abia apoi
+    // se scrie. Într-o singură trecere, o valoare prea lungă găsită la a cincea
+    // cheie oprea salvarea cu primele patru deja scrise — jumătate de formular
+    // salvat, fără ca omul să afle care jumătate. Formularul de Setări se
+    // trimite întreg, deci și refuzul trebuie să fie întreg.
+    $deScris = [];
+
     foreach ($incoming as $key => $raw) {
+        // O CHEIE FĂRĂ RÂND ÎN TABEL SE REFUZĂ PE NUME, nu se sare peste ea.
+        //
+        // `$known` sunt cheile care AU rând azi în `settings`, fiindcă
+        // salvarea scrie cu UPDATE, nu cu INSERT. Sărirea tăcută de aici a
+        // ținut ani: panoul avea casetele „Adresa publică" și „Program de
+        // lucru", pagina publică le citea, dar rândurile lor nu fuseseră
+        // semănate niciodată — deci patronul scria, apăsa „Salvează", primea
+        // „ok", și nu se schimba nimic. Niciodată. (Rândurile se seamănă acum,
+        // în `sql/018_adresa_si_program.sql`.)
+        //
+        // Un refuz e mai bun decât o tăcere chiar și pentru o cheie cu adevărat
+        // necunoscută — o greșeală de tastare într-un script, o cheie ștearsă
+        // din bază cu mâna: toate arătau la fel, adică a izbândă.
+        //
+        // Se refuză ÎNTREG, ca toate celelalte verificări de aici: formularul
+        // de Setări se trimite dintr-o bucată, deci n-are rost să scriem
+        // jumătate din el și să ne plângem după. De-aia refuzul stă în prima
+        // trecere, cea care cântărește, nu în a doua, cea care scrie.
         if (!in_array($key, $known, true)) {
-            continue;                        // ignorăm chei necunoscute
+            fail(
+                'Setarea „' . $key . '" nu există în baza de date, deci nu poate fi '
+                  . 'salvată. Cel mai adesea înseamnă că lipsește o migrare din `sql/` '
+                  . '— vezi docs/09-actualizare-vps.md. Restul setărilor trimise NU au '
+                  . 'fost scrise: formularul se salvează întreg sau deloc.',
+                422,
+                'unknown_setting'
+            );
         }
         // Listele pot veni și ca tablou JSON, nu doar ca șir: validările din
         // rută le acceptă explicit așa (`is_array($raw) ? $raw : json_decode(…)`),
@@ -320,6 +411,35 @@ function settings_save(array $incoming, array $user): array
             $store = $val;
         }
 
+        // Coloana `settings.value` e TEXT: 65535 de OCTEȚI, nu de caractere. Cu
+        // diacritice o literă ocupă doi, iar un secret se și criptează, deci se
+        // umflă. Măsurăm exact ce urmează să scriem — după `json_encode`, după
+        // criptare — fiindcă altfel MySQL răspundea „Data too long", adică
+        // „Eroare internă" în fața omului, iar restul cheilor din aceeași
+        // salvare rămâneau nescrise: jumătate de formular salvat, fără ca
+        // cineva să afle care jumătate.
+        //
+        // Marginea de 5535 de octeți nu e superstiție: e loc pentru ca o
+        // valoare aflată fix la limită să nu depindă de rotunjirile criptării.
+        if (strlen($store) > 60000) {
+            fail(
+                'Valoarea pentru „' . $key . '” este prea lungă: ' . strlen($store) . ' ' .
+                ro_de(strlen($store)) . 'octeți, maximum 60000. Scurteaz-o și salvează din nou.',
+                422,
+                'setting_too_long'
+            );
+        }
+
+        // Se ține și ce se scrie în bază, și textul curat. Pentru secrete
+        // cele două diferă: în coloană intră textul criptat, iar criptarea are
+        // vector de inițializare aleatoriu — același token criptat de două ori
+        // dă șiruri diferite. O comparație „s-a schimbat?" făcută pe ce se
+        // scrie ar răspunde „da" la fiecare salvare, la fiecare secret.
+        $clar = ($isSecret && $val === '__clear__') ? '' : $val;
+        $deScris[$key] = [$store, $clar];
+    }
+
+    foreach ($deScris as $key => [$store, $clar]) {
         q(
             'UPDATE settings SET value = ?, updated_by = ? WHERE setting_key = ?',
             [$store, (int) $user['id'], $key]
@@ -331,8 +451,26 @@ function settings_save(array $incoming, array $user): array
         if ($key === 'panel_code' || ($key === 'panel_enabled' && $store !== '1')) {
             $inchide = true;
         }
-        // Jurnalizăm doar numele cheii, niciodată valoarea unui secret.
         $changed[] = $key;
+        // Ce anume s-a schimbat, nu doar care casetă a fost trimisă.
+        //
+        // Formularul de Setări se trimite ÎNTREG, deci `$changed` cuprinde și
+        // cheile pe care nu le-a atins nimeni: jurnalul scria de fiecare dată
+        // aceeași listă de șapte-opt nume tehnice, dintre care unul singur era
+        // cel căutat. „Care" fără „ce" nu e o urmă, e zgomot — iar cine căuta
+        // în Jurnal cine a mutat ora de deschidere găsea zece rânduri identice.
+        //
+        // Valoarea unui secret nu se scrie NICIODATĂ, nici veche, nici nouă:
+        // jurnalul se citește de la orice administrator, iar un token scris
+        // acolo ar rămâne în clar într-o tabelă care nu se șterge niciodată.
+        // Se spune doar că s-a pus, s-a schimbat ori s-a șters.
+        $inainte = (string) ($vechi[$key] ?? '');
+        if ($clar !== $inainte) {
+            $jurnal[] = in_array($key, $secrets, true)
+                ? $key . ': ' . ($inainte === '' ? 'pus' : ($clar === '' ? 'șters' : 'schimbat'))
+                : $key . ': ' . audit_value($inainte === '' ? null : $inainte)
+                    . ' → ' . audit_value($clar === '' ? null : $clar);
+        }
     }
 
     // Sesiunile deja deschise pe tablete rămâneau valabile până la expirare:
@@ -345,7 +483,12 @@ function settings_save(array $incoming, array $user): array
     }
 
     if ($changed) {
-        audit('settings_update', 'settings', null, implode(', ', $changed));
+        // O salvare care n-a schimbat nimic tot lasă urmă — cineva a deschis
+        // formularul și a apăsat „Salvează" — dar o spune pe față, în loc să
+        // arate ca o modificare.
+        audit('settings_update', 'settings', null, $jurnal
+            ? implode(' · ', $jurnal)
+            : implode(', ', $changed) . ' · nimic schimbat');
     }
     return $changed;
 }

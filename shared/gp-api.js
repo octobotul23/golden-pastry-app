@@ -22,14 +22,31 @@
   function detectBase() {
     if (global.GP_API_BASE) return String(global.GP_API_BASE).replace(/\/$/, '');
 
+    // Numai `hostname`, `protocol` și `port` — niciodată `host` sau `origin`.
+    // Probele care rulează logica paginilor își fac o `location` de mucava cu
+    // exact aceste trei câmpuri (.claude/meniu-real.mjs, .claude/check-panouri.mjs);
+    // o a patra citire ar arunca acolo, la încărcare, în toate suitele deodată.
     const { hostname, protocol, port } = global.location;
 
-    // Dezvoltare locală: Laragon (gp.test) sau un server static pe localhost.
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//${hostname}${port ? ':' + port : ''}/api`;
-    }
+    // Chiar serverul care a trimis pagina, cu portul lui cu tot.
+    const aici = `${protocol}//${hostname}${port ? ':' + port : ''}/api`;
+
+    // Dezvoltare locală pe Laragon: domeniile `*.test` au API-ul lor.
     if (hostname.endsWith('.test')) {
       return `${protocol}//api.gp.test`;
+    }
+
+    // Gazde din care NU se poate deduce un subdomeniu `api.`:
+    //   - nume fără punct — `localhost`, dar și numele calculatorului în rețea;
+    //   - adresă numerică — `127.0.0.1`, dar și `192.168.1.13` de pe telefon;
+    //   - IPv6, pe care `location.hostname` îl dă în paranteze drepte.
+    //
+    // Fără ramura asta, `192.168.1.13` intra pe drumul de producție de mai jos:
+    // `parts.slice(-2)` scotea „1.13”, ieșea `http://api.1.13`, iar portul se
+    // pierdea cu totul — adică aplicația deschisă de pe telefon, în rețeaua
+    // casei, nu găsea niciun server. Aceeași pază ca la Client.dc.html:647.
+    if (!hostname.includes('.') || /^[0-9.]+$/.test(hostname) || hostname.charAt(0) === '[') {
+      return aici;
     }
 
     // Producție: api.goldenpastry.ro, indiferent de subdomeniul apelant.
@@ -144,9 +161,15 @@
       headers,
     };
 
+    // Un FormData (fișier) pleacă așa cum e: browserul pune singur
+    // Content-Type-ul multipart, cu tot cu boundary. JSON-ul se serializează.
     if (payload !== undefined) {
-      headers['Content-Type'] = 'application/json';
-      init.body = JSON.stringify(payload);
+      if (typeof FormData !== 'undefined' && payload instanceof FormData) {
+        init.body = payload;
+      } else {
+        headers['Content-Type'] = 'application/json';
+        init.body = JSON.stringify(payload);
+      }
     }
     if (method !== 'GET' && method !== 'HEAD') {
       const token = getCsrf();
@@ -219,6 +242,90 @@
     return data;
   }
 
+  /* ------------------------------------------------------------ roluri -- */
+
+  /**
+   * Ce panouri are fiecare rol.
+   *
+   * Lista asta NU e o pază. Paza stă pe server, în `require_staff()` și
+   * `require_admin()` din api/lib/auth.php, și rămâne acolo. Lista de aici e
+   * OGLINDA ei: un buton care nu apare e un buton care ar fi dus la un refuz.
+   *
+   * Până acum meniul n-avea nicio noțiune de rol — le arăta pe toate zece
+   * oricui ajungea la el, iar jumătate răspundeau „nu ai voie". Managerul și
+   * agentul de vânzări nici măcar nu ajungeau: intrarea trimitea tot ce nu e
+   * client la Administrare Comenzi, care îi refuza. Două roluri care existau
+   * în baza de date și nu duceau nicăieri.
+   *
+   * Regula când se schimbă ceva: aici se scrie DUPĂ ce s-a deschis poarta de
+   * pe server, niciodată înainte. Serverul mai strâmt decât meniul e doar un
+   * buton care dă un refuz; meniul mai larg decât serverul e chiar defectul
+   * de dinainte.
+   */
+  const PANOURI_TOT = ['Comenzi', 'Laborator', 'Rută', 'Depozit', 'Pontaj', 'Catalog',
+    'Conturi', 'Recomandări', 'Jurnal', 'Setări', 'Parola mea'];
+
+  const PANOURI_ROL = {
+    admin: PANOURI_TOT,
+    // Lista administratorului PLUS una, nu o copie a ei cu un rând în plus:
+    // fondatorul e administrator plus ceva (GP_ADMIN_ROLES pe server), iar
+    // două liste care trebuie să fie egale se despart întotdeauna, mai
+    // devreme sau mai târziu.
+    //
+    // „Ceva"-ul acela are acum două fețe. Una veche: dreptul asupra
+    // administratorilor și a celorlalți fondatori. Una nouă: Statistici —
+    // singurul panou din casă pe care administratorul NU-l are. Oglinda de pe
+    // server e `GP_STATS_ROLES` (api/lib/auth.php), singura listă de roluri
+    // mai strâmtă decât `GP_ADMIN_ROLES`; motivul e scris acolo.
+    fondator: [...PANOURI_TOT, 'Statistici'],
+    manager: ['Comenzi', 'Laborator', 'Rută', 'Depozit', 'Pontaj', 'Parola mea'],
+    agent_vanzari: ['Comenzi', 'Recomandări', 'Parola mea'],
+    angajat: ['Laborator', 'Rută', 'Depozit', 'Pontaj', 'Parola mea'],
+    // Omul de laborator: EXACT o ușă, cea pentru care i s-a făcut contul.
+    //
+    // Rolul ăsta a stat în baza de date din migrarea 009 fără să ducă nicăieri
+    // — n-avea nicio intrare aici, deci cine intra cu el capăta un sertar gol
+    // și era trimis la „Parola mea" de scurtătura de la sfârșitul lui
+    // `primaPagina()`. Pontajul e rostul lui; oglinda de pe server e
+    // `GP_CLOCK_ROLES` (api/lib/auth.php), care îi deschide tableta și atât —
+    // nici depozitul, nici laboratorul, nici foaia de drum.
+    //
+    // În fața tabletei din laborator nu are nevoie de rândul ăsta: acolo nu
+    // intră el cu parolă, ci apasă pe numele lui pe ecranul deschis de tură.
+    // Rândul e pentru ziua în care își deschide singur pagina, de pe telefon.
+    utilizator_lab: ['Pontaj', 'Parola mea'],
+    client: ['Comanda mea', 'Recomandări', 'Parola mea'],
+  };
+
+  /**
+   * Unde cade fiecare rol după ce a scris parola.
+   *
+   * Nu „prima intrare din meniu": aia e o întâmplare a ordinii din MENIU.
+   * Agentul de vânzări are și Comenzi, dar ziua lui începe la Recomandări.
+   * Scris pe față, ca să se poată citi dintr-o privire — iar proba din
+   * .claude/test-roluri.mjs verifică că fiecare destinație de aici chiar e în
+   * meniul rolului ei, ca lista să nu se depărteze pe tăcute.
+   */
+  const ACASA_ROL = {
+    admin: 'Administrare%20Comenzi.dc.html',
+    fondator: 'Administrare%20Comenzi.dc.html',
+    manager: 'Administrare%20Comenzi.dc.html',
+    agent_vanzari: 'Recomandari.dc.html',
+    angajat: 'Panou%20Laborator.dc.html',
+    // Singura lui pagină e și acasa lui.
+    utilizator_lab: 'Pontaj.dc.html',
+    // Clientul intră în „Comanda mea": acolo e comanda lui de mâine, ziua
+    // livrării și, în ziua aceea, câte opriri mai sunt până la el. Magazinul
+    // rămâne la un clic, în sertar și în butonul „Intră în magazin".
+    //
+    // Aici a scris o vreme magazinul, cu motivul „clientul vine să comande, nu
+    // să-și citească istoricul". Motivul era al patiseriei, nu al omului: cine
+    // își scrie parola vrea să vadă CE A COMANDAT, altfel n-avea nevoie de
+    // parolă — magazinul se deschide și fără cont. Schimbat la cererea
+    // patronului, 13 septembrie 2026.
+    client: 'Client.dc.html',
+  };
+
   /* --------------------------------------------------------------- API -- */
 
   const gp = {
@@ -228,6 +335,13 @@
     get: (path) => request('GET', path),
     post: (path, body) => request('POST', path, body === undefined ? {} : body),
     patch: (path, body) => request('PATCH', path, body === undefined ? {} : body),
+    // Un fișier, ca multipart, pe ACELAȘI drum ca orice scriere: tokenul CSRF
+    // asigurat înainte (și din memorie, când sessionStorage e blocat),
+    // reîncercarea la token vechi, erorile ca GpError. Pagina Catalog urca
+    // poza cu un fetch scris de mână, care citea tokenul direct din
+    // sessionStorage: în fereastră privată pleca gol — produsul se crea,
+    // poza pica cu „Token CSRF lipsă sau invalid".
+    upload: (path, formData) => request('POST', path, formData),
     put: (path, body) => request('PUT', path, body === undefined ? {} : body),
     del: (path) => request('DELETE', path),
 
@@ -258,8 +372,14 @@
      * Codul de recomandare se trimite ca `ref`. Unul greșit nu oprește nimic:
      * serverul creează contul oricum, doar fără recomandant.
      *
+     * Adresa și zona sunt neobligatorii, dar odată scrise nu se mai cer la
+     * fiecare comandă: formularul de pe site le completează de pe cont. Zona se
+     * verifică pe server față de lista din Setări — una inventată e refuzată cu
+     * 422, nu înghițită tăcut.
+     *
      * @param {{username:string,name:string,password:string,email?:string,
-     *          phone?:string,customerName?:string,ref?:string}} date
+     *          phone?:string,address?:string,zone?:string,
+     *          customerName?:string,ref?:string}} date
      * @returns {Promise<{user:object,referral:?object,referredBy:?string}>}
      */
     async register(date) {
@@ -286,6 +406,40 @@
      */
     referralCode() {
       const KEY = 'gp-ref';
+      // Codul trebuie să treacă de pe site (goldenpastry.ro) pe pagina de
+      // înscriere (clienti.goldenpastry.ro). sessionStorage e legat de
+      // origine, deci acolo codul rămânea pe site și înscrierea pleca fără
+      // el — pe localhost, unde totul e aceeași origine, nu se vedea. Un
+      // cookie pe domeniul-rădăcină (.goldenpastry.ro) îl citesc toate
+      // subdomeniile; local, fără domeniu, e tot un cookie al paginii.
+      const domeniu = (() => {
+        const h = String(global.location.hostname || '');
+        if (!h || h === 'localhost' || /^[0-9.]+$/.test(h) || h.endsWith('.test')) return '';
+        const p = h.split('.');
+        return p.length >= 2 ? '.' + p.slice(-2).join('.') : '';
+      })();
+      const cookie = {
+        get() {
+          try {
+            const m = String(global.document.cookie || '').match(/(?:^|;\s*)gp-ref=([^;]*)/);
+            return m ? decodeURIComponent(m[1]) : '';
+          } catch (e) { return ''; }
+        },
+        set(v) {
+          try {
+            global.document.cookie = 'gp-ref=' + encodeURIComponent(v) + '; path=/; max-age=' + (30 * 86400)
+              + '; samesite=lax' + (domeniu ? '; domain=' + domeniu : '')
+              + (global.location.protocol === 'https:' ? '; secure' : '');
+          } catch (e) { /* cookie-uri blocate */ }
+        },
+        del() {
+          try {
+            global.document.cookie = 'gp-ref=; path=/; max-age=0' + (domeniu ? '; domain=' + domeniu : '');
+            global.document.cookie = 'gp-ref=; path=/; max-age=0';
+          } catch (e) { /* noop */ }
+        },
+      };
+      gp.__refCookie = cookie;
       let dinUrl = '';
       try {
         const q = new global.URLSearchParams(global.location.search || '');
@@ -301,22 +455,24 @@
         }
       } catch (e) { /* fără URLSearchParams sau fără history: mergem mai departe */ }
 
+      if (dinUrl) cookie.set(dinUrl);
       try {
         if (dinUrl) {
           global.sessionStorage.setItem(KEY, dinUrl);
           return dinUrl;
         }
-        return String(global.sessionStorage.getItem(KEY) || '');
+        return String(global.sessionStorage.getItem(KEY) || '') || cookie.get();
       } catch (e) {
         // Stocare blocată (fereastră privată, setări stricte). Codul rămâne
         // valabil doar pentru pagina curentă — tot mai bine decât deloc.
-        return dinUrl;
+        return dinUrl || cookie.get();
       }
     },
 
     /** Uită codul de recomandare. Se cheamă după ce contul a fost creat. */
     forgetReferral() {
       try { global.sessionStorage.removeItem('gp-ref'); } catch (e) { /* noop */ }
+      try { if (gp.__refCookie) gp.__refCookie.del(); } catch (e) { /* noop */ }
     },
 
     /**
@@ -342,6 +498,32 @@
       // câmpul rămâne nedefinit — pe o instalare pe care migrarea 007 n-a fost
       // rulată, iar paginile verifică asta înainte să deseneze ceva.
       if (user && out && out.referral) user.referral = out.referral;
+      // Și codul celui care l-a ADUS. Nu e același lucru cu cel de deasupra:
+      // acela e codul LUI, ăsta e al celuilalt. Magazinul public umple din el
+      // caseta „Cod de recomandare" a clientului cu cont, ca ea să fie o
+      // oglindă a contului — altfel omul vede o casetă goală, tastează un cod
+      // din memorie, și naște un conflict de descâlcit cu mâna.
+      //
+      // Lipsa lui NU se preface în `false`, ca la `founderReady`: acolo
+      // răspunsul e un da/nu despre instalare, aici lipsa înseamnă „serverul
+      // ăsta nu știe încă să răspundă", care nu e totuna cu „nu l-a adus
+      // nimeni". Rămâne nedefinit, iar pagina desenează caseta goală în
+      // amândouă cazurile — dar fără să spună ceva ce nu știe.
+      if (user && out && out.referredByCode) user.referredByCode = out.referredByCode;
+      // Dacă instalarea are contul de fondator (migrarea 009). Steag despre
+      // BAZĂ, nu despre om — de aceea e `=== true`, nu `||`: pe un server
+      // vechi, care nu trimite câmpul, trebuie să iasă `false`, nu
+      // `undefined`, altfel pagina desenează un buton care duce în 503.
+      if (user) user.founderReady = out && out.founder === true;
+      // De unde vine contul, și dacă a garantat casa pentru el (migrarea 010).
+      //
+      // Aici NU merge tiparul lui `founderReady`, cu `=== true`: acolo
+      // răspunsul e un da/nu despre instalare, pe când aici lipsa câmpului
+      // înseamnă „serverul ăsta nu știe încă să răspundă", care nu e totuna cu
+      // „nu e cont făcut pe site". Rămâne nedefinit, iar pagina „Comanda mea"
+      // verifică asta înainte să scrie un mesaj despre o regulă care pe
+      // instalarea aceea nici nu se aplică.
+      if (user && out && out.origine) user.origine = out.origine;
       return user;
     },
 
@@ -350,6 +532,100 @@
 
     changePassword: (currentPassword, newPassword) =>
       request('POST', '/auth/password', { currentPassword, newPassword }),
+
+    /* --------------------------------------- recomandări cu comisioane -- */
+
+    /**
+     * Câștigurile MELE: codul, linkul, cele trei plăci și istoricul.
+     *
+     * Nu primește niciun parametru, dinadins — nici măcar un identificator de
+     * cont. Cine întreabă se știe din sesiune, pe server, iar răspunsul n-are
+     * cum să fie lărgit dintr-o adresă scrisă de mână. Vezi
+     * `referral_history()` din api/lib/referral.php.
+     *
+     * Pe o bază fără migrarea 008 întoarce `money: false` și liste goale, nu
+     * eroare: pagina desenează atunci doar cardul cu codul.
+     */
+    referrals: () => request('GET', '/referrals'),
+
+    /** „Fă-mi un cod" — derivat din numele contului, ca la înscriere. */
+    referralMakeCode: () => request('POST', '/referrals/code'),
+
+    /**
+     * Toate comisioanele — numai pentru administrator.
+     *
+     * `luna` e „2026-09" sau '' pentru tot. Restul filtrării (căutare, sortare)
+     * se face în pagină: lista unei patiserii are sute de rânduri, iar un drum
+     * la server la fiecare literă tastată ar fi mai lent decât filtrarea locală.
+     */
+    referralsAll: (luna) =>
+      request('GET', '/referrals/all' + (luna ? '?month=' + encodeURIComponent(luna) : '')),
+
+    /** Bifa „i-am dat banii", pusă sau scoasă, pe unul sau pe mai multe rânduri. */
+    referralsPay: (ids, paid) =>
+      request('POST', '/referrals/pay', { ids: ids, paid: paid !== false }),
+
+    /** Conflictul, hotărât: care dintre cele două coduri câștigă. */
+    referralResolve: (id, code) =>
+      request('POST', '/referrals/' + Number(id) + '/resolve', { code: code }),
+
+    /**
+     * Scoate rândul din socoteală — și adu-l înapoi.
+     *
+     * `DELETE` e ce cere omul care apasă. Dedesubt nu e o ștergere, și nici
+     * n-are cum să fie: rândul e recalculat de server la fiecare atingere a
+     * comenzii, deci șters de-a dreptul s-ar scrie la loc singur la prima
+     * mutare de etapă de pe tableta din laborator. Se ține minte faptul că a
+     * fost scos — de-aia există și perechea de mai jos.
+     *
+     * Răspunsul poate aduce `commission: null` la aducerea înapoi: recitirea
+     * comenzii poate arăta că n-a mai rămas nimeni de premiat. Nu e o eroare;
+     * reîncarcă lista.
+     */
+    referralDismiss: (id) => request('DELETE', '/referrals/' + Number(id)),
+
+    /** Perechea: rândul scos, adus înapoi în socoteală. */
+    referralRestore: (id) =>
+      request('POST', '/referrals/' + Number(id) + '/restore', {}),
+
+    /**
+     * Codul și procentul unui cont, schimbate de administrator.
+     *
+     * `PATCH`, nu `POST`: celălalt doar DĂ un cod contului care n-are. Ăsta
+     * suprascrie, iar codul vechi moare pe loc — linkurile deja trimise cu el
+     * nu mai recomandă pe nimeni. Spune-i asta omului înainte să apese.
+     *
+     * `rate: null` înseamnă „ia-l pe cel global"; `rate: 0` înseamnă „nu câștigă
+     * nimic". Nu sunt același lucru.
+     */
+    userReferralEdit: (id, date) =>
+      request('PATCH', '/users/' + Number(id) + '/referral', date || {}),
+
+    /* ------------------------------------------------ contul de fondator -- */
+
+    /**
+     * „Cere drept de fondator" — pentru MINE, niciodată pentru altcineva.
+     *
+     * Nu primește niciun parametru și nu poate primi: contul care cere se ia
+     * din sesiune, pe server. Linkul de confirmare NU vine înapoi în răspuns
+     * — pleacă pe adresa firmei din Setări. Dacă ar veni și încoace, poarta ar
+     * fi tot cutia poștală doar cu numele, iar cine apasă butonul s-ar ridica
+     * singur în rang.
+     */
+    founderRequest: () => request('POST', '/founder/request'),
+
+    /**
+     * Cine ar deveni fondator dacă se confirmă linkul ăsta.
+     *
+     * Publică: se cheamă din pagina de intrare, de obicei fără nicio sesiune —
+     * cel care deschide cutia poștală a firmei nu are neapărat cont.
+     */
+    founderInvite: (token) =>
+      request('GET', '/founder/invite?token=' + encodeURIComponent(String(token || ''))),
+
+    /** Confirmarea. Tokenul e singura autoritate; sesiunea nu contează. */
+    founderAccept: (token) =>
+      request('POST', '/founder/accept', { token: String(token || '') }),
 
     /**
      * Adresa paginii de autentificare, cu urma de unde a venit omul.
@@ -395,6 +671,393 @@
     /** Duce la autentificare, spunându-i de unde ai venit. */
     toLogin() {
       global.location.href = gp.loginHref();
+    },
+
+    /**
+     * Meniul panourilor — o singură listă, pentru toate paginile.
+     *
+     * Fiecare panou își ținea propria copie a listei, scrisă de mână în HTML,
+     * și copiile s-au depărtat una de alta: „Catalog" era al treilea într-o
+     * pagină și ultimul în alta, „Jurnal" lipsea din patru pagini din șase.
+     * De-aia s-a scris `.claude/check-meniu.mjs` — el compară barele laterale
+     * între ele și se supără când nu se mai potrivesc.
+     *
+     * Sertarul de pe telefon are nevoie de exact aceeași listă. Scris tot în
+     * HTML, ar fi însemnat încă opt copii — de data asta pe un ecran la care
+     * verificarea nu se uită, deci s-ar fi depărtat în tăcere, adică fix
+     * defectul pe care fișierul acela a fost scris să-l prindă. Aici lista e
+     * una singură: barele laterale rămân cum sunt (verificarea le păzește),
+     * iar sertarele se desenează din rândurile de mai jos.
+     *
+     * Adresele se scriu codificat („%20"), ca în HTML: `build-deploy.mjs` le
+     * rescrie pe amândouă formele, iar fișierul ăsta trece prin aceeași
+     * rescriere ca paginile (vezi `rescrieFolder`). O pagină care nu e încă în
+     * `PAGES` n-are ce căuta aici — rescrierea ar lăsa-o neatinsă și legătura
+     * ar duce în gol tocmai pe serverul adevărat, nu pe calculatorul de acasă.
+     */
+    /**
+     * Are contul ăsta drepturi depline? („admin" sau „fondator")
+     *
+     * Perechea din pagină a lui GP_ADMIN_ROLES / require_admin() din
+     * api/lib/auth.php. Serverul păzește; rândurile astea doar hotărăsc ce se
+     * desenează — dar dacă ele rămân la `role === "admin"`, un fondator vede
+     * o aplicație care îl refuză peste tot, în timp ce API-ul îi răspunde la
+     * orice. Nu e o gaură de securitate, e mai rău de trăit: aplicația pare
+     * stricată exact pentru omul cu cele mai multe drepturi.
+     *
+     * Zece porți în opt pagini, deci scrisă o dată. Când mâine apare încă un
+     * rol cu drepturi depline, se adaugă aici — nu se caută prin pagini.
+     *
+     * Primește ori obiectul contului, ori direct șirul cu rolul, fiindcă
+     * paginile țin când una, când alta (S.auth în unele, S.role în altele).
+     */
+    eAdmin(cine) {
+      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
+      return rol === 'admin' || rol === 'fondator';
+    },
+
+    /**
+     * „Vede raportul de pontaj?" — administrator, fondator sau manager.
+     *
+     * Perechea din pagină a lui `GP_SHIFTS_ROLES` / `require_shifts()` din
+     * api/lib/auth.php. Serverul păzește; rândul ăsta hotărăște doar dacă
+     * jumătatea de jos a paginii de Pontaj se DESENEAZĂ.
+     *
+     * DE CE ÎNTREBAREA SE PUNE AICI, și nu se află din răspunsul serverului, ca
+     * poarta ceasului de deasupra ei. Ceasul e pagina întreagă: dacă serverul
+     * spune 403, pagina arată ecranul de refuz și gata. Raportul e o bucată
+     * dintr-o pagină care se deschide oricum — iar o bucată desenată întâi și
+     * ștearsă după ce vine refuzul clipește pe ecranul unui angajat cu orele
+     * colegilor lui în ea. Mai bine o întrebare pusă înainte.
+     *
+     * DE CE NU `GP_OPS_ROLES`, adică de ce nu și angajatul: raportul arată
+     * orele TUTUROR, iar ale lui sunt printre ele. O foaie de salarii deschisă
+     * întregii ture nu mai e o unealtă de plată, e o listă de comparat.
+     */
+    eRaportPontaj(cine) {
+      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
+      return rol === 'admin' || rol === 'fondator' || rol === 'manager';
+    },
+
+    /**
+     * „Vede cifrele casei?" — deocamdată numai fondatorul.
+     *
+     * Perechea din pagină a lui `GP_STATS_ROLES` / `require_stats()` din
+     * api/lib/auth.php. Serverul păzește; rândul ăsta hotărăște doar dacă
+     * pagina se DESENEAZĂ sau arată ecranul de refuz.
+     *
+     * DE CE O FUNCȚIE PENTRU UN SINGUR ROL, și nu `role === "fondator"` scris
+     * în pagină. Fiindcă întrebarea nu e „e fondator?", ci „are voie la
+     * statistici?" — iar cele două vor rămâne același lucru doar până când
+     * cineva hotărăște altfel. Scrisă pe rol, schimbarea aia ar trebui găsită
+     * prin pagini; scrisă aici, se face într-un rând, lângă oglinda ei de pe
+     * server.
+     *
+     * DE CE NU `eAdmin`, adică de ce administratorul NU intră. E singura ușă
+     * din casă mai îngustă decât drepturile depline, și e îngustă dinadins:
+     * administratorul ține patiseria în mână zi de zi, dar banii sunt ai
+     * proprietarului. Peste tot în rest cele două roluri trec prin aceleași
+     * uși — aici nu, iar `.claude/check-meniu.mjs` se plânge dacă se apropie
+     * iar una de alta.
+     */
+    eStats(cine) {
+      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
+      return rol === 'fondator';
+    },
+
+    MENIU: [
+      { et: 'Comenzi', href: 'Administrare%20Comenzi.dc.html' },
+      { et: 'Laborator', href: 'Panou%20Laborator.dc.html' },
+      { et: 'Rută', href: 'Ruta%20Sofer.dc.html' },
+      { et: 'Depozit', href: 'Depozit.dc.html' },
+      // Lângă celelalte panouri de tabletă, fiindcă de pe aceleași tablete se
+      // deschide: ceasul de pontaj sus, raportul dedesubt — dar raportul numai
+      // pentru cine are voie să-l vadă (GP_SHIFTS_ROLES pe server).
+      { et: 'Pontaj', href: 'Pontaj.dc.html' },
+      { et: 'Catalog', href: 'Produse.dc.html' },
+      { et: 'Conturi', href: 'Conturi.dc.html' },
+      { et: 'Recomandări', href: 'Recomandari.dc.html' },
+      { et: 'Jurnal', href: 'Jurnal.dc.html' },
+      // Lângă Jurnal, fiindcă amândouă se uită înapoi: unul la ce a făcut
+      // fiecare, celălalt la ce a ieșit din toate. Singura intrare pe care
+      // administratorul n-o are — vezi PANOURI_ROL mai jos.
+      { et: 'Statistici', href: 'Statistici.dc.html' },
+      { et: 'Setări', href: 'Setari.dc.html' },
+      // Pagina clientului. Stă în aceeași listă cu panourile fiindcă e tot o
+      // intrare de meniu, chiar dacă n-o vede decât un rol: altfel clientul ar
+      // fi avut al doilea meniu, scris în alt loc, care s-ar fi depărtat de
+      // ăsta la prima schimbare.
+      { et: 'Comanda mea', href: 'Client.dc.html' },
+      { et: 'Parola mea', href: 'Parola.dc.html' },
+    ],
+
+    PANOURI_ROL,
+    ACASA_ROL,
+
+    /**
+     * Forma în care paginile țin contul în starea lor.
+     *
+     * Toate țineau deja `{u, name, role}`, scris de mână în zece locuri. De
+     * când meniul se filtrează pe rol, îi mai trebuie două lucruri: codul de
+     * recomandare — ca „Recomandări" să apară clientului care chiar recomandă,
+     * nu tuturor — și `isSystem`, ca tableta din tură să nu-și poată schimba
+     * parola comună. Scrise tot de mână, ar fi lipsit exact din pagina uitată,
+     * iar meniul de acolo ar fi fost altul decât în rest, fără să pice nimic.
+     */
+    auth(user) {
+      if (!user) return null;
+      return {
+        u: user.username,
+        name: user.name,
+        role: user.role,
+        // Codul se caută în DOUĂ locuri, fiindcă serverul îl trimite altfel
+        // după cine întreabă:
+        //
+        //   · `GET /auth/me` (contul propriu) îl pune deoparte, în
+        //     `referral: {code, link}` — `public_user()` nu-l are, fiindcă
+        //     rândul vine din `current_user()`, o interogare cu listă fixă de
+        //     coloane care nu cuprinde `referral_code` (motivul, pe larg, la
+        //     api/routes/auth.php:219-223). `gp.me()` îl lipește pe utilizator
+        //     ca `user.referral`.
+        //   · `GET /users` (lista din Conturi) îl pune chiar pe utilizator, ca
+        //     `referralCode`, fiindcă acolo interogarea îl citește.
+        //
+        // Prima formă căuta numai a doua cale. Pe contul propriu ieșea deci
+        // MEREU `null`, iar urmarea se vedea în meniu: clientul care recomandă
+        // nu primea „Recomandări", adică singura pagină în care își vede banii.
+        // Măsurat pe `demo-cumparator` (cod „cumparator"): meniul lui era
+        // „Comanda mea · Parola mea"; cu codul ajuns aici devine „Recomandări ·
+        // Comanda mea · Parola mea". Nu pica nicio probă, fiindcă
+        // `.claude/meniu-real.mjs` cheamă `gp.meniu()` cu conturi făcute de el,
+        // nu cu ce iese din funcția asta.
+        referralCode: user.referralCode || (user.referral && user.referral.code) || null,
+        isSystem: user.isSystem === true,
+      };
+    },
+
+    /**
+     * Unde trimitem omul după autentificare.
+     *
+     * Până acum era o singură întrebare — client sau nu — iar tot ce nu era
+     * client ajungea la Administrare Comenzi. Pentru manager și pentru agentul
+     * de vânzări asta însemna un ecran de refuz imediat după parola corectă.
+     */
+    primaPagina(cine) {
+      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
+      return ACASA_ROL[rol] || 'Parola.dc.html';
+    },
+
+    /**
+     * Meniul gata de desenat: numai intrările rolului, cu pagina curentă
+     * marcată.
+     *
+     * `activ` e eticheta paginii care întreabă — „Conturi" în Conturi.
+     * Intrarea ei rămâne fără adresă: o legătură către pagina pe care ești
+     * deja arată ca un buton stricat, apeși și nu se întâmplă nimic.
+     *
+     * `cine` e contul, în forma dată de `gp.auth()`. Fără el iese listă goală,
+     * dinadins: rolul vine de la server, deci în prima clipă a paginii încă nu
+     * se știe. Un meniu care ar apărea întreg și apoi s-ar strânge ar arăta
+     * omului, o clipă, exact butoanele pe care lucrarea asta le scoate.
+     *
+     * Culorile nu vin de aici. Fișierul ăsta traduce date, nu desenează —
+     * panourile au fundal închis, paginile de client au fundal deschis, iar o
+     * culoare scrisă aici ar fi greșită într-una dintre ele.
+     */
+    meniu(activ, cine) {
+      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
+      const permise = PANOURI_ROL[rol] || [];
+      const obiect = !!cine && typeof cine === 'object';
+      const areCod = obiect && !!cine.referralCode;
+      const eSistem = obiect && cine.isSystem === true;
+
+      return gp.MENIU.filter((x) => {
+        // Pagina pe care ești deja rămâne mereu în listă, oricare ar fi rolul.
+        // Altfel meniul n-ar avea nicio intrare marcată și n-ar mai spune unde
+        // te afli — se întâmplă la administratorul care deschide „Comanda mea"
+        // ca să vadă ce vede clientul. Nu e o portiță: ești deja pe pagină, iar
+        // datele ți le dă serverul sau nu.
+        if (x.et === activ) return true;
+
+        // „RECOMANDĂRI" SE HOTĂRĂȘTE DUPĂ COD, NU DUPĂ ROL — și de aceea stă
+        // ÎNAINTEA matricei, nu după ea.
+        //
+        // Regula, într-o propoziție: pagina banilor e a celui care chiar are un
+        // cod. Din ea ies amândouă capetele:
+        //
+        //   · clientul FĂRĂ cod n-o vede, deși e în matricea lui — ar deschide
+        //     o pagină goală cu o singură propoziție tristă;
+        //   · managerul sau angajatul CU cod o vede, deși nu e în matricea lui.
+        //
+        // Al doilea cap e o reparație, nu o lărgire de drepturi. Un cod se dă
+        // din „Conturi" oricărui cont care nu e de sistem, iar
+        // `referral_owner()` nu se uită la rol: un manager cu cod CHIAR
+        // câștigă comision, iar `GET /referrals` îi răspunde 200 cu rândurile
+        // și cu totalul lui. Măsurat pe instanța de probă: comision
+        // `{amount: 1.05, status: "activ"}`, `totals.due = 1.05` — bani
+        // adevărați, pe un cont care nu avea pe unde să ajungă la pagina în
+        // care se văd. Matricea spune unde te trimite ROLUL; codul e al OMULUI.
+        //
+        // Managerul obișnuit, cel fără cod, nu vede nicio schimbare.
+        if (x.et === 'Recomandări') {
+          // Clientul: NUMAI cu cod. Fără el pagina e goală, iar un client
+          // nu-și poate face singur un cod — deci ar fi o intrare care nu
+          // duce nicăieri. (Paza: .claude/check-meniu.mjs.)
+          if (rol === 'client') return areCod;
+          // Restul: din matricea rolului SAU cu un cod pe cont. Agentul de
+          // vânzări o păstrează și fără cod, fiindcă își poate face unul
+          // chiar de acolo (`canMake`, GET /referrals).
+          return permise.indexOf('Recomandări') >= 0 || areCod;
+        }
+
+        if (permise.indexOf(x.et) < 0) return false;
+        // Contul comun al tabletelor n-are parolă a lui: e a întregii ture.
+        // Cine ar schimba-o de acolo ar închide panoul tuturor, fără să vrea.
+        if (x.et === 'Parola mea' && eSistem) return false;
+        return true;
+      }).map((x) => ({
+        et: x.et,
+        href: x.href,
+        activ: x.et === activ,
+        // Perechea lui `activ`, fiindcă șablonul nu știe să nege: `sc-if`
+        // primește o valoare, nu o expresie. Două `sc-if` complementare sunt
+        // și tiparul casei (vezi `deniedClient` / `deniedStaff` în Conturi).
+        link: x.et !== activ,
+      }));
+    },
+
+    /**
+     * Ultimul rând al sertarului: ieșirea din panou.
+     *
+     * Era scris de mână, la fel în toate cele unsprezece pagini:
+     * „← Alege panoul", spre `Intrare.dc.html`. Pentru personal e corect. Un
+     * client însă n-are niciun panou de ales — rândul îl scotea din magazin și
+     * îl punea în pagina de autentificare, care lui îi arată un card cu încă
+     * două legături. Nu era un fund de sac, dar era un ocol printr-o pagină
+     * care îi cerea să aleagă dintre lucruri pe care nu le are.
+     *
+     * Aici, nu în pagini, din același motiv pentru care meniul e aici: unsprezece
+     * copii ale aceleiași hotărâri se depărtează una de alta.
+     */
+    iesire(cine) {
+      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
+      return rol === 'client'
+        ? { href: 'Site%20Public.dc.html', et: '← Înapoi la magazin' }
+        : { href: 'Intrare.dc.html', et: '← Alege panoul' };
+    },
+
+    /**
+     * De ce n-au venit datele, spus omului care se uită la ecran.
+     *
+     * Panourile prindeau eroarea și o scriau în `console.warn` — adică
+     * nicăieri. Pe tableta din laborator și pe telefonul șoferului nu există
+     * consolă și nu se deschide una. Ecranul rămânea gol, iar starea goală
+     * spunea mai mult decât știa pagina: „Nicio livrare în ziua asta” e o
+     * afirmație de fapt, dar pagina nu apucase să întrebe. Șoferul citea un
+     * „n-ai ce livra” sigur pe el și pleca acasă cu marfa în mașină.
+     *
+     * Așa s-a văzut defectul raportat din patiserie: în meniul de zile scria
+     * că sunt opriri, iar lista de dedesubt era goală, fără niciun motiv. Cele
+     * două numere vin din două cereri deosebite, iar când una pică și cealaltă
+     * nu, ecranul se contrazice singur și nu spune de ce.
+     *
+     * Aici, nu în pagini, din același motiv pentru care meniul e aici: cinci
+     * copii ale aceluiași mesaj se depărtează una de alta.
+     *
+     * `ce` numește lucrul care n-a venit, cum intră în frază: „ruta zilei”,
+     * „comenzile zilei”. 401 NU trece pe aici — sesiunea expirată are deja
+     * drumul ei, `gp.toLogin()`. Excepție: vitrina publică, unde nu există
+     * sesiune de pierdut și unde refuzul se arată ca oricare altul.
+     *
+     * Magazinul e singura pagină bilingvă din casă. Ca să nu-i primească
+     * vizitatorul de pe „/en/" o frază românească în mijlocul ecranului, `ce`
+     * poate veni și ca pereche — `{ ro: 'produsele din magazin', en: 'the
+     * shop products' }` — iar atunci răspunsul e tot o pereche, `{ ro, en }`,
+     * din care pagina alege la desenare. Chemat cu `ce` șir, cum îl cheamă
+     * celelalte cincisprezece pagini, dă exact ce dădea și până acum: un
+     * singur șir, în română.
+     */
+    motiv(e, ce) {
+      // Perechea o duce mai departe `motivEn()`, geamănul de dedesubt: fraza
+      // englezească se scrie o dată, aici, nu în pagină. Copiată în pagină,
+      // s-ar depărta de originalul de aici la prima îndreptare.
+      if (ce && typeof ce === 'object') {
+        return { ro: gp.motiv(e, ce.ro), en: gp.motivEn(e, ce.en) };
+      }
+      const lucrul = ce || 'datele';
+      const s = e && e.status;
+      if (s === 403) {
+        return 'Contul cu care ești intrat nu are voie să vadă ' + lucrul
+          + '. Cere-i unui administrator să-ți pună rolul potrivit.';
+      }
+      if (s === 404) {
+        return 'Serverul nu cunoaște adresa cerută. Cel mai probabil actualizarea '
+          + 's-a oprit la jumătate — spune-i administratorului.';
+      }
+      if (s === 422 || s === 409) {
+        return (e && e.message) || ('Cererea pentru ' + lucrul + ' a fost refuzată.');
+      }
+      if (s >= 500) {
+        return 'Serverul n-a putut aduce ' + lucrul + ' (eroarea ' + s + '). '
+          + 'Motivul îl vede administratorul în jurnalul serverului.';
+      }
+      if (!s) {
+        return 'Nu am ajuns la server. Verifică legătura la internet, apoi încearcă din nou.';
+      }
+      return (e && e.message) || ('Nu am putut aduce ' + lucrul + '.');
+    },
+
+    /**
+     * Geamănul englezesc al lui `motiv()`, pentru vitrina publică.
+     *
+     * Nu se cheamă de-a dreptul din pagini: intrarea e tot `gp.motiv()`, cu
+     * `ce` dat ca pereche. Stă aici, lipit de original, ca cele două fraze să
+     * se citească una sub alta: ramurile sunt aceleași, în aceeași ordine, și
+     * cine adaugă mâine un refuz nou vede pe loc că are două locuri de scris,
+     * nu unul. În pagini n-are ce căuta — acolo s-ar înmulți.
+     *
+     * Aceleași reguli ca dincolo: niciun mesaj nu pretinde că nu există date,
+     * eroarea de server își poartă numărul, iar refuzul lămurit de server se
+     * arată cu vorbele serverului (care vin în română de la API — le lăsăm
+     * așa: sunt mai exacte decât orice ghicim noi aici), cu o singură
+     * excepție, explicată la `alServerului` mai jos.
+     */
+    motivEn(e, ce) {
+      const lucrul = ce || 'the data';
+      const s = e && e.status;
+      // Excepția de la regula „vorbele serverului trec așa cum vin”.
+      //
+      // O singură frază din `e.message` NU e scrisă de server: „Eroare NNN.”,
+      // pe care o fabrică `request()` (vezi mai sus, la aruncarea lui
+      // `GpError`) când răspunsul are cod de eroare și n-are corp JSON. Așa
+      // arată un 429 dat de portarul din față sau un 413 dat de serverul web,
+      // înainte ca PHP-ul nostru să apuce să spună ceva.
+      //
+      // Aia e româneasca NOASTRĂ, nu a API-ului, și sub un titlu englezesc
+      // n-are ce căuta: vizitatorul de pe „/en/” ar citi „Eroare 429.” în
+      // mijlocul unei pagini englezești, fără să afle nici ce s-a întâmplat,
+      // nici ce are de făcut. O lăsăm deci să cadă pe fraza englezească de
+      // dedesubt, care măcar spune și ce urmează.
+      const alServerului = !!(e && e.message) && e.message !== 'Eroare ' + s + '.';
+      if (s === 403) {
+        return 'The account you are signed in with may not see ' + lucrul
+          + '. Ask an administrator to give you the right role.';
+      }
+      if (s === 404) {
+        return 'The server does not know the requested address. The update most '
+          + 'likely stopped halfway — please tell the administrator.';
+      }
+      if (s === 422 || s === 409) {
+        return (alServerului && e.message) || ('The request for ' + lucrul + ' was refused.');
+      }
+      if (s >= 500) {
+        return 'The server could not fetch ' + lucrul + ' (error ' + s + '). '
+          + 'The administrator can see why in the server log.';
+      }
+      if (!s) {
+        return 'We could not reach the server. Check your internet connection, then try again.';
+      }
+      return (alServerului && e.message) || ('We could not fetch ' + lucrul + '.');
     },
 
     /**
@@ -445,6 +1108,28 @@
         variant: o.variant || 'copt',
         phone: o.phone || '',
         total: o.total,
+        // Cine a adus cumpărătorul, pentru eticheta violetă de pe card.
+        //
+        // Trece nedesfăcut: pagina are nevoie și de `status` (un comision în
+        // așteptare nu e al nimănui încă), și de `paid` (bifa din fereastra
+        // comenzii), și de `id` (rândul pe care îl bifează). Serverul îl pune
+        // pe toate cele patru drumuri ale comenzii — listă, citire, creare,
+        // actualizare — deci eticheta apare fără reîncărcare.
+        //
+        // `null` pe o bază fără migrarea 008 și pe comenzile fără recomandant:
+        // pagina nu desenează nimic, exact ca înainte.
+        commission: o.commission || null,
+        // Codul scris pe comandă, ca formularul să-l poată ARĂTA, nu doar
+        // ghici din eticheta violetă. Serverul îl trimite numai personalului
+        // (api/lib/orders.php, attach_items), deci pe drumul clientului vine
+        // null și câmpul rămâne gol — la fel ca pe o bază fără migrarea 008.
+        refCode: o.referralCode || '',
+        // De ce cont s-a lipit comanda. Serverul îl trimitea de mult
+        // (`customerId`, api/lib/orders.php · attach_items), dar nicio pagină
+        // nu-l citea — deci legarea după nume lucra nevăzută, iar o comandă
+        // lipită de contul greșit arăta exact ca una lipită de cel bun.
+        // Fereastra comenzii îl arată acum, ca text, nu ca număr.
+        contId: o.customerId === undefined ? null : o.customerId,
         items: (o.items || []).map((it) => ({
           q: String(it.qty), n: it.name,
           // Numărul poziției și câte bucăți s-au raportat făcute. `itemId` e
@@ -480,7 +1165,28 @@
         total: r.total,
         variant: r.variant || 'copt',
         orderRef: r.orderRef || '',
-        at: r.createdAt ? Date.parse(r.createdAt + 'Z') || 0 : 0,
+        // Cererea n-are comision — rândul se naște abia la acceptare — deci
+        // duce codul tastat în coș și contul din spatele lui, dacă mai există.
+        // `name` gol înseamnă „cod fără cont activ", nu „fără cod".
+        referral: r.referralCode
+          ? { code: r.referralCode, name: r.referralName || '', id: r.referralId || null }
+          : null,
+        at: gp.utc(r.createdAt),
+        // Cererea pusă deoparte de la butonul „🕒 Mai târziu" din anunțul de
+        // pe telefon. Ora vine în aceeași formă ca `createdAt` —
+        // „2026-09-12 22:05:10", UTC, fără fus — deci trece prin aceeași
+        // socoteală; `new Date(șir)` pe curat ar citi-o drept oră locală și ar
+        // greși cu trei ore vara.
+        //
+        // `0` înseamnă „nu e pusă deoparte", ca paginile să compare numere în
+        // loc să deosebească null de șir gol. Pe un server pe care nu s-a
+        // rulat migrarea 013 cheia lipsește cu totul din răspuns — tot 0 iese.
+        snoozed: r.snoozedUntil ? gp.utc(r.snoozedUntil) : 0,
+        // Pe unde s-a hotărât cererea: „panou" sau „telegram". Gol înseamnă
+        // „nu se știe", și e o stare cinstită, nu o defecțiune: coloana a fost
+        // goală până acum, deci toate cererile de dinainte au null, ca și
+        // toate cele de pe un server nemigrat.
+        decidedVia: r.decidedVia || '',
         items: (r.items || []).map((it) => ({
           q: String(it.qty), n: it.name,
           productId: it.productId === undefined ? null : it.productId,
@@ -529,19 +1235,111 @@
     hq: () => (gp.__lists && gp.__lists.hq) || { label: 'Depozit', lat: 44.39235, lng: 26.12385 },
 
     /**
-     * Telefonul și e-mailul publice, din Setări.
+     * Ce spune patiseria despre sine, în public: telefon, e-mail, adresă,
+     * program.
      *
-     * Erau scrise în pagina magazinului, în cinci locuri. Patiseria își
-     * schimba numărul din panou, iar clientul suna tot la cel vechi — și tot
-     * acolo ducea și butonul de WhatsApp. Valorile de mai jos țin numai până
-     * răspunde serverul; adevărul este cel scris în Setări.
+     * Erau scrise în pagina magazinului — telefonul în cinci locuri, adresa în
+     * șapte, programul în două. Patiseria își schimba numărul din panou, iar
+     * clientul suna tot la cel vechi; și tot acolo ducea și butonul de
+     * WhatsApp. Cu adresa și programul era mai rău decât „rămâne în urmă":
+     * site-ul spunea DOUĂ programe deodată. Pagina citită de om zicea
+     * „Luni–Vineri 07:00–21:00, Sâmbătă 07:00–17:00, Duminică închis"; datele
+     * trimise lui Google, din aceleași Setări, ziceau „Luni–Sâmbătă
+     * 05:00–21:00". Nu forme deosebite ale aceluiași program — ore și zile
+     * deosebite. Unul din cei doi clienți venea la ușă închisă.
+     *
+     * Acum amândouă vin din `api/lib/firma.php`, chemat și de GET /lists, și de
+     * pagina scrisă pe server. Orele ajung aici DESFĂCUTE pe zile, de pe
+     * server: o a doua desfacere, în JavaScript, ar fi tocmai al doilea izvor
+     * pe care îl astupăm.
+     *
+     * Valorile de mai jos țin numai până răspunde serverul; adevărul e cel
+     * scris în Setări. `hours.days` rămâne GOL până atunci, dinadins: un tabel
+     * cu ore de rezervă, scrise în cod, e exact paguba de la care am plecat.
+     * Cine îl desenează întreabă întâi dacă are ce.
      */
     contact: () => {
       const c = (gp.__lists && gp.__lists.contact) || {};
+      const h = c.hours || {};
       return {
         phone: c.phone || '0769 493 163',
         email: c.email || 'contact@goldenpastry.ro',
+        address: c.address || 'Șos. Olteniței 103',
+        addressFull: c.addressFull || 'Șos. Olteniței 103, sector 4, București',
+        addressFullEn: c.addressFullEn || 'Șos. Olteniței 103, district 4, Bucharest',
+        mapUrl: c.mapUrl
+          || 'https://www.google.com/maps/search/?api=1&query='
+             + encodeURIComponent('Șos. Olteniței 103, sector 4, București'),
+        hours: { ro: h.ro || '', en: h.en || '', days: h.days || null },
       };
+    },
+
+    /**
+     * Programul, strâns în rânduri gata de desenat.
+     *
+     * Zilele alăturate cu aceleași ore se strâng într-un singur rând, ca la
+     * rândul scris de `firma_publica()` pentru Google: „Luni – Vineri", nu șapte
+     * rânduri, din care cinci la fel. Caseta de contact din magazin are loc
+     * pentru trei-patru rânduri, nu pentru șapte, iar un tabel cu șapte rânduri
+     * identice nu se citește mai bine — se citește mai greu.
+     *
+     * Fiecare rând: numele zilelor în limba cerută, orele (`null` = închis, iar
+     * cine desenează scrie acolo cuvântul lui, fiindcă numai el știe cât loc
+     * are), și dacă ziua de AZI cade înăuntru — de acolo iese rândul îngroșat.
+     *
+     * Ziua de azi se ia cu `gp.acumLaPatiserie()`, nu din ceasul telefonului:
+     * pagina se deschide de oriunde, iar rândul îngroșat spune „azi suntem
+     * deschiși până la…". Un client aflat pe alt fus vedea îngroșată ziua lui,
+     * nu pe a patiseriei. Lecția e veche în magazin, la rândurile de program —
+     * ea se mută aici odată cu ele.
+     *
+     * Lista e goală cât timp serverul n-a răspuns — vezi `gp.contact()`. Cine o
+     * desenează arată caseta abia când are ce pune în ea: un tabel cu ore de
+     * rezervă, scrise în cod, e chiar paguba de la care am plecat.
+     */
+    program(ro = true) {
+      const zile = gp.contact().hours.days;
+      if (!zile) return [];
+      const ORDINE = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const NUME = {
+        Monday: ['Luni', 'Monday'],
+        Tuesday: ['Marți', 'Tuesday'],
+        Wednesday: ['Miercuri', 'Wednesday'],
+        Thursday: ['Joi', 'Thursday'],
+        Friday: ['Vineri', 'Friday'],
+        Saturday: ['Sâmbătă', 'Saturday'],
+        Sunday: ['Duminică', 'Sunday'],
+      };
+      // getDay() dă 0 pentru duminică; ordinea de mai sus începe cu luni.
+      const azi = ORDINE[(gp.acumLaPatiserie().getDay() + 6) % 7];
+      const cheie = (z) => (zile[z] ? zile[z][0] + '-' + zile[z][1] : 'inchis');
+
+      const randuri = [];
+      for (const z of ORDINE) {
+        const ultim = randuri[randuri.length - 1];
+        if (ultim && ultim.cheie === cheie(z)) {
+          ultim.pana = z;
+          ultim.azi = ultim.azi || z === azi;
+          continue;
+        }
+        randuri.push({ cheie: cheie(z), de: z, pana: z, orele: zile[z] || null, azi: z === azi });
+      }
+
+      const i = ro ? 0 : 1;
+      return randuri.map((r) => {
+        const a = NUME[r.de][i];
+        const b = NUME[r.pana][i];
+        let nume = a;
+        if (r.de !== r.pana) {
+          // Două zile alăturate se despart cu virgulă; trei sau mai multe se
+          // scriu ca interval. „Sâmbătă – Duminică" ar fi o listă lungă scrisă
+          // ca drum, iar „Luni, Marți, Miercuri, Joi, Vineri" ar fi un drum
+          // scris ca listă.
+          const lung = ORDINE.indexOf(r.pana) - ORDINE.indexOf(r.de) >= 2;
+          nume = lung ? a + ' – ' + b : a + ', ' + b;
+        }
+        return { nume, orele: r.orele, azi: r.azi };
+      });
     },
 
     /**
@@ -549,10 +1347,43 @@
      *
      * O zonă fără coordonate cade pe depozit: distanța iese 0, ceea ce e
      * vizibil greșit pe rută — mai bine decât să pară corectă și să nu fie.
+     *
+     * Ecranele de rută nu mai ajung aici pentru o astfel de zonă: întreabă
+     * întâi `gp.zoneFaraPunct()` și o scot cu totul din ordonare. Căderea pe
+     * depozit rămâne pentru restul paginilor, care doar desenează un punct.
      */
     zonePoint(zone) {
       const map = (gp.__lists && gp.__lists.zoneCoords) || {};
       return map[zone] || gp.hq();
+    },
+
+    /**
+     * Zona asta e una fără punct pe hartă?
+     *
+     * Altfel spus: o oprire din zona asta NU poate fi așezată în ordinea rutei,
+     * fiindcă n-are față de ce. Ecranele de rută o scot din ordonare și o arată
+     * aparte, într-o listă a ei, dusă de cine poate.
+     *
+     * ÎNTREBAREA NU SE PUNE PE NUME. „În afara Bucureștiului și Ilfovului" e
+     * croită anume fără punct (vezi sql/016_zona_cont.sql), dar zonele se
+     * redenumesc din Setări: un nume scris aici ar ține până în ziua în care
+     * patronul îl scurtează, și de-atunci oprirea ar intra tăcut înapoi în
+     * ordonare. Semnalul e lipsa punctului, care e chiar lucrul care lipsește.
+     *
+     * O oprire FĂRĂ NICIO ZONĂ rămâne unde e azi — pe rută, căzută pe depozit.
+     * Aia e o comandă căreia nu i-a scris nimeni zona, de obicei una luată la
+     * telefon prin oraș; scoasă din rută, ar putea să nu mai fie văzută.
+     *
+     * HARTA GOALĂ înseamnă „n-am aflat încă", nu „nicio zonă n-are punct":
+     * altfel, cât timp listele sunt pe drum de la server, TOATĂ ruta s-ar muta
+     * pentru o clipă în lista de deoparte, și tot acolo ar rămâne pe o
+     * instalare căreia nu i s-au scris încă punctele.
+     */
+    zoneFaraPunct(zone) {
+      const map = (gp.__lists && gp.__lists.zoneCoords) || {};
+      if (!Object.keys(map).length) return false;
+      const z = String(zone == null ? '' : zone).trim();
+      return z !== '' && !map[z];
     },
 
     /**
@@ -599,6 +1430,25 @@
     },
 
     /**
+     * Un moment UTC scris de MySQL („2026-09-07 10:20:30”), ca milisecunde.
+     *
+     * Formatul cu spațiu nu e ISO 8601, iar `Date.parse` îl acceptă doar
+     * după bunul plac al browserului: Chrome îl citește, Safari de pe iPhone
+     * întoarce NaN. Paginile lipeau „Z" și cădeau pe `|| 0`, adică 1 ianuarie
+     * 1970 — Jurnalul arăta toate intrările în 1970, iar cererile clientului
+     * se sortau aiurea pe telefon. Aici spațiul devine „T", cum cere ISO, și
+     * toate paginile trec prin același loc.
+     */
+    utc(s) {
+      const t = String(s == null ? '' : s).trim();
+      if (!t) return 0;
+      const iso = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(t) ? t.replace(' ', 'T') + 'Z'
+        : /Z$|[+-]\d{2}:?\d{2}$/.test(t) ? t : t + 'Z';
+      const ms = Date.parse(iso);
+      return isFinite(ms) ? ms : 0;
+    },
+
+    /**
      * Aceeași cantitate, scrisă pentru ochi: „10”, nu „10.00”; „0,5”, nu „0.5”.
      * Zecimalele se arată doar când există, cu virgulă, cum se scrie la noi.
      *
@@ -610,6 +1460,40 @@
     qtyLabel(v) {
       const n = Math.round(gp.qty(v) * 100) / 100;
       return Number.isInteger(n) ? String(n) : String(n).replace('.', ',');
+    },
+    /**
+     * „o oprire", „3 opriri", „20 de opriri" — numărul scris românește.
+     *
+     * Regula lui „de" nu e o toană: peste douăzeci numeralul cere prepoziția,
+     * iar de la o sută în sus se uită la ULTIMELE două cifre — „101 opriri",
+     * dar „120 de opriri". Scrisă o dată, fiindcă ferestrele spre rută sunt
+     * două, a clientului și a agentului, și ar fi început să se contrazică.
+     */
+    opriri(n) {
+      const k = Math.max(0, Math.round(Number(n) || 0));
+      if (k === 1) return 'o oprire';
+      const r = k % 100;
+      return (r === 0 || r >= 20) ? k + ' de opriri' : k + ' opriri';
+    },
+
+    /**
+     * Rândul de sus al ferestrei spre rută: cât mai are șoferul și pe unde.
+     *
+     * Primește răspunsul lui `GET /routes/mine` întreg. Zonele vin numărate
+     * de server, dar NU acoperă totdeauna toate opririle: o comandă poate fi
+     * scrisă fără zonă, iar atunci suma de pe ecran ar fi ieșit mai mică
+     * decât cifra de lângă ea, și omul ar fi crezut că una dintre ele minte.
+     * Restul se numește pe față, „fără zonă", ca socoteala să se închidă.
+     */
+    rutaRezumat(rt) {
+      if (!rt || typeof rt.remaining !== 'number') return '';
+      if (rt.remaining === 0) return 'Toate livrările de azi sunt încheiate.';
+      const z = (rt.zones || []).map((x) => x.zone + ' (' + x.remaining + ')');
+      const numite = (rt.zones || []).reduce((a, x) => a + (Number(x.remaining) || 0), 0);
+      const fara = rt.remaining - numite;
+      if (fara > 0) z.push('fără zonă (' + fara + ')');
+      return 'Șoferul mai are ' + gp.opriri(rt.remaining) + ' azi'
+        + (z.length ? ' — ' + z.join(' · ') : '') + '.';
     },
 
     /**
@@ -671,6 +1555,55 @@
      *   label „Sâm 29 aug”
      *   long  „Sâmbătă 29 august”
      */
+    /**
+     * Aceeași clipă, citită după ceasul patiseriei.
+     *
+     * Întoarce un `Date` NOU ale cărui câmpuri LOCALE (`getFullYear`,
+     * `getMonth`, `getDate`, `getHours`, `getMinutes`) arată ora de perete din
+     * București pentru clipa dată, oricare ar fi fusul aparatului. Serverul
+     * socotește așa de la început (`today_local()`, `api/lib/http.php:311`, cu
+     * fusul scris în cod ca să nu atârne de setarea găzduirii); ăsta e același
+     * lucru, pentru pagini.
+     *
+     * SE FOLOSEȘTE NUMAI PENTRU CITIT ziua și ora. Rezultatul nu mai e clipa
+     * adevărată în milisecunde, deci nu se scade din alt `Date` și nu se
+     * trimite la server ca marcaj de timp — se trimite ziua scoasă din el.
+     *
+     * Pe un dispozitiv fără datele de fusuri, `Intl` aruncă; atunci rămâne
+     * ceasul aparatului, adică purtarea de dinainte. Mai bine ziua lui decât
+     * niciun răspuns.
+     */
+    laPatiserie(cand) {
+      const d = new Date(cand.getTime());
+      if (isNaN(d.getTime())) return d;
+      try {
+        const p = {};
+        const fmt = new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Europe/Bucharest',
+          year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+        });
+        for (const x of fmt.formatToParts(d)) p[x.type] = x.value;
+        if (p.year && p.month && p.day) {
+          // Ora se pune ÎNTÂI: `setHours` poate revărsa în ziua următoare (ora
+          // 25 e mâine), iar dacă ziua se așază după el revărsarea e ștearsă.
+          // Invers ar fi un defect de o zi, o dată la câteva luni.
+          //
+          // `% 24` fiindcă `hour12: false` dă `24` la miezul nopții în unele
+          // versiuni de ICU — amănuntul care trece toate probele scrise la
+          // ora trei după-amiaza și cade o singură dată pe noapte.
+          d.setHours(Number(p.hour) % 24, Number(p.minute), Number(p.second), 0);
+          d.setFullYear(Number(p.year), Number(p.month) - 1, Number(p.day));
+        }
+      } catch (e) { /* dispozitiv fără date de fus: rămâne ceasul lui */ }
+      return d;
+    },
+
+    /** Clipa de acum, citită după ceasul patiseriei. V. `gp.laPatiserie`. */
+    acumLaPatiserie() {
+      return gp.laPatiserie(new Date());
+    },
+
     days(n = 7) {
       const DOW = ['Dum', 'Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm'];
       const DOWL = ['duminică', 'luni', 'marți', 'miercuri', 'joi', 'vineri', 'sâmbătă'];
@@ -679,7 +1612,26 @@
         'august', 'septembrie', 'octombrie', 'noiembrie', 'decembrie'];
       const p2 = (x) => (x < 10 ? '0' : '') + x;
 
-      const base = new Date();
+      // Ziua PATISERIEI, nu ziua aparatului care întreabă.
+      //
+      // Aici era doar `new Date()`, adică ceasul dispozitivului. De acolo au
+      // curs cinci defecte deodată; cel mai scump: tableta lăsată pe UTC naște
+      // comanda scrisă la 01:00 pe ziua de IERI, iar `?from=azi` o taie din
+      // toate listele. Marfa nu se coace, și nimic pe niciun ecran nu spune de
+      // ce, fiindcă serverul răspunde 200 — marginea de jos lipsește dinadins
+      // (`valid_day_not_too_far()`), ca administratorul să poată consemna o
+      // livrare de ieri.
+      //
+      // Se schimbă NUMAI baza. Restul funcției merge pe câmpurile de ceas
+      // local ale lui `Date`, deci mersul zilelor și etichetele rămân cum
+      // erau; schimbarea urcă singură în `gp.today()` și în toate paginile
+      // care cheamă `gp.days()`, fără să atingă niciuna.
+      //
+      // Ziua NU se ia din `gp.__lists.orderWindow.first`, deși serverul o
+      // trimite: `gp.lists()` reține răspunsul o singură dată, deci ziua ar
+      // ÎNGHEȚA — și ar rupe exact reparațiile de trecere în ziua nouă
+      // (`refreshDays`, `treziZiua`), care au nevoie de un ceas care merge.
+      const base = gp.acumLaPatiserie();
       base.setHours(0, 0, 0, 0);
       const out = [];
       for (let i = 0; i < n; i++) {

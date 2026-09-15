@@ -118,12 +118,19 @@ Din clipa în care și-a pus parola lui, rândul din Conturi se schimbă în
 | Cine | Zile |
 |---|---|
 | client | 30 |
-| administrator, angajat, tablete | 7 |
+| administrator, angajat, manager, agent | 7 |
+| tableta din laborator (contul comun) | 365, împins înainte cât e folosită |
 
 Clientul comandă de pe telefonul lui, deci o lună fără parolă nu deranjează pe
-nimeni. Panourile din patiserie stau pe calculatoare la care ajunge toată tura,
-deci sesiunea lor se închide mai repede. Se schimbă din `api/config.php`,
-cheile `session_days_client` și `session_days_staff`.
+nimeni. Oamenii din patiserie lucrează pe calculatoare la care ajunge toată
+tura, deci sesiunea lor se închide mai repede — și nu se reînnoiește singură,
+tocmai ca să nu rămână deschisă pentru cine intră după tine.
+
+Tableta e altceva: nu e dispozitivul nimănui, stă pornită în laborator și se
+deschide cu codul turei. Sesiunea ei se împinge înainte la fiecare zi în care e
+folosită, deci practic nu se închide niciodată de la sine; se închide când
+schimbi codul din Setări. Se schimbă din `api/config.php`, cheile
+`session_days_client`, `session_days_staff` și `session_days_panou`.
 
 ---
 
@@ -153,15 +160,71 @@ abia atunci primește număr și apare în laborator.
 
 ## Ce poate fiecare rol
 
-| | administrator | angajat / tablete | client |
-|---|---|---|---|
-| Vede comenzile zilei, le avansează prin etape | da | da | doar pe ale lui |
-| Depozit: intrări, ieșiri, praguri | da | da | — |
-| **Acceptă, respinge sau redeschide o cerere de pe site** | da | **nu** | — |
-| **Stabilește ordinea opririlor pe rută** | da | **nu** | — |
-| Conturi, Catalog, Jurnal, Setări | da | nu | — |
+Fiecare rol vede în meniu **numai panourile pe care le poate chiar folosi**. Un
+buton care ar duce la „nu ai acces" nu se mai arată deloc — lista de mai jos e
+oglinda porților de pe server, nu o pază în plus.
 
-Cele două rânduri îngroșate erau, până de curând, deschise întregii ture.
+| Panou | administrator / fondator | manager | agent de vânzări | angajat / tablete | client |
+|---|:-:|:-:|:-:|:-:|:-:|
+| Comenzi | tot | vede și mută etapa | **numai ale lui**, mută etapa | — | — |
+| Laborator | da | da | — | da | — |
+| Rută | da | da | — | da | — |
+| Depozit | da | da | — | da | — |
+| Pontaj | da | da | — | da | — |
+| Catalog | da | — | — | — | — |
+| Conturi | da | — | — | — | — |
+| Recomandări | da | — | da | — | dacă are cod |
+| Jurnal | da | — | — | — | — |
+| Statistici | **numai fondatorul** | — | — | — | — |
+| Setări | da | — | — | — | — |
+| Comanda mea | — | — | — | — | da |
+| Parola mea | da | da | da | da | da |
+
+Mai e un rol, care nu încape în tabel fiindcă are o singură ușă:
+**„utilizator de laborator"** — omul care vine la lucru și atât. El vede
+**Pontaj** și **Parola mea**, nimic altceva. În fața tabletei din laborator nici
+nu intră cu parolă: apasă pe numele lui pe ecranul deschis de tură. Rândul din
+meniu e pentru ziua în care își deschide singur pagina, de pe telefon.
+
+**Fondatorul e administrator plus două lucruri.** Unul vechi: puterea asupra
+administratorilor și a celorlalți fondatori. Unul nou: **„Statistici"** —
+singurul panou din casă pe care administratorul nu-l are. În rest trec prin
+aceleași uși, iar meniul le arată același lucru.
+
+**De ce statisticile nu sunt și ale administratorului.** Nu e o neîncredere în
+om, e o deosebire între munci: administratorul conduce patiseria zi de zi —
+comenzi, marfă, oameni, prețuri — iar cifrele de pe interval (cât a intrat în
+casă, cine cumpără cel mai mult, ce se vinde și ce nu) sunt ale celui care ține
+firma. Oglinda de pe server e `GP_STATS_ROLES` (`api/lib/auth.php`), singura
+listă de roluri din casă mai strâmtă decât `GP_ADMIN_ROLES`.
+
+**Managerul și agentul, în „Comenzi", doar mută etapa.** Văd lista, deschid o
+comandă, o trec dintr-o etapă în alta și pot lua o comandă nouă la telefon.
+Formularul de editare — client, adresă, poziții, cod de recomandare — rămâne al
+administratorului.
+
+**Agentul vede în „Comenzi" numai comenzile oamenilor aduși de el** — ale
+cumpărătorilor legați de codul lui pentru totdeauna și cele care poartă codul
+chiar pe ele. Restul comenzilor casei nu-i apar nici în listă, nici în căutare,
+nici în ruta zilei, nici între cererile de pe site, și nu se pot deschide nici
+cerându-le după număr. Marginea stă pe server, într-un singur loc
+(`referral_agent_scope()`, `api/lib/referral.php`), nu în pagină.
+
+**Agentul de vânzări face conturi de cumpărători**, din pagina „Recomandări",
+lângă „Copiază codul". Contul nou e legat pe loc de codul lui, iar parola pe
+care i-o dă cumpărătorului e provizorie: acesta o schimbă la prima intrare.
+Agentul nu poate cere alt rol decât „client", și nu poate alege recomandantul —
+acela e el, întotdeauna.
+
+Iar în „Comenzi", între cele două trepte de personal:
+
+| | administrator / fondator | restul personalului |
+|---|---|---|
+| **Acceptă, respinge sau redeschide o cerere de pe site** | da | **nu** |
+| **Stabilește ordinea opririlor pe rută** | da | **nu** |
+| Editează comanda: client, adresă, poziții, cod de recomandare | da | **nu** |
+
+Primele două rânduri erau, până de curând, deschise întregii ture.
 Ecranul „Administrare Comenzi" se închidea corect pentru angajați, dar serverul
 primea cererea oricum — iar contul tabletelor, pe care îl deschide un cod știut
 de toată lumea, are exact acest rol. Cine ajungea la el putea respinge din

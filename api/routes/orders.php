@@ -10,9 +10,46 @@ declare(strict_types=1);
 /**
  * GET /orders?day=YYYY-MM-DD&status=...&from=&to=
  *
- * Personalul vede toate comenzile; un client vede exclusiv comenzile lui —
- * filtrul se aplică pe server, nu în interfață.
+ * Personalul vede toate comenzile — afară de agentul de vânzări, care vede
+ * numai ce a adus el; un client vede exclusiv comenzile lui. Filtrul se aplică
+ * pe server, nu în interfață.
  */
+/**
+ * Cine ce comenzi are voie să vadă, ca bucată de SQL.
+ *
+ * Stă într-o funcție fiindcă e chemată din două locuri: lista de comenzi și
+ * numărătoarea pe zile care hrănește calendarul din laborator. Scrisă de două
+ * ori, s-ar fi despărțit la prima corectură — iar despărțirea aici n-ar ieși
+ * ca o eroare, ci ca un calendar care spune „5 comenzi” într-o zi care se
+ * deschide cu patru. Cifra de pe calendar trebuie să fie exact numărul de
+ * rânduri pe care le vede același om când intră în ziua aceea.
+ *
+ * Coloanele se dau ca prefix, fiindcă lista folosește alias-ul `o.` iar
+ * numărătoarea n-are nevoie de niciun alias.
+ */
+// Cine e primit în registru — și de ce întrebarea stă deoparte de filtrul de
+// mai jos — e scris o singură dată, la `orders_readable()` (api/lib/auth.php),
+// fiindcă marginea asta o cere și `/requests`.
+function orders_visibility_filter(array $u, string $prefix = 'o.'): array
+{
+    if ($u['role'] === 'client') {
+        return [$prefix . 'customer_id = ?', [(int) $u['id']]];
+    }
+    if ($u['role'] === 'agent_vanzari') {
+        // Agentul e personal, dar comenzile casei nu sunt ale lui: vede numai
+        // cumpărătorii aduși de el și comenzile care îi poartă codul.
+        // Regula stă într-un singur loc — vezi referral_agent_scope().
+        $sc = referral_agent_scope((int) $u['id'], $prefix . 'customer_id', $prefix . 'referral_code');
+        return [$sc['sql'], $sc['params']];
+    }
+    // Au rămas două tabere: personalul de operațiuni, care le vede pe toate
+    // (filtru gol), și oricine altcineva, care nu vede niciuna. `1 = 0` e
+    // „niciun rând", nu „eroare": lista iese goală, numărătoarea iese zero,
+    // iar o comandă anume iese „nu există" — adică răspunsul nu spune nici
+    // măcar ce numere are casa.
+    return orders_readable($u) ? ['', []] : ['1 = 0', []];
+}
+
 function route_orders_list(): void
 {
     $u = require_auth();
@@ -20,9 +57,10 @@ function route_orders_list(): void
     $where  = [];
     $params = [];
 
-    if ($u['role'] === 'client') {
-        $where[]  = 'o.customer_id = ?';
-        $params[] = (int) $u['id'];
+    [$vSql, $vParams] = orders_visibility_filter($u);
+    if ($vSql !== '') {
+        $where[] = $vSql;
+        $params  = array_merge($params, $vParams);
     }
 
     $day = trim((string) ($_GET['day'] ?? ''));
@@ -52,17 +90,265 @@ function route_orders_list(): void
         $params  = array_merge($params, $list);
     }
 
+    // Plafonul, o singură valoare cu nume, fiindcă se folosește de două ori:
+    // în interogare și în steagul de mai jos. Scrise separat, s-ar fi depărtat
+    // una de alta la prima corectură, iar steagul ar fi început să mintă.
+    //
+    // `?limit=` e pentru cine vrea mai puțin, nu pentru cine vrea mai mult:
+    // se taie la plafon, deci o cerere scrisă de mână nu poate trage tot
+    // tabelul într-un singur răspuns. Zero sau scris greșit înseamnă „cât dai”,
+    // adică plafonul — un parametru neînțeles n-are voie să golească lista.
+    // Felul de livrare, ca filtru de server.
+    //
+    // Panoul îl avea numai în interfață, deci filtra ce apucase să încarce.
+    // Odată ce lista se citește pe pagini, un filtru care lucrează după
+    // tăietură nu mai filtrează comenzile: filtrează pagina.
+    $chan = trim((string) ($_GET['chan'] ?? ''));
+    if ($chan !== '') {
+        $where[]  = 'o.fulfillment = ?';
+        $params[] = $chan;
+    }
+
+    // Căutarea, dusă pe server.
+    //
+    // Caută exact ce scrie pe cutie — „Caută client, referință, produs" — și
+    // nimic în plus. Telefonul e în tabel și ar fi fost ieftin de adăugat, dar
+    // o casetă care caută mai mult decât spune e tot un ecran care minte.
+    //
+    // `%` și `_` se scapă, altfel cine caută „50%" primea toate comenzile, iar
+    // cine caută „a_b" primea și „axb". Caracterul de scăpare e cerut pe față
+    // — ESCAPE '!' — fiindcă backslash-ul implicit al MySQL are alt înțeles în
+    // șirurile PHP și în modul NO_BACKSLASH_ESCAPES: aceeași interogare ar fi
+    // căutat altceva după o schimbare de configurație a serverului.
+    $q = trim((string) ($_GET['q'] ?? ''));
+    if ($q !== '') {
+        $ac = '%' . str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $q) . '%';
+        // Numele produsului se caută prin EXISTS, nu prin JOIN: un JOIN ar fi
+        // înmulțit comanda cu numărul de poziții care se potrivesc, deci
+        // `total` ar fi numărat aceeași comandă de mai multe ori — chiar cifra
+        // de care atârnă numărul de pagini.
+        $where[]  = "(o.ref LIKE ? ESCAPE '!' OR o.customer_name LIKE ? ESCAPE '!'"
+            . " OR EXISTS (SELECT 1 FROM order_items oi"
+            . " WHERE oi.order_id = o.id AND oi.name LIKE ? ESCAPE '!'))";
+        $params[] = $ac;
+        $params[] = $ac;
+        $params[] = $ac;
+    }
+
+    $limita = 500;
+    if (isset($_GET['limit'])) {
+        $cerut = (int) $_GET['limit'];
+        if ($cerut > 0) {
+            $limita = min($cerut, 500);
+        }
+    }
+
+    // Ordinea se socotește după cum a fost cerută lista, fiindcă tăietura cade
+    // întotdeauna la capătul de jos al ei.
+    //
+    // Fereastra de zile înseamnă „mă interesează bucata asta de calendar”, și e
+    // cerută de laborator (Panou Laborator.dc.html:458) și de fila de intrare:
+    // azi..azi+6. Citită de la coadă, ca până acum, tăietura de 500 mânca
+    // tocmai ziua de azi și pe cea de mâine — comenzile care se coc — și lăsa
+    // în listă capătul cel mai depărtat, care nu se face încă. Cerută anume, o
+    // fereastră se citește deci de la capătul ei apropiat.
+    //
+    // Fără fereastră, panoul de administrare vrea ce e proaspăt: acolo ordinea
+    // rămâne cea dinainte, iar tăietura cade pe comenzile vechi.
+    $fereastra = $day !== '' || $from !== '' || $to !== '';
+    $ordine    = $fereastra ? 'o.day ASC, o.seq ASC' : 'o.day DESC, o.seq DESC';
+
+    // Urgentele deasupra, dar numai cui cere anume.
+    //
+    // Panoul de administrare le ridica singur, după ce primea lista. Merge
+    // câtă vreme lista e întreagă; de îndată ce se citește pe pagini, o
+    // sortare făcută după tăietură nu mai sortează comenzile — sortează
+    // pagina. O comandă urgentă de pe pagina a treia rămâne pe pagina a
+    // treia, oricât de sus ar fi urcată acolo.
+    //
+    // Se cere pe față (`?sort=urgent`), nu se face din oficiu: laboratorul,
+    // ruta, depozitul și fila clientului își au ordinea lor și n-au cerut
+    // nicio schimbare. Ordinea rămâne totală — `day, seq` e cheie unică pe
+    // coloane NOT NULL — deci paginile nu se pot amesteca între două cereri.
+    if (trim((string) ($_GET['sort'] ?? '')) === 'urgent') {
+        $ordine = 'o.urgent DESC, ' . $ordine;
+    }
+
+    // Pagina cerută. Plafonată ca la jurnal (api/routes/log.php:37): un
+    // `?page=99999999999999999999` dădea (int) PHP_INT_MAX, iar înmulțirea
+    // trecea în float — „OFFSET 4.6E+20" e eroare de sintaxă SQL, deci 500
+    // pentru un număr de pagină.
+    //
+    // Implicit 1. Cine nu cere o pagină primește exact ce primea și înainte:
+    // primele `$limita` comenzi, în aceeași ordine. Panoul de laborator, ruta,
+    // depozitul și fila clientului n-au aflat nimic.
+    $page   = min(1000000, max(1, (int) ($_GET['page'] ?? 1)));
+    $offset = ($page - 1) * $limita;
+
+    // Numărul total, socotit pe ACELEAȘI condiții.
+    //
+    // Nu se deduce din câte rânduri au venit: asta ar da „câte încap pe
+    // pagină", adică exact minciuna care se repară. Fără JOIN peste poziții,
+    // din motivul scris la căutare.
+    $total = (int) scalar(
+        'SELECT COUNT(*) FROM orders o'
+            . ($where ? ' WHERE ' . implode(' AND ', $where) : ''),
+        $params
+    );
+
+    // LIMIT/OFFSET se interpolează ca întregi validați: MySQL nu acceptă
+    // parametri legați în poziția asta.
     $sql = 'SELECT o.* FROM orders o'
         . ($where ? ' WHERE ' . implode(' AND ', $where) : '')
-        . ' ORDER BY o.day DESC, o.seq DESC LIMIT 500';
+        . ' ORDER BY ' . $ordine . ' LIMIT ' . $limita . ' OFFSET ' . $offset;
 
     $orders = all($sql, $params);
-    json_out(['orders' => attach_items($orders)]);
+    $orders = attach_items($orders, $u['role'] !== 'client');
+
+    // Eticheta violetă „Adus de …" — numai pentru personal.
+    //
+    // Clientul își vede aici propriile comenzi, iar cine l-a adus în casă și cât
+    // câștigă acela din el nu-l privește: e o înțelegere între patron și agent.
+    // Filtrul stă pe rol, nu pe ce desenează pagina, ca de obicei.
+    if ($u['role'] !== 'client') {
+        $com = referral_commissions_for_orders($orders);
+        foreach ($orders as &$o) {
+            $o['commission'] = $com[(int) $o['id']] ?? null;
+        }
+        unset($o);
+    }
+    // Tăietura se spune pe față.
+    //
+    // Până acum lista se oprea la 500 fără să sufle o vorbă: panoul desena
+    // liniștit ce primise, iar comenzile de dincolo de tăietură pur și simplu
+    // nu existau pentru cine se uita la ecran. E felul cel mai rău de a pierde
+    // o comandă — nimeni nu caută ce nu știe că lipsește.
+    //
+    // „>=”, nu „>”: baza n-are cum să dea mai mult decât plafonul, deci egal
+    // înseamnă „exact cât încape”, adică foarte probabil mai era. Un fals
+    // pozitiv la fix 500 de comenzi e un avertisment în plus; unul fals negativ
+    // ar fi o comandă pierdută.
+    // Taietura se spune in continuare, dar acum se poate si numara.
+    //
+    // `truncated` ramane pentru apelantii care nu cer pagini: fila
+    // clientului, depozitul, panoul de laborator. Cifrele noi sunt in plus,
+    // nu in loc — un apelant care nu le citeste nu simte nimic.
+    json_out([
+        'orders'    => $orders,
+        'truncated' => count($orders) >= $limita,
+        'total'     => $total,
+        'page'      => $page,
+        'perPage'   => $limita,
+        'pages'     => (int) max(1, (int) ceil($total / $limita)),
+    ]);
+}
+
+/**
+ * GET /orders/counts?from=&to= — câte comenzi și câte bucăți are fiecare zi.
+ *
+ * Pentru calendarul din laborator. Panoul aduce oricum o fereastră de șapte
+ * zile întregi, cu tot cu poziții, deci săptămâna n-are nevoie de ruta asta;
+ * ce-i lipsea era orizontul. Un brutar care vrea să știe dacă joia viitoare e
+ * încărcată nu poate afla decât mutând fereastra acolo și așteptând — adică
+ * pierzând ziua de azi de pe ecran.
+ *
+ * Se numără, nu se aduc: o lună de comenzi întregi, cu nume, telefoane și
+ * adrese, ar fi și mult de trimis, și mai mult decât are nevoie cineva ca să
+ * se uite pe un calendar.
+ *
+ * Anulatele nu se numără. Laboratorul nu le coace, panoul le scoate din listă
+ * (`Panou Laborator.dc.html`, filtrul după `gp.cancelled()`), deci dacă s-ar
+ * număra aici, calendarul ar arăta o zi mai plină decât e.
+ *
+ * ATENȚIE la ordinea din tabelul de rute: `/orders/counts` TREBUIE să stea
+ * înaintea lui `/orders/#`, altfel segmentul variabil înghite „counts” și
+ * ruta asta nu se cheamă niciodată. Prima potrivire câștigă — v. api/index.php.
+ */
+function route_orders_counts(): void
+{
+    $u = require_auth();
+
+    $from = valid_day(trim((string) ($_GET['from'] ?? '')) ?: today_local());
+    $to   = valid_day(trim((string) ($_GET['to'] ?? '')) ?: $from);
+    if ($to < $from) {
+        [$from, $to] = [$to, $from];
+    }
+    // O lună are 31 de zile, dar grila de calendar arată și zilele lunii
+    // vecine care umplu prima și ultima săptămână: 42 de căsuțe. Plafonul e
+    // pus peste ele, cu loc de o a doua lună cerută din mers, și e acolo ca o
+    // cerere scrisă de mână să nu pună serverul să numere toată baza.
+    if ((strtotime($to) - strtotime($from)) > 92 * 86400) {
+        fail('Intervalul cerut e prea lung: cel mult 92 de zile.', 422, 'range_too_long');
+    }
+
+    $where  = ['o.day BETWEEN ? AND ?'];
+    $params = [$from, $to];
+
+    [$vSql, $vParams] = orders_visibility_filter($u);
+    if ($vSql !== '') {
+        $where[] = $vSql;
+        $params  = array_merge($params, $vParams);
+    }
+
+    $cancelled = status_cancelled();
+    if ($cancelled !== '') {
+        $where[]  = 'o.status <> ?';
+        $params[] = $cancelled;
+    }
+
+    $cond = implode(' AND ', $where);
+
+    $rows = all(
+        "SELECT o.day AS day, COUNT(*) AS n FROM orders o WHERE $cond GROUP BY o.day",
+        $params
+    );
+
+    // Bucățile se numără separat, cu aceeași condiție: un JOIN pe poziții în
+    // aceeași interogare ar înmulți rândurile comenzii și ar strica `COUNT(*)`
+    // — o comandă cu trei poziții ar fi numărată de trei ori.
+    $rowsQ = all(
+        "SELECT o.day AS day, COALESCE(SUM(oi.qty), 0) AS q
+           FROM orders o JOIN order_items oi ON oi.order_id = o.id
+          WHERE $cond
+          GROUP BY o.day",
+        $params
+    );
+
+    $counts = [];
+    $pieces = [];
+    foreach ($rows as $r) {
+        $counts[(string) $r['day']] = (int) $r['n'];
+        $pieces[(string) $r['day']] = 0.0;
+    }
+    foreach ($rowsQ as $r) {
+        // Cantitățile sunt zecimale în bază (o jumătate de tavă e 0.5), iar
+        // tăierea la întreg le-ar pierde — v. proba „cantitățile zecimale”.
+        $pieces[(string) $r['day']] = (float) $r['q'];
+    }
+
+    json_out(['from' => $from, 'to' => $to, 'counts' => $counts, 'pieces' => $pieces]);
 }
 
 function route_orders_get(string $id): void
 {
     $u  = require_auth();
+
+    // Un rol căruia comenzile nu-i sunt deschise DELOC e oprit aici, înaintea
+    // oricărei citiri, și cu același răspuns pentru orice număr: altfel, din
+    // 404 față de 403, ar putea afla care numere de comandă are casa. Lista îi
+    // iese oricum goală (`orders_visibility_filter()`); rândul ăsta închide
+    // drumul lăturalnic, adresa scrisă de mână.
+    if (!orders_readable($u)) {
+        fail('Contul tău nu are acces la comenzi.', 403, 'forbidden');
+    }
+
+    // Marginea agentului stă înaintea oricărei citiri, ca poarta de la
+    // `PATCH /orders`: pusă după „comanda nu există", i-ar fi spus agentului,
+    // din 404 față de 403, care numere de comandă are casa.
+    if ($u['role'] === 'agent_vanzari' && !referral_agent_sees_order((int) $u['id'], (int) $id)) {
+        fail('Comanda nu e a unui cumpărător adus de tine.', 403, 'forbidden');
+    }
+
     $o  = one('SELECT * FROM orders WHERE id = ?', [(int) $id]);
     if (!$o) {
         fail('Comanda nu există.', 404, 'not_found');
@@ -70,7 +356,12 @@ function route_orders_get(string $id): void
     if ($u['role'] === 'client' && (int) $o['customer_id'] !== (int) $u['id']) {
         fail('Nu ai acces la această comandă.', 403, 'forbidden');
     }
-    json_out(['order' => attach_items([$o])[0]]);
+    $out = attach_items([$o], $u['role'] !== 'client')[0];
+    // Ca la listă: cine a adus clientul e treabă între patron și agent.
+    if ($u['role'] !== 'client') {
+        $out['commission'] = referral_commissions_for_orders([$out])[(int) $out['id']] ?? null;
+    }
+    json_out(['order' => $out]);
 }
 
 /* --------------------------------------------------------------- creare -- */
@@ -92,6 +383,73 @@ function route_orders_create(): void
     $user = require_staff();
     $b    = body();
 
+    // Agentul de vânzări poate scrie pe comandă NUMAI codul lui.
+    //
+    // Câmpul era deschis întregului personal, fără nicio poartă: oricine putea
+    // crea comenzi putea trece pe ele codul oricui, iar comisionul se năștea pe
+    // numele altuia. Nu se observa, fiindcă singura pagină care trimitea codul
+    // era formularul administratorului. De când îl are și agentul (cutia
+    // `data-adm="refbox"` din „Administrare Comenzi"), poarta trebuie să existe
+    // pe server: un câmp blocat în pagină e blocat numai pentru cine folosește
+    // pagina.
+    //
+    // Poarta e îngustă dinadins — îl privește doar pe agent. Administratorul și
+    // fondatorul pun în continuare orice cod, fiindcă asta e treaba lor:
+    // repară o comandă căreia i-a scăpat recomandarea. Managerul rămâne cum
+    // era; lui `PATCH /orders` îi refuză oricum câmpul (`ORDER_FIELDS_STAFF`).
+    //
+    // Codul se citește cu `referral_public()`, nu din `$user`: interogarea din
+    // `current_user()` are listă fixă de coloane și nu cuprinde
+    // `referral_code`. Același motiv, scris pe larg, la
+    // api/routes/users.php:199-203.
+    if ($user['role'] === 'agent_vanzari' && isset($b['referralCode'])) {
+        $cerut = referral_normalize_code((string) $b['referralCode']);
+        $alLui = referral_public((int) $user['id']);
+        if ($cerut !== '' && ($alLui === null || $cerut !== referral_normalize_code($alLui['code']))) {
+            fail(
+                'Pe comenzile luate de tine se poate trece numai codul tău de recomandare. '
+                  . 'Pentru codul altcuiva, cere-i unui administrator.',
+                403,
+                'referral_not_yours'
+            );
+        }
+    }
+
+    // Managerul și contul de tură nu pun deloc coduri pe comenzi.
+    //
+    // `PATCH /orders` le refuză câmpul de la sine: `referralCode` nu e în
+    // `ORDER_FIELDS_STAFF`, deci cererea se oprește întreagă cu
+    // `staff_field_denied`. La CREARE nu exista poarta asta. Aceeași persoană
+    // căreia editarea îi era închisă putea totuși să NASCĂ o comandă cu orice
+    // cod pe ea — iar odată născută, cârligul de mai jos scria deja comisionul
+    // pe numele cui i s-a spus. O poartă pusă numai pe una din cele două uși
+    // nu apără nimic: se intră pe cealaltă.
+    //
+    // Ruta nu se poate închide ca la PATCH, cu lista scurtă de câmpuri
+    // îngăduite: la creare tot personalul scrie clientul, telefonul, adresa,
+    // ziua și pozițiile — asta E comanda luată la telefon. Se închide deci
+    // exact câmpul care împarte bani, cu același cod de eroare, ca panoul să
+    // arate același mesaj pe amândouă drumurile.
+    //
+    // Agentul a trecut deja pe lângă poarta lui, de mai sus: el are voie, dar
+    // numai cu codul lui. Administratorul și fondatorul pun orice cod.
+    if (!e_admin($user) && $user['role'] !== 'agent_vanzari') {
+        $oprite = array_values(array_intersect(
+            ['referralCode', 'referralLink'],
+            array_keys($b)
+        ));
+        if ($oprite) {
+            fail(
+                'Codul de recomandare împarte bani, deci nu se pune din contul de personal. '
+                    . 'Câmpuri refuzate: ' . implode(', ', $oprite) . '. '
+                    . 'Ia comanda mai departe fără el — codul îl trece un administrator '
+                    . 'din „Administrare Comenzi", pe comanda deja salvată.',
+                403,
+                'staff_field_denied'
+            );
+        }
+    }
+
     $items = $b['items'] ?? [];
     if (!is_array($items) || !$items) {
         fail('Comanda trebuie să conțină cel puțin un produs.', 422, 'empty_order');
@@ -104,7 +462,7 @@ function route_orders_create(): void
     // în care laboratorul lucrează pentru livrarea de dimineață — o comandă
     // luată la telefon fără zi se scria pe ziua de IERI, iar Panoul Laborator,
     // care cere fereastra azi..azi+6, n-o mai arăta deloc.
-    $day = valid_day(trim((string) ($b['day'] ?? '')) ?: today_local());
+    $day = valid_day_not_too_far(trim((string) ($b['day'] ?? '')) ?: today_local());
 
     // Comanda o scrie personalul, pentru altcineva: numele vine din formular
     // și e obligatoriu. Înainte, un formular fără nume nu era refuzat — se
@@ -120,22 +478,32 @@ function route_orders_create(): void
     // Comanda luată la telefon se leagă de contul clientului, dacă numele îl
     // arată fără dubiu. Altfel clientul n-o vede niciodată în „Comanda mea":
     // panoul lui întoarce doar ce e legat de cont.
-    $customerId = client_by_name($customerName);
+    //
+    // DAR NUMELE TREBUIE SĂ DUCĂ LA UN CLIENT LA CARE OMUL ARE VOIE. Ușa asta
+    // era cea mai scumpă dintre toate, și s-a măsurat pe 14 septembrie 2026:
+    // agentul „mihai" a născut aici comanda 28970 pe numele „Cafeneaua Veche",
+    // un client pe care lista lui nici nu i-l arăta — iar poarta de deasupra,
+    // cea care-i îngăduie numai codul LUI, l-a lăsat să treacă, fiindcă chiar
+    // codul lui era. Din asta au ieșit trei lucruri deodată: comanda a intrat
+    // în istoricul unui client străin, s-a născut un comision de 2,85 RON, și
+    // — cel mai greu de întors — `referral_link_new_user()` a scris
+    // `users.referred_by = 1811` pe contul clientului PENTRU TOTDEAUNA. Adică
+    // orice comandă viitoare a acelui client i-ar fi adus agentului bani, fără
+    // să mai fie nevoie de vreun cod și fără ca cineva să se mai uite.
+    //
+    // Poarta de pe cod nu apăra nimic singură: ea întreabă „al cui e codul?",
+    // nu „al cui e clientul?". Sunt două întrebări, și amândouă trebuie puse.
+    $customerId = client_by_name_in_scope($user, $customerName);
 
     $slot = trim((string) ($b['slot'] ?? ''));
     if ($slot !== '' && !in_array($slot, delivery_slots(), true)) {
         fail('Interval de livrare necunoscut: ' . $slot, 422, 'bad_slot');
     }
 
-    // Zona se verifică față de lista din Setări, exact ca la cereri. Fără
-    // verificare, o zonă inexistentă („Centru", rămasă din prototip) trecea, iar
-    // ruta șoferului o punea pe coordonatele depozitului: oprirea apărea peste
-    // magazie, iar drumul ieșea calculat greșit.
-    $zone  = trim((string) ($b['zone'] ?? ''));
-    $zones = delivery_zones();
-    if ($zone !== '' && $zones && !in_array($zone, $zones, true)) {
-        fail('Zonă necunoscută: ' . $zone, 422, 'bad_zone');
-    }
+    // Zona se verifică față de lista din Setări, exact ca la cereri — și chiar
+    // prin aceeași funcție, `zone_field()` din api/lib/orders.php, ca regula să
+    // nu mai stea scrisă în patru locuri.
+    $zone = zone_field($b['zone'] ?? '');
 
     // Marcajele se puneau doar prin PATCH, după creare: bifa „URGENT" din
     // formularul de comandă nouă se pierdea, iar comanda intra în laborator ca
@@ -143,7 +511,9 @@ function route_orders_create(): void
     $urgent = !empty($b['urgent']);
     $timed  = !empty($b['timed']);
 
-    $fulfillment = trim((string) ($b['fulfillment'] ?? '')) ?: 'Livrare';
+    // Implicitul vine din Setări, nu din textul scris aici: v.
+    // `default_fulfillment()` (api/lib/settings.php) pentru toată povestea.
+    $fulfillment = trim((string) ($b['fulfillment'] ?? '')) ?: default_fulfillment();
     if (!in_array($fulfillment, fulfillment_types(), true)) {
         fail('Mod de onorare necunoscut: ' . $fulfillment, 422, 'bad_fulfillment');
     }
@@ -182,11 +552,22 @@ function route_orders_create(): void
             );
             $orderId = (int) $pdo->lastInsertId();
 
+            // Prețul de catalog rămâne scris lângă cel pus pe hârtie. Pe o
+            // comandă luată la telefon cele două sunt de obicei aceeași cifră;
+            // diferă când s-a onorat un preț promis mai demult, iar atunci
+            // tocmai diferența e ce trebuie să se vadă. Interogarea se alege o
+            // dată, în afara buclei, ca o bază fără migrarea 011 să nu cadă pe
+            // fiecare poziție.
+            $cuLista = promo_supported();
+            $sqlPozitie = $cuLista
+                ? 'INSERT INTO order_items (order_id, product_id, name, variant, qty, unit_price, list_price) VALUES (?, ?, ?, ?, ?, ?, ?)'
+                : 'INSERT INTO order_items (order_id, product_id, name, variant, qty, unit_price) VALUES (?, ?, ?, ?, ?, ?)';
             foreach ($priced as $p) {
-                q(
-                    'INSERT INTO order_items (order_id, product_id, name, variant, qty, unit_price) VALUES (?, ?, ?, ?, ?, ?)',
-                    [$orderId, $p['id'], $p['name'], $p['variant'], $p['qty'], $p['unit']]
-                );
+                $val = [$orderId, $p['id'], $p['name'], $p['variant'], $p['qty'], $p['unit']];
+                if ($cuLista) {
+                    $val[] = $p['catalog'] ?? null;
+                }
+                q($sqlPozitie, $val);
             }
             // Promisiunea se naște odată cu poziția, în aceeași tranzacție:
             // dacă e scrisă mai târziu, între cele două clipe depozitul spune
@@ -202,7 +583,48 @@ function route_orders_create(): void
         }
     }
 
-    $order = attach_items([one('SELECT * FROM orders WHERE id = ?', [$orderId])])[0];
+    // Comisionul se scrie DUPĂ commit, nu în tranzacție.
+    //
+    // În tranzacție, o defecțiune la socoteala recomandării ar da înapoi toată
+    // comanda — marfa, rezervările, tot — pentru o socoteală de marketing.
+    // Regula e cea de la anunțuri (`:221-225`): comanda e lucrul adevărat, ce
+    // vine după ea nu are voie s-o omoare. `UNIQUE (order_id)` din
+    // referral_commissions face scrierea idempotentă, deci nici reluarea buclei
+    // de mai sus n-o poate dubla.
+    $comision = null;
+    try {
+        $comision = referral_commission_sync(
+            $orderId,
+            isset($b['referralCode']) ? (string) $b['referralCode'] : null,
+            (int) $user['id']
+        );
+    } catch (Throwable $e) {
+        error_log('[gp] comision nescris pentru comanda ' . $orderId . ': ' . $e->getMessage());
+    }
+    // Comanda se citește DUPĂ cârlig, nu înainte de el.
+    //
+    // `referral_commission_sync()` scrie `orders.referral_code`, deci un rând
+    // citit mai devreme poartă încă `null` acolo — iar panoul primea în răspuns
+    // o comandă fără codul pe care tocmai îl pusese pe ea. Aceeași ordine e
+    // deja în `route_orders_update()` (`:833`): sincronizează, apoi recitește.
+    $order = attach_items([one('SELECT * FROM orders WHERE id = ?', [$orderId])], true)[0];
+
+    // Eticheta violetă pleacă odată cu comanda: panoul adaugă în listă exact
+    // rândul primit aici, fără să mai ceară o dată. Fără asta, „Adus de …" ar
+    // apărea abia la prima reîmprospătare, iar operatorul ar crede că lipsește.
+    $order['commission'] = $comision === null ? null : [
+        'id'       => (int) $comision['id'],
+        'referrer' => $comision['referrer_id'] !== null ? (int) $comision['referrer_id'] : null,
+        'label'    => $comision['referrer_label'],
+        'amount'   => round((float) $comision['amount'], 2),
+        'rate'     => round((float) $comision['rate'], 2),
+        'status'   => (string) $comision['status'],
+        'paid'     => $comision['paid_at'] !== null,
+        // „Bifa a lucrat?" Nu „am trimis bifa", ci „s-a scris legătura".
+        // Contul putea avea deja un recomandant, caz în care bifa n-a
+        // schimbat nimic — iar panoul are voie s-o spună pe față.
+        'linked'   => !empty($comision['legat_acum']),
+    ];
 
     audit('order_create', 'order', (string) $orderId, 'Comandă #' . $order['seq'] . ' — ' . $customerName);
 
@@ -283,7 +705,7 @@ function route_orders_update(string $id): void
     // `customerName` strecurat lângă `status` ar fi trecut altfel neobservat
     // odată cu apăsarea firească a brutarului, exact pe drumul pe care nimeni
     // nu se uită.
-    if ($u['role'] !== 'admin') {
+    if (!e_admin($u)) {
         $oprite = array_values(array_diff(array_keys($b), ORDER_FIELDS_STAFF));
         if ($oprite) {
             fail(
@@ -294,6 +716,13 @@ function route_orders_update(string $id): void
                 'staff_field_denied'
             );
         }
+    }
+
+    // Marginea agentului stă tot înaintea citirii, din același motiv ca poarta
+    // de mai sus: altfel un agent ar afla, după 404 față de 403, care numere de
+    // comandă există în casă. Vezi referral_agent_scope().
+    if ($u['role'] === 'agent_vanzari' && !referral_agent_sees_order((int) $u['id'], (int) $id)) {
+        fail('Comanda nu e a unui cumpărător adus de tine.', 403, 'forbidden');
     }
 
     $o = one('SELECT * FROM orders WHERE id = ?', [(int) $id]);
@@ -348,6 +777,9 @@ function route_orders_update(string $id): void
         $sets[] = 'phone = ?';
         $vals[] = text_field($b['phone'], 'Telefonul', 32) ?: null;
     }
+    // Ținută deoparte de $sets, ca să nu ajungă `ref` de două ori în același
+    // UPDATE. Vezi lămurirea de la ramura `ref`, mai jos.
+    $refCerut = null;
     if (array_key_exists('address', $b)) {
         $sets[] = 'address = ?';
         $vals[] = text_field($b['address'], 'Adresa', 255) ?: null;
@@ -360,11 +792,32 @@ function route_orders_update(string $id): void
         // primea „Eroare internă", fără să afle ce câmp e de vină, iar
         // tranzacția anula tot ce corectase în formular — adresa, pozițiile,
         // starea. Aici se oprește cu numele câmpului și cu lungimea permisă.
+        //
+        // Referința tastată NU intră aici în `$sets`. Blocul de mutare pe altă
+        // zi, de mai jos, adaugă și el `ref = ?` când numărul e ocupat în ziua
+        // nouă — iar coloana ajungea astfel de două ori în același UPDATE.
+        // MySQL le aplică în ordinea scrierii, deci a doua o bătea pe prima:
+        // administratorul tasta o referință, o vedea în răspuns (răspunsul se
+        // face din ce s-a trimis, nu din ce s-a scris) și găsea în bază cu
+        // totul alta. Se ține deoparte, în $refCerut, și se scrie într-un
+        // singur loc, la capătul buclei.
         $ref = text_field($b['ref'], 'Referința', 24);
-        if ($ref !== '') {
-            $sets[] = 'ref = ?';
-            $vals[] = $ref;
+        // Caseta golită era primită, măsurată și apoi uitată: `$refCerut`
+        // rămânea `null`, referința veche rămânea în bază, iar cererea răspundea
+        // 200. Panoul închidea formularul cu „Comanda  a fost salvată." — cu un
+        // gol în loc de număr, fiindcă mesajul se compune din formularul tocmai
+        // golit. Toate celelalte casete golite de pe ACELAȘI formular se aplică
+        // (telefonul, adresa, mențiunile, intervalul, zona ajung `null`), deci
+        // omul avea toate motivele să creadă că s-a aplicat și asta.
+        //
+        // Nu se poate accepta golirea: după referință se caută comanda în
+        // laborator și pe bon, iar unicitatea e pe (zi, referință) — o coloană
+        // goală ar face două comenzi de nedeosebit. Deci se spune pe față.
+        if ($ref === '') {
+            fail('Referința nu poate rămâne goală: după ea se caută comanda în laborator și pe bon. '
+                . 'Dacă vrei alt număr, scrie-l aici.', 422, 'empty_ref');
         }
+        $refCerut = $ref;
     }
 
     if (array_key_exists('status', $b)) {
@@ -385,9 +838,84 @@ function route_orders_update(string $id): void
         $sets[] = 'notes = ?';
         $vals[] = text_field($b['notes'], 'Mențiunile', 2000) ?: null;
     }
+
+    // Codul de recomandare, pus sau corectat pe o comandă deja făcută. Cazul
+    // obișnuit: cineva a luat comanda la telefon și a uitat să întrebe „cine
+    // v-a trimis?". Fără asta, singura reparație era prin phpMyAdmin.
+    //
+    // Se scrie AICI, în tranzacția antetului, deși cârligul de comisioane de
+    // mai jos ar ști și el să-l scrie. Motivul: cârligul rulează după commit,
+    // prins în try/catch, iar o cădere a lui ar înghiți în tăcere tocmai
+    // corectura pentru care s-a deschis formularul. Scris în `$sets`, codul
+    // rămâne salvat chiar dacă registrul de comisioane are o zi proastă —
+    // comisionul se recalculează singur la următoarea atingere a comenzii.
+    //
+    // Tot de aici vine și că o salvare cu NUMAI codul schimbat nu mai cade în
+    // „Nimic de modificat" (`!$sets`, mai jos).
+    //
+    // `referralCode` și `referralLink` sunt în afara lui ORDER_FIELDS_STAFF
+    // dinadins: cine împarte banii nu e treaba contului de tură. Poarta de la
+    // începutul rutei le oprește cu 403 înainte să se ajungă aici.
+    $codNou   = null;
+    // Pornește de la NU, nu de la DA.
+    //
+    // Steagul ăsta ajunge, mai jos, la `referral_commission_sync()`, care pe
+    // `true` scrie legătura „pentru totdeauna" dintre cumpărător și
+    // recomandant (api/lib/referral.php:1062-1064). Pornit de la `true`, el rămânea
+    // așa la ORICE salvare care nu trimite un cod — iar cea mai obișnuită
+    // salvare din patiserie e tocmai aceea: tableta din laborator mută
+    // comanda o etapă, cu un singur câmp în cerere, `status`.
+    //
+    // Adică operatorul punea codul pe o comandă veche și lăsa bifa nebifată,
+    // anume ca să NU lege contul; a doua zi cineva apăsa „La dospit" și
+    // legătura se scria singură, pe la spate. Hotărârea lui era desfăcută de
+    // o apăsare care n-avea nicio legătură cu banii.
+    //
+    // Legatul rămâne o faptă cerută pe față: numai bifa de mai jos îl aprinde.
+    // Crearea unei comenzi nu trece pe aici — acolo cârligul e chemat cu
+    // valoarea lui implicită (`:317`), deci un cod tastat la comanda nouă
+    // leagă contul ca până acum.
+    $refLeaga = false;
+    if (array_key_exists('referralCode', $b)) {
+        if (!referral_money_supported()) {
+            fail(
+                'Codurile de recomandare nu sunt disponibile: rulează întâi '
+                  . 'sql/008_comisioane_recomandari.sql (și 007 înaintea lui).',
+                503,
+                'referral_money_unavailable'
+            );
+        }
+        $codNou = referral_normalize_code((string) ($b['referralCode'] ?? ''));
+
+        // Bifa din formular, nu un câmp al comenzii: spune dacă legătura
+        // „pentru totdeauna" dintre cumpărător și recomandant are voie să se
+        // scrie acum. Lipsa ei înseamnă NU, fiindcă o comandă reparată azi nu
+        // e o hotărâre despre toate comenzile de mâine ale aceluiași om.
+        $refLeaga = !empty($b['referralLink']);
+
+        // Înaintea oricărei scrieri: vezi api/lib/referral.php.
+        referral_guard_paid_code_change((int) $id, $codNou);
+
+        // A doua pază, tot înaintea scrierii: codul care e chiar al
+        // cumpărătorului. Refuzul e răspicat numai aici, unde omul e de față și
+        // tocmai a tastat ceva; pe drumul de pe site comisionul nu se naște în
+        // tăcere, dar cu urmă în jurnal. Lămurirea întreagă e la funcție.
+        referral_guard_self_code((int) $id, $codNou);
+
+        // A treia: rândul scos din socoteală de mâna patronului. Cârligul îl
+        // lasă dinadins în pace, deci un cod nou n-ar avea niciun efect, iar
+        // omul ar rămâne cu impresia că a reparat ceva. Aici e singurul loc de
+        // unde i se poate spune — cârligul primește `null` mai jos și n-are de
+        // unde ști că tocmai a tastat cineva ceva.
+        referral_guard_dismissed_code((int) $id, $codNou);
+
+        $sets[] = 'referral_code = ?';
+        $vals[] = $codNou === '' ? null : $codNou;
+    }
+
     $newDay = null;
     if (array_key_exists('day', $b)) {
-        $newDay = valid_day((string) $b['day']);
+        $newDay = valid_day_not_too_far((string) $b['day']);
         $sets[] = 'day = ?';
         $vals[] = $newDay;
     }
@@ -513,7 +1041,10 @@ function route_orders_update(string $id): void
         $returStoc = 'Retur: pozițiile comenzii s-au schimbat';
     }
 
-    if (!$sets) {
+    // Referința scoasă din $sets nu are voie să scoată salvarea din picioare:
+    // o corectură numai de referință e o faptă întreagă, nu „nimic de
+    // modificat”.
+    if (!$sets && $refCerut === null) {
         fail('Nimic de modificat.', 422, 'nothing_to_update');
     }
 
@@ -528,14 +1059,21 @@ function route_orders_update(string $id): void
         // „Duplicate entry" și a fost dată înapoi, referința ei nouă n-a fost
         // scrisă, deci nu are ce ajunge în jurnal.
         $refSchimbat = null;
+        // Referința cu care rămâne comanda: cea tastată acum, dacă s-a tastat
+        // una, altfel cea pe care o are. Se socotește la FIECARE încercare,
+        // fiindcă blocul de mutare o poate schimba, iar a doua rulare trebuie
+        // să pornească din nou de la ce a cerut omul.
+        $refFinal = $refCerut ?? (string) $o['ref'];
         try {
             $pdo->beginTransaction();
 
-            // Returul se scrie ÎNAINTE de rescrierea pozițiilor: după
-            // `DELETE FROM order_items` nu mai există nicăieri ce anume s-a
-            // scăzut din depozit pentru comanda asta. Fiind în aceeași
-            // tranzacție, o cădere la mijloc nu lasă marfa întoarsă pe
-            // jumătate.
+            // Returul se scrie ÎNAINTE de rescrierea pozițiilor. De când
+            // ieșirile poartă `order_id`, calea obișnuită citește din registru
+            // și n-ar mai avea nevoie de ordinea asta — dar plasa pentru
+            // comenzile scăzute înainte de reparație recalculează tot din
+            // `order_items`, iar după `DELETE FROM order_items` acolo nu mai
+            // există nimic. Fiind în aceeași tranzacție, o cădere la mijloc nu
+            // lasă marfa întoarsă pe jumătate.
             $intoarse = $returStoc === null
                 ? 0
                 : stock_unsync_order((int) $id, $returStoc, (int) $u['id']);
@@ -577,7 +1115,12 @@ function route_orders_update(string $id): void
                 // spunea pe care. Așa că se păstrează cât se poate, și se
                 // schimbă numai la ciocnire — atunci se scrie și în jurnal, ca
                 // omul să-i poată spune clientului noua referință.
-                $refNou = (string) $o['ref'];
+                // Ciocnirea se caută pe referința FINALĂ, nu pe cea veche: dacă
+                // administratorul a tastat una acum, ea e cea care ajunge în
+                // ziua nouă, deci ea e cea care se poate izbi de o comandă de
+                // acolo. Căutată pe cea veche, referința tastată trecea
+                // neverificată și pica în MySQL pe UNIQUE(day, ref).
+                $refNou = $refFinal;
                 if ($refNou !== '' && scalar(
                     'SELECT 1 FROM orders WHERE day = ? AND ref = ? AND id <> ?',
                     [$newDay, $refNou, (int) $id]
@@ -590,21 +1133,50 @@ function route_orders_update(string $id): void
                         $candidat = '#' . (1000 + $seqNou) . '-' . $i;
                     }
                     $refSchimbat = [$refNou, $candidat];
-                    $s[] = 'ref = ?';
-                    $v[] = $candidat;
+                    $refFinal    = $candidat;
                 }
+            }
+
+            // Singurul loc din toată ruta unde `ref` intră în SET.
+            if ($refCerut !== null || $refSchimbat !== null) {
+                $s[] = 'ref = ?';
+                $v[] = $refFinal;
             }
 
             $v[] = (int) $id;
             q('UPDATE orders SET ' . implode(', ', $s) . ' WHERE id = ?', $v);
 
             if ($priced !== null) {
+                // Producția se RECITEȘTE sub lacăt, chiar înainte de rescriere.
+                // `$facut` de mai sus s-a citit înaintea tranzacției, iar între
+                // acea citire și lacătul pe rândul comenzii (luat de
+                // stock_unsync_order) încap un raport de producție de pe
+                // tabletă: cu harta veche, pozițiile se rescriau cu done_qty=0,
+                // producția raportată dispărea fără urmă, iar următorul raport
+                // (pe totaluri) scădea făina încă o dată. Rândul comenzii e deja
+                // blocat; SELECT-ul de aici e explicit, ca regula să nu depindă
+                // de ce face funcția de retur.
+                one('SELECT id FROM orders WHERE id = ? FOR UPDATE', [(int) $id]);
+                $facut = produced_qty(all(
+                    'SELECT product_id, variant, done_qty FROM order_items WHERE order_id = ?',
+                    [(int) $id]
+                ));
+
                 q('DELETE FROM order_items WHERE order_id = ?', [(int) $id]);
                 // Producția raportată trece peste rescriere ca prețurile promise.
                 // Se pleacă de la o COPIE a hărții, nu de la ea: blocul se reia la
                 // conflict de cheie, iar a doua rulare trebuie să aibă de împărțit
                 // tot atât, nu ce a mai rămas după prima.
                 $ramas = $facut;
+                // Prețul tăiat se rescrie odată cu poziția, din catalogul de
+                // acum — perechea lui, prețul plătit, tocmai s-a socotit din
+                // același catalog. Fără el aici, reducerea de pe o comandă ar
+                // rămâne fără explicație de la prima atingere a comenzii, adică
+                // de la prima mutare de etapă din laborator.
+                $cuLista = promo_supported();
+                $sqlPozitie = $cuLista
+                    ? 'INSERT INTO order_items (order_id, product_id, name, variant, qty, done_qty, unit_price, list_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                    : 'INSERT INTO order_items (order_id, product_id, name, variant, qty, done_qty, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?)';
                 foreach ($priced as $p) {
                     $cheie = ((int) $p['id']) . '|' . $p['variant'];
                     // Plafonat la cantitatea nouă: cine taie comanda de la 8 la 5
@@ -613,10 +1185,11 @@ function route_orders_update(string $id): void
                     // și rămâne acolo, exact ca la o comandă anulată.
                     $done  = min((float) $p['qty'], (float) ($ramas[$cheie] ?? 0));
                     $ramas[$cheie] = ($ramas[$cheie] ?? 0) - $done;
-                    q(
-                        'INSERT INTO order_items (order_id, product_id, name, variant, qty, done_qty, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                        [(int) $id, $p['id'], $p['name'], $p['variant'], $p['qty'], round($done, 2), $p['unit']]
-                    );
+                    $val = [(int) $id, $p['id'], $p['name'], $p['variant'], $p['qty'], round($done, 2), $p['unit']];
+                    if ($cuLista) {
+                        $val[] = $p['catalog'] ?? null;
+                    }
+                    q($sqlPozitie, $val);
                 }
                 // Rezervările vechi au plecat odată cu pozițiile vechi
                 // (`ON DELETE CASCADE` pe `order_item_id`); aici se scriu cele
@@ -637,7 +1210,13 @@ function route_orders_update(string $id): void
     }
 
     $detail = 'Comandă #' . $o['seq'];
-    if (isset($b['status'])) {
+    // „Predată → Predată" nu e o trecere. Era scris pentru ORICE cerere care
+    // aducea o etapă, chiar și aceeași — iar butonul de la ultima etapă din
+    // laborator trimitea exact așa (v. `advance()`, Panou Laborator.dc.html).
+    // Jurnalul nu se golește niciodată, deci fiecare apăsare în gol rămânea
+    // acolo, arătând leit cu o mutare adevărată.
+    $etapaNoua = isset($b['status']) && (string) $b['status'] !== (string) $o['status'];
+    if ($etapaNoua) {
         $detail .= ': ' . $o['status'] . ' → ' . $b['status'];
     }
     // Când s-a onorat un preț mai vechi decât catalogul, jurnalul o spune. Pe
@@ -664,15 +1243,106 @@ function route_orders_update(string $id): void
     if ($intoarse > 0) {
         $detail .= ' · marfa s-a întors în depozit';
     }
+    // Pe codul ăsta se împart bani, deci schimbarea lui nu are voie să fie
+    // tăcută: la sfârșitul lunii, un comision apărut din senin pe o comandă
+    // veche trebuie să poată fi urmărit până la cine l-a pus și când.
+    if ($codNou !== null && $codNou !== (string) ($o['referral_code'] ?? '')) {
+        $detail .= ' · cod de recomandare: ' . (($o['referral_code'] ?? '') ?: '—')
+            . ' → ' . ($codNou ?: '—')
+            . ($refLeaga ? ' (și contul cumpărătorului s-a legat)' : '');
+    }
     // Referința e singurul lucru pe care clientul îl ține minte. Schimbată în
     // tăcere, el ar suna a doua zi cu un număr care nu mai există nicăieri.
     if ($refSchimbat !== null) {
-        $detail .= ' · referință schimbată: ' . $refSchimbat[0] . ' → ' . $refSchimbat[1]
+        // Urma pornește de la ce a CERUT omul, când a cerut ceva: altfel ar
+        // duce la referința veche, pe care n-a mai vrut-o nimeni, iar cel care
+        // caută a doua zi n-ar găsi nicăieri numărul pe care l-a tastat.
+        $detail .= ' · referință ' . ($refCerut !== null ? 'cerută' : 'schimbată') . ': '
+            . $refSchimbat[0] . ' → ' . $refSchimbat[1]
             . ' (era deja folosită în ziua nouă)';
+    } elseif ($refCerut !== null && $refCerut !== (string) $o['ref']) {
+        // Referința e singurul lucru pe care clientul îl ține minte, deci
+        // schimbată de mână lasă urmă chiar și când a intrat curat.
+        $detail .= ' · referință: ' . (((string) $o['ref']) ?: '—') . ' → ' . $refCerut;
     }
-    audit('order_update', 'order', $id, $detail);
+    // UN RÂND CARE NU SPUNE NIMIC NU SE SCRIE.
+    //
+    // Poarta e îngustă dinadins, și se aplică unui singur fel de cerere: cea
+    // care aduce NUMAI o etapă, și aceeași. Atunci nu s-a schimbat nimic, deci
+    // n-are ce să intre în registru.
+    //
+    // Orice altă salvare scrie mai departe, chiar și când detaliul rămâne scurt.
+    // Rândurile de mai sus numesc etapa, prețul onorat, clientul, contul,
+    // returul, codul și referința — dar NU adresa, telefonul, ziua, intervalul
+    // sau pozițiile. O corectură de adresă lasă deci un „Comandă #84" simplu:
+    // puțin, dar adevărat, și singura urmă că a umblat cineva la comandă. Aici
+    // nu se taie aceea — se taie numai apăsarea în gol.
+    $doarEtapaNeschimbata = isset($b['status']) && !$etapaNoua
+        && $detail === 'Comandă #' . $o['seq'];
+    if (!$doarEtapaNeschimbata) {
+        audit('order_update', 'order', $id, $detail);
+    }
 
-    json_out(['order' => attach_items([one('SELECT * FROM orders WHERE id = ?', [(int) $id])])[0]]);
+    // Un singur cârlig acoperă TOATE drumurile prin care se schimbă o comandă,
+    // fiindcă `orders.status` se scrie într-un singur loc din tot codul: chiar
+    // ruta asta. Inclusiv butonul „Șterge comanda", care de fapt trimite un
+    // PATCH pe etapa de anulare (Administrare Comenzi.dc.html:1961-1965).
+    //
+    // De aceea anularea și dezanularea se poartă simetric fără să scrie nimeni
+    // regula a doua oară: `referral_commission_sync()` recitește starea
+    // comenzii și pune „anulat" sau „activ" după cum o găsește. La fel pentru
+    // totalul schimbat — pozițiile rescrise mută baza de calcul, deci și suma.
+    //
+    // Prins în try/catch, ca la creare: comanda e deja salvată și comisă.
+    $comision = null;
+    try {
+        $comision = referral_commission_sync((int) $id, null, (int) $u['id'], $refLeaga);
+    } catch (Throwable $e) {
+        error_log('[gp] comision nerecalculat pentru comanda ' . $id . ': ' . $e->getMessage());
+    }
+
+    $out = attach_items([one('SELECT * FROM orders WHERE id = ?', [(int) $id])], true)[0];
+    $out['commission'] = $comision === null ? null : [
+        'id'       => (int) $comision['id'],
+        'referrer' => $comision['referrer_id'] !== null ? (int) $comision['referrer_id'] : null,
+        'label'    => $comision['referrer_label'],
+        'amount'   => round((float) $comision['amount'], 2),
+        'rate'     => round((float) $comision['rate'], 2),
+        'status'   => (string) $comision['status'],
+        'paid'     => $comision['paid_at'] !== null,
+        // „Bifa a lucrat?" Nu „am trimis bifa", ci „s-a scris legătura".
+        // Contul putea avea deja un recomandant, caz în care bifa n-a
+        // schimbat nimic — iar panoul are voie s-o spună pe față.
+        'linked'   => !empty($comision['legat_acum']),
+    ];
+
+    // Cele două fapte pe care patronul le poate cere pe telefon: comanda a
+    // ajuns gata, ori a fost anulată. Locul e ales, nu întâmplător: `orders.status`
+    // se scrie într-un SINGUR loc în tot programul — ruta asta — inclusiv de
+    // butonul „Șterge comanda", care de fapt trimite un PATCH pe etapa de
+    // anulare. Un cârlig aici acoperă toate drumurile, exact ca
+    // `referral_commission_sync()` de deasupra.
+    //
+    // Se întreabă întâi, se trimite abia apoi. Fără întrebare, FIECARE apăsare
+    // de „La dospit" de pe tableta din laborator — sutele zilei — ar pleca pe
+    // drumul lung al lui `json_out_early()`, ca să nu anunțe nimic.
+    $vechi  = (string) $o['status'];
+    $nou    = (string) $out['status'];
+    $anunt  = notify_order_status_event($vechi, $nou);
+    if ($anunt === null || !notify_channels_for($anunt)) {
+        json_out(['order' => $out]);
+    }
+
+    // De aici încolo, ca la comanda nouă: răspunsul pleacă primul, anunțurile
+    // pe urmă. Un furnizor căzut ține conexiunea cincisprezece secunde, iar
+    // tableta din laborator ar rămâne cu butonul apăsat tot atâta.
+    json_out_early(['order' => $out]);
+    try {
+        notify_order_status($out, $vechi, $nou);
+    } catch (Throwable $e) {
+        error_log('[gp] anunț de etapă nedus pentru comanda ' . $id . ': ' . $e->getMessage());
+    }
+    exit;
 }
 
 /* ------------------------------------------------------- producția din lot -- */
@@ -717,8 +1387,16 @@ function route_orders_update(string $id): void
  */
 function route_order_production(string $id): void
 {
-    $u = require_staff();
+    $u = require_ops();   // laboratorul: agentul de vânzări n-are ce raporta aici
     $b = body();
+
+    // Raportul de producție e tot o atingere de comandă, deci trece prin
+    // aceeași margine: agentul n-are ce raporta pe comanda altcuiva. Poarta
+    // stă înaintea tranzacției — `fail()` încheie scriptul, iar cu tranzacția
+    // deschisă ar lăsa rândurile zăvorâte, ca la `$opreste` mai jos.
+    if ($u['role'] === 'agent_vanzari' && !referral_agent_sees_order((int) $u['id'], (int) $id)) {
+        fail('Comanda nu e a unui cumpărător adus de tine.', 403, 'forbidden');
+    }
 
     $raport = $b['items'] ?? null;
     if (!is_array($raport) || !$raport) {
@@ -769,9 +1447,18 @@ function route_order_production(string $id): void
         all('SELECT id FROM order_items WHERE order_id = ? ORDER BY id FOR UPDATE', [(int) $id]);
 
         // Potrivirea poziție → articol finit, copiată literă cu literă din
-        // `route_stock_sync`. Dacă intrarea de la producție ia un articol și
-        // scăderea de la „Predată” altul, croasantul intră într-un raft și iese
-        // din altul: două cifre greșite în loc de una.
+        // `route_stock_sync`, filtrul pe `active` inclusiv. Dacă intrarea de la
+        // producție ia un articol și scăderea de la „Predată” altul, croasantul
+        // intră într-un raft și iese din altul: două cifre greșite în loc de una.
+        //
+        // Costul filtrului, spus pe față: ruta asta scrie și „Corecție
+        // producție”, adică desface o intrare de mai devreme. Dacă între raport
+        // și corectură articolul a fost scos din depozit, corectura nu mai are
+        // unde se scrie — `done_qty` se îndreaptă, dar cifra raftului nu, iar
+        // produsul apare în `missing`. Ieșirea e la îndemână și e aceeași ca la
+        // scădere: articolul se repune din „Scoase din depozit”, în josul
+        // paginii Depozit. Alternativa — să lăsăm producția să intre într-un raft
+        // pe care nu-l vede nimeni — e tocmai defectul reparat aici.
         $pozitii = all(
             'SELECT oi.id, oi.product_id, oi.name, oi.qty, oi.done_qty,
                     si.id AS item_id, si.name AS item_name
@@ -780,9 +1467,12 @@ function route_order_production(string $id): void
                       ON si.id = (
                            SELECT s.id
                              FROM stock_items s
-                            WHERE (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
-                               OR (s.product_id IS NULL AND s.name = oi.name)
-                            ORDER BY (s.active = 0), (s.product_id IS NULL), s.id
+                            WHERE (
+                                    (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
+                                    OR (s.product_id IS NULL AND s.name = oi.name)
+                                  )
+                              AND s.active = 1
+                            ORDER BY (s.product_id IS NULL), s.id
                             LIMIT 1
                          )
               WHERE oi.order_id = ?
@@ -956,7 +1646,7 @@ function route_order_production(string $id): void
     }
 
     json_out([
-        'order' => attach_items([one('SELECT * FROM orders WHERE id = ?', [(int) $id])])[0],
+        'order' => attach_items([one('SELECT * FROM orders WHERE id = ?', [(int) $id])], true)[0],
         'moves' => $miscari,
         // Pozițiile fără articol finit în depozit: intrarea nu s-a putut scrie
         // nicăieri. Pagina le arată, ca lipsa să nu se descopere abia la
@@ -981,9 +1671,10 @@ function route_order_production(string $id): void
  * trimisese comenzile. Decizia stă acum într-un singur loc, lângă Setări, ca
  * ruta și numărătoarea zilelor să nu spună lucruri diferite.
  *
+ * @param  array|null $u          cine cere, pentru marginea agentului de vânzări
  * @return array{0: string, 1: array}  [condiția SQL, valorile ei]
  */
-function route_stop_filter(): array
+function route_stop_filter(?array $u = null): array
 {
     $cond   = [];
     $params = [];
@@ -1000,23 +1691,50 @@ function route_stop_filter(): array
         $params = array_merge($params, $pickup);
     }
 
+    // Marginea agentului de vânzări, aceeași ca la lista de comenzi.
+    //
+    // Stă aici, nu la cele două rute care cheamă funcția, tocmai fiindcă sunt
+    // două: scrisă de două ori, s-ar fi despărțit la prima corectură.
+    //
+    // DAR RÂNDUL DE MAI JOS NU SE ATINGE NICIODATĂ AZI, și e bine să scrie asta
+    // aici, negru pe alb. Amândouă rutele care cheamă funcția cu un utilizator
+    // — `route_driver_routes()` și `route_driver_route_counts()` — încep cu
+    // `require_ops()`, iar `GP_OPS_ROLES` (api/lib/auth.php) e
+    // `admin, angajat, manager, fondator`. Un `agent_vanzari` ia 403 pe ușă,
+    // măsurat cu conturi adevărate. Cine citește filtrul și crede că agenții
+    // își văd opririle citește greșit: nu ajung până aici.
+    //
+    // Atunci de ce rămâne. `GET /routes` întoarce comenzi ÎNTREGI, cu nume,
+    // telefon și adresă. În ziua în care cineva adaugă agenții la
+    // `GP_OPS_ROLES` — o singură linie, în alt fișier — mărginirea listei de
+    // comenzi s-ar ocoli cerând ruta zilei. Rândul de față ține ziua aceea în
+    // frâu dinainte, și costă o comparație de șiruri.
+    //
+    // Lărgirea porții n-o face rândul ăsta: e o hotărâre despre cine ce vede,
+    // și e a patronului.
+    if ($u !== null && ($u['role'] ?? '') === 'agent_vanzari') {
+        $sc     = referral_agent_scope((int) $u['id'], 'customer_id', 'referral_code');
+        $cond[] = $sc['sql'];
+        $params = array_merge($params, $sc['params']);
+    }
+
     return [$cond ? implode(' AND ', $cond) : '1', $params];
 }
 
 /** GET /routes?day= — opririle zilei, în ordinea comenzilor. */
 function route_driver_routes(): void
 {
-    require_staff();
+    $u   = require_ops();   // ruta: v. GP_OPS_ROLES
     $day = valid_day(trim((string) ($_GET['day'] ?? '')) ?: today_local());
 
     // Opririle cu ordine stabilită manual vin primele, în ordinea aceea;
     // restul, după intervalul promis.
     $order = 'ORDER BY route_seq IS NULL, route_seq, slot, seq';
-    [$cond, $params] = route_stop_filter();
+    [$cond, $params] = route_stop_filter($u);
     array_unshift($params, $day);
     $orders = all("SELECT * FROM orders WHERE day = ? AND $cond $order", $params);
 
-    json_out(['day' => $day, 'stops' => attach_items($orders)]);
+    json_out(['day' => $day, 'stops' => attach_items($orders, true)]);
 }
 
 /**
@@ -1031,7 +1749,7 @@ function route_driver_routes(): void
  */
 function route_driver_route_counts(): void
 {
-    require_staff();
+    $u    = require_ops();   // ruta: v. GP_OPS_ROLES
     $from = valid_day(trim((string) ($_GET['from'] ?? '')) ?: today_local());
     $to   = valid_day(trim((string) ($_GET['to'] ?? '')) ?: $from);
     if ($to < $from) {
@@ -1043,7 +1761,7 @@ function route_driver_route_counts(): void
         fail('Intervalul cerut e prea lung: cel mult 31 de zile.', 422, 'range_too_long');
     }
 
-    [$cond, $params] = route_stop_filter();
+    [$cond, $params] = route_stop_filter($u);
     array_unshift($params, $from, $to);
     $rows = all("SELECT day, COUNT(*) AS n FROM orders WHERE day BETWEEN ? AND ? AND $cond GROUP BY day", $params);
 
@@ -1053,6 +1771,108 @@ function route_driver_route_counts(): void
     }
 
     json_out(['from' => $from, 'to' => $to, 'counts' => $counts]);
+}
+
+/**
+ * GET /routes/mine — cât mai are șoferul până la comanda ta, azi.
+ *
+ * Cine întreabă: clientul, pentru comanda lui; agentul de vânzări, pentru
+ * cumpărătorii aduși de el — câte un rând pentru fiecare, aleasă de patron.
+ *
+ * De ce o rută nouă și nu o lărgire a lui `GET /routes`. Aceea e
+ * `require_ops()` și întoarce comenzile ÎNTREGI, cu nume, telefon, adresă și
+ * poziții. Un client n-are ce căuta în comenzile altora, iar un agent n-are ce
+ * căuta în ale casei. Aici pleacă numai cifre („mai are 7 opriri", „2 până la
+ * tine") și numele zonelor — adică fix cât ține un om să-și aștepte marfa.
+ *
+ * De ce nu primește `?day=`. Fereastra e despre AZI: „nu aveți nicio comandă
+ * care trebuie livrată astăzi" e chiar mesajul ales. O zi liberă în adresă ar
+ * fi lăsat pe oricine să numere opririle oricărei zile, la nesfârșit — o
+ * scurgere mică, dar fără niciun câștig, fiindcă nimeni n-o cere.
+ *
+ * Ordinea e a rutei adevărate, aceeași cu a ecranului șoferului, și se
+ * socotește peste TOATE opririle zilei — de-aia `route_stop_filter()` se
+ * cheamă aici fără utilizator. Cu marginea agentului pusă peste ea, „2 opriri
+ * până la tine" ar fi numărat doar clienții agentului, adică ar fi mințit.
+ */
+function route_my_route_window(): void
+{
+    $u   = require_auth();
+    $day = today_local();
+
+    // Toate opririle zilei, în ordinea în care le face șoferul.
+    [$cond, $params] = route_stop_filter();
+    array_unshift($params, $day);
+    $stops = all(
+        'SELECT id, ref, seq, customer_name, zone, slot, status
+           FROM orders
+          WHERE day = ? AND ' . $cond . '
+          ORDER BY route_seq IS NULL, route_seq, slot, seq',
+        $params
+    );
+
+    // Etapa de „gata" e o setare, nu un cuvânt scris în cod. Dacă lipsește,
+    // nicio oprire nu se socotește livrată: mai bine „mai are 7 opriri" decât
+    // un „0" liniștitor și fals.
+    $done = status_done();
+
+    // Care opriri sunt ale celui care întreabă. Regula stă tot în
+    // `orders_visibility_filter()`, ca la lista de comenzi: scrisă a doua oară
+    // aici, s-ar fi despărțit de ea la prima corectură. Pentru personal
+    // întoarce gol, deci nu are opriri „ale lui" — ei au ecranul șoferului.
+    [$vSql, $vParams] = orders_visibility_filter($u, '');
+    $aleMele = [];
+    if ($vSql !== '') {
+        $p = array_merge([$day], $vParams);
+        foreach (all(
+            'SELECT id FROM orders WHERE day = ? AND (' . $vSql . ')',
+            $p
+        ) as $r) {
+            $aleMele[(int) $r['id']] = true;
+        }
+    }
+
+    $ramase  = 0;
+    $peZone  = [];
+    $inainte = [];
+    foreach ($stops as $s) {
+        if ($done !== '' && (string) $s['status'] === $done) {
+            continue;
+        }
+        // Câte opriri nelivrate stau ÎNAINTEA ei. Se scrie înainte de
+        // incrementare, deci prima oprire rămasă are zero.
+        $inainte[(int) $s['id']] = $ramase;
+        $ramase++;
+        $z = trim((string) $s['zone']);
+        if ($z !== '') {
+            $peZone[$z] = ($peZone[$z] ?? 0) + 1;
+        }
+    }
+
+    $zone = [];
+    foreach ($peZone as $z => $n) {
+        $zone[] = ['zone' => $z, 'remaining' => $n];
+    }
+
+    $mine = [];
+    foreach ($stops as $s) {
+        $id = (int) $s['id'];
+        if (!isset($aleMele[$id])) {
+            continue;
+        }
+        $gata = $done !== '' && (string) $s['status'] === $done;
+        $mine[] = [
+            'id'          => $id,
+            'ref'         => $s['ref'],
+            'customer'    => $s['customer_name'],
+            'zone'        => $s['zone'],
+            'slot'        => $s['slot'],
+            'delivered'   => $gata,
+            'stopsBefore' => $gata ? null : ($inainte[$id] ?? null),
+        ];
+    }
+
+    json_out(['day' => $day, 'remaining' => $ramase, 'zones' => $zone, 'mine' => $mine]);
 }
 
 /**
@@ -1074,7 +1894,7 @@ function route_driver_reorder(): void
     // administrator; serverul rămăsese însă deschis întregului personal, deci
     // ordinea se putea răsturna din contul comun al tabletelor, iar șoferul
     // pleca pe alt traseu decât cel stabilit, fără ca nimeni să știe de ce.
-    require_role('admin');
+    require_admin();
     $b   = body();
     $day = valid_day(trim((string) ($b['day'] ?? '')));
     $ids = $b['ids'] ?? [];

@@ -1,0 +1,87 @@
+/*
+ * Golden Pastry — eticheta „Adus de …".
+ *
+ * Aceeași etichetă apare în trei locuri deosebite: pe pagina „Recomandări"
+ * (unde e filtrul apăsat), pe cardul și pe rândul comenzii din „Administrare
+ * comenzi", și în fereastra de editare. Regula din plan e ca ea să arate LA
+ * FEL peste tot — de aceea culoarea și forma stau într-un singur fișier, nu în
+ * blocul <style> al fiecărei pagini. Lecția e cea din shared/gp-nav.css: copiile
+ * de CSS se depărtează una de alta exact cum s-au depărtat copiile meniului.
+ *
+ * `.claude/build-deploy.mjs` copiază folderul `shared` întreg pe amândouă
+ * subdomeniile și trece fișierele .css prin aceeași rescriere de legături ca
+ * paginile, deci `Recomandari.dc.html` de mai jos devine `recomandari.html`.
+ */
+
+/* Violetul recomandărilor.
+   Nu e în paleta „hearth" — e o culoare de semnalizare, cerută anume pentru
+   eticheta asta. Împrăștiată prin markup ca `rgba(139,92,246,.14)` în douăzeci
+   de locuri, prima schimbare de nuanță ar fi însemnat douăzeci de căutări și
+   un loc uitat. */
+:root {
+  --rc-mov-bg: rgba(139, 92, 246, .14);
+  --rc-mov-fg: #6D28D9;
+  --rc-mov-line: rgba(139, 92, 246, .30);
+}
+
+/* Forma cerută: colțuri rotunde, text mic și gros, fundal stins.
+   `white-space:nowrap` fiindcă eticheta stă lângă alte insigne pe un rând care
+   se rupe: numele trebuie să treacă întreg pe rândul următor, nu tăiat în două.
+
+   Și, când nici pe rândul lui nu încape, se taie cu trei puncte în loc să iasă
+   din card. Se vede la 820px, unde cardurile stau pe două coloane de 243px, iar
+   „Adus de Ana Popescu Recomandarea" cere 247 — pastila trecea peste marginea
+   cardului, în șanțul dintre coloane. Numele lungi de firmă sunt regula, nu
+   excepția, deci limita trebuie să fie în etichetă, nu în fiecare pagină care o
+   folosește.
+
+   `inline-block`, nu `inline-flex`: `text-overflow` taie textul unui bloc, iar
+   într-un container flex textul gol e un element anonim, pe care regula nu-l
+   prinde — s-ar tăia drept, fără puncte, exact la colțul rotunjit. Eticheta n-are
+   azi decât text; dacă i se adaugă vreodată o pictogramă, textul intră într-un
+   `<span>` propriu și eticheta se întoarce la flex.
+
+   Nu se pierde nimic: `title` poartă oricum numele întreg și suma. */
+.rc-badge {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--rc-mov-bg);
+  color: var(--rc-mov-fg);
+  border: 1px solid var(--rc-mov-line);
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.6;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.rc-badge:hover { background: rgba(139, 92, 246, .22); color: var(--rc-mov-fg); }
+
+/* Aceeași etichetă, pe ținte de deget: în cardul de telefon și în fereastra
+   comenzii, unde e o legătură pe care omul chiar o apasă. */
+.rc-badge--tap { min-height: 30px; padding: 4px 12px; font-size: 13px; }
+
+/* Comisionul ținut în așteptare: două coduri se bat pe aceeași comandă, iar
+   suma nu e încă a nimănui. Chihlimbariu, nu violet — culoarea spune că
+   rândul așteaptă un om, nu că cineva a câștigat ceva. */
+.rc-badge--wait {
+  background: rgba(217, 119, 6, .16);
+  color: #9A5B06;
+  border-color: rgba(217, 119, 6, .32);
+}
+.rc-badge--wait:hover { background: rgba(217, 119, 6, .24); color: #9A5B06; }
+
+/* Comision stins (comandă anulată) sau cod fără cont în spate. Atribuirea se
+   vede mai departe — patronul trebuie să afle CE a scris omul în coș, chiar
+   dacă din codul acela nu mai câștigă nimeni — dar fără culoarea banilor. */
+.rc-badge--off {
+  background: var(--h-bg-sunk);
+  color: var(--h-fg-subtle);
+  border-color: var(--h-line);
+}
+.rc-badge--off:hover { background: var(--h-bg-sunk); color: var(--h-fg-muted); }

@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setări · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,7 @@
 <x-dc>
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -18,13 +24,24 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-st=chip]{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--h-bg-sunk);border:1px solid var(--h-line)}
 [data-st=mini]{display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;padding:0;font-size:14px;border-radius:9px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);cursor:pointer}
 [data-st=mini]:hover{border-color:var(--h-accent);color:var(--h-fg)}
+/* Bifele din tabla „ce anunțuri primești". Trei stări, nu două: bifat,
+   nebifat, și „canalul e oprit din întrerupătorul lui". A treia e cea care
+   lipsea din toate variantele încercate — fără ea, o bifă pusă pe un canal
+   oprit arată exact ca una care chiar trimite, iar patronul așteaptă un mesaj
+   care n-are cum să plece. Rămâne apăsabilă dinadins: omul pregătește canalul
+   înainte să-l pornească. */
+[data-st=ev]{background:var(--h-bg-surface);color:var(--h-fg-muted)}
+[data-st=ev]:hover{border-color:var(--h-accent)}
+[data-st=evon]{background:var(--h-bg-sunk);border-color:var(--h-accent)!important;color:var(--h-fg);font-weight:600}
+[data-st=evoff]{background:var(--h-bg-surface);color:var(--h-fg-faint);opacity:.62}
+[data-st=evoff]:hover{opacity:.85}
+[data-st=anuntrand]{background:var(--h-bg-surface)}
 @media (max-width:760px){
 [data-st=shell]{flex-direction:column!important}
 [data-st=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
 [data-st=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
 [data-st=nav]{display:none!important}
 [data-st=sidefoot]{display:none!important}
-[data-st=phoneback]{display:flex!important}
 [data-st=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
 [data-st=topbar] h1{font-size:20px!important}
 [data-st=body]{padding:14px 14px 26px!important;gap:12px!important}
@@ -32,7 +49,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-st=tabs]::-webkit-scrollbar{display:none}
 [data-st=tabs]>button{flex:none!important}
 [data-st=grid2]{grid-template-columns:1fr!important}
-[data-st=savebar]{flex-wrap:wrap!important}
+/* Pe 390 px cele trei bife nu încap lângă text: textul trece sus, bifele
+   dedesubt, pe toată lățimea. Fără regula asta „WhatsApp" se rupea în două
+   rânduri în interiorul chenarului. */
+[data-st=anuntrand]{flex-direction:column!important;gap:10px!important}
+[data-st=savebar]{flex-wrap:wrap!important;margin-left:0!important;width:100%!important}
+[data-st=savebar]>button{flex:1 1 130px!important}
 }
 </style>
 </helmet>
@@ -63,30 +85,70 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7">Setări</span>
 </div>
-<a data-st="phoneback" href="Administrare%20Comenzi.dc.html" title="Comenzi" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
 <div data-st="nav" style="display:flex;flex-direction:column;gap:6px">
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
-<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
-<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
-<a href="Depozit.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Depozit</a>
-<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
-<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
-<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Setări</span>
-<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
 </div>
 <div data-st="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<!-- Pastila cu numele afirmă două lucruri deodată: cine se uită la ecran și
+     că omul acela e administrator. Se desenează numai după ce serverul le-a
+     spus pe amândouă. Cât timp caseta roșie e aprinsă fiindcă sesiunea n-a
+     venit, aici stătea un nume gol cu „administrator” scris dedesubt — un
+     drept pe care pagina nu apucase să-l verifice. Restul subsolului rămâne:
+     ieșirea din panou și nota despre salvări sunt adevărate oricum. -->
+<sc-if value="{{ sideWho }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
 <div style="display:flex;flex-direction:column;min-width:0;flex:1">
 <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
 <span style="font-size:12px;opacity:.6">administrator</span>
 </div>
 </div>
+</sc-if>
 <a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
 <p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Modificările se aplică pe toate dispozitivele, nu doar pe acesta. Fiecare salvare intră în jurnal.</p>
 </div>
 </div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
 
 <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
 
@@ -107,14 +169,26 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--success" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:st-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+<button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
 </div>
 </sc-if>
 
 <sc-if value="{{ err }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:st-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ err }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onErrClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+<button type="button" aria-label="Închide mesajul de eroare" class="h-btn h-btn--ghost" onClick="{{ onErrClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<!-- Cererea a căzut. Caseta stă aici, în trunchiul comun al paginii, ca să se
+     vadă la fel pe telefon și pe monitor — cele două vederi se despart mai
+     jos, din foaia de stil, nu din marcaje deosebite. Nu se închide cu un ×:
+     ce n-a venit rămâne nevenit până cere omul din nou. -->
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
 </div>
 </sc-if>
 
@@ -159,6 +233,38 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <!-- ──────────────────────────────────────────── notificări ── -->
 <sc-if value="{{ isNotify }}" hint-placeholder-val="{{ false }}">
+
+<!-- Tabla stă ÎNAINTEA celor trei canale, nu după, fiindcă răspunde la
+     întrebarea dinaintea lor: ce vreau să aflu. Cardul unui canal răspunde
+     abia la a doua — pe unde vreau să aflu, și cu ce token. Pusă la coadă, ar
+     fi fost găsită de patron abia după ce ar fi renunțat să caute. -->
+<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Ce anunțuri primești, și pe unde</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Bifează pe fiecare rând canalele pe care vrei să afli despre el. Un canal oprit din întrerupătorul lui nu trimite nimic, oricâte bife ar avea aici.</span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ anunturi }}" as="A" hint-placeholder-count="6">
+<div data-st="anuntrand" style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;padding:12px 14px;border:1px solid var(--h-line);border-radius:14px">
+<div style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:220px">
+<span style="font-size:15px;font-weight:600">{{ A.label }}</span>
+<span style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ A.help }}</span>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<sc-for list="{{ A.canale }}" as="C" hint-placeholder-count="3">
+<label data-st="{{ C.st }}" title="{{ C.title }}" style="display:flex;align-items:center;gap:6px;font-size:13px;padding:6px 10px;border:1px solid var(--h-line);border-radius:10px;cursor:pointer">
+<input type="checkbox" checked="{{ C.on }}" onChange="{{ C.onChange }}">
+<span>{{ C.eticheta }}</span>
+</label>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<p style="margin:0;font-size:12px;line-height:1.6;color:var(--h-fg-faint);text-wrap:pretty">{{ anunturiNota }}</p>
+</div>
 
 <div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
 <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
@@ -215,7 +321,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <label class="h-field">
 <span class="h-label">{{ waTokenLabel }}</span>
 <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-<input class="h-input" value="{{ waToken }}" onChange="{{ onWaToken }}" placeholder="{{ waTokenHint }}" style="flex:1;min-width:220px;height:46px;font-size:15px">
+<input class="h-input" value="{{ waToken }}" onChange="{{ onWaToken }}" placeholder="{{ waTokenHint }}" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" style="flex:1;min-width:220px;height:46px;font-size:15px">
 <sc-if value="{{ waTokenSet }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onWaTokenClear }}" style="height:46px;font-size:14px;color:var(--h-danger)">Șterge tokenul</button>
 </sc-if>
@@ -224,7 +330,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </label>
 
 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--h-line)">
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestWa }}" style="height:46px;font-size:14px;margin-top:14px">{{ testWaLabel }}</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestWa }}" disabled="{{ testOff }}" title="{{ testHint }}" style="height:46px;font-size:14px;margin-top:14px">{{ testWaLabel }}</button>
 <p style="margin:14px 0 0;flex:1;min-width:220px;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ waFootnote }}</p>
 </div>
 </div>
@@ -249,7 +355,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-help">Trebuie să fie pe domeniul tău, altfel mesajul ajunge în spam.</span>
 </label>
 </div>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestMail }}" style="height:46px;font-size:14px;align-self:flex-start">{{ testMailLabel }}</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestMail }}" disabled="{{ testOff }}" title="{{ testHint }}" style="height:46px;font-size:14px;align-self:flex-start">{{ testMailLabel }}</button>
 </div>
 
 <div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
@@ -263,8 +369,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 <label class="h-field">
 <span class="h-label">Token bot</span>
-<input class="h-input" type="password" value="{{ tgToken }}" onChange="{{ onTgToken }}" placeholder="{{ tgTokenHint }}" style="height:46px;font-size:15px">
-<span class="h-help">Îl primești de la @BotFather, în Telegram.</span>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<input class="h-input" value="{{ tgToken }}" onChange="{{ onTgToken }}" placeholder="{{ tgTokenHint }}" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" style="flex:1;min-width:200px;height:46px;font-size:15px">
+<sc-if value="{{ tgTokenSet }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onTgTokenClear }}" style="height:46px;font-size:14px;color:var(--h-danger)">Șterge tokenul</button>
+</sc-if>
+</div>
+<span class="h-help">{{ tgTokenHelp }}</span>
 </label>
 <label class="h-field">
 <span class="h-label">Chat ID</span>
@@ -272,7 +383,32 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-help">Scrie-i botului un mesaj, apoi ia id-ul de la @userinfobot.</span>
 </label>
 </div>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestTg }}" style="height:46px;font-size:14px;align-self:flex-start">{{ testTgLabel }}</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestTg }}" disabled="{{ testOff }}" title="{{ testHint }}" style="height:46px;font-size:14px;align-self:flex-start">{{ testTgLabel }}</button>
+
+<!-- Butoanele de sub anunț. Stau în cartonașul Telegramului, nu în tabla de
+     bife de sus: tabla răspunde la „ce vreau să aflu", asta la „ce pot face
+     din mesaj". Și numai Telegram poate: WhatsApp are butoane doar în
+     șabloanele aprobate de Meta, iar un răspuns la ele vine ca mesaj scris,
+     nu ca apăsare — vezi rândul de ajutor de jos. -->
+<div style="display:flex;flex-direction:column;gap:12px;padding:14px;border:1px solid var(--h-line);border-radius:14px;background:var(--h-bg-surface)">
+<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:220px">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:15px;font-weight:600">Butoane sub anunț</span>
+<span class="{{ tgStareCls }}" style="font-size:10px">{{ tgStareEt }}</span>
+</div>
+<span style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ tgLegNota }}</span>
+</div>
+<label class="h-switch"><input type="checkbox" checked="{{ tgButoane }}" onChange="{{ onTgButoane }}"><span>{{ tgButoaneLabel }}</span></label>
+</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTgLeaga }}" disabled="{{ tgLegOff }}" title="{{ tgLegHint }}" style="height:46px;font-size:14px">{{ tgLegLabel }}</button>
+<sc-if value="{{ tgLegat }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onTgDezleaga }}" disabled="{{ tgLegOff }}" style="height:46px;font-size:14px;color:var(--h-danger)">Dezleagă botul</button>
+</sc-if>
+</div>
+<span class="h-help">{{ tgLegHelp }}</span>
+</div>
 </div>
 
 </sc-if>
@@ -320,7 +456,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-for list="{{ zones }}" as="z" hint-placeholder-count="4">
 <div data-st="chip" style="flex-wrap:wrap">
 <span class="h-numeric" style="width:22px;flex:none;font-size:13px;color:var(--h-fg-faint)">{{ z.n }}</span>
-<input class="h-input" value="{{ z.name }}" onChange="{{ z.onName }}" placeholder="Nume zonă" style="flex:2;min-width:130px;height:40px;font-size:14px">
+<input class="h-input" value="{{ z.name }}" onChange="{{ z.onName }}" onBlur="{{ z.onNameBlur }}" onKeyDown="{{ z.onNameKey }}" placeholder="Nume zonă" style="flex:2;min-width:130px;height:40px;font-size:14px">
 <input class="h-input h-numeric" value="{{ z.lat }}" onChange="{{ z.onLat }}" placeholder="lat" style="flex:1;min-width:90px;height:40px;font-size:14px">
 <input class="h-input h-numeric" value="{{ z.lng }}" onChange="{{ z.onLng }}" placeholder="lng" style="flex:1;min-width:90px;height:40px;font-size:14px">
 <button type="button" data-st="mini" onClick="{{ z.onUp }}" title="Mai sus">↑</button>
@@ -345,7 +481,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <label class="h-field">
 <span class="h-label">Comanda este gata când ajunge la</span>
 <select class="h-select" value="{{ doneStatus }}" onChange="{{ onDoneStatus }}" style="height:46px;font-size:15px">
-<sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="5">
+<sc-for list="{{ doneOpts }}" as="o" hint-placeholder-count="5">
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
 </select>
@@ -354,7 +490,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <label class="h-field">
 <span class="h-label">Comanda este anulată când ajunge la</span>
 <select class="h-select" value="{{ cancelStatus }}" onChange="{{ onCancelStatus }}" style="height:46px;font-size:15px">
-<sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="5">
+<sc-for list="{{ cancelOpts }}" as="o" hint-placeholder-count="5">
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
 </select>
@@ -377,7 +513,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <label class="h-field" style="max-width:420px">
 <span class="h-label">{{ panelCodeLabel }}</span>
-<input class="h-input" value="{{ panelCode }}" onChange="{{ onPanelCode }}" placeholder="{{ panelCodeHint }}" style="height:46px;font-size:15px">
+<input class="h-input" value="{{ panelCode }}" onChange="{{ onPanelCode }}" placeholder="{{ panelCodeHint }}" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" style="height:46px;font-size:15px">
 <span class="h-help">{{ panelCodeHelp }}</span>
 </label>
 <div class="h-alert h-alert--warning" style="border-radius:12px;padding:10px 14px">
@@ -411,7 +547,7 @@ const LISTS = [
   {
     k: "order_statuses",
     t: "Etape în laborator",
-    h: "Ordinea în care avansează o comandă. Butonul „etapa următoare” din panoul laboratorului merge exact pe lista asta.",
+    h: "Ordinea în care avansează o comandă. Butonul de etapă din panoul laboratorului poartă numele etapei următoare de aici și duce comanda exact acolo.",
     ph: "Ex.: La glazurat"
   },
   {
@@ -446,6 +582,39 @@ const LISTS = [
   }
 ];
 
+/**
+ * Ce se poate anunța, în ordinea în care apare în tablă.
+ *
+ * OGLINDA lui `notify_events()` din api/lib/notify.php — cheile trebuie să fie
+ * aceleași, altfel bifa se salvează și nu declanșează nimic, ori serverul o
+ * refuză cu „Anunțul … nu există". `.claude/check-anunturi.mjs` compară cele
+ * două liste cheie cu cheie și cade dacă s-au depărtat.
+ *
+ * Textele NU sunt copiate din PHP: acolo sunt lămuriri pentru cine citește
+ * codul, aici sunt pentru cine se uită la ecran cu telefonul în mână.
+ */
+const ANUNTURI = [
+  { k: "request_new", l: "Cerere nouă de pe site",
+    h: "Cineva a completat coșul și așteaptă un răspuns. Pe Telegram vine cu două butoane: acceptă și respinge." },
+  { k: "order_new", l: "Comandă nouă",
+    h: "O comandă scrisă în panou sau născută dintr-o cerere acceptată." },
+  { k: "order_done", l: "Comandă gata",
+    h: "Comanda a ajuns în etapa care o încheie. Util dacă vrei să știi de departe că a plecat marfa." },
+  { k: "order_cancelled", l: "Comandă anulată",
+    h: "Comanda a fost trecută pe etapa de anulare, adică ștearsă din panou." },
+  { k: "user_new", l: "Cont nou pe site",
+    h: "Un cumpărător și-a făcut singur cont. Dacă a venit pe un cod de recomandare, anunțul spune al cui e." },
+  { k: "stock_low", l: "Articol sub pragul minim",
+    h: "O ieșire din depozit a coborât un articol sub pragul lui. Se anunță o singură dată, la trecerea pragului." },
+];
+
+/** Cele trei canale, în ordinea în care le vede omul mai jos în pagină. */
+const CANALE = [
+  { k: "email", et: "E-mail" },
+  { k: "whatsapp", et: "WhatsApp" },
+  { k: "telegram", et: "Telegram" },
+];
+
 const TABS = [
   { k: "general", l: "General" },
   { k: "notify", l: "Notificări" },
@@ -457,7 +626,34 @@ const GENERAL = [
   { k: "company_name", l: "Numele firmei", hint: "Golden Pastry", help: "Apare în antetul mesajelor." },
   { k: "company_phone", l: "Telefon public", hint: "+40 7xx xxx xxx", help: "Numărul afișat pe site." },
   { k: "company_email", l: "E-mail public", hint: "contact@goldenpastry.ro", help: "Adresa de contact de pe site." },
-  { k: "stock_min_default", l: "Prag minim implicit", hint: "10", help: "Cantitatea sub care un articol nou de depozit e considerat pe terminate." },
+  // Adresa asta nu e decor: din ea se scrie blocul „PostalAddress” pe care îl
+  // citește Google (`seo/index.php:289`) și rândul de contact din pagina fără
+  // JavaScript. Până acum cheia era citită de pagina publică, dar nu putea fi
+  // scrisă de nicăieri — deci adresa firmei era, în fapt, scrisă în cod.
+  // Caseta goală înseamnă tot „ia-o pe cea din cod”, ca până acum.
+  { k: "company_address", l: "Adresa publică", hint: "Șos. Olteniței 103, sector 4, București", help: "Adresa pe care o citește Google și o vede clientul pe site. Goală, rămâne cea scrisă în cod." },
+  // Orele sunt rândul pe care Google îl arată lângă firmă — „Deschis · se
+  // închide la 21:00" — și fără ele rândul lipsește cu totul. Se scriu ca
+  // pentru un om; „api/lib/firma.php" le înțelege și le traduce în amândouă
+  // formele: cea pentru Google (`openingHoursSpecification`) și tabelul de pe
+  // pagină. De la unificare, caseta asta hotărăște AMÂNDOUĂ fețele site-ului,
+  // nu doar ce află Google — de-aia ajutorul o spune pe șleau.
+  //
+  // Caseta goală înseamnă „luni-vineri 07:00-21:00, sâmbătă 07:00-17:00", ca
+  // până acum la adresă. Ajutorul de mai jos o spune anume: presupunerea
+  // zilelor e a noastră, nu a patronului, deci trebuie să fie la un cuvânt
+  // distanță de dezmințit. O zi nescrisă e o zi închisă: duminica lipsește din
+  // rând fiindcă patiseria e închisă duminica.
+  { k: "company_hours", l: "Program de lucru", hint: "Lu-Vi 07:00-21:00, Sâ 07:00-17:00", help: "Orele pe care le arată și tabelul de pe pagină, și Google. Scrie zilele în față, altfel înțelegem luni-sâmbătă. Se pot da mai multe intervale, despărțite prin virgulă: „Lu-Vi 07:00-21:00, Sâ 07:00-17:00”. O zi pe care n-o scrii e o zi închisă." },
+  { k: "stock_min_default", l: "Prag minim implicit", hint: "10", help: "Cantitatea sub care un articol nou de depozit e considerat pe terminate. Zecimalele se scriu și cu virgulă: 0,5." },
+  // Zero, nu cinci: migrarea 008 îl seamănă cu „0” dinadins, ca o actualizare
+  // să nu înceapă să datoreze bani din prima comandă de după ea. Patronul îl
+  // ridică de aici, când vrea, și de-atunci încolo se aplică.
+  //
+  // Aici e valoarea de temelie, nu singura: fiecare cont poate avea procentul
+  // lui, pus din Conturi. Acolo caseta goală înseamnă „ia-l pe ăsta” — de
+  // aceea ridicarea de aici îi atinge pe toți cei lăsați neatinși.
+  { k: "referral_rate_default", l: "Procent de recomandare", hint: "5", help: "Cât câștigă, din fiecare comandă, cel care a adus clientul. Casa pornește de la 5%. Zero — sau caseta lăsată goală, care înseamnă același lucru — face ca recomandările să se țină minte, dar să nu aducă bani; iar comenzile făcute cât timp scrie zero rămân cu zero și după ce urci procentul, fiindcă procentul se îngheață pe comandă." },
   // De aici pleacă mașina. Coordonatele intră în calculul kilometrilor și în
   // ordonarea opririlor, deci greșite mută toată ruta în alt cartier.
   { k: "hq_label", l: "Punctul de plecare al livrărilor", hint: "Depozit · Șos. Olteniței 103", help: "Numele afișat ca prima oprire pe ruta șoferului." },
@@ -469,12 +665,32 @@ const isMasked = (v) => typeof v === "string" && v.indexOf("•") === 0;
 
 class Component extends DCLogic {
   state = {
+    navOpen: false,
     auth: null, loaded: false, tab: "general",
     s: {}, orig: {}, drafts: {},
     // Anunțurile care nu au plecat. Comanda e salvată, dar laboratorul nu știe
     // de ea: până nu apar aici, singurul care află este clientul, la telefon.
-    failed: [],
-    msg: "", err: "", saving: false, testing: "", tested: {}
+    failed: [], failedTotal: 0,
+    msg: "", err: "", saving: false, testing: "", tested: {},
+    // De ce n-au venit datele, spus omului care se uită la ecran. Gol
+    // înseamnă „nu s-a întâmplat nimic rău”, niciodată „nu e nimic de
+    // arătat”: a doua e o afirmație despre lume, și se face din altă parte.
+    //
+    // DOUĂ câmpuri, nu unul, fiindcă pagina face două cereri deosebite: cine e
+    // omul (`gp.me()`) și setările (`GET /settings`). Cu un singur câmp,
+    // reușita uneia stingea și motivul celeilalte — iar drumul nu era închipuit:
+    // cu sesiunea necitită și setările pe server, „Trimite test” chema `pull()`,
+    // `pull()` reușea, caseta se stingea, și rămânea pe ecran o pagină care nu
+    // mai spunea nicăieri că nu știe cine se uită la ea. Mai rău, caseta era
+    // SINGURUL loc din care se putea recere sesiunea („Încearcă din nou" e
+    // înăuntrul ei, singura apariție din tot fișierul), deci stingerea ei lua
+    // de pe ecran tocmai unealta de reparat. Același tipar ca `eroareMine` și
+    // `eroareLista` din „Recomandări".
+    eroareCine: "",
+    eroareSetari: "",
+    // "" · "link" · "unlink". Ține butonul apăsat cât ține drumul până la
+    // Telegram — legarea e un apel afară, nu o scriere locală, și poate dura.
+    linking: ""
   };
 
   componentDidMount() {
@@ -497,14 +713,35 @@ class Component extends DCLogic {
     // Listele aduc punctul depozitului, propus ca punct de plecare la o zonă nouă.
     gp.lists().catch(() => {});
 
-    gp.me()
+    this.pullTot();
+  }
+
+  /**
+   * Contul și, dacă are dreptul, setările — cererea de la care pornește pagina.
+   *
+   * Stă într-o metodă, nu în `componentDidMount`, fiindcă „Încearcă din nou”
+   * trebuie să reia DRUMUL ÎNTREG. Reluat doar cu `pull()`, contul ar fi
+   * rămas nesosit, iar pagina ar fi aprins din nou ecranul „intră cu un cont
+   * de administrator” — adică tocmai minciuna de care fuge caseta de eroare.
+   */
+  pullTot() {
+    return gp.me()
       .then((user) => {
         if (!user) { gp.toLogin(); return; }
-        this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
-        if (user.role !== "admin") { this.setState({ loaded: true }); return; }
+        this.setState({ auth: gp.auth(user) });
+        if (!gp.eAdmin(user)) { this.setState({ loaded: true }); return; }
         return this.pull();
       })
-      .catch(() => this.setState({ loaded: true }));
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // Fără sesiune, `gp.me()` nu aruncă — întoarce null. Deci dacă s-a
+        // ajuns aici, a căzut cererea însăși, și pagina nu știe cine e omul.
+        // Lacătul e `eroare`, nu `loaded`: cu `loaded` singur, ecranul „nu ai
+        // acces la setări” s-ar fi aprins peste o întrebare la care serverul
+        // n-a apucat să răspundă. Iar cu `loaded` lăsat fals, pagina s-ar
+        // învârti la nesfârșit — altă tăcere, la fel de mută.
+        else this.setState({ eroareCine: gp.motiv(e, "setările"), loaded: true });
+      });
   }
 
   /** Setările de pe server. Secretele vin mascate, niciodată în clar. */
@@ -514,12 +751,31 @@ class Component extends DCLogic {
         const s = r.settings || {};
         this.setState({
           s: Object.assign({}, s), orig: Object.assign({}, s),
-          failed: r.failed || [], loaded: true
+          failed: r.failed || [], failedTotal: r.failedTotal || 0, loaded: true,
+          // Răspunsul bun stinge caseta, altfel pagina ar minți întoarsă pe
+          // dos: „Setările nu s-au încărcat” scris deasupra formularului abia
+          // umplut cu setările adevărate, fără × cu care să se închidă.
+          // `pull()` se cheamă din trei locuri — „Încearcă din nou”, „Trimite
+          // test” și „Leagă botul” — iar numai primul stingea caseta; pe
+          // celelalte două, formularul gol lăsa `changes()` gol, deci paza
+          // lui „Trimite test" nu oprea pe nimeni și drumul era deschis larg.
+          // („Leagă botul" are și a doua pază, `tgLegOff`, care în starea aceea
+          // îl ține închis; drumul lui e altul — o încărcare REUȘITĂ urmată de
+          // un `pull()` picat lasă `S.s` plin, iar atunci butonul e apăsabil.)
+          //
+          // Stinge NUMAI motivul ei. Motivul sesiunii, `eroareCine`, nu e al
+          // cererii ăsteia și rămâne pe ecran până întreabă cineva din nou.
+          eroareSetari: ""
         });
       })
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
-        else this.setState({ err: e.message, loaded: true });
+        // Refuzul nu mai pleacă în bara trecătoare `err`: aceea se închide cu
+        // un × și nu se mai întoarce, iar un răspuns care dispare la o apăsare
+        // greșită nu e un răspuns. Lacătul e `eroare`, nu `loaded`: `loaded`
+        // rămâne adevărat ca pagina să nu se învârtă la nesfârșit. Mesajul îl
+        // scrie `gp.motiv()`, ca să sune la fel în toate panourile.
+        else this.setState({ eroareSetari: gp.motiv(e, "setările"), loaded: true });
       });
   }
 
@@ -556,15 +812,49 @@ class Component extends DCLogic {
     Object.keys(S.s).forEach((k) => {
       if (k.slice(-4) === "_set") return;              // indicatori, nu valori
       if (S.s[k] === S.orig[k]) return;
-      if (isMasked(S.s[k])) return;                    // token neatins
+      // „Mascat" înseamnă „token neatins" NUMAI la un secret.
+      //
+      // Fără prima jumătate a condiției, regula se aplica tuturor cheilor:
+      // orice casetă obișnuită care începe cu „•" — numele punctului de
+      // plecare, adresa publică, un nume de zonă — era socotită token și nu
+      // pleca deloc spre server. Pierderea era complet mută: cheia nu era
+      // trimisă, deci nu apărea nici printre cele „căzute" pe care `save()`
+      // le numește în mesajul roșu, iar dacă era singura schimbare pagina
+      // răspundea „Nu e nimic de salvat." — o contrazicere pe față a ceea ce
+      // omul tocmai tastase.
+      //
+      // Indicatorul `<cheie>_set` e trimis de `settings_public()`
+      // (api/lib/settings.php:267-269) exact și numai pentru cheile secrete,
+      // deci condiția de aici e acum aceeași cu cea de pe server
+      // (api/lib/settings.php:326-327).
+      if (S.s[k + "_set"] !== undefined && isMasked(S.s[k])) return;
       out[k] = S.s[k];
     });
     return out;
   }
 
+  /**
+   * Ce vede omul după „Salvează" se scrie din RĂSPUNS, nu din faptul că
+   * răspunsul a venit.
+   *
+   * Mesajul verde se scria necondiționat, la orice 200. Dar un 200 nu
+   * înseamnă „s-a scris": serverul sare tăcut peste cheile pe care nu le are
+   * în tabel (`settings_save()`, api/lib/settings.php) și răspunde totuși
+   * ok=true; iar un secret criptat cu o cheie de criptare care s-a schimbat
+   * între timp SE scrie, dar la citire nu se mai poate decoda și iese gol
+   * (`settings_all()` îl tratează ca necompletat, dinadins, ca aplicația să
+   * meargă mai departe). Amândouă arată la fel din fața ecranului: mesaj
+   * verde, casetă goală, nimic salvat, niciun loc din care să afli de ce.
+   *
+   * Verificarea e ieftină fiindcă serverul spune deja tot ce trebuie:
+   * `changed` e lista cheilor chiar scrise, iar pentru fiecare secret vine
+   * `<cheie>_set`, adică „valoarea de acolo se poate citi". Comparăm cu ce am
+   * trimis și numim pe nume ce n-a ținut.
+   */
   save() {
     const diff = this.changes();
-    if (!Object.keys(diff).length) {
+    const trimise = Object.keys(diff);
+    if (!trimise.length) {
       this.setState({ msg: "Nu e nimic de salvat.", err: "" });
       return;
     }
@@ -576,12 +866,95 @@ class Component extends DCLogic {
         // celelalte pagini deschise în aceeași filă să nu rămână pe cele vechi.
         gp.__lists = null;
         gp.lists().catch(() => {});
+
+        // Chei trimise care nu apar în lista celor scrise. Dacă serverul nu
+        // trimite deloc `changed` — o versiune mai veche — nu inventăm o
+        // alarmă: presupunem că le-a scris pe toate.
+        const scrise = Array.isArray(r.changed) ? r.changed : trimise;
+        const cazute = trimise.filter((k) => scrise.indexOf(k) < 0);
+        // Secretele se recunosc după indicatorul însoțitor. Unul care tocmai a
+        // fost pus și se întoarce „nesetat" e scris în bază și necitibil —
+        // adică pierdut, oricât de verde ar fi mesajul.
+        const pierdute = trimise.filter((k) =>
+          s[k + "_set"] !== undefined && diff[k] !== "__clear__" && !s[k + "_set"]);
+        const rele = cazute.concat(pierdute.filter((k) => cazute.indexOf(k) < 0));
+
+        // Ce s-a tastat CÂT cererea era pe drum.
+        //
+        // Salvarea ține o clipă-două, iar formularul rămâne deschis: se poate
+        // scrie mai departe în el. Până acum răspunsul rescria tot formularul,
+        // deci textul scris între timp dispărea din casetă — fără niciun semn,
+        // sub mesajul verde „Setările au fost salvate.". Pagina cunoștea
+        // capcana la butonul de test, unde reîmprospătarea se sare dinadins
+        // („textul omului nu s-ar mai întoarce", mai jos în `test()`), dar
+        // salvarea n-avea aceeași grijă.
+        //
+        // `changes()` se socotește ACUM, adică față de `orig`-ul vechi: o
+        // cheie a cărei valoare de pe ecran nu mai e cea trimisă a fost
+        // atinsă între timp și se păstrează peste ce vine de la server.
+        const acum = this.changes();
+        const ecran = this.state.s;
+        const restante = Object.keys(acum).filter((k) => acum[k] !== diff[k]);
+        const pastrate = {};
+        restante.forEach((k) => { pastrate[k] = ecran[k]; });
+
         this.setState({
-          s: Object.assign({}, s), orig: Object.assign({}, s),
-          saving: false, msg: "Setările au fost salvate.", drafts: {}
+          // `orig` rămâne răspunsul curat al serverului — el e linia de bază
+          // față de care se socotește ce mai e de salvat. `s` e răspunsul plus
+          // ce a scris omul între timp, deci casetele nu-și pierd textul, iar
+          // subtitlul „Ai modificări nesalvate" apare din nou, pe bună dreptate.
+          s: Object.assign({}, s, pastrate), orig: Object.assign({}, s),
+          saving: false,
+          msg: rele.length ? "" : (restante.length
+            ? "S-au salvat setările trimise. Ce ai scris cât timp se salva a rămas în formular și e încă nesalvat — apasă „Salvează” din nou."
+            : "Setările au fost salvate."),
+          err: rele.length
+            ? "Restul s-au salvat, dar " + (rele.length === 1 ? "„" + rele[0] + "”" : "acestea") +
+              " nu: " + rele.join(", ") +
+              ". La un token, cauza obișnuită e cheia de criptare din api/config.php, schimbată " +
+              "după ce fusese salvat — scrie-l din nou. Dacă nici așa nu ține, setarea lipsește " +
+              "din baza de date și trebuie rulate migrările."
+            : ""
         });
       })
       .catch((e) => this.setState({ saving: false, err: e.message }));
+  }
+
+  /**
+   * Leagă sau dezleagă botul de Telegram.
+   *
+   * Aceeași disciplină ca la butonul de test, și din același motiv: serverul
+   * lucrează cu TOKENUL SALVAT, nu cu cel de pe ecran. Cine tasta tokenul și
+   * apăsa direct „Leagă botul" ar fi primit „Salvează întâi tokenul" de la
+   * server — un refuz adevărat, dar de neînțeles cu tokenul scris în față.
+   *
+   * Nu trece prin „Salvează": cele trei valori pe care le scrie — secretul,
+   * starea și contul — nu le tastează nimeni, se nasc din răspunsul lui
+   * Telegram. De aceea au rută proprie (api/routes/telegram.php), iar aici se
+   * recitesc după, cu `pull()`.
+   */
+  legare(ce) {
+    if (Object.keys(this.changes()).length) {
+      this.setState({
+        msg: "",
+        err: "Ai modificări nesalvate. Legarea folosește tokenul salvat pe server, nu pe cel de pe ecran — salvează întâi, apoi leagă botul."
+      });
+      // Mesajul stă deasupra filelor; omul e derulat jos, la buton.
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { /* noop */ }
+      return;
+    }
+    this.setState({ linking: ce, err: "", msg: "" });
+    gp.post("/telegram/" + ce, {})
+      .then((r) => this.setState({
+        linking: "",
+        msg: ce === "link"
+          ? "Botul e legat. Apăsările de pe telefon se vor scrie în Jurnal pe contul „" + (r.actor || "") + "”."
+          : "Botul a fost dezlegat. Anunțurile pleacă mai departe, dar fără butoane sub ele."
+      }))
+      // Starea, secretul și contul s-au schimbat pe server. `pull()` nu
+      // atinge `msg`, deci mesajul de mai sus rămâne pe ecran.
+      .then(() => this.pull())
+      .catch((e) => this.setState({ linking: "", err: e.message }));
   }
 
   test(channel) {
@@ -596,6 +969,8 @@ class Component extends DCLogic {
         msg: "",
         err: "Ai modificări nesalvate. Testul folosește datele salvate pe server, nu pe cele de pe ecran — salvează întâi, apoi trimite testul."
       });
+      // Mesajul stă deasupra filelor; omul e derulat jos, la buton.
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { /* noop */ }
       return;
     }
     this.setState({ testing: channel, err: "", msg: "" });
@@ -618,15 +993,23 @@ class Component extends DCLogic {
   }
 
   /**
-   * Golește lista de anunțuri eșuate, după ce administratorul a citit-o.
+   * Stinge anunțurile eșuate pe care administratorul tocmai le-a citit.
    *
    * Rândurile rămân în baza de date; doar nu mai sunt arătate. Fără pasul ăsta
    * o defecțiune reparată demult ar sta permanent pe ecran, iar un eșec nou ar
    * trece neobservat printre cele vechi.
+   *
+   * Se trimit id-urile rândurilor de pe ecran, nu un corp gol. Cu un corp gol,
+   * serverul stingea TOT tabelul, iar lista arată cel mult 20 de rânduri: după
+   * un weekend cu 47 de eșecuri, apăsarea asta ștergea din vedere 27 pe care
+   * nu le citise nimeni, și nu mai exista niciun loc din care să se afle de
+   * ele. Răspunsul aduce lotul următor, deci butonul le parcurge pe rând.
    */
   markFailedSeen() {
-    gp.post("/settings/notifications/seen", {})
-      .then((r) => this.setState({ failed: r.failed || [] }))
+    const ids = (this.state.failed || []).map((f) => f.id);
+    if (!ids.length) return;
+    gp.post("/settings/notifications/seen", { ids })
+      .then((r) => this.setState({ failed: r.failed || [], failedTotal: r.failedTotal || 0 }))
       .catch((e) => this.setState({ err: e.message }));
   }
 
@@ -638,12 +1021,78 @@ class Component extends DCLogic {
     const toggle = (k) => () => this.put(k, on(k) ? "0" : "1");
     const field = (k) => (e) => this.put(k, e.target.value);
 
-    const isAdmin = S.auth && S.auth.role === "admin";
+    /**
+     * Lista de evenimente a unui canal, citită din starea paginii.
+     *
+     * Valoarea stă în stare ca ȘIR JSON, nu ca tablou, și e important: `changes()`
+     * compară cu `===` față de `orig`, iar două tablouri cu același conținut nu
+     * sunt niciodată `===`. Ținută ca tablou, fiecare salvare ar fi trimis toate
+     * cele trei liste, la fiecare apăsare, chiar neatinse — iar Jurnalul ar fi
+     * raportat de fiecare dată trei schimbări care nu s-au întâmplat.
+     *
+     * Șirul gol înseamnă „rândul lipsește din baza de date", adică migrarea 013
+     * nerulată: atunci arătăm purtarea de dinainte, cum face și serverul
+     * (`notify_channel_events()`). Lista goală — `[]` — e altceva: e hotărârea
+     * omului, și rămâne goală.
+     */
+    const evLista = (canal) => {
+      const raw = v("notify_" + canal + "_events");
+      if (raw === "") return ["request_new", "order_new"];
+      try {
+        const x = JSON.parse(raw);
+        return Array.isArray(x) ? x.filter((k) => typeof k === "string") : [];
+      } catch (e) {
+        return [];
+      }
+    };
+
+    /**
+     * Apasă o bifă.
+     *
+     * Lista se RECONSTRUIEȘTE din catalog, în ordinea catalogului, nu se
+     * împinge cheia la coadă. Așa, bifat-și-debifat lasă exact șirul de la care
+     * s-a pornit, iar `changes()` vede corect „nimic de salvat" — altfel
+     * butonul ar rămâne aprins după o apăsare fără urmări, iar Jurnalul ar
+     * primi o schimbare inventată. E aceeași ordine pe care o scrie și
+     * serverul în `guard_event_lists()`, deci cele două nu se ceartă.
+     */
+    const evToggle = (canal, cheie) => () => {
+      const acum = evLista(canal);
+      const vrea = acum.indexOf(cheie) < 0;
+      const nou  = ANUNTURI.map((E) => E.k).filter((k) =>
+        k === cheie ? vrea : acum.indexOf(k) >= 0);
+      this.put("notify_" + canal + "_events", JSON.stringify(nou));
+    };
+
+    const isAdmin = !!S.auth && gp.eAdmin(S.auth);
     const dirty = Object.keys(this.changes()).length > 0;
 
     const provider = v("notify_whatsapp_provider", "meta");
     const isTwilio = provider === "twilio";
-    const waSet = !!S.s.notify_whatsapp_token_set;
+    // Furnizorul SALVAT, nu cel de pe ecran. Cele două căi împart aceleași
+    // două cutii, dar pun în ele lucruri deosebite: la Meta e Bearer token +
+    // Phone Number ID, la Twilio e Auth Token + Account SID. Un token de la
+    // unul nu deschide nimic la celălalt.
+    //
+    // De aceea, de îndată ce se alege alt furnizor pe ecran, tokenul salvat
+    // încetează să mai fie „al nostru": „Token salvat" ar fi adevărat despre
+    // baza de date și mincinos despre ce urmează să se întâmple. Serverul
+    // refuză oricum salvarea fără datele noi (`guard_whatsapp_provider()`,
+    // api/routes/settings.php); aici se spune înainte de drum.
+    // Setările CHIAR au venit de la server. Nu e același lucru cu `S.loaded`:
+    // acela spune doar că lanțul de pornire s-a terminat, și e adevărat și
+    // când `GET /settings` a picat — atunci `S.s` rămâne gol, iar filele
+    // citeau din el ca dintr-un răspuns. Așa ieșeau, sub caseta roșie,
+    // propoziții care AFIRMĂ cum e configurat serverul: „Dezactivat",
+    // „neconfigurat", „Nelegat" și, cea mai costisitoare dintre toate, „Fără
+    // cod configurat, tabletele nu pot deschide panoul." Adminul o citea,
+    // scria un cod nou, apăsa „Salvează" — și înlocuia codul care funcționa,
+    // dând tabletele din laborator afară pe loc (`api/lib/settings.php` închide
+    // sesiunile de panou la orice scriere de `panel_code`).
+    const stiute = !S.eroareSetari && Object.keys(S.orig || {}).length > 0;
+    const provSalvat = (S.orig.notify_whatsapp_provider || "meta");
+    const provSchimbat = provider !== provSalvat;
+    const waSet = !!S.s.notify_whatsapp_token_set && !provSchimbat;
     const tgSet = !!S.s.notify_telegram_token_set;
     const panelSet = !!S.s.panel_code_set;
     const waState = v("notify_whatsapp_status", "neconfigurat");
@@ -652,6 +1101,16 @@ class Component extends DCLogic {
 
     // Etapele, ca opțiuni pentru cele două roluri speciale.
     const statuses = this.list("order_statuses");
+    const etapaOpts = (aleasa) => {
+      const o = statuses.map((x) => ({ v: x, l: x }));
+      // Serverul refuză salvarea în starea asta (api/routes/settings.php ·
+      // `guard_status_list`), deci opțiunea nu e o portiță: e chiar arătarea
+      // motivului pentru care refuză.
+      if (aleasa && statuses.indexOf(aleasa) < 0) {
+        o.unshift({ v: aleasa, l: aleasa + " — nu mai e în listă, alege alta" });
+      }
+      return o;
+    };
 
     const lists = LISTS.map((L) => {
       const items = self.list(L.k);
@@ -732,14 +1191,165 @@ class Component extends DCLogic {
       set({ drafts: Object.assign({}, S.drafts, { __zone: "" }), err: "" });
     };
 
-    const testLabel = (ch, txt) => S.testing === ch ? "Se trimite…" : txt;
+    // Numele zonei stă într-o schiță până se termină de scris, ca numele
+    // grupelor din Catalog. Motivul: onChange din DSL e chiar onChange-ul lui
+    // React, deci se declanșează la FIECARE literă. Cum redenumirea muta și
+    // punctul de pe hartă, orice nume care TRECE prin numele altei zone îi lua
+    // acesteia punctul și îl arunca la litera următoare: „Ilfov” →
+    // „Sector 1 si Ilfov” trece, la a opta literă, exact prin „Sector 1”.
+    // Serverul are acum și el o plasă (api/routes/settings.php ·
+    // guard_zone_coords), dar fără schița de aici omul ar primi refuzul ei
+    // pentru o redenumire pe care nici n-a apucat s-o termine.
+    const cheiaZona = (i) => "__zn:" + i;
+    const schitaZona = (i) => S.drafts[cheiaZona(i)];
+    const faraSchita = (i) => {
+      const d = Object.assign({}, S.drafts);
+      delete d[cheiaZona(i)];
+      return d;
+    };
+    const incheieZona = (i) => {
+      const schita = schitaZona(i);
+      if (schita === undefined) return;
+      const vechi = zoneList[i];
+      const nou = schita.trim();
+      // Gol sau neschimbat: numele rămâne cel de dinainte. Un câmp golit din
+      // greșeală nu are voie să scoată zona din listă pe tăcute.
+      if (nou === "" || nou === vechi) { set({ drafts: faraSchita(i), err: "" }); return; }
+      if (zoneList.some((z, j) => j !== i && z === nou)) {
+        set({ drafts: faraSchita(i), err: "„" + nou + "” există deja în listă." });
+        return;
+      }
+      const list = zoneList.slice();
+      list[i] = nou;
+      const map = Object.assign({}, zoneMap);
+      if (map[vechi] !== undefined) { map[nou] = map[vechi]; delete map[vechi]; }
+      saveZones(list, map);
+      set({ drafts: faraSchita(i), err: "" });
+    };
+
+    // Cu modificări nesalvate, butonul de test se vede dezactivat și SPUNE de
+    // ce, chiar pe el. Înainte rămânea activ, iar test() refuza cu un mesaj
+    // roșu afișat sus, deasupra filelor — omul derulat jos, la E-mail sau
+    // Telegram, vedea doar un buton care nu face nimic.
+    const testLabel = (ch, txt) => S.testing === ch ? "Se trimite…" : dirty ? "Salvează întâi, apoi testează" : txt;
+    const testOff = dirty || S.testing !== "";
+    // Starea legăturii cu Telegram și motivul pentru care butonul e închis, în
+    // ordinea în care le verifică și serverul (api/routes/telegram.php ·
+    // `route_telegram_link()`) — ca refuzul să vină de aici, în românește, nu
+    // de acolo, după un drum degeaba.
+    const tgStare = v("notify_telegram_webhook_status", "nelegat");
+    const tgLegPiedica = dirty
+      ? "Ai modificări nesalvate. Legarea folosește datele salvate pe server — apasă „Salvează” de jos, apoi leagă botul."
+      : (!tgSet
+        ? "Salvează întâi tokenul botului, apoi leagă-l."
+        : (v("notify_telegram_chat_id") === ""
+          ? "Salvează întâi Chat ID-ul, altfel botul n-are cui răspunde."
+          : ""));
+    const testHint = dirty ? "Testul folosește datele salvate pe server, nu pe cele de pe ecran. Apasă „Salvează” sus, apoi testează." : "";
+
+    // Titlul casetei roșii, scris după ce chiar e în listă. Două minciuni
+    // reparate deodată:
+    //
+    // · numărul se lua din rândurile aduse — cel mult 20 — deci un weekend cu
+    //   47 de eșecuri se anunța ca „20 anunțuri nu au plecat”, o cifră mai
+    //   mică decât adevărul tocmai într-un mesaj de alarmă;
+    // · propoziția despre comandă se scria întotdeauna, deci un „Trimite mesaj
+    //   de test” eșuat — care n-are nicio comandă în spate — trimitea omul să
+    //   caute o comandă pierdută care nu existase niciodată.
+    const areComenzi = S.failed.some((f) => f.orderId);
+    const cateFailed = Math.max(S.failedTotal || 0, S.failed.length);
+    const restFailed = cateFailed - S.failed.length;
+    const failedTitle = (cateFailed === 1
+        ? "Un anunț nu a plecat."
+        : cateFailed + " anunțuri nu au plecat.")
+      + (restFailed > 0
+        ? " Aici se văd primele " + S.failed.length + "; apasă „Am văzut” ca să treci la următoarele " + restFailed + "."
+        : "")
+      + (areComenzi
+        ? (S.failed.length === 1
+          ? " Comanda este salvată, dar nu a fost anunțată."
+          : " Comenzile sunt salvate, dar nu au fost anunțate.")
+        : "");
 
     return {
-      blocked: S.loaded && !isAdmin,
-      allowed: !S.loaded || isAdmin,
-      blockedLine: S.auth
-        ? "Contul „" + S.auth.name + "” nu are acces la setări. Doar administratorii pot schimba configurarea aplicației."
-        : "Intră cu un cont de administrator ca să vezi setările.",
+      // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
+      // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
+      // există — bara e acum un șablon peste lista de aici, ca nu cumva un
+      // buton scos dintr-un meniu să rămână în celălalt.
+      //
+      // `gp.meniu()` (shared/gp-api.js) taie din listă panourile pe care
+      // rolul ăsta n-are voie să le deschidă. Până sosește sesiunea, `S.auth`
+      // e null și lista iese goală — dinadins: mai bine nicio intrare o
+      // clipă decât intrări care dispar sub deget. Le compară
+      // `.claude/check-meniu.mjs`.
+      meniu: gp.meniu("Setări", S.auth),
+      navHere: "Setări",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      // Apăsarea pe foaie nu are voie să ajungă la fundal, care închide.
+      onNavKeep: (e) => e.stopPropagation(),
+      // Două steaguri, nu unul negat, fiindcă `sc-if` primește o valoare, nu o
+      // expresie. Marcajul sertarului rămâne identic în toate panourile; ce se
+      // arată din el se hotărăște de aici.
+      //
+      // Numele apare NUMAI dacă se știe al cui e. Până răspunde serverul, și în
+      // paginile unde un cont fără drepturi rămâne pe ecran cu un mesaj de
+      // refuz în loc să fie trimis la intrare, `S.auth` e gol — iar un rând care
+      // scrie „conectat" sub un nume gol ar minți. Atunci nu se arată niciunul.
+      navWho: !!S.auth,
+      navAnon: false,
+      // Subsolul barei de pe monitor scrie „administrator” CHIAR SUB nume,
+      // deci afirmă două lucruri: cine e omul și ce drept are. De aceea are
+      // lacăt propriu, mai strâns decât `navWho`: sertarul de pe telefon
+      // scrie doar „conectat”, o afirmație pe care numele o acoperă singur.
+      // Fără el, cu `gp.me()` picat pagina arăta o pastilă goală cu
+      // „administrator” dedesubt, lângă caseta care tocmai spunea că nu știe
+      // nimic — iar pe telefon nimeni n-ar fi văzut-o, subsolul fiind ascuns
+      // de bandă (`[data-st=sidefoot]{display:none}`).
+      sideWho: !!S.auth && isAdmin,
+      // „Ieși din cont" lipsea cu totul din pagina asta — și de pe monitor,
+      // nu doar de pe telefon. Sertarul îl arată în toate panourile, deci
+      // trebuie să existe în toate. Sesiunea se închide pe SERVER, apoi
+      // pagina pleacă la intrare, ca omul să nu rămână pe un ecran mort.
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+      // Singurele două afirmații despre lume din pagina asta. „Contul n-are
+      // acces la setări” se poate spune doar dacă serverul a răspuns cine e
+      // omul; cât e aprinsă caseta de eroare, nu s-a răspuns. Atunci rămâne
+      // ecranul obișnuit, cu caseta roșie deasupra și cu butonul de
+      // reîncercare — nu un refuz inventat, din care nu se iese.
+      //
+      // Cardurile de felul „nicio comandă” nu există în pagină: setările sunt
+      // un formular, iar listele goale se desenează ca liste goale.
+      //
+      // Al doilea lacăt, `!!S.auth`: ecranul de refuz vorbește despre CONTUL
+      // omului, deci nu se aprinde până nu se știe al cui e. Până acum îl
+      // ținea pe loc numai lipsa unui motiv pe ecran; iar cât timp cele două
+      // cereri împărțeau un singur câmp, lacătul acela se putea ridica singur
+      // — un `GET /settings` reușit după un `gp.me()` picat (apăsând „Trimite
+      // test”) ar fi stins motivul sesiunii și ar fi răsturnat pe ecran tocmai
+      // refuzul, peste setările abia sosite, fără niciun buton cu care să se
+      // iasă din el. Acum câmpurile sunt două, deci nici nu se mai poate
+      // întâmpla; lacătul rămâne, fiindcă el numește cauza.
+      //
+      // Lacătul se uită la motivul SESIUNII, nu la amândouă: un `GET /settings`
+      // picat nu spune nimic despre contul omului, iar ecranul de refuz nu e
+      // despre setări, e despre el.
+      blocked: S.loaded && !!S.auth && !isAdmin && !S.eroareCine,
+      allowed: !S.loaded || !S.auth || isAdmin || !!S.eroareCine,
+      // O singură frază, nu două pe ramuri: de când `blocked` cere `!!S.auth`,
+      // ecranul ăsta se aprinde NUMAI peste un cont știut, iar ramura „intră cu
+      // un cont de administrator" devenise cod la care nu se mai putea ajunge
+      // pe niciun drum. Un mesaj care nu se poate reproduce e mai rău decât
+      // unul lipsă: cine îl caută mâine îl găsește în fișier și nu-l poate
+      // scoate pe ecran. Cine n-are sesiune nu ajunge aici — îl duce
+      // `gp.toLogin()`, din `pullTot()`.
+      blockedLine: "Contul „" + (S.auth ? S.auth.name : "") + "” nu are acces la setări. Doar administratorii pot schimba configurarea aplicației.",
       authName: S.auth ? S.auth.name : "",
 
       sub: dirty ? "Ai modificări nesalvate" : "Se aplică pe toate dispozitivele",
@@ -753,14 +1363,30 @@ class Component extends DCLogic {
       msg: S.msg, onMsgClose: () => set({ msg: "" }),
       err: S.err, onErrClose: () => set({ err: "" }),
 
+      // O singură casetă pentru cele două cereri, dar nu un singur MESAJ:
+      // când cad amândouă, se scriu amândouă motivele, unul după altul.
+      // Fraza lui `gp.motiv()` numește ea lucrul care n-a venit.
+      eroare: [S.eroareCine, S.eroareSetari].filter(function (m) { return !!m; }).join(" "),
+      // Titlul era scris fix în marcaj, „Setările nu s-au încărcat." — fals
+      // când picase sesiunea, nu setările. Acum spune care dintre cele două.
+      eroareTitlu: S.eroareCine
+        ? "Nu s-a putut afla cine ești."
+        : "Setările nu s-au încărcat.",
+      // `this.setState`, nu `set`: `set` de mai sus primește un singur
+      // argument și ar fi înghițit în tăcere apelul de după scriere — adică
+      // butonul ar fi stins caseta fără să ceară nimic de la server.
+      //
+      // Amândouă câmpurile, fiindcă `pullTot()` reface drumul ÎNTREG.
+      onReincearca: () => {
+        this.setState({ eroareCine: "", eroareSetari: "" }, () => this.pullTot());
+      },
+
       /* --- anunțurile care nu au plecat --- */
       hasFailed: S.failed.length > 0,
-      failedTitle: S.failed.length === 1
-        ? "Un anunț nu a plecat. Comanda este salvată, dar nu a fost anunțată."
-        : S.failed.length + " anunțuri nu au plecat. Comenzile sunt salvate, dar nu au fost anunțate.",
+      failedTitle,
       failedList: S.failed.map((f) => {
         // Ora vine de la server în UTC, ca în Jurnal, și se arată în ora locală.
-        const d = new Date(Date.parse(String(f.createdAt || "").replace(" ", "T") + "Z") || 0);
+        const d = new Date(gp.utc(f.createdAt));
         const z = (n) => (n < 10 ? "0" + n : "" + n);
         const canal = f.channel === "email" ? "e-mail"
           : f.channel === "whatsapp" ? "WhatsApp"
@@ -769,7 +1395,13 @@ class Component extends DCLogic {
           line: z(d.getDate()) + "." + z(d.getMonth() + 1) + ", "
             + z(d.getHours()) + ":" + z(d.getMinutes())
             + " · " + canal
-            + (f.orderId ? " · comanda #" + f.orderId : "")
+            // Referința, cu ziua ei: „#1003” repornește în fiecare zi, deci
+            // singură n-ar deosebi două comenzi. Un anunț fără comandă în
+            // spate — o cerere de pe site sau un mesaj de test — își spune
+            // felul din subiect, ca să nu pară o comandă pierdută.
+            + (f.orderRef
+                ? " · comanda " + f.orderRef + (f.orderDay ? " din " + f.orderDay : "")
+                : (f.subject ? " · " + f.subject : ""))
             + " · " + (f.error || "cauză necunoscută")
         };
       }),
@@ -794,11 +1426,12 @@ class Component extends DCLogic {
       /* --- WhatsApp --- */
       waOn: on("notify_whatsapp_enabled"),
       onWaOn: toggle("notify_whatsapp_enabled"),
-      waOnLabel: on("notify_whatsapp_enabled") ? "Pornit" : "Oprit",
+      waOnLabel: !stiute ? "necitit" : (on("notify_whatsapp_enabled") ? "Pornit" : "Oprit"),
       // Starea reală, nu doar ce a rămas scris după ultima încercare. Un token
       // salvat, dar netrimis niciodată, arăta „neconfigurat” — adică exact
-      // invers decât adevărul.
-      waStatus: waReady && waState === "neconfigurat" ? "netestat" : waState,
+      // invers decât adevărul. Iar fără setări citite, „neconfigurat" e o
+      // afirmație despre server scoasă dintr-un `S.s` gol: atunci, „necitit".
+      waStatus: !stiute ? "necitit" : (waReady && waState === "neconfigurat" ? "netestat" : waState),
       waStatusCls: waState === "conectat" ? "h-badge h-badge--success"
         : waState === "eroare" ? "h-badge h-badge--danger"
         : waReady ? "h-badge h-badge--warning" : "h-badge",
@@ -825,14 +1458,26 @@ class Component extends DCLogic {
       waTemplate: v("notify_whatsapp_template", "comanda_noua"),
       onWaTemplate: field("notify_whatsapp_template"),
       waTokenLabel: isTwilio ? "Auth Token" : "Access Token",
-      waToken: v("notify_whatsapp_token"),
+      // Masca („••••3f9a") NU intră ca valoare în casetă: cine dădea clic la
+      // capătul ei și tasta tokenul nou trimitea „••••3f9a<token>", pe care
+      // isMasked() îl arunca — iar dacă mai schimbase și altceva, pagina
+      // spunea „Setările au fost salvate" cu tokenul vechi rămas pe loc. Masca
+      // se vede în placeholder; caseta goală înseamnă „păstrează-l".
+      waToken: isMasked(v("notify_whatsapp_token")) ? "" : v("notify_whatsapp_token"),
       onWaToken: field("notify_whatsapp_token"),
       waTokenSet: waSet,
-      waTokenHint: waSet ? "Token salvat — lasă gol ca să-l păstrezi" : "Lipește tokenul aici",
+      waTokenHint: waSet
+        ? "Token salvat (" + v("notify_whatsapp_token") + ") — lasă gol ca să-l păstrezi"
+        : (provSchimbat ? "Lipește tokenul de la " + (isTwilio ? "Twilio" : "Meta") : "Lipește tokenul aici"),
       waTokenHelp: waSet
         ? "Tokenul este salvat criptat. Serverul nu îl mai trimite înapoi, de aceea vezi doar ultimele caractere. Scrie altul doar dacă vrei să-l înlocuiești."
-        : "Se salvează criptat și nu mai poate fi citit din interfață. Introdu-l tu — eu nu ating credențiale.",
+        : (provSchimbat
+          ? "Ai schimbat furnizorul. Tokenul salvat e al celui dinainte și nu deschide nimic aici — scrie tokenul și "
+            + (isTwilio ? "Account SID-ul" : "Phone Number ID-ul") + " de la " + (isTwilio ? "Twilio" : "Meta")
+            + " în aceeași salvare, altfel serverul refuză schimbarea."
+          : "Se salvează criptat și nu mai poate fi citit din interfață. Introdu-l tu — eu nu ating credențiale."),
       onWaTokenClear: () => this.put("notify_whatsapp_token", "__clear__"),
+      testOff, testHint,
       onTestWa: () => this.test("whatsapp"),
       testWaLabel: testLabel("whatsapp", "Trimite mesaj de test"),
       waFootnote: isTwilio
@@ -840,6 +1485,40 @@ class Component extends DCLogic {
         : "Meta permite mesaje inițiate de firmă doar prin șablon aprobat. Testul folosește datele salvate, deci salvează întâi.",
 
       /* --- e-mail --- */
+      /* --- tabla „ce anunț pe ce canal" ------------------------------- */
+      anunturi: ANUNTURI.map((E) => ({
+        label: E.l,
+        help: E.h,
+        canale: CANALE.map((C) => {
+          const pornit = on("notify_" + C.k + "_enabled");
+          const bifat  = evLista(C.k).indexOf(E.k) >= 0;
+          return {
+            eticheta: C.et,
+            on: bifat,
+            onChange: evToggle(C.k, E.k),
+            // Un canal oprit din întrerupătorul lui nu trimite nimic, oricâte
+            // bife ar avea. Bifa rămâne apăsabilă dinadins — omul pregătește
+            // canalul înainte să-l pornească — dar textul de sub deget spune
+            // adevărul, ca să nu aștepte degeaba un mesaj.
+            st: pornit ? (bifat ? "evon" : "ev") : "evoff",
+            title: pornit
+              ? (bifat ? E.l + " ajunge pe " + C.et : E.l + " NU ajunge pe " + C.et)
+              : C.et + " e oprit din întrerupătorul lui, mai jos — deocamdată nu pleacă nimic pe acolo.",
+          };
+        }),
+      })),
+      anunturiNota: (() => {
+        const tacute = CANALE
+          .filter((C) => on("notify_" + C.k + "_enabled") && evLista(C.k).length === 0)
+          .map((C) => C.et);
+        if (tacute.length) {
+          return "Atenție: " + tacute.join(" și ") + " " + (tacute.length === 1 ? "e pornit" : "sunt pornite")
+            + ", dar fără nicio bifă pe " + (tacute.length === 1 ? "coloana" : "coloanele")
+            + " de mai sus — deci nu " + (tacute.length === 1 ? "trimite" : "trimit") + " nimic.";
+        }
+        return "Bifele se salvează cu butonul „Salvează” de jos, ca restul setărilor.";
+      })(),
+
       mailOn: on("notify_email_enabled"),
       onMailOn: toggle("notify_email_enabled"),
       mailOnLabel: on("notify_email_enabled") ? "Pornit" : "Oprit",
@@ -854,32 +1533,75 @@ class Component extends DCLogic {
       tgOn: on("notify_telegram_enabled"),
       onTgOn: toggle("notify_telegram_enabled"),
       tgOnLabel: on("notify_telegram_enabled") ? "Pornit" : "Oprit",
-      tgToken: v("notify_telegram_token"),
+      // Caseta era `type="password"` — singura din toată aplicația fără
+      // `autoComplete`. Pagina se servește de pe lab.goldenpastry.ro, adică de
+      // pe chiar originea unde administratorul își ține parola de intrare în
+      // managerul de parole al browserului, iar Chrome umple singur un câmp de
+      // parolă care nu-i spune ce e. Două urmări, amândouă tăcute: ori scria
+      // parola contului în casetă fără să declanșeze onChange — starea React
+      // rămânea goală, `changes()` n-avea ce trimite, iar pagina spunea
+      // „Setările au fost salvate" cu tokenul netrimis — ori o lipea înaintea
+      // tokenului tastat, și pleca spre Telegram un token greșit.
+      //
+      // Iar dovada că a ținut lipsea cu totul: după salvare caseta se golea și
+      // atât, fără mască în placeholder, fără buton de ștergere, fără rândul
+      // de ajutor pe care WhatsApp le are pe toate trei. O casetă goală după
+      // „Salvează" se citește „n-a ținut" — și exact așa s-a și citit.
+      tgToken: isMasked(v("notify_telegram_token")) ? "" : v("notify_telegram_token"),
       onTgToken: field("notify_telegram_token"),
-      tgTokenHint: tgSet ? "Token salvat — lasă gol ca să-l păstrezi" : "123456:ABC-DEF…",
+      tgTokenSet: tgSet,
+      tgTokenHint: tgSet ? "Token salvat (" + v("notify_telegram_token") + ") — lasă gol ca să-l păstrezi" : "123456:ABC-DEF…",
+      tgTokenHelp: tgSet
+        ? "Tokenul este salvat criptat. Serverul nu îl mai trimite înapoi, de aceea vezi doar ultimele caractere. Scrie altul doar dacă vrei să-l înlocuiești."
+        : "Îl primești de la @BotFather, în Telegram. Se salvează criptat și nu mai poate fi citit din interfață.",
+      onTgTokenClear: () => this.put("notify_telegram_token", "__clear__"),
       tgChat: v("notify_telegram_chat_id"),
       onTgChat: field("notify_telegram_chat_id"),
       onTestTg: () => this.test("telegram"),
       testTgLabel: testLabel("telegram", "Trimite mesaj de test"),
+
+      /* --- butoanele de sub anunț --- */
+      tgButoane: on("notify_telegram_buttons"),
+      onTgButoane: toggle("notify_telegram_buttons"),
+      tgButoaneLabel: !stiute ? "necitit" : (on("notify_telegram_buttons") ? "Pornite" : "Oprite"),
+      tgLegat: tgStare === "legat",
+      // Insigna afirmă o stare de pe server: fără setări citite, „Nelegat" e
+      // scos dintr-un `S.s` gol, nu dintr-un răspuns.
+      tgStareEt: !stiute ? "necitit" : (tgStare === "legat" ? "Legat" : (tgStare === "eroare" ? "Legătura a picat" : "Nelegat")),
+      tgStareCls: tgStare === "legat"
+        ? "h-badge h-badge--success"
+        : (tgStare === "eroare" ? "h-badge h-badge--danger" : "h-badge h-badge--honey"),
+      // Rândul ăsta e singurul loc din program care îi spune patronului ce
+      // butoane să aștepte sub anunț, deci se rescrie odată cu
+      // `telegram_request_buttons()` din api/lib/notify.php. Cât timp a promis
+      // „Mai târziu” și „Etapa următoare”, care nu se mai trimit de nicăieri,
+      // omul derula conversația de pe telefon după ele, nu le găsea, și
+      // credea că i-a picat legătura cu botul — așa că apăsa „Leagă din nou”
+      // peste un webhook sănătos, în loc să intre în panou și să lucreze.
+      tgLegNota: "Cererile noi vin cu două butoane: „Acceptă” și „Respinge”. Apăsarea face exact ce ar fi făcut "
+        + "apăsarea din panou, și se scrie la fel în Jurnal. Anunțul de comandă nouă pleacă fără butoane: "
+        + "hotărârea unei comenzi se ia în panou sau pe ecranul din laborator, unde se vede ziua întreagă.",
+      tgLegLabel: S.linking === "link" ? "Se leagă…" : (tgStare === "legat" ? "Leagă din nou" : "Leagă botul"),
+      onTgLeaga: () => this.legare("link"),
+      onTgDezleaga: () => this.legare("unlink"),
+      tgLegOff: tgLegPiedica !== "" || S.linking !== "",
+      tgLegHint: tgLegPiedica,
+      // Rândul de jos spune ce se întâmplă ACUM, nu ce ar trebui să facă omul:
+      // ce trebuie făcut stă în textul de sub deget, pe buton.
+      tgLegHelp: tgStare === "legat"
+        ? "Botul ascultă apăsările. Cine apasă lucrează pe contul care a legat botul — faptele apar în Jurnal pe numele acela, nu pe „Sistem”."
+        : (tgStare === "eroare"
+          ? "Ultima legare nu a ținut și butoanele nu lucrează. Verifică tokenul și Chat ID-ul, apoi încearcă din nou."
+          : "Cât timp botul nu e legat, anunțurile pleacă fără butoane. Legarea se face de pe adresa publică, pe https — "
+            + "Telegram nu acceptă un server de acasă, deci butonul funcționează abia după publicare. Pe WhatsApp "
+            + "butoanele merg numai în șabloanele aprobate de Meta, iar răspunsul vine ca mesaj scris, nu ca apăsare: "
+            + "de aceea cutia asta e numai la Telegram."),
 
       /* --- liste --- */
       lists,
       /* --- zone, cu punctul lor de pe hartă --- */
       zones: zoneList.map((name, i) => {
         const pt = zoneMap[name] || {};
-        // Redenumirea trebuie să mute și coordonatele: altfel zona nouă rămâne
-        // fără punct, iar cea veche păstrează unul de care nu mai are nimeni
-        // nevoie — și ruta iese greșită fără să spună nimeni de ce.
-        const rename = (to) => {
-          const list = zoneList.slice();
-          list[i] = to;
-          const map = Object.assign({}, zoneMap);
-          if (name !== to) {
-            if (map[name]) map[to] = map[name];
-            delete map[name];
-          }
-          saveZones(list, map);
-        };
         const move = (d) => () => {
           const j = i + d;
           if (j < 0 || j >= zoneList.length) return;
@@ -896,10 +1618,13 @@ class Component extends DCLogic {
         };
         return {
           n: String(i + 1),
-          name,
+          // Cât se scrie, se arată schița; după aceea, numele din listă.
+          name: schitaZona(i) === undefined ? name : schitaZona(i),
           lat: pt.lat === undefined ? "" : String(pt.lat),
           lng: pt.lng === undefined ? "" : String(pt.lng),
-          onName: (e) => rename(e.target.value),
+          onName: (e) => set({ drafts: Object.assign({}, S.drafts, { [cheiaZona(i)]: e.target.value }) }),
+          onNameBlur: () => incheieZona(i),
+          onNameKey: (e) => { if (e.key === "Enter") { e.preventDefault(); incheieZona(i); } },
           onLat: setPoint("lat"),
           onLng: setPoint("lng"),
           onUp: move(-1),
@@ -917,27 +1642,41 @@ class Component extends DCLogic {
       onZoneKey: (e) => { if (e.key === "Enter") { e.preventDefault(); addZone(); } },
       onZoneAdd: addZone,
 
-      statusOpts: statuses.map((x) => ({ v: x, l: x })),
+      // Opțiunile se făceau numai din lista EDITATĂ. Când etapa aleasă cădea
+      // din listă — o ștergere, adică jumătatea dintâi a unei redenumiri —
+      // valoarea rămânea fără opțiune, iar browserul arăta prima etapă. Omul
+      // citea „În așteptare" acolo unde în bază scria încă „Anulată", și nu
+      // avea de unde afla că trebuie să aleagă ceva. Acum valoarea rămasă în
+      // aer își capătă opțiunea ei, scrisă pe față.
+      doneOpts: etapaOpts(v("order_status_done")),
       doneStatus: v("order_status_done"),
       onDoneStatus: field("order_status_done"),
+      cancelOpts: etapaOpts(v("order_status_cancelled")),
       cancelStatus: v("order_status_cancelled"),
       onCancelStatus: field("order_status_cancelled"),
 
       /* --- acces --- */
       panelOn: on("panel_enabled"),
       onPanelOn: toggle("panel_enabled"),
-      panelOnLabel: on("panel_enabled") ? "Activ" : "Dezactivat",
-      panelCode: v("panel_code"),
+      // Cele patru rânduri de mai jos AFIRMĂ cum e configurat serverul, deci
+      // tac cât timp setările n-au venit (vezi `stiute`, sus).
+      panelOnLabel: !stiute ? "necitit" : (on("panel_enabled") ? "Activ" : "Dezactivat"),
+      panelCode: isMasked(v("panel_code")) ? "" : v("panel_code"),
       onPanelCode: field("panel_code"),
-      panelCodeLabel: panelSet ? "Cod nou" : "Cod de acces",
+      panelCodeLabel: !stiute ? "Cod pentru panouri" : (panelSet ? "Cod nou" : "Cod de acces"),
       // Aici era un exemplu — chiar codul implicit pe care îl punea
       // instalatorul. Un exemplu dintr-un câmp de acces se tastează ca atare,
       // iar pagina asta se publică pe lab.goldenpastry.ro ca fișier static:
       // sugestia ajungea la oricine îi citea sursa. Acum spunem doar regula.
-      panelCodeHint: panelSet ? "Cod salvat — lasă gol ca să-l păstrezi" : "Minim 6 caractere, greu de ghicit",
-      panelCodeHelp: panelSet
-        ? "Codul este salvat criptat, de aceea nu se poate afișa. Scrie altul doar dacă vrei să-l schimbi."
-        : "Fără cod configurat, tabletele nu pot deschide panoul."
+      panelCodeHint: !stiute ? "" : (panelSet ? "Cod salvat — lasă gol ca să-l păstrezi" : "Minim 6 caractere, greu de ghicit"),
+      // Rândul de ajutor nu tace de tot cât setările lipsesc: aici tăcerea ar
+      // fi tot o capcană, fiindcă un câmp gol de cod se citește ca „n-are cod".
+      // Spune pe față ce nu se știe și ce pagubă face scrisul pe nevăzute.
+      panelCodeHelp: !stiute
+        ? "Setările n-au venit de la server, deci pagina nu știe dacă există deja un cod. Nu scrie unul acum: salvarea l-ar înlocui pe cel de azi și ar da tabletele din laborator afară pe loc."
+        : (panelSet
+          ? "Codul este salvat criptat, de aceea nu se poate afișa. Scrie altul doar dacă vrei să-l schimbi."
+          : "Fără cod configurat, tabletele nu pot deschide panoul.")
     };
   }
 }

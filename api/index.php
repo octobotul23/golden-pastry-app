@@ -57,6 +57,8 @@ require __DIR__ . '/lib/orders.php';
 require __DIR__ . '/lib/catalog.php';
 require __DIR__ . '/lib/notify.php';
 require __DIR__ . '/lib/referral.php';
+require __DIR__ . '/lib/promo.php';
+require __DIR__ . '/lib/firma.php';
 
 cors((array) config('allowed_origins', []));
 
@@ -128,6 +130,10 @@ $routes = [
 
     ['GET',    '/orders',            'orders',   'route_orders_list'],
     ['POST',   '/orders',            'orders',   'route_orders_create'],
+    // ÎNAINTEA lui /orders/# dinadins: # e un segment variabil, iar prima
+    // potrivire câștigă. Pusă după, ruta asta n-ar fi chemată niciodată —
+    // "counts" ar intra ca id de comandă și ar ieși 404.
+    ['GET',    '/orders/counts',     'orders',   'route_orders_counts'],
     ['GET',    '/orders/#',          'orders',   'route_orders_get'],
     ['PATCH',  '/orders/#',          'orders',   'route_orders_update'],
 
@@ -141,6 +147,10 @@ $routes = [
     // îl scotea din comenzile zilei deschise — singurele pe care le are pagina
     // — deci scria „0 opriri" în dreptul tuturor celorlalte zile.
     ['GET',    '/routes/counts',     'orders',   'route_driver_route_counts'],
+    // Fereastra îngustă a clientului și a agentului: numai cifre și nume de
+    // zone, plus opririle lui. `/routes` de deasupra nu se putea lărgi — e
+    // `require_ops()` și întoarce comenzi întregi, cu nume și adrese.
+    ['GET',    '/routes/mine',       'orders',   'route_my_route_window'],
     ['PUT',    '/routes',            'orders',   'route_driver_reorder'],
 
     ['GET',    '/stock/items',       'stock',    'route_items_list'],
@@ -154,18 +164,91 @@ $routes = [
     ['POST',   '/stock/moves',       'stock',    'route_moves_create'],
     ['POST',   '/stock/sync',        'stock',    'route_stock_sync'],
 
+    // Pontajul din laborator. Trei porți deosebite dinadins, fiindcă cele trei
+    // rute nu cer același drept: tableta cere lista de nume și pontează
+    // (`require_clock()`, dar cine pontează se dovedește cu codul lui propriu);
+    // raportul e al administratorului, fondatorului ȘI managerului
+    // (`require_shifts()`); corectura unui rând uitat deschis e numai a
+    // administratorului. Vezi antetul lui api/routes/lab.php.
+    ['GET',    '/lab/people',        'lab',      'route_lab_people'],
+    ['POST',   '/lab/clock',         'lab',      'route_lab_clock'],
+    ['GET',    '/lab/shifts',        'lab',      'route_lab_shifts'],
+    ['PATCH',  '/lab/shifts/#',      'lab',      'route_lab_shift_update'],
+
+    // Tabla de anunțuri de pe ecranul laboratorului. Citește oricine ține
+    // ecranul deschis, inclusiv contul `panou` al tabletei (`require_ops()`);
+    // scrie și ia jos cine conduce tura (`require_shifts()`) — dar numai
+    // anunțul lui, afară de administratori și fondatori, care pot lua jos
+    // orice. „Ia jos" nu șterge rândul, îi pune termenul pe clipa asta:
+    // vezi route_lab_message_delete().
+    ['GET',    '/lab/messages',      'lab',      'route_lab_messages'],
+    ['POST',   '/lab/messages',      'lab',      'route_lab_message_new'],
+    ['DELETE', '/lab/messages/#',    'lab',      'route_lab_message_delete'],
+
     ['GET',    '/users',             'users',    'route_users_list'],
     ['POST',   '/users',             'users',    'route_users_create'],
     ['PATCH',  '/users/#',           'users',    'route_users_update'],
     ['DELETE', '/users/#',           'users',    'route_users_delete'],
     ['POST',   '/users/#/password',  'users',    'route_users_password'],
+    // Codul de pontaj: pus, schimbat sau șters. Rută proprie, ca sora ei de
+    // deasupra și din aceleași motive — vezi route_users_lab_pin().
+    ['POST',   '/users/#/lab-pin',   'users',    'route_users_lab_pin'],
+    // „Recunosc clientul": contul făcut pe site capătă dreptul de a primi
+    // comenzile luate la telefon pe numele lui. Vezi route_users_vouch().
+    ['POST',   '/users/#/vouch',     'users',    'route_users_vouch'],
     // Codul de recomandare pentru un cont vechi, care s-a născut înainte să
     // existe coloana. Rută proprie, nu un câmp în plus la PATCH: e o operație
     // care se face o singură dată pe cont și nu trebuie să poată fi trimisă din
     // greșeală de formularul care salvează numele la ieșirea din casetă.
     ['POST',   '/users/#/referral',  'users',    'route_users_referral'],
+    // Schimbarea dinadins a codului și a procentului. Verb propriu, fiindcă are
+    // o urmare pe care POST-ul de deasupra n-o are: codul vechi moare pe loc.
+    ['PATCH',  '/users/#/referral',  'users',    'route_users_referral_edit'],
+
+    // Căutarea de client, pentru cine scrie o cerere în numele altuia. Stă
+    // deoparte de `/users` fiindcă are alt public și alt răspuns: `/users` e
+    // numai a administratorului și dă contul întreg, pe când aici intră și
+    // agentul de vânzări — dar numai la clienții aduși de el, și numai la
+    // datele de livrare. Vezi api/routes/clients.php.
+    ['GET',    '/clients',           'clients',  'route_clients_search'],
+
+    // Recomandările cu bani. Prima rută e a oricui e conectat și scoate NUMAI
+    // rândurile lui; a treia e a administratorului și le scoate pe toate. Sunt
+    // două rute deosebite, nu una cu un `if` înăuntru, tocmai ca filtrarea să
+    // stea în `WHERE` și să nu poată fi ocolită dintr-un parametru.
+    ['GET',    '/referrals',         'referrals', 'route_referrals_mine'],
+    ['POST',   '/referrals/code',    'referrals', 'route_referrals_make_code'],
+    ['GET',    '/referrals/all',     'referrals', 'route_referrals_all'],
+    ['POST',   '/referrals/pay',     'referrals', 'route_referrals_pay'],
+    // Comisioanele născute la procentul zero, îndreptate la apăsarea patronului.
+    // Aceeași cale cu două verbe, nu două căi: GET-ul ARATĂ ce s-ar schimba,
+    // POST-ul chiar schimbă. Ținute pe un singur nume, previzualizarea și fapta
+    // nu se pot depărta una de alta — iar patronul a cerut anume să vadă
+    // înainte de a apăsa. Lămurirea întreagă, în api/lib/referral.php,
+    // „ÎNDREPTAREA ZEROURILOR".
+    ['GET',    '/referrals/rate-fix', 'referrals', 'route_referrals_rate_fix_preview'],
+    ['POST',   '/referrals/rate-fix', 'referrals', 'route_referrals_rate_fix'],
+    ['POST',   '/referrals/#/resolve', 'referrals', 'route_referrals_resolve'],
+    // Rândul scos din socoteală și adus înapoi. DELETE e ce cere omul care
+    // apasă; dedesubt e o tăietură care ține minte, nu o ștergere — altfel
+    // cârligul de la comenzi ar scrie rândul la loc singur (sql/012).
+    ['DELETE', '/referrals/#',       'referrals', 'route_referrals_delete'],
+    ['POST',   '/referrals/#/restore', 'referrals', 'route_referrals_restore'],
+
+    // Fondatorul. Prima rută cere o sesiune și lucrează numai pentru cel
+    // conectat; celelalte două sunt PUBLICE și se legitimează cu tokenul din
+    // e-mail, fiindcă cine deschide cutia poștală a firmei nu are neapărat un
+    // cont — și, dacă are, nu e neapărat conectat pe telefonul pe care citește.
+    ['POST',   '/founder/request',   'founder',  'route_founder_request'],
+    ['GET',    '/founder/invite',    'founder',  'route_founder_invite'],
+    ['POST',   '/founder/accept',    'founder',  'route_founder_accept'],
 
     ['GET',    '/log',               'log',      'route_log_list'],
+
+    // Cifrele casei. Singura rută din tabelul ăsta care NU se deschide
+    // administratorului: `require_stats()` o ține numai pentru fondator
+    // (api/lib/auth.php · GP_STATS_ROLES).
+    ['GET',    '/stats',             'stats',    'route_stats_get'],
 
     ['GET',    '/settings',          'settings', 'route_settings_get'],
     ['PUT',    '/settings',          'settings', 'route_settings_save'],
@@ -174,6 +257,15 @@ $routes = [
     // plecat ar rămâne pe ecran și după ce cauza a fost reparată, iar un eșec
     // nou nu s-ar mai deosebi de unul vechi.
     ['POST',   '/settings/notifications/seen', 'settings', 'route_settings_notifications_seen'],
+
+    // Butoanele de sub anunțul primit pe Telegram. Webhookul e SINGURA rută
+    // din tabelul ăsta la care nu bate un browser: cererea vine de la
+    // serverele Telegram, fără cookie și fără token CSRF, iar în locul lor
+    // stau secretul din antet și potrivirea conversației — vezi
+    // api/routes/telegram.php.
+    ['POST',   '/telegram/webhook',  'telegram', 'route_telegram_webhook'],
+    ['POST',   '/telegram/link',     'telegram', 'route_telegram_link'],
+    ['POST',   '/telegram/unlink',   'telegram', 'route_telegram_unlink'],
 ];
 
 /** Potrivește ruta și extrage segmentele variabile. */

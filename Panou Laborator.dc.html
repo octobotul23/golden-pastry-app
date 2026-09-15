@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Laborator · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,7 @@
 <x-dc>
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 html,body{margin:0;height:100%;background:#191310;font-family:var(--h-font-body);-webkit-tap-highlight-color:transparent}
@@ -24,33 +30,179 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 [data-lb=rail]{position:fixed!important;left:0!important;right:0!important;bottom:0!important;width:auto!important;max-height:88vh!important;border-left:0!important;border-top:1px solid rgba(246,237,225,.22)!important;border-radius:22px 22px 0 0!important;z-index:30!important;animation:lb-up .28s var(--h-ease-spring)!important}
 [data-lb=rail][data-detail=false]{display:none!important}
 [data-lb=totals]{display:none!important}
-[data-lb=head]{flex-wrap:wrap!important;gap:10px!important;padding:12px 14px!important}
-[data-lb=headtitle]{font-size:17px!important}
+/* Antetul rămâne pe UN rând. Cu `wrap`, pe telefon butonul ☰ era cel care
+   cădea — singur, sub siglă, iar antetul creștea de la 69px la 129px. Titlul
+   are `min-width:0`, deci se poate strânge; ca să nu dea pe dinafară, cele
+   două rânduri de text ale lui primesc trei puncte. */
+[data-lb=head]{flex-wrap:nowrap!important;gap:10px!important;padding:12px 14px!important}
+[data-lb=headtitle]{font-size:17px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+[data-lb=headsub]{overflow:hidden!important;text-overflow:ellipsis!important}
 [data-lb=clock]{font-size:22px!important}
 [data-lb=daybar]{padding:10px 14px!important}
-[data-lb=phoneback]{display:flex!important}
 [data-lb=daypills]{display:none!important}
 [data-lb=sorts]{display:none!important}
 [data-lb=phonemenu]{display:flex!important}
 [data-lb=lanes]{padding:12px 14px 26px!important}
+/* PRAGUL DE DEGET, 44px.
+   Măsurat la 390: caseta „poziția e gata toată" era 30×30, iar săgețile de
+   ordine 38×44 — amândouă sub prag, și amândouă apăsate des, cu mâna plină de
+   făină. Nepotrivirea se vedea în același rând: „o bucată mai puțin" și „încă
+   o bucată" sunt de la început 44×44, deci acțiunea cea mai însemnată din rând
+   („toată poziția e gata", care scrie sau șterge deodată toate bucățile) avea
+   butonul cel mai mic. Rândul are `min-height:52px`, deci 44 încape fără să
+   se miște aranjamentul.
+   Pe monitor NU se atinge nimic: acolo se apasă cu mouse-ul. */
+[data-lb=itemdone]{width:44px!important;height:44px!important;border-radius:11px!important}
+[data-lb=cardmove]{width:44px!important}
 }
 @media (min-width:901px){
 [data-lb=railclose]{display:none!important}
+/* PE LAT, PAGINA ARE O ÎNĂLȚIME, NU UN MINIM.
+   Cu `min-height:100vh` pe înveliș, rândul cu cele două coloane creștea cât
+   ținea lista de comenzi, iar `overflow-y:auto` de pe coloana de detaliu nu
+   se aprindea niciodată: nimic nu dădea pe dinafară. Se derula pagina, deci
+   butoanele de jos ale foii de detaliu („Tot lotul e gata", butonul de etapă)
+   ajungeau la capătul unui rând de două mii de pixeli — sub linia ecranului,
+   după toată lista. Cu o înălțime adevărată, rândul are un capăt, iar cele
+   două coloane se derulează fiecare în ea; antetul și filele zilelor rămân la
+   vedere, ceea ce e chiar rostul lor.
+   Pe telefon NU se atinge nimic: acolo foaia de detaliu e o foaie de jos, cu
+   derulare proprie (v. banda de max-width:900px). */
+[data-lb=page]{height:100vh!important;min-height:0!important;overflow:hidden!important}
+[data-lb=shell]{overflow:hidden!important}
+[data-lb=lanes]{overflow-y:auto!important}
+}
+/* LA 390 IESE CUVÂNTUL „Fără sunet", PASTILA ROZ RĂMÂNE.
+   Antetul stă pe UN rând (v. banda de max-width:900px), deci tot ce se adaugă
+   în dreapta lui se ia din titlu. Socotit pe lățimile fixe de acolo — 28
+   tăblia + 40 sigla + 5×10 spațiile + ~58 ceasul + 3×44 butoanele = 308 din
+   390 — titlului îi mai rămân vreo optzeci de puncte; cu butonul de sunet
+   lățit de cuvânt (încă vreo șaptezeci și șase) n-ar mai rămâne nimic, iar
+   „Golden Pastry · laborator" s-ar preface în trei puncte.
+   Sub 620 rămâne clopotul tăiat pe fond roz — se vede de departe că nu e ca
+   vecinii lui — iar cuvintele stau mai departe în `title` și în `aria-label`,
+   deci cititorul de ecran nu pierde nimic. Pe tableta din laborator (820) și
+   pe monitor cuvântul se vede: acolo e loc berechet.
+   CIFRELE DE MAI SUS SUNT SOCOTITE, NU MĂSURATE. De trecut prin măsurătoarea
+   la 390 înainte de urcare. */
+@media (max-width:620px){
+[data-lb=mutet]{display:none!important}
 }
 </style>
 </helmet>
 
-<div style="min-height:100vh;display:flex;flex-direction:column;color:#F6EDE1;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-line-strong:rgba(246,237,225,.22);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-honey:#F2A63B;--h-honey-soft:rgba(242,166,59,.16);--h-honey-soft-fg:#F7C46B;--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-danger:#E8A0AF;--h-danger-soft:rgba(232,160,175,.16);--h-fg-on-accent:#1B120B;--h-fg-on-honey:#1B120B;--h-shadow-1:none;--h-shadow-2:none;--h-shadow-3:none;background:var(--h-bg-page)">
+<!-- POARTA DE ROL A PANOULUI, ÎN PAGINĂ.
+     Serverul o ține de la început (rutele de aici sunt `require_ops()`), dar
+     pagina nu întreba nimic: cine tasta adresa capătă panoul întreg, cu o
+     casetă roșie de refuz în fiecare colț și nicio propoziție care să spună
+     de ce. Ecranul ăsta o spune, și trimite omul unde are ce face.
+     Același marcaj ca ecranul de refuz din „Administrare Comenzi". -->
+<sc-if value="{{ faraAcces }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.14), transparent 70%)">
+<div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Panoul din laborator</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ accesLinie }}</span>
+</div>
+<div style="width:100%;display:flex;flex-direction:column;gap:8px">
+<sc-if value="{{ accesClient }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<a href="Site%20Public.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Intră în magazin</a>
+<a href="Client.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Comanda mea</a>
+</div>
+</sc-if>
+<sc-if value="{{ accesAltul }}" hint-placeholder-val="{{ false }}">
+<a href="{{ accesAcasa }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">{{ accesAcasaEt }}</a>
+</sc-if>
+<button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
+<a href="Intrare.dc.html" style="font-size:14px;color:rgba(255,255,255,.72);text-decoration:none;padding-top:4px">← Alege panoul</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<div data-lb="page" style="min-height:100vh;display:flex;flex-direction:column;color:#F6EDE1;--h-bg-page:#191310;--h-bg-sunk:#130E0B;--h-bg-surface:#241A14;--h-bg-raised:#2E2119;--h-fg:#F6EDE1;--h-fg-muted:#C9AF99;--h-fg-subtle:#B09A85;--h-fg-faint:#8B7561;--h-line:rgba(246,237,225,.12);--h-line-strong:rgba(246,237,225,.22);--h-accent:#F2A63B;--h-accent-fg:#F7C46B;--h-accent-soft:rgba(242,166,59,.16);--h-honey:#F2A63B;--h-honey-soft:rgba(242,166,59,.16);--h-honey-soft-fg:#F7C46B;--h-jam:#E8A0AF;--h-jam-soft:rgba(232,160,175,.16);--h-success:#A9C98F;--h-success-soft:rgba(169,201,143,.16);--h-warning:#F7C46B;--h-warning-soft:rgba(247,196,107,.16);--h-danger:#E8A0AF;--h-danger-soft:rgba(232,160,175,.16);--h-fg-on-accent:#1B120B;--h-fg-on-honey:#1B120B;--h-shadow-1:none;--h-shadow-2:none;--h-shadow-3:none;background:var(--h-bg-page)">
 
 <div data-lb="head" style="display:flex;align-items:center;gap:16px;padding:14px 22px;border-bottom:1px solid var(--h-line);background-image:radial-gradient(80% 240% at 0% 0%, rgba(242,166,59,.14), transparent 60%)">
 <img src="assets/logo-alb.png" alt="Golden Pastry" style="width:40px;height:40px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
 <span data-lb="headtitle" style="font-family:var(--h-font-display);font-size:21px;font-weight:600;white-space:nowrap">Golden Pastry · laborator</span>
-<span style="font-size:13px;color:var(--h-fg-subtle);white-space:nowrap">{{ headSub }}</span>
+<span data-lb="headsub" style="font-size:13px;color:var(--h-fg-subtle);white-space:nowrap">{{ headSub }}</span>
 </div>
 <span data-lb="clock" class="h-numeric" style="margin-left:auto;font-family:var(--h-font-display);font-size:28px;font-weight:700;flex:none">{{ clock }}</span>
-<a data-lb="phoneback" href="Intrare.dc.html" title="Alege panoul" style="display:flex;flex:none;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:rgba(246,237,225,.10);border:1px solid var(--h-line-strong);color:#F6EDE1;font-size:19px;text-decoration:none">←</a>
+<!-- AMUȚIREA, ÎN ANTET, LÂNGĂ CEAS.
+     Butonul care oprește clinchetul e chiar lucrul care face clinchetul
+     îngăduit: un sunet pe care nu-l poți opri se oprește oricum, într-o zi
+     încărcată, cu degetul pe butonul de închidere al tabletei. De-aia stă
+     aici, la vedere de la doi metri, și nu într-o pagină de setări în care
+     nimeni din laborator n-are ce căuta.
+     Două butoane, nu unul cu două fețe, fiindcă cele două stări n-au voie să
+     semene: cât sună, e un buton ca vecinii lui; cât e amuțit, e o pastilă
+     roz cu clopotul tăiat și cu cuvintele scrise pe ea — altfel omul care
+     nu-și mai amintește că a apăsat crede că s-a stricat anunțarea.
+     Pastila „NOU" de pe carduri rămâne aprinsă și amuțit: butonul spune „nu
+     mai striga", nu „nu-mi mai spune". -->
+<sc-if value="{{ sunetPornit }}" hint-placeholder-val="{{ true }}">
+<button class="gp-burger gp-burger--mereu" type="button" title="Comenzile noi sună. Apasă ca să amuțești ecranul." aria-label="Comenzile noi sună. Apasă ca să amuțești ecranul." onClick="{{ onSunet }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M18 9a6 6 0 1 0-12 0c0 5-2 6-2 6h16s-2-1-2-6"></path>
+<path d="M10.4 20a2 2 0 0 0 3.2 0"></path>
+</svg>
+</button>
+</sc-if>
+<sc-if value="{{ sunetTacut }}" hint-placeholder-val="{{ false }}">
+<button type="button" title="Ecranul e amuțit: comenzile noi nu mai sună. Apasă ca să sune iar." aria-label="Ecranul e amuțit: comenzile noi nu mai sună. Apasă ca să sune iar." onClick="{{ onSunet }}" style="flex:none;display:flex;align-items:center;gap:8px;height:44px;padding:0 12px;border:0;border-radius:12px;background:var(--h-jam);color:var(--h-fg-on-accent);font-family:var(--h-font-body);font-size:13px;font-weight:700;cursor:pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<path d="M18 9a6 6 0 0 0-9.4-5.2"></path>
+<path d="M6.2 6.3A6 6 0 0 0 6 9c0 5-2 6-2 6h13"></path>
+<path d="M10.4 20a2 2 0 0 0 3.2 0"></path>
+<path d="M3 3l18 18"></path>
+</svg>
+<span data-lb="mutet" style="white-space:nowrap">Fără sunet</span>
+</button>
+</sc-if>
+<button class="gp-burger gp-burger--mereu" type="button" title="Calendarul comenzilor" aria-label="Calendarul comenzilor" onClick="{{ onCalOpen }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+<rect x="3" y="5" width="18" height="16" rx="2.5"></rect>
+<path d="M3 10h18M8 3v4M16 3v4"></path>
+</svg>
+</button>
+<button class="gp-burger gp-burger--mereu" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
 
 <div data-lb="daybar" style="display:flex;gap:8px;padding:12px 22px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);overflow-x:auto">
 <div data-lb="phonemenu" style="display:none;align-items:center;gap:8px;width:100%">
@@ -70,10 +222,132 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 </div>
 
+<sc-if value="{{ taiat }}" hint-placeholder-val="{{ false }}">
+<div data-lb="taiat" class="h-alert h-alert--warning" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 22px 0;padding:12px 14px;border-radius:14px;font-size:15px">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700;flex:none">Ziua are mai multe comenzi decât încap într-un răspuns.</p>
+<p style="margin:0;flex:1;min-width:180px;line-height:1.4">Pe ecran sunt primele. Cifra din filă e numărul adevărat — cere-i administratorului să împartă ziua pe ture.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ ancorat }}" hint-placeholder-val="{{ false }}">
+<div data-lb="ancora" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 22px 0;padding:12px 14px;border-radius:14px;background:var(--h-accent-soft);border:1px solid var(--h-accent);font-size:15px">
+<p style="margin:0;flex:1;min-width:180px;line-height:1.4">Panoul stă pe o zi aleasă din calendar. {{ ancoraEticheta }}.</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onAzi }}" style="flex:none;min-height:44px;padding:0 16px;font-size:15px;border-radius:12px">Înapoi la azi</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 22px 0;padding:14px;border-radius:14px;font-size:15px">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700;flex:none">Comenzile nu s-au încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45;flex:1;min-width:200px">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="flex:none;min-height:44px;padding:0 16px;font-size:15px;border-radius:12px">Încearcă din nou</button>
+</div>
+</sc-if>
+
 <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--danger" style="display:flex;align-items:center;gap:10px;margin:12px 22px 0;padding:12px 14px;border-radius:14px;font-size:15px">
 <p class="h-alert__title" style="margin:0;font-size:15px;flex:1;min-width:0">{{ toast }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onToastClose }}" style="flex:none;height:40px;width:40px;padding:0;font-size:18px;border-radius:12px">×</button>
+<button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onToastClose }}" style="flex:none;height:40px;width:40px;padding:0;font-size:18px;border-radius:12px">×</button>
+</div>
+</sc-if>
+
+<sc-for list="{{ anunturi }}" as="a" hint-placeholder-count="2">
+<div data-lb="anunt" style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin:12px 22px 0;padding:13px 15px;border-radius:14px;background:var(--h-bg-raised);border:1px solid var(--h-line-strong);border-left:5px solid var(--h-honey)">
+<p style="margin:0;flex:1 1 240px;min-width:0;font-size:18px;font-weight:600;line-height:1.4">{{ a.text }}</p>
+<span style="flex:none;align-self:center;font-size:13px;line-height:1.4;color:var(--h-fg-subtle)">{{ a.sub }}</span>
+<sc-if value="{{ a.poateLua }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="{{ a.cls }}" onClick="{{ a.onLua }}" style="flex:none;align-self:center;min-height:40px;padding:0 14px;font-size:14px;border-radius:12px">{{ a.et }}</button>
+</sc-if>
+</div>
+</sc-for>
+
+<sc-if value="{{ potPune }}" hint-placeholder-val="{{ false }}">
+<div data-lb="anuntbara" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 22px 0">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onAnuntNou }}" disabled="{{ anuntPlin }}" style="flex:none;min-height:44px;padding:0 16px;font-size:15px;border-radius:12px">Pune un anunț pe ecran</button>
+<span style="flex:1;min-width:180px;font-size:13px;line-height:1.4;color:var(--h-fg-subtle)">{{ anuntLoc }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ anuntFoaie }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ onAnuntRenunta }}" style="position:fixed;inset:0;z-index:86;background:rgba(11,7,5,.7);display:flex;align-items:center;justify-content:center;padding:18px">
+<div onClick="{{ onAnuntKeep }}" style="width:100%;max-width:460px;background:var(--h-bg-surface);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow-y:auto">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span class="h-h3" style="margin:0;font-size:20px">Un anunț pentru laborator</span>
+<span style="font-size:14px;line-height:1.5;color:var(--h-fg-subtle)">Stă pe ecranul de aici, deasupra comenzilor zilei, și îl citește toată tura.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="h-eyebrow" style="font-size:12px">Ce ai de spus</span>
+<textarea autoFocus="{{ true }}" class="h-textarea" value="{{ anuntText }}" onChange="{{ onAnuntText }}" rows="3" placeholder="Mâine vine făina la șase — lăsați loc lângă ușă." style="font-size:16px"></textarea>
+<span style="font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ anuntRamase }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="h-eyebrow" style="font-size:12px">Ține până la</span>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<input class="h-input" type="date" value="{{ anuntZi }}" onChange="{{ onAnuntZi }}" style="flex:1 1 150px;height:48px;font-size:16px">
+<input class="h-input h-numeric" type="time" value="{{ anuntOra }}" onChange="{{ onAnuntOra }}" style="flex:1 1 130px;height:48px;font-size:16px">
+</div>
+<span style="font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Lasă-le goale dacă anunțul stă până îl ia cineva jos. Ziua fără oră înseamnă până la miezul nopții.</span>
+</div>
+<sc-if value="{{ anuntEroare }}" hint-placeholder-val="{{ false }}">
+<p class="h-alert h-alert--danger" style="margin:0;border-radius:12px;padding:10px 14px;font-size:15px;line-height:1.4">{{ anuntEroare }}</p>
+</sc-if>
+<div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onAnuntRenunta }}" style="min-height:46px;padding:0 18px;font-size:15px;border-radius:14px">Renunță</button>
+<button type="button" class="{{ anuntCls }}" onClick="{{ onAnuntPune }}" disabled="{{ anuntLucru }}" style="min-height:46px;padding:0 20px;font-size:15px;border-radius:14px">Pune pe ecran</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ calOpen }}" hint-placeholder-val="{{ false }}">
+<div data-lb="calsheet" style="position:fixed;inset:0;z-index:85;background:rgba(11,7,5,.7);display:flex;flex-direction:column;justify-content:flex-end">
+<div style="width:100%;flex:none;max-height:92vh;overflow-y:auto;padding:16px 16px 22px;border-radius:22px 22px 0 0;background:var(--h-bg-surface);border-top:1px solid var(--h-line-strong);display:flex;flex-direction:column;gap:12px;animation:lb-up .24s var(--h-ease-spring)">
+
+<div style="display:flex;align-items:center;gap:10px">
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0;flex:1">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">{{ calTitlu }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ calSub }}</span>
+</div>
+<button type="button" aria-label="Luna dinainte" title="Luna dinainte" class="h-btn h-btn--secondary" onClick="{{ onLunaPrev }}" style="flex:none;height:46px;width:46px;padding:0;font-size:20px;border-radius:14px">‹</button>
+<button type="button" aria-label="Luna următoare" title="Luna următoare" class="h-btn h-btn--secondary" onClick="{{ onLunaNext }}" style="flex:none;height:46px;width:46px;padding:0;font-size:20px;border-radius:14px">›</button>
+<button type="button" aria-label="Închide calendarul" title="Închide calendarul" class="h-btn h-btn--ghost" onClick="{{ onCalClose }}" style="flex:none;height:46px;width:46px;padding:0;font-size:20px;border-radius:14px">×</button>
+</div>
+
+<sc-if value="{{ calEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px;border-radius:14px;font-size:15px">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700;flex:none">Numărul de comenzi nu s-a încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45;flex:1;min-width:180px">{{ calEroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCalReincearca }}" style="flex:none;min-height:44px;padding:0 16px;font-size:15px;border-radius:12px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+<span style="text-align:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Lu</span>
+<span style="text-align:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Ma</span>
+<span style="text-align:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Mi</span>
+<span style="text-align:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Jo</span>
+<span style="text-align:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Vi</span>
+<span style="text-align:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Sâ</span>
+<span style="text-align:center;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Du</span>
+</div>
+
+<div data-lb="calgrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+<sc-for list="{{ calCelule }}" as="c" hint-placeholder-count="42">
+<button type="button" aria-label="{{ c.iso }}" onClick="{{ c.onClick }}" style="min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:4px 2px;border-radius:12px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};font-family:var(--h-font-body);cursor:pointer">
+<span style="font-size:15px;font-weight:{{ c.greu }};line-height:1.1">{{ c.zi }}</span>
+<span class="h-numeric" style="font-size:13px;font-weight:700;line-height:1.1">{{ c.n }}</span>
+<span style="font-size:10px;opacity:.75;line-height:1.1;white-space:nowrap">{{ c.buc }}</span>
+</button>
+</sc-for>
+</div>
+
+<p style="margin:0;font-size:13px;color:var(--h-fg-subtle);line-height:1.45">Apasă o zi ca să muți panoul pe ea. Cifra mare e numărul de comenzi, cea mică sunt bucățile de făcut.</p>
+
+<sc-if value="{{ ancorat }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onAzi }}" style="min-height:52px;padding:0 18px;font-size:16px;border-radius:14px">Înapoi la ziua de azi</button>
+</sc-if>
+
+</div>
 </div>
 </sc-if>
 
@@ -82,7 +356,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <div style="width:100%;flex:none;max-height:90vh;overflow-y:auto;padding:16px 16px 22px;border-radius:22px 22px 0 0;background:var(--h-bg-surface);border-top:1px solid var(--h-line-strong);display:flex;flex-direction:column;gap:8px;animation:lb-up .24s var(--h-ease-spring)">
 <div style="display:flex;align-items:center;gap:12px">
 <span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Ce zi vrei să vezi</span>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+<button type="button" aria-label="Închide alegerea zilei" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
 </div>
 <sc-for list="{{ menuDays }}" as="m" hint-placeholder-count="7">
 <button type="button" onClick="{{ m.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ m.bd }};background:{{ m.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
@@ -102,7 +376,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 </sc-if>
 
-<div style="flex:1;display:flex;align-items:stretch;min-height:0">
+<div data-lb="shell" style="flex:1;display:flex;align-items:stretch;min-height:0">
 
 <div data-lb="lanes" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;padding:16px 22px 30px">
 <div data-lb="sorts" style="display:flex;align-items:center;gap:8px;overflow-x:auto">
@@ -126,6 +400,19 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
 <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ o.ref }}</span>
+<!-- PASTILA COMENZII ABIA PICATE. Stă prima, lângă referință, fiindcă e
+     singurul lucru de pe card care s-a schimbat în ultimele minute; restul
+     insignelor spun cum e comanda de când s-a născut. Plină, nu stinsă
+     (`--solid`, adică fondul de accent cu scris închis), ca să se citească de
+     la doi metri, de lângă cuptor. Cuvântul e cel al patronului, cerut anume
+     așa: „NOU", nu „Nouă". Nu e o scăpare de gramatică — nu se acordă cu
+     nimic, fiindcă nu e un adjectiv lipit de comandă, ci un strigăt: patru
+     litere late, citite dintr-o ochire de peste laborator. „Nouă" ar fi fost
+     cu o literă mai lung și cu o silabă mai moale. Se stinge singură după
+     răstimpul din `PRAG_NOU`. -->
+<sc-if value="{{ o.nou }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--solid" style="font-size:12px">NOU</span>
+</sc-if>
 <sc-if value="{{ o.urgent }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--jam lb-blink" style="font-size:11px">Urgent</span>
 </sc-if>
@@ -136,8 +423,8 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <span class="{{ o.variantCls }}" style="font-size:11px">{{ o.variant }}</span>
 </div>
 </div>
-<button type="button" class="{{ o.upCls }}" onClick="{{ o.onUp }}" title="Mută mai sus" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↑</button>
-<button type="button" class="{{ o.downCls }}" onClick="{{ o.onDown }}" title="Mută mai jos" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↓</button>
+<button data-lb="cardmove" type="button" class="{{ o.upCls }}" onClick="{{ o.onUp }}" title="Mută mai sus" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↑</button>
+<button data-lb="cardmove" type="button" class="{{ o.downCls }}" onClick="{{ o.onDown }}" title="Mută mai jos" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↓</button>
 </div>
 <span style="font-family:var(--h-font-display);font-size:21px;font-weight:600;line-height:1.15">{{ o.cust }}</span>
 <div style="display:flex;flex-direction:column;gap:4px">
@@ -155,11 +442,21 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <sc-if value="{{ o.canBack }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ o.onBack }}" title="Înapoi la {{ o.backLabel }}" style="height:44px;width:44px;padding:0;font-size:17px;border-radius:12px">←</button>
 </sc-if>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ o.onAdvance }}" style="height:44px;padding:0 12px;font-size:14px;border-radius:12px;white-space:nowrap">{{ o.nextLabel }}</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ o.onAdvance }}" disabled="{{ o.advanceOff }}" style="height:44px;padding:0 12px;font-size:14px;border-radius:12px;white-space:nowrap">{{ o.nextLabel }}</button>
 </div>
 </div>
 </div>
 </sc-for>
+<sc-if value="{{ nepotrivire }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="padding:16px;border-radius:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Numărătoarea și lista nu se potrivesc.</p>
+<p style="margin:0;font-size:14px;line-height:1.45">{{ nepotrivireText }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 16px;font-size:15px;border-radius:12px">Încearcă din nou</button>
+</div>
+</sc-if>
+<sc-if value="{{ seAduce }}" hint-placeholder-val="{{ false }}">
+<div style="padding:16px;border-radius:14px;border:1px dashed var(--h-line-strong);font-size:15px;color:var(--h-fg-faint)">Se aduc comenzile zilei…</div>
+</sc-if>
 <sc-if value="{{ queueEmpty }}" hint-placeholder-val="{{ false }}">
 <div style="padding:16px;border-radius:14px;border:1px dashed var(--h-line-strong);font-size:15px;color:var(--h-fg-faint)">Nicio comandă în ziua asta.</div>
 </sc-if>
@@ -175,7 +472,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ detail.ref }} · {{ detail.slot }}</span>
 <span style="font-family:var(--h-font-display);font-size:23px;font-weight:600;line-height:1.15">{{ detail.cust }}</span>
 </div>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px;flex:none">×</button>
+<button type="button" aria-label="Închide fișa comenzii" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px;flex:none">×</button>
 </div>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <span class="{{ detail.chanCls }}" style="font-size:12px">{{ detail.chan }}</span>
@@ -190,7 +487,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <div style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:0;flex:1">
 <sc-for list="{{ detail.items }}" as="it" hint-placeholder-count="3">
 <div style="display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 10px;border-radius:14px;border:1px solid var(--h-line);background:{{ it.bg }}">
-<button type="button" onClick="{{ it.onAll }}" title="{{ it.allTitle }}" style="width:30px;height:30px;flex:none;border-radius:8px;border:2px solid var(--h-accent);display:grid;place-items:center;font-size:15px;font-weight:700;color:#1B120B;background:{{ it.boxBg }};cursor:pointer;padding:0">{{ it.mark }}</button>
+<button data-lb="itemdone" type="button" onClick="{{ it.onAll }}" title="{{ it.allTitle }}" style="width:30px;height:30px;flex:none;border-radius:8px;border:2px solid var(--h-accent);display:grid;place-items:center;font-size:15px;font-weight:700;color:#1B120B;background:{{ it.boxBg }};cursor:pointer;padding:0">{{ it.mark }}</button>
 <span style="color:var(--h-fg-muted);flex:1;min-width:0;font-size:16px">{{ it.n }}</span>
 <button type="button" onClick="{{ it.onMinus }}" title="O bucată mai puțin" style="width:44px;height:44px;flex:none;border-radius:12px;border:1px solid var(--h-line);background:var(--h-bg-raised);color:var(--h-fg);font-size:22px;line-height:1;cursor:pointer;padding:0">−</button>
 <span class="h-numeric" style="min-width:66px;text-align:center;font-weight:700;font-size:16px;color:var(--h-accent-fg)">{{ it.count }}</span>
@@ -200,7 +497,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 <div style="display:flex;flex-direction:column;gap:8px">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ detail.onAllDone }}" style="height:48px;font-size:15px;border-radius:14px">Tot lotul e gata</button>
-<button type="button" class="{{ detail.nextCls }}" onClick="{{ detail.onAdvance }}" style="height:54px;font-size:16px;border-radius:16px">{{ detail.nextLabel }}</button>
+<button type="button" class="{{ detail.nextCls }}" onClick="{{ detail.onAdvance }}" disabled="{{ detail.advanceOff }}" style="height:54px;font-size:16px;border-radius:16px">{{ detail.nextLabel }}</button>
 <sc-if value="{{ detail.canBack }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ detail.onBack }}" style="height:48px;font-size:15px;border-radius:14px">{{ detail.backLabel }}</button>
 </sc-if>
@@ -276,11 +573,78 @@ const o = (ref, cust, chan, status, items, extra) => Object.assign({ ref, cust, 
 // Varianta veche avea zilele scrise în cod („26 august"), deci panoul ar fi
 // rămas blocat în trecut imediat după publicare.
 const DOW = ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sâm"];
+const LUNI = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie",
+  "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
 const pad2 = (n) => (n < 10 ? "0" : "") + n;
 const isoOf = (d) => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+/**
+ * O zi ISO, ca dată locală.
+ *
+ * `new Date("2026-09-12")` o citește ca miez de noapte UTC, deci la est de
+ * Greenwich cade pe ziua dinainte. Panoul lucrează numai cu zile locale, așa
+ * că spargem șirul și construim data pe componente.
+ */
+const dinIso = (iso) => {
+  const p = String(iso).split("-").map(Number);
+  const d = new Date(p[0], (p[1] || 1) - 1, p[2] || 1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+/**
+ * Când s-a pus anunțul: „pus azi la 05:12", „pus ieri la 22:40", „pus 9 septembrie".
+ *
+ * Ora vine de la server ca ceas de perete al patiseriei (`now_local()`), deci
+ * se citește ca text — NU prin `gp.utc()`, care ar muta-o cu două-trei ore și
+ * ar scrie „pus ieri" peste un anunț de azi-dimineață. Aceeași grijă e scrisă
+ * și în `Pontaj.dc.html`, din același motiv.
+ *
+ * Ziua de azi se cere prin `gp.acumLaPatiserie()`, nu din ceasul tabletei:
+ * ecranul ăsta stă aprins nopțile, adică pe aparatul căruia nimeni nu-i
+ * verifică fusul.
+ */
+const etPusLa = (s) => {
+  const zi = String(s || "").slice(0, 10);
+  const ora = String(s || "").slice(11, 16);
+  if (zi.length !== 10) return "pus";
+  const azi = isoOf(gp.acumLaPatiserie());
+  if (zi === azi) return "pus azi la " + ora;
+  const d = dinIso(zi);
+  if (Math.round((dinIso(azi) - d) / 86400000) === 1) return "pus ieri la " + ora;
+  return "pus " + d.getDate() + " " + LUNI[d.getMonth()];
+};
+/**
+ * Cât mai ține: „fără termen", „până azi la 18:00", „până mâine la 06:00",
+ * „până 22 septembrie, 06:00".
+ *
+ * Peste mâine se scrie data, nu numele zilei: „până joi", citit într-o joi, e
+ * o întrebare, nu un răspuns.
+ */
+const etTermenul = (s) => {
+  const zi = String(s || "").slice(0, 10);
+  const ora = String(s || "").slice(11, 16);
+  if (zi.length !== 10) return "fără termen";
+  const azi = isoOf(gp.acumLaPatiserie());
+  if (zi === azi) return "până azi la " + ora;
+  const d = dinIso(zi);
+  if (Math.round((d - dinIso(azi)) / 86400000) === 1) return "până mâine la " + ora;
+  return "până " + d.getDate() + " " + LUNI[d.getMonth()] + ", " + ora;
+};
+/**
+ * Ziua de la care pornește fereastra de șapte zile. Gol înseamnă „de azi".
+ *
+ * Calendarul poate duce panoul oriunde în lună, deci fereastra nu mai e legată
+ * de ceas. Cât timp e ancorată, trecerea peste miezul nopții n-o mai mută: ziua
+ * a ales-o omul, nu ceasul, iar o listă care sare singură la 00:00 sub mâinile
+ * cuiva care pregătea comenzile de joi e mai rea decât una veche.
+ */
+let ANCORA = "";
 const buildDays = () => {
   const out = [];
-  const base = new Date();
+  // `gp.acumLaPatiserie()`, nu `new Date()`: panoul ăsta stă pe o tabletă
+  // din laborator, adică exact aparatul căruia nimeni nu-i verifică fusul.
+  // Cu ceasul lui, fereastra pornea pe ziua de ieri și tura cocea lista de
+  // ieri. V. `shared/gp-api.js` · `laPatiserie`.
+  const base = ANCORA ? dinIso(ANCORA) : gp.acumLaPatiserie();
   base.setHours(0, 0, 0, 0);
   for (let i = 0; i < 7; i++) {
     const d = new Date(base);
@@ -304,16 +668,211 @@ const refreshDays = () => {
 
 // Panoul pornește gol și se umple de la server. Fără date demo: ce se vede
 // pe ecranul din laborator trebuie să fie exclusiv comenzi reale.
+/**
+ * Cine are voie să DESCHIDĂ panoul.
+ *
+ * Serverul a ținut poarta de la început: rutele de aici sunt `require_ops()`,
+ * iar `GP_OPS_ROLES` nu are nici `client`, nici `agent_vanzari`. Pagina însă
+ * nu întreba nimic, deci cine tasta adresa capătă panoul întreg, plin de
+ * refuzuri, fără să afle că nu e al lui.
+ *
+ * Răspunsul se citește din matricea meniului, nu se scrie a doua oară: dacă
+ * mâine „Laborator" iese din meniul unui rol, poarta se închide singură.
+ * Aceeași regulă și aceleași cuvinte ca în „Administrare Comenzi" ·
+ * `vedeComenzi`.
+ */
+const PANOUL = "Laborator";
+const CE_PANOU = "panoul din laborator";
+const vedePanoul = (a) => (gp.PANOURI_ROL[(a && a.role) || ""] || []).indexOf(PANOUL) >= 0;
+
+/* ─────────────────────── comanda care tocmai a picat ───────────────────── */
+
+/**
+ * Cât ține pastila „NOU" pe card: zece minute.
+ *
+ * Clinchetul e strigătul; pastila e ce rămâne din el pentru omul care era la
+ * cuptor când a sunat. Zece minute e cam cât o șarjă: cât să-și șteargă
+ * mâinile, să scoată tava din brațe și să ajungă la ecran — și tot să
+ * găsească acolo comanda însemnată.
+ *
+ * Nu mai mult: într-o dimineață încărcată pică mai multe comenzi pe oră, iar o
+ * pastilă de o jumătate de oră ar aprinde jumătate de panou. „NOU" ar ajunge
+ * tapet, adică n-ar mai însemna nimic — și tocmai însemnătatea ei e marfa.
+ * Nu mai puțin: trei minute trec într-un drum până la frigider, iar omul ar
+ * veni la un panou care a uitat deja de ce l-a chemat.
+ *
+ * Se stinge singură, fără niciun ceas pus anume: panoul se redesenează la
+ * fiecare împrospătare (patru secunde) și la fiecare bătaie de ceas
+ * (douăzeci), iar vârsta se socotește din nou la fiecare desen.
+ */
+const PRAG_NOU = 10 * 60 * 1000;
+
+/**
+ * CUM ȘTIE PANOUL CĂ O COMANDĂ E NOUĂ: DUPĂ CLIPA NAȘTERII, SPUSĂ DE SERVER.
+ *
+ * Verificat, nu presupus. `GET /orders` trece fiecare rând prin `attach_items`
+ * (`api/lib/orders.php`), iar acolo, lângă `updatedAt`, pleacă spre pagină și
+ * `createdAt`. Coloana e `DEFAULT CURRENT_TIMESTAMP`, iar fiecare legătură la
+ * bază începe cu fusul zero (`api/lib/db.php`), deci ora vine în UTC și se
+ * citește cu `gp.utc()` — exact ca ora cererilor din `shared/gp-api.js`. (NU ca
+ * orele tablei de anunțuri de mai jos, care sunt scrise cu ceasul de perete și
+ * se citesc ca text: două coloane, două convenții, amândouă spuse pe față în
+ * locul lor.)
+ *
+ * CEALALTĂ CALE — să ții minte pe tabletă ce id-uri erau la împrospătarea de
+ * dinainte și să socotești noi pe cele care n-au fost acolo — ar minți în trei
+ * locuri pe care ecranul ăsta chiar le trăiește în fiecare tură:
+ *
+ *   1. la deschiderea paginii și la fiecare împrospătare a browserului, TOATE
+ *      comenzile zilei ar părea abia picate, și ar suna toate deodată, în capul
+ *      turei;
+ *   2. la apăsarea unei file de zi. Panoul cere O SINGURĂ zi (v. `pull()`),
+ *      deci lista se schimbă toată: cele patruzeci de comenzi de mâine ar fi
+ *      patruzeci de comenzi „noi";
+ *   3. la o comandă anulată și pusă la loc din Administrare, sau mutată pe ziua
+ *      asta din alta: n-a fost în lista de dinainte, deci ar trece drept
+ *      nou-născută, deși e de marți.
+ *
+ * Clipa nașterii nu se încurcă în niciunul din cele trei: e o însușire a
+ * comenzii, nu a listei în care s-a nimerit ea.
+ *
+ * CÂND MINTE TOTUȘI, ȘI CE FACE ATUNCI. Nu la fus greșit: vârsta e diferența a
+ * două clipe absolute — `Date.now()` și ora UTC de la server — iar o diferență
+ * nu știe de fusuri. De-aia NU se cheamă aici `gp.acumLaPatiserie()`, al cărui
+ * `getTime()` e mutat dinadins ca să arate ceasul de perete și ar da o vârstă
+ * falsă cu două-trei ore. Minte la CEAS greșit: pe o tabletă rămasă în urmă sau
+ * luată înainte cu mai mult decât răstimpul de sus, vârsta iese în afara
+ * ferestrei și nu se aprinde nimic. Tăcerea e paguba cea mai mică dintre cele
+ * cu putință — o pastilă mincinoasă pe cardul greșit ar trimite tura să coacă
+ * altceva.
+ */
+const eNoua = (ord) => {
+  const varsta = Date.now() - gp.utc(ord && ord.nascutaLa);
+  return varsta >= 0 && varsta <= PRAG_NOU;
+};
+
+/**
+ * AMUȚIREA SE ȚINE MINTE PE TABLETĂ, ÎNTR-O CHEIE A EI.
+ *
+ * Nu în `KEY`: aceea e starea panoului — bifele și ordinea manuală — și se
+ * rescrie ÎNTREAGĂ în `citesteLocal()`, deci hotărârea despre sunet ar fi fost
+ * măturată la prima curățenie, fără ca cineva să înțeleagă de ce sună iar.
+ *
+ * Hotărârea trebuie să treacă peste împrospătarea paginii; altfel n-ar fi o
+ * hotărâre, ci o rugăminte. Pe o tabletă care nu lasă nimic scris (fereastră
+ * privată, memorie plină) rămâne pe durata paginii, atât — nu e nimic de
+ * reparat de cel din fața ecranului, deci nu se spune nimic pe ecran.
+ */
+const SKEY = "gp-lab-sunet-v1";
+const citesteMut = () => {
+  try { return localStorage.getItem(SKEY) === "1"; } catch (e) { return false; }
+};
+const scrieMut = (mut) => {
+  try { localStorage.setItem(SKEY, mut ? "1" : "0"); } catch (e) {}
+};
+
+/**
+ * CLINCHETUL, FĂCUT DIN NIMIC.
+ *
+ * Fără fișier de sunet în proiect: două note de sinusoidă — un „la" și un „re"
+ * deasupra lui — o treime de secundă cu totul. Un fișier ar fi fost un binar de
+ * urcat la fiecare publicare și încă un lucru care poate lipsi de pe server.
+ *
+ * DE CE NU SE AUDE NIMIC ÎNAINTE CA CINEVA SĂ ATINGĂ ECRANUL. Browserele nu
+ * lasă o pagină să scoată sunet până când omul n-a atins-o măcar o dată —
+ * altfel orice filă uitată deschisă ar putea striga la el. Contextul de sunet
+ * se naște deci „suspendat", iar `resume()` chemat din senin e respins, cu o
+ * făgăduință căzută care ajunge în consolă dacă n-o prinde nimeni. Aici o
+ * prindem și nu ne plângem: e purtarea așteptată a browserului, nu o
+ * defecțiune, iar tableta din laborator n-are pe cine plânge în consolă.
+ *
+ * Dezghețul vine de la PRIMA ATINGERE, oricare (v. `componentDidMount`), și de
+ * la apăsarea pe butonul care pornește sunetul — care e ea însăși atingerea
+ * cerută. Pe ecranul din laborator cineva atinge ceva în primele secunde ale
+ * turei.
+ *
+ * Cât contextul e încă suspendat, clinchetul tace — dar comanda se socotește
+ * anunțată (v. `vedeComenziNoi`). Altfel, la prima atingere de după, ar porni
+ * deodată toate clinchetele înghițite până atunci.
+ */
+let CTX = null;
+const contextulDeSunet = () => {
+  if (CTX) return CTX;
+  const Fabrica = window.AudioContext || window.webkitAudioContext;
+  if (!Fabrica) return null;
+  try { CTX = new Fabrica(); } catch (e) { CTX = null; }
+  return CTX;
+};
+const dezgheata = () => {
+  const c = contextulDeSunet();
+  if (!c || c.state !== "suspended") return;
+  try {
+    const f = c.resume();
+    if (f && typeof f.catch === "function") f.catch(() => {});
+  } catch (e) {}
+};
+const clinchet = () => {
+  const c = contextulDeSunet();
+  // Nici pornit, nici gata: tăcem și mergem mai departe. Un ecran pe care încă
+  // nu l-a atins nimeni nu e un ecran stricat.
+  if (!c || c.state !== "running") return;
+  try {
+    const t0 = c.currentTime + 0.02;
+    [[880, 0], [1174.66, 0.12]].forEach((nota) => {
+      const osc = c.createOscillator();
+      const vol = c.createGain();
+      const t = t0 + nota[1];
+      osc.type = "sine";
+      osc.frequency.value = nota[0];
+      // Volumul urcă și coboară în rampă, nu în treaptă: o sinusoidă pornită și
+      // oprită brusc pocnește, iar pocnetul e chiar sunetul de care se satură
+      // omul până la prânz. Nouă sutimi din plin e o lingură atinsă de ceașcă,
+      // nu o sonerie — se aude pe lângă cuptor, nu peste el.
+      vol.gain.setValueAtTime(0.0001, t);
+      vol.gain.exponentialRampToValueAtTime(0.09, t + 0.02);
+      vol.gain.exponentialRampToValueAtTime(0.0001, t + 0.30);
+      osc.connect(vol);
+      vol.connect(c.destination);
+      osc.start(t);
+      osc.stop(t + 0.32);
+    });
+  } catch (e) {
+    // Un clinchet care n-a ieșit nu e o veste pentru cel din fața ecranului:
+    // n-are ce face cu ea, iar pastila de pe card spune oricum ce s-a
+    // întâmplat. Aici nu se înghite niciun refuz al serverului — acelea au
+    // locul lor, în `pull()` și în `writeStatus()`.
+  }
+};
+
 const FALLBACK = [];
 
 class Component extends DCLogic {
-  state = { orders: FALLBACK, day: 0, filter: "Toate", sort: "interval", sel: null, st: {}, ord: {}, clock: "07:12", menu: false, toast: "" };
+  // `cal*` sunt calendarul: foaia deschisă, luna arătată (ISO-ul zilei 1),
+  // numărătoarea pe zile venită de la server și motivul, dacă n-a venit.
+  // `ancora` e ziua de la care pornește fereastra de șapte zile — gol
+  // înseamnă „de azi”, iar oglinda ei de la nivel de modul e `ANCORA`.
+  // `countsGata` spune dacă numărătoarea serverului acoperă fereastra: până
+  // atunci se numără local, din comenzile aduse.
+  // `mut` e amuțirea clinchetului de comandă nouă. Pornește pe „sună" și se
+  // înlocuiește la montare cu ce scrie în browserul tabletei (v. `citesteMut`):
+  // starea inițială nu poate citi din localStorage, fiindcă acolo se poate
+  // arunca, iar un câmp de stare care aruncă ia pagina cu el.
+  state = { navOpen: false, auth: null, orders: FALLBACK, day: 0, filter: "Toate", sort: "interval", sel: null, st: {}, ord: {}, clock: "07:12", mut: false, menu: false, toast: "", eroare: "", taiat: false, cal: false, calLuna: "", calCounts: {}, calPieces: {}, calEroare: "", countsGata: false, ancora: "", orderDay: "", anunturi: [], potPune: false, anuntMax: 5, anuntFoaie: false, anuntText: "", anuntZi: "", anuntOra: "", anuntEroare: "", anuntLucru: false, anuntArm: 0 };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
     // dacă le redenumești din panou, pagina trebuie să afle de la server.
     gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    // Cine a deschis panoul? Până acum scria în cod că nu-i nimeni — adevărat
+    // pentru tableta din tură, care intră cu codul comun, și mincinos pentru
+    // managerul care deschide aceeași pagină de pe telefonul lui. Din
+    // răspuns iese și meniul: fără el, sertarul ar arăta toate panourile,
+    // inclusiv cele care i-ar răspunde „nu ai voie".
+    //
+    // Fără sesiune, cererea cade cu 401 — nu e o eroare aici: panoul merge
+    // mai departe anonim, cum a mers dintotdeauna.
+    gp.me().then((user) => this.setState({ auth: gp.auth(user) })).catch(() => {});
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
       const st = this.state || {};
@@ -335,7 +894,29 @@ class Component extends DCLogic {
       }, true);
     }
     this.citesteLocal();
+    // Amuțirea, adusă din browserul tabletei. Nu din `citesteLocal()`: aceea
+    // rescrie cheia panoului cu ce știe ea despre bife și ordine, deci sunetul
+    // ar fi fost aruncat la prima curățenie (v. `SKEY`).
+    this.setState({ mut: citesteMut() });
+    // Dezghețul sunetului, la prima atingere de oriunde: un buton de etapă, o
+    // filă de zi, un card — orice. Ascultătorii stau pe fereastră, în faza de
+    // captare, ca o apăsare oprită pe drum cu `stopPropagation` (cardurile au
+    // destule) să nu treacă nevăzută. Nu se scot după prima atingere: tableta
+    // adoarme peste noapte și își suspendă singură contextul de sunet, iar
+    // atunci aceeași atingere trebuie să-l trezească din nou.
+    //
+    // Cât e amuțit nu se naște niciun context: un aparat de sunet pornit
+    // degeaba e o baterie mâncată degeaba.
+    this.__atingere = () => { if (!this.state.mut) dezgheata(); };
+    window.addEventListener("pointerdown", this.__atingere, true);
+    window.addEventListener("keydown", this.__atingere, true);
     this.pull();
+    // Numărătoarea pe zile, de la server. Filele o scoteau din comenzile
+    // aduse, iar `GET /orders` taie răspunsul la 500 de rânduri: pe o
+    // săptămână încărcată, o zi întreagă putea scrie „0 comenzi” fiindcă
+    // rândurile ei căzuseră după tăietură. Cifra din filă și cifra din
+    // calendar vin de acum din același loc, deci nu se pot contrazice.
+    this.pullCounts(FROM_DAY, TO_DAY, false);
     // Ce se poate schimba în altă filă a aceluiași browser e doar starea
     // locală a panoului — bifele, comenzile încheiate și ordinea manuală;
     // comenzile vin de pe server. Cheia se compara aici cu `OKEY`, un nume
@@ -348,15 +929,106 @@ class Component extends DCLogic {
       this.pull();
     };
     window.addEventListener("storage", this.onStore);
-    this.poll = setInterval(() => this.pull(), 4000);
+    // gp.poll(): pauză cât fila e ascunsă și o singură tură în zbor. Cu
+    // setInterval, un răspuns pornit înaintea unui PATCH putea ajunge după
+    // clearPending() și pune înapoi etapa veche pe card, pentru o tură.
+    this.poll = gp.poll(() => this.pull(), 4000);
+    // Anunțurile se întreabă rar, nu odată cu comenzile: o tablă de anunțuri se
+    // schimbă de câteva ori pe zi, iar patru secunde ar fi însemnat douăzeci de
+    // mii de cereri pe tură ca să se afle că nu s-a schimbat nimic. Treizeci de
+    // secunde e destul de repede: managerul lipește anunțul de la birou și îl
+    // vede pe ecranul din laborator înainte să apuce să se ridice de pe scaun.
+    this.pullAnunturi();
+    this.pollAnunturi = gp.poll(() => this.pullAnunturi(), 30000);
     this.tick();
     this.timer = setInterval(() => this.tick(), 20000);
   }
   componentWillUnmount() {
     clearInterval(this.timer);
-    clearInterval(this.poll);
+    if (typeof this.poll === "function") this.poll();
+    if (typeof this.pollAnunturi === "function") this.pollAnunturi();
     window.removeEventListener("storage", this.onStore);
     window.removeEventListener("popstate", this.__gpBack);
+    window.removeEventListener("pointerdown", this.__atingere, true);
+    window.removeEventListener("keydown", this.__atingere, true);
+  }
+
+  /**
+   * După fiecare desen: a picat vreo comandă nouă?
+   *
+   * Aici, nu în `pull()`, fiindcă aici e adevărul de pe ecran. `pull()` are
+   * trei drumuri prin care lista ajunge la desen — răspunsul serverului, etapa
+   * apăsată ținută minte cât e PATCH-ul pe drum, cifrele raportate ținute la
+   * fel — iar clinchetul are nevoie de un singur loc, cel de la capăt.
+   */
+  componentDidUpdate() {
+    this.vedeComenziNoi();
+  }
+
+  /**
+   * Sună o dată pentru comenzile picate de la împrospătarea de dinainte.
+   *
+   * PASTILA ȘI CLINCHETUL NU SPUN ACELAȘI LUCRU, de-aia nu se aprind după
+   * aceeași regulă. Pastila spune o ÎNSUȘIRE — „comanda asta s-a născut acum
+   * șapte minute" — care rămâne adevărată și după o împrospătare a browserului;
+   * de-aia se socotește din nou la fiecare desen (v. `eNoua`) și nu ține minte
+   * nimic. Clinchetul spune o ÎNTÂMPLARE — „tocmai a picat" — iar o întâmplare
+   * pe care ai trăit-o deja nu se mai strigă o dată fiindcă ai apăsat F5.
+   *
+   * De aici cele două tăceri, amândouă cerute:
+   *
+   *   · PRIMA TURĂ NU SUNĂ ȘI NU APRINDE NIMIC NOU. La deschiderea paginii,
+   *     după o împrospătare a browserului și după mutarea pe altă zi, lista
+   *     vine toată deodată. Unele comenzi din ea pot fi într-adevăr proaspete,
+   *     și atunci primesc pastilă pe bună dreptate — dar niciuna n-a picat sub
+   *     ochii ăștia, deci nu se strigă nimic. Se ține minte că le-am văzut, și
+   *     atât. (Asta e și paguba de ocolit a celeilalte metode, cea cu id-urile
+   *     ținute minte: acolo tăcerea de-aici ar fi fost obligatorie ca să nu
+   *     sune TOATĂ ziua deodată; aici e o hotărâre, nu un plasture.)
+   *   · APĂSAREA UNEI FILE DE ZI nu sună: ziua s-a schimbat, `__ziuaSunata` nu
+   *     mai e aceeași, deci lista nouă e iarăși o primă tură. (Fila de zi, nu
+   *     fila browserului. Cât fila browserului stă ascunsă, `gp.poll` face
+   *     pauză; la întoarcere vine o listă în care pot fi comenzi picate între
+   *     timp, și ele sună — o dată, toate la un loc. E bine așa: au picat
+   *     într-adevăr, și nimeni nu le-a auzit încă.)
+   *
+   * UN SINGUR CLINCHET PE ÎMPROSPĂTARE, oricâte comenzi ar fi picat deodată.
+   * Trei clinchete unul peste altul nu spun „trei comenzi", spun „s-a stricat
+   * ceva".
+   *
+   * CE NU ACOPERĂ: panoul cere de la server O SINGURĂ zi (v. `pull()`), deci
+   * nu poate ști nimic despre o comandă picată pe altă zi decât fila deschisă.
+   * O comandă pentru mâine, intrată cât tura se uită la azi, nu sună — și nici
+   * n-ar avea ce face tura cu ea acum.
+   */
+  vedeComenziNoi() {
+    const S = this.state;
+    const ziua = (DAY_KEYS[S.day] || DAY_KEYS[0]).iso;
+    // Aceeași dovadă ca la cartonul „Nicio comandă în ziua asta": fără un
+    // răspuns DESPRE ziua deschisă, lista de pe ecran e a altei zile, sau încă
+    // nu e nicio listă.
+    if (S.orderDay !== ziua) return;
+
+    const proaspete = (S.orders || []).filter(eNoua);
+    const prima = this.__ziuaSunata !== ziua;
+    this.__ziuaSunata = ziua;
+
+    const stiute = prima ? {} : (this.__sunate || {});
+    const nesunate = proaspete.filter((o) => !stiute[o.id]);
+    // Se ține minte numai ce e proaspăt ACUM, deci lista se golește singură pe
+    // măsură ce comenzile ies din fereastră — și nu se pot întoarce în ea,
+    // fiindcă vârsta nu scade. Fără asta, un ecran aprins trei zile ar strânge
+    // un dicționar cu toate comenzile săptămânii.
+    const acum = {};
+    proaspete.forEach((o) => { acum[o.id] = 1; });
+    this.__sunate = acum;
+
+    if (prima || !nesunate.length) return;
+    // Amuțit, comanda tot se socotește anunțată — scrierea de mai sus s-a și
+    // făcut. Altfel, la pornirea sunetului, ar suna pe nepusă masă pentru
+    // comenzi de acum o jumătate de oră.
+    if (S.mut) return;
+    clinchet();
   }
 
   /**
@@ -404,9 +1076,40 @@ class Component extends DCLogic {
    * acceptată de administrator pe alt calculator apare aici.
    */
   pull() {
+    // Rolul care n-are panoul ăsta nu mai întreabă: serverul i-ar răspunde
+    // 403 la fiecare tură de patru secunde, iar ecranul de refuz e deja peste
+    // el. Poarta e pe „știu și nu are", nu pe „nu știu".
+    if (this.state.auth && !vedePanoul(this.state.auth)) return;
     const days = DAY_KEYS.map(d => d.date);
-    return gp.get('/orders?from=' + FROM_DAY + '&to=' + TO_DAY)
+    // Ziua deschisă, nu toată fereastra.
+    //
+    // Cerea `?from=…&to=…`, adică șapte zile de comenzi ÎNTREGI, iar
+    // `GET /orders` taie răspunsul la 500 de rânduri. Măsurat pe baza de
+    // probă, cu fereastra pornită din 25 septembrie: serverul are 250 + 368 +
+    // 141 = 759 de comenzi, trimite 500, iar panoul socotea 250 pentru ziua
+    // de 368 și ZERO pentru ziua de 141. Ziua cu o sută patruzeci și una de
+    // comenzi se deschidea goală, cu cartonul „Nicio comandă în ziua asta”
+    // aprins — aceeași minciună de care s-a plâns și șoferul, mutată în
+    // laborator.
+    //
+    // O singură zi intră în plafon cu loc berechet, iar cifrele filelor vin
+    // acum de la `/orders/counts`, care numără în bază și nu are ce tăia. Cât
+    // e tăiat totuși (o zi cu peste 500 de comenzi), pagina o spune: v.
+    // `taiat` mai jos.
+    const ziua = (DAY_KEYS[this.state.day] || DAY_KEYS[0]).iso;
+    return gp.get('/orders?day=' + ziua)
       .then((r) => {
+        // Răspunsul învechit se aruncă.
+        //
+        // De când `pull()` aduce o singură zi, cererea și răspunsul pot să nu
+        // mai fie despre aceeași zi: brutarul apasă fila de mâine în timp ce
+        // răspunsul pentru azi e pe drum, iar `setState` de mai jos ar scrie
+        // comenzile de azi sub eticheta de mâine. `/orders` nu-și spune ziua în
+        // răspuns (v. `api/routes/orders.php:228`), deci se compară ziua CERUTĂ
+        // cu ziua deschisă ACUM. Nu e o eroare — e o cerere întoarsă prea
+        // târziu, iar cea pentru ziua nouă e deja pe drum.
+        const ziuaAcum = (DAY_KEYS[this.state.day] || DAY_KEYS[0]).iso;
+        if (ziua !== ziuaAcum) return;
         // Comenzile anulate nu sunt de lucru: dacă rămân pe panou, cineva le
         // coace. Le scoatem aici, nu din interogare, ca redenumirea etapei din
         // Setări să se aplice imediat, fără repornirea paginii.
@@ -421,7 +1124,14 @@ class Component extends DCLogic {
         // apăsare și scriere. Fără ea, cifra sare înapoi sub deget.
         const facute = this.__pendingProd || {};
         const list = (r.orders || [])
-          .map(gp.toPageOrder)
+          // Clipa nașterii, lipită aici fiindcă `gp.toPageOrder` n-o duce mai
+          // departe. Nu se atinge de el din pagina asta: e ajutorul tuturor
+          // paginilor, iar o comandă nou-născută nu interesează, azi, decât
+          // ecranul ăsta. Rămâne ȘIRUL primit de la server, nu milisecundele:
+          // socoteala se face la desen (v. `eNoua`), unde se știe și cât e
+          // ceasul — iar o listă în care nimic nu se schimbă de la sine se
+          // compară cinstit cu cea de dinainte (`__seen`).
+          .map((raw) => Object.assign(gp.toPageOrder(raw), { nascutaLa: raw.createdAt || "" }))
           .filter((o) => o.status !== gp.cancelled())
           .map((o) => (asteptate[o.id] ? Object.assign({}, o, { status: asteptate[o.id] }) : o))
           .map((o) => (o.items || []).some((it) => facute[it.itemId] !== undefined)
@@ -433,13 +1143,177 @@ class Component extends DCLogic {
             : o);
         const next = JSON.stringify(list);
         if (next !== this.__seen) { this.__seen = next; this.setState({ orders: list }); }
+        // Ziua DESPRE CARE panoul are un răspuns. Se scrie și pe o listă
+        // neschimbată: un răspuns gol pentru ziua deschisă e exact ce deosebește
+        // „am întrebat, nu-i nimic" de „încă întreb".
+        if (this.state.orderDay !== ziua) this.setState({ orderDay: ziua });
+        if (this.state.eroare) this.setState({ eroare: "" });
+        // Serverul spune singur când a tăiat răspunsul. O listă tăiată arată
+        // exact ca o listă întreagă, deci tăcerea de aici ar fi o minciună de
+        // același fel: tura ar coace 500 din 640 și ar pleca acasă convinsă
+        // că a terminat ziua.
+        const taiat = !!(r && r.truncated);
+        if (taiat !== this.state.taiat) this.setState({ taiat });
       })
       .catch((e) => {
         // O eroare de rețea trecătoare nu trebuie să golească panoul: păstrăm
         // ce era afișat, ca laboratorul să poată lucra mai departe.
+        //
+        // Dar nici să tacă. Aici era `console.warn`, adică nicăieri: tableta
+        // din laborator n-are consolă. Când panoul pornea pe o cerere picată,
+        // brutarul citea „Nicio comandă în ziua asta” — o afirmație pe care
+        // pagina n-avea de unde s-o facă — și lotul zilei rămânea nefăcut.
+        // Panoul se reîmprospătează din patru în patru secunde, deci mesajul
+        // dispare singur de îndată ce serverul răspunde iar.
         if (e.isAuth) gp.toLogin();
-        else console.warn('[gp] nu am putut aduce comenzile:', e.message);
+        else this.setState({ eroare: gp.motiv(e, "comenzile zilei") });
       });
+  }
+
+  /**
+   * Câte comenzi are fiecare zi dintre `from` și `to`, numărate de server.
+   *
+   * Două motive pentru care numărătoarea nu se face aici, din comenzile aduse:
+   *
+   * 1. `GET /orders` are un plafon de 500 de rânduri pe răspuns
+   *    (`api/routes/orders.php`). Pe o săptămână încărcată, panoul primește
+   *    500 din 842, iar o zi cu 225 de comenzi ar fi scris „0 comenzi” în
+   *    filă — exact defectul pentru care s-a născut `/routes/counts` la șofer.
+   * 2. Calendarul se uită la o lună întreagă. O lună de comenzi ÎNTREGI, cu
+   *    nume, telefoane și adrese, e și mult de trimis, și mult mai mult decât
+   *    are nevoie cineva ca să vadă care zi e plină.
+   *
+   * Un răspuns nu șterge cheile aduse de altul: fereastra de șapte zile și
+   * luna deschisă se adună în același dicționar, cheile sunt zile ISO și nu
+   * se ciocnesc. Zilele fără comenzi lipsesc din răspuns — `GROUP BY` nu
+   * întoarce rânduri pentru ele — de-aia există `countsGata`: fără el, „nu
+   * știu” și „zero” n-ar mai fi deosebite.
+   */
+  pullCounts(from, to, pentruCalendar) {
+    return gp.get('/orders/counts?from=' + from + '&to=' + to)
+      .then((r) => {
+        const c = Object.assign({}, this.state.calCounts, (r && r.counts) || {});
+        const p = Object.assign({}, this.state.calPieces, (r && r.pieces) || {});
+        const patch = { calCounts: c, calPieces: p, countsGata: true };
+        if (this.state.calEroare) patch.calEroare = "";
+        this.setState(patch);
+      })
+      .catch((e) => {
+        if (e.isAuth) { gp.toLogin(); return; }
+        // Aceeași regulă ca la restul panoului: o numărătoare care n-a venit
+        // n-are voie să se dea drept zero. `countsGata` rămâne cum era, deci
+        // filele se întorc la numărătoarea locală, iar calendarul spune de ce
+        // nu poate arăta cifrele.
+        if (pentruCalendar) this.setState({ calEroare: gp.motiv(e, "numărul de comenzi pe zile") });
+      });
+  }
+
+  /**
+   * Mută fereastra de șapte zile ca să înceapă cu ziua cerută.
+   *
+   * Panoul rămâne panoul zilei: nu capătă o a doua listă și nici o a doua
+   * noțiune de „ziua deschisă”. Se mută doar de unde pornește fereastra, iar
+   * tot restul paginii — filele, sortarea, detaliul, raportarea bucăților —
+   * merge neschimbat. `iso` gol înseamnă „înapoi la azi”.
+   */
+  mutaFereastra(iso) {
+    ANCORA = iso || "";
+    refreshDays();
+    this.__seen = null;
+    this.setState({
+      ancora: ANCORA, day: 0, sel: null, cal: false, menu: false,
+      // Contoarele ferestrei vechi n-ar minți, dar `countsGata` da: până vine
+      // răspunsul pentru fereastra nouă, filele ar arăta „0 comenzi” în
+      // dreptul zilelor pe care serverul nu le-a numărat încă.
+      countsGata: false, eroare: "",
+    }, () => {
+      this.pull();
+      this.pullCounts(FROM_DAY, TO_DAY, false);
+    });
+  }
+
+  /**
+   * Trece pe altă zi din fereastră.
+   *
+   * Era `set({ day: i })`, atât: panoul avea toate șapte zilele în memorie,
+   * deci schimbarea filei era o simplă refiltrare. De când cere o singură zi
+   * (v. `pull()`), ziua nouă trebuie chiar cerută — altfel fila se aprinde și
+   * lista rămâne a zilei dinainte.
+   */
+  mutaZi(i, inchideMeniul) {
+    this.__seen = null;
+    this.setState({
+      day: i, sel: null, menu: inchideMeniul ? false : this.state.menu,
+    }, () => this.pull());
+  }
+
+  /** Prima zi a lunii arătate în calendar, ca ISO. */
+  lunaCal() {
+    const s = this.state.calLuna;
+    if (s) return s;
+    const baza = dinIso(this.state.ancora || DAY_KEYS[0].iso);
+    return isoOf(new Date(baza.getFullYear(), baza.getMonth(), 1));
+  }
+
+  /**
+   * Cele 42 de căsuțe ale lunii arătate, cu numărul de comenzi al fiecăreia.
+   *
+   * Șase rânduri de șapte, mereu, fiindcă o lună de 31 de zile care începe
+   * duminica are nevoie de șase. Numărul fix ține grila de aceeași înălțime
+   * de la o lună la alta: altfel foaia sare sub degetul celui care schimbă
+   * luna, iar butonul „luna următoare” fuge de sub el.
+   *
+   * Săptămâna începe luni, cum se numără la noi — `getDay()` numără de la
+   * duminică, de-aia mutarea cu `+ 6) % 7`.
+   */
+  celuleCal() {
+    const p1 = dinIso(this.lunaCal());
+    const luna = p1.getMonth();
+    const start = new Date(p1);
+    start.setDate(1 - ((p1.getDay() + 6) % 7));
+    // Ceasul patiseriei, nu al tabletei: căsuța îngroșată din calendar
+    // spune „azi", iar „azi" e ziua după care se ia laboratorul. Pe o tabletă
+    // pe alt fus, semnul cădea pe căsuța vecină — adică pe altă tură.
+    const aziIso = isoOf(gp.acumLaPatiserie());
+    const deschisa = (DAY_KEYS[this.state.day] || DAY_KEYS[0]).iso;
+    const out = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const iso = isoOf(d);
+      out.push({
+        iso,
+        zi: String(d.getDate()),
+        inLuna: d.getMonth() === luna,
+        azi: iso === aziIso,
+        deschisa: iso === deschisa,
+        n: this.state.calCounts[iso] || 0,
+        q: this.state.calPieces[iso] || 0,
+      });
+    }
+    return out;
+  }
+
+  /** Deschide calendarul și cere numărătoarea lunii arătate. */
+  deschideCal(lunaIso) {
+    const luna = lunaIso || this.lunaCal();
+    this.setState({ cal: true, calLuna: luna, calEroare: "" }, () => {
+      // Se cere exact intervalul desenat, nu luna: prima și ultima săptămână
+      // arată și zile din lunile vecine, iar o căsuță desenată fără cifră ar
+      // părea o zi liberă.
+      const p1 = dinIso(luna);
+      const s = new Date(p1);
+      s.setDate(1 - ((p1.getDay() + 6) % 7));
+      const e = new Date(s);
+      e.setDate(s.getDate() + 41);
+      this.pullCounts(isoOf(s), isoOf(e), true);
+    });
+  }
+
+  /** Sare cu `delta` luni în calendar (−1 înapoi, +1 înainte). */
+  saltLuna(delta) {
+    const p1 = dinIso(this.lunaCal());
+    this.deschideCal(isoOf(new Date(p1.getFullYear(), p1.getMonth() + delta, 1)));
   }
 
   /**
@@ -558,14 +1432,33 @@ class Component extends DCLogic {
   }
 
   tick() {
-    const d = new Date();
+    // AMÂNDOUĂ ceasurile de aici sunt ale patiseriei, și trebuie să fie
+    // ACELAȘI ceas cu cel din care se face fereastra de zile (`buildDays`,
+    // `gp.acumLaPatiserie()`).
+    //
+    // Paza de mai jos compară ziua de acum cu prima zi a ferestrei. Cu un ceas
+    // aici și altul acolo, pe o tabletă pe alt fus cele două nu se potrivesc
+    // niciodată cât ține diferența — iar atunci `refreshDays()` și `pull()`
+    // plecau la FIECARE douăzeci de secunde, ceasuri în șir. Exact paguba
+    // despre care vorbește comentariul de mai jos, numai că venită din fus, nu
+    // din ancoră.
+    //
+    // Ceasul arătat în panou e tot al patiseriei: pe el se uită tura ca să știe
+    // cât mai e până la ora unei livrări.
+    const d = gp.acumLaPatiserie();
     const p = (n) => (n < 10 ? "0" : "") + n;
     const patch = { clock: p(d.getHours()) + ":" + p(d.getMinutes()) };
     // Ceasul e singurul lucru din panou care se uită periodic la data reală,
     // deci tot el trebuie să ducă tableta în ziua nouă. Rămânem pe aceeași zi
     // din calendar cât timp mai încape în fereastră, ca omul care se uita la
     // comenzile de poimâine să nu fie mutat pe altă listă fără să atingă nimic.
-    if (isoOf(d) !== DAY_KEYS[0].iso) {
+    //
+    // Cât timp fereastra e ancorată din calendar, ceasul n-are ce muta: ziua a
+    // ales-o omul. Fără paza asta, tura care pregătește comenzile de joi ar fi
+    // aruncată înapoi la ziua curentă la prima bătaie de ceas de după miezul
+    // nopții — și, mai rău, la fiecare douăzeci de secunde după aceea, fiindcă
+    // ziua ancorată nu e niciodată egală cu ziua de azi.
+    if (!ANCORA && isoOf(d) !== DAY_KEYS[0].iso) {
       const aleasa = (DAY_KEYS[this.state.day] || DAY_KEYS[0]).iso;
       refreshDays();
       const i = DAY_KEYS.findIndex((x) => x.iso === aleasa);
@@ -598,6 +1491,90 @@ class Component extends DCLogic {
     } catch (e) {}
   }
 
+  /* ───────────────────────────────── tabla de anunțuri ──────────────── */
+
+  /**
+   * Anunțurile care mai țin acum, de la server.
+   *
+   * ORICE NECAZ ÎNSEAMNĂ „N-AVEM TABLĂ AICI", și se înghite. Sunt trei feluri
+   * de necaz și toate trei au același înțeles pentru ochiul din laborator:
+   * 401 — panoul e deschis fără sesiune, cum a fost dintotdeauna; 403 — contul
+   * care l-a deschis n-are ce căuta în anunțuri; 503 — baza n-a primit încă
+   * migrarea 015. În niciunul din cele trei nu e nimic de arătat și nimic de
+   * reparat de cel din fața ecranului, iar un banner roșu peste comenzile zilei
+   * ar fi o supărare fără leac. Comenzile, care sunt treaba ecranului, merg
+   * înainte în toate trei.
+   */
+  pullAnunturi() {
+    return gp.get("/lab/messages")
+      .then((r) => this.setState({
+        anunturi: r.messages || [],
+        // `=== true`, nu adevărul lui gol: un răspuns venit de la un server mai
+        // vechi n-are cheia deloc, iar `undefined` trebuie citit ca „nu poate",
+        // nu ca „poate". Aceeași grijă ca la `hasLabPin` din Conturi.
+        potPune: r.canPost === true,
+        anuntMax: Number(r.max) || 5,
+      }))
+      .catch(() => this.setState({ anunturi: [], potPune: false }));
+  }
+
+  /**
+   * Anunțul pleacă spre server.
+   *
+   * ZIUA ȘI ORA SE LIPESC AICI, în două câmpuri, fiindcă așa le scrie omul.
+   * Ziua fără oră înseamnă miezul nopții următor — „ține până joi" spus cu gura
+   * înseamnă joi toată ziua, nu joi la ora deschiderii filei. Ora fără zi nu se
+   * ghicește: la trei dimineața „până la șase" e azi, la opt dimineața nu se
+   * mai știe, iar un anunț stins prea devreme e chiar paguba de ocolit. Se cere
+   * ziua pe față.
+   */
+  puneAnuntul() {
+    const S = this.state;
+    const text = String(S.anuntText || "").trim();
+    if (!text) return this.setState({ anuntEroare: "Scrie ce ai de spus." });
+    if (S.anuntOra && !S.anuntZi) {
+      return this.setState({ anuntEroare: "Ai scris ora, dar nu și ziua până la care ține anunțul." });
+    }
+    const until = S.anuntZi ? S.anuntZi + " " + (S.anuntOra || "23:59") : "";
+    this.setState({ anuntLucru: true, anuntEroare: "" });
+    return gp.post("/lab/messages", { body: text, until })
+      .then(() => {
+        this.setState({ anuntFoaie: false, anuntLucru: false, anuntText: "", anuntZi: "", anuntOra: "" });
+        this.pullAnunturi();
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ anuntLucru: false, anuntEroare: gp.motiv(e, "anunțul") });
+      });
+  }
+
+  /**
+   * Anunțul se ia de pe ecran, din două apăsări.
+   *
+   * Ca ștergerea unui cont din Conturi, și din același motiv: butonul stă pe un
+   * ecran atins cu mâinile pline, la doi metri de cuptor. O apăsare din greșeală
+   * ar lua jos tocmai lucrul pe care cineva trebuia să-l citească peste o oră,
+   * iar anunțul nu se mai poate pune la loc de la ecranul acela — îl scrie
+   * altcineva, de la birou.
+   *
+   * Necazul iese prin `toast`, mesajul care exista deja în pagină: și „anunțul
+   * e pus de altcineva" (403), și „l-a luat cineva între timp" (409) sunt
+   * lucruri de citit o dată și de închis, nu de reparat.
+   */
+  iaAnuntul(id) {
+    if (this.state.anuntArm !== id) return this.setState({ anuntArm: id });
+    this.setState({ anuntArm: 0 });
+    return gp.del("/lab/messages/" + id)
+      .then(() => this.pullAnunturi())
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else {
+          this.setState({ toast: gp.motiv(e, "luarea anunțului de pe ecran") });
+          this.pullAnunturi();
+        }
+      });
+  }
+
   renderVals() {
     this.__gpSync();
     const S = this.state;
@@ -606,6 +1583,14 @@ class Component extends DCLogic {
 
     const advance = (id, cur) => {
       const nx = CYCLE_OF()[Math.min(CYCLE_OF().indexOf(cur) + 1, CYCLE_OF().length - 1)];
+      // Plafonul de mai sus dă, la ULTIMA etapă, tot etapa de acum — iar
+      // cererea plecă oricum. Serverul o primea și scria în jurnal
+      // „Predată → Predată”, adică o trecere care nu s-a întâmplat, într-un
+      // registru care nu se golește niciodată. Paza stă aici, nu numai în
+      // marcaj: butonul se stinge pentru ochi, dar funcția e chemată din două
+      // locuri (cardul din listă și foaia de detaliu) și mâine poate fi chemată
+      // din al treilea.
+      if (nx === cur) return;
       this.writeStatus(id, nx);
     };
     const back = (id, cur) => {
@@ -636,13 +1621,25 @@ class Component extends DCLogic {
     const deco = (ord) => {
       const st = ord.status;
       const b = bucati(ord);
+      const nou = eNoua(ord);
       return Object.assign({}, ord, {
         status: st, statusCls: ST[st] || "h-badge",
         // Congelat sau gata de servire: fără asta laboratorul nu are de unde
         // ști ce pregătește, deși de varianta aleasă depinde și prețul plătit.
         variant: gp.variantLabel(ord.variant),
         variantCls: ord.variant === "congelat" ? "h-badge h-badge--accent" : "h-badge h-badge--honey",
-        cardCls: ord.isNew && st === "În așteptare" ? "h-card lb-new" : "h-card",
+        nou,
+        // Inelul de pe card cere ochiul; pastila doar spune. De-aia inelul se
+        // stinge de îndată ce cineva a mișcat comanda din prima etapă — a fost
+        // luată în primire, n-are de ce să mai bată la geam — iar pastila
+        // rămâne cât e comanda tânără: vârsta ei nu se schimbă fiindcă a pus
+        // cineva mâna pe ea.
+        //
+        // Inelul `lb-new` e desenat în foaia de stil de la începutul paginii,
+        // dar atârna până acum de `ord.isNew`, pe care nu-l pune nimeni:
+        // `gp.toPageOrder` n-are câmpul, deci n-a clipit niciodată. Acum
+        // atârnă de aceeași socoteală ca pastila.
+        cardCls: nou && st === "În așteptare" ? "h-card lb-new" : "h-card",
         urgent: !!ord.urgent,
         bg: ord.urgent ? "rgba(232,160,175,.10)" : "var(--h-bg-surface)",
         bd: ord.urgent ? "var(--h-jam)" : "var(--h-line)",
@@ -653,6 +1650,10 @@ class Component extends DCLogic {
         canBack: CYCLE_OF().indexOf(st) > 0,
         backLabel: CYCLE_OF()[Math.max(CYCLE_OF().indexOf(st) - 1, 0)],
         onAdvance: (e) => { if (e && e.stopPropagation) e.stopPropagation(); advance(ord.id, st); },
+        // Stins la ultima etapă: eticheta lui spune deja „Finalizată”, deci
+        // arăta ca un buton care duce undeva. Nu ducea nicăieri — numai în
+        // jurnal.
+        advanceOff: st === gp.done(),
         onBack: (e) => { if (e && e.stopPropagation) e.stopPropagation(); back(ord.id, st); }
       });
     };
@@ -678,7 +1679,7 @@ class Component extends DCLogic {
       onDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(key, ids, i, 1); }
     }));
 
-    let detail = { canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, onAllDone: () => {}, onClose: () => {} };
+    let detail = { canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, onAllDone: () => {}, onClose: () => {} };
     let hasDetail = false;
     flat.forEach(ord => {
       const t = ord.slot || "";
@@ -717,6 +1718,7 @@ class Component extends DCLogic {
         nextLabel: st === gp.done() ? "Comandă finalizată" : "Trece la: " + CYCLE_OF()[CYCLE_OF().indexOf(st) + 1],
         nextCls: st === gp.done() ? "h-btn h-btn--secondary" : "h-btn h-btn--primary",
         onAdvance: () => advance(ord.id, st),
+        advanceOff: st === gp.done(),
         canBack: CYCLE_OF().indexOf(st) > 0,
         backLabel: "Înapoi la: " + CYCLE_OF()[Math.max(CYCLE_OF().indexOf(st) - 1, 0)],
         onBack: () => back(ord.id, st),
@@ -736,22 +1738,236 @@ class Component extends DCLogic {
     }));
     const totList = Object.keys(tot).map(k => ({ n: k, q: tot[k] })).sort((a, b) => b.q - a.q);
     const maxQ = totList.length ? totList[0].q : 1;
-    const dayCount = (d) => S.orders.filter(x => x.day === d.date).length;
+    // Numărul de comenzi al unei zile din fereastră.
+    //
+    // De la server cât timp numărătoarea lui a sosit, fiindcă el are toate
+    // rândurile; din comenzile aduse până atunci, ca filele să nu fie goale
+    // în prima secundă. Numărătoarea locală e o rezervă, nu adevărul: pe o
+    // săptămână cu peste cinci sute de comenzi, ea nu vede decât ce a încăput
+    // în răspuns.
+    const dayCount = (d) => (S.countsGata
+      ? (S.calCounts[d.iso] || 0)
+      : S.orders.filter(x => x.day === d.date).length);
+
+    // E cineva anume dincolo de ecran, sau e tura întreagă pe contul comun?
+    const omAnume = !!S.auth && !S.auth.isSystem;
+    const faraAcces = !!S.auth && !vedePanoul(S.auth);
+    const acasa = S.auth ? gp.primaPagina(S.auth) : "Intrare.dc.html";
+
+    // Paza de aur: fila și tabla nu pot spune lucruri diferite fără să spună
+    // că se contrazic.
+    //
+    // De când cifra filei vine de la `/orders/counts` (numărată în bază) și
+    // lista de la `/orders` (un singur răspuns), cele două au drumuri
+    // despărțite. Dacă serverul numără comenzi în ziua deschisă dar lista a
+    // venit goală, atunci ceva s-a rupt între ele — și tocmai asta e plângerea
+    // de la care a pornit lucrarea: „vezi în meniu că sunt două opriri, dar nu
+    // vezi nimic”. Cartonul „Nicio comandă în ziua asta” ar fi a treia
+    // afirmație, care le dezminte pe amândouă. Se stinge, iar în locul lui se
+    // spune contradicția, cu numărul pe care serverul îl dă.
+    // `orderDay` e dovada pozitivă că răspunsul e despre ziua deschisă. Fără
+    // ea, cartonul ar clipi la fiecare apăsare de filă: până vine răspunsul,
+    // tabla e goală iar numărătoarea e deja a zilei noi.
+    const numarS = S.countsGata ? (S.calCounts[day.iso] || 0) : 0;
+    const nepotrivire = numarS > 0 && S.orders.length === 0
+      && S.orderDay === day.iso && !S.eroare;
 
     return {
+      // Meniul de pe telefon și de pe tabletă. Panoul ăsta n-are bară
+      // laterală pe niciun ecran, deci butonul ☰ e singura cale de ieșire
+      // din el — de-aia se vede la orice lățime. Lista vine din `gp.meniu()`
+      // (shared/gp-api.js), una singură pentru toate panourile.
+      meniu: gp.meniu("Laborator", S.auth),
+      navHere: "Laborator",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      // Apăsarea pe foaie nu are voie să ajungă la fundal, care închide.
+      onNavKeep: (e) => e.stopPropagation(),
+      // Tableta din tură lucrează pe contul comun, deci n-are pe cine numi;
+      // dar aceeași pagină se deschide și de pe telefonul unui om anume, iar
+      // atunci rândul cu numele lui trebuie să fie acolo. Scris în cod pe
+      // „nimeni", panoul îl trata pe manager ca pe o tabletă.
+      //
+      // Contul comun se cunoaște după `isSystem`, spus de server; nu după
+      // nume, cum se ghicea în Depozit până acum.
+      navWho: omAnume,
+      navAnon: !omAnume,
+      authName: omAnume ? S.auth.name : "",
+
+      // POARTA DE ROL, ÎN PAGINĂ. Se aprinde numai când se ȘTIE cine a intrat
+      // și rolul lui n-are panoul ăsta. Fără sesiune (`gp.me()` cade cu 401)
+      // panoul merge mai departe anonim, cum a mers dintotdeauna: „nu știu
+      // încă" nu e un refuz, și tableta din tură n-are voie să se închidă
+      // fiindcă răspunsul întârzie o clipă.
+      faraAcces,
+      // Aceeași propoziție nu se potrivește amândurora, exact ca la ecranul
+      // de refuz din „Administrare Comenzi": clientul nu e un angajat cu
+      // rolul greșit, iar „rolul lui lucrează în altă parte" n-are ce să-i
+      // spună. Textul se desparte pe aceeași întrebare pe care o pun și
+      // butoanele de dedesubt, ca ecranul să nu se contrazică singur.
+      accesLinie: !S.auth ? ""
+        : (S.auth.role === "client"
+          ? "Contul „" + S.auth.name + "” e cont de client: aici lucrează personalul patiseriei. Comenzile tale le vezi în „Comanda mea”."
+          : "Contul „" + S.auth.name + "” nu are acces la " + CE_PANOU + ". Rolul lui lucrează în altă parte — te duc acolo."),
+      accesClient: faraAcces && S.auth.role === "client",
+      accesAltul: faraAcces && S.auth.role !== "client",
+      // Unde-l trimitem: pagina cu care începe ziua rolului lui, aceeași pe
+      // care o dă și autentificarea (`gp.primaPagina`). Eticheta se ia din
+      // `gp.MENIU`, ca butonul să poarte chiar numele din sertar; magazinul
+      // nu e o intrare de meniu, de-aia clientul are ramura lui mai sus.
+      accesAcasa: acasa,
+      accesAcasaEt: (gp.MENIU.filter((x) => x.href === acasa)[0] || {}).et || "Pagina mea",
+
+
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
       clock: S.clock,
       toast: S.toast,
       onToastClose: () => set({ toast: "" }),
+
+      /* ── clinchetul comenzilor noi, și butonul care-l amuțește ────────── */
+      //
+      // Două steaguri, nu unul negat în marcaj: cele două stări au butoane
+      // deosebite (v. antetul), iar `sc-if` nu știe să nege.
+      sunetPornit: !S.mut,
+      sunetTacut: !!S.mut,
+      onSunet: () => {
+        const mut = !S.mut;
+        // Se scrie ÎNTÂI pe tabletă și abia apoi în stare, ca la restul
+        // panoului: dacă browserul nu lasă să se scrie, ecranul arată oricum
+        // ce a apăsat omul, numai că hotărârea nu ține până mâine.
+        scrieMut(mut);
+        // Apăsarea ASTA e chiar atingerea de care are nevoie browserul ca să
+        // lase sunetul să pornească. Dezghețat aici, în același gest, se aude
+        // PRIMUL clinchet de după — nu al doilea.
+        if (!mut) dezgheata();
+        set({ mut });
+      },
+
+      /* ── tabla de anunțuri ──────────────────────────────────────────── */
+      //
+      // Anunțurile stau SUB bannerele de mai sus, nu deasupra lor, și nu
+      // fiindcă ar fi mai puțin însemnate. Bannerele acelea vorbesc despre
+      // clipa asta — „comenzile nu s-au încărcat", „nu s-a salvat" — și sunt
+      // lucruri de îndreptat pe loc; anunțul ține o zi. Cât timp totul merge,
+      // toate patru sunt ascunse, deci anunțul e oricum primul de pe ecran.
+      anunturi: (S.anunturi || []).map((m) => ({
+        text: m.body,
+        // ZIUA ÎN CARE S-A PUS SE SCRIE ÎNTOTDEAUNA, și ăsta e miezul.
+        // „Mâine vine făina" citit peste trei zile e o minciună care nu se
+        // vede: cuvântul „mâine" arată la fel în orice zi. Cu „pus marți"
+        // lângă el, cititorul știe singur despre care mâine e vorba.
+        sub: etPusLa(m.createdAt) + " · " + (m.author || "un cont șters")
+          + " · " + etTermenul(m.until),
+        poateLua: m.canDelete === true,
+        // Armat, butonul își spune pe față ce face — ca la luarea codului de
+        // pontaj din Conturi. Iar cât e armat e roșu: un stil gol nu acoperă
+        // culoarea clasei, deci `h-btn--danger` se vede întreagă.
+        cls: "h-btn " + (S.anuntArm === m.id ? "h-btn--danger" : "h-btn--ghost"),
+        et: S.anuntArm === m.id ? "Sigur? Ia-l jos" : "Ia-l jos",
+        onLua: () => this.iaAnuntul(m.id),
+      })),
+      potPune: S.potPune === true,
+      anuntPlin: (S.anunturi || []).length >= (S.anuntMax || 5),
+      anuntLoc: (S.anunturi || []).length >= (S.anuntMax || 5)
+        ? "Ecranul e plin: " + (S.anuntMax || 5) + " anunțuri deodată e cât încape deasupra "
+          + "comenzilor. Ia unul jos ca să faci loc."
+        : "Se vede pe ecranele din laborator, pentru toată tura.",
+
+      anuntFoaie: S.anuntFoaie,
+      anuntText: S.anuntText,
+      anuntZi: S.anuntZi,
+      anuntOra: S.anuntOra,
+      anuntEroare: S.anuntEroare,
+      anuntLucru: S.anuntLucru,
+      anuntCls: "h-btn h-btn--primary" + (S.anuntLucru ? " h-btn--loading" : ""),
+      // Numărătoarea se scrie sub casetă, nu se lasă pe seama serverului:
+      // un refuz venit după ce omul a scris o sută de cuvinte e o pierdere de
+      // timp care se putea ocoli cu o cifră.
+      anuntRamase: (() => {
+        const n = String(S.anuntText || "").trim().length;
+        const max = 500;
+        if (n > max) return "Cu " + (n - max) + " caractere peste — scurtează-l.";
+        return n + " din " + max + " de caractere.";
+      })(),
+      onAnuntNou: () => set({
+        anuntFoaie: true, anuntText: "", anuntZi: "", anuntOra: "",
+        anuntEroare: "", anuntLucru: false, anuntArm: 0,
+      }),
+      onAnuntKeep: (e) => e.stopPropagation(),
+      onAnuntRenunta: () => set({ anuntFoaie: false, anuntEroare: "" }),
+      onAnuntText: (e) => set({ anuntText: e.target.value }),
+      onAnuntZi: (e) => set({ anuntZi: e.target.value }),
+      onAnuntOra: (e) => set({ anuntOra: e.target.value }),
+      onAnuntPune: () => this.puneAnuntul(),
       menuOpen: S.menu,
       onMenuOpen: () => set({ menu: true }),
       onMenuClose: () => set({ menu: false }),
+
+      /* ── calendarul ─────────────────────────────────────────────────── */
+      //
+      // Filele de sus arată șapte zile, atât. Cine vrea să știe dacă joia
+      // viitoare e încărcată nu putea afla decât mutând fereastra acolo și
+      // pierzând ziua de azi de pe ecran. Calendarul dă orizontul: o lună
+      // întreagă, cu numărul de comenzi al fiecărei zile, ca tura să poată
+      // pregăti dinainte.
+      calOpen: S.cal,
+      onCalOpen: () => this.deschideCal(),
+      onCalClose: () => set({ cal: false }),
+      calTitlu: (() => {
+        const p = dinIso(this.lunaCal());
+        return LUNI[p.getMonth()] + " " + p.getFullYear();
+      })(),
+      onLunaPrev: () => this.saltLuna(-1),
+      onLunaNext: () => this.saltLuna(1),
+      calEroare: S.calEroare,
+      onCalReincearca: () => this.deschideCal(this.lunaCal()),
+      calCelule: this.celuleCal().map((c) => ({
+        iso: c.iso,
+        zi: c.zi,
+        // Zero nu se scrie: patruzeci și două de zerouri într-o grilă fac
+        // cifrele care contează invizibile. Ziua liberă rămâne o căsuță
+        // liniștită.
+        n: c.n ? String(c.n) : "",
+        buc: c.n ? gp.qtyLabel(c.q) + " buc." : "",
+        // Ziua deschisă e plină, ziua de azi are doar contur: dacă amândouă
+        // ar fi pline, n-ai ști pe care te uiți.
+        bg: c.deschisa ? "var(--h-accent)" : c.n ? "var(--h-bg-raised)" : "transparent",
+        bd: c.deschisa ? "var(--h-accent)" : c.azi ? "var(--h-accent-fg)" : "var(--h-line)",
+        fg: c.deschisa ? "var(--h-fg-on-accent)" : c.inLuna ? "var(--h-fg)" : "var(--h-fg-faint)",
+        greu: c.n ? "700" : "500",
+        onClick: () => this.mutaFereastra(c.iso),
+      })),
+      calSub: (() => {
+        const zile = this.celuleCal().filter((c) => c.inLuna);
+        const n = zile.reduce((a, c) => a + c.n, 0);
+        const q = zile.reduce((a, c) => a + c.q, 0);
+        if (!S.countsGata && !n) return "Se numără…";
+        return n === 0 ? "Nicio comandă în luna asta"
+          : n + (n === 1 ? " comandă · " : " comenzi · ") + gp.qtyLabel(q) + " buc.";
+      })(),
+      // Semnul că panoul nu mai e pe ziua de azi. Fără el, tura care intră
+      // dimineața ar putea lucra o zi întreagă de pe lista de joi, lăsată
+      // deschisă de tura dinainte, fără să bănuiască nimic.
+      // Serverul a tăiat răspunsul: lista de pe ecran nu e toată ziua.
+      taiat: S.taiat,
+      ancorat: !!S.ancora,
+      ancoraEticheta: S.ancora
+        ? "Fereastra pornește de la " + DAY_KEYS[0].dow + " " + DAY_KEYS[0].date
+        : "",
+      onAzi: () => this.mutaFereastra(""),
       currentLabel: day.dow + " " + day.date + " · " + dayCount(day) + " comenzi" +
         (S.sort === "urgent" ? " · urgente primele" : S.sort === "client" ? " · client A–Z" : ""),
       menuDays: DAY_KEYS.map((d, i) => ({
         label: d.dow + " " + d.date, count: String(dayCount(d)), mark: i === S.day ? "✓" : "",
         bg: i === S.day ? "var(--h-accent-soft)" : "var(--h-bg-raised)",
         bd: i === S.day ? "var(--h-accent)" : "var(--h-line)",
-        onClick: () => set({ day: i, sel: null, menu: false })
+        onClick: () => this.mutaZi(i, true)
       })),
       menuSorts: [{ v: "interval", l: "Pe intervale de oră" }, { v: "urgent", l: "Urgente primele" }, { v: "client", l: "Client A–Z" }].map(s => ({
         label: s.l, mark: S.sort === s.v ? "✓" : "",
@@ -759,12 +1975,13 @@ class Component extends DCLogic {
         bd: S.sort === s.v ? "var(--h-accent)" : "var(--h-line)",
         onClick: () => set({ sort: s.v, menu: false })
       })),
-      headSub: dayCount(day) + " comenzi · " + day.dow + " " + day.date + " · registru pe 7 zile",
+      headSub: dayCount(day) + " comenzi · " + day.dow + " " + day.date + " · "
+        + (S.ancora ? "zi aleasă din calendar" : "registru pe 7 zile"),
       dayLabel: day.dow + " " + day.date,
       dayTabs: DAY_KEYS.map((d, i) => ({
         label: d.dow + " " + d.date, count: String(dayCount(d)),
         cls: i === S.day ? "h-btn h-btn--primary" : "h-btn h-btn--ghost",
-        onClick: () => set({ day: i, sel: null })
+        onClick: () => this.mutaZi(i, false)
       })),
       sortBtns: [{ v: "urgent", l: "Urgente primele" }, { v: "client", l: "Client A–Z" }].map(s => ({
         label: s.l, cls: S.sort === s.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
@@ -772,7 +1989,28 @@ class Component extends DCLogic {
       })),
       hasCustom: Object.keys(S.ord).length > 0,
       onResetOrder: () => this.save({ ord: {} }),
-      queue, queueEmpty: queue.length === 0,
+      queue,
+      // „Nicio comandă în ziua asta” e o afirmație: am întrebat, nu-i nimic.
+      // Când cererea a picat, pagina n-a apucat să întrebe — locul cartonului
+      // îl ia mesajul de eroare de deasupra listei.
+      // Același lacăt ca la șofer: cartonul e o afirmație, deci are nevoie
+      // de un răspuns DESPRE ZIUA DESCHISĂ. Până atunci se spune ce e:
+      // panoul încă întreabă.
+      // Și un al treilea lacăt: cine n-are panoul ăsta n-a întrebat nimic
+      // (`pull()` se oprește la poartă), deci n-are de unde să afle că ziua
+      // e goală. Ecranul de refuz acoperă cartonul oricum, dar o afirmație
+      // ascunsă e tot o afirmație.
+      queueEmpty: queue.length === 0 && !S.eroare && !nepotrivire
+        && S.orderDay === day.iso && !faraAcces,
+      seAduce: S.orderDay !== day.iso && !S.eroare,
+      nepotrivire,
+      nepotrivireText: "Serverul numără " + numarS
+        + (numarS === 1 ? " comandă" : " comenzi")
+        + " în ziua asta, dar lista a venit goală. Apasă „Încearcă din nou”;"
+        + " dacă se repetă, spune-i administratorului: nu e o zi liberă, e o"
+        + " nepotrivire între numărătoare și listă.",
+      eroare: S.eroare,
+      onReincearca: () => { this.__seen = null; set({ eroare: "" }); this.pull(); },
       queueMeta: queue.length + (queue.length === 1 ? " comandă · " : " comenzi · ") + gp.qtyLabel(pieces) + " buc. · mută cu ↑ ↓",
       detail, hasDetail, noDetail: !hasDetail,
       hasDetailAttr: hasDetail ? "true" : "false",

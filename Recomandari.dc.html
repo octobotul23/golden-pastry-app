@@ -1,0 +1,1762 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recomandări · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-recomandari.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+
+/* Violetul și eticheta „Adus de …" stau în shared/gp-recomandari.css, fiindcă
+   aceeași etichetă apare și pe comenzi, în „Administrare comenzi". Aici rămân
+   doar lucrurile care sunt numai ale paginii ăsteia. */
+
+@keyframes rc-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes rc-fade{from{opacity:0}to{opacity:1}}
+@keyframes rc-pop{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* Unealta de căutare și sortare.
+   Peste 760px e un rând de controale. Sub, devine UN SINGUR buton care
+   deschide foaia de jos — regula din Partea B: nimic nu dispare pe telefon
+   fără înlocuitor, iar un grup de peste patru opțiuni nu se rupe pe trei
+   rânduri, ci intră într-o listă. */
+[data-rc=toolsphone]{display:none}
+[data-rc=row]{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+@media (max-width:760px){
+  [data-rc=tools]{display:none!important}
+  [data-rc=toolsphone]{display:flex!important}
+  [data-rc=wrap]{padding:16px 14px 40px!important}
+  [data-rc=tiles]{grid-template-columns:1fr!important}
+  /* Rândul de istoric se așază pe două etaje: numele sus, cifrele jos.
+     Ținut pe un rând, numele firmei se rupea în trei linii, iar suma —
+     lucrul pentru care omul a deschis pagina — ajungea sub pliul ecranului. */
+  [data-rc=histrow]{flex-wrap:wrap!important;row-gap:4px!important}
+  [data-rc=histname]{flex-basis:100%!important}
+}
+</style>
+</helmet>
+
+<div data-rc="wrap" style="min-height:100vh;padding:28px 24px 60px;background:var(--h-bg-sunk)">
+<div style="max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:18px;animation:rc-in .22s var(--h-ease-out)">
+
+<!-- ------------------------------------------------------------- antet -- -->
+<div data-rc="row" style="gap:14px">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<h1 class="h-h3" style="margin:0;font-size:25px">Recomandări</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+</div>
+<button class="gp-burger gp-burger--mereu gp-burger--lumina" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}" style="margin-left:auto">☰</button>
+</div>
+
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
+
+<!-- Cererea n-a ajuns la capăt. Caseta stă ÎNAINTEA celor două vederi — cea
+     pentru omul neconectat și pagina întreagă — fiindcă un refuz al serverului
+     le poate stinge pe amândouă deodată, iar pusă înăuntrul uneia n-ar mai fi
+     văzută din cealaltă. -->
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<!-- Nu e nimeni conectat. -->
+<sc-if value="{{ anonim }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:22px 20px;border-radius:20px;display:flex;flex-direction:column;gap:14px">
+<p style="margin:0;font-size:15px;line-height:1.6;color:var(--h-fg-muted);text-wrap:pretty">Ca să-ți vezi codul și câștigurile, intră întâi în cont.</p>
+<a href="Intrare.dc.html" class="h-btn h-btn--primary" style="min-height:50px;font-size:16px;text-decoration:none;display:flex;align-items:center;justify-content:center">Mergi la intrare</a>
+</div>
+</sc-if>
+
+<sc-if value="{{ deschis }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:18px">
+
+<sc-if value="{{ err }}" hint-placeholder-val="{{ '' }}">
+<div class="h-alert h-alert--danger" style="border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;align-items:stretch">
+<p style="margin:0;font-size:15px">{{ err }}</p>
+</div>
+</sc-if>
+<!-- ------------------------------------------- livrările de azi -- -->
+<!-- Fereastra agentului spre ruta șoferului: câte opriri mai are, pe
+     unde, și câte până la fiecare dintre cumpărătorii lui. Niciun nume
+     străin nu ajunge aici — serverul îi trimite numai rândurile lui
+     (`route_my_route_window`, api/routes/orders.php). -->
+<sc-if value="{{ areRuta }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:20px;border-radius:20px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h2 class="h-h4" style="margin:0;font-size:18px">Livrările de azi</h2>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ rutaSub }}</span>
+</div>
+<sc-if value="{{ areOpririMele }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ opririMele }}" as="o" hint-placeholder-count="3">
+<div data-rc="histrow" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--h-line)">
+<span data-rc="histname" style="flex:1;min-width:0;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis">{{ o.nume }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);white-space:nowrap">{{ o.unde }}</span>
+<span class="{{ o.cls }}" style="font-size:11px;white-space:nowrap">{{ o.cat }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ faraOpririMele }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:15px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">Nu aveți nicio comandă care trebuie livrată astăzi.</p>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- ----------------------------------------------------- codul meu -- -->
+<div class="h-card" style="padding:20px;border-radius:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h2 class="h-h4" style="margin:0;font-size:18px">Codul tău</h2>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ codSub }}</span>
+</div>
+
+<sc-if value="{{ areCod }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div data-rc="row">
+<span class="h-numeric" style="font-size:22px;font-weight:700;letter-spacing:.02em;padding:8px 14px;border-radius:13px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">{{ cod }}</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCopyCod }}" style="min-height:44px;font-size:15px">{{ copyCodLabel }}</button>
+</div>
+<div data-rc="row">
+<input class="h-input" value="{{ link }}" readonly onClick="{{ onSelectLink }}" style="flex:1;min-width:180px;height:44px;font-size:14px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCopyLink }}" style="min-height:44px;font-size:15px;flex:none">{{ copyLinkLabel }}</button>
+</div>
+<p style="margin:0;font-size:13px;line-height:1.55;color:var(--h-fg-subtle);text-wrap:pretty">Cine deschide linkul și își face cont e legat de tine. Codul se poate și scrie de mână, în coș sau la înscriere.</p>
+</div>
+</sc-if>
+
+<!-- A treia cale de a aduce pe cineva, lângă cod și link: contul făcut pe loc,
+     în fața omului. Stă aici, nu în „Conturi", fiindcă agentul n-are acces
+     acolo — și fiindcă aici e pagina în care lucrează.
+
+     Baza de 240px a paragrafului de mai jos nu e aleasă din ochi: pe telefon
+     cardul are 320px, iar butonul „Renunț" 93px. Cu 200px paragraful încă
+     încăpea lângă el și se strângea la 215px, adică vreo 29 de semne pe rând.
+     Cu 240 nu mai încape, deci butonul trece pe rândul lui și textul ia
+     lățimea întreagă. Pe ecran lat rămân tot alături, ca până acum. -->
+<sc-if value="{{ potFaceCont }}" hint-placeholder-val="{{ false }}">
+<div data-rc="contnou" style="display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid var(--h-line)">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+<span style="flex:1 1 240px;min-width:0;font-size:13px;line-height:1.55;color:var(--h-fg-subtle);text-wrap:pretty">Poți face contul pe loc, cu codul tău. Cumpărătorul intră cu parola pe care i-o dai și și-o schimbă singur la prima intrare.</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onContToggle }}" style="min-height:44px;font-size:15px;flex:none">{{ contToggleEt }}</button>
+</div>
+
+<sc-if value="{{ contGata }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5">{{ contGata }}</div>
+</sc-if>
+
+<!-- Contul s-a făcut, dar legătura nu s-a scris. Cutia verde de deasupra
+     spune adevărul (contul EXISTĂ), asta îl spune pe celălalt. Separată de
+     `contErr`, care stă înăuntrul formularului și dispare odată cu el la
+     reușită — iar aici tocmai despre o reușită pe jumătate e vorba. -->
+<sc-if value="{{ contAtentie }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5">{{ contAtentie }}</div>
+</sc-if>
+
+<sc-if value="{{ contDeschis }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele omului
+<input autoFocus="{{ true }}" class="h-input" value="{{ contNume }}" onChange="{{ onContNume }}" placeholder="ex. Maria Ionescu" style="height:46px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele firmei, dacă are
+<input class="h-input" value="{{ contFirma }}" onChange="{{ onContFirma }}" placeholder="ex. Cofetăria Belvedere" style="height:46px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Utilizator
+<input class="h-input" value="{{ contUser }}" onChange="{{ onContUser }}" placeholder="litere mici, cifre, punct sau minus" style="height:46px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parola de început
+<input class="h-input" value="{{ contParola }}" onChange="{{ onContParola }}" placeholder="cel puțin 8 caractere" style="height:46px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Telefon, dacă îl dă
+<input class="h-input" value="{{ contTel }}" onChange="{{ onContTel }}" placeholder="ex. 0722 123 456" style="height:46px;font-size:16px">
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Adresa firmei, dacă o știi
+<input class="h-input" value="{{ contAdresa }}" onChange="{{ onContAdresa }}" placeholder="ex. Calea Victoriei 63, et. 2" style="height:46px;font-size:16px">
+</label>
+<sc-if value="{{ zoneReady }}" hint-placeholder-val="{{ true }}">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Zona
+<select class="h-input" value="{{ contZona }}" onChange="{{ onContZona }}" style="height:46px;font-size:16px">
+<sc-for list="{{ zoneOpts }}" as="z" hint-placeholder-count="9">
+<option value="{{ z.v }}">{{ z.l }}</option>
+</sc-for>
+</select>
+<span style="font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ contZonaSfat }}</span>
+</label>
+</sc-if>
+
+<sc-if value="{{ contErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5">{{ contErr }}</div>
+</sc-if>
+
+<button type="button" class="h-btn h-btn--primary" disabled="{{ contOff }}" onClick="{{ onContSalveaza }}" style="min-height:48px;font-size:16px;align-self:flex-start">{{ contSalvEt }}</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ faraCod }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px">
+<p style="margin:0;font-size:15px;line-height:1.6;color:var(--h-fg-muted);text-wrap:pretty">Nu ai încă un cod de recomandare. Îți facem unul din prenumele tău — îl poți dicta la telefon.</p>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onMakeCode }}" style="min-height:48px;font-size:16px;align-self:flex-start">{{ makeLabel }}</button>
+</div>
+</sc-if>
+</div>
+
+<!-- --------------------------------------------- cele trei plăci -- -->
+<sc-if value="{{ areBani }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:18px">
+
+<div data-rc="tiles" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+<sc-for list="{{ placi }}" as="p" hint-placeholder-count="3">
+<div class="h-card" style="padding:16px 18px;border-radius:18px;display:flex;flex-direction:column;gap:4px;border-left:3px solid {{ p.culoare }}">
+<span class="h-eyebrow" style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ p.eticheta }}</span>
+<span class="h-numeric" style="font-size:23px;font-weight:700">{{ p.suma }}</span>
+</div>
+</sc-for>
+</div>
+
+<!-- Procentul de azi e zero. Rândul stă CHIAR SUB plăci, fiindcă despre ele
+     vorbește: trei zerouri fără nicio explicație sunt tocmai ecranul care a
+     ținut trei comenzi ale patronului la 0,00 RON fără ca cineva să afle de
+     ce. Nu e o alertă roșie — nimic nu s-a stricat — ci o lămurire, cu locul
+     din care se pune cifra scris în ea. -->
+<sc-if value="{{ procentZero }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:16px;padding:13px 16px;display:flex;flex-direction:column;align-items:stretch">
+<p style="margin:0;font-size:14px;line-height:1.55;text-wrap:pretty">{{ procentZeroText }}</p>
+</div>
+</sc-if>
+
+<!-- --------------------------- rezumatul pe cumpărător (agentul) -- -->
+<sc-if value="{{ areCumparatori }}" hint-placeholder-val="{{ true }}">
+<div class="h-card" style="padding:20px;border-radius:20px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h2 class="h-h4" style="margin:0;font-size:18px">De la cine ai câștigat</h2>
+<span style="font-size:14px;color:var(--h-fg-subtle)">Numele firmei și cât ți-a adus, cu totul.</span>
+</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ cumparatori }}" as="c" hint-placeholder-count="3">
+<div data-rc="histrow" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--h-line)">
+<span data-rc="histname" style="flex:1;min-width:0;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis">{{ c.nume }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);white-space:nowrap">{{ c.comenzi }}</span>
+<span class="h-numeric" style="font-size:16px;font-weight:700;white-space:nowrap">{{ c.suma }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<!-- --------------------------------------- istoricul meu, pe comenzi -- -->
+<div class="h-card" style="padding:20px;border-radius:20px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h2 class="h-h4" style="margin:0;font-size:18px">Istoricul câștigurilor</h2>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ istSub }}</span>
+</div>
+
+<sc-if value="{{ istGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:15px;line-height:1.6;color:var(--h-fg-muted);text-wrap:pretty">Încă nimic. Prima comandă a cuiva venit cu codul tău apare aici.</p>
+</sc-if>
+
+<sc-if value="{{ istPlin }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ istoric }}" as="r" hint-placeholder-count="5">
+<div data-rc="histrow" style="display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--h-line)">
+<span data-rc="histname" style="flex:1;min-width:0;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis">{{ r.nume }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);white-space:nowrap">{{ r.data }}</span>
+<span style="font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px;background:{{ r.stareBg }};color:{{ r.stareFg }};white-space:nowrap">{{ r.stare }}</span>
+<!-- Socoteala din care iese suma — „370,00 RON × 5%". Aceeași ca pe rândul
+     patronului de mai jos, fiindcă e aceeași întrebare: de unde vine cifra.
+     Fără ea, un comision de 0,00 RON nu spunea dacă a fost mică comanda sau
+     zero procentul, iar omul n-avea pe ce pune degetul când suna să întrebe. -->
+<span class="h-numeric" style="font-size:12px;color:var(--h-fg-subtle);white-space:nowrap">{{ r.socoteala }}</span>
+<span class="h-numeric" style="font-size:16px;font-weight:700;white-space:nowrap;min-width:92px;text-align:right">{{ r.suma }}</span>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- ============================================ partea administratorului -- -->
+<sc-if value="{{ eAdmin }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:18px">
+
+<!-- Conflictele stau PRIMELE și au tratament de alertă: sunt singurele
+     rânduri care nu se rezolvă singure. Un comision în așteptare nu se
+     numără pentru nimeni, deci cât stă acolo, cineva nu e plătit. -->
+<sc-if value="{{ areConflicte }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:20px;padding:18px 20px;display:flex;flex-direction:column;align-items:stretch;gap:14px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<p class="h-alert__title" style="margin:0;font-size:17px">De rezolvat: {{ nrConflicte }}</p>
+<p style="margin:0;font-size:14px;line-height:1.55;text-wrap:pretty">Pe comenzile astea s-a tastat un cod, dar contul avea deja alt recomandant. Până alegi, comisionul nu se numără pentru niciunul dintre ei.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px">
+<sc-for list="{{ conflicte }}" as="c" hint-placeholder-count="2">
+<div class="h-card" style="padding:14px 16px;border-radius:16px;display:flex;flex-direction:column;gap:10px">
+<div data-rc="row" style="gap:8px">
+<span style="font-size:15px;font-weight:700;text-decoration:{{ c.taiat }}">{{ c.cumparator }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ c.despre }}</span>
+<sc-if value="{{ c.scos }}">
+<span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--h-bg-page);color:var(--h-fg-subtle);border:1px solid var(--h-line);white-space:nowrap">scos</span>
+</sc-if>
+</div>
+<div data-rc="row" style="gap:8px">
+<button type="button" class="h-btn h-btn--secondary" disabled="{{ c.scosOff }}" onClick="{{ c.onCont }}" style="flex:1 1 190px;min-width:0;min-height:64px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:9px 14px;text-align:left;white-space:normal">
+<span style="font-size:11px;letter-spacing:.05em;text-transform:uppercase;opacity:.65">Recomandantul contului</span>
+<span style="max-width:100%;font-size:15px;font-weight:700;line-height:1.25;overflow-wrap:anywhere">{{ c.contNume }}</span>
+<span style="max-width:100%;font-size:11px;opacity:.6;line-height:1.3;overflow-wrap:anywhere">{{ c.contCod }}</span>
+</button>
+<button type="button" class="h-btn h-btn--secondary" disabled="{{ c.scosOff }}" onClick="{{ c.onTastat }}" style="flex:1 1 190px;min-width:0;min-height:64px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:9px 14px;text-align:left;white-space:normal">
+<span style="font-size:11px;letter-spacing:.05em;text-transform:uppercase;opacity:.65">Codul tastat în coș</span>
+<span style="max-width:100%;font-size:15px;font-weight:700;line-height:1.25;overflow-wrap:anywhere">{{ c.tastatNume }}</span>
+<span style="max-width:100%;font-size:11px;opacity:.6;line-height:1.3;overflow-wrap:anywhere">{{ c.tastatCod }}</span>
+</button>
+</div>
+<div data-rc="row" style="gap:8px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ c.onScos }}" style="min-height:40px;font-size:13px">{{ c.scosEt }}</button>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<!-- ----------------------- comisioanele născute la procentul zero -- -->
+<!-- Vestea de după apăsare stă ÎNAINTEA cardului și în afara lui: apăsarea
+     reușită golește chiar cardul, deci un mesaj pus înăuntru ar fi dispărut
+     odată cu lucrul despre care vorbește. -->
+<sc-if value="{{ indreptatMsg }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="border-radius:16px;padding:13px 16px;display:flex;flex-direction:column;align-items:stretch">
+<p style="margin:0;font-size:15px;line-height:1.5">{{ indreptatMsg }}</p>
+</div>
+</sc-if>
+
+<!-- Cardul se desenează numai când chiar e ceva de îndreptat, și numai
+     patronului. Stă DUPĂ conflicte, fiindcă acelea sunt singurele care nu se
+     rezolvă singure, și înaintea listei, fiindcă e o treabă care se face o
+     dată și pe urmă dispare de pe ecran pentru totdeauna.
+
+     Previzualizarea nu e podoabă: e chiar condiția pusă de patron — „arată
+     ce devine fiecare rând". Lista de sub titlu vine de la server, din
+     aceeași socoteală care va scrie în bază (api/lib/referral.php,
+     `referral_zero_rate_preview()`), deci ce se vede e ce se face. -->
+<sc-if value="{{ areIndreptat }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:18px 20px;border-radius:20px;display:flex;flex-direction:column;gap:14px;border-left:3px solid var(--h-accent)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h2 class="h-h4" style="margin:0;font-size:18px">{{ indreptatTitlu }}</h2>
+<p style="margin:0;font-size:14px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">{{ indreptatSub }}</p>
+</div>
+<div style="max-height:280px;overflow-y:auto;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<p class="h-numeric" style="margin:0;font-size:13px;line-height:1.75;white-space:pre-line;overflow-wrap:anywhere">{{ indreptatLista }}</p>
+</div>
+<div data-rc="row" style="gap:12px">
+<button type="button" class="h-btn h-btn--primary" disabled="{{ indreptatOff }}" onClick="{{ onIndreapta }}" style="min-height:48px;font-size:16px;flex:none">{{ indreptatBtn }}</button>
+<span class="h-numeric" style="font-size:15px;font-weight:700;color:var(--h-fg-muted)">{{ indreptatTotal }}</span>
+</div>
+</div>
+</sc-if>
+
+<!-- ------------------------------------ unelte: căutare și sortare -- -->
+<div class="h-card" style="padding:20px;border-radius:20px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h2 class="h-h4" style="margin:0;font-size:18px">Toți recomandanții</h2>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ totiSub }}</span>
+</div>
+
+<!-- Peste 760px: căutarea pe primul rând, filtrele pe al doilea. Nu din
+     lipsă de loc, ci ca așezarea să fie aceeași la orice lățime: cinci
+     controale pe un rând cădeau cu un buton orfan pe al doilea etaj exact
+     între 960 și 1100px. -->
+<div data-rc="tools" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<input class="h-input" value="{{ q }}" onChange="{{ onQ }}" placeholder="Caută firma, recomandantul sau codul" style="flex:1 1 100%;width:auto;height:46px;font-size:15px">
+<select class="h-input" value="{{ sort }}" onChange="{{ onSort }}" style="flex:1 1 170px;width:auto;height:46px;font-size:15px">
+<sc-for list="{{ sortOpts }}" as="s" hint-placeholder-count="6">
+<option value="{{ s.val }}">{{ s.et }}</option>
+</sc-for>
+</select>
+<select class="h-input" value="{{ luna }}" onChange="{{ onLuna }}" style="flex:1 1 130px;width:auto;height:46px;font-size:15px">
+<sc-for list="{{ luniOpts }}" as="l" hint-placeholder-count="4">
+<option value="{{ l.val }}">{{ l.et }}</option>
+</sc-for>
+</select>
+<button type="button" class="h-btn {{ neplBtn }}" onClick="{{ onNepl }}" style="flex:none;min-height:46px;font-size:15px">Doar neplătite</button>
+<button type="button" class="h-btn {{ confBtn }}" onClick="{{ onConf }}" style="flex:none;min-height:46px;font-size:15px">Doar conflicte</button>
+</div>
+
+<!-- Ai venit de pe eticheta violetă a unei comenzi. -->
+<sc-if value="{{ areRef }}" hint-placeholder-val="{{ false }}">
+<div data-rc="row" style="gap:8px;padding:2px 0">
+<span class="rc-badge rc-badge--tap">Doar {{ refNume }}</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onRefClear }}" style="min-height:40px;font-size:14px">Arată-i pe toți</button>
+</div>
+</sc-if>
+
+<!-- Sub 760px: un singur buton care spune ce e ales acum. Degetul nu
+     trebuie să deschidă lista ca să afle unde e. -->
+<div data-rc="toolsphone" style="align-items:stretch;gap:8px">
+<button type="button" onClick="{{ onSheetOpen }}" style="flex:1;min-width:0;min-height:56px;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+<span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Filtre</span>
+<span style="max-width:100%;font-size:15px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ filtreLabel }}</span>
+</span>
+<span style="flex:none;font-size:16px;color:var(--h-fg-subtle)">▾</span>
+</button>
+</div>
+
+<sc-if value="{{ listaGoala }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:15px;line-height:1.6;color:var(--h-fg-muted);text-wrap:pretty">{{ golText }}</p>
+</sc-if>
+
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ oameni }}" as="o" hint-placeholder-count="3">
+<div style="border:1px solid var(--h-line);border-radius:16px;overflow:hidden">
+
+<button type="button" onClick="{{ o.onToggle }}" style="width:100%;display:flex;align-items:center;gap:12px;min-height:60px;padding:10px 14px;background:var(--h-bg-surface);border:0;border-bottom:1px solid {{ o.linie }};color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<span style="font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis">{{ o.nume }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);overflow:hidden;text-overflow:ellipsis">{{ o.sub }}</span>
+</span>
+<span style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex:none">
+<span class="h-numeric" style="font-size:17px;font-weight:700;color:{{ o.datoratFg }}">{{ o.datorat }}</span>
+<span style="font-size:12px;color:var(--h-fg-subtle);white-space:nowrap">de încasat</span>
+</span>
+<span style="width:20px;text-align:center;font-size:15px;color:var(--h-fg-subtle);flex:none">{{ o.sageata }}</span>
+</button>
+
+<sc-if value="{{ o.deschis }}" hint-placeholder-val="{{ true }}">
+<div style="padding:8px 14px 14px;display:flex;flex-direction:column;gap:2px;background:var(--h-bg-page)">
+<sc-for list="{{ o.randuri }}" as="r" hint-placeholder-count="3">
+<div data-rc="histrow" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--h-line)">
+<button type="button" onClick="{{ r.onPay }}" title="{{ r.bifaTitlu }}" disabled="{{ r.bifaOff }}" style="flex:none;width:30px;height:30px;border-radius:9px;border:1px solid {{ r.bifaLine }};background:{{ r.bifaBg }};color:{{ r.bifaFg }};font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center">{{ r.bifa }}</button>
+<span data-rc="histname" style="flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;opacity:{{ r.randOpac }};text-decoration:{{ r.numeTaiat }}">{{ r.nume }}</span>
+<sc-if value="{{ r.scos }}">
+<span style="flex:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:var(--h-bg-page);color:var(--h-fg-subtle);border:1px solid var(--h-line);white-space:nowrap">scos</span>
+</sc-if>
+<sc-if value="{{ r.areStare }}">
+<span style="flex:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;background:{{ r.stareBg }};color:{{ r.stareFg }};white-space:nowrap">{{ r.stare }}</span>
+</sc-if>
+<span style="font-size:12px;color:var(--h-fg-subtle);white-space:nowrap">{{ r.data }}</span>
+<span class="h-numeric" style="font-size:12px;color:var(--h-fg-subtle);white-space:nowrap">{{ r.socoteala }}</span>
+<span class="h-numeric" style="font-size:15px;font-weight:700;white-space:nowrap;min-width:86px;text-align:right;opacity:{{ r.randOpac }};text-decoration:{{ r.numeTaiat }}">{{ r.suma }}</span>
+<button type="button" data-rc="histout" onClick="{{ r.onScos }}" title="{{ r.scosTitlu }}" disabled="{{ r.scosOff }}" style="flex:none;min-height:30px;padding:4px 10px;border-radius:9px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:{{ r.scosFg }};font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">{{ r.scosEt }}</button>
+</div>
+</sc-for>
+<div data-rc="row" style="padding-top:10px">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ o.onPayAll }}" style="min-height:44px;font-size:14px">{{ o.payAllLabel }}</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+</div>
+</div>
+
+<!-- ------------------------------------------ foaia de jos, pe telefon -- -->
+<sc-if value="{{ sheet }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:80;background:rgba(27,18,11,.62);display:flex;flex-direction:column;justify-content:flex-end;animation:rc-fade .18s var(--h-ease-out)">
+<div class="h-card" style="width:100%;flex:none;max-height:90vh;overflow-y:auto;padding:16px 16px 22px;border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:8px;animation:rc-pop .22s var(--h-ease-spring)">
+<div style="position:sticky;top:-16px;z-index:1;display:flex;align-items:center;gap:12px;padding:6px 0;background:var(--h-bg-surface)">
+<h2 class="h-h4" style="margin:0;font-size:19px">Filtre și sortare</h2>
+<button type="button" aria-label="Închide filtrele" class="h-btn h-btn--ghost" onClick="{{ onSheetClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+</div>
+
+<input class="h-input" value="{{ q }}" onChange="{{ onQ }}" placeholder="Caută firma, recomandantul sau codul" style="height:52px;font-size:16px">
+
+<p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Sortare</p>
+<sc-for list="{{ sortOpts }}" as="s" hint-placeholder-count="6">
+<button type="button" onClick="{{ s.onPick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">{{ s.et }}</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ s.mark }}</span>
+</button>
+</sc-for>
+
+<p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Arată</p>
+<button type="button" onClick="{{ onNepl }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ neplBd }};background:{{ neplBg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">Doar neplătite</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ neplMark }}</span>
+</button>
+<button type="button" onClick="{{ onConf }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ confBd }};background:{{ confBg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">Doar conflicte</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ confMark }}</span>
+</button>
+
+<p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Luna</p>
+<sc-for list="{{ luniOpts }}" as="l" hint-placeholder-count="4">
+<button type="button" onClick="{{ l.onPick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ l.bd }};background:{{ l.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0">{{ l.et }}</span>
+<span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ l.mark }}</span>
+</button>
+</sc-for>
+
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onSheetClose }}" style="margin-top:12px;min-height:54px;font-size:16px">Gata</button>
+</div>
+</div>
+</sc-if>
+
+</x-dc>
+
+<script type="text/x-dc" data-dc-script>
+/**
+ * Recomandări — codul, câștigurile, plata.
+ *
+ * O pagină, două fețe după rol:
+ *
+ *   oricine        — codul propriu, linkul, cele trei plăci, rezumatul pe
+ *                    cumpărător (asta vede distribuitorul: numele firmei și cât
+ *                    a câștigat de la ea) și istoricul pe comenzi;
+ *   administrator  — în plus: conflictele de rezolvat, PRIMELE, și lista
+ *                    tuturor recomandanților, cu căutare, sortare și bifa de
+ *                    plată pe fiecare rând.
+ *
+ * Cele două fețe vin din DOUĂ RUTE DEOSEBITE, nu din aceeași cu un `if` în
+ * pagină: `GET /referrals` scoate numai rândurile celui conectat și nici măcar
+ * nu conține cheile din care s-ar afla totalul comenzii; `GET /referrals/all`
+ * cere rol de administrator. Confidențialitatea e apărată în `WHERE`, pe
+ * server — pagina doar desenează ce a primit.
+ *
+ * Sortarea și căutarea se fac AICI, nu pe server, dinadins: lista unei
+ * patiserii are sute de rânduri, iar un drum la bază la fiecare literă tastată
+ * ar fi mai lent decât filtrarea locală. Ce se mărginește pe server e luna —
+ * singurul interval care poate crește nemărginit.
+ */
+
+/** Bani, scriși ca în tot restul aplicației: „18,50 RON". */
+function bani(v) {
+  const n = Math.round((Number(v) || 0) * 100) / 100;
+  return n.toFixed(2).replace(".", ",") + " RON";
+}
+
+/**
+ * Procentul scris pe rând: „5%", „2,5%" — sau NIMIC, dacă nu se știe.
+ *
+ * `bani()` de mai sus e prevăzătoare (`Number(v) || 0`); `String()` nu e. Pe un
+ * rând venit fără procent — un server neactualizat, o rută care uită coloana —
+ * `String(undefined)` scria chiar cuvântul „undefined" lângă banii omului:
+ * „900,00 RON × undefined%". Aici lipsa TACE.
+ *
+ * Un zero pus în locul lipsei ar fi fost mai rău decât „undefined": ar fi
+ * AFIRMAT că procentul e zero, adică „din comanda asta nu-ți vine nimic" —
+ * ceva ce nimeni nu știe și ce omul ar fi crezut, fiindcă e scris cu cifre.
+ *
+ * Ce a venit se scrie CUM a venit: „5.00" de la server rămâne „5,00%", nu
+ * devine „5%". Trecerea prin `Number` e numai judecată, nu rescriere.
+ */
+function procentRand(rata) {
+  if (rata === null || rata === undefined || rata === "") return "";
+  if (!Number.isFinite(Number(rata))) return "";
+  return String(rata).replace(".", ",") + "%";
+}
+
+/** Socoteala de pe rând: „900,00 RON × 5%". Fără procent, șir gol. */
+function socotealaRand(baza, rata) {
+  const p = procentRand(rata);
+  return p ? bani(baza) + " × " + p : "";
+}
+
+/** „2026-09-24" → „24.09.2026". Data zilei comenzii, nu un moment UTC. */
+function ziRo(s) {
+  const t = String(s || "").slice(0, 10);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+  return m ? m[3] + "." + m[2] + "." + m[1] : t;
+}
+
+/**
+ * Etichetele de stare.
+ *
+ * În bază, fără diacritice și în limba schemei: „activ", „in_asteptare",
+ * „anulat". Pe ecran, în limba omului care citește — un distribuitor nu are
+ * ce face cu cuvântul „activ", el vrea să știe dacă banii au venit sau nu.
+ * De-aia „activ" neplătit se scrie „de încasat", exact ca placa de sus.
+ */
+const STARI = {
+  activ:        { et: "de încasat",   bg: "rgba(139,92,246,.14)", fg: "#6D28D9" },
+  in_asteptare: { et: "în așteptare", bg: "rgba(217,119,6,.16)",  fg: "#9A5B06" },
+  anulat:       { et: "anulat",       bg: "rgba(120,113,108,.16)", fg: "#57534E" }
+};
+
+const SORTARI = [
+  // Implicit: „cât îi mai datorăm". E întrebarea de zi cu zi — cine așteaptă
+  // bani de la mine — iar o listă alfabetică ar cere-o căutată cu ochii.
+  { val: "datorat",  et: "Cât îi mai datorăm" },
+  { val: "castigat", et: "Cât a câștigat, cu totul" },
+  { val: "nume",     et: "Alfabetic" },
+  { val: "ultima",   et: "Data ultimei comenzi" },
+  { val: "comenzi",  et: "Număr de comenzi" },
+  { val: "neplatit", et: "Neplătite întâi" }
+];
+
+class Component extends DCLogic {
+  state = {
+    // Două locuri pentru refuzuri, nu unul. Pagina face DOUĂ cereri deosebite
+    // — câștigurile MELE (`gp.referrals`) și lista întreagă (`gp.referralsAll`)
+    // — iar cu un singur câmp reușita uneia ștergea mesajul celeilalte: omul
+    // schimba luna, lista venea, iar motivul pentru care câștigurile lui
+    // lipsesc de pe ecran dispărea fără să fi fost reparat ceva. Fiecare
+    // cerere își stinge numai propriul mesaj. Caseta de sus le arată pe
+    // amândouă, fiindcă `gp.motiv()` numește în frază lucrul care n-a venit.
+    navOpen: false, auth: null, loaded: false, err: "", eroareMine: "", eroareLista: "",
+    mine: null, all: null,
+    // Fereastra spre ruta de azi (`GET /routes/mine`), pentru agent. `null`
+    // înseamnă „încă nu s-a aflat", și atunci cartonașul tace — nu spune
+    // nici că are livrări, nici că n-are.
+    ruta: null,
+    cod: null, link: "", canMake: false, money: true,
+    q: "", sort: "datorat", luna: "", nepl: false, conf: false,
+    refId: "", sheet: false, deschise: {}, copiat: "", busy: false,
+    // Contul de cumpărător făcut de agent, de pe telefon, în fața omului.
+    // Ține tot ce se tastează într-un singur loc: câmpurile astea n-au ce
+    // căuta amestecate cu starea listei de comisioane, iar la reușită se
+    // golesc dintr-o mișcare.
+    // `adresa` și `zona` sunt noi: agentul care înscrie o cofetărie știe pe loc
+    // unde e. Scrise aici, comanda lui dintâi pleacă cu loc de livrare; scrise
+    // mai târziu, cineva dă un telefon ca să le afle.
+    cont: { open: false, nume: "", firma: "", user: "", parola: "", tel: "", adresa: "", zona: "", err: "", gata: "", atentie: "", busy: false },
+    // Zonele vin din Setări. Steagul spune dacă lista chiar a sosit — fără el,
+    // o casetă goală ar zice „patiseria n-are nicio zonă" în loc de „încă n-am
+    // aflat", iar agentul ar înscrie contul fără zonă crezând că n-are ce alege.
+    zoneReady: false,
+    // Comisioanele născute la procentul zero, așa cum ar arăta îndreptate
+    // (`GET /referrals/rate-fix`). `null` înseamnă „încă nu s-a aflat", și
+    // atunci cardul tace — nu spune nici că e ceva de îndreptat, nici că nu e.
+    // Vine numai la administrator; agentul nu bate la ușa aceea.
+    fix: null,
+    // Vestea de după apăsare: câte rânduri s-au îndreptat și cu cât. Stă
+    // deoparte de `err`, fiindcă e o reușită, și deoparte de card, fiindcă
+    // tocmai apăsarea golește cardul — vestea trebuie să rămână pe ecran după
+    // ce lucrul despre care vorbește a dispărut din el.
+    fixMsg: ""
+  };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+
+    // Zonele de livrare, pentru contul de cumpărător făcut de aici. Căderea se
+    // înghite: fără liste, caseta de zonă nu se desenează, dar contul se face
+    // mai departe — o zonă lipsă se pune oricând din „Conturi".
+    gp.lists().then(() => this.setState({ zoneReady: gp.zones().length > 0 })).catch(() => {});
+
+    // `?ref=<id>` — de aici vine eticheta violetă apăsată pe o comandă.
+    // Identificatorul, nu numele: numele se schimbă la o corectură de firmă,
+    // iar legătura ar duce în gol tocmai când cineva o urmează. Se ține ca
+    // ȘIR și se compară ca șir, fiindcă `referrer_id` vine din JSON și un
+    // `"12" === 12` ar fi fals în tăcere.
+    try {
+      const r = new URLSearchParams(window.location.search || "").get("ref");
+      // Deschis din start: cine vine de pe o comandă vrea rândurile, nu titlul.
+      if (r && /^\d+$/.test(r)) {
+        const d = {};
+        d[r] = true;
+        this.setState({ refId: r, deschise: d });
+      }
+      // `?conf=1` — eticheta chihlimbarie de pe o comandă cu două coduri.
+      // Duce direct la lista de conflicte, adică la butoanele de hotărât.
+      const c = new URLSearchParams(window.location.search || "").get("conf");
+      if (c === "1") this.setState({ conf: true });
+
+      // `?q=<cod>` — codul tastat în coș care nu mai are cont în spate.
+      // Nu se poate filtra pe un om care nu există, deci se caută șirul: dacă
+      // vreun rând mai vechi a fost câștigat cu el, patronul îl vede.
+      const q = new URLSearchParams(window.location.search || "").get("q");
+      if (q && q.length <= 64) this.setState({ q: q });
+    } catch (e) { /* fără adresă citibilă, pagina merge întreagă */ }
+
+    this.pull();
+
+    // Ruta se mișcă în timp ce agentul ține pagina deschisă; comisioanele
+    // nu. Deci se împrospătează singură DOAR fereastra spre rută, din
+    // jumătate în jumătate de minut — o listă de comisioane reîncărcată sub
+    // degetul omului i-ar închide rândurile pe care tocmai le desfăcuse.
+    // `gp.poll()` se oprește cât fila e ascunsă, deci telefonul lăsat în
+    // buzunar nu cere nimic.
+    this.stopRuta = gp.poll(() => this.incarcaRuta(), 30000);
+  }
+
+  componentWillUnmount() {
+    if (this.stopRuta) this.stopRuta();
+  }
+
+  /**
+   * Fereastra spre ruta de azi — numai pentru agentul de vânzări.
+   *
+   * Administratorul are ecranul șoferului întreg, iar serverul i-ar întoarce
+   * aici zero opriri „ale lui": cartonașul i-ar fi spus că n-are nicio
+   * livrare azi, ceea ce e fals. Deci pentru el nici nu se cere.
+   *
+   * Contul se ia din argument când vine din `pull()`, fiindcă `setState` de
+   * acolo n-a apucat să intre în `this.state` — o citire din stare ar fi
+   * văzut contul dinainte, adică `null` la prima încărcare, și fereastra
+   * n-ar fi pornit niciodată.
+   *
+   * Un refuz nu aprinde nicio casetă: fereastra e un adaos, nu miezul
+   * paginii. Rămâne `null`, adică „nu se știe", și cartonașul tace.
+   */
+  incarcaRuta(user) {
+    const a = user || this.state.auth;
+    if (!a || a.role !== 'agent_vanzari') return Promise.resolve();
+    return gp.get('/routes/mine')
+      .then((d) => this.setState({ ruta: d }))
+      .catch(() => {});
+  }
+
+  /**
+   * Tot drumul de aducere al paginii, într-un singur loc.
+   *
+   * Întâi cine e omul, apoi ce are el de văzut: fără răspunsul lui `gp.me()`
+   * nu se știe dacă se mai cere și lista administratorului. Strâns aici, nu
+   * lăsat în `componentDidMount`, tocmai ca butonul „Încearcă din nou" să
+   * refacă drumul ÎNTREG — o reîncercare care ar cere numai jumătate ar lăsa
+   * pagina pe jumătate adevărată.
+   *
+   * `gp.me()` nu cade pe 401: pentru omul neconectat întoarce `null`, iar
+   * pagina îi arată cartonul cu „intră întâi în cont". Deci un refuz ajuns
+   * aici e un refuz ADEVĂRAT — server căzut, rețea ruptă — și are voie să
+   * aprindă caseta.
+   */
+  pull() {
+    return gp.me()
+      .then((user) => {
+        this.setState({ auth: gp.auth(user), loaded: true });
+        if (user) this.incarca(user);
+        if (user) this.incarcaRuta(user);
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // `loaded` rămâne adevărat, ca pagina să nu se învârtă la nesfârșit —
+        // asta ar fi altă minciună. Lacătul care oprește cardurile de gol e
+        // MOTIVUL, nu `loaded`: „Încă nimic" e o afirmație despre lume, iar
+        // pagina n-a apucat s-o verifice. Cu `loaded` drept lacăt s-ar fi
+        // aprins oricum, fiindcă tocmai sfârșitul cererii prin refuz e lucrul
+        // de care e vorba.
+        //
+        // Motivul, la plural: câmpul `eroare` nu mai există, a fost despărțit
+        // în `eroareMine` și `eroareLista` — fiecare card se uită la al lui.
+        // Iar „Nu ai încă un cod de recomandare" (`faraCod`) NU e lăcătuit,
+        // dinadins: e scris pe larg 400 de rânduri mai jos, lângă cheie.
+        // Scris aici greșit, rândul ăsta a fost o capcană: cine îl citea se
+        // ducea să pună la loc un lacăt cu `S.eroare`, iar `!undefined` fiind
+        // mereu adevărat, lacătul ar fi intrat ca un cod care nu face nimic.
+        // Merge în `eroareMine`, nu în `eroareLista`: fără răspunsul lui
+        // `gp.me()` niciuna dintre cele două cereri nu pornește, iar lucrul
+        // pe care omul nu-l vede e tot al lui — codul și câștigurile.
+        else this.setState({ eroareMine: gp.motiv(e, "recomandările"), loaded: true });
+      });
+  }
+
+  /**
+   * Cele două cereri.
+   *
+   * Ruta de administrator se cheamă NUMAI dacă omul e administrator — nu ca să
+   * ascundem un buton, ci fiindcă altfel fiecare deschidere a paginii ar lăsa
+   * în jurnalul serverului un 403 pentru fiecare agent, iar un 403 adevărat
+   * s-ar pierde printre ele.
+   */
+  incarca(user) {
+    gp.referrals()
+      .then((d) => this.setState({
+        mine: d, cod: d.code || null, link: d.link || "",
+        canMake: d.canMake === true, money: d.money !== false,
+        // Răspunsul bun își stinge propriul mesaj — și numai pe al lui.
+        // O casetă rămasă deasupra unor date proaspete e tot o minciună,
+        // doar întoarsă pe dos.
+        eroareMine: ""
+      }))
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // Vorbele le pune `gp.motiv()`, nu pagina: cinci copii ale aceluiași
+        // mesaj se depărtează una de alta. Și merg în `eroareMine`, nu în
+        // `err`: `err` e bara pentru ce n-a putut fi SALVAT, pe când aici n-a
+        // putut fi ADUS. Deosebirea o simte omul, fiindcă numai a doua are sub
+        // ea butonul care mai încearcă o dată.
+        else this.setState({ eroareMine: gp.motiv(e, "recomandările") });
+      });
+
+    if (gp.eAdmin(user)) {
+      gp.referralsAll(this.state.luna)
+        .then((d) => this.setState({ all: d, eroareLista: "" }))
+        .catch((e) => {
+          if (e.isAuth) gp.toLogin();
+          // Numit altfel decât cererea de deasupra, fiindcă e alt lucru:
+          // câștigurile MELE au căzut, sau lista TUTUROR. Omul trebuie să
+          // știe care dintre ele lipsește de pe ecran — de aceea și mesajul,
+          // și lacătele care tac din pricina lui, stau în câmpul lor.
+          else this.setState({ eroareLista: gp.motiv(e, "lista de comisioane") });
+        });
+
+      // Comisioanele născute la procentul zero, adică lista din spatele
+      // butonului de îndreptare. Stă înăuntrul aceleiași porți ca lista de
+      // deasupra, și din același motiv: pentru un agent ruta răspunde 403, iar
+      // jurnalul serverului s-ar umple cu refuzuri printre care un 403 adevărat
+      // nu s-ar mai vedea.
+      //
+      // Refuzul se înghite, ca la fereastra spre ruta de azi și din același
+      // motiv: cardul e un ADAOS, nu miezul paginii. Fără răspuns, `fix` rămâne
+      // `null` — „nu se știe" — iar cardul tace. O casetă roșie aici ar sta
+      // peste o pagină în care toate cifrele au venit întregi.
+      gp.get("/referrals/rate-fix")
+        .then((d) => this.setState({ fix: d }))
+        .catch(() => {});
+    }
+  }
+
+  /**
+   * Reîncarcă lista administratorului — după o bifă, o rezolvare sau o lună
+   * schimbată — și, pe lângă ea, câștigurile proprii.
+   *
+   * Sunt DOUĂ cereri, deci două mesaje. Fiecare ramură atinge numai câmpul ei:
+   * reușita listei n-are dreptul să stingă motivul pentru care câștigurile
+   * mele lipsesc de pe ecran. Cu un singur câmp, schimbarea lunii ștergea o
+   * casetă pe care nimeni n-o reparase, iar plăcile și istoricul rămâneau
+   * lipsă fără să mai scrie nicăieri de ce.
+   */
+  reincarcaTot() {
+    gp.referralsAll(this.state.luna)
+      .then((d) => this.setState({ all: d, busy: false, eroareLista: "" }))
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        // Reîncărcarea e tot o ADUCERE, nu o salvare: bifa s-a scris deja pe
+        // server. Dacă ea cade, lista de pe ecran e cea veche, iar cardurile
+        // de gol de sub ea n-ar mai avea dreptul să spună nimic — deci refuzul
+        // merge în caseta cu buton, nu în bara trecătoare.
+        else this.setState({ eroareLista: gp.motiv(e, "lista de comisioane"), busy: false });
+      });
+    // Aici era `.catch(() => {})`: a doua picare se înghițea în tăcere, iar
+    // plăcile rămâneau pe cifrele vechi fără ca omul să afle. Tăcerea e
+    // tocmai lucrul pe care pagina nu are voie să-l facă.
+    gp.referrals()
+      .then((d) => this.setState({ mine: d, eroareMine: "" }))
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ eroareMine: gp.motiv(e, "recomandările") });
+      });
+    // A treia cerere, tot a administratorului: lista comisioanelor născute la
+    // zero. Se reîmprospătează odată cu celelalte fiindcă ea CHIAR se schimbă
+    // de la o apăsare la alta — o bifă de plată scoate un rând din ea, iar un
+    // buton care ar scrie mai departe „3 comisioane" ar promite o faptă pe care
+    // serverul o refuză. Tăcerea la refuz e cea lămurită în `incarca()`.
+    gp.get("/referrals/rate-fix")
+      .then((d) => this.setState({ fix: d }))
+      .catch(() => {});
+  }
+
+  /**
+   * Butonul „Îndreaptă comisioanele născute la 0%", apăsat.
+   *
+   * Nu trimite nicio listă: rândurile atinse le alege serverul, sub aceleași
+   * margini cu care a construit previzualizarea (api/lib/referral.php,
+   * „ÎNDREPTAREA ZEROURILOR"). Un identificator scris în cerere ar fi o ușă pe
+   * care previzualizarea o ține închisă.
+   *
+   * Vestea se scrie din ce a RĂSPUNS serverul, nu din ce se vedea pe ecran
+   * înainte de apăsare: între cele două poate să se fi strecurat o bifă de
+   * plată de pe altă tabletă, iar atunci numărul de pe buton nu mai e cel
+   * schimbat. Zero nu e o eroare — e treaba făcută de cel care a apăsat cu o
+   * clipă înainte — și se spune pe față, ca omul să nu apese a doua oară.
+   *
+   * La sfârșit se reîncarcă TOT, ca la bifa de plată: sumele îndreptate intră
+   * în cele cinci socoteli de sus, iar o stare ciupită local le-ar fi lăsat pe
+   * cifrele vechi.
+   */
+  indreapta() {
+    if (this.state.busy) return;
+    this.setState({ busy: true, err: "", fixMsg: "" });
+    gp.post("/referrals/rate-fix", {})
+      .then((d) => {
+        const n = Number((d && d.changed) || 0);
+        this.setState({
+          fixMsg: n === 0
+            ? "Nu mai era nimic de îndreptat — cineva a apăsat înaintea ta."
+            : (n === 1 ? "Un comision a fost îndreptat" : n + " comisioane au fost îndreptate")
+              + ", cu " + bani(d && d.total) + " cu totul. Scrie și în Jurnal, pe numele tău."
+        });
+        this.reincarcaTot();
+      })
+      .catch((e) => this.setState({
+        err: e.message || "Nu am putut îndrepta comisioanele.",
+        busy: false
+      }));
+  }
+
+  /**
+   * Copiere cu rezervă.
+   *
+   * `navigator.clipboard` lipsește pe http și pe browserele vechi — exact
+   * situația de pe stația de dezvoltare și de pe telefoanele din laborator.
+   * Rezerva prin `document.execCommand` e urâtă, dar merge acolo unde cealaltă
+   * nici nu există. Aceeași pereche e scrisă și în „Client.dc.html".
+   */
+  copiaza(text, ce) {
+    const gata = () => {
+      this.setState({ copiat: ce });
+      setTimeout(() => this.setState({ copiat: "" }), 1600);
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(gata, () => this.copiazaVechi(text, gata));
+        return;
+      }
+    } catch (e) { /* trecem la rezervă */ }
+    this.copiazaVechi(text, gata);
+  }
+
+  copiazaVechi(text, gata) {
+    try {
+      const t = document.createElement("textarea");
+      t.value = text;
+      t.setAttribute("readonly", "");
+      t.style.position = "fixed";
+      t.style.opacity = "0";
+      document.body.appendChild(t);
+      t.select();
+      document.execCommand("copy");
+      document.body.removeChild(t);
+      gata();
+    } catch (e) {
+      this.setState({ err: "Nu am putut copia. Selectează textul și copiază-l cu mâna." });
+    }
+  }
+
+  /**
+   * Rândurile administratorului, strânse pe oameni.
+   *
+   * Criteriile cerute — „cât îi mai datorăm", „cât a câștigat", „număr de
+   * comenzi" — sunt toate ale OMULUI, nu ale unei comenzi. De aceea lista
+   * principală e pe oameni, iar comenzile stau înăuntru, la deschidere. O listă
+   * plată n-ar fi putut fi sortată după niciunul dintre ele.
+   */
+  peOameni() {
+    const S = this.state;
+    const rows = (S.all && S.all.rows) || [];
+    const q = S.q.trim().toLowerCase();
+    const map = new Map();
+
+    for (const r of rows) {
+      // Conflictele au propriul loc, sus. Aici ar fi rânduri fără stăpân.
+      if (r.status === "in_asteptare") continue;
+      if (S.nepl && r.paid) continue;
+      // Rândul scos din socoteală RĂMÂNE în listă, ca patronul să-l poată aduce
+      // înapoi — ascuns cu totul, ar fi un cimitir din care nu se mai iese.
+      // Sub filtrul „doar neplătite" n-are însă ce căuta: acela e teancul de
+      // plată al lunii, iar un rând scos nu se datorează nimănui.
+      if (S.nepl && r.dismissed) continue;
+      // Venit de pe eticheta violetă a unei comenzi: numai omul acela.
+      if (S.refId && String(r.referrer_id) !== S.refId) continue;
+
+      const nume = r.referrer_label || "—";
+      const cump = r.buyer_label || "—";
+      // Și codul cu care s-a câștigat rândul: e singurul lucru pe care patronul
+      // îl are în mână când se uită la un coș, iar `code_used` păstrează șirul
+      // de atunci chiar dacă omul și-a schimbat între timp codul.
+      const cod = String(r.code_used || "").toLowerCase();
+      if (q && nume.toLowerCase().indexOf(q) < 0
+            && cump.toLowerCase().indexOf(q) < 0
+            && cod.indexOf(q) < 0) continue;
+
+      // Cheia e identificatorul, nu numele: doi recomandanți pot ajunge să se
+      // cheme la fel după o corectură de firmă, iar strânși la un loc ar
+      // împărți un total care nu e al niciunuia.
+      const cheie = r.referrer_id ? String(r.referrer_id) : "?" + nume;
+      if (!map.has(cheie)) {
+        map.set(cheie, { cheie: cheie, nume: nume, randuri: [], castigat: 0,
+          platit: 0, platitStins: 0, datorat: 0, ultima: "" });
+      }
+      const o = map.get(cheie);
+      o.randuri.push(r);
+      // Numai „activ" e ban CÂȘTIGAT — anulatul s-a stins. Rândul anulat rămâne
+      // vizibil în listă, ca omul să vadă de ce nu i se socotește.
+      //
+      // Dar PLĂTITUL se numără oricum s-ar fi sfârșit comanda: banii aceia au
+      // ieșit din casă. Numărat numai la „activ", cum era, un comision plătit
+      // pe o comandă anulată după aceea dispărea din placa „Plătit" și nu-l mai
+      // căuta nimeni — deși el e chiar suma pe care patronul o are de
+      // recuperat, ținută deoparte în `platitStins`.
+      // Nicio socoteală nu-l numără — la fel ca pe server, unde cele cinci
+      // plăci au aceeași margine (api/routes/referrals.php, `$undeT`). Dacă
+      // pagina ar aduna altfel decât serverul, două cifre despre aceiași bani
+      // s-ar contrazice pe același ecran.
+      if (!r.dismissed) {
+        if (r.paid) {
+          o.platit += Number(r.amount) || 0;
+          if (r.status !== "activ") o.platitStins += Number(r.amount) || 0;
+        }
+        if (r.status === "activ") {
+          o.castigat += Number(r.amount) || 0;
+          if (!r.paid) o.datorat += Number(r.amount) || 0;
+        }
+      }
+      if (r.order_day > o.ultima) o.ultima = r.order_day;
+    }
+
+    const out = [...map.values()];
+    for (const o of out) {
+      // Adunat direct din rândurile active neplătite, nu ca scădere: cu banii
+      // plătiți pe comenzi anulate în „plătit", scăderea ar putea ieși negativă.
+      o.datorat = Math.round(o.datorat * 100) / 100;
+      o.castigat = Math.round(o.castigat * 100) / 100;
+      o.platit = Math.round(o.platit * 100) / 100;
+      o.platitStins = Math.round(o.platitStins * 100) / 100;
+      o.neplatite = o.randuri.filter((r) => !r.paid && r.status === "activ" && !r.dismissed).length;
+      o.randuri.sort((a, b) => (a.order_day < b.order_day ? 1 : a.order_day > b.order_day ? -1 : b.id - a.id));
+    }
+
+    const cum = {
+      datorat:  (a, b) => b.datorat - a.datorat,
+      castigat: (a, b) => b.castigat - a.castigat,
+      nume:     (a, b) => a.nume.localeCompare(b.nume, "ro"),
+      ultima:   (a, b) => (a.ultima < b.ultima ? 1 : a.ultima > b.ultima ? -1 : 0),
+      comenzi:  (a, b) => b.randuri.length - a.randuri.length,
+      neplatit: (a, b) => b.neplatite - a.neplatite || b.datorat - a.datorat
+    };
+    out.sort(cum[S.sort] || cum.datorat);
+    return out;
+  }
+
+  /** Ultimele douăsprezece luni, ca listă de ales. */
+  luni() {
+    const out = [{ val: "", et: "Toate lunile" }];
+    // Ceasul patiseriei: comisioanele se socotesc pe lunile ei. La începutul
+    // lui septembrie, un telefon pe alt fus ar fi arătat lista pornind din
+    // august, iar luna curentă ar fi lipsit din ea.
+    const azi = gp.acumLaPatiserie();
+    const NUME = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie",
+      "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(azi.getFullYear(), azi.getMonth() - i, 1);
+      const val = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      out.push({ val: val, et: NUME[d.getMonth()] + " " + d.getFullYear() });
+    }
+    return out;
+  }
+
+  plateste(ids, paid) {
+    if (!ids.length || this.state.busy) return;
+    this.setState({ busy: true, err: "" });
+    gp.referralsPay(ids, paid)
+      .then(() => this.reincarcaTot())
+      .catch((e) => this.setState({ err: e.message || "Bifa nu s-a putut salva.", busy: false }));
+  }
+
+  renderVals() {
+    const S = this.state;
+    const set = (x) => this.setState(x);
+    // Formularul de cont nou trăiește într-un singur obiect din stare, deci se
+    // schimbă câmp cu câmp printr-o funcție a lui. Citit din `s`, nu din `c`:
+    // două taste apăsate în aceeași randare ar fi pornit amândouă de la aceeași
+    // copie veche, iar a doua ar fi ștearsă-o pe prima.
+    const c = S.cont;
+    const setC = (p) => this.setState((s) => ({ cont: Object.assign({}, s.cont, p) }));
+    const a = S.auth;
+    const eAdmin = !!a && gp.eAdmin(a);
+    const mine = S.mine || {};
+    const tot = mine.totals || { earned: 0, paid: 0, due: 0, paidCancelled: 0 };
+
+    const sel = (v) => (v ? "var(--h-accent)" : "var(--h-line)");
+    const selBg = (v) => (v ? "rgba(179,74,22,.10)" : "var(--h-bg-surface)");
+
+    /* --------------------------------------------------- conflictele -- */
+    // Conflictele scoase rămân în listă, tăiate: un cod tastat greșit e chiar
+    // cel mai obișnuit motiv de scoatere, iar dacă rândul ar dispărea de aici
+    // n-ar mai fi nicăieri de unde adus înapoi — în lista pe oameni nu intră,
+    // fiindcă un conflict n-are încă niciun câștigător sub care să stea.
+    const conflicte = ((S.all && S.all.rows) || [])
+      .filter((r) => r.status === "in_asteptare")
+      .map((r) => ({
+        cumparator: r.buyer_label || "—",
+        scos: !!r.dismissed,
+        scosOff: !!r.dismissed,
+        taiat: r.dismissed ? "line-through" : "none",
+        scosEt: r.dismissed ? "Adu înapoi în socoteală" : "Scoate din socoteală",
+        onScos: () => this.scoate(r.id, !r.dismissed),
+        despre: "comanda " + (r.order_ref || "#" + r.order_id) + " · " + ziRo(r.order_day)
+          + " · " + bani(r.base_total),
+        // Numele mare, codul mic dedesubt: patronul alege între doi OAMENI, nu
+        // între două șiruri. Pe un rând, „Recomandantul contului (probacod…)"
+        // ieșea din card pe telefon; pe trei etaje, orice cod încape.
+        contNume: r.code_account_name || "cod fără cont activ",
+        contCod: r.code_account || "—",
+        tastatNume: r.code_typed_name || "cod fără cont activ",
+        tastatCod: r.code_typed || "—",
+        onCont: () => this.rezolva(r.id, r.code_account),
+        onTastat: () => this.rezolva(r.id, r.code_typed)
+      }));
+
+    /* -------------------------- comisioanele născute la procentul zero -- */
+
+    // Lista o hotărăște SERVERUL, nu pagina (`referral_zero_rate_preview()`),
+    // și dinadins: ce se arată aici trebuie să fie chiar ce se atinge la
+    // apăsare. Filtrată încă o dată în pagină, cele două s-ar fi putut depărta
+    // una de alta la prima reparație, iar butonul ar fi devenit o surpriză.
+    //
+    // Rândurile PLĂTITE nu ajung niciodată până aici: serverul nici măcar nu le
+    // citește. O previzualizare care ar arăta o chitanță printre cele „de
+    // îndreptat" ar fi o promisiune pe care nimeni n-o ține.
+    const fixRanduri = (S.fix && S.fix.rows) || [];
+    // Câte o linie de rând, într-un singur șir, desenat cu `white-space:pre-line`.
+    // NU e un `<sc-for>`, deși ar fi fost firesc: socoteala fiecărui rând se
+    // citește dintr-o privire, iar o listă de rânduri desenate ar fi cerut
+    // o coloană de etichete pentru un card care, după o apăsare, nu mai apare
+    // niciodată. Ce se vede e tot ce trebuie ca omul să verifice o sumă:
+    // cine încasează, de la cine, din ce comandă, ce bază, ce procent, ce sumă.
+    const fixLinii = fixRanduri.map((r) => {
+      // Procentul e singura bucată a liniei care poate lipsi: `rate_new` vine
+      // din socoteala de acum a serverului, nu din rândul înghețat. Fără el
+      // linia rămâne întreagă — bază, egal, sumă — și tace doar înmulțirea.
+      const p = procentRand(r.rate_new);
+      return (r.referrer_label || "câștigător fără nume")
+        + "  ←  " + (r.buyer_label || "cumpărător fără nume")
+        + " · comanda " + (r.order_ref || "#" + r.order_id)
+        + " · " + ziRo(r.order_day)
+        + " · " + bani(r.base_total)
+        + (p ? " × " + p : "")
+        + "  =  " + bani(r.amount_new)
+        + (r.dismissed ? "   (scos din socoteală)" : "");
+    }).join("\n");
+
+    // Procentul de AZI al omului care se uită la pagină. Serverul îl trimite de
+    // mult (`route_referrals_mine`, câmpul `rate`), dar pagina îl arunca — iar
+    // fără el „0,00 RON" rămâne un zero mut. Se citește ca NUMĂR și se compară
+    // cu zero: `undefined` nu e zero, e „încă nu s-a aflat", iar o pagină care
+    // n-a primit încă răspunsul n-are voie să afirme nimic despre bani.
+    const rataMea = Number(mine.rate);
+    // Procentul CASEI ajunge numai la administrator (`defaultRate`, din
+    // `route_referrals_all`). E aici ca să nu mințim: un cont căruia i s-a pus
+    // dinadins 0% din „Conturi" nu se repară din Setări, iar o singură frază
+    // pentru amândouă cazurile l-ar fi trimis pe om unde nu trebuie.
+    const rataCasei = (S.all && S.all.defaultRate !== undefined && S.all.defaultRate !== null)
+      ? Number(S.all.defaultRate)
+      : null;
+    const procentZero = S.money !== false && !!S.mine && rataMea === 0;
+
+    /* ------------------------------------------------- lista pe oameni -- */
+    const oameni = (eAdmin && !S.conf) ? this.peOameni().map((o) => {
+      const deschis = !!S.deschise[o.cheie];
+      // „Bifează tot ce e neplătit" nu le ia și pe cele scoase: serverul le-ar
+      // refuza oricum în tăcere, iar numărul de pe buton ar minți.
+      const neplatiteIds = o.randuri
+        .filter((r) => !r.paid && r.status === "activ" && !r.dismissed).map((r) => r.id);
+      return {
+        nume: o.nume,
+        sub: o.randuri.length + (o.randuri.length === 1 ? " comandă" : " comenzi")
+          + " · câștigat " + bani(o.castigat) + " · plătit " + bani(o.platit)
+          + (o.ultima ? " · ultima " + ziRo(o.ultima) : ""),
+        datorat: bani(o.datorat),
+        datoratFg: o.datorat > 0 ? "var(--h-accent)" : "var(--h-fg-subtle)",
+        sageata: deschis ? "▴" : "▾",
+        linie: deschis ? "var(--h-line)" : "transparent",
+        deschis: deschis,
+        onToggle: () => {
+          const d = Object.assign({}, S.deschise);
+          if (d[o.cheie]) delete d[o.cheie]; else d[o.cheie] = true;
+          set({ deschise: d });
+        },
+        payAllLabel: neplatiteIds.length
+          ? "Bifează tot ce e neplătit (" + neplatiteIds.length + ")"
+          : "Nimic neplătit",
+        onPayAll: () => this.plateste(neplatiteIds, true),
+        randuri: o.randuri.map((r) => {
+          // Rândul purta doar nume, dată, socoteală și sumă — nicăieri nu scria
+          // că e stins. Bifa era vie pe el, iar o apăsare greșită „plătea" un
+          // comision anulat: banii ieșeau, iar rândul nu intra în nicio placă.
+          // Acum starea e scrisă pe rând, iar bifa e închisă exact acolo unde o
+          // închide și serverul (api/lib/referral.php, `commission_not_payable`).
+          // Rămâne deschisă pe rândul ANULAT DAR PLĂTIT: aceea e singura cale
+          // prin care patronul își scoate bifa înapoi.
+          const activ = r.status === "activ";
+          const st = STARI[r.status] || STARI.activ;
+          // Tăiat, nu ascuns, și palid: se citește dintr-o privire că rândul e
+          // acolo dar nu se numără. Bifa de plată se închide pe el, fiindcă
+          // serverul o refuză oricum (api/lib/referral.php, `referral_dismiss_where`).
+          return {
+            nume: r.buyer_label || "—",
+            scos: !!r.dismissed,
+            numeTaiat: r.dismissed ? "line-through" : "none",
+            randOpac: r.dismissed ? ".5" : "1",
+            scosEt: r.dismissed ? "Adu înapoi" : "Scoate",
+            scosTitlu: r.dismissed
+              ? "Adu comisionul înapoi în socoteală"
+              : (r.paid
+                ? "Scoate întâi bifa de plată: banii au ieșit deja din casă"
+                : "Scoate comisionul din socoteală, fără să-l ștergi"),
+            scosOff: !!r.paid && !r.dismissed,
+            scosFg: r.dismissed ? "var(--h-accent)" : "var(--h-fg-subtle)",
+            onScos: () => this.scoate(r.id, !r.dismissed),
+            data: ziRo(r.order_day),
+            // Socoteala scrisă pe ecran, din cifrele înghețate în rând: omul
+            // trebuie să poată verifica plata fără să întrebe pe nimeni.
+            socoteala: socotealaRand(r.base_total, r.rate),
+            suma: bani(r.amount),
+            areStare: !activ,
+            stare: st.et,
+            stareBg: st.bg,
+            stareFg: st.fg,
+            bifa: r.paid ? "✓" : "",
+            bifaOff: (!activ && !r.paid) || !!r.dismissed,
+            bifaTitlu: r.dismissed
+              ? "Comisionul e scos din socoteală: adu-l întâi înapoi"
+              : (r.paid
+                ? "Plătit — apasă ca să scoți bifa"
+                : (activ
+                  ? "Bifează ca plătit"
+                  : "Comanda e " + st.et + ": comisionul nu se mai datorează")),
+            bifaBg: r.paid ? "rgba(34,150,83,.16)" : "var(--h-bg-surface)",
+            bifaFg: r.paid ? "#1B7A43" : "var(--h-fg-subtle)",
+            bifaLine: r.paid ? "rgba(34,150,83,.45)" : "var(--h-line)",
+            onPay: () => this.plateste([r.id], !r.paid)
+          };
+        })
+      };
+    }) : [];
+
+    const sortEt = (SORTARI.find((s) => s.val === S.sort) || SORTARI[0]).et;
+    const lunaEt = (this.luni().find((l) => l.val === S.luna) || { et: "Toate lunile" }).et;
+    const refRand = S.refId
+      ? ((S.all && S.all.rows) || []).find((r) => String(r.referrer_id) === S.refId)
+      : null;
+    const refNume = refRand ? (refRand.referrer_label || "recomandantul ales") : "recomandantul ales";
+
+    return {
+      /* ------------------------------------------------------ antet -- */
+      // Fără lacăt, o cerere căzută îl trimitea pe omul CONECTAT la „intră
+      // întâi în cont": pagina nu apucase să afle cine e, deci hotăra că nu e
+      // nimeni. Cel mai rău fel de minciună — una care îl pune pe drumuri.
+      // Lacătul e pe `eroareMine`, fiindcă acolo scrie `pull()` când `gp.me()`
+      // cade: dacă lista de comisioane pică, pagina ȘTIE cine e omul, iar
+      // cartonul n-are de ce să tacă.
+      anonim: S.loaded && !a && !S.eroareMine,
+      deschis: !S.loaded || !!a,
+      sub: a ? "Contul „" + a.name + "”" : "Codul tău de recomandare și câștigurile din el",
+      // Sertarul de meniu, același marcaj ca în panouri. Înainte aici era o
+      // singură legătură de întoarcere, care ghicea pe rol de unde ai venit
+      // — și ghicea prost pentru agentul de vânzări, pe care îl trimitea la
+      // administrare deși pagina asta e chiar casa lui.
+      meniu: gp.meniu("Recomandări", a),
+      navHere: "Recomandări",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(a),
+
+      /* --------------------------------------- livrările de azi -- */
+      // Cartonașul se desenează numai pentru agent și numai DUPĂ ce
+      // serverul a răspuns: până atunci pagina nu știe nimic, iar „nu aveți
+      // nicio comandă azi" ar fi o afirmație pe care n-a verificat-o.
+      areRuta: !!S.ruta && !!a && a.role === "agent_vanzari",
+      rutaSub: gp.rutaRezumat(S.ruta),
+      areOpririMele: !!(S.ruta && (S.ruta.mine || []).length),
+      faraOpririMele: !!S.ruta && !(S.ruta.mine || []).length,
+      // Numele cumpărătorului, unde se duce marfa, și a câta oprire e.
+      // Serverul nu trimite nici telefon, nici adresă: pe ecranul ăsta n-au
+      // ce căuta, iar ce nu pleacă din server nu se poate scurge din pagină.
+      opririMele: ((S.ruta && S.ruta.mine) || []).map((m) => ({
+        nume: m.customer || "Fără nume",
+        unde: [m.zone || "", m.slot || ""].filter(Boolean).join(" · "),
+        cat: m.delivered
+          ? "Livrată"
+          : typeof m.stopsBefore !== "number"
+            ? "Pe rută"
+            : m.stopsBefore === 0 ? "Urmează" : "Peste " + gp.opriri(m.stopsBefore),
+        cls: m.delivered ? "h-badge h-badge--success" : "h-badge h-badge--accent"
+      })),
+      navOpen: S.navOpen,
+      onNavOpen: () => set({ navOpen: true }),
+      onNavClose: () => set({ navOpen: false }),
+      onNavKeep: (e) => e.stopPropagation(),
+      navWho: !!a,
+      navAnon: false,
+      authName: a ? a.name : "",
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+      err: S.err,
+      // O singură casetă pentru două cereri, dar nu un singur MESAJ: dacă
+      // amândouă au căzut, se scriu amândouă motivele, una după alta. Fraza
+      // lui `gp.motiv()` numește ea lucrul care n-a venit („recomandările",
+      // „lista de comisioane"), deci omul vede care dintre ele lipsește.
+      eroare: [S.eroareMine, S.eroareLista].filter(function (m) { return !!m; }).join(" "),
+      // Titlul era scris fix în marcaj, „Recomandările nu s-au încărcat." —
+      // adevărat când pică `gp.me()` sau câștigurile omului, fals când pică
+      // NUMAI lista întreagă a patronului: atunci codul, cele trei plăci și
+      // istoricul se văd întregi chiar sub el, iar omul pleacă crezând că
+      // cifrele de dedesubt sunt vechi. Caseta stă prima în document, deci
+      // fraza aceea era primul lucru de pe ecran.
+      //
+      // Acum titlul spune care dintre cele două a căzut. Când cad amândouă,
+      // rămâne cel mare: e adevărat pentru amândouă.
+      eroareTitlu: S.eroareMine
+        ? "Recomandările nu s-au încărcat."
+        : "Lista de comisioane nu s-a încărcat.",
+      // Bloc cu acolade, nu săgeată scurtă: golirea trebuie să apuce să intre
+      // în stare ÎNAINTE de noua cerere, altfel caseta roșie ar rămâne aprinsă
+      // peste o pagină tocmai încărcată bine. `set` de mai sus nu duce mai
+      // departe funcția de după, deci aici se cheamă `setState` pe față.
+      onReincearca: () => {
+        // Amândouă câmpurile, fiindcă `pull()` reface drumul ÎNTREG: ar fi
+        // nedrept să pornească o cerere nouă cu motivul vechi al celeilalte
+        // încă pe ecran.
+        this.setState({ eroareMine: "", eroareLista: "" }, () => this.pull());
+      },
+
+      /* ----------------------------------------------------- codul -- */
+      areCod: !!S.cod,
+      // FĂRĂ lacăt de eroare, dinadins. `faraCod` nu e un carton de gol: e
+      // SINGURUL loc din care omul își face codul — propoziția „Nu ai încă un
+      // cod de recomandare" plus butonul „Fă-mi un cod". Paza lui adevărată e
+      // `S.canMake`, care rămâne fals până când `gp.referrals()` chiar
+      // răspunde, deci pe cererea căzută cartonul oricum nu apare.
+      // Un `&& !S.eroare` aici nu apăra nimic și lua unealta tocmai când omul
+      // avea nevoie de ea: administratorului fără cod îi pica
+      // `GET /referrals/all` — altă cerere, fără nicio legătură cu codul lui —
+      // și butonul dispărea, lăsând pe ecran doar „Încă nu ai unul." (`codSub`)
+      // fără nimic dedesubt.
+      faraCod: !S.cod && S.canMake,
+      cod: S.cod || "",
+      link: S.link || "",
+      // Trei stări, nu două: cu cod, fără cod dar se poate face, și fără cod
+      // fără să se poată face — ultima e instalarea căreia nu i s-a importat
+      // încă sql/007. Ea n-are buton sub ea, deci propoziția e tot ce rămâne.
+      // Propoziția asta e o afirmație despre contul omului, nu o etichetă.
+      // Pe `!S.mine` — adică înainte de răspuns, sau după un refuz — ea
+      // spunea „Încă nu ai unul, iar acum nu se poate face niciunul. Sună la
+      // patiserie.", deci îl trimitea la telefon pentru o lipsă pe care pagina
+      // n-o aflase de nicăieri. Tace până când chiar are ce spune; ce s-a
+      // întâmplat scrie în caseta de sus.
+      codSub: !S.mine
+        ? ""
+        : (S.cod
+            ? "Dă-l mai departe. Cine cumpără cu el îți aduce comision."
+            : (S.canMake
+                ? "Încă nu ai unul."
+                : "Încă nu ai unul, iar acum nu se poate face niciunul. Sună la patiserie.")),
+      copyCodLabel: S.copiat === "cod" ? "Copiat ✓" : "Copiază codul",
+      copyLinkLabel: S.copiat === "link" ? "Copiat ✓" : "Copiază linkul",
+      onCopyCod: () => this.copiaza(S.cod || "", "cod"),
+      onCopyLink: () => this.copiaza(S.link || "", "link"),
+      onSelectLink: (e) => { try { e.target.select(); } catch (x) { /* noop */ } },
+      makeLabel: S.busy ? "Se face…" : "Fă-mi un cod",
+      onMakeCode: () => {
+        if (S.busy) return;
+        set({ busy: true, err: "" });
+        gp.referralMakeCode()
+          .then((d) => set({ cod: d.code, link: d.link, canMake: false, busy: false }))
+          .catch((e) => set({ err: e.message || "Nu am putut face codul.", busy: false }));
+      },
+
+      /* ------------------------------- contul de cumpărător, făcut aici -- */
+      // Cui i se arată: exact cui îi răspunde serverul. Fără cod, serverul
+      // răspunde oricum „n-ar avea cum să fie legat de tine" (409), iar un
+      // buton care duce numai la un refuz e mai rău decât niciun buton.
+      //
+      // Și rolul se cere, nu doar „nu e client". `POST /users` e
+      // `require_staff()` cu o poartă îngustă imediat dedesubt: cine nu e
+      // administrator sau fondator TREBUIE să fie agent de vânzări, altfel 403
+      // `not_allowed` (api/routes/users.php · `route_users_create()`).
+      // „a.role !== 'client'" lăsa deci butonul și managerului și angajatului
+      // cu cod — amândoi îl apăsau și primeau refuzul. De când „Recomandări"
+      // urmează codul și nu matricea rolului (shared/gp-api.js · `gp.meniu`),
+      // amândoi ajung chiar în pagina asta, deci butonul nu mai e o
+      // închipuire.
+      potFaceCont: !!(a && S.cod && (gp.eAdmin(a) || a.role === "agent_vanzari")),
+      contDeschis: !!c.open,
+      contToggleEt: c.open ? "Renunț" : "Fă un cont de cumpărător",
+      onContToggle: () => setC({ open: !c.open, err: "", gata: "", atentie: "" }),
+      contNume: c.nume, contFirma: c.firma, contUser: c.user,
+      contParola: c.parola, contTel: c.tel,
+      contAdresa: c.adresa, contZona: c.zona,
+      onContNume: (e) => setC({ nume: e.target.value }),
+      onContFirma: (e) => setC({ firma: e.target.value }),
+      onContUser: (e) => setC({ user: e.target.value }),
+      onContParola: (e) => setC({ parola: e.target.value }),
+      onContTel: (e) => setC({ tel: e.target.value }),
+      onContAdresa: (e) => setC({ adresa: e.target.value }),
+      onContZona: (e) => setC({ zona: e.target.value }),
+      zoneReady: S.zoneReady,
+      zoneOpts: [{ v: "", l: "Alege zona (nu e obligatoriu)" }]
+        .concat(gp.zones().map((z) => ({ v: z, l: z }))),
+      // Vestea se dă agentului în clipa în care alege, nu clientului în ziua în
+      // care așteaptă mașina. Întrebarea e pusă hărții, nu numelui zonei.
+      contZonaSfat: gp.zoneFaraPunct(c.zona)
+        ? "Zonă din afara orașului: nu intră pe ruta șoferului, iar ora livrării se confirmă la telefon."
+        : "Sectorul sau zona în care livrăm. Se completează singură la comenzile lui.",
+      contErr: c.err,
+      contGata: c.gata,
+      contAtentie: c.atentie,
+      contOff: !!c.busy,
+      contSalvEt: c.busy ? "Se face contul…" : "Fă contul",
+      onContSalveaza: () => {
+        if (c.busy) return;
+        const nume = (c.nume || "").trim();
+        // Utilizatorul se coboară la litere mici aici, nu doar pe server:
+        // altfel omul tastează „Maria", serverul îl primește „maria", iar
+        // agentul îi dictează la telefon numele cu majusculă pe care contul
+        // nu-l are.
+        const user = (c.user || "").trim().toLowerCase();
+        const parola = c.parola || "";
+        if (!nume || !user || parola.length < 8) {
+          return setC({ err: "Numele, utilizatorul și o parolă de cel puțin 8 caractere sunt obligatorii.", gata: "", atentie: "" });
+        }
+        // `linkToMe` e cererea de legare, spusă pe față. Pentru agent legarea
+        // vine oricum — butonul lui n-are alt rost — dar pentru administrator
+        // și fondator NU venea deloc, fiindcă ruta citea codul numai pe ramura
+        // celui care nu e administrator. Propoziția de mai jos spunea totuși
+        // „e legat de codul tău", și nimeni n-avea de unde afla că nu e.
+        //
+        // „Conturi" nu trimite steagul și rămâne neatinsă: acolo un cont nou nu
+        // e o recomandare, e o înregistrare.
+        const corp = { username: user, name: nume, password: parola, role: "client", linkToMe: true };
+        if ((c.firma || "").trim()) corp.customerName = c.firma.trim();
+        if ((c.tel || "").trim()) corp.phone = c.tel.trim();
+        // La fel ca firma și telefonul: se trimit numai dacă s-a scris ceva.
+        // Un câmp gol lăsat în cerere ar scrie NULL peste NULL și ar lăsa în
+        // Jurnal urma unei schimbări care n-a avut loc.
+        if ((c.adresa || "").trim()) corp.address = c.adresa.trim();
+        if ((c.zona || "").trim()) corp.zone = c.zona.trim();
+        setC({ busy: true, err: "", gata: "", atentie: "" });
+        gp.post("/users", corp)
+          .then((d) => {
+            // NU SE MAI AFIRMĂ NIMIC: se repetă ce a răspuns serverul.
+            // `referrer` e null când legătura nu s-a scris — și asta se poate
+            // întâmpla și cu codul în mână, fiindcă `referral_link_new_user()`
+            // înghite orice piedică dinadins (o recomandare nescrisă nu e
+            // motiv să cadă contul). Singurul loc de unde se mai poate afla
+            // dacă s-a scris e chiar răspunsul.
+            const legat = d && d.referrer;
+            setC({
+              open: false, nume: "", firma: "", user: "", parola: "", tel: "",
+              adresa: "", zona: "",
+              busy: false, err: "",
+              gata: "Contul „" + user + "” e gata. "
+                + nume + " intră cu parola pe care i-ai dat-o și și-o schimbă la prima intrare."
+                + (legat ? " E legat de codul tău („" + legat.code + "”)." : ""),
+              atentie: legat ? "" : ("Contul NU s-a legat de codul tău, deci comenzile lui nu-ți vor "
+                + "cădea ție. Codul se poate pune pe prima lui comandă, din „Comenzi” — cere-i unui "
+                + "administrator dacă tu n-ai acces acolo.")
+            });
+            // Numai lista proprie, nu `reincarcaTot()`: acela cere și
+            // `/referrals/all`, care pentru agent e 403 — și refuzul ar fi
+            // aprins alerta roșie de sus imediat după o reușită.
+            //
+            // Dar refuzul PROPRIEI rute se scrie, nu se înghite: `/referrals`
+            // e chiar ruta agentului, deci o picare acolo e o picare
+            // adevărată. Cât ea stă pe ecran, „Încă nimic" de sub istoric tace
+            // — plăcile de deasupra sunt de dinainte de contul tocmai făcut,
+            // iar pagina n-are de unde ști dacă între timp s-a schimbat ceva.
+            gp.referrals()
+              .then((d) => this.setState({ mine: d, eroareMine: "" }))
+              .catch((e) => {
+                if (e.isAuth) gp.toLogin();
+                else this.setState({ eroareMine: gp.motiv(e, "recomandările") });
+              });
+          })
+          .catch((e) => setC({ busy: false, atentie: "", err: e.message || "Nu am putut face contul." }));
+      },
+
+      /* ------------------------------------------------ plăcile mele -- */
+      // Trei zerouri și un „încă nimic" înaintea listei de plătit sunt 310px
+      // de nimic pe ecranul patronului, care aproape niciodată nu e și
+      // recomandant. Pentru un distribuitor nou zerourile SPUN ceva — aici va
+      // apărea ce câștigi — deci nu se ascund pentru toată lumea, ci doar
+      // pentru administratorul care n-are niciun rând al lui.
+      // Plăcile se desenau și când `mine` n-a venit deloc, din rezerva
+      // `{ earned: 0, … }` de mai sus. „Câștigat 0,00 lei" e o afirmație
+      // despre banii omului, nu un chenar de umplut: se arată numai după ce
+      // răspunsul chiar a sosit.
+      //
+      // `|| procentZero` e nou și strică dinadins liniștea de mai sus: pe un
+      // server cu procentul pe zero, administratorul fără niciun rând al lui
+      // TREBUIE să vadă plăcile, fiindcă rândul de sub ele — singurul loc în
+      // care scrie de ce toate comisioanele ies 0,00 RON — n-are unde altundeva
+      // să stea. Cele trei zerouri nu mai sunt atunci 310px de nimic: sunt
+      // chiar dovada frazei de dedesubt.
+      areBani: S.money !== false && !!S.mine
+        && ((mine.rows || []).length > 0 || !eAdmin || procentZero),
+
+      /* ------------------------------------- procentul de azi e zero -- */
+      // Rândul care lipsea: comisioanele se scriau, se legau, se numărau — și
+      // ieșeau toate 0,00 RON, fără ca nimic de pe ecran să spună de ce. Trei
+      // comenzi ale patronului au stat așa până le-a numărat el cu mâna.
+      procentZero: procentZero,
+      // Două fraze, nu una, fiindcă sunt două boli deosebite, iar leacul lor e
+      // în locuri deosebite. Pe cea de-a doua o poate scrie numai
+      // administratorul, singurul căruia serverul îi trimite procentul casei.
+      procentZeroText: rataCasei !== null && rataCasei > 0
+        ? "Contul acesta are procentul 0%, deși al casei e "
+          + String(rataCasei).replace(".", ",") + "%. Comisioanele lui se scriu "
+          + "mai departe, dar toate cu 0,00 RON. Procentul unui cont se pune din „Conturi”."
+        : "Procentul de recomandare e 0% chiar acum: comisioanele se scriu mai "
+          + "departe, dar toate cu 0,00 RON. Se pune din Setări → General, la "
+          + "„Procent de recomandare”.",
+      // A patra placă apare numai când chiar există ce recupera. Pe zero ar fi
+      // încă o cifră de citit pentru nimic, iar pe altceva decât zero e singura
+      // urmă a unor bani ieșiți din casă pentru o comandă care s-a stins.
+      placi: [
+        { eticheta: "Câștigat", suma: bani(tot.earned), culoare: "var(--h-accent)" },
+        { eticheta: "Plătit", suma: bani(tot.paid), culoare: "#1B7A43" },
+        { eticheta: "De încasat", suma: bani(tot.due), culoare: "var(--rc-mov-fg)" }
+      ].concat(Number(tot.paidCancelled) > 0
+        ? [{ eticheta: "Plătit pe comenzi stinse", suma: bani(tot.paidCancelled), culoare: "#9A5B06" }]
+        : []),
+
+      areCumparatori: ((mine.buyers || []).length > 0),
+      cumparatori: (mine.buyers || []).map((b) => ({
+        nume: b.buyer,
+        comenzi: b.orders + (b.orders === 1 ? " comandă" : " comenzi"),
+        suma: bani(b.amount)
+      })),
+
+      // Lacătul ăsta a fost pus după tipar, pe `S.eroare`, și nu putea fi
+      // atins niciodată: „Încă nimic" se desenează numai înăuntrul lui
+      // `areBani`, care cere `S.mine`, iar pe drumul de deschidere o cerere
+      // căzută lasă `S.mine` gol, deci cartonul oricum nu apare.
+      //
+      // Rămâne, mutat pe câmpul cererii care chiar îl hrănește, fiindcă
+      // acum are un drum adevărat: agentul cu zero rânduri face un cont de
+      // cumpărător, reîmprospătarea de după (`/referrals`) pică, iar `S.mine`
+      // rămâne cel vechi. Atunci „Prima comandă a cuiva venit cu codul tău
+      // apare aici" ar fi o afirmație despre o listă pe care pagina n-a mai
+      // putut s-o citească. Pe `eroareLista`, nu: lista administratorului nu
+      // spune nimic despre istoricul meu.
+      istGol: ((mine.rows || []).length === 0) && !S.eroareMine,
+      istPlin: ((mine.rows || []).length > 0),
+      istSub: (mine.rows || []).length
+        ? "Fiecare comandă adusă de tine, cu ziua și suma."
+          + (mine.truncated ? " Lista arată numai cele mai noi; plăcile de sus sunt pe tot." : "")
+        : "",
+      istoric: (mine.rows || []).map((r) => {
+        const st = STARI[r.status] || STARI.activ;
+        return {
+          nume: r.buyer_label || "—",
+          data: ziRo(r.order_day),
+          // Socoteala, scrisă pe rând, exact ca în lista patronului de mai jos
+          // și din același motiv: omul trebuie să poată verifica plata fără să
+          // întrebe pe nimeni. Aici lipsea — serverul nu trimitea nici baza,
+          // nici procentul (`referral_history()`) — iar „0,00 RON" rămânea un
+          // zero mut: agentul nu putea ști dacă a fost mică comanda sau zero
+          // procentul. Acum scrie „370,00 RON × 0%", și se vede care din două.
+          socoteala: socotealaRand(r.base_total, r.rate),
+          suma: bani(r.amount),
+          stare: r.paid ? "plătit" : st.et,
+          stareBg: r.paid ? "rgba(34,150,83,.14)" : st.bg,
+          stareFg: r.paid ? "#1B7A43" : st.fg
+        };
+      }),
+
+      /* --------------------------------------------- administratorul -- */
+      eAdmin: eAdmin,
+      areConflicte: conflicte.length > 0,
+      // Numărul de rezolvat le numără numai pe cele care CHIAR au ce se
+      // rezolva. Cele scoase rămân desenate mai jos, dar nu mai cer nimic de
+      // la nimeni — la fel ca pe server, unde `totals.conflicts` le sare.
+      nrConflicte: (() => {
+        const c = conflicte.filter((x) => !x.scos).length;
+        return c + (c === 1 ? " comision" : " comisioane");
+      })(),
+      conflicte: conflicte,
+
+      /* ------------------------- îndreptarea comisioanelor de la 0% -- */
+      // Butonul se desenează NUMAI când chiar are ce îndrepta, și numai
+      // patronului. Amândouă porțile sunt adevărate, nu de politețe: `eAdmin`
+      // ține cardul departe de ecranul agentului, iar lista goală îl ține
+      // departe de un server sănătos — pe care, dacă s-ar desena, ar fi un
+      // buton care nu face nimic, adică încă un fel de tăcere.
+      //
+      // Serverul păzește oricum: ruta e `require_admin()`. Rândul de aici
+      // hotărăște doar dacă se DESENEAZĂ ceva.
+      areIndreptat: eAdmin && fixRanduri.length > 0,
+      indreptatTitlu: fixRanduri.length === 1
+        ? "Un comision s-a născut la 0%"
+        : fixRanduri.length + " comisioane s-au născut la 0%",
+      // Se spune întâi DE CE s-a întâmplat, apoi CE se schimbă și ce NU. Ultima
+      // propoziție e cea mai importantă: cine citește trebuie să știe, înainte
+      // de a apăsa, că banii deja dați nu se ating.
+      indreptatSub: "Au fost scrise cât timp procentul de recomandare era zero, iar "
+        + "procentul se îngheață pe comandă, deci n-au cum să se repare singure. "
+        + "Apăsarea le pune procentul de AZI al fiecărui câștigător în parte și "
+        + "rescrie suma. Comisioanele deja plătite nu se ating, iar conflictele "
+        + "nehotărâte și comenzile anulate rămân cum sunt."
+        + ((S.fix && S.fix.truncated)
+          ? " Sunt mai multe decât încap într-o apăsare: după asta, apasă din nou."
+          : ""),
+      indreptatLista: fixLinii,
+      indreptatTotal: "În total: " + bani((S.fix && S.fix.total) || 0),
+      indreptatOff: S.busy,
+      indreptatBtn: S.busy
+        ? "Se îndreaptă…"
+        : (fixRanduri.length === 1
+          ? "Îndreaptă comisionul"
+          : "Îndreaptă cele " + fixRanduri.length + " comisioane"),
+      onIndreapta: () => this.indreapta(),
+      // Vestea de după. Stă în AFARA cardului, fiindcă apăsarea reușită golește
+      // chiar cardul: pusă înăuntru, ar fi dispărut odată cu lucrul despre care
+      // vorbește, iar omul n-ar fi aflat niciodată dacă s-a întâmplat ceva.
+      indreptatMsg: S.fixMsg,
+
+      // Totalurile vin acum adunate în SQL peste TOT intervalul, nu peste
+      // rândurile care au încăput în listă. Când lista e mai scurtă decât
+      // socoteala, se spune pe față — altfel omul ar căuta în zadar rândurile
+      // care lipsesc din coloana de dedesubt.
+      totiSub: S.all
+        ? "Datorat acum: " + bani((S.all.totals || {}).due)
+          + " · plătit: " + bani((S.all.totals || {}).paid)
+          + (Number((S.all.totals || {}).paidCancelled) > 0
+            ? " · de recuperat de pe comenzi stinse: " + bani((S.all.totals || {}).paidCancelled)
+            : "")
+          + (S.all.truncated
+            ? " · lista de mai jos arată numai cele mai noi rânduri; totalurile sunt pe tot intervalul"
+            : "")
+        // „Se încarcă…" era adevărat doar cât chiar se încărca. După un refuz
+        // nu se mai încarcă nimic, iar rândul rămânea să se învârtă singur sub
+        // un titlu fără listă — a doua minciună, pe lângă lista goală.
+        // Pe `eroareLista`, fiindcă rândul ăsta vorbește despre `S.all`: dacă
+        // numai câștigurile mele au picat, lista chiar se încarcă mai departe
+        // și n-are de ce să tacă.
+        : (S.eroareLista ? "" : "Se încarcă…"),
+      // Tot pe `eroareLista`: „Încă niciun comision" e o afirmație despre
+      // lista TUTUROR. Cu lacătul pe amândouă mesajele, un refuz al
+      // câștigurilor mele ascundea un carton ADEVĂRAT.
+      listaGoala: eAdmin && !!S.all && oameni.length === 0 && !S.eroareLista,
+      golText: S.conf
+        ? "Vezi doar conflictele. Scoate filtrul ca să revii la listă."
+        : (S.q || S.nepl || S.luna || S.refId
+          ? "Nimic care să se potrivească filtrelor. Schimbă-le sau golește căutarea."
+          : "Încă niciun comision. Apar aici de la prima comandă venită cu un cod."),
+      oameni: oameni,
+
+      /* --------------------------------------------------- uneltele -- */
+      q: S.q,
+      onQ: (e) => set({ q: e.target.value }),
+      sort: S.sort,
+      onSort: (e) => set({ sort: e.target.value }),
+      sortOpts: SORTARI.map((s) => ({
+        val: s.val, et: s.et,
+        mark: S.sort === s.val ? "✓" : "",
+        bd: sel(S.sort === s.val), bg: selBg(S.sort === s.val),
+        onPick: () => set({ sort: s.val, sheet: false })
+      })),
+      luna: S.luna,
+      onLuna: (e) => { set({ luna: e.target.value }); setTimeout(() => this.reincarcaTot(), 0); },
+      luniOpts: this.luni().map((l) => ({
+        val: l.val, et: l.et,
+        mark: S.luna === l.val ? "✓" : "",
+        bd: sel(S.luna === l.val), bg: selBg(S.luna === l.val),
+        onPick: () => { set({ luna: l.val, sheet: false }); setTimeout(() => this.reincarcaTot(), 0); }
+      })),
+      nepl: S.nepl,
+      neplBtn: S.nepl ? "h-btn--primary" : "h-btn--secondary",
+      neplBd: sel(S.nepl), neplBg: selBg(S.nepl), neplMark: S.nepl ? "✓" : "",
+      onNepl: () => set({ nepl: !S.nepl }),
+
+      // „Doar conflicte" nu filtrează lista, ci o ascunde cu totul: un
+      // comision în așteptare n-are recomandant, deci n-ar avea sub ce nume
+      // să stea. Cardul de sus rămâne singur pe ecran, iar patronul le ia la
+      // rând fără să sară peste zeci de rânduri care nu-l privesc acum.
+      conf: S.conf,
+      confBtn: S.conf ? "h-btn--primary" : "h-btn--secondary",
+      confBd: sel(S.conf), confBg: selBg(S.conf), confMark: S.conf ? "✓" : "",
+      onConf: () => set({ conf: !S.conf }),
+
+      // Venit de pe eticheta violetă a unei comenzi. Se spune pe față pe cine
+      // s-a strâns lista și cum se lărgește la loc — altfel „lipsesc oameni"
+      // arată exact ca un defect.
+      areRef: eAdmin && !!S.refId,
+      refNume: refNume,
+      onRefClear: () => set({ refId: "" }),
+
+      // Butonul de pe telefon spune ce e ales ACUM, ca degetul să nu fie
+      // nevoit să deschidă lista ca să afle.
+      filtreLabel: sortEt + " · " + lunaEt
+        + (S.nepl ? " · doar neplătite" : "")
+        + (S.conf ? " · doar conflicte" : ""),
+      sheet: S.sheet,
+      onSheetOpen: () => set({ sheet: true }),
+      onSheetClose: () => set({ sheet: false })
+    };
+  }
+
+  /**
+   * Scoate rândul din socoteală — sau adu-l înapoi.
+   *
+   * Aceeași formă ca `plateste()`: se reîncarcă TOT, nu se ciupește rândul din
+   * stare. Aducerea înapoi recitește comanda pe server, deci suma se poate
+   * schimba, iar rândul poate chiar să dispară dacă între timp n-a mai rămas
+   * nimeni de premiat. O stare ciupită local ar fi arătat cifra veche.
+   */
+  scoate(id, scos) {
+    if (this.state.busy) return;
+    this.setState({ busy: true, err: "" });
+    (scos ? gp.referralDismiss(id) : gp.referralRestore(id))
+      .then(() => this.reincarcaTot())
+      .catch((e) => this.setState({
+        err: e.message || (scos
+          ? "Nu am putut scoate comisionul din socoteală."
+          : "Nu am putut aduce comisionul înapoi."),
+        busy: false
+      }));
+  }
+
+  rezolva(id, cod) {
+    if (!cod || this.state.busy) return;
+    this.setState({ busy: true, err: "" });
+    gp.referralResolve(id, cod)
+      .then(() => this.reincarcaTot())
+      .catch((e) => this.setState({ err: e.message || "Nu am putut rezolva conflictul.", busy: false }));
+  }
+}
+</script>
+</body>
+</html>

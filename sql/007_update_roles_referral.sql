@@ -104,6 +104,15 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 --
 -- Alege pe care cont rămâne adresa, golește-o pe celelalte, apoi rulează
 -- fișierul din nou: pasul se va executa atunci.
+-- „Fără adresă" se scrie NULL, nu șir gol: NULL nu se ciocnește de NULL în
+-- niciun index unic, dar '' se ciocnește de ''. Codul de azi scrie deja NULL
+-- (`$email ?: null`, api/routes/users.php:405); rândurile cu '' vin din
+-- versiuni vechi sau dintr-o corectură făcută de mână în bază. Fără rândul
+-- ăsta, două astfel de conturi ar fi oprit ALTER-ul de mai jos cu 1062 — adică
+-- ar fi oprit toată actualizarea — și nu s-ar fi văzut la numărătoarea de mai
+-- jos, fiindcă ea le sare anume.
+UPDATE users SET email = NULL WHERE email = '';
+
 SET @dubluri := (
   SELECT COUNT(*) FROM (
     SELECT email FROM users

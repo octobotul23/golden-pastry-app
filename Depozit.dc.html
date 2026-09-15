@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Depozit · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,7 @@
 <x-dc>
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -24,7 +30,32 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-dep=mobilelist]{display:flex!important}
 }
 @media (min-width:761px) and (max-width:1280px){
-[data-dep=mobilelist]{display:grid!important;grid-template-columns:1fr 1fr!important;align-items:start!important}
+[data-dep=mobilelist]{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;align-items:start!important}
+}
+/* Pe tabletă (măsurat la 820) Depozitul ieșea din ecran cu 110px, din două
+   pricini care se adună. Prima e grila de carduri de deasupra: `1fr 1fr` nu
+   ține, fiindcă elementele de grilă au implicit `min-width:auto`, deci
+   lățimea cerută de conținut bate pista și grila crește peste containerul ei;
+   `minmax(0,1fr)` e leacul obișnuit. A doua e grupul din dreapta barei de sus:
+   căutarea are 290px scriși în marcaj, iar cu „+ Articol" și „+ Mișcare" cere
+   522px dintr-o bară de 497px în care mai stă și titlul — și n-avea voie să se
+   rupă, fiindcă `flex-wrap` lipsea. Acum trece pe rândul lui, cu căutarea
+   elastică. Regulile sunt copiate din Comenzi, unde același defect a fost
+   reparat deja, cu aceeași bandă (761-1000), ca să nu se depărteze una de
+   alta.
+
+   Măsurat la 820, stricând la loc câte o bucată: totul reparat dă
+   `scrollWidth` 805; fără banda asta, 903; fără înfășurarea butoanelor de pe
+   card, 838; fără amândouă și fără `minmax()`, 930 — starea de la care s-a
+   pornit. `minmax()` singur nu mai mișcă azi cifra, fiindcă odată ce rândul de
+   butoane se înfășoară, cardul nu mai cere mai mult decât pista lui de 242px.
+   Rămâne totuși scris: `1fr` înseamnă `minmax(auto,1fr)`, adică pista are ca
+   prag chiar cât cere conținutul — deci orice nume de produs mai lung ar
+   readuce defectul. Cu `minmax(0,1fr)` nu-l mai poate readuce nimic. */
+@media (min-width:761px) and (max-width:1000px){
+[data-dep=topbar]{flex-wrap:wrap!important}
+[data-dep=topbar]>div:last-child{margin-left:0!important;width:100%!important}
+[data-dep=search]{width:auto!important;flex:1 1 0!important;min-width:0!important}
 }
 @media (max-width:760px){
 [data-dep=shell]{flex-direction:column!important}
@@ -32,7 +63,6 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-dep=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
 [data-dep=nav]{display:none!important}
 [data-dep=sidefoot]{display:none!important}
-[data-dep=phoneback]{display:flex!important}
 [data-dep=filterbar]{position:sticky!important;top:0!important;z-index:19!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:6px!important;width:auto!important;margin:0 -14px!important;padding:8px 14px!important;background:var(--h-bg-page)!important;border-bottom:1px solid var(--h-line)!important;overflow-x:auto!important;scrollbar-width:none}
 [data-dep=filterbar]::-webkit-scrollbar{display:none}
 
@@ -76,18 +106,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7">Depozit</span>
 </div>
-<a data-dep="phoneback" href="Intrare.dc.html" title="Alege panoul" style="display:none;margin-left:auto;flex:none;align-items:center;justify-content:center;width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:18px;text-decoration:none">←</a>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
 <div data-dep="nav" style="display:flex;flex-direction:column;gap:6px">
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Comenzi</a>
-<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Laborator</a>
-<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Rută</a>
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">Depozit</span>
-<a href="Produse.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Catalog</a>
-<a href="Conturi.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Conturi</a>
-<a href="Jurnal.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Jurnal</a>
-<a href="Setari.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Setări</a>
-<a href="Parola.dc.html" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">Parola mea</a>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
 </div>
 <div data-dep="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
 <div data-dep="whobox" style="display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
@@ -103,6 +132,40 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p data-dep="sidenote" style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Stocul se calculează din registrul de intrări și ieșiri, nu se scrie de mână. Ștergi o mișcare greșită și stocul revine singur.</p>
 </div>
 </div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
+
 
 <div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
 
@@ -121,7 +184,15 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
 <div class="{{ msgCls }}" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:dp-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+<button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Depozitul nu s-a încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
 </div>
 </sc-if>
 
@@ -250,9 +321,18 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </label>
 </div>
 <span style="font-size:13px;color:var(--h-fg-subtle)">{{ r.last }}</span>
-<div style="display:flex;gap:8px">
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onIn }}" style="flex:1;min-height:46px;font-size:15px">+ Intrare</button>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onOut }}" style="flex:1;min-height:46px;font-size:15px">− Ieșire</button>
+<!-- Rândul se înfășoară, fiindcă pe tabletă cardul ăsta stă în două coloane și
+     primește 242px, din care 211 rămân butoanelor. Cele trei cer 288: „Șterge"
+     are 76 și e `flex:none`, iar „+ Intrare" și „− Ieșire" nu scad sub textul
+     lor (un element de flex are implicit `min-width:auto`), deci ceda cine
+     n-avea încotro: grupul cere cu 77px mai mult decât are, iar „Șterge" ieșea
+     din card cu 61px și din ecran cu 18. Cu `flex-wrap` și o bază adevărată de
+     96px, primele două rămân perechea de pe rândul întâi, iar „Șterge" trece
+     dedesubt. Pe ecran lat sau pe telefon, unde cardul e întreg, toate trei
+     stau tot pe un rând, ca până acum. -->
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onIn }}" style="flex:1 1 96px;min-height:46px;font-size:15px">+ Intrare</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onOut }}" style="flex:1 1 96px;min-height:46px;font-size:15px">− Ieșire</button>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onDelete }}" style="flex:none;min-height:46px;padding:0 14px;font-size:15px;color:{{ r.delFg }}">{{ r.delLabel }}</button>
 </div>
 </div>
@@ -264,6 +344,24 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 </div>
+
+<sc-if value="{{ areScoase }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:16px 2px 4px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:13px;font-weight:700;color:var(--h-fg-muted)">{{ scoaseTitlu }}</span>
+<span style="font-size:12px;color:var(--h-fg-subtle);line-height:1.45">Registrul lor a rămas întreg, iar numele rămâne al lor. Repune-le aici dacă vrei numele înapoi.</span>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ scoase }}" as="z" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border:1px solid var(--h-line);border-radius:999px;background:var(--h-bg-surface)">
+<span style="font-size:13px;font-weight:600">{{ z.n }}</span>
+<span style="font-size:11px;color:var(--h-fg-subtle)">{{ z.c }}</span>
+<button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ z.onRepune }}" title="Repune în depozit" style="min-height:32px;padding:0 10px;font-size:13px">↩ Repune</button>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
 
 </div>
 </sc-if>
@@ -315,7 +413,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="h-card" style="width:100%;flex:none;max-height:88vh;overflow-y:auto;padding:16px 16px 20px;border-radius:22px 22px 0 0;display:flex;flex-direction:column;gap:8px;animation:dp-pop .22s var(--h-ease-spring)">
 <div style="display:flex;align-items:center;gap:12px;padding-bottom:2px">
 <h2 class="h-h4" style="margin:0;font-size:19px">Ce vrei să vezi</h2>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+<button type="button" aria-label="Închide meniul de panouri" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
 </div>
 <sc-for list="{{ menuViews }}" as="v" hint-placeholder-count="5">
 <button type="button" onClick="{{ v.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ v.bd }};background:{{ v.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
@@ -350,7 +448,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <h2 class="h-h4" style="margin:0;font-size:21px">Mișcare de depozit</h2>
 <span style="font-size:13px;color:var(--h-fg-subtle)">{{ formSub }}</span>
 </div>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+<button type="button" aria-label="Închide formularul de mișcare" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
 </div>
 
 <div style="display:flex;gap:8px">
@@ -419,11 +517,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <h2 class="h-h4" style="margin:0;font-size:21px">Articol nou în depozit</h2>
 <span style="font-size:13px;color:var(--h-fg-subtle)">Intră în listă cu stocul 0 · pune-i prima intrare imediat după.</span>
 </div>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onArtCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+<button type="button" aria-label="Închide formularul articolului nou" class="h-btn h-btn--ghost" onClick="{{ onArtCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
 </div>
 
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Denumire
-<input class="h-input" value="{{ artN }}" onChange="{{ onArtN }}" placeholder="ex. Cutie tort 26 cm" style="height:50px;font-size:16px">
+<input autoFocus="{{ true }}" class="h-input" value="{{ artN }}" onChange="{{ onArtN }}" placeholder="ex. Cutie tort 26 cm" style="height:50px;font-size:16px">
 </label>
 
 <div data-dep="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -486,13 +584,26 @@ const authRole = (a) => {
 // Datele erau scrise în cod, deci pagina ar fi rămas convinsă că e mereu
 // 26 august 2026: „Azi" ar fi arătat mișcările altei zile, iar totalurile
 // zilnice ar fi rămas înghețate la acea dată.
-const TODAY = gp.days(1)[0].iso;
-const YEST = (() => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
+// `let`, nu `const`: pagina se reîmprospătează la nesfârșit, deci trece prin
+// miezul nopții. Cu ziua înghețată la încărcare, depozitarul din tura de
+// noapte citea „Ieșiri azi: 0" după șaisprezece ieșiri — și le putea face a
+// doua oară. Măsurat: optsprezece reîmprospătări, adică o tură întreagă, fără
+// ca ziua să se miște.
+//
+// Se împrospătează la DESENARE (`renderVals`), nu în `pull()`: `pull` lasă o
+// fereastră de cincisprezece secunde, iar `gp.poll` se oprește de tot cât fila
+// e ascunsă — adică exact cât tableta stă cu ecranul stins pe masa din depozit.
+let TODAY = "";
+let YEST = "";
+const zileProaspete = () => {
+  const d = gp.acumLaPatiserie();
   const p2 = (n) => (n < 10 ? "0" : "") + n;
-  return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate());
-})();
+  const iso = (x) => x.getFullYear() + "-" + p2(x.getMonth() + 1) + "-" + p2(x.getDate());
+  TODAY = iso(d);
+  d.setDate(d.getDate() - 1);
+  YEST = iso(d);
+};
+zileProaspete();
 const MON = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "noi", "dec"];
 // Categoriile se editează din Setări → Liste. Erau fixate aici, deci o
 // categorie adăugată din panou nu ar fi apărut nici în file, nici în sortare.
@@ -503,9 +614,21 @@ const OUT_R = ["Consum în producție", "Comandă client", "Pierdere / rebut", "
 
 
 const num = (v) => { const x = parseFloat(String(v).replace(",", ".")); return isFinite(x) ? x : 0; };
+// Cantitatea, scrisă ca pentru un om — dar fără să mintă.
+//
+// Rotunjea la o zecimală, iar sub 0,05 scria pur și simplu numărul întreg.
+// Coloana `stock_moves.qty` ține însă patru zecimale, iar în laborator se
+// cântăresc chiar cantități de-acolo: 30 de grame de drojdie sunt 0,03 kg.
+// Registrul le scria pe toate „−0 kg", adică o mișcare care pare să nu se fi
+// întâmplat — și tot așa arăta și „Lipsă 0 kg" la un articol care chiar
+// lipsea. Cifra exactă nu era scrisă nicăieri, nici măcar într-un `title`.
+//
+// Patru zecimale, cât ține coloana. Rotunjirea rămâne, fiindcă ea taie
+// zgomotul de virgulă mobilă (0,1 + 0,2 iese 0,30000000000000004), dar taie
+// numai zgomot, nu marfă. `-0` iese „0": semnul îl pune apelantul.
 const fmt = (x) => {
-  const r = Math.round(x * 10) / 10;
-  return (Math.abs(r % 1) < 0.05 ? String(Math.round(r)) : String(r).replace(".", ","));
+  const r = Math.round(x * 10000) / 10000;
+  return Number.isInteger(r) ? String(r) : String(r).replace(".", ",");
 };
 const dLabel = (iso) => {
   const [y, mo, dd] = iso.split("-");
@@ -516,7 +639,11 @@ const dLabel = (iso) => {
 };
 
 class Component extends DCLogic {
-  state = { items: [], categories: [], units: [], moves: [], mins: {}, orders: [], who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, sterg: null };
+  // `scoase` stă separat de `items` dinadins: articolele scoase din depozit
+  // n-au voie să intre în socotelile de zi cu zi — „Sub prag", „Lipsă", numărul
+  // de poziții, lista din formularul de mișcare — fiindcă marfa lor nu mai e de
+  // vândut. Au nevoie de exact un lucru: o cale înapoi.
+  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", sterg: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -544,12 +671,15 @@ class Component extends DCLogic {
       }, true);
     }
     this.setState({ view: this.props.defaultView === "Registru" ? "Registru" : "Stoc" });
-    this.pull();
-    this.timer = setInterval(() => this.pull(), 15000);
+    // gp.poll() aduce prima dată imediat, apoi din 15 în 15 secunde; se
+    // oprește cât fila e ascunsă și nu suprapune două ture. Cu setInterval,
+    // fila lăsată deschisă cerea 4 liste (mișcări LIMIT 1000, comenzi LIMIT
+    // 500…) la fiecare 15 secunde și pe un ecran pe care nu se uita nimeni.
+    this.timer = gp.poll(() => this.pull(), 15000);
   }
 
   componentWillUnmount() {
-    if (this.timer) clearInterval(this.timer);
+    if (typeof this.timer === "function") this.timer();
   }
 
   /**
@@ -561,20 +691,31 @@ class Component extends DCLogic {
    */
   pull() {
     return Promise.all([
-      gp.get('/stock/items'),
+      // Lista ÎNTREAGĂ, cu tot cu articolele scoase din depozit. Numele unui
+      // articol stins rămâne al lui — registrul s-ar despărți în două altfel —
+      // iar depozitarul se lovește de asta tocmai când scrie un articol nou.
+      // Ieșirea trebuie deci să stea în aceeași pagină, nu într-un loc pe care
+      // n-are de unde să-l bănuiască.
+      gp.get('/stock/items?all=1'),
       gp.get('/stock/moves'),
       gp.get('/orders'),
       gp.me(),
     ])
       .then(([items, moves, orders, user]) => {
         this.setState({
-          items: items.items || [],
+          items: (items.items || []).filter((i) => i.active !== false),
+          scoase: (items.items || []).filter((i) => i.active === false),
           categories: items.categories || [],
           units: items.units || [],
           // Forma veche a registrului, ca restul paginii să rămână neatins:
           // d = data, t = ora, k = in/out, p = produs, q = cantitate.
           moves: (moves.moves || []).map((m) => {
-            const dt = new Date((m.createdAt || '').replace(' ', 'T') + 'Z');
+            // Clipa vine de la server, dar se citea cu câmpurile locale ale
+            // aparatului: pe o tabletă pe alt fus, mișcarea din tura de noapte
+            // apărea pe rândul altei zile. Serverul o socotește pe
+            // Europe/Bucharest (`stock_local_day_utc`, `api/routes/stock.php:396`),
+            // deci și registrul o citește așa.
+            const dt = gp.laPatiserie(new Date(gp.utc(m.createdAt)));
             const p2 = (n) => (n < 10 ? '0' : '') + n;
             return {
               id: m.id,
@@ -590,6 +731,8 @@ class Component extends DCLogic {
             };
           }),
           orders: (orders.orders || []).map(gp.toPageOrder),
+          movesTruncated: !!moves.truncated,
+          auth: gp.auth(user),
           who: user ? user.name : 'Laborator',
           role: user ? user.role : '',
           loaded: true,
@@ -597,7 +740,13 @@ class Component extends DCLogic {
       })
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
-        else this.setState({ msg: e.message, msgBad: true, loaded: true });
+        // `loaded` rămâne adevărat, ca pagina să nu se învârtă la nesfârșit —
+        // asta ar fi altă minciună. Lacătul care oprește cardurile de gol să
+        // pretindă că depozitul e gol e `eroare`, nu `loaded`: „Nimic pe
+        // filtrele alese” e o afirmație despre lume, iar pagina n-a apucat
+        // s-o verifice. Mesajul nu mai pleacă în bara trecătoare, care se
+        // închide cu un × și nu se mai întoarce.
+        else this.setState({ eroare: gp.motiv(e, "stocul"), loaded: true });
       });
   }
 
@@ -684,6 +833,24 @@ class Component extends DCLogic {
   }
 
   /**
+   * Aduce înapoi în depozit un articol scos din listă.
+   *
+   * Ruta primea de mult `active`, dar nicio pagină nu i-l trimitea: articolul
+   * cu istoric se stingea și rămânea acolo, cu numele ocupat și fără nicio
+   * cale de întoarcere. Depozitarul care voia numele înapoi îl scria altfel,
+   * iar de-atunci registrul avea două nume pentru același lucru.
+   *
+   * Tiparul e cel din catalog (Produse.dc.html · „↩ Repune în catalog"), ca
+   * omul care umblă prin amândouă paginile să găsească același gest.
+   */
+  repuneArticol(id, nume) {
+    return gp.patch('/stock/items/' + id, { active: true })
+      .then(() => this.pull())
+      .then(() => this.setState({ msg: "„" + nume + "” e din nou în depozit.", msgBad: false }))
+      .catch((e) => this.setState({ msg: e.message, msgBad: true }));
+  }
+
+  /**
    * Încheie scrierea în câmpul „Prag": trimite pe server doar dacă e ceva
    * de trimis, apoi lasă rândul înapoi pe cifra venită de la server.
    *
@@ -707,7 +874,10 @@ class Component extends DCLogic {
 
 
   now() {
-    const d = new Date(), z = (n) => (n < 10 ? "0" : "") + n;
+    // Ceasul patiseriei, ca restul paginii (v. `zileProaspete`). Nimeni n-o
+    // cheamă azi, dar o oră luată din alt ceas decât ziua de deasupra ei e
+    // capcana pe care o calcă următorul care o cheamă.
+    const d = gp.acumLaPatiserie(), z = (n) => (n < 10 ? "0" : "") + n;
     return z(d.getHours()) + ":" + z(d.getMinutes());
   }
 
@@ -813,8 +983,8 @@ class Component extends DCLogic {
             ? " Fără articol în depozit: " + r.missing.join(", ") + ". "
               + ((r.skipped && r.skipped.length) || 1)
               + ((r.skipped && r.skipped.length) === 1
-                  ? " comandă a rămas nescăzută, întreagă — creează articolele și apasă din nou."
-                  : " comenzi au rămas nescăzute, întregi — creează articolele și apasă din nou.")
+                  ? " comandă a rămas nescăzută, întreagă — fă articolele, sau repune-le din „Scoase din depozit”, și apasă din nou."
+                  : " comenzi au rămas nescăzute, întregi — fă articolele, sau repune-le din „Scoase din depozit”, și apasă din nou.")
             : "")
         )
       }))
@@ -835,6 +1005,9 @@ class Component extends DCLogic {
 
   renderVals() {
     this.__gpSync();
+    // Ziua, la fiecare desenare. Un rând aici, și pagina nu mai poate rămâne
+    // convinsă că e tot ziua de ieri: v. `zileProaspete` mai sus.
+    zileProaspete();
     const S = this.state, set = (x) => this.setState(x);
     const showRes = this.props.showReserved !== false;
     const cat = this.catalog(), led = this.ledger();
@@ -1013,18 +1186,73 @@ class Component extends DCLogic {
     const pend = this.pending();
     const pendPieces = pend.reduce((a, o) => a + (o.items || []).reduce((x, i) => x + num(i.q), 0), 0);
 
+    // E cineva anume dincolo de ecran, sau e tura întreagă pe contul comun?
+    // Se întreabă o dată, fiindcă răspunsul se folosește în cinci locuri
+    // dedesubt și toate trebuie să spună același lucru.
+    const omAnume = !!S.auth && !S.auth.isSystem;
+
     return {
+      // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
+      // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
+      // există — bara e acum un șablon peste lista de aici, ca nu cumva un
+      // buton scos dintr-un meniu să rămână în celălalt.
+      //
+      // `gp.meniu()` (shared/gp-api.js) taie din listă panourile pe care
+      // rolul ăsta n-are voie să le deschidă. Până sosește sesiunea, `S.auth`
+      // e null și lista iese goală — dinadins: mai bine nicio intrare o
+      // clipă decât intrări care dispar sub deget. Le compară
+      // `.claude/check-meniu.mjs`.
+      meniu: gp.meniu("Depozit", S.auth),
+      navHere: "Depozit",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      // Apăsarea pe foaie nu are voie să ajungă la fundal, care închide.
+      onNavKeep: (e) => e.stopPropagation(),
+      // Două steaguri, nu unul negat, fiindcă `sc-if` primește o valoare, nu o
+      // expresie. Marcajul sertarului rămâne identic în toate panourile; ce se
+      // arată din el se hotărăște de aici.
+      //
+      // Depozitul se deschide și de pe tableta comună, cu codul panourilor,
+      // unde nimeni nu e conectat pe numele lui. Întrebarea se punea până
+      // acum pe nume — `S.who !== "Laborator"` — fiindcă altceva nu era la
+      // îndemână; acum serverul spune direct care cont e al turei
+      // (`isSystem`, din `public_user()`), deci se poate întreba ce ne
+      // interesează cu adevărat: e cineva anume dincolo de ecran?
+      //
+      // Contează fiindcă de aici se scrie „X · conectat" și se dă butonul
+      // „Ieși". Pe tura întreagă, amândouă sunt minciuni: n-are cine ieși
+      // dintr-un cont pe care nu l-a deschis nimeni pe numele lui.
+      navWho: omAnume,
+      navAnon: !omAnume,
+      // Pagina ține numele contului în `who`; sertarul îl cere ca `authName`,
+      // ca marcajul lui să fie identic în toate panourile.
+      authName: S.who,
       who: S.who,
-      signedIn: S.who !== "Laborator",
-      accountHref: S.role === "admin" ? "Conturi.dc.html" : S.who !== "Laborator" ? "Depozit.dc.html" : "Administrare%20Comenzi.dc.html",
-      accountHint: S.role === "admin" ? "contul tău · schimbă parola" : S.who !== "Laborator" ? "cont de angajat" : "intră în cont →",
+      signedIn: omAnume,
+      accountHref: gp.eAdmin(S.role) ? "Conturi.dc.html" : omAnume ? "Depozit.dc.html" : "Administrare%20Comenzi.dc.html",
+      accountHint: gp.eAdmin(S.role) ? "contul tău · schimbă parola" : omAnume ? "cont de angajat" : "intră în cont →",
+      // Ieșirea adevărată: sesiunea se închide pe SERVER, apoi pagina duce la
+      // intrare. Înainte se ștergea doar o cheie din localStorage pe care n-o
+      // mai citea nimeni: cookie-ul HttpOnly rămânea valabil, următorul
+      // pull() punea numele la loc, iar mișcările se scriau tot pe contul
+      // omului care credea că a ieșit — pe o tabletă comună, cu tot ce urmează.
       onLogout: () => {
-        try { localStorage.removeItem("gp-auth-v1"); } catch (e) {}
-        set({ who: "Laborator", msg: "Ai ieșit din cont · mișcările se trec pe „Laborator”.", msgBad: false });
+        set({ msg: "Se închide sesiunea…", msgBad: false });
+        gp.logout().finally(() => gp.toLogin());
       },
       viewTitle: S.view === "Registru" ? "Registru de mișcări" : "Stoc în depozit",
       viewSub: S.loaded
         ? items.length + " poziții · " + inToday.length + " intrări și " + outToday.length + " ieșiri azi · " + (alerts + shorts.length) + " atenționări"
+          // Serverul dă cel mult 1000 de mișcări: registrul și totalurile lui
+          // acoperă doar atât. Stocul curent e calculat pe server din TOATE
+          // mișcările, deci cifrele din fila „Stoc" rămân bune.
+          + (S.movesTruncated ? " · registrul arată doar ultimele 1000 de mișcări" : "")
         : "Se citește registrul…",
       search: S.search,
       onSearch: (e) => set({ search: e.target.value }),
@@ -1036,6 +1264,14 @@ class Component extends DCLogic {
       // „Scăderea din stoc a eșuat” apăreau verzi, în locul și în culoarea
       // confirmărilor. Un refuz al serverului trebuie să arate a refuz.
       msgCls: S.msgBad ? "h-alert h-alert--danger" : "h-alert h-alert--success",
+      eroare: S.eroare,
+      onReincearca: () => {
+        // NU `set(...)`: scurtătura de mai sus e `set = (x) => this.setState(x)`,
+        // cu UN singur parametru, deci funcția de după ar fi căzut tăcut. Caseta
+        // s-ar fi stins, omul ar fi crezut că s-a reîncercat, și n-ar fi plecat
+        // nimic spre server — un buton care se poartă ca și cum ar lucra.
+        this.setState({ eroare: "" }, () => this.pull());
+      },
       onMsgClose: () => set({ msg: "", msgBad: false }),
 
       stats: [
@@ -1112,9 +1348,21 @@ class Component extends DCLogic {
       isStock: S.view === "Stoc", isLog: S.view === "Registru",
       resDisplay: showRes ? "flex" : "none",
       resInline: showRes ? "inline" : "none",
-      rows: rowVals, noRows: rowVals.length === 0,
+      rows: rowVals, noRows: rowVals.length === 0 && !S.eroare,
       onClearFilters: () => set({ cat: "Toate", search: "", sort: "cat" }),
-      logDays, noLog: logDays.length === 0,
+
+      // Raftul celor scoase: se arată numai când chiar există așa ceva, altfel
+      // ar fi un rând gol care întreabă din senin „ce-i asta?".
+      areScoase: (S.scoase || []).length > 0,
+      scoaseTitlu: (S.scoase || []).length === 1
+        ? "Un articol scos din depozit"
+        : (S.scoase || []).length + " articole scoase din depozit",
+      scoase: (S.scoase || []).map((i) => ({
+        n: i.name,
+        c: i.category,
+        onRepune: () => this.repuneArticol(i.id, i.name)
+      })),
+      logDays, noLog: logDays.length === 0 && !S.eroare,
 
       // Deschiderea casetei stinge semaforul: o cerere rămasă fără răspuns nu
       // trebuie să blocheze adăugarea până la reîncărcarea paginii.

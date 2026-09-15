@@ -1,0 +1,266 @@
+/*
+ * Golden Pastry — sertarul de meniu de pe telefon.
+ *
+ * Pe ecran mic bara laterală a panourilor se ascundea și nu punea nimic în
+ * loc: din Catalog, Jurnal, Setări și Parola mea nu se mai putea ajunge
+ * nicăieri, iar „Ieși din cont" devenea de neatins. Butonul ☰ și sertarul de
+ * mai jos sunt înlocuitorul.
+ *
+ * Stilurile stau AICI, într-un singur fișier, nu în blocul <style> al fiecărei
+ * pagini. Opt copii de CSS s-ar fi depărtat una de alta exact cum s-au
+ * depărtat cele opt copii ale meniului — și atunci butoanele chiar ar fi stat
+ * unul mai sus decât altul, de la o pagină la alta. Lista de intrări vine tot
+ * dintr-un singur loc, `gp.meniu()` din shared/gp-api.js.
+ *
+ * `.claude/build-deploy.mjs` copiază folderul `shared` întreg și trece
+ * fișierele .css prin aceeași rescriere de legături ca paginile.
+ */
+
+/* Butonul ☰ din bara de sus. Înlocuiește săgeata „←", care arăta la fel în
+   toate panourile dar ducea în alt loc din fiecare: din Conturi la Comenzi,
+   din Jurnal la Conturi, din Depozit la alegerea panoului. Un singur semn cu
+   patru înțelesuri nu se poate învăța. */
+.gp-burger {
+  display: none;                 /* pe monitor există bara laterală */
+  flex: none;
+  margin-left: auto;             /* împins la dreapta în bara de sus; aici, nu
+                                    în marcaj, ca butonul să n-aibă niciun stil
+                                    scris pe el în cele opt pagini */
+  align-items: center;
+  justify-content: center;
+  /* Lățime ȘI înălțime fixe, nu min-height: vecinii din bară au înălțimi
+     date tot fix, iar un min-height s-ar fi întins după conținut și butonul
+     ar fi stat cu câțiva pixeli mai jos decât restul rândului. */
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .10);
+  color: var(--h-cream-100);
+  font-family: var(--h-font-body);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.gp-burger:hover { background: rgba(255, 255, 255, .18); }
+
+/* Varianta pentru antetele deschise la culoare.
+   Culorile de mai sus sunt scrise pentru o bară cocoa: cremă peste un alb
+   străveziu. Zece pagini au bara aceea. Recomandări nu: butonul ei stă direct
+   pe fundalul de cremă al paginii, iar acolo regula de sus îl desena cremă pe
+   cremă. Butonul exista, se apăsa, deschidea sertarul — dar nu se vedea, deci
+   pagina părea fără nicio ieșire. Aceeași rețetă, întoarsă: cerneala paginii
+   peste un întuneric străveziu. */
+.gp-burger--lumina {
+  background: rgba(27, 18, 11, .07);
+  color: var(--h-fg);
+}
+.gp-burger--lumina:hover { background: rgba(27, 18, 11, .14); }
+
+/* Fundalul întunecat. Apăsat, închide sertarul. */
+.gp-navsheet {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  /* Foaia stă la mijlocul înălțimii, nu lipită de marginea de jos.
+     Prima formă o ridica de jos, „unde ajunge degetul". Pe telefoanele lungi
+     de azi asta o împingea atât de jos încât primele rânduri cădeau sub linia
+     în care se uită omul, iar pe un ecran lat rămânea un dreptunghi mic
+     agățat de marginea de jos a monitorului. La mijloc se vede toată dintr-o
+     privire, și pe telefon, și pe tabletă. */
+  justify-content: center;
+  padding: 16px 12px;
+  background: rgba(27, 18, 11, .62);
+  animation: gp-navfade .18s var(--h-ease-out);
+}
+
+/* Foaia propriu-zisă. Culorile barei laterale, fiindcă e același meniu — doar
+   pus altfel. Dacă ar fi fost deschisă la culoare, ar fi semănat cu foaia de
+   filtre din Comenzi, care e altceva. */
+.gp-navcard {
+  box-sizing: border-box;
+  width: 100%;
+  /* Foaia se măsoară după mână, nu după ecran. Pe telefon `max-width` nu se
+     simte — ecranul e mai îngust. Pe tabletă și pe monitor, unde butonul ☰
+     rămâne (Laborator și Rută n-au bară laterală), fără el rândurile s-ar
+     întinde pe toată lățimea: o țintă de 1400px cu scrisul singur în capătul
+     din stânga, la care ochiul și mâna au de mers degeaba. */
+  max-width: 520px;
+  margin: 0 auto;
+  /* Scăzut din înălțime, nu din ecran: foaia stă acum la mijloc, între cele
+     două margini de 16px ale fundalului, deci un `88vh` ar fi ieșit din ele. */
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 8px 14px 16px;
+  /* Rotunjită de toate patru colțurile: nu mai atinge marginea de jos, iar
+     două colțuri drepte în aer ar arăta ca o foaie tăiată. */
+  border-radius: 22px;
+  background: var(--h-cocoa-800);
+  color: var(--h-cream-100);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: gp-navpop .22s var(--h-ease-spring);
+}
+
+/* Bara mică de sus: spune din priviri că foaia se trage și se închide. */
+.gp-navgrab {
+  flex: none;
+  width: 38px;
+  height: 4px;
+  margin: 4px auto 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .26);
+}
+
+.gp-navhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 2px 4px;
+}
+.gp-navtitle {
+  font-family: var(--h-font-display);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: .02em;
+}
+.gp-navsub {
+  font-size: 13px;
+  opacity: .66;
+}
+.gp-navx {
+  margin-left: auto;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .10);
+  color: var(--h-cream-100);
+  font-family: var(--h-font-body);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+.gp-navx:hover { background: rgba(255, 255, 255, .18); }
+
+/* Un rând de meniu. Aceleași măsuri pentru <a> și pentru <button>, ca rândul
+   de ieșire din cont să nu iasă cu un pixel mai jos decât celelalte. */
+.gp-navrow {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .07);
+  color: var(--h-cream-100);
+  font-family: var(--h-font-body);
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.gp-navrow:hover { background: rgba(255, 255, 255, .14); }
+
+/* Pagina pe care ești deja. E <span>, nu <a>: o legătură care te duce unde
+   ești arată ca un buton stricat. */
+.gp-navrow--on {
+  background: var(--h-accent);
+  color: #1B120B;
+  font-weight: 700;
+  cursor: default;
+}
+.gp-navrow--on:hover { background: var(--h-accent); }
+
+/* Rândul cu numele contului: arată ca un rând de meniu, dar nu duce nicăieri —
+   butonul de ieșire din el e cel care face ceva. */
+.gp-navrow--who { cursor: default; }
+.gp-navrow--who:hover { background: rgba(255, 255, 255, .07); }
+
+/* Numele paginii, în capul foii. */
+.gp-navid {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Despărțitorul dintre panouri și ce ține de cont. */
+.gp-navsep {
+  height: 1px;
+  margin: 8px 2px 4px;
+  background: rgba(255, 255, 255, .12);
+}
+.gp-navwho {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+.gp-navname {
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gp-navquiet {
+  font-size: 12px;
+  opacity: .6;
+}
+.gp-navout {
+  flex: none;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, .22);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--h-cream-100);
+  font-family: var(--h-font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.gp-navout:hover { background: rgba(255, 255, 255, .10); }
+
+@keyframes gp-navfade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes gp-navpop {
+  from { transform: translateY(14px); opacity: 0 }
+  to   { transform: translateY(0); opacity: 1 }
+}
+
+/* Pe telefon apare butonul. */
+@media (max-width: 760px) {
+  .gp-burger { display: flex }
+}
+/* Panourile de tabletă (Laborator, Rută) n-au bară laterală pe niciun ecran,
+   deci butonul trebuie să existe la orice lățime — altfel de pe monitor n-ar
+   mai fi nicio cale de ieșire din ele. */
+.gp-burger--mereu {
+  display: flex;
+  /* Fără împinsul la dreapta: în antetele astea vecinul din stânga are deja
+     `margin-left:auto`, iar două margini automate ar împărți spațiul liber
+     între ele și ar lăsa butonul rupt de restul rândului. */
+  margin-left: 0;
+}
+
+/* Sertarul NU se ascunde pe ecran lat, deși prima formă a fișierului îl
+   ascundea — cu gândul la sertarul rămas deschis când o tabletă se rotește.
+   Regula aceea rupea tocmai panourile pentru care butonul a fost făcut: în
+   Laborator și Rută butonul se vede la orice lățime, fiindcă n-au bară
+   laterală, iar pe monitor apăsarea lui nu mai deschidea nimic. Un buton care
+   nu face nimic e mai rău decât o foaie rămasă deschisă — mai ales aici, unde
+   e singura cale de ieșire din panou.
+   Foaia rămasă deschisă nu e o încurcătură: se închide și cu „×", și apăsând
+   pe fundal. În celelalte șase panouri nici nu se poate deschide pe monitor,
+   fiindcă acolo butonul ☰ e ascuns de la 761px în sus. */

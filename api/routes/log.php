@@ -6,14 +6,18 @@ declare(strict_types=1);
 /** GET /log?search=&page=&action= */
 function route_log_list(): void
 {
-    require_role('admin');
+    require_admin();
 
     $where  = [];
     $params = [];
 
     $search = trim((string) ($_GET['search'] ?? ''));
     if ($search !== '') {
-        $where[] = '(l.user_label LIKE ? OR l.action LIKE ? OR l.detail LIKE ?)';
+        // Numele se caută și prin legătura spre `users`, nu numai în ce s-a
+        // scris atunci în jurnal: rândurile mai vechi de reparația din
+        // `audit()` au `user_label` gol, iar fără COALESCE o căutare după
+        // numele omului le arunca din numărătoare cu totul.
+        $where[] = '(COALESCE(l.user_label, u.name) LIKE ? OR l.action LIKE ? OR l.detail LIKE ?)';
         $like    = '%' . $search . '%';
         array_push($params, $like, $like, $like);
     }
@@ -25,11 +29,20 @@ function route_log_list(): void
     }
 
     $perPage = 50;
-    $page    = max(1, (int) ($_GET['page'] ?? 1));
+    // Plafonat: `?page=99999999999999999999` dădea (int) PHP_INT_MAX, iar
+    // înmulțirea trecea în float — „OFFSET 4.6E+20" e eroare de sintaxă SQL,
+    // deci 500 pentru un număr de pagină. Peste un milion de pagini nu are
+    // jurnalul, și oricum răspunsul e gol.
+    $page    = min(1000000, max(1, (int) ($_GET['page'] ?? 1)));
     $offset  = ($page - 1) * $perPage;
 
     $clause = $where ? ' WHERE ' . implode(' AND ', $where) : '';
-    $total  = (int) scalar("SELECT COUNT(*) FROM audit_log l$clause", $params);
+    // Aceeași legătură ca la citire: `$clause` poate cuprinde `u.name`, iar
+    // o numărătoare fără JOIN ar pica pe o coloană necunoscută.
+    $total  = (int) scalar(
+        "SELECT COUNT(*) FROM audit_log l LEFT JOIN users u ON u.id = l.user_id$clause",
+        $params
+    );
 
     // LIMIT/OFFSET se interpolează ca întregi validați: MySQL nu acceptă
     // parametri legați în această poziție.
@@ -37,7 +50,7 @@ function route_log_list(): void
     // doar numele, ca înregistrarea să rămână lizibilă după ștergerea contului.
     // Fără el, coloana „Cont" din pagină arăta o liniuță la fiecare rând.
     $rows = all(
-        "SELECT l.*, u.role
+        "SELECT l.*, u.role, u.name AS user_name
            FROM audit_log l
            LEFT JOIN users u ON u.id = l.user_id
          $clause ORDER BY l.id DESC LIMIT $perPage OFFSET $offset",
@@ -47,7 +60,11 @@ function route_log_list(): void
     json_out([
         'entries' => array_map(static fn($r) => [
             'id'        => (int) $r['id'],
-            'user'      => $r['user_label'],
+            // Numele din jurnal, iar dacă lipsește (rând scris înainte de
+            // reparația din `audit()`), cel de pe contul legat. Numai când nu
+            // există nici contul rămâne gol, iar pagina scrie „Sistem" —
+            // atunci chiar e adevărat.
+            'user'      => $r['user_label'] ?? $r['user_name'],
             'role'      => $r['role'],
             'action'    => $r['action'],
             'entity'    => $r['entity'],

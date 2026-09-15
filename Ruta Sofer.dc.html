@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruta șoferului · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <script src="./support.js"></script>
 <script src="./shared/gp-api.js"></script>
 </head>
@@ -10,6 +15,7 @@
 <x-dc>
 <helmet>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:#120d0a;font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -22,15 +28,47 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </style>
 </helmet>
 
+<!-- POARTA DE ROL A PANOULUI, ÎN PAGINĂ.
+     Serverul o ține de la început (rutele de aici sunt `require_ops()`), dar
+     pagina nu întreba nimic: cine tasta adresa capătă panoul întreg, cu o
+     casetă roșie de refuz în fiecare colț și nicio propoziție care să spună
+     de ce. Ecranul ăsta o spune, și trimite omul unde are ce face.
+     Același marcaj ca ecranul de refuz din „Administrare Comenzi". -->
+<sc-if value="{{ faraAcces }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.14), transparent 70%)">
+<div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
+<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Ruta șoferului</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ accesLinie }}</span>
+</div>
+<div style="width:100%;display:flex;flex-direction:column;gap:8px">
+<sc-if value="{{ accesClient }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<a href="Site%20Public.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Intră în magazin</a>
+<a href="Client.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Comanda mea</a>
+</div>
+</sc-if>
+<sc-if value="{{ accesAltul }}" hint-placeholder-val="{{ false }}">
+<a href="{{ accesAcasa }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">{{ accesAcasaEt }}</a>
+</sc-if>
+<button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
+<a href="Intrare.dc.html" style="font-size:14px;color:rgba(255,255,255,.72);text-decoration:none;padding-top:4px">← Alege panoul</a>
+</div>
+</div>
+</div>
+</sc-if>
+
 <div data-rt="phone" style="min-height:100vh;display:flex;flex-direction:column;background:var(--h-bg-page)">
 
 <div style="position:sticky;top:0;z-index:10;display:flex;flex-direction:column;gap:12px;padding:16px 16px 12px;background:var(--h-bg-surface);border-bottom:1px solid var(--h-line);background-image:radial-gradient(120% 100% at 0% 0%, rgba(242,166,59,.12), transparent 62%)">
-<div style="display:flex;align-items:center;gap:12px">
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
 <img src="assets/logo-alb.png" alt="Golden Pastry" style="width:36px;height:36px;object-fit:contain;flex:none">
-<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1 1 150px">
 <span style="font-family:var(--h-font-display);font-size:20px;font-weight:600;line-height:1.2">Ruta de livrare</span>
-<span style="font-size:13px;color:var(--h-fg-subtle)">{{ sub }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);line-height:1.35">{{ sub }}</span>
 </div>
+<button class="gp-burger gp-burger--mereu" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 <span class="{{ nextCls }}" style="font-size:12px;flex:none">{{ nextLabel }}</span>
 </div>
 
@@ -47,7 +85,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="width:100%;flex:none;max-height:88vh;overflow-y:auto;padding:16px 16px 22px;border-radius:22px 22px 0 0;background:var(--h-bg-surface);border-top:1px solid var(--h-line);display:flex;flex-direction:column;gap:8px;animation:rt-in .22s var(--h-ease-out)">
 <div style="display:flex;align-items:center;gap:12px">
 <span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Ce zi vrei să vezi</span>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+<button type="button" aria-label="Închide alegerea zilei" class="h-btn h-btn--ghost" onClick="{{ onMenuClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
 </div>
 <sc-for list="{{ menuDays }}" as="m" hint-placeholder-count="7">
 <button type="button" onClick="{{ m.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid {{ m.bd }};background:{{ m.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;cursor:pointer">
@@ -61,14 +99,19 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <div class="h-progress" style="height:8px"><div class="h-progress__bar" style="width:{{ pct }}"></div></div>
-<div style="display:flex;align-items:center;gap:12px;font-size:13px;color:var(--h-fg-subtle)">
+<div style="display:flex;align-items:flex-start;gap:12px;font-size:13px;color:var(--h-fg-subtle)">
 <span class="h-numeric">{{ doneLabel }}</span>
-<span class="h-numeric" style="margin-left:auto">{{ totalKm }} · {{ totalDur }}</span>
+<span style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:0">
+<span class="h-numeric">{{ totalKm }} · {{ totalDur }}</span>
+<sc-if value="{{ kmNota }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:11px;line-height:1.3;text-align:right">{{ kmNota }}</span>
+</sc-if>
+</span>
 </div>
 </div>
 
 <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
-<div class="h-alert h-alert--success" style="margin:12px 16px 0;border-radius:14px;padding:12px 14px;font-size:15px;align-items:center;animation:rt-in .25s var(--h-ease-out)">
+<div class="{{ toastCls }}" style="margin:12px 16px 0;border-radius:14px;padding:12px 14px;font-size:15px;align-items:center;animation:rt-in .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ toast }}</p>
 </div>
 </sc-if>
@@ -77,6 +120,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div style="display:flex;flex-direction:column;border:1px solid var(--h-line);border-radius:18px;overflow:hidden;background:var(--h-bg-surface)">
 <sc-for list="{{ stops }}" as="s" hint-placeholder-count="5">
+<sc-if value="{{ s.antet }}" hint-placeholder-val="{{ false }}">
+<div style="border-top:1px solid var(--h-line);border-bottom:1px solid var(--h-line);padding:12px 15px;background:var(--h-bg-sunk);display:flex;flex-direction:column;gap:4px">
+<span class="h-eyebrow" style="font-size:11px">{{ s.antet }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);line-height:1.45">{{ s.antetSub }}</span>
+</div>
+</sc-if>
 <div style="border-bottom:1px solid var(--h-line);border-left:3px solid {{ s.border }};opacity:{{ s.op }}">
 <button type="button" onClick="{{ s.onToggle }}" style="width:100%;display:flex;gap:12px;align-items:flex-start;padding:14px 15px;border:0;background:{{ s.head }};text-align:left;cursor:pointer;font-family:var(--h-font-body);color:var(--h-fg)">
 <span class="h-numeric" style="flex:none;width:40px;height:40px;border-radius:50%;background:{{ s.numBg }};color:{{ s.numFg }};display:flex;align-items:center;justify-content:center;font-family:var(--h-font-display);font-size:19px;font-weight:700">{{ s.num }}</span>
@@ -95,7 +144,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ s.timeLabel }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--warning" style="font-size:11px">{{ s.timeLabel }}</span>
 </sc-if>
+<sc-if value="{{ s.leg }}" hint-placeholder-val="{{ true }}">
 <span class="h-numeric">{{ s.leg }}</span>
+</sc-if>
 <span class="h-numeric">{{ s.qty }} buc.</span>
 </div>
 </div>
@@ -128,6 +179,28 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 </div>
 
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div data-rt="wide" class="h-alert h-alert--danger" style="padding:18px 18px 16px;border-radius:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:17px;font-weight:700">Ruta nu s-a încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:48px;padding:0 18px;font-size:16px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ nepotrivire }}" hint-placeholder-val="{{ false }}">
+<div data-rt="wide" class="h-alert h-alert--warning" style="padding:18px 18px 16px;border-radius:18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:17px;font-weight:700">Opririle aduse nu sunt din ziua deschisă.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ nepotrivireText }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:48px;padding:0 18px;font-size:16px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ seAduce }}" hint-placeholder-val="{{ false }}">
+<div data-rt="wide" class="h-card" style="padding:40px 20px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Se aduce ruta zilei…</p>
+</div>
+</sc-if>
+
 <sc-if value="{{ noStops }}" hint-placeholder-val="{{ false }}">
 <div data-rt="wide" class="h-card" style="padding:40px 20px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center">
 <p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nicio livrare în ziua asta.</p>
@@ -150,6 +223,39 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 
 </div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
 
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:420,&quot;height&quot;:900}}">
@@ -167,7 +273,9 @@ const DKEY = "gp-driver-v1";
 const HQ_OF = () => gp.hq();
 // Zonele și punctele lor de pe hartă vin din Setări. Erau scrise în cod, în
 // trei pagini deodată: o zonă adăugată din panou primea în tăcere coordonatele
-// Centrului, iar kilometrii de pe rută ieșeau greșiți fără niciun semn.// Zilele se calculează la încărcare. Erau scrise în cod, deci ruta ar fi
+// Centrului, iar kilometrii de pe rută ieșeau greșiți fără niciun semn.
+
+// Zilele se calculează la încărcare. Erau scrise în cod, deci ruta ar fi
 // rămas la sfârșitul lui august indiferent de data reală.
 //
 // Se calculau o singură dată, la deschiderea paginii, iar tableta din mașină
@@ -186,13 +294,39 @@ const buildDays = () => {
 buildDays();
 const SPEED = 22, SERVICE = 6;
 
+/**
+ * Cine are voie să DESCHIDĂ panoul.
+ *
+ * Serverul a ținut poarta de la început: rutele de aici sunt `require_ops()`,
+ * iar `GP_OPS_ROLES` nu are nici `client`, nici `agent_vanzari`. Pagina însă
+ * nu întreba nimic, deci cine tasta adresa capătă panoul întreg, plin de
+ * refuzuri, fără să afle că nu e al lui.
+ *
+ * Răspunsul se citește din matricea meniului, nu se scrie a doua oară: dacă
+ * mâine „Rută" iese din meniul unui rol, poarta se închide singură.
+ * Aceeași regulă și aceleași cuvinte ca în „Administrare Comenzi" ·
+ * `vedeComenzi`.
+ */
+const PANOUL = "Rută";
+const CE_PANOU = "ruta șoferului";
+const vedePanoul = (a) => (gp.PANOURI_ROL[(a && a.role) || ""] || []).indexOf(PANOUL) >= 0;
+
 class Component extends DCLogic {
-  state = { orders: [], counts: {}, day: DAYS[0].v, loaded: {}, open: null, toast: "", menu: false };
+  state = { navOpen: false, auth: null, orders: [], counts: {}, day: DAYS[0].v, loaded: {}, open: null, toast: "", toastBad: false, menu: false, eroare: "", contorRupt: false, orderDay: "", listsReady: false };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
     // dacă le redenumești din panou, pagina trebuie să afle de la server.
     gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    // Cine a deschis panoul? Până acum scria în cod că nu-i nimeni — adevărat
+    // pentru tableta din tură, care intră cu codul comun, și mincinos pentru
+    // managerul care deschide aceeași pagină de pe telefonul lui. Din
+    // răspuns iese și meniul: fără el, sertarul ar arăta toate panourile,
+    // inclusiv cele care i-ar răspunde „nu ai voie".
+    //
+    // Fără sesiune, cererea cade cu 401 — nu e o eroare aici: panoul merge
+    // mai departe anonim, cum a mers dintotdeauna.
+    gp.me().then((user) => this.setState({ auth: gp.auth(user) })).catch(() => {});
     document.documentElement.setAttribute("data-theme", "dark");
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
@@ -216,7 +350,16 @@ class Component extends DCLogic {
     }
     const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
     const d = read(DKEY, {});
-    const today = new Date();
+    // Ziua cu care se deschide pagina, pe ceasul patiseriei.
+    //
+    // Era ceasul telefonului, iar zilele din sertar vin de la
+    // `gp.days()` — adică de la ceasul patiseriei. Pe un telefon pe alt fus
+    // cele două nu se potriveau: `day` ieșea un număr care nu există în
+    // sertar, `ISOOF[day]` venea nedefinit, ruta se cerea pentru ziua bună,
+    // iar `stopsFor()` o filtra după ziua greșită. Rezultatul: sertarul scria
+    // „2 opriri", iar ecranul rămânea gol. Paza de nepotrivire prinde asta
+    // acum și o spune, dar mai bine să nu se nască.
+    const today = gp.acumLaPatiserie();
     const p2 = (n) => (n < 10 ? "0" : "") + n;
 
     this.setState({
@@ -271,7 +414,26 @@ class Component extends DCLogic {
    * șoferul alegea mâine, vedea o rută goală.
    */
   pull() {
+    // Rolul care n-are panoul ăsta nu mai întreabă: serverul i-ar răspunde
+    // 403 la fiecare cincisprezece secunde, iar ecranul de refuz e deja peste
+    // el. Poarta e pe „știu și nu are", nu pe „nu știu".
+    if (this.state.auth && !vedePanoul(this.state.auth)) return;
     const iso = ISOOF[this.state.day] || gp.today();
+
+    // Listele se mai cer, dacă prima cerere a picat.
+    //
+    // Se cereau o singură dată, la montare, cu `.catch(() => {})` — adică
+    // tăcere. Tura de cincisprezece secunde cheamă numai ruta și numărătoarea,
+    // deci nimeni nu mai întreba niciodată. Din zonele din Setări iese punctul
+    // de pe hartă al fiecărei opriri; fără ele `pos()` cade pe același punct
+    // pentru toate, deci fiecare distanță iese zero. „0,0 km" arată exact ca
+    // o rută scurtă.
+    //
+    // Ieftin: `gp.lists()` reține răspunsul reușit, deci de îndată ce merge o
+    // dată nu se mai cere. Rândul ăsta rulează numai cât steagul e stins.
+    if (!this.state.listsReady) {
+      gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    }
 
     // Numărul de opriri al fiecărei zile din meniu vine de la server, pentru
     // toată fereastra deodată. Se număra din comenzile aduse pentru ziua
@@ -281,18 +443,61 @@ class Component extends DCLogic {
       .then((r) => {
         const c = JSON.stringify((r && r.counts) || {});
         if (c !== this.__counted) { this.__counted = c; this.setState({ counts: JSON.parse(c) }); }
+        if (this.state.contorRupt) this.setState({ contorRupt: false });
       })
-      .catch(() => {});
+      // Numărătoarea picată nu golește pagina, dar nu are voie nici să pretindă
+      // zero: `counts` gol ar scrie „0 opriri” în dreptul fiecărei zile din
+      // meniu, inclusiv peste zilele care au livrări. Steagul de aici pune „—”
+      // în locul cifrei, adică „nu știu”, care e adevărul.
+      .catch(() => { if (!this.state.contorRupt) this.setState({ contorRupt: true }); });
 
     return gp.get('/routes?day=' + iso)
       .then((r) => {
+        // Răspunsul învechit se aruncă.
+        //
+        // Serverul spune în răspuns pentru ce zi e (`json_out(['day' => ...])`)
+        // tocmai pentru asta, dar pagina nu se uita la el: scria în stare tot
+        // ce venea. Două apăsări de zi una după alta lasă două cereri în aer,
+        // iar pe o legătură de telefon ele nu se întorc neapărat în ordinea în
+        // care au plecat. Când răspunsul zilei părăsite ajungea al doilea, în
+        // `orders` rămâneau opririle ei — iar `stopsFor()`, care filtrează
+        // după ziua aleasă, le arunca pe toate afară. Sertarul zilelor scria
+        // „11 opriri” cu bifă pe ziua deschisă, ecranul spunea „Nicio livrare
+        // în ziua asta”, și amândouă erau despre aceeași zi.
+        //
+        // Se compară cu ziua din stare CITITĂ ACUM, nu cu `iso` de la
+        // plecare: între timp șoferul poate să fi ales deja altceva.
+        const ziuaAcum = ISOOF[this.state.day] || gp.today();
+        if (r && r.day && r.day !== ziuaAcum) return;
         const list = (r.stops || []).map(gp.toPageOrder);
         const next = JSON.stringify(list);
         if (next !== this.__seen) { this.__seen = next; this.setState({ orders: list }); }
+        // Ziua DESPRE CARE pagina are un răspuns. Se scrie și când lista n-a
+        // schimbat nimic: tocmai un răspuns gol pentru ziua deschisă e
+        // lucrul pe care paza de mai jos are nevoie să-l deosebească de o
+        // cerere încă pe drum.
+        if (this.state.orderDay !== ziuaAcum) this.setState({ orderDay: ziuaAcum });
+        if (this.state.eroare) this.setState({ eroare: "" });
       })
       .catch((e) => {
+        // Refuzul se ARATĂ, nu se scrie în consolă.
+        //
+        // Aici era `console.warn`, adică nicăieri: pe telefonul șoferului nu
+        // există consolă. Ruta rămânea goală, iar cartonul de dedesubt îi
+        // spunea „Nicio livrare în ziua asta” — o afirmație pe care pagina
+        // n-avea de unde s-o facă, fiindcă nu apucase să afle. Numărul din
+        // meniul de zile vine din ALTĂ cerere, care poate să reușească; atunci
+        // ecranul se contrazice singur: sus scrie că sunt opriri, jos nu e
+        // niciuna, și nimic nu spune de ce.
+        // Aceeași pază a zilei ca la răspunsul bun, din același motiv.
+        //
+        // Refuzul unei cereri PĂRĂSITE nu spune nimic despre ziua deschisă
+        // acum. Fără rândul ăsta, șoferul apasă o zi nouă, ea se încarcă
+        // bine, și peste ea se aprinde cartonul roșu al zilei de dinainte —
+        // un mesaj adevărat despre o întrebare la care nimeni nu mai ține.
+        if (iso !== (ISOOF[this.state.day] || gp.today())) return;
         if (e.isAuth) gp.toLogin();
-        else console.warn('[gp] nu am putut aduce ruta:', e.message);
+        else this.setState({ eroare: gp.motiv(e, "ruta zilei") });
       });
   }
 
@@ -378,14 +583,52 @@ class Component extends DCLogic {
     this.__gpSync();
     const S = this.state;
     const list = this.stopsFor(S.day);
-    const mins = (t) => parseInt(String(t).slice(0, 2), 10) * 60 + parseInt(String(t).slice(3), 10);
+    // Steagul stă aici, nu în obiectul de mai jos, fiindcă lacătul cartonului
+    // de gol trebuie să-l poată numi: cheile unui obiect nu se văd între ele.
+    //
+    // `orderDay` e dovada pozitivă că serverul a răspuns DESPRE ZIUA DESCHISĂ.
+    // Fără ea, steagul s-ar aprinde o clipă la fiecare apăsare de zi: până vine
+    // răspunsul, `orders` ține opririle zilei părăsite, deci „am date, dar nu
+    // din ziua asta" e adevărat și nefolositor. Contradicția se spune numai
+    // când e o contradicție: am întrebat despre ziua asta, am primit opriri,
+    // și niciuna nu trece filtrul ei.
+    const ziuaDeschisa = ISOOF[S.day] || gp.today();
+    const nepotrivire = list.length === 0 && S.orders.length > 0
+      && S.orderDay === ziuaDeschisa && !S.eroare;
+    // Oprire fără interval → fără NaN pe tot restul rutei (vezi Administrare).
+    const mins = (t) => {
+      const m = /^(\d{1,2}):(\d{2})/.exec(String(t || ""));
+      return m ? Number(m[1]) * 60 + Number(m[2]) : NaN;
+    };
+    const minsOr = (t, alt) => { const v = mins(t); return isNaN(v) ? alt : v; };
     const hhmm = (m) => {
       const x = ((Math.round(m) % 1440) + 1440) % 1440;
       return String(Math.floor(x / 60)).padStart(2, "0") + ":" + String(x % 60).padStart(2, "0");
     };
+    // ÎN AFARA ORAȘULUI: a doua listă, sub rută.
+    //
+    // Ruta se ordonează după punctele de pe hartă (`delivery_zone_coords`). O
+    // zonă fără punct n-are cum să intre în ordinea aia: `pos()` o așază în
+    // curtea depozitului, deci kilometrul de dinainte iese 0 și optimizatorul
+    // o pune prima — un drum la Ploiești strecurat între Sectorul 1 și
+    // Sectorul 2, iar ora fiecărei opriri de după el, mincinoasă.
+    //
+    // Întrebarea se pune HĂRȚII, nu numelui: `gp.zoneFaraPunct()`. Zonele se
+    // redenumesc din Setări, deci un nume scris aici ar putrezi la prima
+    // redenumire; punctul lipsă rămâne lipsă oricum s-ar chema zona.
+    //
+    // Cât timp listele n-au ajuns, harta e goală și `zoneFaraPunct()` răspunde
+    // „nu știu" (adică `false`), deci ecranul arată exact ruta de azi. Nimic
+    // nu se ascunde înainte de-a ști; despărțirea apare când se poate face.
+    const peRuta = list.filter((o) => !gp.zoneFaraPunct(o.zone));
+    const deoparte = list.filter((o) => gp.zoneFaraPunct(o.zone));
+
+    // Kilometrii, ceasul și ordinea se socotesc NUMAI pe rută. Opririle de
+    // deoparte n-au punct, deci n-au nici distanță — iar o distanță inventată
+    // ar strica și orele opririlor care chiar sunt pe rută.
     let prev = HQ_OF(), total = 0;
-    const legs = list.map(o => { const p = this.pos(o), d = this.km(prev, p); prev = p; total += d; return d; });
-    let clock = list.length ? mins(list[0].slot) - legs[0] / SPEED * 60 : 0;
+    const legs = peRuta.map(o => { const p = this.pos(o), d = this.km(prev, p); prev = p; total += d; return d; });
+    let clock = peRuta.length ? minsOr(peRuta[0].slot, 8 * 60) - legs[0] / SPEED * 60 : 0;
 
     const toggleItem = (o, i) => {
       const cur = (S.loaded[o.id] || []).slice();
@@ -416,6 +659,7 @@ class Component extends DCLogic {
       this.setState({
         orders: S.orders.map(x => x.id === o.id ? Object.assign({}, x, { status: next }) : x),
         open: null,
+        toastBad: false,
         toast: delivered ? o.cust + " — livrarea a fost anulată." : o.cust + " · " + o.ref + " marcat livrat. Laboratorul vede „" + gp.done() + "”."
       });
 
@@ -423,7 +667,7 @@ class Component extends DCLogic {
         .catch((e) => {
           this.__seen = null;
           this.pull();
-          this.setState({ toast: "Nu s-a salvat: " + e.message });
+          this.setState({ toast: "Nu s-a salvat: " + e.message, toastBad: true });
         });
     };
 
@@ -452,10 +696,22 @@ class Component extends DCLogic {
       return i >= iDone - 1;
     };
 
-    const stops = list.map((o, i) => {
-      clock += legs[i] / SPEED * 60;
-      const eta = hhmm(clock);
-      clock += SERVICE;
+    /**
+     * Un carton de oprire — același șablon pentru amândouă listele.
+     *
+     * Ce le deosebește e puțin și se vede pe ecran: bulina poartă numărul
+     * oprirei pe rută și „↗" în afara orașului (un număr acolo ar minți, că
+     * nu e o poziție într-o ordine), kilometrul lipsește unde nu există punct
+     * de la care să-l măsori, iar prima oprire de deoparte poartă banda care
+     * desparte listele.
+     *
+     * Ceasul se mișcă numai pe rută, și numai o dată pe oprire: funcția asta
+     * se cheamă întâi pentru toate opririle de pe rută, în ordinea lor, și
+     * abia apoi pentru cele de deoparte.
+     */
+    const carton = (o, i, laRuta, cuAntet) => {
+      let eta = "";
+      if (laRuta) { clock += legs[i] / SPEED * 60; eta = hhmm(clock); clock += SERVICE; }
       const done = o.status === gp.done();
       const lo = S.loaded[o.id] || [];
       const allLoaded = lo.length === o.items.length && o.items.length > 0;
@@ -464,10 +720,34 @@ class Component extends DCLogic {
       // aceeași informație.
       const gata = etapaGata(o.status);
       return {
-        num: done ? "✓" : String(i + 1), ref: o.ref, cust: o.cust, slot: o.slot, eta,
+        num: done ? "✓" : laRuta ? String(i + 1) : "↗", ref: o.ref, cust: o.cust, slot: o.slot, eta,
+        // Banda care desparte listele o poartă PRIMA oprire de deoparte, nu
+        // marcajul: `<sc-for>` desenează un singur șablon, iar un al doilea
+        // `<sc-for>` ar însemna încă patruzeci de rânduri de carton copiate,
+        // care s-ar depărta de original la prima reparație.
+        antet: cuAntet ? "În afara orașului" : "",
+        antetSub: cuAntet
+          ? "Nu intră pe rută: zona n-are punct pe hartă, deci kilometrii și "
+            + "orele de sus nu le cuprind. Le duce cine poate, iar ora promisă "
+            + "se confirmă la telefon."
+          : "",
         timeLabel: o.timed ? "ora " + o.slot + " fix" : "",
-        addr: (o.addr || "adresă necompletată") + " · " + (o.zone || "Centru"),
-        qty: gp.qtyLabel(this.qty(o)), leg: legs[i].toFixed(1) + " km", note: o.note || "",
+        // D8: nu se inventează o zonă.
+        //
+        // Era `o.zone || "Centru"`. „Centru” nu e în `delivery_zones` și n-are
+        // punct pe hartă, deci `pos()` o așază în curtea depozitului, iar
+        // kilometrii de dinainte și de după ies fabricați. Restul programului e
+        // deja cinstit: panoul de comenzi scrie adresa fără sufix. Când zona
+        // lipsește, ecranul o spune — șoferul întreabă, nu ghicește.
+        addr: (o.addr || "adresă necompletată") + (o.zone ? " · " + o.zone : " · fără zonă"),
+        // „—" cât timp nu știm, nu „0,0 km". Zero e un număr; „nu știu" nu e
+        // zero. Același tipar ca `contorRupt` la numărătoarea din meniu.
+        qty: gp.qtyLabel(this.qty(o)),
+        // Fără punct pe hartă nu există kilometru, deci nu se scrie niciunul:
+        // marcajul sare peste rândul gol. „—" ar însemna „nu știu încă", ceea
+        // ce e adevărat numai cât timp nu s-au adus listele.
+        leg: !laRuta ? "" : S.listsReady ? legs[i].toFixed(1) + " km" : "—",
+        note: o.note || "",
         urgent: !!o.urgent,
         stageLabel: done || gata === null ? "" : (gata ? "Gata" : "În lucru"),
         stageCls: gata ? "h-badge h-badge--success" : "h-badge h-badge--warning",
@@ -492,26 +772,109 @@ class Component extends DCLogic {
           };
         }),
         onAll: () => allItems(o),
-        nav: "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent((o.addr || o.cust) + ", București"),
+        // Sufixul „, București" e adevărat numai pentru opririle de pe rută:
+        // zonele cu punct pe hartă sunt sectoarele și Ilfovul. Lipit pe o
+        // adresă din afara orașului, ar trimite șoferul în alt oraș — Google
+        // primește „Str. Gării 12, Ploiești, București" și alege el unde e.
+        // Adresa din afară pleacă așa cum a scris-o clientul.
+        nav: "https://www.google.com/maps/dir/?api=1&destination="
+          + encodeURIComponent((o.addr || o.cust) + (laRuta ? ", București" : "")),
         doneCls: done ? "h-btn h-btn--ghost h-btn--block" : "h-btn h-btn--primary h-btn--block",
         doneLabel: done ? "Anulează livrarea" : "Marchează livrat",
         onDone: () => markDone(o)
       };
-    });
+    };
+
+    // Ruta întâi, în ordinea ei de azi; dedesubt, ce nu încape pe ea. O
+    // singură derulare, un singur fel de carton.
+    const stops = peRuta.map((o, i) => carton(o, i, true, false))
+      .concat(deoparte.map((o, i) => carton(o, i, false, i === 0)));
 
     const doneCount = list.filter(o => o.status === gp.done()).length;
     const next = list.find(o => o.status !== gp.done());
+    // Insigna „Următoarea" numără poziții pe RUTĂ, deci caută în `peRuta`: pe
+    // `list` ar număra și opririle de deoparte, care n-au poziție.
+    const urmRuta = peRuta.find(o => o.status !== gp.done());
+    const afaraRamase = deoparte.filter(o => o.status !== gp.done()).length;
+    // Ziua spune pe față ce cuprinde: numărul de sus e tot ce datorează ziua,
+    // iar partea care nu intră pe rută se spune imediat, nu se află în mașină.
+    const opriri = (n) => n + (n === 1 ? " oprire" : " opriri");
+    const ziuaCuprinde = DLONG[S.day] + " · " + opriri(list.length)
+      + (deoparte.length ? ", din care " + deoparte.length + " în afara orașului" : "");
+
+    // E cineva anume dincolo de ecran, sau e tura întreagă pe contul comun?
+    const omAnume = !!S.auth && !S.auth.isSystem;
+    const faraAcces = !!S.auth && !vedePanoul(S.auth);
+    const acasa = S.auth ? gp.primaPagina(S.auth) : "Intrare.dc.html";
 
     return {
-      sub: DLONG[S.day] + " · " + list.length + (list.length === 1 ? " oprire" : " opriri"),
+      // Meniul de pe telefon și de pe tabletă. Panoul ăsta n-are bară
+      // laterală pe niciun ecran, deci butonul ☰ e singura cale de ieșire
+      // din el — de-aia se vede la orice lățime. Lista vine din `gp.meniu()`
+      // (shared/gp-api.js), una singură pentru toate panourile.
+      meniu: gp.meniu("Rută", S.auth),
+      navHere: "Rută",
+      // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
+      // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
+      // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
+      // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      // Apăsarea pe foaie nu are voie să ajungă la fundal, care închide.
+      onNavKeep: (e) => e.stopPropagation(),
+      // Tableta din tură lucrează pe contul comun, deci n-are pe cine numi;
+      // dar aceeași pagină se deschide și de pe telefonul unui om anume, iar
+      // atunci rândul cu numele lui trebuie să fie acolo. Scris în cod pe
+      // „nimeni", panoul îl trata pe manager ca pe o tabletă.
+      //
+      // Contul comun se cunoaște după `isSystem`, spus de server; nu după
+      // nume, cum se ghicea în Depozit până acum.
+      navWho: omAnume,
+      navAnon: !omAnume,
+      authName: omAnume ? S.auth.name : "",
+
+      // POARTA DE ROL, ÎN PAGINĂ. Se aprinde numai când se ȘTIE cine a intrat
+      // și rolul lui n-are panoul ăsta. Fără sesiune (`gp.me()` cade cu 401)
+      // panoul merge mai departe anonim, cum a mers dintotdeauna: „nu știu
+      // încă" nu e un refuz, și tableta din tură n-are voie să se închidă
+      // fiindcă răspunsul întârzie o clipă.
+      faraAcces,
+      // Aceeași propoziție nu se potrivește amândurora, exact ca la ecranul
+      // de refuz din „Administrare Comenzi": clientul nu e un angajat cu
+      // rolul greșit, iar „rolul lui lucrează în altă parte" n-are ce să-i
+      // spună. Textul se desparte pe aceeași întrebare pe care o pun și
+      // butoanele de dedesubt, ca ecranul să nu se contrazică singur.
+      accesLinie: !S.auth ? ""
+        : (S.auth.role === "client"
+          ? "Contul „" + S.auth.name + "” e cont de client: aici lucrează personalul patiseriei. Comenzile tale le vezi în „Comanda mea”."
+          : "Contul „" + S.auth.name + "” nu are acces la " + CE_PANOU + ". Rolul lui lucrează în altă parte — te duc acolo."),
+      accesClient: faraAcces && S.auth.role === "client",
+      accesAltul: faraAcces && S.auth.role !== "client",
+      // Unde-l trimitem: pagina cu care începe ziua rolului lui, aceeași pe
+      // care o dă și autentificarea (`gp.primaPagina`). Eticheta se ia din
+      // `gp.MENIU`, ca butonul să poarte chiar numele din sertar; magazinul
+      // nu e o intrare de meniu, de-aia clientul are ramura lui mai sus.
+      accesAcasa: acasa,
+      accesAcasaEt: (gp.MENIU.filter((x) => x.href === acasa)[0] || {}).et || "Pagina mea",
+
+
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+      sub: ziuaCuprinde,
       menuOpen: S.menu,
       onMenuOpen: () => this.setState({ menu: true }),
       onMenuClose: () => this.setState({ menu: false }),
-      currentLabel: DLONG[S.day] + " · " + list.length + (list.length === 1 ? " oprire" : " opriri"),
+      // Butonul „Ziua rutei" e îngust și taie cu trei puncte, deci poartă
+      // forma scurtă; propoziția întreagă stă în rândul de deasupra lui, unde
+      // încape. Erau același text fiindcă nu se deosebeau, nu fiindcă trebuie.
+      currentLabel: DLONG[S.day] + " · " + opriri(list.length),
       menuDays: DAYS.map(d => {
         const n = this.dayCount(d.v);
         return {
-          label: DLONG[d.v] || d.l, count: n + (n === 1 ? " oprire" : " opriri"),
+          label: DLONG[d.v] || d.l,
+          // „—” înseamnă „nu știu”, nu „zero”: numărătoarea n-a răspuns.
+          count: S.contorRupt ? "—" : n + (n === 1 ? " oprire" : " opriri"),
           mark: d.v === S.day ? "✓" : "",
           bg: d.v === S.day ? "var(--h-accent-soft)" : "var(--h-bg-raised)",
           bd: d.v === S.day ? "var(--h-accent)" : "var(--h-line)",
@@ -522,15 +885,72 @@ class Component extends DCLogic {
         l: d.l, cls: d.v === S.day ? "h-btn h-btn--primary h-btn--sm" : "h-btn h-btn--secondary h-btn--sm",
         onClick: () => this.goDay(d.v, false)
       })),
-      stops, noStops: list.length === 0,
+      stops,
+      // Cartonul „Nicio livrare în ziua asta” e o AFIRMAȚIE: am întrebat, nu-i
+      // nimic. Când cererea a picat, pagina n-a apucat să întrebe, deci n-are
+      // dreptul s-o facă — locul ei îl ia cartonul de eroare de mai jos.
+      // Paza de aur, pusă după ce am urmărit plângerea „vezi în meniu că sunt
+      // opriri, dar nu vezi nimic”.
+      //
+      // `list` e ce trece filtrul zilei; `S.orders` e ce a trimis serverul.
+      // Când serverul a trimis opriri și NICIUNA nu trece filtrul, ziua nu e
+      // liberă: ziua cerută și ziua filtrată nu sunt aceeași zi. Ecranul nu
+      // are voie să spună „nicio livrare” — asta e o afirmație despre lume,
+      // iar lumea a răspuns altceva. Cauzele știute (răspuns învechit, ceasul
+      // dispozitivului rămas în urmă) sunt reparate fiecare la locul ei, dar
+      // paza rămâne: dacă mai apare vreodată un al treilea drum spre starea
+      // asta, șoferul o află de pe ecran, nu din mașină, cu marfa la bord.
+      nepotrivire,
+      nepotrivireText: "Serverul a trimis " + S.orders.length
+        + (S.orders.length === 1 ? " oprire" : " opriri")
+        + ", dar pentru altă zi decât cea deschisă. Apasă „Încearcă din nou”; "
+        + "dacă se repetă, verifică data și ora din setările telefonului.",
+      // „Nicio livrare în ziua asta" numai DUPĂ ce am întrebat despre ziua
+      // asta. `orderDay` e singurul lucru care deosebește „am întrebat, nu-i
+      // nimic" de „încă n-am întrebat": prima desenare se face înaintea lui
+      // `componentDidMount`, iar numărătoarea din meniu vine dintr-o cerere
+      // mai mică, care de obicei aterizează prima. Fără lacătul ăsta, ecranul
+      // arată „2 opriri" sus și „Nicio livrare" jos, pe cod altfel reparat.
+      // Și un al treilea lacăt: cine n-are panoul ăsta n-a întrebat nimic
+      // (`pull()` se oprește la poartă), deci n-are de unde să afle că ziua
+      // e goală. Ecranul de refuz acoperă cartonul oricum, dar o afirmație
+      // ascunsă e tot o afirmație.
+      noStops: list.length === 0 && !S.eroare && !nepotrivire && !faraAcces
+        && S.orderDay === ziuaDeschisa,
+      // Cât timp nu știm, se spune că nu știm. Nu se folosește un steag
+      // „cerere în aer": acela s-ar aprinde și la tura de 15 secunde, deci
+      // cartonul ar clipi pe o zi chiar liberă. `orderDay` rămâne pus între
+      // ture, deci mesajul apare o dată, la început, și nu se mai întoarce.
+      seAduce: S.orderDay !== ziuaDeschisa && !S.eroare,
+      eroare: S.eroare,
+      onReincearca: () => {
+        this.__seen = null;
+        this.__counted = null;
+        this.setState({ eroare: "" }, () => this.pull());
+      },
       pct: list.length ? Math.round(doneCount / list.length * 100) + "%" : "0%",
       doneLabel: doneCount + " din " + list.length + " livrate",
-      totalKm: total.toFixed(1) + " km",
-      totalDur: list.length ? Math.round(total / SPEED * 60 + list.length * SERVICE) + " min" : "—",
-      nextLabel: next ? "Următoarea · oprirea " + (list.indexOf(next) + 1) : list.length ? "Rută încheiată" : "Liber",
+      // Kilometrii și durata sunt ale RUTEI, nu ale zilei: opririle de deoparte
+      // n-au punct, deci n-au distanță. Banda de deasupra lor o spune, ca
+      // numărul de aici să nu pară că le cuprinde.
+      totalKm: S.listsReady ? total.toFixed(1) + " km" : "—",
+      totalDur: (S.listsReady && peRuta.length)
+        ? Math.round(total / SPEED * 60 + peRuta.length * SERVICE) + " min" : "—",
+      // Nota stă lipită de numărul pe care-l îngustează, nu în subsol: cine
+      // citește „34,7 km" își face socoteala zilei pe loc, iar drumul până la
+      // Ploiești nu e în el. Apare numai când e ceva de spus.
+      kmNota: deoparte.length ? "fără cele din afara orașului" : "",
+      // Trei stări, nu două: mai e o oprire pe rută · ruta s-a terminat dar
+      // au rămas livrări în afara orașului · nu mai e nimic. A doua lipsea, și
+      // ecranul ar fi scris „Rută încheiată" cu marfa pentru Ploiești în mașină.
+      nextLabel: urmRuta ? "Următoarea · oprirea " + (peRuta.indexOf(urmRuta) + 1)
+        : afaraRamase ? (afaraRamase === 1 ? "Rămâne una în afara orașului"
+          : "Rămân " + afaraRamase + " în afara orașului")
+        : list.length ? "Rută încheiată" : "Liber",
       nextCls: next ? "h-badge h-badge--warning" : "h-badge h-badge--success",
       allDone: list.length > 0 && !next,
       toast: S.toast,
+      toastCls: S.toastBad ? "h-alert h-alert--danger" : "h-alert h-alert--success",
       // Ordinea manuală stă pe comenzile brute din `list`; obiectele din
       // `stops` sunt cele pregătite pentru afișare și nu au câmpul routeSeq,
       // deci testul pe ele ieșea mereu adevărat (`undefined !== null`), iar

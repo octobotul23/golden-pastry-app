@@ -1,0 +1,59 @@
+-- Migrarea 018 — adresa publică și programul capătă rând în `settings`
+--
+-- Se rulează o singură dată, după 017. Poate fi rulată de câte ori vrei fără
+-- pagubă: `INSERT IGNORE` nu atinge un rând care există deja, deci o adresă pe
+-- care ai scris-o tu rămâne a ta.
+--
+-- Rulare locală (Laragon):  mysql -u root gp_dev < sql/018_adresa_si_program.sql
+-- Rulare pe VPS:            bash actualizeaza-vps.sh (le rulează pe toate, în ordine)
+--
+-- Ce aduce, și DE CE
+-- ==================
+--
+-- PROBLEMA DE REZOLVAT: DOUĂ CASETE CARE NU SE PUTEAU SCRIE. Panoul Setări are
+-- de mult casetele „Adresa publică" și „Program de lucru", iar pagina publică
+-- le citește pe amândouă (`seo/index.php`: `company_address`, `company_hours`).
+-- Numai că `settings_save()` (api/lib/settings.php) scrie NUMAI peste cheile
+-- care au deja rând în tabel — `$known = array_keys(settings_all())` — iar
+-- aceste două chei n-au fost semănate niciodată, nici de `002_seed.sql`, nici
+-- de vreo migrare de după el.
+--
+-- Deci patronul scria adresa, apăsa „Salvează", primea răspuns bun — și nu se
+-- schimba nimic, nicăieri, niciodată. Adresa firmei era în fapt scrisă în cod.
+-- Panoul a învățat între timp să prindă pierderea și s-o numească pe nume
+-- („Setari.dc.html", cheile „căzute"), dar a numi paguba nu e a o repara: omul
+-- afla că nu se poate, nu căpăta un loc unde să scrie.
+--
+-- CE VALORI SE SEAMĂNĂ, ȘI DE CE TOCMAI ACESTEA
+-- =============================================
+--
+-- Exact cele scrise în cod ca temei de rezervă (`api/lib/firma.php`):
+-- „Șos. Olteniței 103" și „Lu-Vi 07:00-21:00, Sâ 07:00-17:00".
+-- Migrarea NU schimbă deci nimic din ce
+-- se vede pe site în clipa actualizării: schimbă doar cine ține valoarea —
+-- baza, nu fișierul. De mâine se poate scrie din Setări.
+--
+-- Programul e cel PE CARE-L ARĂTA PAGINA, nu cel pe care-l afla Google. Până
+-- la unificare site-ul spunea două programe deodată: omului „Luni–Vineri
+-- 07:00–21:00, Sâmbătă 07:00–17:00, Duminică Închis", scris în marcaj, iar lui
+-- Google „Luni–Sâmbătă 05:00–21:00", citit din Setări. Patronul a hotărât care
+-- e adevărat: cel de pe pagină. Duminica rămâne închis, adică lipsește din
+-- rând — o zi nenumită e o zi închisă.
+--
+-- Codul își păstrează temeiul de rezervă, dinadins: caseta golită din panou
+-- salvează șir gol, nu null, iar `firma_publica()` verifică tocmai de-aia cu
+-- `?:`, nu cu `??`. Cine golește caseta se întoarce la valoarea din cod, nu
+-- rămâne cu un rând de contact gol în pagină.
+--
+-- CE NU ATINGE, DINADINS
+-- ======================
+--
+-- Nu scrie peste un rând care există: dacă ai apucat să pui adresa cu mâna
+-- în bază, ori dacă migrarea s-a rulat deja, `INSERT IGNORE` trece pe lângă.
+-- Spre deosebire de `017`, aici NU e nevoie de un `UPDATE … WHERE updated_by
+-- IS NULL`: `017` avea de îndreptat o valoare semănată greșit de noi, pe când
+-- aici nu există nicio valoare de îndreptat — numai un rând care lipsește.
+
+INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
+  ('company_address', 'Șos. Olteniței 103', 0),
+  ('company_hours', 'Lu-Vi 07:00-21:00, Sâ 07:00-17:00', 0);

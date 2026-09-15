@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 function route_settings_get(): void
 {
-    require_role('admin');
+    require_admin();
     // Anunțurile eșuate pleacă odată cu setările, ca panoul să le poată arăta
     // fără o cerere în plus. Până acum eșecul se scria doar în tabelul
     // `notifications`, în care nu se uita nicio pagină: o comandă care nu a
@@ -13,7 +13,12 @@ function route_settings_get(): void
     // ea.
     json_out([
         'settings' => settings_public(),
-        'failed'   => failed_notifications(),
+        'failed'      => failed_notifications(),
+        // Câte sunt CU ADEVĂRAT, nu câte încap în listă. Titlul casetei roșii
+        // se scria din rândurile aduse — cel mult 20 — deci un weekend cu 47
+        // de eșecuri se anunța ca „20 anunțuri nu au plecat”. O cifră mai mică
+        // decât adevărul, tocmai într-un mesaj de alarmă.
+        'failedTotal' => failed_notifications_count(),
     ]);
 }
 
@@ -26,50 +31,112 @@ function route_settings_get(): void
  */
 function failed_notifications(): array
 {
+    // Comanda se aduce odată cu anunțul: rândul scria „comanda #<id>”, adică
+    // numărul din baza de date, care nu apare nicăieri altundeva în program.
+    // Pe hârtia din laborator, în panou și pe factură scrie referința („#1003”),
+    // deci omul avea în față un număr pe care nu-l putea căuta nicăieri.
     $rows = all(
-        "SELECT id, channel, recipient, subject, error, order_id, created_at
-           FROM notifications
-          WHERE status = 'failed' AND seen_at IS NULL
-          ORDER BY id DESC LIMIT 20"
+        "SELECT n.id, n.channel, n.recipient, n.subject, n.error, n.order_id, n.created_at,
+                o.ref AS order_ref, o.seq AS order_seq, o.day AS order_day
+           FROM notifications n
+           LEFT JOIN orders o ON o.id = n.order_id
+          WHERE n.status = 'failed' AND n.seen_at IS NULL
+          ORDER BY n.id DESC LIMIT 20"
     );
 
-    return array_map(static fn($r) => [
-        'id'        => (int) $r['id'],
-        'channel'   => $r['channel'],
-        'recipient' => $r['recipient'],
-        'subject'   => $r['subject'],
-        'error'     => $r['error'],
-        'orderId'   => $r['order_id'] === null ? null : (int) $r['order_id'],
-        'createdAt' => $r['created_at'],
-    ], $rows);
+    return array_map(static function (array $r): array {
+        // Comanda poate lipsi din două motive: anunțul e al unei cereri de pe
+        // site (order_id NULL) sau comanda a fost ștearsă între timp. Ziua
+        // merge alături de referință fiindcă referința repornește în fiecare
+        // zi de la #1001 — singură, n-ar deosebi două comenzi.
+        $comanda = $r['order_seq'] !== null;
+        return [
+            'id'        => (int) $r['id'],
+            'channel'   => $r['channel'],
+            'recipient' => $r['recipient'],
+            'subject'   => $r['subject'],
+            'error'     => $r['error'],
+            'orderId'   => $r['order_id'] === null ? null : (int) $r['order_id'],
+            'orderRef'  => $comanda ? ($r['order_ref'] ?: ('#' . (1000 + (int) $r['order_seq']))) : null,
+            'orderDay'  => $comanda ? $r['order_day'] : null,
+            'createdAt' => $r['created_at'],
+        ];
+    }, $rows);
+}
+
+/** Câte anunțuri eșuate nevăzute sunt, dincolo de cele 20 aduse în listă. */
+function failed_notifications_count(): int
+{
+    $r = one("SELECT COUNT(*) AS n FROM notifications WHERE status = 'failed' AND seen_at IS NULL");
+    return (int) ($r['n'] ?? 0);
 }
 
 /**
  * POST /settings/notifications/seen
  *
- * Golește lista de anunțuri eșuate din panou. Rândurile rămân în tabel, doar
- * primesc `seen_at`: fără butonul acesta, o defecțiune reparată acum o
- * săptămână ar rămâne pe ecran la nesfârșit și nu ai mai deosebi-o de una nouă,
- * adică exact felul în care se pierde din vedere un anunț care chiar contează.
+ * Stinge din panou anunțurile eșuate pe care le-a citit administratorul.
+ * Rândurile rămân în tabel, doar primesc `seen_at`: fără butonul acesta, o
+ * defecțiune reparată acum o săptămână ar rămâne pe ecran la nesfârșit și nu ai
+ * mai deosebi-o de una nouă, adică exact felul în care se pierde din vedere un
+ * anunț care chiar contează.
+ *
+ * Se sting DOAR id-urile trimise, adică exact rândurile pe care pagina le-a
+ * avut pe ecran. Înainte, butonul trimitea un corp gol și UPDATE-ul mătura tot
+ * tabelul — dar lista arată cel mult 20 de rânduri. Un weekend cu tokenul de
+ * WhatsApp expirat lăsa 47 de eșecuri: omul citea 20 și stingea 47, iar
+ * celelalte 27 nu se mai puteau afla de nicăieri, fiindcă Setările sunt singurul
+ * loc din tot programul care citește tabelul `notifications`. Rămânea cu
+ * canalul reparat și fără să știe pe care clienți să-i sune înapoi.
+ *
+ * Al doilea drum, care nu cerea nici măcar 20 de eșecuri: lista se încarcă o
+ * singură dată, la deschiderea paginii. Un anunț picat la 11:30 era stins de un
+ * buton apăsat la 12:00 pentru cu totul altceva, fără să fi apărut vreodată pe
+ * ecran.
+ *
+ * O cerere fără id-uri nu mai stinge nimic, dinadins: singurul lucru care ar
+ * putea trimite așa ceva e o pagină veche, iar „nu fac nimic” e răspunsul care
+ * nu pierde date.
  */
 function route_settings_notifications_seen(): void
 {
-    require_role('admin');
+    require_admin();
 
-    $n = q(
-        "UPDATE notifications SET seen_at = UTC_TIMESTAMP()
-          WHERE status = 'failed' AND seen_at IS NULL"
-    )->rowCount();
+    $b   = body();
+    $ids = [];
+    foreach ((array) ($b['ids'] ?? []) as $v) {
+        $id = (int) $v;
+        if ($id > 0 && !in_array($id, $ids, true)) {
+            $ids[] = $id;
+        }
+        if (count($ids) >= 200) {
+            break;                           // lista arată 20; 200 e loc de zece loturi
+        }
+    }
+
+    $n = 0;
+    if ($ids !== []) {
+        $semne = implode(', ', array_fill(0, count($ids), '?'));
+        $n = q(
+            "UPDATE notifications SET seen_at = UTC_TIMESTAMP()
+              WHERE id IN ($semne) AND status = 'failed' AND seen_at IS NULL",
+            $ids
+        )->rowCount();
+    }
 
     if ($n > 0) {
         audit('notifications_seen', 'settings', null, $n . ' anunțuri eșuate marcate ca văzute');
     }
-    json_out(['ok' => true, 'marked' => $n, 'failed' => failed_notifications()]);
+    json_out([
+        'ok'          => true,
+        'marked'      => $n,
+        'failed'      => failed_notifications(),
+        'failedTotal' => failed_notifications_count(),
+    ]);
 }
 
 function route_settings_save(): void
 {
-    $u = require_role('admin');
+    $u = require_admin();
     $b = body();
 
     $incoming = $b['settings'] ?? $b;
@@ -120,9 +187,56 @@ function route_settings_save(): void
         }
     }
 
+    // Pragul minim implicit, verificat acolo unde se SCRIE, nu unde se citește.
+    //
+    // Caseta trecea nefiltrată în bază, iar articolele noi o luau de acolo cu un
+    // simplu `(float)` (api/routes/stock.php). Două pagube, amândouă tăcute:
+    // „0,5" scris cu virgulă — cum scrie zecimalele oricine de aici, și cum le
+    // primește anume caseta vecină de coordonate (guard_hq_coords() mai jos) —
+    // devenea 0, adică „fără prag": articolul nu mai apărea niciodată în „Sub
+    // prag minim" și nimeni nu afla că s-a terminat, până când îți trebuia și
+    // nu-l aveai. Iar un număr peste cât încape în DECIMAL(10,2) ieșea invers,
+    // ca „Eroare internă", abia la primul articol nou — la trei săptămâni după
+    // ce fusese tastat, când nimeni nu mai lega una de alta.
+    //
+    // Verificarea stă aici, la salvare, ca patronul să afle pe loc că „0,5" nu
+    // e ce crede el. Forma cu punct se scrie înapoi în cerere, ca baza să țină
+    // cifrele scrise de om, nu un float rotunjit — același tipar ca la
+    // coordonate.
+    if (array_key_exists('stock_min_default', $incoming)) {
+        $brut = str_replace(',', '.', trim((string) $incoming['stock_min_default']));
+        if ($brut !== '') {
+            if (!is_numeric($brut) || (float) $brut < 0 || (float) $brut > 99999999.99) {
+                fail('Pragul minim implicit trebuie să fie un număr între 0 și 99999999,99. '
+                    . 'Zecimalele se pot scrie și cu virgulă.', 422, 'bad_stock_min_default');
+            }
+            $incoming['stock_min_default'] = $brut;
+        }
+    }
+
+    // Procentul de recomandare, mărginit la 0–100.
+    //
+    // Nu e o formalitate: coloana e DECIMAL(5,2), deci baza primește fără să
+    // clipească un „500". Pagina Setări are o casetă de numere, dar un PUT
+    // scris cu curl n-are casetă — iar de la clipa aceea FIECARE comandă ar
+    // naște o datorie de cinci ori valoarea ei, plătibilă unor oameni adevărați.
+    // `referral_clamp_rate()` taie oricum la 100 mai târziu, dar tăierea tăcută
+    // ar însemna că patronul a scris una și s-a salvat alta.
+    if (array_key_exists('referral_rate_default', $incoming)) {
+        $v = trim((string) $incoming['referral_rate_default']);
+        if ($v !== '' && (!is_numeric($v) || (float) $v < 0 || (float) $v > 100)) {
+            fail('Procentul de recomandare trebuie să fie un număr între 0 și 100.',
+                422, 'bad_referral_rate');
+        }
+    }
+
+    guard_whatsapp_provider($incoming);
+
     validate_lists($incoming);
+    $incoming = guard_event_lists($incoming);
     guard_status_list($incoming);
-    guard_zone_list($incoming);
+    $incoming = guard_zone_list($incoming);
+    $incoming = guard_slot_list($incoming);
     $incoming = guard_zone_coords($incoming);
     $incoming = guard_hq_coords($incoming);
 
@@ -132,6 +246,126 @@ function route_settings_save(): void
 }
 
 /* ------------------------------------------------------------- validări -- */
+
+/**
+ * Schimbarea furnizorului de WhatsApp cere datele noului furnizor.
+ *
+ * Cele două căi împart aceleași două cutii, dar pun în ele lucruri deosebite:
+ *
+ *   · Meta    — `notify_whatsapp_token` e un Bearer token,
+ *               `notify_whatsapp_phone_id` e Phone Number ID;
+ *   · Twilio  — tokenul e Auth Token,
+ *               `notify_whatsapp_phone_id` ține Account SID (api/lib/notify.php ·
+ *               `send_whatsapp_twilio()`, unde scrie asta pe față).
+ *
+ * Un Bearer token de la Meta nu deschide nimic la Twilio, și invers. Până
+ * acum, schimbarea furnizorului singură trecea cuminte: valorile celuilalt
+ * rămâneau în bază, iar panoul le arăta ca „Token salvat" — fiindcă tokenul
+ * CHIAR e salvat, doar că e al altcuiva. Prima comandă după schimbare pleca
+ * spre furnizorul nou cu cheia celui vechi, primea 401, iar anunțul cădea în
+ * caseta de anunțuri eșuate, cu o eroare de la un serviciu străin.
+ *
+ * De aceea schimbarea se refuză când nu vine cu datele ei. Nu e o pază de
+ * securitate, ci un refuz în locul unei tăceri: ce urma să se întâmple oricum
+ * (mesaje neduse) se spune înainte, nu după.
+ *
+ * Mascarea nu trece drept valoare: „•" în față înseamnă „las-o cum e"
+ * (api/lib/settings.php · `settings_save()`), adică exact tokenul vechi.
+ */
+function guard_whatsapp_provider(array $incoming): void
+{
+    if (!array_key_exists('notify_whatsapp_provider', $incoming)) {
+        return;
+    }
+    $nou  = trim((string) $incoming['notify_whatsapp_provider']);
+    $vechi = setting('notify_whatsapp_provider', 'meta');
+    if ($nou === '' || $nou === $vechi) {
+        return;
+    }
+
+    $scris = static function (array $incoming, string $cheie): bool {
+        if (!array_key_exists($cheie, $incoming)) {
+            return false;
+        }
+        $v = trim((string) $incoming[$cheie]);
+        return $v !== '' && $v !== '__clear__' && !str_starts_with($v, '•');
+    };
+
+    $nume = ['meta' => 'Meta (WhatsApp Cloud API)', 'twilio' => 'Twilio'];
+    $etNou = $nume[$nou] ?? $nou;
+    if (!$scris($incoming, 'notify_whatsapp_token') || !$scris($incoming, 'notify_whatsapp_phone_id')) {
+        fail(
+            'Ca să treci pe ' . $etNou . ', scrie în aceeași salvare și tokenul, și '
+            . ($nou === 'twilio' ? 'Account SID-ul' : 'Phone Number ID-ul')
+            . ' de acolo. Cele salvate acum sunt ale furnizorului de dinainte și nu deschid nimic la cel nou.',
+            422,
+            'provider_credentials_missing'
+        );
+    }
+}
+
+/**
+ * Listele „ce anunț pe ce canal".
+ *
+ * NU intră în `list_keys()`, deși sunt tot liste JSON în `settings`, și asta
+ * din exact un motiv: acolo lista goală e refuzată („nu poate rămâne goală"),
+ * fiindcă o patiserie fără nicio etapă de producție e o greșeală de tastat.
+ * Aici lista goală e o HOTĂRÂRE — „nu vreau nimic pe WhatsApp" — și trebuie să
+ * treacă. Aceeași deosebire o face și `notify_channel_events()` la citire,
+ * care de-aceea nu folosește `setting_list()`.
+ *
+ * Ce se verifică în schimb: fiecare cheie să existe în catalog. O bifă pentru
+ * un eveniment fără cârlig scris în program e o promisiune pe care panoul n-o
+ * poate ține — omul o bifează, se salvează cuminte, și telefonul tace la
+ * nesfârșit fără să afle nimeni de ce. Mai bine un refuz limpede la salvare.
+ *
+ * Lista se scrie înapoi în cerere curățată și în ordinea catalogului, ca două
+ * salvări cu aceleași bife să dea același șir în baza de date — altfel jurnalul
+ * ar raporta o schimbare la fiecare apăsare de „Salvează".
+ */
+function guard_event_lists(array $incoming): array
+{
+    $stiute = array_keys(notify_events());
+
+    foreach (notify_channels() as $canal) {
+        $cheie = 'notify_' . $canal . '_events';
+        if (!array_key_exists($cheie, $incoming)) {
+            continue;
+        }
+        $raw  = $incoming[$cheie];
+        $list = is_array($raw) ? $raw : json_decode((string) $raw, true);
+        if (!is_array($list)) {
+            fail('Lista de anunțuri pentru „' . $canal . '” nu este validă.', 422, 'bad_event_list');
+        }
+
+        $curat = [];
+        foreach ($list as $v) {
+            if (is_array($v) || is_object($v)) {
+                fail('Lista de anunțuri pentru „' . $canal . '” conține o valoare care nu este text.',
+                    422, 'bad_event_list');
+            }
+            $v = trim((string) $v);
+            if ($v === '') {
+                continue;
+            }
+            if (!in_array($v, $stiute, true)) {
+                fail(
+                    'Anunțul „' . $v . '” nu există. Cele care există: ' . implode(', ', $stiute) . '.',
+                    422,
+                    'unknown_event'
+                );
+            }
+            if (!in_array($v, $curat, true)) {
+                $curat[] = $v;
+            }
+        }
+
+        // Ordinea catalogului, nu ordinea în care au fost bifate casetele.
+        $incoming[$cheie] = array_values(array_filter($stiute, static fn($e) => in_array($e, $curat, true)));
+    }
+
+    return $incoming;
+}
 
 /** Cheile care țin o listă JSON editabilă din panou. */
 function list_keys(): array
@@ -151,6 +385,21 @@ function list_keys(): array
  */
 function validate_lists(array $incoming): void
 {
+    // Cât încape în coloanele în care ajung valorile: `orders.slot` VARCHAR(16),
+    // `zone` 64, `status` 48, `fulfillment` 32, `stock_items.category` 64,
+    // `unit` 16. Fără pragul ăsta, un interval scris „06:30 – 08:00 dimineața"
+    // se salva fără nicio obiecție — iar fiecare vizitator care îl alegea pe
+    // site primea „Eroare internă." de la POST /requests (1406, data too long).
+    // Refuzul trebuie să fie aici, la cel care poate corecta valoarea.
+    $maxim = [
+        'delivery_slots'     => 16,
+        'delivery_zones'     => 64,
+        'order_statuses'     => 48,
+        'fulfillment_types'  => 32,
+        'fulfillment_pickup' => 32,
+        'stock_categories'   => 64,
+        'stock_units'        => 16,
+    ];
     foreach (list_keys() as $key) {
         if (!array_key_exists($key, $incoming)) {
             continue;
@@ -173,6 +422,14 @@ function validate_lists(array $incoming): void
                 fail('Lista „' . $key . '” conține o valoare care nu este text.', 422, 'bad_list');
             }
             $v = trim((string) $v);
+            if (isset($maxim[$key]) && mb_strlen($v) > $maxim[$key]) {
+                fail(
+                    'Lista „' . $key . '”: valoarea „' . $v . '” are ' . mb_strlen($v)
+                      . ' caractere, maximum ' . $maxim[$key] . '.',
+                    422,
+                    'list_value_too_long'
+                );
+            }
             if ($v !== '' && !in_array($v, $clean, true)) {
                 $clean[] = $v;
             }
@@ -234,33 +491,93 @@ function guard_status_list(array $incoming): void
         }
     }
 
+    // SE VERIFICĂ VALOAREA DE DUPĂ SALVARE, NU NUMAI CEA TRIMISĂ ACUM.
+    //
+    // Aici era un `continue` pe cheia lipsă din cerere, adică „dacă nu se
+    // schimbă rolul, nu-l verifica". Numai că rolul se poate rupe și fără să-l
+    // atingă cineva: e de ajuns ca ETAPA spre care arată să iasă din listă. Iar
+    // pagina de Setări trimite exact atât — numai lista, fiindcă numai ea s-a
+    // schimbat (Setari.dc.html · `changes()`).
+    //
+    // Ce urma nu se mai vedea nicăieri: `status_cancelled()` întoarce ''
+    // pentru totdeauna (ea, spre deosebire de `status_done()`, n-are cădere de
+    // siguranță), deci comenzile anulate se întorc pe ruta șoferului, își țin
+    // rezervările din depozit și își păstrează comisioanele „activ".
+    //
+    // Ștergerea rămâne cu totul posibilă — dar în aceeași salvare cu alegerea
+    // altei etape. Adică fix ce face omul când redenumește o etapă.
     foreach (['order_status_done' => 'încheiată', 'order_status_cancelled' => 'anulată'] as $key => $label) {
-        if (!array_key_exists($key, $incoming)) {
+        $cerut = array_key_exists($key, $incoming);
+        $v     = trim((string) ($cerut ? $incoming[$key] : setting($key)));
+        if ($v === '' || in_array($v, $next, true)) {
             continue;
         }
-        $v = trim((string) $incoming[$key]);
-        if ($v !== '' && !in_array($v, $next, true)) {
-            fail('Etapa „' . $label . '” trebuie să fie una dintre etapele din listă.', 422, 'bad_special_status');
-        }
+        fail(
+            $cerut
+                ? 'Etapa „' . $label . '” trebuie să fie una dintre etapele din listă. '
+                  . '„' . $v . '” nu e printre ele.'
+                : 'Etapa care marchează comanda „' . $label . '” e acum „' . $v . '”, '
+                  . 'iar ea nu mai e în listă. Alege alta la „Etapele cu rol special” '
+                  . 'și salvează amândouă deodată.',
+            422,
+            'bad_special_status'
+        );
     }
 }
 
 /**
- * Protejează zonele folosite de comenzi care încă urmează să fie livrate.
+ * Numără pe valoare comenzile care urmează și cererile încă nerezolvate.
  *
- * O zonă ștearsă din listă nu face comenzile să dispară, dar le lasă cu o
- * zonă pe care harta nu o mai cunoaște: oprirea primește coordonatele
- * depozitului, iar ruta arată zero kilometri până la ea. Ar părea corectă și
- * n-ar fi, ceea ce e mai rău decât o eroare pe față.
+ * Ziua se leagă ca parametru, calculată în PHP, nu se cere bazei prin
+ * `UTC_DATE()`. Ora României e cu 2-3 ore înaintea celei din UTC, deci între
+ * miezul nopții și 03:00 `UTC_DATE()` întoarce ziua de IERI: paza număra
+ * comenzile de ieri, deja livrate, și refuza o ștergere pe care nimic n-o mai
+ * ținea — cu o cifră pe care omul n-o putea verifica din nicio pagină, deci
+ * putea ajunge să umble la comenzi vechi ca să scape de mesaj. Restul codului
+ * care compară cu ziua omului folosește `today_local()`; aici rămăsese în urmă.
  *
- * Comenzile din trecut nu contează — ruta lor s-a făcut demult.
+ * Cererile n-au filtru pe zi: una rămasă pe „nou” e nerezolvată oricare ar fi
+ * ziua cerută, iar acceptarea verifică oricum ziua separat (`valid_order_day`).
  */
-function guard_zone_list(array $incoming): void
+function list_usage(string $coloana): array
 {
-    if (!array_key_exists('delivery_zones', $incoming)) {
-        return;
+    $n = [];
+    foreach (all(
+        "SELECT `$coloana` AS v, COUNT(*) AS n FROM orders
+          WHERE `$coloana` IS NOT NULL AND `$coloana` <> '' AND day >= ?
+          GROUP BY `$coloana`",
+        [today_local()]
+    ) as $r) {
+        $n[(string) $r['v']] = ['comenzi' => (int) $r['n'], 'cereri' => 0];
     }
-    $raw  = $incoming['delivery_zones'];
+    foreach (all(
+        "SELECT `$coloana` AS v, COUNT(*) AS n FROM order_requests
+          WHERE status = 'nou' AND `$coloana` IS NOT NULL AND `$coloana` <> ''
+          GROUP BY `$coloana`"
+    ) as $r) {
+        $v = (string) $r['v'];
+        if (!isset($n[$v])) { $n[$v] = ['comenzi' => 0, 'cereri' => 0]; }
+        $n[$v]['cereri'] = (int) $r['n'];
+    }
+    return $n;
+}
+
+/** „2 comenzi care urmează și o cerere în așteptare”, fără părțile care sunt zero. */
+function list_usage_text(int $comenzi, int $cereri): string
+{
+    $parti = [];
+    if ($comenzi > 0) {
+        $parti[] = $comenzi === 1 ? 'o comandă care urmează' : $comenzi . ' comenzi care urmează';
+    }
+    if ($cereri > 0) {
+        $parti[] = $cereri === 1 ? 'o cerere în așteptare' : $cereri . ' cereri în așteptare';
+    }
+    return implode(' și ', $parti);
+}
+
+/** Lista curățată de goluri și de dubluri, în ordinea în care a fost scrisă. */
+function list_clean($raw): array
+{
     $list = is_array($raw) ? $raw : json_decode((string) $raw, true);
     $next = [];
     foreach ((array) $list as $v) {
@@ -269,27 +586,90 @@ function guard_zone_list(array $incoming): void
             $next[] = $v;
         }
     }
+    return $next;
+}
+
+/**
+ * Protejează zonele folosite de comenzi care încă urmează să fie livrate — și
+ * de cererile care încă așteaptă să fie acceptate.
+ *
+ * O zonă ștearsă din listă nu face comenzile să dispară, dar le lasă cu o
+ * zonă pe care harta nu o mai cunoaște: oprirea primește coordonatele
+ * depozitului, iar ruta arată zero kilometri până la ea. Ar părea corectă și
+ * n-ar fi, ceea ce e mai rău decât o eroare pe față.
+ *
+ * Cererile lipseau din numărătoare, deși ele sunt tocmai partea care nu s-a
+ * așezat încă: zona lor putea fi ștearsă, iar la acceptare cererea cădea cu
+ * „Zonă necunoscută” — o cerere venită de la un client adevărat, cu produsele
+ * și telefonul lui, pe care operatorul n-o mai putea trece în comandă. Ocolirea
+ * la îndemână, schimbă-i zona, mută oprirea în altă parte a orașului fără ca
+ * nimeni să bage de seamă.
+ *
+ * Comenzile din trecut nu contează — ruta lor s-a făcut demult.
+ *
+ * Lista se și curăță aici: nimic nu se opunea până acum ca aceeași zonă să fie
+ * scrisă de două ori. Pe ecran ieșeau două rânduri identice, imposibil de
+ * deosebit unul de altul — ștergi unul și nu știi care a plecat.
+ */
+function guard_zone_list(array $incoming): array
+{
+    if (!array_key_exists('delivery_zones', $incoming)) {
+        return $incoming;
+    }
+    $next = list_clean($incoming['delivery_zones']);
 
     // Ca și la etape: doar zonele pe care le scoate chiar această salvare.
     $current = delivery_zones();
-    $inUse = all(
-        'SELECT zone, COUNT(*) AS n FROM orders
-          WHERE zone IS NOT NULL AND zone <> \'\' AND day >= UTC_DATE()
-          GROUP BY zone'
-    );
-    foreach ($inUse as $row) {
-        $zone = (string) $row['zone'];
-        if (in_array($zone, $current, true) && !in_array($zone, $next, true)) {
-            fail(
-                'Zona „' . $zone . '” nu poate fi ștearsă: ' . (int) $row['n'] .
-                ((int) $row['n'] === 1
-                    ? ' comandă care urmează este în ea. Mut-o mai întâi în altă zonă.'
-                    : ' comenzi care urmează sunt în ea. Mută-le mai întâi în altă zonă.'),
-                409,
-                'zone_in_use'
-            );
+    foreach (list_usage('zone') as $zone => $cate) {
+        if (!in_array($zone, $current, true) || in_array($zone, $next, true)) {
+            continue;
         }
+        $total = $cate['comenzi'] + $cate['cereri'];
+        fail(
+            'Zona „' . $zone . '” nu poate fi ștearsă: ' . list_usage_text($cate['comenzi'], $cate['cereri'])
+              . ($total === 1 ? ' este în ea. Mut-o' : ' sunt în ea. Mută-le')
+              . ' mai întâi în altă zonă.',
+            409,
+            'zone_in_use'
+        );
     }
+
+    $incoming['delivery_zones'] = json_encode($next, JSON_UNESCAPED_UNICODE);
+    return $incoming;
+}
+
+/**
+ * Aceeași pază pentru intervalele de livrare, care n-aveau niciuna.
+ *
+ * Zonele erau apărate, etapele erau apărate, orele nu. Un interval scos din
+ * listă lăsa comenzile și cererile care îl foloseau cu o oră pe care niciun
+ * formular n-o mai recunoaște: în panou caseta sare pe primul interval, iar
+ * cererea nu se mai poate accepta deloc.
+ */
+function guard_slot_list(array $incoming): array
+{
+    if (!array_key_exists('delivery_slots', $incoming)) {
+        return $incoming;
+    }
+    $next = list_clean($incoming['delivery_slots']);
+
+    $current = delivery_slots();
+    foreach (list_usage('slot') as $slot => $cate) {
+        if (!in_array($slot, $current, true) || in_array($slot, $next, true)) {
+            continue;
+        }
+        $total = $cate['comenzi'] + $cate['cereri'];
+        fail(
+            'Intervalul „' . $slot . '” nu poate fi scos: ' . list_usage_text($cate['comenzi'], $cate['cereri'])
+              . ($total === 1 ? ' este pe el. Mut-o' : ' sunt pe el. Mută-le')
+              . ' mai întâi pe alt interval.',
+            409,
+            'slot_in_use'
+        );
+    }
+
+    $incoming['delivery_slots'] = json_encode($next, JSON_UNESCAPED_UNICODE);
+    return $incoming;
 }
 
 /**
@@ -353,6 +733,54 @@ function guard_zone_coords(array $incoming): array
             );
         }
         $curatat[$zone] = ['lat' => $lat, 'lng' => $lng];
+    }
+
+    // Plasa de dedesubt: harta primită se scrie ÎNTREAGĂ peste cea din bază,
+    // deci o cheie lipsă din ea nu însemna „las-o cum e”, ci „șterge punctul”.
+    // Pagina chiar trimitea așa ceva: caseta cu numele zonei comita la fiecare
+    // literă, iar un nume care trece prin numele altei zone — „Ilfov” →
+    // „Sector 1 si Ilfov” trece, la a opta literă, exact prin „Sector 1” — îi
+    // lua acesteia punctul și îl arunca la litera următoare. La final lista
+    // avea toate zonele, dar una era fără punct.
+    //
+    // Ce urma nu se vedea nicăieri: gp.zonePoint() cade pe depozit când zona
+    // n-are punct, deci opririle din zona aceea se desenau una peste alta, în
+    // curtea depozitului, iar „Optimizează ruta” le punea primele — piciorul
+    // până acolo arăta 0 km, nu o distanță absurdă care ar fi sărit în ochi.
+    //
+    // Refuzul e îngust dinadins, ca să nu calce peste ce spune comentariul de
+    // mai sus: se plânge DOAR de o zonă care rămâne în listă și care are azi
+    // un punct bun. O zonă ștearsă își duce punctul cu ea, iar una rămasă din
+    // trecut fără punct nu blochează nimic — n-are ce pierde.
+    $listaRaw = array_key_exists('delivery_zones', $incoming) ? $incoming['delivery_zones'] : null;
+    if ($listaRaw === null) {
+        $lista = delivery_zones();
+    } else {
+        $parsata = is_array($listaRaw) ? $listaRaw : json_decode((string) $listaRaw, true);
+        $lista   = [];
+        foreach ((array) $parsata as $v) {
+            $lista[] = trim((string) $v);
+        }
+    }
+    foreach ($current as $zone => $point) {
+        $zone = (string) $zone;
+        if (array_key_exists($zone, $curatat) || !in_array($zone, $lista, true)) {
+            continue;
+        }
+        $latV = is_array($point) ? zone_coord($point['lat'] ?? null) : null;
+        $lngV = is_array($point) ? zone_coord($point['lng'] ?? null) : null;
+        if ($latV === null || $lngV === null) {
+            continue;                        // n-a fost punct bun, n-are ce se pierde
+        }
+        fail(
+            'Zona „' . $zone . '” ar rămâne fără punct pe hartă, deși rămâne în listă. ' .
+            'Un punct pierdut nu se vede nicăieri: opririle din zona aceea s-ar desena ' .
+            'în curtea depozitului, iar „Optimizează ruta” le-ar pune primele, ca și cum ' .
+            'ar fi la zero kilometri. Dacă vrei să scoți zona, scoate-o din listă; dacă ' .
+            'ai redenumit-o, trimite punctul pe numele nou.',
+            422,
+            'zone_point_lost'
+        );
     }
 
     $incoming['delivery_zone_coords'] = json_encode($curatat, JSON_UNESCAPED_UNICODE);
@@ -434,7 +862,7 @@ function guard_hq_coords(array $incoming): array
  */
 function route_settings_test(string $channel): void
 {
-    require_role('admin');
+    require_admin();
 
     if (!in_array($channel, ['email', 'whatsapp', 'telegram'], true)) {
         fail('Canal necunoscut: ' . $channel, 404, 'unknown_channel');
@@ -459,11 +887,12 @@ function route_settings_test(string $channel): void
             'SELECT error FROM notifications WHERE channel = ? ORDER BY id DESC LIMIT 1',
             [$channel]
         );
-        json_out([
-            'ok'      => false,
-            'channel' => $channel,
-            'error'   => $last['error'] ?? 'Cauză necunoscută.',
-        ], 502);
+        // În forma pe care o citește clientul: `error` este un obiect
+        // {code, message}, ca la orice alt refuz (vezi fail() și gp-api.js).
+        // Trimis ca text simplu, pagina Setări nu-l găsea și arăta doar
+        // „Eroare 502." — tocmai motivul furnizorului, pentru care există
+        // ruta asta, nu ajungea niciodată la om.
+        fail($last['error'] ?? 'Cauză necunoscută.', 502, 'test_failed');
     }
 
     audit('settings_test', 'settings', $channel, 'Test trimis cu succes');

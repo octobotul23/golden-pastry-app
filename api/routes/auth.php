@@ -17,15 +17,22 @@ function route_login(): void
     }
 
     $full = one(
-        'SELECT id, username, name, email, phone, address, role, customer_name, must_change_password
+        'SELECT id, username, name, email, phone, address, role, customer_name, must_change_password,
+                is_system
            FROM users WHERE id = ?',
         [$u['id']]
     );
 
+    // Zona firmei, lipită pe rând înainte de `public_user()`. Ca `referral` de
+    // mai jos: citire după cheia primară, nu o coloană în plus în lista fixă de
+    // deasupra — aceea ar cădea cu 1054 pe o instalare fără migrarea 016, adică
+    // nimeni n-ar mai putea intra în cont.
+    $full['zone'] = user_zone((int) $full['id']);
+
     json_out([
         'user'        => public_user($full),
         'csrf'        => $csrf,
-        'sessionDays' => session_days_for((string) $full['role']),
+        'sessionDays' => session_days_for((string) $full['role'], !empty($full['is_system'])),
         // Codul de recomandare și linkul gata de trimis. Se citește separat, nu
         // din SELECT-ul de mai sus: acela are listă fixă de coloane, iar o
         // coloană adăugată acolo ar cădea cu 1054 pe o instalare pe care
@@ -36,11 +43,11 @@ function route_login(): void
 }
 
 /**
- * POST /auth/register { username, name, password, email?, phone?, customerName?, ref? }
+ * POST /auth/register { username, name, password, email?, phone?, address?, zone?, customerName?, ref? }
  *
  * Contul pe care și-l face singur vizitatorul de pe site. Până acum conturile se
  * puteau naște în două locuri — instalatorul (o singură dată) și `POST /users`,
- * care cere `require_role('admin')` — deci un client nu avea de unde începe, iar
+ * care cere `require_admin()` — deci un client nu avea de unde începe, iar
  * o recomandare n-avea unde să se agațe: momentul „își face cont" nu exista.
  *
  * Trei lucruri sunt scrise fix și NU se citesc niciodată din corpul cererii:
@@ -76,7 +83,9 @@ function route_register(): void
 
     $b        = body();
     $username = strtolower(need($b, 'username'));
-    $name     = need($b, 'name');
+    // Lungimile coloanelor, verificate aici: peste ele, INSERT-ul pica cu 1406
+    // și omul primea „Eroare internă." în loc de „numele e prea lung".
+    $name     = text_field(need($b, 'name'), 'Numele', 128, true);
     // Tăiată de spații, ca peste tot altundeva: autentificarea compară parola
     // trecută prin need(), care taie. Un spațiu lipit de la copiat sau de la
     // tastatura telefonului ar da un hash pe care intrarea în cont nu l-ar mai
@@ -90,6 +99,9 @@ function route_register(): void
 
     if (!preg_match('/^[a-z0-9._-]{3,64}$/', $username)) {
         fail('Utilizatorul poate conține doar litere mici, cifre, punct, minus și underscore (3–64).', 422, 'bad_username');
+    }
+    if (reserved_username($username)) {
+        fail('Acest nume de utilizator este rezervat. Alege altul.', 422, 'bad_username');
     }
     if (strlen($password) < 8) {
         fail('Parola trebuie să aibă cel puțin 8 caractere.', 422, 'weak_password');
@@ -106,21 +118,60 @@ function route_register(): void
     // Stă în api/lib/auth.php, nu în routes/users.php: rutele nu se încarcă una
     // pe alta, iar o a doua copie a unei reguli de unicitate se depărtează de
     // prima exact când contează.
-    check_user_email($email);
+    check_user_email($email, null, true);
 
     // Verificările de mai sus sunt din memorie, iar între ele și scriere încap
     // două cereri paralele. q_unique() prinde ciocnirea de index și o întoarce
     // ca refuzul pe care cererea l-ar fi primit o clipă mai târziu, în loc de
     // „Eroare internă.".
+    // `self_registered` se scrie ÎN ACELAȘI INSERT, nu cu un UPDATE de după.
+    //
+    // Coloana e temelia pe care `client_by_name()` hotărăște cui i se dau
+    // comenzile luate la telefon. Scrisă separat, o cădere între cele două
+    // scrieri ar fi lăsat un cont născut pe site nemarcat — adică un cont „al
+    // casei" pe veci, exact defectul reparat, doar ajuns pe altă ușă. Aici nu
+    // există „între".
+    //
+    // Coloana se cere numai când migrarea 010 a fost importată: pe o instalare
+    // pe care fișierele s-au urcat înaintea importului, cerută necondiționat, ea
+    // ar da 1054 „Unknown column" — adică nimeni nu și-ar mai putea face cont.
+    // ADRESA ȘI ZONA FIRMEI. Coloana `users.address` există din 001 și n-a
+    // lipsit niciodată — doar n-o cerea nimeni: formularul scria în capul lui că
+    // „îți ține adresa și telefonul, ca să nu le mai scrii la fiecare comandă"
+    // și cerea numai telefonul. Amândouă rămân neobligatorii: cine își face cont
+    // seara, de pe telefon, n-are întotdeauna la îndemână adresa exactă a
+    // punctului de lucru, iar un formular care refuză din cauza asta pierde
+    // clientul înainte de prima comandă. Se pot completa oricând din „Comanda
+    // mea".
+    $address = text_field($b['address'] ?? '', 'Adresa', 255) ?: null;
+    // Zona trece prin aceeași verificare ca la comenzi: numai un nume din lista
+    // Setărilor. Un cont cu o zonă pe care panourile n-o pot afișa ar duce
+    // minciuna mai departe la fiecare comandă completată din el.
+    $zone = zone_field($b['zone'] ?? '') ?: null;
+
+    $cuOrigine = user_origin_supported();
+    // Zona are poarta ei, ca `self_registered`: pe o instalare pe care migrarea
+    // 016 n-a fost încă importată, coloana n-ar exista, iar cerută
+    // necondiționat ar da 1054 — adică nimeni nu și-ar mai putea face cont.
+    // Contul se naște atunci fără zonă, cum se năștea și ieri.
+    $cuZona = user_zone_supported();
     q_unique(
-        "INSERT INTO users (username, password_hash, name, email, phone, role, customer_name,
-                            active, is_system, must_change_password, password_changed_at)
-         VALUES (?, ?, ?, ?, ?, 'client', ?, 1, 0, 0, UTC_TIMESTAMP())",
-        [
+        "INSERT INTO users (username, password_hash, name, email, phone, address, role, customer_name,
+                            active, is_system, must_change_password, password_changed_at"
+        . ($cuOrigine ? ', self_registered' : '')
+        . ($cuZona ? ', zone' : '') . ")
+         VALUES (?, ?, ?, ?, ?, ?, 'client', ?, 1, 0, 0, UTC_TIMESTAMP()"
+        . ($cuOrigine ? ', 1' : '')
+        . ($cuZona ? ', ?' : '') . ")",
+        // Semnul de întrebare al zonei e ULTIMUL din VALUES, deci și valoarea
+        // lui trebuie să fie ultima aici. Pusă lângă adresă, ar fi ajuns tăcut
+        // în altă coloană.
+        array_merge([
             $username, password_hash($password, PASSWORD_DEFAULT), $name,
-            $email ?: null, trim((string) ($b['phone'] ?? '')) ?: null,
-            trim((string) ($b['customerName'] ?? '')) ?: null,
-        ],
+            $email ?: null, text_field($b['phone'] ?? '', 'Telefonul', 32) ?: null,
+            $address,
+            text_field($b['customerName'] ?? '', 'Numele firmei', 160) ?: null,
+        ], $cuZona ? [$zone] : []),
         'Există deja un cont cu acest utilizator.',
         'username_taken'
     );
@@ -173,7 +224,8 @@ function route_register(): void
     );
 
     $nou = one('SELECT * FROM users WHERE id = ?', [$id]);
-    json_out([
+
+    $raspuns = [
         'user'        => public_user($nou),
         'csrf'        => $csrf,
         'sessionDays' => $zile,
@@ -183,7 +235,26 @@ function route_register(): void
         ],
         // Cine l-a adus, ca pagina să poată spune „mulțumim, ai venit de la Ana".
         'referredBy'  => $adusDe ? $adusDe['name'] : null,
-    ], 201);
+    ];
+
+    // Anunțul „cont nou" pleacă DUPĂ răspuns, ca la comanda nouă și din același
+    // motiv: cine tocmai și-a făcut cont stă cu ochii pe butonul „Creează cont",
+    // iar un canal căzut ține conexiunea cincisprezece secunde. Contul e deja
+    // scris, sesiunea deja deschisă; anunțul n-are voie să le țină în loc.
+    //
+    // Numai conturile făcute de pe SITE trec pe aici. Cele făcute de
+    // administrator din „Conturi" nu anunță nimic: omul e chiar de față și
+    // tocmai a apăsat el butonul — un anunț despre propria faptă e zgomot.
+    if (!notify_channels_for('user_new')) {
+        json_out($raspuns, 201);
+    }
+    json_out_early($raspuns, 201);
+    try {
+        notify_user_new($nou, $adusDe ? (string) $adusDe['name'] : '');
+    } catch (Throwable $e) {
+        error_log('[gp] anunț „cont nou" nedus pentru ' . $id . ': ' . $e->getMessage());
+    }
+    exit;
 }
 
 function route_logout(): void
@@ -203,19 +274,53 @@ function route_me(): void
     if (!$u) {
         json_out(['user' => null], 200);
     }
+    // Zona firmei — din același motiv și pe același drum ca `referral` de mai
+    // jos: o citire după cheia primară, nu o coloană în plus în `current_user()`.
+    $u['zone'] = user_zone((int) $u['id']);
     // Cât ține sesiunea nu e un secret, iar pagina de intrare are nevoie de
     // el ca să spună limpede de ce nu mai cere parola. Fără asta ar trebui
     // scris un număr în pagină, care s-ar depărta tăcut de configurație.
     json_out([
         'user'        => public_user($u),
         'csrf'        => $u['csrf_token'],
-        'sessionDays' => session_days_for((string) $u['role']),
+        'sessionDays' => session_days_for((string) $u['role'], !empty($u['is_system'])),
         // Codul de recomandare al contului. Nu se ia din current_user() —
         // interogarea aceea are listă fixă de coloane și e pe drumul fiecărei
         // cereri; o coloană adăugată acolo ar cădea cu 1054 pe o instalare pe
         // care migrarea 007 n-a fost încă rulată, adică ar opri toată aplicația
         // pentru o funcție secundară. Aici e o citire după cheia primară.
         'referral'    => referral_public((int) $u['id']),
+        // Cine l-a adus PE EL. Nu e același lucru cu `referral` de deasupra:
+        // acela e codul lui, ăsta e al celui care l-a trimis. Magazinul public
+        // umple din el caseta „Cod de recomandare" a clientului cu cont
+        // (Site Public.dc.html:1374), ca să fie o oglindă a contului și nu o a
+        // doua părere: cookie-ul rămas dintr-un link vechi nu mai are voie să
+        // ajungă pe cererile lui, iar caseta goală îl ispitea să tasteze un
+        // cod din memorie — adică un conflict de descâlcit cu mâna.
+        //
+        // `null` are DOUĂ înțelesuri aici, și amândouă se desenează la fel:
+        // „nu l-a adus nimeni" și „instalarea n-are migrarea 007". Pagina nu
+        // scrie nimic în niciunul din cazuri, iar socoteala comisioanelor nu
+        // atârnă de rândul ăsta: ea citește `users.referred_by` de-a dreptul.
+        'referredByCode' => referral_referred_by_code((int) $u['id']),
+        // Contul ăsta e făcut pe site și încă nerecunoscut de casă? De asta
+        // atârnă dacă i se leagă comenzile luate la telefon (`client_by_name()`,
+        // api/lib/orders.php), deci „Comanda mea" trebuie să poată spune omului
+        // de ce îi e panoul gol. Ca `referral` de deasupra: citire după cheia
+        // primară, nu o coloană în plus în `current_user()`.
+        //
+        // `null` înseamnă „instalarea n-are migrarea 010", nu „nu vine de pe
+        // site" — pagina nu scrie nimic atunci, fiindcă regula nici nu se aplică.
+        'origine'     => user_origin_public((int) $u['id']),
+        // A fost importată migrarea 009? Steag despre INSTALARE, nu despre om:
+        // nu spune nimic despre contul care întreabă și e la fel pentru toți.
+        //
+        // Fără el, pagina „Parola mea" ar avea de ales între două rele: să
+        // arate mereu butonul „Cere drept de fondator", care pe o bază
+        // nemigrată se lovește de 503 după apăsare, sau să nu-l arate
+        // niciodată. Ca `referral` de deasupra: pagina află dinainte ce se
+        // poate, ca să nu ofere un buton care n-are unde să ducă.
+        'founder'     => founder_supported(),
     ]);
 }
 
@@ -273,15 +378,21 @@ function route_panel_login(): void
         'INSERT INTO sessions (id, user_id, csrf_token, expires_at, ip, user_agent)
          VALUES (?, ?, ?, UTC_TIMESTAMP() + INTERVAL ? DAY, ?, ?)',
         [
-            token_hash($token), $u['id'], $csrf, session_days_for('angajat'),
+            token_hash($token), $u['id'], $csrf, session_days_panou(),
             $ip, substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255),
         ]
     );
-    set_session_cookie($token, session_days_for('angajat'));
+    // Nu `session_days_for('angajat')`, cum scria până acum: aceea e durata
+    // omului din echipă (șapte zile), iar tableta nu e un om. Cu ea, ecranul
+    // din laborator se stingea la o săptămână de la ultima deschidere cu cod,
+    // de obicei în mijlocul unei ture. Vezi `session_days_panou()` și
+    // `prelungeste_sesiunea_panoului()` în `api/lib/auth.php`: de acolo încolo
+    // sesiunea se împinge singură înainte, cât timp tableta e folosită.
+    set_session_cookie($token, session_days_panou());
 
     audit('panel_unlock', 'user', (string) $u['id'], 'Panou deschis cu cod', (int) $u['id'], 'Panou comun');
 
-    json_out(['user' => public_user($u), 'csrf' => $csrf]);
+    json_out(['user' => public_user($u), 'csrf' => $csrf, 'sessionDays' => session_days_panou()]);
 }
 
 /* ------------------------------------------------- parola uitată -- */

@@ -141,7 +141,13 @@ if [[ -n "$OCUPANT" && "$OCUPANT" != "apache2" ]]; then
   exit 1
 fi
 
-a2enmod rewrite headers >/dev/null
+# „expires" a fost adăugat în 2.0.3. Pe Debian și Ubuntu nu e aprins din oficiu,
+# iar .htaccess-ul paginilor își ține sub „<IfModule mod_expires.c>" tot capitolul
+# de memorare în browser — inclusiv termenele pozelor, ale .css și ale .js. Fără
+# modul, Apache sare peste blocul acela în tăcere: nicio eroare, dar fiecare
+# deschidere de pagină cere din nou tot ce s-ar fi putut ține. (Paginile în sine
+# sunt apărate și fără el, de blocul de mod_headers scris alături.)
+a2enmod rewrite headers expires >/dev/null
 info "PHP $(php -r 'echo PHP_VERSION;')"
 php -r 'foreach (["pdo_mysql","openssl","mbstring","curl","json","filter"] as $e) if (!extension_loaded($e)) { fwrite(STDERR, "lipsește extensia $e\n"); exit(1); }' \
   || mor "lipsesc extensii PHP"
@@ -177,8 +183,27 @@ if [[ "$TABELE" -eq 0 ]]; then
   info "Bază goală — import schema și datele inițiale."
   my --default-character-set=utf8mb4 "$DB_NAME" < "$SQL_DIR/001_schema.sql"
   my --default-character-set=utf8mb4 "$DB_NAME" < "$SQL_DIR/002_seed.sql"
+
+  # Schema (001) e ținută la zi până la 007, dar nu mai departe: migrările de
+  # după ea aduc tabele și coloane pe care 001 nu le are — comisioanele de
+  # recomandare (008), pontajul (009), originea contului (010), reducerea
+  # pachetului de test (011), rândul de comision scos din socoteală (012).
+  # Fără ele, serverul pornește cu o bază pe jumătate și codul nou răspunde
+  # „Eroare internă" la prima apăsare pe „Recomandări".
+  #
+  # Toate sunt idempotente și se uită întâi în information_schema, deci se pot
+  # rula și peste ce a pus deja 001. Aceeași buclă, cu aceeași săritură peste
+  # 001/002, ca în actualizeaza-vps.sh.
+  for f in "$SQL_DIR"/[0-9][0-9][0-9]_*.sql; do
+    [[ -e "$f" ]] || continue
+    case "$(basename "$f")" in 001_*|002_*) continue ;; esac
+    my --default-character-set=utf8mb4 "$DB_NAME" < "$f" \
+      || mor "migrarea $(basename "$f") a picat — baza a rămas pe jumătate"
+  done
+  info "Migrări: toate, până la $(basename "$(ls -1 "$SQL_DIR"/[0-9][0-9][0-9]_*.sql | tail -1)")"
 else
-  info "Baza are deja $TABELE tabele — nu import nimic (migrările se aplică manual, vezi docs/07)."
+  info "Baza are deja $TABELE tabele — nu import nimic aici."
+  info "Migrările care lipsesc se aplică cu actualizeaza-vps.sh (vezi docs/09)."
 fi
 PRODUSE="$(my -N -B -e "SELECT COUNT(*) FROM \`${DB_NAME}\`.products" 2>/dev/null || echo 0)"
 info "Tabele: $(my -N -B -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${DB_NAME}'") · produse: $PRODUSE"
@@ -188,11 +213,41 @@ info "Tabele: $(my -N -B -e "SELECT COUNT(*) FROM information_schema.tables WHER
 pas "Copiez fișierele în $DIR"
 mkdir -p "$DIR"/{public_html,clienti,lab,api}
 
+# Cele patru copieri, fiecare cu plasa ei. `set -euo pipefail` oprea deja
+# scriptul dacă una pica — dar îl oprea MUT, și tăcerea costă altfel după cum
+# e prima rulare sau a doua. Prima oară, un folder necopiat înseamnă doar un
+# site care nu merge încă: se rulează din nou și gata. A doua oară, când
+# `ACTUALIZARE` e 1, înseamnă un site pe jumătate schimbat pe care CIRCULĂ
+# comenzi adevărate — paginile noi cheamă un api care nu le cunoaște rutele.
+# Scriptul ăsta, spre deosebire de `actualizeaza-vps.sh`, NU face nicio copie
+# de siguranță: de-aia mesajul de acolo îl trimite pe om la celălalt script,
+# nu la o arhivă care nu există.
+rupt() {
+  rosu ""
+  rosu "EROARE: n-am putut copia folderul „$1”."
+  rosu ""
+  if (( ACTUALIZARE )); then
+    rosu "Instalarea exista deja, deci site-ul e ACUM pe jumătate schimbat: ce s-a"
+    rosu "copiat înainte de „$1” e nou, restul a rămas vechi. Cele două jumătăți nu"
+    rosu "se potrivesc — clientul vede numai refuzuri."
+    rosu ""
+    rosu "Scriptul ăsta nu face copie de siguranță. Pentru actualizări folosește"
+    rosu "actualizeaza-vps.sh: el arhivează întâi codul și baza, și știe să te ducă"
+    rosu "înapoi dintr-o comandă. Vezi docs/09-actualizare-vps.md."
+  else
+    rosu "E prima instalare, deci nu s-a stricat nimic din ce era: pur și simplu"
+    rosu "site-ul nu e încă întreg. Află de ce a picat copierea — de obicei e discul"
+    rosu "plin (df -h) sau drepturile pe folder — și rulează scriptul din nou."
+  fi
+  rosu ""
+  exit 1
+}
+
 # public_html: fără --delete, ca să nu dispară pozele urcate din panoul Catalog.
-rsync -a            "$SURSA/public_html/" "$DIR/public_html/"
-rsync -a --delete   "$SURSA/clienti/"     "$DIR/clienti/"
-rsync -a --delete   "$SURSA/lab/"         "$DIR/lab/"
-rsync -a --delete --exclude '/config.php' "$SURSA/api/" "$DIR/api/"
+rsync -a            "$SURSA/public_html/" "$DIR/public_html/" || rupt public_html
+rsync -a --delete   "$SURSA/clienti/"     "$DIR/clienti/"     || rupt clienti
+rsync -a --delete   "$SURSA/lab/"         "$DIR/lab/"         || rupt lab
+rsync -a --delete --exclude '/config.php' "$SURSA/api/"       "$DIR/api/"       || rupt api
 mkdir -p "$DIR/public_html/products"
 info "public_html · clienti · lab · api"
 

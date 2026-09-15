@@ -49,10 +49,11 @@ Apoi importă structura, în ordine:
 
 A doua rulare adaugă cele 22 de produse reale și setările implicite.
 
-`002_seed.sql` se poate rula ori de câte ori e nevoie: adaugă ce lipsește și
-reîmprospătează datele produselor, dar **nu** șterge comenzi și **nu**
-suprascrie setările pe care le-ai configurat deja din panou (tokenul de
-WhatsApp, adresa de notificare).
+`002_seed.sql` se poate rula ori de câte ori e nevoie: e numai `INSERT IGNORE`
+— adaugă ce lipsește și lasă neatins ce există. **Nu** șterge comenzi, **nu**
+rescrie produsele editate din pagina Produse și **nu** suprascrie setările pe
+care le-ai configurat deja din panou (tokenul de WhatsApp, adresa de
+notificare).
 
 ## 4. Pune proiectul unde îl vede Laragon
 
@@ -104,7 +105,7 @@ Una singură le pornește pe toate:
 node .claude/verifica-tot.mjs
 ```
 
-Peste nouă sute de verificări, în două grupe. Întâi cele statice, care se uită
+Peste trei mii de verificări, în două grupe. Întâi cele statice, care se uită
 doar la fișiere — sintaxa paginilor, meniul lateral, pachetul de publicare,
 probele de regresie ale panourilor. Apoi cele care cer serverul pornit pe 8100:
 autentificare, drepturi pe rol, fluxul comenzilor de la cererea de pe site până

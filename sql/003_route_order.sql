@@ -84,7 +84,9 @@ INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
 -- loc pe cele din prototip: o rută de livrare într-un cartier nou dispărea în
 -- tăcere. Îl înlocuim cu o sămânță care nu atinge o valoare existentă.
 INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
-  ('delivery_zones', '["Sector 1","Sector 2","Sector 3","Sector 4","Sector 5","Sector 6","Ilfov"]', 0);
+-- Ultima zonă rămâne dinadins fără punct în `delivery_zone_coords` de mai sus:
+-- vezi sql/016_zona_cont.sql, care o aduce pe bazele deja instalate.
+  ('delivery_zones', '["Sector 1","Sector 2","Sector 3","Sector 4","Sector 5","Sector 6","Ilfov","În afara Bucureștiului și Ilfovului"]', 0);
 
 -- Catalogul devine editabil din aplicație: grupele de produse primesc tabel
 -- propriu, cu nume și subtitlu în ambele limbi.
@@ -101,14 +103,30 @@ CREATE TABLE IF NOT EXISTS product_categories (
   KEY ix_pcat_active (active, sort)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT IGNORE INTO product_categories (slug, name, name_en, note, note_en, sort) VALUES
-  ('strudel', 'Ștrudel', 'Strudel', 'Foietaj crocant, trei umpluturi', 'Crisp puff pastry, three fillings', 0),
-  ('trigon', 'Trigon', 'Triangles', 'Foietaj, dulce și sărat', 'Puff pastry, sweet and savoury', 10),
-  ('croissant', 'Croissant', 'Croissants', 'Straturi fine, umpluturi cu cremă', 'Fine layers, cream fillings', 20),
-  ('roll', 'Roll', 'Rolls', 'Aluat dospit, gama sărată', 'Leavened dough, the savoury range', 30),
-  ('covrig', 'Covrigi', 'Pretzels', 'Aluat dospit, la bucată', 'Leavened dough, sold by the piece', 40),
-  ('corn', 'Corn', 'Horns', 'Aluat fraged, gama dulce', 'Tender dough, the sweet range', 50),
-  ('special', 'Specialități', 'Specialities', 'Rețete de casă, preț special', 'House recipes, special price', 60);
+-- Semănatul se face NUMAI dacă tabelul e gol — adică o singură dată, la
+-- trecerea de la o bază de dinainte de 003. `INSERT IGNORE` singur nu ajunge:
+-- el sare peste ce se ciocnește de o cheie, dar o grupă pe care patronul a
+-- ȘTERS-O din Catalog n-are cu ce se ciocni și s-ar întoarce la fiecare
+-- actualizare, ca secțiune goală pe site. Aceeași hotărâre pentru care
+-- actualizarea sare cu totul peste 002 (vezi bucla de migrări din
+-- actualizeaza-vps.sh) — numai că 003 nu era sărită, fiindcă are și ALTER-e.
+--
+-- Numărătoarea se ia ÎNAINTE, într-o variabilă: citită în WHERE, ar fi privit
+-- tabelul în timp ce scrie în el, iar primul rând inserat ar fi oprit restul.
+-- Rândurile vin dintr-un UNION ALL, nu din VALUES, fiindcă numai un SELECT
+-- poate avea condiție.
+SET @pcat_gol := (SELECT COUNT(*) = 0 FROM product_categories);
+
+INSERT IGNORE INTO product_categories (slug, name, name_en, note, note_en, sort)
+SELECT g.* FROM (
+            SELECT 'strudel'   slug, 'Ștrudel'       name, 'Strudel'      name_en, 'Foietaj crocant, trei umpluturi'   note, 'Crisp puff pastry, three fillings' note_en,  0 sort
+  UNION ALL SELECT 'trigon',        'Trigon',             'Triangles',         'Foietaj, dulce și sărat',                'Puff pastry, sweet and savoury',        10
+  UNION ALL SELECT 'croissant',     'Croissant',          'Croissants',        'Straturi fine, umpluturi cu cremă',      'Fine layers, cream fillings',           20
+  UNION ALL SELECT 'roll',          'Roll',               'Rolls',             'Aluat dospit, gama sărată',              'Leavened dough, the savoury range',     30
+  UNION ALL SELECT 'covrig',        'Covrigi',            'Pretzels',          'Aluat dospit, la bucată',                'Leavened dough, sold by the piece',     40
+  UNION ALL SELECT 'corn',          'Corn',               'Horns',             'Aluat fraged, gama dulce',               'Tender dough, the sweet range',         50
+  UNION ALL SELECT 'special',       'Specialități',       'Specialities',      'Rețete de casă, preț special',           'House recipes, special price',          60
+) g WHERE @pcat_gol = 1;
 
 -- Varianta în care pleacă marfa: „congelat" sau „copt". Prețul se alegea după
 -- cum clientul are cont, ceea ce nu corespundea cu ce vede pe site.
