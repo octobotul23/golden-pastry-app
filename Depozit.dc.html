@@ -208,7 +208,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 </div>
 
-<div data-dep="phonesummary" style="display:none;gap:8px;overflow-x:auto;padding-bottom:2px">
+<div data-dep="phonesummary" style="display:none;gap:8px;overflow-x:auto;padding-bottom:2px;flex:none">
 <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
 <div style="flex:none;display:flex;align-items:baseline;gap:7px;padding:10px 13px;border-radius:13px;border:1px solid {{ s.bd }};background:var(--h-bg-surface)">
 <span class="h-numeric" style="font-family:var(--h-font-display);font-size:19px;font-weight:700;line-height:1;color:{{ s.fg }}">{{ s.value }}</span>
@@ -643,7 +643,7 @@ class Component extends DCLogic {
   // n-au voie să intre în socotelile de zi cu zi — „Sub prag", „Lipsă", numărul
   // de poziții, lista din formularul de mișcare — fiindcă marfa lor nu mai e de
   // vândut. Au nevoie de exact un lucru: o cale înapoi.
-  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", sterg: null };
+  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], deScazut: null, auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", sterg: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -698,6 +698,10 @@ class Component extends DCLogic {
       // n-are de unde să-l bănuiască.
       gp.get('/stock/items?all=1'),
       gp.get('/stock/moves'),
+      // Numai pentru potrivirea după nume din caseta „Articol nou”
+      // (`produsulDupaNume`): serverul dă cel mult 500 de comenzi, cele mai noi,
+      // deci din lista asta nu se numără nimic. Comenzile de scăzut vin în
+      // `pending`, de la `/stock/items`.
       gp.get('/orders'),
       gp.me(),
     ])
@@ -713,7 +717,7 @@ class Component extends DCLogic {
             // Clipa vine de la server, dar se citea cu câmpurile locale ale
             // aparatului: pe o tabletă pe alt fus, mișcarea din tura de noapte
             // apărea pe rândul altei zile. Serverul o socotește pe
-            // Europe/Bucharest (`stock_local_day_utc`, `api/routes/stock.php:396`),
+            // Europe/Bucharest (`stock_local_day_utc`, `api/routes/stock.php:403`),
             // deci și registrul o citește așa.
             const dt = gp.laPatiserie(new Date(gp.utc(m.createdAt)));
             const p2 = (n) => (n < 10 ? '0' : '') + n;
@@ -732,6 +736,10 @@ class Component extends DCLogic {
           }),
           orders: (orders.orders || []).map(gp.toPageOrder),
           movesTruncated: !!moves.truncated,
+          // Câte comenzi predate așteaptă scăderea, numărate pe server din toate
+          // (`stock_de_scazut`, api/routes/stock.php). Lista `orders` de mai sus
+          // are cel mult 500, cele mai noi, deci nu se numără nimic din ea.
+          deScazut: items.pending && typeof items.pending.orders === "number" ? items.pending : null,
           auth: gp.auth(user),
           who: user ? user.name : 'Laborator',
           role: user ? user.role : '',
@@ -947,20 +955,27 @@ class Component extends DCLogic {
   }
 
   /**
-   * Comenzile încheiate care încă n-au fost scăzute din depozit.
+   * Câte comenzi încheiate încă n-au fost scăzute din depozit, și câte bucăți au.
    *
    * Marcajul vine de pe server (`stockSynced`). Se ținea în starea paginii,
    * deci dispărea la reîncărcare: butonul „scade din stoc” apăsat a doua oară
    * scădea din nou aceleași produse, iar pe două calculatoare se scădea de
    * două ori. Stocul cobora singur, fără urmă.
+   *
+   * Cifra — `{ orders, pieces }` — vine tot de pe server, din `GET /stock/items`.
+   * Se socotea din `GET /orders`, care dă cel mult 500 de comenzi, cele mai noi:
+   * o comandă veche rămasă nescăzută (oprită de un articol lipsă, redeschisă de
+   * o corectură) nu mai aprindea butonul, deși scăderea ar fi luat-o.
    */
   pending() {
-    return this.state.orders.filter(o => o.status === gp.done() && !o.stockSynced && (o.items || []).length);
+    const p = this.state.deScazut;
+    return p && typeof p.orders === "number" ? p : { orders: 0, pieces: 0 };
   }
 
   sync(silent) {
-    const list = this.pending();
-    if (!list.length) return;
+    // Scăderea de pe server le ia pe toate; garda se uită deci la cifra lui, nu
+    // la lista din pagină, care se oprește la 500.
+    if (!(this.pending().orders > 0)) return;
     // Butonul nu se blochează singur, iar un al doilea clic pornea a doua
     // cerere înainte să răspundă prima. Serverul se apără acum de scăderea
     // dublă, dar tot n-are rost să-i trimitem două.
@@ -1184,7 +1199,6 @@ class Component extends DCLogic {
     const fStock = F ? num(fc.open) : 0;
     const fDelta = F ? (F.k === "in" ? num(F.q) : -num(F.q)) : 0;
     const pend = this.pending();
-    const pendPieces = pend.reduce((a, o) => a + (o.items || []).reduce((x, i) => x + num(i.q), 0), 0);
 
     // E cineva anume dincolo de ecran, sau e tura întreagă pe contul comun?
     // Se întreabă o dată, fiindcă răspunsul se folosește în cinci locuri
@@ -1294,9 +1308,9 @@ class Component extends DCLogic {
         }
       ],
 
-      hasPending: pend.length > 0,
-      pendingTitle: pend.length + (pend.length === 1 ? " comandă predată nu e scăzută din stoc" : " comenzi predate nu sunt scăzute din stoc"),
-      pendingHint: fmt(pendPieces) + " bucăți din comenzile marcate „" + gp.done() + "” în laborator sau administrare.",
+      hasPending: pend.orders > 0,
+      pendingTitle: pend.orders + (pend.orders === 1 ? " comandă predată nu e scăzută din stoc" : " comenzi predate nu sunt scăzute din stoc"),
+      pendingHint: fmt(num(pend.pieces)) + " bucăți din comenzile marcate „" + gp.done() + "” în laborator sau administrare.",
       onSync: () => this.sync(false),
       // Butonul se stinge cât timp scăderea e în lucru. Paza din sync() oprea
       // deja a doua cerere, dar pe ecran nu se schimba nimic: pe tabletă, un

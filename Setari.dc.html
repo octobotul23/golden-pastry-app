@@ -223,8 +223,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-for list="{{ generalFields }}" as="f" hint-placeholder-count="4">
 <label class="h-field">
 <span class="h-label">{{ f.label }}</span>
-<input class="h-input" value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.hint }}" style="height:46px;font-size:15px">
-<span class="h-help">{{ f.help }}</span>
+<input class="h-input" value="{{ f.value }}" onChange="{{ f.onChange }}" readOnly="{{ f.inchisa }}" placeholder="{{ f.hint }}" style="height:46px;font-size:15px">
+<span class="h-help" style="color:{{ f.helpFg }}">{{ f.help }}</span>
 </label>
 </sc-for>
 </div>
@@ -601,7 +601,7 @@ const ANUNTURI = [
   { k: "order_done", l: "Comandă gata",
     h: "Comanda a ajuns în etapa care o încheie. Util dacă vrei să știi de departe că a plecat marfa." },
   { k: "order_cancelled", l: "Comandă anulată",
-    h: "Comanda a fost trecută pe etapa de anulare, adică ștearsă din panou." },
+    h: "Comanda a fost trecută pe etapa de anulare, adică ștearsă din panou. Pe aceleași canale pleacă și „Comandă refăcută”, dacă o aduci înapoi." },
   { k: "user_new", l: "Cont nou pe site",
     h: "Un cumpărător și-a făcut singur cont. Dacă a venit pe un cod de recomandare, anunțul spune al cui e." },
   { k: "stock_low", l: "Articol sub pragul minim",
@@ -622,6 +622,11 @@ const TABS = [
   { k: "access", l: "Acces" }
 ];
 
+// Marca `m` numește migrarea care seamănă rândul unei chei pe care
+// `sql/002_seed.sql` n-o seamănă. Pe o bază unde migrarea n-a intrat, rândul
+// lipsește, caseta stă închisă și spune pe nume ce migrare să aștepte omul
+// (`faraRand()` și paza din `save()`). Fără marcă, ar spune doar „o migrare
+// din sql/", adică l-ar trimite să caute.
 const GENERAL = [
   { k: "company_name", l: "Numele firmei", hint: "Golden Pastry", help: "Apare în antetul mesajelor." },
   { k: "company_phone", l: "Telefon public", hint: "+40 7xx xxx xxx", help: "Numărul afișat pe site." },
@@ -631,7 +636,7 @@ const GENERAL = [
   // JavaScript. Până acum cheia era citită de pagina publică, dar nu putea fi
   // scrisă de nicăieri — deci adresa firmei era, în fapt, scrisă în cod.
   // Caseta goală înseamnă tot „ia-o pe cea din cod”, ca până acum.
-  { k: "company_address", l: "Adresa publică", hint: "Șos. Olteniței 103, sector 4, București", help: "Adresa pe care o citește Google și o vede clientul pe site. Goală, rămâne cea scrisă în cod." },
+  { k: "company_address", m: "018_adresa_si_program.sql", l: "Adresa publică", hint: "Șos. Olteniței 103, sector 4, București", help: "Adresa pe care o citește Google și o vede clientul pe site. Goală, rămâne cea scrisă în cod." },
   // Orele sunt rândul pe care Google îl arată lângă firmă — „Deschis · se
   // închide la 21:00" — și fără ele rândul lipsește cu totul. Se scriu ca
   // pentru un om; „api/lib/firma.php" le înțelege și le traduce în amândouă
@@ -644,7 +649,7 @@ const GENERAL = [
   // zilelor e a noastră, nu a patronului, deci trebuie să fie la un cuvânt
   // distanță de dezmințit. O zi nescrisă e o zi închisă: duminica lipsește din
   // rând fiindcă patiseria e închisă duminica.
-  { k: "company_hours", l: "Program de lucru", hint: "Lu-Vi 07:00-21:00, Sâ 07:00-17:00", help: "Orele pe care le arată și tabelul de pe pagină, și Google. Scrie zilele în față, altfel înțelegem luni-sâmbătă. Se pot da mai multe intervale, despărțite prin virgulă: „Lu-Vi 07:00-21:00, Sâ 07:00-17:00”. O zi pe care n-o scrii e o zi închisă." },
+  { k: "company_hours", m: "018_adresa_si_program.sql", l: "Program de lucru", hint: "Lu-Vi 07:00-21:00, Sâ 07:00-17:00", help: "Orele pe care le arată și tabelul de pe pagină, și Google. Scrie zilele în față, altfel înțelegem luni-sâmbătă. Se pot da mai multe intervale, despărțite prin virgulă: „Lu-Vi 07:00-21:00, Sâ 07:00-17:00”. O zi pe care n-o scrii e o zi închisă." },
   { k: "stock_min_default", l: "Prag minim implicit", hint: "10", help: "Cantitatea sub care un articol nou de depozit e considerat pe terminate. Zecimalele se scriu și cu virgulă: 0,5." },
   // Zero, nu cinci: migrarea 008 îl seamănă cu „0” dinadins, ca o actualizare
   // să nu înceapă să datoreze bani din prima comandă de după ea. Patronul îl
@@ -653,7 +658,12 @@ const GENERAL = [
   // Aici e valoarea de temelie, nu singura: fiecare cont poate avea procentul
   // lui, pus din Conturi. Acolo caseta goală înseamnă „ia-l pe ăsta” — de
   // aceea ridicarea de aici îi atinge pe toți cei lăsați neatinși.
-  { k: "referral_rate_default", l: "Procent de recomandare", hint: "5", help: "Cât câștigă, din fiecare comandă, cel care a adus clientul. Casa pornește de la 5%. Zero — sau caseta lăsată goală, care înseamnă același lucru — face ca recomandările să se țină minte, dar să nu aducă bani; iar comenzile făcute cât timp scrie zero rămân cu zero și după ce urci procentul, fiindcă procentul se îngheață pe comandă." },
+  //
+  // Rândul îl seamănă și 008 (cu „0”), și 017 (cu „5”, peste un zero al casei).
+  // Marca o numește pe 017, ca raportul actualizării: martorul din
+  // `actualizeaza-vps.sh` spune „migrarea 017 n-a intrat” când rândul lipsește,
+  // iar omul trebuie să citească același nume și aici, și acolo.
+  { k: "referral_rate_default", m: "017_procent_recomandare.sql", l: "Procent de recomandare", hint: "5", help: "Cât câștigă, din fiecare comandă, cel care a adus clientul. Casa pornește de la 5%. Zero — sau caseta lăsată goală, care înseamnă același lucru — face ca recomandările să se țină minte, dar să nu aducă bani; iar comenzile făcute cât timp scrie zero rămân cu zero și după ce urci procentul, fiindcă procentul se îngheață pe comandă." },
   // De aici pleacă mașina. Coordonatele intră în calculul kilometrilor și în
   // ordonarea opririlor, deci greșite mută toată ruta în alt cartier.
   { k: "hq_label", l: "Punctul de plecare al livrărilor", hint: "Depozit · Șos. Olteniței 103", help: "Numele afișat ca prima oprire pe ruta șoferului." },
@@ -834,13 +844,35 @@ class Component extends DCLogic {
   }
 
   /**
+   * Cheile din `chei` care n-au rând în tabelul `settings` al serverului.
+   *
+   * Serverul scrie setările cu UPDATE, deci o cheie fără rând nu se poate
+   * salva, iar `settings_save()` refuză atunci TOATĂ cererea (422
+   * `unknown_setting`), cu tot ce era bun lângă ea. Pagina le știe dinainte:
+   * `GET /settings` întoarce exact cheile care au rând (`settings_public()`),
+   * deci pe o bază fără migrarea 018 adresa publică și programul lipsesc din
+   * `orig`. Marca `m` din `GENERAL` numește migrarea care seamănă rândul, ca
+   * omul să afle ce anume n-a intrat.
+   *
+   * Numai când răspunsul chiar a venit, ca la `stiute` din `renderVals()`: cu
+   * setările necitite nu știm ce rânduri există, deci nu oprim nimic și lăsăm
+   * serverul să spună.
+   */
+  faraRand(chei) {
+    const S = this.state;
+    if (S.eroareSetari || !Object.keys(S.orig || {}).length) return [];
+    return chei.filter((k) => k.slice(-4) !== "_set" && S.orig[k] === undefined);
+  }
+
+  /**
    * Ce vede omul după „Salvează" se scrie din RĂSPUNS, nu din faptul că
    * răspunsul a venit.
    *
    * Mesajul verde se scria necondiționat, la orice 200. Dar un 200 nu
-   * înseamnă „s-a scris": serverul sare tăcut peste cheile pe care nu le are
-   * în tabel (`settings_save()`, api/lib/settings.php) și răspunde totuși
-   * ok=true; iar un secret criptat cu o cheie de criptare care s-a schimbat
+   * înseamnă „s-a scris": serverul sărea tăcut peste cheile pe care nu le avea
+   * în tabel (`settings_save()`, api/lib/settings.php) și răspundea totuși
+   * ok=true — azi le refuză pe nume, cu 422, iar `faraRand()` le oprește încă
+   * de aici; iar un secret criptat cu o cheie de criptare care s-a schimbat
    * între timp SE scrie, dar la citire nu se mai poate decoda și iese gol
    * (`settings_all()` îl tratează ca necompletat, dinadins, ca aplicația să
    * meargă mai departe). Amândouă arată la fel din fața ecranului: mesaj
@@ -856,6 +888,45 @@ class Component extends DCLogic {
     const trimise = Object.keys(diff);
     if (!trimise.length) {
       this.setState({ msg: "Nu e nimic de salvat.", err: "" });
+      return;
+    }
+    // Paza de dinainte de drum: nicio cheie fără rând în tabel nu pleacă.
+    //
+    // Serverul refuză TOATĂ cererea când găsește una (`settings_save()`,
+    // întreg sau deloc), iar după refuz formularul n-avea ieșire: caseta
+    // rămânea în `changes()` și golită, fiindcă `""` nu e `undefined`, deci
+    // fiecare apăsare pe „Salvează" primea același refuz, iar singura scăpare
+    // era „Renunță" — adică tot ce se scrisese. Casetele din „Date despre
+    // firmă" stau oricum închise (`inchisa`, în `renderVals()`), dar
+    // comutatoarele și listele din celelalte file scriu tot prin `put()`;
+    // paza de aici le prinde pe toate.
+    //
+    // Nu trimitem restul fără ele: ar fi o salvare pe jumătate, pe care
+    // serverul o refuză dinadins. Le scoatem pe nume din formular, iar restul
+    // rămâne pe ecran pentru apăsarea următoare.
+    const lipsa = this.faraRand(trimise);
+    if (lipsa.length) {
+      const una = lipsa.length === 1;
+      const din = (k) => GENERAL.find((f) => f.k === k) || {};
+      const migrari = lipsa.map((k) => din(k).m).filter((m, i, a) => m && a.indexOf(m) === i);
+      const ramase = trimise.length - lipsa.length;
+      const s = Object.assign({}, this.state.s);
+      lipsa.forEach((k) => { delete s[k]; });
+      this.setState({
+        s, msg: "",
+        err: "N-am trimis nimic spre server. " +
+          lipsa.map((k) => "„" + (din(k).l || k) + "”").join(", ") +
+          (una ? " nu se poate salva încă" : " nu se pot salva încă") +
+          ": în baza de date a serverului nu există rând pentru " +
+          (una ? "această casetă" : "aceste casete") + ", fiindcă " +
+          (migrari.length > 1 ? "migrările " + migrari.join(" și ") + " n-au intrat"
+            : migrari.length ? "migrarea " + migrari[0] + " n-a intrat"
+            : "o migrare din sql/ n-a intrat") +
+          ". Rulează actualizarea (sudo bash actualizeaza-vps.sh), apoi reîncarcă pagina. " +
+          "Am scos din formular ce scriseseși acolo" +
+          (ramase ? "; restul modificărilor sunt încă pe ecran — apasă „Salvează” din nou."
+            : "; altceva de salvat nu mai era.")
+      });
       return;
     }
     this.setState({ saving: true, err: "", msg: "" });
@@ -1418,10 +1489,23 @@ class Component extends DCLogic {
       isAccess: S.tab === "access",
 
       /* --- general --- */
-      generalFields: GENERAL.map((f) => ({
-        label: f.l, hint: f.hint, help: f.help,
-        value: v(f.k), onChange: field(f.k)
-      })),
+      generalFields: GENERAL.map((f) => {
+        // O casetă fără rând în tabel stă închisă și spune de ce, în locul
+        // ajutorului obișnuit. Deschisă, omul scria în ea, iar la „Salvează"
+        // serverul refuza tot formularul (vezi `faraRand()` și paza din
+        // `save()`). Cu setările necitite `faraRand()` nu închide nimic.
+        const inchisa = this.faraRand([f.k]).length > 0;
+        return {
+          label: f.l, value: v(f.k), onChange: field(f.k), inchisa,
+          hint: inchisa ? "" : f.hint,
+          help: inchisa
+            ? "Nu se poate scrie încă: pe server lipsește rândul acestei setări, fiindcă " +
+              (f.m ? "migrarea " + f.m : "o migrare din sql/") +
+              " n-a intrat. Rulează actualizarea (sudo bash actualizeaza-vps.sh), apoi reîncarcă pagina."
+            : f.help,
+          helpFg: inchisa ? "var(--h-warning)" : "var(--h-fg-subtle)"
+        };
+      }),
 
       /* --- WhatsApp --- */
       waOn: on("notify_whatsapp_enabled"),

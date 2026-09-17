@@ -249,9 +249,9 @@ după nu.
 | `013_anunturi_pe_canal.sql` | Da — cele trei coloane noi (`notifications.event`, `order_requests.decided_via`, `order_requests.snoozed_until`) se uită întâi în `information_schema`, iar setările intră cu `INSERT IGNORE`, deci a doua rulare nu calcă peste ce ai bifat. Adaugă lista de anunțuri a fiecărui canal și cele patru setări ale butoanelor din Telegram. Singurul `UPDATE` marchează drept `order_new` anunțurile vechi legate de o comandă și prinde numai rândurile încă nemarcate. Listele se seamănă cu exact ce se trimitea până acum (`["request_new","order_new"]`), deci actualizarea nu pornește singură niciun mesaj nou. Nu cere nicio migrare anterioară. |
 | `014_pontaj_laborator.sql` | Da — aditiv, fiecare pas se uită întâi în `information_schema`. Adaugă coloana `users.lab_pin` (codul de pontaj, ținut hașurat cu `password_hash`, niciodată în clar) și tabelul `lab_shifts` cu `CREATE TABLE IF NOT EXISTS`. Lărgește lista de roluri cu `utilizator_lab`, la **coada** listei ENUM, deci conturile de azi nu-și schimbă rolul. Nu atinge niciun rând existent și nu cere nicio migrare anterioară. |
 | `015_mesaje_laborator.sql` | Da — face un tabel nou, `lab_messages`, cu `CREATE TABLE IF NOT EXISTS`, și nu atinge nimic altceva: nicio coloană adăugată, niciun rând schimbat, nicio listă de roluri lărgită. La a doua rulare nu are ce face. Nu cere nicio migrare anterioară. Anunțurile deja puse rămân pe ecran: rândurile nu se șterg niciodată, li se pune doar termenul pe clipa în care cineva le ia jos. |
-| `016_zona_cont.sql` | Da — fiecare pas se uită întâi unde trebuie. Adaugă coloana `users.zone` (zona firmei, ca să nu mai fie cerută la fiecare comandă) numai dacă lipsește din `information_schema`. Pune zona „În afara Bucureștiului și Ilfovului" la **coada** listei tale de zone, și numai dacă nu e deja acolo (`JSON_SEARCH`), deci zonele adăugate de tine din Setări rămân neatinse — nu e un `UPDATE` cu lista scrisă în fișier, greșeala pe care a făcut-o `003` și pe care a trebuit s-o luăm înapoi. **Nu atinge `delivery_zone_coords`**: zona nouă rămâne dinadins fără punct pe hartă, fiindcă „restul țării" nu e un loc, iar lipsa punctului e chiar semnalul după care ruta o scoate din ordonare și o arată aparte. Completează zona conturilor de client din zona ultimei lor comenzi, dar numai acolo unde e încă necompletată (`u.zone IS NULL`), deci la a doua rulare n-are ce face. Nu cere nicio migrare anterioară. |
-| `017_procent_recomandare.sql` | Da — scrie o singură setare și nimic altceva: nicio coloană, niciun tabel, niciun rând de comandă atins. Urcă `referral_rate_default` la **5**, dar **numai dacă rândul e încă cel semănat la instalare**: paza e `updated_by IS NULL`, adică „n-a umblat niciun om la el". Dacă ai pus tu vreodată o cifră din Setări — chiar și zero, dinadins — migrarea te ocolește și la prima rulare, și la a zecea. Comisioanele deja socotite **nu** se ating: procentul se îngheață pe fiecare comandă la nașterea ei, iar îndreptarea rândurilor vechi se face din panoul „Recomandări", la apăsarea ta, nu pe furiș dintr-un fișier `.sql`. Nu cere nicio migrare anterioară, dar are înțeles numai după `008`, care a făcut rândul. |
-| `018_adresa_si_program.sql` | Da — scrie două setări și nimic altceva, cu `INSERT IGNORE`: nicio coloană, niciun tabel, niciun rând de comandă atins. Seamănă rândurile `company_address` și `company_hours`, care n-au existat niciodată, deși panoul Setări avea casetele lor de mult, iar pagina publică le citea. Valorile semănate sunt chiar cele scrise până acum în cod (`seo/index.php`), ca site-ul să arate la fel în clipa actualizării. La a doua rulare nu se întâmplă nimic: `INSERT IGNORE` trece pe lângă un rând care există, deci adresa pe care ai scris-o tu din Setări **rămâne a ta**. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază — n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Nu cere nicio migrare anterioară. |
+| `016_zona_cont.sql` | Da — fiecare pas se uită întâi unde trebuie. Adaugă coloana `users.zone` (zona firmei, ca să nu mai fie cerută la fiecare comandă) numai dacă lipsește din `information_schema`. Pune zona „În afara Bucureștiului și Ilfovului" la **coada** listei tale de zone, și numai dacă nu e deja acolo (`JSON_SEARCH`), deci zonele adăugate de tine din Setări rămân neatinse — nu e un `UPDATE` cu lista scrisă în fișier, greșeala pe care a făcut-o `003` și pe care a trebuit s-o luăm înapoi. **Nu atinge `delivery_zone_coords`**: zona nouă rămâne dinadins fără punct pe hartă, fiindcă „restul țării" nu e un loc, iar lipsa punctului e chiar semnalul după care ruta o scoate din ordonare și o arată aparte. Completează zona conturilor de client din zona ultimei lor comenzi. Amândoi pașii cu date — zona în listă și zona pe conturi — se fac **numai în rularea care adaugă coloana** (coloana se numără în `information_schema` înainte de `ALTER`): orice rulare de după o găsește deja acolo și nu mai atinge nici lista, nici conturile. Așa o zonă ștearsă de tine de pe un cont rămâne ștearsă, iar zona din afara orașului, redenumită sau scoasă din Setări, nu se mai întoarce sub numele vechi la fiecare actualizare. Înainte, paza era `u.zone IS NULL` și „numai dacă numele nu e deja acolo" — iar ștergerea din Conturi scrie tocmai NULL, și o redenumire scoate tocmai numele. Urmarea: zona de pe cont se ia din comenzi o singură dată pe instalare; un client făcut după aceea fără zonă și-o alege singur în formular, ori i-o pui tu din Conturi. Nu cere nicio migrare anterioară. |
+| `017_procent_recomandare.sql` | Da — scrie o singură setare și nimic altceva: nicio coloană, niciun tabel, niciun rând de comandă atins. Seamănă rândul `referral_rate_default` dacă lipsește (`INSERT IGNORE`, cu valoarea 5) și îl urcă la **5**, dar **numai dacă rândul e încă cel semănat la instalare**: paza e `updated_by IS NULL`, adică „n-a umblat niciun om la el". Dacă ai pus tu vreodată o cifră din Setări — chiar și zero, dinadins — migrarea te ocolește și la prima rulare, și la a zecea. Comisioanele deja socotite **nu** se ating: procentul se îngheață pe fiecare comandă la nașterea ei, iar îndreptarea rândurilor vechi se face din panoul „Recomandări", la apăsarea ta, nu pe furiș dintr-un fișier `.sql`. Nu cere nicio migrare anterioară: dacă `008` n-a apucat să semene rândul, îl face ea. Ea e și migrarea pe care o numește panoul sub caseta „Procent de recomandare", când rândul lipsește. |
+| `018_adresa_si_program.sql` | Da — scrie două setări și nimic altceva, cu `INSERT IGNORE`: nicio coloană, niciun tabel, niciun rând de comandă atins. Seamănă rândurile `company_address` și `company_hours`, care n-au existat niciodată, deși panoul Setări avea casetele lor de mult, iar pagina publică le citea. Valorile semănate sunt chiar cele scrise în cod ca temei de rezervă (`api/lib/firma.php`, `GP_FIRMA_ADRESA` și `GP_FIRMA_PROGRAM`), ca site-ul să arate la fel în clipa actualizării. La a doua rulare nu se întâmplă nimic: `INSERT IGNORE` trece pe lângă un rând care există, deci adresa pe care ai scris-o tu din Setări **rămâne a ta**. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază — n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Nu cere nicio migrare anterioară. |
 
 Dacă o versiune viitoare are nevoie de o **setare** nouă, primești un fișier
 separat care conține doar acel `INSERT IGNORE INTO settings`. Nu reimportul
@@ -260,7 +260,7 @@ seed-ului.
 ### Cum verifici că migrarea a intrat
 
 `api/verifica.php` **nu te ajută**: pe o instalare vie răspunde 404
-(`api/verifica.php:413-423`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
+(`api/verifica.php:636-650`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
 Pentru starea de azi — migrările **003 … 018** — trebuie să întoarcă
 **34 de rânduri**:
 
@@ -326,12 +326,19 @@ scrie două setări, `company_address` și `company_hours`, și nimic altceva. C
 două chei erau citite de pagina publică de mult, aveau casetele lor în Setări —
 și n-aveau rând în tabel. Iar salvarea scrie cu `UPDATE`, peste rânduri care
 există: patronul scria adresa firmei, apăsa „Salvează", primea răspuns bun, și
-nu se schimba nimic. Niciodată. De-aceea aici nu contează numai că rândurile
-**există**, ci și **ce scrie în ele**: pe o instalare proaspăt migrată trebuie
-să citești `company_address = Șos. Olteniței 103` și
-`company_hours = Lu-Vi 07:00-21:00, Sâ 07:00-17:00` — chiar valorile care erau până acum scrise
-în cod, ca site-ul să arate la fel în clipa actualizării. Dacă lipsesc cu
-totul, `018` n-a intrat, iar cele două casete din Setări sunt tot oarbe.
+nu se schimba nimic. Niciodată. Tăcerea aceea nu mai e cu putință: o cheie fără
+rând închide caseta din panou, iar cererea care o poartă totuși — un script, un
+import, o pagină rămasă deschisă de ieri — e refuzată întreagă, cu **toate**
+cheile lipsă numite și fără să se scrie nimic din ea
+(`api/lib/settings.php:379-399`, codul `unknown_setting`). De-aceea aici nu
+contează numai că rândurile **există**, ci și **ce scrie în ele**: pe o
+instalare proaspăt migrată trebuie să citești
+`company_address = Șos. Olteniței 103` și
+`company_hours = Lu-Vi 07:00-21:00, Sâ 07:00-17:00` — chiar valorile care erau
+până acum scrise în cod, ca site-ul să arate la fel în clipa actualizării. Dacă
+lipsesc cu totul, `018` n-a intrat, iar cele două casete din Setări
+stau închise și spun sub ele ce migrare lipsește; se deschid după actualizare
+și o reîncărcare a paginii.
 (Dacă scrie altceva, nu e o pagubă: înseamnă că le-ai scris tu, iar migrarea
 trece pe lângă un rând care există.)
 
@@ -363,6 +370,15 @@ Vreo trei minute. Fiecare pas prinde altceva.
    etapa și pune-o la loc. Asta probează cookie-ul între subdomenii, tokenul
    CSRF și o rută care scrie. Dacă apare „Token CSRF lipsă sau invalid",
    reîncarcă pagina o dată: tokenul stă în memoria filei, nu în cookie.
+
+   Tot acolo, verifică și paza etapei: deschide panoul din laborator într-o
+   filă, treci pe altă filă, anulează aceeași comandă din „Comenzi", apoi
+   întoarce-te la prima filă **fără s-o reîncarci** și apasă „etapa următoare".
+   Trebuie să scrie **„Comanda #… a fost schimbată între timp: acum e
+   «Anulată». N-am mutat-o."**, iar comanda să rămână anulată. Dacă în loc de
+   asta comanda se mută și reapare în laborator, pe server a rămas pachetul
+   vechi. Dacă scrie „Nu s-a salvat: …", s-a urcat numai jumătate din pachet
+   (API nou cu pagini vechi, ori invers): rulează din nou actualizarea.
 6. **Catalog → un produs cu poză urcată de tine.** Confirmă că se vede
    miniatura: cererea trece prin redirecționarea din `.claude/build-deploy.mjs:486`,
    deci probează și `.htaccess`-ul de pe `lab`.
@@ -380,11 +396,11 @@ Vreo trei minute. Fiecare pas prinde altceva.
 
 Reparațiile opresc greșeala de aici încolo; ele **nu** îndreaptă rândurile
 strâmbe scrise înainte. Dacă serverul mergea deja cu versiunea veche, treci o
-dată cele trei interogări de mai jos prin phpMyAdmin (fila **SQL**, pe baza
-aplicației) după ce ai urcat. Durează un minut și nu schimbă nimic: toate trei
+dată cele patru interogări de mai jos prin phpMyAdmin (fila **SQL**, pe baza
+aplicației) după ce ai urcat. Durează un minut și nu schimbă nimic: toate patru
 sunt `SELECT`.
 
-**Zero rânduri la toate trei = nu e nimic de îndreptat.** Nu te alarma dacă una
+**Zero rânduri la toate patru = nu e nimic de îndreptat.** Nu te alarma dacă una
 scoate ceva: sunt cazuri numărabile, se repară din aplicație.
 
 ### 1. Marfă scăzută din depozit și niciodată întoarsă
@@ -405,6 +421,16 @@ Ce faci cu ce iese: deschide fiecare comandă în panou și **salveaz-o o dată*
 fără să schimbi nimic. Codul reparat întoarce marfa în depozit ca mișcări de
 intrare și scoate marcajul. Verifică pe urmă în Depozit → registru că a apărut
 rândul de intrare cu referința comenzii.
+
+**Semnul „Scade din stoc” se poate aprinde singur după actualizare.** Până la
+2.1.1, Depozitul număra comenzile de scăzut din cele mai noi 500 de comenzi, deci
+o comandă „Predată” mai veche — oprită de un articol lipsă sau redeschisă de o
+corectură — rămânea nescăzută fără niciun semn. Acum cifra vine de pe server,
+din toate comenzile (`api/routes/stock.php:650`). Dacă semnul apare cu comenzi
+la care nu te așteptai, gândește-te întâi dacă nu le-ai scos deja marfa de mână,
+cu o mișcare de ieșire în registru: apăsarea pe „Scade din stoc” le-ar scădea a
+doua oară. În cazul ăsta adaugă o mișcare de intrare cu aceeași cantitate după
+apăsare, nu în loc de ea — altfel comanda rămâne nescăzută și semnul nu se stinge.
 
 ### 2. Comenzi scăzute de mai multe ori
 
@@ -462,6 +488,40 @@ din listă, cea cu id-ul mai mare) și mut-o pe altă zi și înapoi — codul r
 îi dă o referință liberă și scrie schimbarea în Jurnal. Pentru zilele trecute nu
 umbla la ele: sunt istorie, iar clientul are pe hârtie referința pe care a
 primit-o.
+
+### 4. Comenzi rămase în lucru pe o zi care a trecut
+
+Până la 2.1.1, o comandă scoasă din „Anulată" — cu „Reface comanda", din
+lista de etape a fișei sau din lista „Stare" a formularului, la salvare — se
+întorcea pe ziua ei salvată, oricât de veche, fără niciun semn. Rămânea în lucru pe o zi pe care n-o mai arată nici panoul din
+laborator, nici ruta șoferului, iar marfa ei stătea pusă deoparte: rezervarea
+ține seama numai de etapă, nu de zi (`api/routes/stock.php:63`). Acum caseta
+spune că ziua e în trecut, dar comenzile refăcute înainte au rămas unde erau.
+
+```sql
+SELECT o.id, o.ref, o.`day`, o.status, o.customer_name
+  FROM orders o
+ WHERE o.`day` < CURDATE()
+   AND o.status <> (SELECT value FROM settings WHERE setting_key = 'order_status_done')
+   AND o.status <> (SELECT value FROM settings WHERE setting_key = 'order_status_cancelled')
+ ORDER BY o.`day`, o.id;
+```
+
+Nu toate câte ies vin de aici: apare și o comandă plecată la vremea ei, dar
+netrecută „Predată". Gestul e același. Pune în panoul de comenzi filtrul
+**„Toate zilele · cu istoric"**, deschide fiecare comandă din listă și hotărăște:
+
+- **a plecat atunci** → din lista de etape a fișei, treci-o „Predată". Marfa nu
+  mai stă pusă deoparte, iar comanda așteaptă „Scade din stoc" în Depozit. Dacă
+  i-ai scos deja marfa de mână, citește întâi ce scrie la punctul 1 despre
+  scăderea a doua oară.
+- **n-a plecat și nu mai trebuie** → treci-o „Anulată". Marfa se eliberează.
+- **tot trebuie să plece** → deschide-o cu „Editează comanda", alege în câmpul
+  **„Zi"** o zi de azi încolo și salvează. Reapare pe panoul din laborator și pe
+  ruta șoferului.
+
+Rulează interogarea în timpul zilei, nu după miezul nopții: `CURDATE()` e ziua
+ceasului bazei, care poate rămâne cu câteva ore în urma patiseriei.
 
 ---
 
@@ -570,10 +630,16 @@ comenzi pe jumătate în bază**.
 
 Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
-(`Site Public.dc.html:1130`), deci o schimbare de preț se vede corect. **Dar
-dispariția e complet tăcută**: `:1233` scoate din catalog orice produs care nu
-are **amândouă** prețurile, iar `:1317` filtrează din coș rândurile rămase fără
+(`Site Public.dc.html:2009`), deci o schimbare de preț se vede corect. **Dar
+dispariția e complet tăcută**: `:2427` scoate din catalog orice produs care nu
+are **amândouă** prețurile, iar `:2601` filtrează din coș rândurile rămase fără
 pereche, fără niciun mesaj.
+
+Singura excepție e coșul refăcut din **„Comandă din nou”** (butonul de pe
+comenzile din „Comanda mea”). Acela ia prețurile de azi, nu pe cele de pe
+comanda veche, iar magazinul spune într-o casetă câte produse n-au mai intrat;
+cele șterse de tot din catalog le numește chiar pagina clientului, sub buton.
+Un coș făcut de mână și lăsat peste noapte rămâne tăcut, ca mai sus.
 
 Concret: un client își face coșul luni seara, 8 produse, 340 lei. Marți scoți un
 produs din gamă și, la altul, ștergi prețul „copt" ca să-l recalculezi și uiți

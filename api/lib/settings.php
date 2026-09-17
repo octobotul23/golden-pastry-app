@@ -351,39 +351,54 @@ function settings_save(array $incoming, array $user): array
     // DOUĂ treceri, nu una: întâi se pregătește și se cântărește tot, abia apoi
     // se scrie. Într-o singură trecere, o valoare prea lungă găsită la a cincea
     // cheie oprea salvarea cu primele patru deja scrise — jumătate de formular
-    // salvat, fără ca omul să afle care jumătate. Formularul de Setări se
-    // trimite întreg, deci și refuzul trebuie să fie întreg.
+    // salvat, fără ca omul să afle care jumătate. Ce pleacă într-o cerere se
+    // scrie întreg sau deloc, deci și refuzul trebuie să fie întreg.
     $deScris = [];
 
-    foreach ($incoming as $key => $raw) {
-        // O CHEIE FĂRĂ RÂND ÎN TABEL SE REFUZĂ PE NUME, nu se sare peste ea.
-        //
-        // `$known` sunt cheile care AU rând azi în `settings`, fiindcă
-        // salvarea scrie cu UPDATE, nu cu INSERT. Sărirea tăcută de aici a
-        // ținut ani: panoul avea casetele „Adresa publică" și „Program de
-        // lucru", pagina publică le citea, dar rândurile lor nu fuseseră
-        // semănate niciodată — deci patronul scria, apăsa „Salvează", primea
-        // „ok", și nu se schimba nimic. Niciodată. (Rândurile se seamănă acum,
-        // în `sql/018_adresa_si_program.sql`.)
-        //
-        // Un refuz e mai bun decât o tăcere chiar și pentru o cheie cu adevărat
-        // necunoscută — o greșeală de tastare într-un script, o cheie ștearsă
-        // din bază cu mâna: toate arătau la fel, adică a izbândă.
-        //
-        // Se refuză ÎNTREG, ca toate celelalte verificări de aici: formularul
-        // de Setări se trimite dintr-o bucată, deci n-are rost să scriem
-        // jumătate din el și să ne plângem după. De-aia refuzul stă în prima
-        // trecere, cea care cântărește, nu în a doua, cea care scrie.
+    // CHEILE FĂRĂ RÂND ÎN TABEL SE REFUZĂ PE NUME — TOATE, înainte de orice.
+    //
+    // `$known` sunt cheile care AU rând azi în `settings`, fiindcă salvarea
+    // scrie cu UPDATE, nu cu INSERT. Sărirea tăcută de aici a ținut ani:
+    // panoul avea casetele „Adresa publică" și „Program de lucru", pagina
+    // publică le citea, dar rândurile lor nu fuseseră semănate niciodată —
+    // deci patronul scria, apăsa „Salvează", primea „ok", și nu se schimba
+    // nimic. (Rândurile se seamănă acum, în `sql/018_adresa_si_program.sql`.)
+    //
+    // Un refuz e mai bun decât o tăcere chiar și pentru o cheie cu adevărat
+    // necunoscută — o greșeală de tastare într-un script, o cheie ștearsă din
+    // bază cu mâna: toate arătau la fel, adică a izbândă.
+    //
+    // Se refuză ÎNTREG, ca toate celelalte verificări de aici, și de-aia stă
+    // înaintea buclei care cântărește, nu în cea care scrie. Dar se STRÂNG
+    // întâi toate: pe o bază căreia îi lipsește o migrare, aceeași cerere
+    // poate purta două-trei chei fără rând (018 aduce adresa ȘI programul),
+    // iar un refuz care o numea doar pe prima îl trimitea pe om la actualizare
+    // pentru o cheie și-l lăsa s-o afle pe a doua abia la apăsarea următoare.
+    // Pagina de Setări nu le mai trimite deloc (`faraRand()` din
+    // Setari.dc.html); refuzul de aici rămâne pentru orice altă cerere.
+    $faraRand = [];
+    foreach (array_keys($incoming) as $key) {
         if (!in_array($key, $known, true)) {
-            fail(
-                'Setarea „' . $key . '" nu există în baza de date, deci nu poate fi '
-                  . 'salvată. Cel mai adesea înseamnă că lipsește o migrare din `sql/` '
-                  . '— vezi docs/09-actualizare-vps.md. Restul setărilor trimise NU au '
-                  . 'fost scrise: formularul se salvează întreg sau deloc.',
-                422,
-                'unknown_setting'
-            );
+            $faraRand[] = (string) $key;
         }
+    }
+    if ($faraRand) {
+        $una = count($faraRand) === 1;
+        fail(
+            ($una ? 'Setarea ' : 'Setările ')
+              . implode(', ', array_map(static fn ($k) => '„' . $k . '"', $faraRand))
+              . ' nu există în baza de date, deci nu '
+              . ($una ? 'poate fi salvată' : 'pot fi salvate')
+              . '. Cel mai adesea înseamnă că lipsește o migrare din `sql/`; pe server, '
+              . '`sudo bash actualizeaza-vps.sh` le aduce pe toate — vezi '
+              . 'docs/09-actualizare-vps.md. Nimic din salvarea asta NU a fost scris: '
+              . 'formularul se salvează întreg sau deloc.',
+            422,
+            'unknown_setting'
+        );
+    }
+
+    foreach ($incoming as $key => $raw) {
         // Listele pot veni și ca tablou JSON, nu doar ca șir: validările din
         // rută le acceptă explicit așa (`is_array($raw) ? $raw : json_decode(…)`),
         // deci o cerere scrisă de mână — curl, un script de import — trece de
@@ -454,7 +469,8 @@ function settings_save(array $incoming, array $user): array
         $changed[] = $key;
         // Ce anume s-a schimbat, nu doar care casetă a fost trimisă.
         //
-        // Formularul de Setări se trimite ÎNTREG, deci `$changed` cuprinde și
+        // Formularul de Setări se trimitea pe atunci ÎNTREG (azi pleacă doar
+        // diferențele, din `changes()`), deci `$changed` cuprindea și
         // cheile pe care nu le-a atins nimeni: jurnalul scria de fiecare dată
         // aceeași listă de șapte-opt nume tehnice, dintre care unul singur era
         // cel căutat. „Care" fără „ce" nu e o urmă, e zgomot — iar cine căuta

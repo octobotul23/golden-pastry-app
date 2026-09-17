@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.0.4/deploy
+  Pachet: /root/plasture-vps 2.1.1/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -58,6 +58,14 @@ o pune în raport la pasul „Caut pachetul":
 Data e a **pachetului**, nu a zilei de azi. Mai veche decât te aștepți =
 s-a aplicat un pachet vechi. Un avertisment galben în locul celor două rânduri
 înseamnă un pachet construit înainte ca ștampila să existe.
+
+Cifrele de mai sus sunt **dinadins** dintr-un pachet vechi, ca să se vadă ce
+înseamnă „mai veche decât te aștepți". Pe a ta o citești înainte să urci, din
+proiect:
+
+```bash
+cat deploy/PACHET.txt
+```
 
 `PACHET.txt` nu pleacă pe site: se copiază numai `api/`, `public_html/`,
 `clienti/` și `lab/`, iar el stă deasupra lor. E și singurul fișier din proiect
@@ -104,8 +112,8 @@ grep -c session_days_panou /var/www/gp/api/lib/auth.php
    din Catalog n-are cu ce se ciocni și s-ar întoarce de la morți la fiecare
    actualizare (`actualizeaza-vps.sh:390`).
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
-   și din curățenie (`actualizeaza-vps.sh:604`), iar folderul pozelor e citit din
-   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:551`,
+   și din curățenie (`actualizeaza-vps.sh:684`), iar folderul pozelor e citit din
+   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:614`,
    `api/routes/catalog.php:512`).
 6. **Drepturile**: totul pe `www-data`, `755` la foldere, `644` la fișiere,
    `640` la `config.php`.
@@ -136,7 +144,7 @@ exact în minutele dintre cele două jumătăți ale actualizării.
 Fișierele `api/setup.php` și `api/verifica.php` sunt un caz aparte: ghidul de
 instalare cere ștergerea lor, dar amândouă sunt în pachet, deci copierea le-ar
 pune la loc de fiecare dată. Scriptul ține minte care lipseau și le scoate din
-nou (`actualizeaza-vps.sh:570`). Se închid și singure, cu `404`, din clipa în
+nou (`actualizeaza-vps.sh:633`). Se închid și singure, cu `404`, din clipa în
 care instalarea are un administrator activ — dar hotărârea rămâne a ta.
 
 ---
@@ -258,24 +266,58 @@ la coada listei și **fără coordonate** — lipsa punctului nu e o scăpare, e
 semnalul după care opririle de acolo ies din ordinea rutei și se arată aparte,
 în josul ecranului de rută.
 
+Privirea asta e pentru actualizarea care **aduce** `016`. Dacă după aceea ai
+redenumit zona sau ai scos-o din listă, rămâne cum ai lăsat-o: `016` scrie în
+listă și pe conturi numai în rularea care adaugă coloana `users.zone`, iar
+orice actualizare de după nu le mai atinge. La fel o zonă pe care ai șters-o
+de pe un cont din **Conturi**: rămâne ștearsă.
+
+Dacă ai redenumit zona sau ai șters zone de pe conturi **înainte** de
+actualizarea asta, uită-te o dată în **Setări → Zone** după o zonă „În afara
+Bucureștiului și Ilfovului" apărută din nou lângă cea redenumită de tine, și
+în **Conturi** după zonele șterse care s-au întors. Migrarea de dinainte le
+punea la loc la fiecare actualizare; reparația oprește asta de acum încolo, dar
+nu desface ce s-a pus deja.
+
 Iar pentru `017` privirea e și mai scurtă, fiindcă nici ea nu se vede în
-numărul de tabele: **Setări → Procent de recomandare** trebuie să scrie **5**,
-nu `0`. Migrarea urcă cifra numai dacă rândul e încă cel semănat la instalare;
-dacă ai pus tu vreodată o valoare de acolo — zero inclusiv — te ocolește
+numărul de tabele: în **Setări → General**, „Procent de recomandare" trebuie să
+scrie **5**, nu `0`. Migrarea urcă cifra numai dacă rândul e încă cel semănat
+la instalare; dacă ai pus tu vreodată o valoare de acolo — zero inclusiv — te ocolește
 dinadins, și atunci `0` e răspunsul corect. Dar dacă n-ai umblat niciodată la
 ea și tot scrie `0`, migrarea n-a intrat: recomandările se leagă și se numără
 mai departe, însă fiecare comandă adusă prin ele naște un câștig de
 `0,00 RON` — și, fiindcă procentul se îngheață pe comandă, acele comenzi
-rămân la zero și după ce cifra se îndreaptă.
+rămân la zero și după ce cifra se îndreaptă. Iar dacă acolo nu e nicio cifră, ci
+o casetă închisă, cu `017_procent_recomandare.sql` scris sub ea, rândul lipsește
+cu totul din tabel: până intră migrarea, aplicația socotește cu 5%, cifra din
+cod, iar din panou nu poți pune alta.
 
-Iar pentru `018` privirea e tot scurtă, și tot în Setări, fiindcă și ea scrie
-setări, nu schemă: **Adresa publică** trebuie să conțină „Șos. Olteniței 103",
-iar **Program de lucru** „Lu-Vi 07:00-21:00, Sâ 07:00-17:00" — afară de cazul în care le-ai
-scris tu între timp, și atunci rămân ale tale. Dacă amândouă sunt goale,
-migrarea n-a intrat, și se vede pe loc: scrii ceva în ele, apeși „Salvează" și
-capeți un refuz care numește cheia (`unknown_setting`). Până la `018`, aceeași
-apăsare răspundea „ok" și nu scria nimic — de-aia adresa firmei a stat ani de
-zile scrisă în cod, fără ca cineva s-o poată schimba.
+Iar pentru `018` privirea e tot scurtă, și tot în **Setări → General**, fiindcă
+și ea scrie setări, nu schemă: **Adresa publică** trebuie să conțină „Șos.
+Olteniței 103", iar **Program de lucru** „Lu-Vi 07:00-21:00, Sâ 07:00-17:00" —
+afară de cazul în care le-ai scris tu între timp, și atunci rămân ale tale. O
+casetă goală nu e semnul migrării lipsă: goală și deschisă înseamnă că ai
+golit-o tu, iar site-ul arată atunci adresa și programul scrise în cod. Semnul e
+caseta **închisă**, în care nu se poate scrie, cu `018_adresa_si_program.sql`
+numit sub ea; se deschide după actualizare și o reîncărcare a paginii. O cerere
+care poartă totuși cheile fără rând (un script, un import, o pagină rămasă
+deschisă de ieri) capătă un refuz care le numește pe **toate**, nu doar pe
+prima, iar din salvarea aceea nu se scrie nimic: formularul se salvează întreg
+sau deloc (`unknown_setting`). Până la `018`, aceeași salvare răspundea „ok" și
+nu scria nimic — de-aia adresa firmei a stat ani de zile scrisă în cod, fără ca
+cineva s-o poată schimba.
+
+Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
+adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:442`,
+`:521`). Un rând galben care spune că `017` sau `018` **n-a intrat** e o migrare
+lipsă — aproape mereu un folder `sql/` urcat mai vechi decât pachetul; la
+procent îl dă și un `0` rămas de la casă, pe care `017` l-ar fi urcat la 5. Un
+rând galben care începe cu **„N-am putut citi…"**, cu eroarea lui mysql
+dedesubt, e altceva: migrările au trecut, a picat numai întrebarea de după ele,
+deci raportul nu știe ce e acolo și nu ghicește. Nu rulezi din nou pentru atât;
+te uiți tu, în Setări. La fel vorbește și rândul conturilor făcute pe site pe
+care nu le-a recunoscut nimeni (`:582`): acolo o citire picată tăcea înainte,
+exact ca „niciun cont", iar acum se aude.
 
 ---
 

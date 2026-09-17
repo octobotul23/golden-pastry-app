@@ -10,13 +10,20 @@ Contul îl deschizi tu, din `lab.goldenpastry.ro/conturi`.
 
 ## Ce vede clientul
 
-**După autentificare ajunge în magazin**, nu într-un panou. Acolo, în locul
-butonului „Intră în cont", antetul îi arată numele firmei și un meniu cu două
-intrări: `Comanda mea` și `Ieși din cont`.
+**După autentificare ajunge în „Comanda mea"**, nu în magazin. Acolo îl
+așteaptă comanda care urmează, ziua livrării și, în ziua aceea, câte opriri mai
+sunt până la el. Magazinul rămâne la un clic: butonul **„Intră în magazin"** de
+pe pagina de intrare, și rândul din meniul contului.
 
-Înainte era trimis în panoul „Comanda mea", care arată o singură comandă și
-niciun produs. Ca să comande trebuia să găsească singur drumul înapoi la
-magazin — și acolo să-și scrie din nou datele, deși tocmai se autentificase.
+În magazin, când ajunge acolo, în locul butonului „Intră în cont" antetul îi
+arată numele firmei și un meniu cu două intrări: `Comanda mea` și
+`Ieși din cont`.
+
+> O vreme l-am trimis de-a dreptul în magazin, cu socoteala „clientul vine să
+> comande, nu să-și citească istoricul". Socoteala era a patiseriei, nu a
+> omului: cine își scrie parola vrea să vadă **ce a comandat** — altfel n-avea
+> nevoie de parolă, fiindcă magazinul se deschide și fără cont. Schimbat la
+> cererea patronului, 13 septembrie 2026.
 
 **Formularul de comandă se scurtează.** Companie, persoană de contact, e-mail,
 telefon, segment și volum estimat sunt întrebări de prim contact: pentru un

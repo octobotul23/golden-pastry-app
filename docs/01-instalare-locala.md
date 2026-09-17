@@ -55,6 +55,68 @@ rescrie produsele editate din pagina Produse și **nu** suprascrie setările pe
 care le-ai configurat deja din panou (tokenul de WhatsApp, adresa de
 notificare).
 
+### Restul folderului `sql/` — migrările
+
+Cele două fișiere de mai sus **nu sunt tot**. `001_schema.sql` face 17 tabele,
+iar aplicația de azi cere 21. Ce lipsește se naște abia în migrări:
+`referral_commissions` din `008`, `founder_invites` din `009`, `lab_shifts` din
+`014`, `lab_messages` din `015` — plus nouă coloane din `users`, între ele
+`referral_code`, `referred_by` și `referred_at`, care vin din `007`. O bază
+oprită la `002` arată întreagă și nu se plânge la import: se plânge pagina, mai
+târziu, cu „lipsește migrarea".
+
+Migrările **nu se aleg pe sprânceană**, și nici nu se scriu una câte una aici —
+o listă scrisă cu mâna e exact felul în care se uită o migrare. Le aplică pe
+toate, în ordinea numelor, unealta din proiect:
+
+```bash
+C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe -f .claude\instalare-local.php
+```
+
+Din **linia de comandă**, nu din browser: `.claude/dev-server.php` răspunde 403
+la orice `.php` din afara lui `api/` și `seo/`, iar unealta asta se leagă la
+MySQL ca `root` și face `CREATE DATABASE`, `CREATE USER` și `GRANT` fără să
+întrebe nimic — n-are ce căuta la o adresă din rețea.
+
+Unealta ia numele bazei și parola din `api/config.php` (pasul 5, deja făcut),
+face singură baza dacă lipsește, și trece prin **toate** fișierele din `sql/`.
+Se rulează de câte ori vrei: fiecare migrare se uită întâi în
+`information_schema` și, dacă are deja ce caută, nu face nimic.
+
+**Cum verifici.** Ultimele rânduri ale uneltei sunt chiar verificarea:
+
+```
+Tabele în gp_dev: 21
+audit_log, founder_invites, lab_messages, lab_shifts, login_attempts, ...
+Produse în catalog: 22
+
+GATA — baza e pregătită.
+```
+
+**21 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
+numele care lipsește îți spune care migrare n-a intrat: `referral_commissions`
+e din `008`, `founder_invites` din `009`, `lab_shifts` din `014`,
+`lab_messages` din `015`. Fără primul, „Recomandări" nu-ți arată banii; fără
+celelalte două, „Pontaj" și tabla de anunțuri din Panoul Laborator răspund
+lămurit că lipsește migrarea. Și dacă în dreptul vreunui fișier scrie un număr
+de erori, nu trece peste: eroarea e tipărită dedesubt, cu instrucțiunea lângă
+ea.
+
+Fără PHP la îndemână, același lucru din linia de comandă `mysql` — tot o buclă,
+nu o listă, ca o migrare nouă să intre fără să se schimbe nimic aici.
+`001` și `002` sunt sărite fiindcă tocmai le-ai importat din phpMyAdmin (`001`
+rulat a doua oară se oprește cu „Duplicate foreign key constraint name
+`fk_req_order`"; unealta de mai sus știe să treacă peste, `mysql` gol nu):
+
+```powershell
+$mysql = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe"
+Get-ChildItem sql\*.sql | Sort-Object Name | ForEach-Object {
+  if ($_.Name -match '^00[12]_') { return }
+  cmd /c "`"$mysql`" --default-character-set=utf8mb4 -u root gp_dev < `"$($_.FullName)`"" > $null
+  if ($LASTEXITCODE) { Write-Host "EROARE la $($_.Name)" }
+}
+```
+
 ## 4. Pune proiectul unde îl vede Laragon
 
 Laragon servește din `C:\laragon\www`. Cel mai simplu, fără să muți nimic, este
@@ -155,3 +217,8 @@ sau spune-mi ce scrie și mă uit eu.
 
 **Caracterele apar corect în phpMyAdmin dar greșit în pagină** — verifică să fi
 importat `001_schema.sql` *înainte* de `002_seed.sql`.
+
+**O pagină spune că „lipsește migrarea", sau „Recomandări" nu arată niciun ban**
+— migrările n-au intrat. Numără tabelele din `gp_dev`: dacă sunt 17, nu 21, ai
+rămas la `002`. Rulează `.claude/instalare-local.php` (pasul 3); merge și peste
+o bază care are deja comenzi, nu pierde nimic.

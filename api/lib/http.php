@@ -347,7 +347,7 @@ function now_local(): string
  * Un `DATE(created_at)` pus între ele compară două lucruri deosebite, iar
  * greșeala se vede numai între 00:00 și 03:00 ora României — orele în care
  * laboratorul chiar lucrează. Depozitul a pățit-o o dată și a rezolvat-o
- * comparând pe clipe (`stock_local_day_utc()`, api/routes/stock.php:396). Acolo
+ * comparând pe clipe (`stock_local_day_utc()`, api/routes/stock.php:403). Acolo
  * se putea, fiindcă erau numai două margini. Când ziua locală trebuie să iasă
  * PE FIECARE RÂND — ca să se poată grupa după ea — marginile nu mai ajung.
  *

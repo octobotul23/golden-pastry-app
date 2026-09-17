@@ -583,14 +583,19 @@ class Component extends DCLogic {
           day: today,
           orders: o ? (o.orders || []).map(gp.toPageOrder) : null,
           // Fără filtru aici: `GET /routes` a scos deja modurile de ridicare,
-          // pe lista din Setări (api/routes/orders.php:1481-1485 →
-          // `pickup_fulfillments()`). A doua sită era mai strâmtă decât prima:
-          // cerea numele scris exact „Livrare", deci o patiserie care își
-          // botează modul „Curier" sau „Tur A" vedea „0 opriri" pe ecranul de
-          // start, cu șoferul deja plecat. Pagina vecină, „Ruta Sofer", doar
-          // mapează (:332) — la fel se face și aici.
+          // pe lista din Setări (`route_routes()` din `api/routes/orders.php`
+          // cheamă `pickup_fulfillments()`). A doua sită era mai strâmtă decât
+          // prima: cerea numele scris exact „Livrare", deci o patiserie care
+          // își botează modul „Curier" sau „Tur A" vedea „0 opriri" pe ecranul
+          // de start, cu șoferul deja plecat. Pagina vecină, „Ruta Sofer", doar
+          // mapează și ea `(r.stops || []).map(gp.toPageOrder)` — la fel se
+          // face și aici.
           stops: r ? (r.stops || []).map(gp.toPageOrder) : null,
           moves: m ? (m.moves || []).length : null,
+          // Câte comenzi are săptămâna după server. `orders` se oprește la 500
+          // (api/routes/orders.php · `$limita`); cardul „Administrare” le
+          // numără pe toate.
+          ordersTotal: o && typeof o.total === "number" ? o.total : null,
         }
       });
     });
@@ -643,7 +648,20 @@ class Component extends DCLogic {
     // Ziua venită cu datele, nu ceasul de acum și nu cel de la încărcare.
     // `TODAY_ISO` rămâne căderea pentru desenarea de dinaintea primei cereri.
     const today = all.filter(o => o.date === ((st && st.day) || TODAY_ISO));
-    const open = today.filter(o => o.status !== gp.done());
+    // „De făcut" înseamnă nici gata, nici anulată. `GET /orders` întoarce și
+    // comenzile anulate — așa și trebuie, e registrul zilei —, iar sita de
+    // aici le lua drept muncă rămasă: cardul „Laborator" ar fi scris „3 · 40
+    // de bucăți de făcut azi" într-o dimineață în care două din cele trei
+    // fuseseră anulate aseară, iar bucătăria ar fi plecat după făină pentru
+    // marfa nimănui. Așa cerne și panoul de producție („Panou Laborator", care
+    // scoate `gp.cancelled()` din lista lui), iar depozitul sare peste ele la
+    // socoteala rezervărilor.
+    //
+    // Cardul „Foaia de rută" n-avea nevoie: `GET /routes` scoate anulatele
+    // chiar pe server (`status_cancelled()`). Cardul „Administrare" le NUMĂRĂ
+    // dinadins — el spune câte comenzi are săptămâna în registru, nu câtă
+    // treabă a mai rămas.
+    const open = today.filter(o => o.status !== gp.done() && o.status !== gp.cancelled());
     const pieces = open.reduce((a, o) => a + o.items.reduce((x, i) => x + gp.qty(i.q), 0), 0);
     const left = stops.filter(o => o.status !== gp.done()).length;
 
@@ -824,7 +842,8 @@ class Component extends DCLogic {
      * Sora lui puneParolaNoua() de deasupra, cu o deosebire care se vede în
      * ultima linie: acolo se uită și sesiunea, fiindcă serverul tocmai a
      * închis-o odată cu parola veche. Aici nu se închide nimic — rolul se
-     * citește din `users` la fiecare cerere (api/lib/auth.php:30) — deci cine
+     * citește din `users` la fiecare cerere (`current_user()`,
+     * `api/lib/auth.php`) — deci cine
      * era conectat rămâne conectat, doar cu drepturi mai multe.
      *
      * Nu cere token CSRF, și n-ar avea de unde: linkul se deschide într-o filă
@@ -913,7 +932,7 @@ class Component extends DCLogic {
         // „ex. ana.popescu", care e un om, nu o tură.
         //
         // Deosebirea căutată de comentariul vechi era `is_system`, nu rolul:
-        // `public_user()` o trimite ca `isSystem` (`api/lib/auth.php:1255`).
+        // `public_user()` o trimite ca `isSystem` (`api/lib/auth.php`).
         if (user.isSystem === true) {
           await gp.logout();
           return this.setState({
@@ -1031,7 +1050,7 @@ class Component extends DCLogic {
         {
           role: "Administrare", title: "Comenzi, rute, produse", href: "Administrare%20Comenzi.dc.html",
           desc: "Adaugi și editezi comenzi, marchezi urgențe, ordonezi ruta șoferului și vezi ce produse se cer cel mai mult.",
-          stat: n(areComenzi, all.length), statLabel: lbl(areComenzi, "comenzi în registrul pe 7 zile"),
+          stat: n(areComenzi, st && typeof st.ordersTotal === "number" ? st.ordersTotal : all.length), statLabel: lbl(areComenzi, "comenzi în registrul pe 7 zile"),
           tag: S.auth ? "conectat" : "cu parolă", tagCls: S.auth ? "h-badge h-badge--success" : "h-badge h-badge--honey"
         }
       ],

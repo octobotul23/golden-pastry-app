@@ -33,6 +33,11 @@ declare(strict_types=1);
  * filtru. Eliberarea la „Predată", redeschiderea dacă iese din „Predată" și
  * eliberarea la anulare sunt astfel un singur `WHERE`, nu trei bucăți de cod
  * care pot rămâne în urmă una față de alta.
+ *
+ * Alături vine `pending`: câte comenzi predate așteaptă scăderea și câte bucăți
+ * au (`stock_de_scazut`). Depozitul le socotea din aceeași listă de cel mult
+ * 500 de comenzi, deci bannerul „Scade din stoc” tăcea tocmai când butonul mai
+ * avea ce scădea.
  */
 function route_items_list(): void
 {
@@ -76,6 +81,8 @@ function route_items_list(): void
         'items'      => array_map('stock_item_public', $rows),
         'categories' => stock_categories(),
         'units'      => stock_units(),
+        // Câte comenzi predate așteaptă scăderea, numărate din toate — v. stock_de_scazut().
+        'pending'    => stock_de_scazut(),
     ]);
 }
 
@@ -625,6 +632,36 @@ function route_moves_create(): void
 }
 
 /* ------------------------------------------------- scăderea comenzilor -- */
+
+/**
+ * Câte comenzi încheiate așteaptă scăderea din depozit și câte bucăți au.
+ *
+ * Aceeași condiție ca în `route_stock_sync` (etapa de încheiere și
+ * `stock_synced = 0`), numărată pe toată baza. Pagina Depozit o socotea din
+ * `GET /orders`, care dă cel mult 500 de comenzi, cele mai noi: o comandă
+ * veche rămasă nescăzută — oprită de un articol lipsă, sau redeschisă de o
+ * corectură — nu mai aprindea butonul „Scade din stoc”, deși scăderea ar fi
+ * luat-o. Rezervarea ei se stinsese la „Predată”, deci stocul rămânea umflat
+ * fără niciun semn.
+ *
+ * Comenzile fără nicio poziție nu se numără: n-au ce scădea, iar scăderea le
+ * marchează oricum, odată cu celelalte. Așa făcea și pagina.
+ */
+function stock_de_scazut(): array
+{
+    $done = status_done();
+    if ($done === '') {
+        return ['orders' => 0, 'pieces' => 0.0];
+    }
+    $r = one(
+        'SELECT COUNT(DISTINCT o.id) AS n, COALESCE(SUM(oi.qty), 0) AS q
+           FROM orders o
+           JOIN order_items oi ON oi.order_id = o.id
+          WHERE o.status = ? AND o.stock_synced = 0',
+        [$done]
+    );
+    return ['orders' => (int) ($r['n'] ?? 0), 'pieces' => (float) ($r['q'] ?? 0)];
+}
 
 /**
  * POST /stock/sync — scade din depozit comenzile încheiate.

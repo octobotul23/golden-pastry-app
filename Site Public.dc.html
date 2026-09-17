@@ -169,6 +169,22 @@
   </div>
   </sc-if>
 
+  <sc-if value="{{ reiaVizibil }}" hint-placeholder-val="{{ false }}">
+  <div style="max-width:1740px;margin:1.1rem auto 0;padding:0 clamp(1.25rem,4vw,3rem)">
+  <div class="h-alert h-alert--accent" role="status" style="border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+  <p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ reiaTitlu }}</p>
+  <p style="margin:0;font-size:15px;line-height:1.45">{{ reiaText }}</p>
+  <sc-if value="{{ reiaAreLipsa }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;line-height:1.45">{{ reiaLipsaText }}</p></sc-if>
+  <sc-if value="{{ reiaAreVechi }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;line-height:1.45">{{ reiaVechiText }}</p></sc-if>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+  <sc-if value="{{ reiaCosBtn }}" hint-placeholder-val="{{ false }}"><button type="button" class="h-btn h-btn--primary" onClick="{{ arataCos }}" aria-expanded="{{ cosJosStr }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaVeziCos }}</button></sc-if>
+  <sc-if value="{{ reiaAreVechi }}" hint-placeholder-val="{{ false }}"><button type="button" class="h-btn h-btn--secondary" onClick="{{ reiaPuneLaLoc }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaReiaLaLoc }}</button></sc-if>
+  <button type="button" class="h-btn h-btn--ghost" onClick="{{ reiaInchide }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaReiaInchide }}</button>
+  </div>
+  </div>
+  </div>
+  </sc-if>
+
   <sc-if value="{{ onHome }}" hint-placeholder-val="{{ true }}">
   <main>
     <section style="max-width:1740px;margin:0 auto;padding:clamp(1.5rem,4vw,3rem) clamp(1.25rem,4vw,3rem) 0">
@@ -1451,7 +1467,19 @@ class Component extends DCLogic {
       // Cheia și textul brut din căsuța de cantitate care se editează acum:
       // cât timp e goală, rândul rămâne în coș cu cantitatea de dinainte.
       editKey: '',
-      editText: ''
+      editText: '',
+      // „Comandă din nou”, adusă din „Comanda mea” prin `?reia=`. Cât timp e
+      // plină, deasupra paginii stă caseta care spune ce a intrat în coș, ce a
+      // rămas pe dinafară și unde e coșul de dinainte. Forma:
+      //   chei      — cheile coșului puse de reluare (după cernere: numai cele
+      //               din catalog);
+      //   lipsa     — câte au căzut la cernere;
+      //   cernut    — catalogul a sosit și cheile au fost verificate în el;
+      //   stricata  — adresa avea `?reia=`, dar nimic de citit în ea;
+      //   vechi     — coșul de dinainte, pus deoparte (sau null), și fila lui.
+      // Se ține în `gp-cart-v1` odată cu coșul: o reîncărcare nu are voie să
+      // piardă un coș despre care caseta a promis că l-a pus deoparte.
+      reia: null
     };
   }
 
@@ -1480,6 +1508,7 @@ class Component extends DCLogic {
           c.slug, c.name, c.nameEn || c.name, c.note || '', c.noteEn || c.note || ''
         ]);
         this.setState({ prod, groups, promos: r.promos || null, eroare: '', eroareEn: '' });
+        this.setState((s) => this.cerneReluarea(s, r.products || []));
       })
       .catch((e) => {
         // Lacătul care oprește pagina să afirme ceva despre catalog e
@@ -1738,6 +1767,15 @@ class Component extends DCLogic {
       if (cod) this.setState({ refDinCookie: cod });
     } catch (e) { /* fără recomandare — mergem mai departe */ }
 
+    // „Comandă din nou”: comanda veche vine în adresă (`?reia=f12x10.b9x2`),
+    // fiindcă „Comanda mea” stă pe altă gazdă și nu poate scrie coșul de aici.
+    // Adresa se citește ACUM, și tot acum se curăță — ca parametrul să nu
+    // rămână acolo chiar dacă restul pornirii s-ar poticni. Coșul însă se
+    // umple abia după citirea coșului vechi din browser, mai jos: pus înainte,
+    // coșul vechi l-ar fi călcat.
+    let reia = null;
+    try { reia = gp.reiaDinAdresa(); } catch (e) { /* adresă de neînțeles: coșul rămâne cum era */ }
+
     this.pullCatalog();
     this.pullAuth();
     this.pullContact();
@@ -1789,16 +1827,26 @@ class Component extends DCLogic {
       if (r) this.setState({ page: r.page, lang: r.lang, fel: r.fel, cheie: r.cheie, menuOpen: false });
     };
     window.addEventListener('popstate', this._onPop);
-    try {
-      const raw = window.localStorage.getItem('gp-cart-v1');
-      const d = raw ? JSON.parse(raw) : null;
-      if (d && typeof d === 'object') {
-        this.setState({
-          qty: d.qty && typeof d.qty === 'object' ? d.qty : {},
-          tier: d.tier === 'baked' ? 'baked' : 'frozen'
-        });
-      }
-    } catch (err) { /* noop */ }
+    // Coșul din browser. Citirea stă într-un singur loc (`recitesteCosul`),
+    // fiindcă se mai face și după montare, din cele două ascultătoare de mai
+    // jos.
+    this.recitesteCosul();
+    // „ÎNAPOI” DIN MEMORIA BROWSERULUI. Browserul poate ține pagina întreagă
+    // după plecare și o pune la loc neatinsă la „înapoi” — fără reîncărcare,
+    // fără montare nouă. Fila revine atunci cu coșul din clipa plecării, deși
+    // între timp „Comandă din nou” poate să fi refăcut coșul în browser.
+    // NUMAI cu `persisted`: la prima arătare a paginii coșul abia a fost citit,
+    // iar o citire în plus ar călca reluarea din adresă înainte ca ea să fi
+    // apucat să fie scrisă în browser.
+    this._onIntoarcere = (e) => { if (e && e.persisted) this.recitesteCosul(); };
+    window.addEventListener('pageshow', this._onIntoarcere);
+    // A DOUA FILĂ A MAGAZINULUI. Browserul anunță celelalte file, niciodată pe
+    // cea care a scris, iar fila care primește coșul nu i-l mai scrie înapoi
+    // (`__cosScris`, în `componentDidUpdate`) — deci două file nu se pot
+    // învârti una pe alta. `key` gol înseamnă browser golit cu totul.
+    this._onAltaFila = (e) => { if (!e || !e.key || e.key === 'gp-cart-v1') this.recitesteCosul(); };
+    window.addEventListener('storage', this._onAltaFila);
+    if (reia) this.primesteReluarea(reia);
     this.asideRef = this.asideRef || React.createRef();
     this._off = 0;
     this._floatTick = () => {
@@ -1951,8 +1999,16 @@ class Component extends DCLogic {
   componentDidUpdate() {
     this.potrivesteIstoricul();
     if (this._onScroll) this._onScroll();
+    // Coșul se scrie numai când diferă de ce știe fila că e deja în browser.
+    // Scris la fiecare desenare, cum era, o filă cu coșul vechi în memorie — a
+    // doua filă, sau una întoarsă cu „înapoi” — îl punea peste cel nou la prima
+    // atingere, chiar fără să fi umblat la coș.
     try {
-      window.localStorage.setItem('gp-cart-v1', JSON.stringify({ qty: this.state.qty, tier: this.state.tier }));
+      const cos = JSON.stringify({ qty: this.state.qty, tier: this.state.tier, reia: this.state.reia || null });
+      if (cos !== this.__cosScris) {
+        window.localStorage.setItem('gp-cart-v1', cos);
+        this.__cosScris = cos;
+      }
     } catch (err) { /* noop */ }
   }
 
@@ -1962,6 +2018,45 @@ class Component extends DCLogic {
     window.removeEventListener('resize', this._onScroll);
     window.removeEventListener('resize', this._onResize);
     if (this._onPop) window.removeEventListener('popstate', this._onPop);
+    if (this._onIntoarcere) window.removeEventListener('pageshow', this._onIntoarcere);
+    if (this._onAltaFila) window.removeEventListener('storage', this._onAltaFila);
+  }
+
+  /**
+   * Coșul, citit din browser (`gp-cart-v1`), nu din memoria filei.
+   *
+   * Se cheamă la montare și încă de două ori după ea: când fila se întoarce cu
+   * „înapoi” din memoria browserului (`pageshow` cu `persisted`) și când altă
+   * filă a magazinului schimbă coșul (`storage`). În amândouă, coșul din
+   * memorie nu mai e cel adevărat. Pățania pe care o opresc: omul refăcea o
+   * comandă cu „Comandă din nou”, se întorcea cu „înapoi” pe magazinul de
+   * dinainte și atingea ceva — iar coșul vechi se scria peste cel refăcut, cu
+   * tot cu coșul pus deoparte de casetă. Și una mai scumpă: trimisă dintr-o
+   * filă, comanda rămânea întreagă în coșul celeilalte, gata să plece a doua
+   * oară.
+   *
+   * Curățenia e cea de la montare, scrisă o singură dată. Un coș care lipsește
+   * din browser (golit din altă filă) e un coș gol, cu varianta neschimbată;
+   * un text de neînțeles se lasă în pace. Golirea trece prin `dezarmeaza`, ca
+   * oricare alta: altfel fereastra de finalizare ar sări singură peste ecran
+   * la produsul următor.
+   *
+   * Ce s-a citit se ține minte în `__cosScris`: fila știe atunci că browserul
+   * are deja coșul ăsta și nu i-l mai scrie înapoi (`componentDidUpdate`).
+   */
+  recitesteCosul() {
+    let raw = null;
+    let d = null;
+    try {
+      raw = window.localStorage.getItem('gp-cart-v1');
+      d = raw ? JSON.parse(raw) : {};
+    } catch (err) { return; }
+    if (!d || typeof d !== 'object') return;
+    this.__cosScris = raw;
+    this.setState((s) => Object.assign({
+      tier: !raw ? s.tier : d.tier === 'baked' ? 'baked' : 'frozen',
+      reia: d.reia && typeof d.reia === 'object' && Array.isArray(d.reia.chei) ? d.reia : null
+    }, this.dezarmeaza(s, d.qty && typeof d.qty === 'object' ? d.qty : {})));
   }
 
   /**
@@ -2041,6 +2136,89 @@ class Component extends DCLogic {
   dezarmeaza(s, q) {
     if (Object.keys(q).length || s.sent) return { qty: q };
     return { qty: q, finalizare: false };
+  }
+
+  /**
+   * „Comandă din nou”: comanda veche intră în coș.
+   *
+   * ÎNLOCUIEȘTE coșul, nu se adună la el. Adunată, o comandă refăcută peste un
+   * coș uitat de săptămâna trecută ar fi plecat cu marfă în plus, iar omul ar
+   * fi citit pe ecran exact comanda pe care a vrut s-o repete — plus ceva.
+   * Coșul de dinainte nu se pierde: stă în `reia.vechi`, iar caseta de sus îl
+   * poate pune la loc dintr-un clic.
+   *
+   * „De dinainte” înseamnă din CLIPA apăsării — și atunci când în coș stă o
+   * reluare mai veche, nelămurită. Coșul de dinaintea ACELEIA ar fi fost o
+   * stare pe care omul a lăsat-o de mult în urmă: după o reluare fără niciun
+   * produs în catalog, caseta ar fi scris „coșul a rămas cum era” deasupra
+   * unui coș pe care el nu-l mai avea.
+   *
+   * Pagina se mută pe catalog, unde e coșul. Fără `duLa()`: aceea ar împinge
+   * o intrare nouă în istoric, iar primul „înapoi” l-ar fi dus pe „/”, pe care
+   * n-a fost niciodată. Adresa se ÎNLOCUIEȘTE.
+   */
+  primesteReluarea(chei) {
+    const lista = Object.keys(chei || {});
+    this.setState((s) => {
+      const pagina = { page: 'catalog', fel: 'pagina', cheie: '', menuOpen: false, cosJos: false, finalizare: false };
+      if (!lista.length) {
+        // Parametrul era acolo, dar nicio bucată nu s-a putut citi: legătură
+        // tăiată de un program de mesagerie, sau scrisă de mână. Coșul rămâne
+        // neatins, iar caseta spune de ce nu s-a întâmplat nimic.
+        return Object.assign(pagina, {
+          reia: { chei: [], lipsa: 0, cernut: true, stricata: true, vechi: null, vechiTier: '' }
+        });
+      }
+      const inainte = s.qty || {};
+      const inainteTier = s.tier;
+      const variante = lista.map((k) => k.split(':')[0]);
+      return Object.assign(pagina, {
+        qty: Object.assign({}, chei),
+        // Fila deschisă urmează comanda când comanda e toată într-o variantă;
+        // amestecată, rămâne cum era — coșul le ține pe amândouă oricum.
+        tier: variante.every((v) => v === variante[0]) ? variante[0] : s.tier,
+        reia: {
+          chei: lista, lipsa: 0, cernut: false, stricata: false,
+          vechi: Object.keys(inainte).some((k) => inainte[k] > 0) ? Object.assign({}, inainte) : null,
+          vechiTier: inainteTier === 'baked' ? 'baked' : 'frozen'
+        }
+      });
+    });
+    if (!GP_HARTA || typeof history === 'undefined' || !history.replaceState || typeof location === 'undefined') return;
+    try {
+      history.replaceState(history.state, '', caleaCatre('catalog', this.state.lang, 'pagina', '') + (location.search || ''));
+    } catch (err) { /* istoric nescriibil: pagina e oricum pe catalog */ }
+  }
+
+  /**
+   * Reluarea, cernută prin catalogul abia sosit.
+   *
+   * Un produs scos din catalog, sau rămas fără unul din prețuri, nu se vede
+   * în magazin (`PROD`, în renderVals), iar coșul îl ascunde tăcut. Lăsat
+   * acolo, ar fi fost o cheie-fantomă: nevăzută, dar scrisă în browser. Aici
+   * cheile acelea ies din coș și se numără, ca omul să afle câte au rămas pe
+   * dinafară. Dacă n-a intrat nimic, coșul de dinainte se pune singur la loc:
+   * altfel omul ar fi rămas cu un coș gol, pentru o comandă care nu s-a
+   * putut reface.
+   *
+   * O singură dată pe reluare (`cernut`): catalogul se mai cere și la
+   * „Încearcă din nou”, iar a doua cernere n-ar mai avea ce număra.
+   */
+  cerneReluarea(s, produse) {
+    const R = s.reia;
+    if (!R || R.cernut) return null;
+    const deVanzare = {};
+    (produse || []).forEach((x) => {
+      if (x && x.priceFrozen !== null && x.priceBaked !== null) deVanzare[String(x.id)] = true;
+    });
+    const intra = R.chei.filter((k) => deVanzare[k.split(':')[1]]);
+    const q = Object.assign({}, s.qty);
+    R.chei.forEach((k) => { if (!deVanzare[k.split(':')[1]]) delete q[k]; });
+    const reia = Object.assign({}, R, { chei: intra, lipsa: R.chei.length - intra.length, cernut: true });
+    if (!intra.length && R.vechi) {
+      return { qty: Object.assign({}, R.vechi), tier: R.vechiTier === 'baked' ? 'baked' : 'frozen', reia: Object.assign(reia, { vechi: null }) };
+    }
+    return { qty: q, reia };
   }
 
   setQty(key, n) {
@@ -2526,6 +2704,21 @@ class Component extends DCLogic {
     // dispărându-i de sub deget și rămânea cu catalogul gol în față, fără să
     // afle dacă a plecat ceva. Prins la proba de pe 8100, nu la citire.
     const finalizare = !!this.state.finalizare && (picks.length > 0 || !!this.state.sent);
+
+    // „Comandă din nou”: caseta de deasupra paginii. Se arată numai pe catalog,
+    // unde e coșul, și numai după ce catalogul a răspuns: până atunci pagina nu
+    // știe ce a intrat și ce nu, deci n-are ce afirma. Pe o eroare de catalog
+    // tace, ca tot restul paginii.
+    //
+    // Se numără produsele reluării care sunt ÎNCĂ în coș. Dacă omul le-a scos
+    // pe toate, caseta n-are despre ce să mai vorbească și dispare.
+    const R = this.state.reia;
+    const reiaGata = !!R && !!R.cernut && !this.state.eroare && this.state.prod !== null;
+    const reiaInCos = reiaGata && !R.stricata
+      ? R.chei.filter((k) => QTY[k] > 0 && byNo[k.split(':')[1]]).length : 0;
+    const reiaNimic = reiaGata && !R.stricata && R.chei.length === 0;
+    const reiaVechi = reiaInCos > 0 && !!R.vechi && Object.keys(R.vechi).some((k) => R.vechi[k] > 0);
+    const reiaDe = (n) => (n % 100 === 0 || n % 100 > 19 ? ' de' : '');
 
     const piecesText = totPieces + ' ' + t('buc', 'pcs');
     const orderText = (extra) => {
@@ -3168,6 +3361,41 @@ class Component extends DCLogic {
       inchideCos: () => this.setState({ cosJos: false }),
       ctaInchide: t('Închide', 'Close'),
       ctaVeziCos: t('Vezi coșul', 'View cart'),
+
+      reiaVizibil: p === 'catalog' && reiaGata && (!!R.stricata || reiaNimic || reiaInCos > 0),
+      reiaTitlu: reiaGata && R.stricata
+        ? t('Legătura aceasta nu a putut fi citită', 'This link could not be read')
+        : reiaNimic
+          ? t('Comanda aceea nu mai poate fi refăcută', 'That order can no longer be repeated')
+          : t('Comanda ta de data trecută e în coș', 'Your previous order is in the cart'),
+      reiaText: reiaGata && R.stricata
+        ? t('Coșul a rămas cum era. Poți alege din produsele de azi sau te întorci la „Comanda mea” și apeși din nou pe „Comandă din nou”.',
+          'Your cart was left as it was. Choose from today\'s products, or go back to your orders and press "Order again" once more.')
+        : reiaNimic
+          ? t('Niciun produs de pe ea nu mai e în catalog, așa că coșul a rămas cum era. Alege din produsele de azi.',
+            'None of its products are in the catalogue anymore, so your cart was left as it was. Choose from today\'s products.')
+          : t((reiaInCos === 1 ? 'Un produs a intrat' : reiaInCos + reiaDe(reiaInCos) + ' produse au intrat')
+              + ' în coș, la prețurile de azi. Verifică cantitățile, alege ziua și trimite comanda când ești gata.',
+            (reiaInCos === 1 ? 'One product was' : reiaInCos + ' products were')
+              + ' added to the cart at today\'s prices. Check the quantities, pick the day and send the order when you are ready.'),
+      reiaAreLipsa: reiaInCos > 0 && R.lipsa > 0,
+      reiaLipsaText: reiaInCos > 0 && R.lipsa > 0
+        ? (R.lipsa === 1
+          ? t('Un produs nu mai e în catalog și a rămas pe dinafară.', 'One product is no longer in the catalogue and was left out.')
+          : t(R.lipsa + reiaDe(R.lipsa) + ' produse nu mai sunt în catalog și au rămas pe dinafară.',
+            R.lipsa + ' products are no longer in the catalogue and were left out.'))
+        : '',
+      reiaAreVechi: reiaVechi,
+      reiaVechiText: t('Coșul pe care îl aveai l-am pus deoparte.', 'We set aside the cart you had before.'),
+      reiaCosBtn: mob && reiaInCos > 0 && picks.length > 0,
+      ctaReiaLaLoc: t('Pune la loc coșul de dinainte', 'Restore my previous cart'),
+      ctaReiaInchide: t('Am înțeles', 'Got it'),
+      reiaInchide: () => this.setState({ reia: null }),
+      reiaPuneLaLoc: () => this.setState((s) => (s.reia && s.reia.vechi
+        ? Object.assign(
+          { reia: null, tier: s.reia.vechiTier === 'baked' ? 'baked' : 'frozen', cosJos: false },
+          this.dezarmeaza(s, Object.assign({}, s.reia.vechi)))
+        : { reia: null })),
       totalPieces: piecesText,
       // Totalul e cifra de plată; prețul de catalog stă lângă ea, tăiat, și
       // numai când chiar diferă. Până acum totalul arăta lista, adică exact
@@ -3334,7 +3562,7 @@ class Component extends DCLogic {
       // Golirea închide și foaia: fără produse, bara de jos dispare, iar o
       // foaie rămasă deschisă peste catalog n-ar mai avea din ce să se
       // închidă în afară de fundal.
-      clearPicks: () => this.setState({ qty: {}, cosJos: false, finalizare: false }),
+      clearPicks: () => this.setState({ qty: {}, cosJos: false, finalizare: false, reia: null }),
       reqTitle: mine ? t('Comanda ta', 'Your order') : t('Cererea ta', 'Your request'),
       reqEmpty: mine
         ? t('Alege produsele și cantitățile. Le trimiți cu un buton — datele tale le avem deja.',
@@ -3777,7 +4005,7 @@ class Component extends DCLogic {
               try { gp.forgetReferral(); } catch (e) { /* cookie-uri blocate */ }
             }
             return this.setState(Object.assign(
-              { sent: true, sending: false, sendErr: '', qty: {},
+              { sent: true, sending: false, sendErr: '', qty: {}, reia: null,
                 // Clientul ales se dezleagă odată cu coșul. Coșul se golește,
                 // „Mulțumim" rămâne pe ecran, iar butonul se aprinde la loc:
                 // dacă legătura ar rămâne, următorul coș pus de pe aceeași
@@ -3800,6 +4028,52 @@ class Component extends DCLogic {
             // Refuzul aprinde butonul la loc: cererea completată trebuie să
             // poată fi trimisă din nou după ce omul corectează ce lipsea.
             this.__trimit = false;
+            // CĂZUTĂ DIN REȚEA, CEREREA POATE SĂ FI AJUNS.
+            //
+            // `gp-api.js` dă `code: 'network'` numai când `fetch` n-a primit
+            // niciun răspuns — ceea ce nu înseamnă că cererea n-a plecat.
+            // Legătura cade des tocmai după ce serverul a scris-o, iar
+            // răspunsul se pierde pe drum. Mesajul de până acum („Nu am putut
+            // contacta serverul”) îl îndemna pe om să mai apese o dată, iar
+            // laboratorul primea două cereri identice. Serverul nu are încă o
+            // cheie care să recunoască a doua trimitere, deci pagina spune ce
+            // știe: nu știm dacă a ajuns — uită-te întâi acolo unde s-ar vedea.
+            // Clientul se uită în „Comanda mea”, personalul în lista de cereri;
+            // vizitatorul fără cont n-are unde să se uite — pentru el adevărul
+            // stă la capătul firului, la patiserie.
+            //
+            // ȘI TOCMAI PE EL ÎL TRIMITEA MESAJUL SPRE BUTON. „Scrie-ne pe
+            // WhatsApp, cu butonul de mai jos” suna a ieșire sigură, dar sub
+            // caseta roșie stau două butoane, și amândouă trimit comanda a
+            // doua oară: întâi cel de trimitere, care reface exact cererea
+            // căzută, apoi cel verde, „Trimite pe WhatsApp” (`sendWa`), care
+            // strânge tot formularul și tot coșul într-un mesaj gata scris —
+            // adică a doua comandă, pe alt canal, la aceeași patiserie. Vorba
+            // pusă să oprească dublura arăta cu degetul chiar spre ea.
+            //
+            // Cât timp serverul n-are cheie de idempotență (migrarea 019 e
+            // fișă nereparată), singurul lucru cinstit e să spunem pe față ce
+            // se poate întâmpla la a doua apăsare și să dăm numărul la care se
+            // află răspunsul. Numărul vine din Setări, ca peste tot în pagină:
+            // scris aici, ar fi fost încă un loc din care patiseria uită să-l
+            // schimbe când și-l schimbă.
+            //
+            // Un refuz al serverului — orice răspuns, oricât de rău — nu e
+            // aici: acolo cererea sigur n-a intrat, și rămâne mai jos, cu
+            // vorbele serverului.
+            if (e && e.code === 'network') {
+              return this.setState({
+                sending: false,
+                sendErr: mine
+                  ? t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam comanda, așa că nu știm dacă a ajuns la noi. Înainte s-o trimiți din nou, uită-te în „Comanda mea”, din meniul contului: dacă e acolo, a ajuns, iar a doua ar fi în plus.',
+                      'The connection dropped while we were sending your order, so we cannot tell whether it reached us. Before sending it again, look under “My order”, in the account menu: if it is there, it arrived, and a second one would be one too many.')
+                  : staff
+                    ? t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam cererea, așa că nu știm dacă a ajuns la noi. Înainte s-o trimiți din nou, uită-te în Comenzi, la „Cereri de pe site”: dacă e acolo, a ajuns, iar a doua ar fi în plus.',
+                        'The connection dropped while we were sending the request, so we cannot tell whether it reached us. Before sending it again, look in the Comenzi panel, under “Cereri de pe site”: if it is there, it arrived, and a second one would be one too many.')
+                    : t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam cererea, așa că nu știm dacă a ajuns la noi. Dacă o trimiți din nou, s-ar putea să plece a doua oară — sună-ne întâi la ' + phoneText + ' și îți spunem pe loc dacă am primit-o. Dacă ai cont, o vezi și singur în „Comanda mea”, după ce intri în cont.',
+                        'The connection dropped while we were sending your request, so we cannot tell whether it reached us. If you send it again, it may go out a second time — call us first on ' + phoneText + ' and we will tell you straight away whether we got it. If you have an account, you can also see it yourself under “My order”, once you log in.')
+              });
+            }
             return this.setState({
               sending: false,
               // Mesajul serverului e mai util decât unul generic: spune exact

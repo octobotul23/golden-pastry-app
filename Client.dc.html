@@ -289,6 +289,16 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-eyebrow" style="font-size:11px">Motivul</span>
 <span style="font-size:14px;line-height:1.5;text-wrap:pretty">{{ c.reason }}</span>
 </div>
+<sc-if value="{{ c.areReia }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-if value="{{ c.poateReia }}" hint-placeholder-val="{{ false }}">
+<a class="h-btn h-btn--secondary" href="{{ c.reiaHref }}" style="min-height:46px;font-size:14px;align-self:flex-start;text-decoration:none">Comandă din nou →</a>
+</sc-if>
+<sc-if value="{{ c.areReiaNota }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:var(--h-fg-muted);line-height:1.45;text-wrap:pretty">{{ c.reiaNota }}</span>
+</sc-if>
+</div>
+</sc-if>
 </div>
 </sc-for>
 </div>
@@ -326,6 +336,16 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-for>
 <span style="font-size:13px;color:var(--h-fg-subtle);line-height:1.45">{{ h.detail }}</span>
+</div>
+</sc-if>
+<sc-if value="{{ h.areReia }}" hint-placeholder-val="{{ false }}">
+<div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:6px">
+<sc-if value="{{ h.poateReia }}" hint-placeholder-val="{{ false }}">
+<a class="h-btn h-btn--secondary" href="{{ h.reiaHref }}" style="min-height:46px;font-size:14px;align-self:flex-start;text-decoration:none">Comandă din nou →</a>
+</sc-if>
+<sc-if value="{{ h.areReiaNota }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ h.reiaNota }}</span>
+</sc-if>
 </div>
 </sc-if>
 </div>
@@ -385,11 +405,14 @@ const CH = { Ridicare: "h-badge h-badge--honey", Livrare: "h-badge h-badge--acce
 //
 // Regula adevărată e lista `fulfillment_pickup` din Setări, aceeași după care
 // serverul umple ruta șoferului (`GET /routes`: fulfillment NOT IN pickup).
-// Copiată cuvânt cu cuvânt din „Administrare Comenzi.dc.html":1092, ca cele
-// două pagini să nu se despartă la prima corectură.
+// Copiată cuvânt cu cuvânt din `CU_MASINA` al paginii
+// „Administrare Comenzi.dc.html", ca cele două pagini să nu se despartă la
+// prima corectură. (Numele funcției, nu rândul: numărul vechi, :1092, arată
+// astăzi spre cartonașul de recomandare al aceleiași pagini.)
 //
-// Rezerva `chan === "Livrare"` acoperă clipa dinainte ca `gp.lists()` (:424) să
-// se întoarcă; după aceea pagina se redesenează oricum, cu `listsReady`.
+// Rezerva `chan === "Livrare"` acoperă clipa dinainte ca `gp.lists()` — chemat
+// la încărcarea paginii — să se întoarcă; după aceea pagina se redesenează
+// oricum, cu `listsReady`.
 const CU_MASINA = (chan) => { const p = gp.pickupFulfillments(); return p.length ? p.indexOf(chan) < 0 : chan === "Livrare"; };
 const CLIENT_ST = {
   "În așteptare": { l: "Programată", c: "h-badge" },
@@ -465,8 +488,9 @@ class Component extends DCLogic {
     // pagina asta a fost scrisă să-l repare: omul suna, sau comanda a doua
     // oară. Aici stă motivul lui, ca să nu se mai piardă.
     cerEroare: "",
-    // Istoricul: care comandă e desfăcută și dacă s-au cerut toate.
-    openPast: {}, pastAll: false,
+    // Istoricul: care comandă e desfăcută și dacă s-au cerut toate. `taiat`
+    // spune că serverul a dat numai cele mai noi 500 de comenzi.
+    openPast: {}, pastAll: false, taiat: false,
     // Mesajul de sub linkul de recomandare („Link copiat.").
     refMsg: "",
     // Fereastra spre ruta de azi, așa cum o dă `GET /routes/mine`. `null`
@@ -600,6 +624,9 @@ class Component extends DCLogic {
           : Promise.resolve(null);
         return Promise.all([gp.get('/orders'), cereri, ruta]).then(([r, cer, rt]) => this.setState({
           orders: (r.orders || []).map(gp.toPageOrder),
+          // Peste 500 de comenzi serverul le dă numai pe cele mai noi; istoricul
+          // nu mai promite atunci „toate”.
+          taiat: !!r.truncated,
           // Cererile picate NU se șterg de pe ecran: rămân cele de dinainte,
           // iar motivul spune că n-au putut fi împrospătate.
           requests: cer.ok ? cer.lista : this.state.requests,
@@ -799,6 +826,44 @@ class Component extends DCLogic {
       }
     };
 
+    // „Comandă din nou”, pe cartonașele care s-au ÎNCHEIAT: istoricul (livrate,
+    // ridicate, anulate) și cererile refuzate. Nu pe comanda activă, pe cele
+    // următoare sau pe cererile în așteptare — acolo marfa e încă pe drum, iar
+    // pagina a fost reparată tocmai ca omul să nu mai comande a doua oară ceva
+    // ce casa are deja.
+    //
+    // Butonul e o legătură simplă spre magazin, cu comanda strânsă în adresă
+    // (`gp.reia`): în producție magazinul e pe altă gazdă decât pagina asta,
+    // deci coșul lui nu se poate scrie de aici. Numele paginii stă scris
+    // dintr-o bucată, fiindcă build-deploy îl rescrie căutând exact textul
+    // ăsta — lipit din bucăți, ar fi rămas o legătură spre nicăieri.
+    //
+    // Nimic din reluare nu pleacă singur: magazinul pune produsele în coș, iar
+    // ziua și trimiterea rămân ale omului, la prețurile de azi.
+    //
+    // În previzualizarea personalului pagina ține comenzile TUTUROR clienților:
+    // butonul ar fi umplut coșul adminului cu comanda altcuiva. Acolo nu apare,
+    // ca și cartonașul de recomandare.
+    const reluare = (items) => {
+      if (isPreview) return { areReia: false, poateReia: false, reiaHref: "", areReiaNota: false, reiaNota: "" };
+      const r = gp.reia(items);
+      const nota = (r.cod
+        ? [
+          r.scoase.length ? "Nu intră în coș, fiindcă nu sunt în magazin: " + r.scoase.join(", ") + "." : "",
+          r.rotunjit ? "Cantitățile cu zecimale intră rotunjite în sus, la bucăți întregi." : "",
+          r.taiat ? "Dintr-un produs intră în coș cel mult 9999 de bucăți." : ""
+        ]
+        : [r.scoase.length ? "Nu se poate reface din magazin: produsele ei nu mai sunt acolo." : ""]
+      ).filter(Boolean).join(" ");
+      return {
+        areReia: !!r.cod || !!nota,
+        poateReia: !!r.cod,
+        reiaHref: r.cod ? "Site%20Public.dc.html?reia=" + r.cod : "",
+        areReiaNota: !!nota,
+        reiaNota: nota
+      };
+    };
+
     return {
       // Sertarul de meniu, același ca în panouri. Pagina asta n-a avut
       // niciunul: din ea se ieșea doar cu „Ieși" și cu legătura spre
@@ -970,7 +1035,7 @@ class Component extends DCLogic {
 
       hasRejected: !!respinse.length,
       rejectedTitle: respinse.length === 1 ? "O cerere n-a putut fi onorată" : "Cereri care n-au putut fi onorate",
-      rejected: respinse.map((c) => ({
+      rejected: respinse.map((c) => Object.assign({
         id: c.id,
         when: c.date ? "Cerută pentru " + zLung(c.date) : "Fără zi cerută",
         qty: gp.qtyLabel(qty(c)),
@@ -979,7 +1044,7 @@ class Component extends DCLogic {
         // să ghicească dacă e vina lui. Când motivul lipsește din bază, spunem
         // pe față că lipsește și trimitem la telefon.
         reason: c.reason || "Nu s-a scris un motiv. Sună-ne și îți spunem despre ce a fost vorba."
-      })),
+      }, reluare(c.items))),
 
       emptyLine: staffBlocked
         ? "Contul „" + (auth ? auth.name : "") + "” e cont de angajat: acest ecran e doar pentru clienți. Folosește panourile de lucru."
@@ -1028,10 +1093,14 @@ class Component extends DCLogic {
 
       /* --- ce a comandat până acum --- */
       hasPast: !!trecute.length,
-      pastCount: trecute.length === 1 ? "o comandă" : trecute.length + " comenzi",
+      // Cu lista tăiată de server, istoricul are numai cele mai noi comenzi:
+      // cifra nu mai are voie să pară „toate”.
+      pastCount: S.taiat
+        ? (trecute.length === 1 ? "cea mai nouă comandă" : "cele mai noi " + trecute.length + " comenzi")
+        : (trecute.length === 1 ? "o comandă" : trecute.length + " comenzi"),
       past: aratate.map(o => {
         const deschis = !!S.openPast[o.id];
-        return {
+        return Object.assign({
           id: o.id,
           when: zScurt(o.date),
           line: [gp.qtyLabel(qty(o)) + " buc", bani(o.total)].filter(Boolean).join(" · "),
@@ -1046,10 +1115,10 @@ class Component extends DCLogic {
             CU_MASINA(o.chan) ? (o.addr ? "livrată la " + o.addr : "livrare") : "ridicată de la laborator"
           ].filter(Boolean).join(" · "),
           toggle: () => set({ openPast: Object.assign({}, S.openPast, { [o.id]: !deschis }) })
-        };
+        }, reluare(o.items));
       }),
       hasMorePast: trecute.length > aratate.length,
-      morePastLabel: "Vezi toate cele " + trecute.length + " comenzi",
+      morePastLabel: (S.taiat ? "Vezi cele mai noi " : "Vezi toate cele ") + trecute.length + " comenzi",
       showAllPast: () => set({ pastAll: true })
     };
   }

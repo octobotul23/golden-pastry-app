@@ -116,7 +116,7 @@ registrul Depozitului:
 | articolul finit al produsului | **intră**, o bucată |
 
 Adică exact pasul de la tejghea: făina iese, croissantul intră. Când comanda
-ajunge la **Predată** și apeși „Scade comenzile", croissantul **pleacă** — al
+ajunge la **Predată** și apeși „Scade din stoc” în Depozit, croissantul **pleacă** — al
 treilea pas, scris separat. Nimic nu se scade de două ori.
 
 Cifra pe care o trimite tableta este **totalul făcut**, nu cât s-a adăugat. De
@@ -188,6 +188,11 @@ Asta e informația pentru care există coloana.
 Cifrele se socotesc pe server, din toate comenzile. Înainte se adunau în pagină,
 din comenzile pe care apuca să le aducă — cel mult 500 — deci peste atâtea
 comenzi „Rezervat" scădea fără ca nimic să spună că s-a numărat doar o parte.
+
+La fel se numără bannerul **„Scade din stoc”**: câte comenzi „Predată” n-au fost
+încă scăzute, și câte bucăți au, vine de pe server, din toate comenzile. Socotit
+în pagină, bannerul tăcea tocmai pentru comenzile vechi rămase pe loc — oprite
+de un articol lipsă sau redeschise de o corectură —, deși butonul le-ar fi scăzut.
 
 Un articol se leagă de produsul lui din **Depozit → articolul → Produs**. Fără
 legătura asta, promisiunea unui produs redenumit între timp nu-și mai găsește

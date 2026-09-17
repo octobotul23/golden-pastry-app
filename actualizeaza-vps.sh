@@ -343,8 +343,8 @@ if (( ! FARA_COPIE )) && [[ "$DOAR" != "baza" ]]; then
   # înseamnă deja pentru copiile de bază. Și tot ea face iar adevărate două
   # mesaje de mai jos, fără să le atingă nimeni: `rupt()` nu mai spune „ai
   # pornit scriptul cu --fara-copie" despre o arhivă pe care a șters-o singur
-  # (:505-512), iar raportul de la urmă nu mai arată calea unui fișier care nu
-  # mai e (:635). Amândouă se uitau la adevăr; adevărul era cel stricat.
+  # (la pasul „Fișiere"), iar raportul de la „Gata" nu mai arată calea unui
+  # fișier care nu mai e. Amândouă se uitau la adevăr; adevărul era cel stricat.
   if [[ "$PASTREAZA" =~ ^[0-9]+$ ]] && (( PASTREAZA > 0 )); then
     for f in $(ls -1 "$COPII"/cod-*.tar.gz 2>/dev/null | sort -r | tail -n +$((PASTREAZA + 1))); do
       rm -f "$f"
@@ -430,17 +430,54 @@ else
   # despre migrarea care repară comisioanele de 0,00 RON. De-aceea procentul se
   # citește aici din bază și se spune CU VALOAREA LUI: e martorul însuși, nu o
   # urmă a lui într-o cifră de schemă.
+  #
+  # Golul are însă două pricini, și nu se spun la fel. Dacă mysql răspunde fără
+  # niciun rând, rândul lipsește: 017 n-a intrat. Dacă mysql pică, nu știm
+  # nimic — iar „n-a intrat" ar trimite omul după o migrare care poate e la
+  # locul ei. De-aia codul de ieșire se ține minte, nu se îneacă într-un
+  # `|| echo ""`, cum se îneca până acum: atunci martorul tăcea la amândouă.
   PROC="$(my -N -B "$DB_NAME" -e \
     "SELECT COALESCE(TRIM(value), ''), IF(updated_by IS NULL, 'casa', 'om')
-       FROM settings WHERE setting_key = 'referral_rate_default'" 2>/dev/null || echo "")"
-  if [[ -n "$PROC" ]]; then
+       FROM settings WHERE setting_key = 'referral_rate_default'" 2>/tmp/gp-martor.err)" \
+    && PROC_CITIT=1 || PROC_CITIT=0
+  if (( ! PROC_CITIT )); then
+    # O citire picată e o AVERTIZARE, nu o oprire: migrările de mai sus au
+    # trecut deja, iar un `mor` aici ar lăsa fișierele necopiate pentru o
+    # întrebare pusă după lucru.
+    galben "  N-am putut citi procentul de recomandare din bază:"
+    sed -n '1,4p' /tmp/gp-martor.err 2>/dev/null | sed 's/^/    /' || true
+    info "Migrările de mai sus au trecut; a picat numai citirea de după ele, deci"
+    info "nu știu ce procent a rămas. Uită-te în Setări → General."
+  elif [[ -z "$PROC" ]]; then
+    # Rândul nu e în tabel. După o buclă de migrări reușită asta înseamnă că 017
+    # n-a fost printre fișiere: `INSERT IGNORE`-ul ei l-ar fi pus. Urmarea nu se
+    # vede de nicăieri: aplicația socotește cu procentul din cod
+    # (`referral_default_rate()`, api/lib/referral.php), iar din Setări nu se
+    # poate pune altul, fiindcă salvarea scrie numai peste rânduri care există
+    # și refuză cheia fără rând (`unknown_setting`).
+    galben "  Procentul de recomandare n-are rând în Setări — migrarea 017 n-a intrat."
+    info "Până intră, aplicația socotește cu procentul scris în cod (5%), iar"
+    info "„Procent de recomandare” din Setări → General nu se poate salva."
+    info "Caută mai sus rândul „017_procent_recomandare.sql”: dacă lipsește, folderul"
+    info "sql/ urcat e mai vechi decât pachetul."
+  else
     # Tăiat pe TAB, nu cu `read`: valoarea poate fi goală, iar `read VAL CINE`
     # ar muta atunci „casa" în VAL și raportul ar scrie „Procentul: casa%".
     VAL="${PROC%%$'\t'*}"
     CINE="${PROC##*$'\t'}"
     if [[ -z "$VAL" ]]; then
       galben "  Procentul de recomandare e gol — recomandările nu aduc nimic."
-      info "Îl pui din Setări → Recomandări."
+      info "Îl pui din Setări → General."
+    elif [[ "$CINE" == "casa" && "$VAL" =~ ^0+([.,]0+)?$ ]]; then
+      # Un zero pe care nu l-a hotărât nimeni e semănătura lui 008. 017 îl urcă
+      # la 5 la fiecare rulare (`UPDATE … WHERE updated_by IS NULL`), deci un
+      # zero al casei rămas DUPĂ migrări spune că 017 n-a fost printre fișiere.
+      # Fără ramura asta el cădea pe cea de dedesubt și ieșea VERDE, „0% — pus
+      # acum": tocmai zeroul care naște comisioanele de 0,00 RON, lăudat.
+      galben "  Procentul de recomandare e 0%, semănat de casă — migrarea 017 n-a intrat."
+      info "Cât timp e zero, fiecare comision nou se naște 0,00 RON și rămâne așa pe"
+      info "veci. Caută mai sus rândul „017_procent_recomandare.sql”: dacă lipsește,"
+      info "folderul sql/ urcat e mai vechi decât pachetul."
     elif [[ "$CINE" == "casa" ]]; then
       verde "  Procentul de recomandare: $VAL% — pus acum (nu-l hotărâse nimeni)."
     elif [[ "$VAL" =~ ^0+([.,]0+)?$ ]]; then
@@ -451,7 +488,7 @@ else
       galben "  Procentul de recomandare e 0% — hotărât de tine, deci l-am lăsat."
       info "Cât timp e zero, fiecare comision nou se naște 0,00 RON și rămâne"
       info "așa pe veci: procentul se îngheață la nașterea rândului. Îl schimbi"
-      info "din Setări → Recomandări."
+      info "din Setări → General."
     else
       info "Procentul de recomandare: $VAL% — hotărât de tine, l-am lăsat în pace."
     fi
@@ -466,23 +503,33 @@ else
   # două lucruri din tot pachetul pe care le citește OMUL DE PE STRADĂ: stau în
   # pagina publică, în datele trimise lui Google și în subsolul magazinului.
   # Până la migrarea asta, casetele din Setări primeau „salvat" și nu scriau
-  # nimic nicăieri (`settings_save()` trece numai peste cheile care au deja
-  # rând), deci adresa firmei era în fapt scrisă în cod. Un raport care spune
+  # nimic nicăieri (`settings_save()` trecea atunci tăcut peste cheile fără
+  # rând; azi le refuză pe nume), deci adresa firmei era în fapt scrisă în cod. Un raport care spune
   # „era deja aplicată" despre tocmai reparația aceea îl lasă pe om să creadă
   # că nici acum nu se poate scrie.
   #
   # Se citesc deci amândouă și se spun CU VALOAREA LOR, ca procentul de mai
   # sus: rândul însuși e martorul, nu urma lui într-o cifră de schemă.
+  #
+  # Și aici golul are două pricini, ca la procent: niciun rând înseamnă că 018
+  # n-a intrat, mysql picat înseamnă că nu știm. Până acum amândouă ieșeau
+  # „migrarea 018 n-a intrat", iar omul căuta o migrare care era la locul ei.
   FIRMA="$(my -N -B "$DB_NAME" -e \
     "SELECT setting_key, COALESCE(TRIM(value), ''), IF(updated_by IS NULL, 'casa', 'om')
        FROM settings WHERE setting_key IN ('company_address', 'company_hours')
-      ORDER BY setting_key" 2>/dev/null || echo "")"
-  if [[ -z "$FIRMA" ]]; then
+      ORDER BY setting_key" 2>/tmp/gp-martor.err)" \
+    && FIRMA_CITITA=1 || FIRMA_CITITA=0
+  if (( ! FIRMA_CITITA )); then
+    galben "  N-am putut citi adresa și programul din bază:"
+    sed -n '1,4p' /tmp/gp-martor.err 2>/dev/null | sed 's/^/    /' || true
+    info "Migrările de mai sus au trecut; a picat numai citirea de după ele, deci"
+    info "nu știu ce scrie în ele. Uită-te în Setări → General."
+  elif [[ -z "$FIRMA" ]]; then
     # Nici măcar rândurile goale n-au ajuns în tabel: 018 n-a intrat, iar
-    # casetele din Setări vor primi mai departe „salvat" fără să salveze.
+    # casetele „Adresa publică” și „Program de lucru” din Setări stau închise.
     galben "  Adresa și programul n-au rând în Setări — migrarea 018 n-a intrat."
     info "Până intră, casetele „Adresa publică” și „Program de lucru” din Setări"
-    info "primesc răspuns bun și nu schimbă nimic, nicăieri."
+    info "stau închise, iar site-ul arată adresa și programul scrise în cod."
   else
     while IFS= read -r LINIE; do
       [[ -z "$LINIE" ]] && continue
@@ -524,11 +571,27 @@ else
   # comenzile luate la telefon pe același nume, până nu-l recunoaște cineva
   # din Conturi. Cifra se spune acum, nu se descoperă peste o săptămână, la o
   # comandă care „nu i-a apărut clientului în cont".
+  #
+  # Și aici codul de ieșire se ține minte, ca la procent și la adresă. `COUNT(*)`
+  # întoarce mereu un rând, deci golul de după vechiul `|| echo ""` nu putea
+  # însemna decât o citire picată — iar ea tăcea, exact ca „niciun cont de
+  # recunoscut". Adică tocmai când nu știa nimic, scriptul lăsa impresia că a
+  # verificat și n-a găsit.
   NERECUNOSCUTE="$(my -N -B "$DB_NAME" -e \
-    "SELECT COUNT(*) FROM users WHERE self_registered = 1 AND vouched_at IS NULL" 2>/dev/null || echo "")"
-  if [[ "$NERECUNOSCUTE" =~ ^[0-9]+$ ]] && (( NERECUNOSCUTE > 0 )); then
-    galben "  $(numar "$NERECUNOSCUTE" "cont făcut pe site" "conturi făcute pe site") nu se mai leagă singure la comenzile luate la telefon."
-    info "Le recunoști din Conturi, cu „Recunosc clientul”. Până atunci, clientul"
+    "SELECT COUNT(*) FROM users WHERE self_registered = 1 AND vouched_at IS NULL" 2>/tmp/gp-martor.err)" \
+    && CONTURI_CITITE=1 || CONTURI_CITITE=0
+  if (( ! CONTURI_CITITE )); then
+    galben "  N-am putut citi câte conturi făcute pe site așteaptă să le recunoști:"
+    sed -n '1,4p' /tmp/gp-martor.err 2>/dev/null | sed 's/^/    /' || true
+    info "Migrările de mai sus au trecut; a picat numai citirea de după ele, deci"
+    info "nu știu dacă e vreunul. Uită-te în Conturi, după „Recunosc clientul”."
+  elif [[ "$NERECUNOSCUTE" =~ ^[0-9]+$ ]] && (( NERECUNOSCUTE > 0 )); then
+    # Acordul, ca la `numar()`: „1 cont … singur", „3 conturi … singure". O
+    # singură formă scria „1 cont făcut pe site nu se mai leagă singure".
+    if (( NERECUNOSCUTE == 1 )); then SINGUR="singur"; PE_EL="Îl"
+    else SINGUR="singure"; PE_EL="Le"; fi
+    galben "  $(numar "$NERECUNOSCUTE" "cont făcut pe site" "conturi făcute pe site") nu se mai leagă $SINGUR la comenzile luate la telefon."
+    info "$PE_EL recunoști din Conturi, cu „Recunosc clientul”. Până atunci, clientul"
     info "își vede în cont numai comenzile date chiar de pe site."
   fi
 fi
@@ -580,8 +643,11 @@ else
     rosu "EROARE: n-am putut copia folderul „$1”."
     rosu ""
     rosu "Site-ul e ACUM pe jumătate schimbat: ce s-a copiat înainte de „$1” e nou,"
-    rosu "restul a rămas vechi. Nu-l lăsa așa — paginile noi cheamă un api care nu"
-    rosu "le cunoaște rutele, iar clientul vede numai refuzuri."
+    rosu "restul a rămas vechi. API-ul merge primul tocmai ca jumătatea asta să fie"
+    rosu "cea care ține: paginile vechi nu-i cer nimic din ce-a apărut nou, deci"
+    rosu "clientul comandă și laboratorul mută mai departe. Nu lăsa totuși casa"
+    rosu "așa — rămân ecrane din două versiuni, iar ce vede unul nu se potrivește"
+    rosu "cu ce vede altul."
     rosu ""
     if [[ -n "${ARHIVA_COD:-}" && -f "${ARHIVA_COD:-}" ]]; then
       rosu "Pune codul înapoi cum era, dintr-o singură comandă:"
@@ -596,13 +662,30 @@ else
     exit 1
   }
 
-  rsync "${ARG_PUBLIC[@]}"                  "$SURSA/public_html/" "$DIR/public_html/" || rupt public_html
-  rsync -a --delete                         "$SURSA/clienti/"     "$DIR/clienti/"     || rupt clienti
-  rsync -a --delete                         "$SURSA/lab/"         "$DIR/lab/"         || rupt lab
+  # ORDINEA CELOR PATRU E O HOTĂRÂRE, nu felul în care au ieșit din listă:
+  # API-ul merge PRIMUL, paginile după el. E aceeași socoteală ca la pasul
+  # „Migrări" de mai sus — întâi se schimbă cel de care depinde celălalt.
+  #
+  # Între primul rsync și ultimul, casa are câteva zeci de secunde două vârste.
+  # Cu paginile copiate întâi, fereastra aceea era o pană adevărată, nu o
+  # subțiere: paginile din 2.1.1 trimit la PATCH /orders câmpul `from` — etapa
+  # pe care o avea comanda pe ecranul de pe care s-a apăsat — iar API-ul vechi
+  # nu-l cunoaște. Din contul de tură el nu curăță cererea de câmpul străin, ci
+  # o oprește întreagă, cu 403 `staff_field_denied`, deci tableta din laborator
+  # nu mai putea muta NIMIC până se termina copierea.
+  #
+  # Invers, fereastra e goală: API-ul nou nu cere nimic nou de la pagini. `from`
+  # e facultativ acolo — „Lipsa lui se poartă ca până acum", vezi
+  # ORDER_FIELDS_PRECONDITION în api/routes/orders.php — deci paginile vechi,
+  # care nu-l trimit, merg pe el neschimbate.
+  #
   # --exclude apără config.php și de copiere, și de ștergere: rsync nu șterge
   # ce a exclus decât dacă i se cere anume, cu --delete-excluded.
   rsync -a --delete --exclude '/config.php' "$SURSA/api/"         "$DIR/api/"         || rupt api
-  info "public_html · clienti · lab · api"
+  rsync "${ARG_PUBLIC[@]}"                  "$SURSA/public_html/" "$DIR/public_html/" || rupt public_html
+  rsync -a --delete                         "$SURSA/clienti/"     "$DIR/clienti/"     || rupt clienti
+  rsync -a --delete                         "$SURSA/lab/"         "$DIR/lab/"         || rupt lab
+  info "api · public_html · clienti · lab"
 
   for f in "${SCOASE[@]+"${SCOASE[@]}"}"; do
     rm -f "$DIR/api/$f"

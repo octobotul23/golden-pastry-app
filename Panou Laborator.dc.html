@@ -116,7 +116,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <a href="{{ accesAcasa }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">{{ accesAcasaEt }}</a>
 </sc-if>
 <button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
-<a href="Intrare.dc.html" style="font-size:14px;color:rgba(255,255,255,.72);text-decoration:none;padding-top:4px">← Alege panoul</a>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;color:rgba(255,255,255,.72);text-decoration:none">← Alege panoul</a>
 </div>
 </div>
 </div>
@@ -204,7 +204,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 </sc-if>
 
-<div data-lb="daybar" style="display:flex;gap:8px;padding:12px 22px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);overflow-x:auto">
+<div data-lb="daybar" style="display:flex;gap:8px;padding:12px 22px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);overflow-x:auto;flex:none">
 <div data-lb="phonemenu" style="display:none;align-items:center;gap:8px;width:100%">
 <button type="button" onClick="{{ onMenuOpen }}" style="flex:1;min-width:0;min-height:54px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:8px 13px;border-radius:14px;background:var(--h-bg-surface);border:1px solid var(--h-line-strong);color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
 <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Vezi acum</span>
@@ -225,7 +225,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <sc-if value="{{ taiat }}" hint-placeholder-val="{{ false }}">
 <div data-lb="taiat" class="h-alert h-alert--warning" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 22px 0;padding:12px 14px;border-radius:14px;font-size:15px">
 <p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700;flex:none">Ziua are mai multe comenzi decât încap într-un răspuns.</p>
-<p style="margin:0;flex:1;min-width:180px;line-height:1.4">Pe ecran sunt primele. Cifra din filă e numărul adevărat — cere-i administratorului să împartă ziua pe ture.</p>
+<p style="margin:0;flex:1;min-width:180px;line-height:1.4">Pe ecran sunt primele 500, în ordinea numerelor. Lipsesc comenzile cu numerele cele mai mari, adică ultimele luate. Cifra din filă e numărul adevărat, numărat în baza de date: lista golită de lucru NU înseamnă că ziua e gata. Cere-i administratorului lista lor din „Comenzi”, care citește ziua pe pagini, și mutarea pe altă zi a ce nu se coace azi.</p>
 </div>
 </sc-if>
 
@@ -379,7 +379,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <div data-lb="shell" style="flex:1;display:flex;align-items:stretch;min-height:0">
 
 <div data-lb="lanes" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;padding:16px 22px 30px">
-<div data-lb="sorts" style="display:flex;align-items:center;gap:8px;overflow-x:auto">
+<div data-lb="sorts" style="display:flex;align-items:center;gap:8px;overflow-x:auto;flex:none">
 <sc-for list="{{ sortBtns }}" as="s" hint-placeholder-count="3">
 <button type="button" class="{{ s.cls }}" onClick="{{ s.onClick }}" style="height:44px;flex:none;font-size:14px;border-radius:12px">{{ s.label }}</button>
 </sc-for>
@@ -1105,7 +1105,7 @@ class Component extends DCLogic {
         // mai fie despre aceeași zi: brutarul apasă fila de mâine în timp ce
         // răspunsul pentru azi e pe drum, iar `setState` de mai jos ar scrie
         // comenzile de azi sub eticheta de mâine. `/orders` nu-și spune ziua în
-        // răspuns (v. `api/routes/orders.php:228`), deci se compară ziua CERUTĂ
+        // răspuns (v. `api/routes/orders.php:236`), deci se compară ziua CERUTĂ
         // cu ziua deschisă ACUM. Nu e o eroare — e o cerere întoarsă prea
         // târziu, iar cea pentru ziua nouă e deja pe drum.
         const ziuaAcum = (DAY_KEYS[this.state.day] || DAY_KEYS[0]).iso;
@@ -1332,6 +1332,19 @@ class Component extends DCLogic {
     const order = (this.state.orders || []).find(o => o.id === id);
     if (!order) return;
 
+    // Etapa de pe care pleacă apăsarea: exact ce scrie pe card în clipa asta.
+    //
+    // Pleacă la server ca `from` (api/routes/orders.php · route_orders_update),
+    // iar serverul o compară cu etapa din bază și refuză cu 409 dacă între timp
+    // comanda a fost mutată de altcineva. Tableta se împrospătează la patru
+    // secunde și stă pe loc cât fila e ascunsă, deci o tabletă trezită din somn
+    // muta mai departe o comandă pe care administratorul o anulase de mult: ea
+    // învia în tăcere, reapărea în laborator și pe rută, iar pe telefonul
+    // PATRONULUI suna și anunțul „Comandă refăcută". Nu al cumpărătorului:
+    // anunțurile de etapă pleacă numai spre adresa, numărul și conversația
+    // scrise în Setări → Notificări, niciodată spre datele de pe comandă.
+    const from = order.status;
+
     // Cât timp PATCH-ul e pe drum ținem minte etapa apăsată, ca reîmprospătarea
     // de la patru secunde să n-o șteargă de pe ecran cu un răspuns mai vechi.
     this.__pending = Object.assign({}, this.__pending || {}, { [id]: status });
@@ -1340,18 +1353,60 @@ class Component extends DCLogic {
     this.__seen = JSON.stringify(next);
     this.setState({ orders: next, toast: "" });
 
-    gp.patch('/orders/' + order.id, { status })
-      .then(() => this.clearPending(id))
+    const trimite = () => gp.patch('/orders/' + order.id, { status, from })
+      .then(() => true)
       .catch((e) => {
-        this.clearPending(id);
         this.__seen = null;
         // Un refuz al serverului trebuie spus cu voce tare. Cu un simplu
         // console.warn, cardul sărea singur înapoi la etapa veche, iar brutarul,
         // care nu se uită în consola browserului, credea că a apăsat greșit și
         // apăsa la nesfârșit.
-        this.setState({ toast: "Nu s-a salvat: " + e.message });
+        //
+        // Refuzul pentru „s-a schimbat între timp" e altă veste decât „nu s-a
+        // salvat": nimeni n-a greșit nimic, doar ecranul rămăsese în urmă. De
+        // aceea se scrie cu etapa de acum, pe care serverul o trimite în
+        // `error.current` (v. `detalii` din shared/gp-api.js).
+        const acum = (e.detalii && e.detalii.current) || "";
+        this.setState({
+          toast: e.code === "status_changed" && acum
+            ? "Comanda " + (order.ref || "#" + id) + " a fost schimbată între timp: acum e „"
+                + acum + "”. N-am mutat-o."
+            : "Nu s-a salvat: " + e.message
+        });
         this.pull();
+        return false;
       });
+
+    // UN PAS PE RÂND, PE FIECARE COMANDĂ.
+    //
+    // Două apăsări repezi pe același card — „La dospit", apoi „În cuptor"
+    // înainte să se întoarcă prima — plecau deodată. Serverul le putea scrie în
+    // altă ordine, și atunci comanda rămânea la etapa dintâi, deși pe ecran
+    // scria a doua: un pas pierdut, fără niciun semn. De când pasul poartă
+    // etapa de plecare, ar fi fost mai rău: al doilea ar fi luat 409 pe
+    // degeaba, fiindcă în bază era încă etapa de dinaintea primului.
+    //
+    // Așa, al doilea pas pleacă abia după ce primul s-a scris, deci `from`-ul
+    // lui e adevărat. Iar dacă primul n-a ajuns (refuz ori pană de rețea), al
+    // doilea nu mai pleacă deloc: pornea de la o etapă care n-a existat
+    // niciodată pe server, iar lista tocmai se recitește.
+    //
+    // Fără nimic pe drum, cererea pleacă ACUM, nu peste o tură de microtask-uri:
+    // altfel o tabletă atinsă cu degete cu făină ar aduna apăsări într-o coadă
+    // pornită degeaba.
+    const lant = this.__lant || (this.__lant = {});
+    const pas = lant[id]
+      ? lant[id].then((mers) => (mers === false ? false : trimite()))
+      : trimite();
+    lant[id] = pas;
+    pas.then((mers) => {
+      // Așteptarea se stinge la CAPĂTUL lanțului, nu la primul răspuns: cu o a
+      // doua apăsare încă pe drum, ștearsă mai devreme, reîmprospătarea ar fi
+      // pus pe card etapa scrisă de prima apăsare — adică o săritură înapoi
+      // sub ochii omului.
+      if (lant[id] === pas) { delete lant[id]; this.clearPending(id); }
+      return mers;
+    });
   }
 
   /** Comanda a primit răspuns de la server: nu mai ținem etapa apăsată local. */
@@ -1423,9 +1478,38 @@ class Component extends DCLogic {
           }
         })
         .catch((e) => {
+          // Asteptarea locală se stinge pe AMÂNDOUĂ drumurile, și pe cel de
+          // refuz. Rămasă aprinsă, cifra apăsată ar sta peste cea din bază la
+          // fiecare reîmprospătare, iar cardul ar arăta croasante care nu s-au
+          // scris nicăieri — tocmai minciuna de care se plânge refuzul.
           uita();
           this.__seen = null;
-          this.setState({ toast: "Nu s-a salvat: " + e.message });
+          // Comanda anulată între timp nu e o pană de rețea, iar textul o spune
+          // ca atare: până acum, un 409 arăta pe ecran exact ca un internet
+          // căzut, și brutarul apăsa din nou pe o comandă moartă. Vestea se
+          // scrie cu etapa de acum, pe care serverul o trimite în
+          // `error.current` (v. `detalii` din shared/gp-api.js).
+          //
+          // Fraza e aproape aceeași cu cea din `writeStatus`, și stă scrisă a
+          // doua oară DINADINS, nu din lene: uneltele casei citesc metodele din
+          // pagină una câte una și le rulează pe un panou de carton care are
+          // numai `setState` și `pull`. O metodă ajutătoare chemată cu `this.`
+          // le face să crape, iar pagina rămâne nemăsurată — adică tocmai
+          // regula asta ar rămâne nepăzită. Dacă se schimbă vorbele aici, se
+          // schimbă și acolo; sunt două uși ale ACELUIAȘI card și nu are voie
+          // una să spună omului adevărul, iar cealaltă „Nu s-a salvat".
+          //
+          // Eticheta se ia de pe cardul din listă, ca la butonul de etapă;
+          // coada ține numai numărul comenzii, iar o comandă abia dispărută de
+          // pe listă rămâne cu „#" și numărul ei — tot mai bine decât nimic.
+          const ord = (this.state.orders || []).find((o) => String(o.id) === String(oid));
+          const acum = (e.detalii && e.detalii.current) || "";
+          this.setState({
+            toast: e.code === "status_changed" && acum
+              ? "Comanda " + ((ord && ord.ref) || "#" + oid) + " a fost schimbată între timp: acum e „"
+                  + acum + "”. N-am notat producția."
+              : "Nu s-a salvat: " + e.message
+          });
           this.pull();
         });
     });

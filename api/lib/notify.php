@@ -81,7 +81,10 @@ function notify_events(): array
         ],
         'order_cancelled' => [
             'label' => 'Comandă anulată',
-            'help'  => 'Comanda a fost trecută pe etapa de anulare, adică ștearsă din panou.',
+            'help'  => 'Comanda a fost trecută pe etapa de anulare, adică ștearsă din panou. '
+                . 'Pe aceleași canale pleacă și „Comandă refăcută", când o comandă anulată e adusă înapoi.',
+            // Refacerea n-are cheie a ei, dinadins: o bifă separată ar fi putut-o
+            // despărți de anulare. Lămurirea e la notify_order_status_events().
             // unde: api/routes/orders.php · route_orders_update()
         ],
         'user_new' => [
@@ -263,35 +266,39 @@ function notify_new_order(array $order): void
 }
 
 /**
- * Comanda a intrat în etapa de încheiere sau în cea de anulare.
+ * Comanda a intrat în etapa de încheiere ori în cea de anulare, sau a ieșit
+ * din cea de anulare.
  *
  * Se cheamă dintr-un singur loc — `route_orders_update()` — fiindcă acela e
  * singurul loc din tot programul care scrie `orders.status`. Inclusiv butonul
- * „Șterge comanda", care de fapt trimite un PATCH pe etapa de anulare.
+ * „Șterge comanda", care de fapt trimite un PATCH pe etapa de anulare, și
+ * perechea lui, „Reface comanda", care trimite un PATCH pe începutul fluxului.
  *
  * `$vechi` nu e decor: fără el, o salvare care atinge telefonul unei comenzi
  * deja predate ar trimite încă o dată „Comandă gata". Anunțul se dă la
- * TRECERE, nu la starea de fapt.
+ * TRECERE, nu la starea de fapt. Tot din `$vechi` se vede și refacerea: nu
+ * contează unde ajunge comanda, contează că pleacă de pe anulare.
+ *
+ * O trecere poate naște două anunțuri: o comandă anulată mutată direct pe
+ * „Predată" e și refăcută, și gata. Pleacă amândouă, fiecare pe canalele bifei
+ * lui, în ordinea faptelor — întâi refacerea, apoi încheierea.
  */
 function notify_order_status(array $order, string $vechi, string $nou): void
 {
-    $event = notify_order_status_event($vechi, $nou);
-    if ($event === null) {
-        return;
+    $ref = order_ref_text($order);
+    foreach (notify_order_status_events($vechi, $nou) as $event => $cap) {
+        $text = $cap . ' ' . $ref . ' — ' . ($order['customerName'] ?? '')
+            . "\n" . 'Etapă: ' . $vechi . ' → ' . $nou
+            . (!empty($order['day']) ? "\n" . 'Pentru: ' . $order['day'] : '')
+            . "\n" . 'Total: ' . number_format((float) ($order['total'] ?? 0), 2, ',', '.') . ' lei';
+
+        notify_event($event, $text, (int) $order['id'], $cap . ' ' . $ref, $order);
     }
-
-    $ref  = order_ref_text($order);
-    $cap  = $event === 'order_done' ? 'Comandă gata ' : 'Comandă anulată ';
-    $text = $cap . $ref . ' — ' . ($order['customerName'] ?? '')
-        . "\n" . 'Etapă: ' . $vechi . ' → ' . $nou
-        . (!empty($order['day']) ? "\n" . 'Pentru: ' . $order['day'] : '')
-        . "\n" . 'Total: ' . number_format((float) ($order['total'] ?? 0), 2, ',', '.') . ' lei';
-
-    notify_event($event, $text, (int) $order['id'], rtrim($cap) . ' ' . $ref, $order);
 }
 
 /**
- * Ce fel de anunț naște trecerea asta de etapă — sau `null`, dacă niciunul.
+ * Ce anunțuri naște trecerea asta de etapă, ca listă `cheia bifei => capul
+ * mesajului` — goală, dacă niciunul.
  *
  * Stă deoparte, nu în funcția care trimite, fiindcă ruta trebuie să poată
  * ÎNTREBA fără să trimită: dacă nu iese niciun anunț, răspunsul pleacă pe
@@ -301,19 +308,40 @@ function notify_order_status(array $order, string $vechi, string $nou): void
  *
  * Etapele se citesc din Setări, nu din cod: dacă patronul redenumește „Predată"
  * în „Livrată", anunțul îl urmează, fiindcă `status_done()` îl urmează.
+ *
+ * „COMANDĂ REFĂCUTĂ" N-ARE BIFĂ A EI: PLEACĂ PE A LUI „COMANDĂ ANULATĂ".
+ * Hotărârea patronului: refacerea pleacă pe aceleași canale pe care a plecat
+ * anularea — altfel pe Telegram rămâne ultimul mesaj „anulată", iar echipa
+ * crede că nu mai e. O cheie separată ar fi fost o bifă separată, deci un
+ * canal care primește anularea fără să primească refacerea — exact ce cere
+ * hotărârea să nu se poată. Pe o bază veche, cheia nouă ar fi pornit și
+ * nebifată, lângă o anulare bifată. De aceea rândul refacerii poartă în
+ * `notifications.event` tot `order_cancelled`: coloana spune pe ce bifă a
+ * plecat anunțul, iar ce spune anunțul stă în subiect.
+ *
+ * Mutată direct pe „Predată", o comandă anulată dă DOUĂ anunțuri, tot din
+ * hotărârea patronului: întâi „Comandă refăcută", apoi „Comandă gata". Ordinea
+ * cheilor din lista întoarsă e ordinea în care pleacă.
  */
-function notify_order_status_event(string $vechi, string $nou): ?string
+function notify_order_status_events(string $vechi, string $nou): array
 {
     if ($vechi === $nou) {
-        return null;               // anunțul se dă la TRECERE, nu la stare
+        return [];                 // anunțul se dă la TRECERE, nu la stare
+    }
+    $anulata = status_cancelled();
+    $out     = [];
+    // Ieșirea din anulare, oriunde ar duce: începutul fluxului („Reface
+    // comanda"), etapa aleasă din formular ori din lista vederii rapide, ori
+    // chiar „Predată".
+    if ($anulata !== '' && $vechi === $anulata) {
+        $out['order_cancelled'] = 'Comandă refăcută';
     }
     if ($nou !== '' && $nou === status_done()) {
-        return 'order_done';
+        $out['order_done'] = 'Comandă gata';
+    } elseif ($anulata !== '' && $nou === $anulata) {
+        $out['order_cancelled'] = 'Comandă anulată';
     }
-    if ($nou !== '' && $nou === status_cancelled()) {
-        return 'order_cancelled';
-    }
-    return null;
+    return $out;
 }
 
 /**

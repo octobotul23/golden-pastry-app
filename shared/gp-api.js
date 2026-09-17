@@ -44,7 +44,9 @@
     // Fără ramura asta, `192.168.1.13` intra pe drumul de producție de mai jos:
     // `parts.slice(-2)` scotea „1.13”, ieșea `http://api.1.13`, iar portul se
     // pierdea cu totul — adică aplicația deschisă de pe telefon, în rețeaua
-    // casei, nu găsea niciun server. Aceeași pază ca la Client.dc.html:647.
+    // casei, nu găsea niciun server. Aceeași pază ca la `staffHref` din
+    // Client.dc.html (numele câmpului, nu numărul rândului: rândurile paginii
+    // se mută la fiecare lucrare) și ca la `referralCode()`, mai jos.
     if (!hostname.includes('.') || /^[0-9.]+$/.test(hostname) || hostname.charAt(0) === '[') {
       return aici;
     }
@@ -88,11 +90,17 @@
   /* ------------------------------------------------------------ erori -- */
 
   class GpError extends Error {
-    constructor(message, status, code) {
+    constructor(message, status, code, detalii) {
       super(message);
       this.name = 'GpError';
       this.status = status;
       this.code = code;
+      // Obiectul `error` întreg, așa cum l-a trimis serverul. Unele refuzuri
+      // spun mai mult decât un cod și un mesaj: 409 `status_changed` pune în
+      // `current` etapa pe care o are ACUM comanda, ca ecranul rămas în urmă
+      // să poată spune omului ce s-a întâmplat, fără încă o cerere. Niciodată
+      // null, ca pagina să poată citi `e.detalii.current` fără pază.
+      this.detalii = detalii || {};
     }
     /** Sesiunea a expirat sau nu există. */
     get isAuth() {
@@ -235,7 +243,10 @@
       throw new GpError(
         err.message || `Eroare ${res.status}.`,
         res.status,
-        err.code || String(res.status)
+        err.code || String(res.status),
+        // Tot ce a mai pus serverul în `error` merge mai departe, neatins:
+        // pagina alege ce citește din el. Vezi `detalii` la clasă.
+        err
       );
     }
 
@@ -473,6 +484,121 @@
     forgetReferral() {
       try { global.sessionStorage.removeItem('gp-ref'); } catch (e) { /* noop */ }
       try { if (gp.__refCookie) gp.__refCookie.del(); } catch (e) { /* noop */ }
+    },
+
+    /**
+     * „Comandă din nou”: o comandă veche, strânsă într-un cod scurt de adresă.
+     *
+     * DE CE PRIN ADRESĂ, ȘI NU PRIN COȘUL DIN BROWSER. Pagina clientului stă pe
+     * clienti.goldenpastry.ro, magazinul pe goldenpastry.ro — două origini, deci
+     * două localStorage-uri care nu se văd unul pe altul. Coșul scris de aici
+     * în `gp-cart-v1` ar fi mers perfect pe serverul de probă, unde totul e
+     * aceeași origine, și n-ar fi ajuns NICIODATĂ în magazinul din producție.
+     * Aceeași pățanie ca a codului de recomandare (`referralCode()`, mai sus).
+     *
+     * Codul: bucăți `f<id>x<cant>` (congelat) și `b<id>x<cant>` (copt),
+     * legate cu punct — `f12x10.b9x2`. Numai litere, cifre și punct, deci nu
+     * cere codare în adresă și nu se strică trecând prin build-deploy.
+     *
+     * Întoarce și ce a rămas pe dinafară, din aceeași trecere, ca nota de sub
+     * buton să nu poată spune altceva decât ce a intrat în cod:
+     *   `scoase`   — pozițiile fără produs din catalog (scrise de mână la
+     *                telefon, sau produs șters): coșul are cheie pe produs, deci
+     *                n-au unde intra;
+     *   `rotunjit` — o sumă cu zecimale (0,5 tăvi din panou) a intrat rotunjită
+     *                în SUS: coșul lucrează numai cu bucăți întregi, iar în jos
+     *                0,4 ar fi dispărut cu totul;
+     *   `taiat`    — o sumă peste 9999, cât primește căsuța de cantitate.
+     *
+     * Același produs pe două rânduri (bucățile la prețul promis și cele puse
+     * azi, api/lib/orders.php) se ADUNĂ: scrise rând cu rând în aceeași cheie,
+     * al doilea l-ar fi călcat pe primul și s-ar fi pierdut marfă.
+     */
+    reia(items) {
+      const sume = {};
+      const ordine = [];
+      const scoase = [];
+      (items || []).forEach((i) => {
+        if (!i) return;
+        const q = gp.qty(i.q != null ? i.q : i.qty);
+        if (!(q > 0)) return;
+        const id = Number(i.productId);
+        const v = i.variant === 'congelat' ? 'f' : i.variant === 'copt' ? 'b' : '';
+        if (!(Number.isInteger(id) && id > 0) || !v) {
+          const n = String(i.n != null ? i.n : (i.name || '')).trim();
+          if (n && scoase.indexOf(n) < 0) scoase.push(n);
+          return;
+        }
+        const k = v + id;
+        if (!(k in sume)) { sume[k] = 0; ordine.push(k); }
+        sume[k] += q;
+      });
+      let rotunjit = false;
+      let taiat = false;
+      const bucati = ordine.map((k) => {
+        // Rotunjirea la sutimi înainte de `ceil`: 2,7 + 0,1 + 0,2 adunate în
+        // virgulă mobilă dau 3,0000000000000004, iar `ceil` ar fi urcat un 3 la 4.
+        const exact = Math.round(sume[k] * 100) / 100;
+        if (exact % 1 !== 0) rotunjit = true;
+        const n = Math.ceil(exact);
+        if (n > 9999) taiat = true;
+        return k + 'x' + Math.min(9999, n);
+      });
+      return { cod: bucati.join('.'), scoase, rotunjit, taiat };
+    },
+
+    /**
+     * Codul lui `reia()`, citit înapoi în cheile coșului din magazin
+     * (`frozen:12`, `baked:9`). Strict: o bucată care nu arată exact ca una
+     * scrisă de `reia()` se sare, nu se ghicește — adresa poate fi tăiată de un
+     * program de mesagerie sau scrisă de mână. Cel mult 200 de bucăți și 9999
+     * dintr-un produs, cât primește căsuța de cantitate.
+     *
+     * Întoarce un obiect gol pentru un cod de neînțeles: magazinul spune atunci
+     * că legătura nu s-a putut citi și lasă coșul cum era.
+     */
+    reiaCitire(s) {
+      const qty = {};
+      String(s == null ? '' : s).split('.').slice(0, 200).forEach((b) => {
+        const m = /^([fb])([1-9][0-9]{0,8})x([1-9][0-9]{0,3})$/.exec(b);
+        if (!m) return;
+        const k = (m[1] === 'f' ? 'frozen:' : 'baked:') + m[2];
+        qty[k] = Math.min(9999, (qty[k] || 0) + parseInt(m[3], 10));
+      });
+      return qty;
+    },
+
+    /**
+     * `?reia=` din adresa magazinului: îl citește O SINGURĂ DATĂ și îl scoate.
+     *
+     * Lăsat în adresă, parametrul s-ar fi aplicat din nou la fiecare
+     * reîncărcare, iar `duLa()` l-ar fi purtat pe toate paginile magazinului
+     * (ea duce `location.search` mai departe, pentru `?utm_source=`). Restul
+     * adresei rămâne neatins — alți parametri, `#`, starea din istoric —,
+     * exact ca la `?ref=`.
+     *
+     * `null` când parametrul lipsește. Nu aruncă niciodată: un browser fără
+     * istoric scriibil lasă parametrul pe loc, dar reluarea tot se citește.
+     */
+    reiaDinAdresa() {
+      try {
+        const loc = global.location;
+        const q = new global.URLSearchParams(loc.search || '');
+        const v = q.get('reia');
+        if (v === null) return null;
+        q.delete('reia');
+        const coada = q.toString();
+        try {
+          global.history.replaceState(
+            global.history.state,
+            '',
+            loc.pathname + (coada ? '?' + coada : '') + (loc.hash || '')
+          );
+        } catch (e) { /* istoric nescriibil: adresa rămâne, coșul se umple oricum */ }
+        return gp.reiaCitire(v);
+      } catch (e) {
+        return null;
+      }
     },
 
     /**
@@ -757,8 +883,8 @@
      * din casă mai îngustă decât drepturile depline, și e îngustă dinadins:
      * administratorul ține patiseria în mână zi de zi, dar banii sunt ai
      * proprietarului. Peste tot în rest cele două roluri trec prin aceleași
-     * uși — aici nu, iar `.claude/check-meniu.mjs` se plânge dacă se apropie
-     * iar una de alta.
+     * uși — aici nu. `.claude/check-meniu.mjs` se plânge dacă se apropie iar,
+     * și dacă rândul ăsta nu mai spune ce spune PANOURI_ROL (secțiunea G).
      */
     eStats(cine) {
       const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';

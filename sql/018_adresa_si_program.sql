@@ -24,6 +24,11 @@
 -- („Setari.dc.html", cheile „căzute"), dar a numi paguba nu e a o repara: omul
 -- afla că nu se poate, nu căpăta un loc unde să scrie.
 --
+-- De la runda 2.1.1 panoul merge mai departe: caseta fără rând stă ÎNCHISĂ și
+-- numește migrarea asta sub ea, iar settings_save() refuză ÎNTREAGĂ cererea care
+-- poartă o cheie fără rând (422, unknown_setting), numindu-le pe toate. Migrarea
+-- rămâne singurul loc de unde vine rândul în care se poate scrie.
+--
 -- CE VALORI SE SEAMĂNĂ, ȘI DE CE TOCMAI ACESTEA
 -- =============================================
 --

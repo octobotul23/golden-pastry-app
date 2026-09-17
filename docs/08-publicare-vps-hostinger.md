@@ -222,9 +222,12 @@ mysql --default-character-set=utf8mb4 -u root -p gp < /root/deploy/sql/001_schem
 mysql --default-character-set=utf8mb4 -u root -p gp < /root/deploy/sql/002_seed.sql
 ```
 
-Migrările `003`–`007` n-au ce face la o instalare nouă: schema le conține
-deja. Cele de după ele, **`008`–`018`, sunt cele care contează** — schema nu le
-are (cea mai nouă e `018_adresa_si_program.sql`). Bucla de mai jos le rulează pe toate, de la `003` în sus, și e bine așa:
+Migrările `003`–`006` n-au ce face la o instalare nouă: schema le conține
+deja. `007` **nu** — măsurat în `001_schema.sql`: `referral_code`,
+`referred_by` și `referred_at` nu apar nicăieri în el, iar `users.role` e tot
+`ENUM('admin','angajat','client')`, fără `manager` și `agent_vanzari`. Așa că
+cele care contează sunt **`007`–`018`** — schema nu le are (cea mai nouă e
+`018_adresa_si_program.sql`). Bucla de mai jos le rulează pe toate, de la `003` în sus, și e bine așa:
 fiecare se uită întâi în `information_schema` și, dacă are deja ce caută, nu
 face nimic. Nu le alege pe sprânceană — o listă scrisă cu mâna e exact felul în
 care se uită o migrare.
@@ -245,18 +248,25 @@ lămurit că lipsește migrarea — vezi `lab_supported()` și
 `lab_board_supported()`. (`instaleaza-vps.sh` face bucla asta singur.)
 
 `017_procent_recomandare.sql` nu se vede nici în tabele, nici în coloane: ea
-scrie o setare, atât. O verifici în **Setări → Procent de recomandare**, unde
-pe o instalare nouă trebuie să scrie **5**. Dacă scrie `0`, recomandările
-merg — se leagă, se numără — dar nu aduc niciun ban, și nimic din aplicație
-nu te anunță despre asta.
+scrie o setare, atât. O verifici în **Setări → General**, la „Procent de
+recomandare", unde pe o instalare nouă trebuie să scrie **5**. Dacă scrie `0`,
+recomandările merg — se leagă, se numără — dar nu aduc niciun ban, și nimic din
+aplicație nu te anunță despre asta. Iar dacă acolo nu e nicio cifră, ci o casetă
+închisă cu `017_procent_recomandare.sql` scris sub ea, rândul lipsește cu totul
+din `settings`: până intră migrarea, aplicația socotește cu 5%, cifra scrisă în
+cod, iar din panou nu poți pune alta.
 
 `018_adresa_si_program.sql` e la fel ca `017`: nu se vede nici în tabele, nici
 în coloane, fiindcă scrie două setări — adresa publică și programul. O verifici
-în **Setări → Adresa publică** și **Program de lucru**: pe o instalare nouă
-trebuie să scrie „Șos. Olteniței 103", respectiv „Lu-Vi 07:00-21:00, Sâ 07:00-17:00". Dacă
-amândouă casetele sunt goale, migrarea n-a intrat — și atunci ele nu se pot
-scrie deloc: salvarea răspunde cu un refuz care numește cheia lipsă
-(`unknown_setting`), fiindcă setările se scriu peste rânduri care există.
+tot în **Setări → General**, la „Adresa publică" și „Program de lucru": pe o
+instalare nouă trebuie să scrie „Șos. Olteniței 103", respectiv „Lu-Vi 07:00-21:00, Sâ 07:00-17:00".
+Semnul că migrarea n-a intrat nu e caseta goală — goală și deschisă înseamnă că
+ai golit-o tu, și atunci site-ul arată adresa și programul scrise în cod —, ci
+caseta **închisă**, în care nu se poate scrie, cu `018_adresa_si_program.sql`
+scris sub ea:
+setările se scriu peste rânduri care există, deci fără rând n-au unde se scrie.
+O cerere care le poartă totuși (un script, un import) e refuzată întreagă, cu
+toate cheile lipsă numite (`unknown_setting`), și nu scrie nimic din ea.
 
 `016_zona_cont.sql` nu se vede în numărul de tabele: ea aduce o **coloană**
 (`users.zone`) și încă o zonă în lista de livrare. O verifici în aplicație, nu

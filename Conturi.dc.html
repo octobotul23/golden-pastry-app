@@ -81,7 +81,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 <button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
-<a href="Intrare.dc.html" style="font-size:14px;color:rgba(255,255,255,.72);text-decoration:none;padding-top:4px">← Alege panoul</a>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;color:rgba(255,255,255,.72);text-decoration:none">← Alege panoul</a>
 </div>
 </div>
 </div>
@@ -1600,9 +1600,9 @@ class Component extends DCLogic {
 
         gp.put('/settings', { panel_code: v })
           .then((r) => {
-            // Un 200 nu înseamnă „s-a scris". `settings_save()` sare tăcut
-            // peste cheile pe care nu le are în tabel și răspunde totuși
-            // ok=true; iar un secret criptat cu o cheie de criptare schimbată
+            // Un 200 nu înseamnă „s-a scris". `settings_save()` sărea tăcut
+            // peste cheile pe care nu le avea în tabel (azi le refuză pe nume,
+            // cu 422) și răspundea totuși ok=true; iar un secret criptat cu o cheie de criptare schimbată
             // între timp SE scrie, dar la citire nu se mai poate decoda și
             // iese gol. Amândouă arată la fel de aici: mesaj verde, cardul
             // mutat pe „••••••••" din propria noastră presupunere, și codul

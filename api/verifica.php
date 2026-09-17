@@ -174,30 +174,91 @@ if ($hasConfig) {
         check('Codificarea legăturii', str_starts_with($charset, 'utf8mb4'), $charset,
             'Cu altă codificare, diacriticele din denumirile produselor și din etape se strică.');
 
-        // Tabelele: câte din cele create de sql/001_schema.sql există deja?
+        // Tabelele aplicației: câte din ele există deja în bază?
         //
         // Lista trebuie să fie completă, altfel pagina minte tocmai în situația
-        // pentru care există: `product_categories` lipsea de aici, deci un
-        // import vechi sau parțial, fără el, primea „14 din 14 prezente" și
-        // bifă verde — iar prima deschidere a paginii Catalog cădea cu eroare
-        // de bază de date. Când se adaugă un tabel în schemă, se adaugă și aici.
+        // pentru care există. S-a întâmplat de două ori, în același fel:
+        //
+        //   1. `product_categories` lipsea de aici, deci un import vechi sau
+        //      parțial, fără el, primea „14 din 14 prezente" și bifă verde —
+        //      iar prima deschidere a paginii Catalog cădea cu eroare de bază
+        //      de date.
+        //   2. Apoi lista a rămas la cele 17 tabele din `sql/001_schema.sql`,
+        //      iar `referral_commissions` (008), `founder_invites` (009),
+        //      `lab_shifts` (014) și `lab_messages` (015) n-au intrat niciodată
+        //      în ea: o bază oprită la `002` primea „17 din 17 prezente" și
+        //      bifă verde, fără patru tabele din douăzeci și unu.
+        //
+        // A doua oară NU s-a călcat nicio regulă. Regula scrisă aici zicea „când
+        // se adaugă un tabel ÎN SCHEMĂ, se adaugă și aici", iar cele patru n-au
+        // fost adăugate în schemă: au venit prin migrări. Regula era scrisă
+        // pentru evenimentul greșit, deci n-avea cum să prindă ce s-a întâmplat.
+        // De-aia o reparație care doar adaugă cele patru nume ar repeta
+        // greșeala: peste trei luni ar fi cinci.
+        //
+        // Lista nu se mai ține deci de mână. `.claude/test-doc-actualizari.mjs`
+        // (regula „lista de tabele din verifica.php e chiar ce creeaza sql")
+        // cere ca cheile de mai jos să fie EXACT numele din toate `CREATE TABLE`
+        // din `sql/`, fiecare cu fișierul care îl naște primul. O migrare nouă
+        // cu un tabel nou înroșește proba în ziua în care intră în `sql/` — nu
+        // peste trei luni, în pagina asta.
+        //
+        // DE CE RĂMÂNE SCRISĂ ÎN COD, ȘI NU SE CITEȘTE DIN `sql/`. Pe VPS
+        // folderul acela nu ajunge lângă `api/`: `actualizeaza-vps.sh:684-687`
+        // copiază în `/var/www/gp/` numai `api`, `public_html`, `clienti` și
+        // `lab`, iar `sql/` rămâne unde a fost urcat, în `/root/deploy/`, de
+        // unde îl citesc scripturile de server. O citire de pe disc n-ar găsi
+        // nimic exact pe serverul pentru care există pagina: ori ar tăcea verde,
+        // ori ar pune un rând „nu pot ști" la fiecare deschidere. Adevărul stă
+        // deci în cod, iar proba îl ține în acord cu discul.
         $tables = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
         $need   = [
-            'users', 'sessions', 'password_resets', 'product_categories', 'products',
-            'order_requests', 'order_request_items', 'orders', 'order_items',
-            'stock_items', 'stock_moves', 'product_recipes', 'stock_reservations',
-            'audit_log', 'notifications', 'settings',
-            'login_attempts',
+            'users'                => '001_schema.sql',
+            'sessions'             => '001_schema.sql',
+            'password_resets'      => '001_schema.sql',
+            'product_categories'   => '001_schema.sql',
+            'products'             => '001_schema.sql',
+            'order_requests'       => '001_schema.sql',
+            'order_request_items'  => '001_schema.sql',
+            'orders'               => '001_schema.sql',
+            'order_items'          => '001_schema.sql',
+            'stock_items'          => '001_schema.sql',
+            'stock_moves'          => '001_schema.sql',
+            'product_recipes'      => '001_schema.sql',
+            'stock_reservations'   => '001_schema.sql',
+            'audit_log'            => '001_schema.sql',
+            'notifications'        => '001_schema.sql',
+            'settings'             => '001_schema.sql',
+            'login_attempts'       => '001_schema.sql',
+            'referral_commissions' => '008_comisioane_recomandari.sql',
+            'founder_invites'      => '009_pontaj_si_roluri.sql',
+            'lab_shifts'           => '014_pontaj_laborator.sql',
+            'lab_messages'         => '015_mesaje_laborator.sql',
         ];
-        $missing = array_values(array_diff($need, $tables));
+        $missing = array_values(array_diff(array_keys($need), $tables));
+        // Numele lipsă spune singur care fișier n-a intrat, ca în docs/01 și în
+        // docs/08 („referral_commissions e din 008, lab_shifts din 014..."). Nu
+        // se scrie a doua oară: se citește din lista de mai sus.
+        $numite = array_map(static fn(string $t): string => $t . ' (' . $need[$t] . ')', $missing);
+        // Fără tabelele schemei aplicația nu pornește deloc — prima pagină cade
+        // cu eroare de bază de date. Fără cele aduse de migrări pornește, dar
+        // paginile care le cer răspund „lipsește migrarea". Deosebirea se
+        // citește tot din listă, nu se ține minte a doua oară.
+        $lipsaSchema = array_filter($missing, static fn(string $t): bool => $need[$t] === '001_schema.sql');
         check(
             'Tabelele aplicației',
             $missing === [],
             $missing === []
                 ? count($need) . ' din ' . count($need) . ' prezente'
-                : (count($need) - count($missing)) . ' din ' . count($need) . ' — lipsesc: ' . implode(', ', $missing),
-            'Importă sql/001_schema.sql și sql/002_seed.sql din phpMyAdmin. Dacă baza e mai veche decât tabelele care lipsesc, adu-le cu migrarea lor din sql/ — vezi docs/08-publicare-vps-hostinger.md.',
-            false
+                : (count($need) - count($missing)) . ' din ' . count($need) . ' — lipsesc: ' . implode(', ', $numite),
+            'sql/001_schema.sql și sql/002_seed.sql NU sunt tot: restul tabelelor se nasc abia '
+                . 'în migrări. Rulează TOATE fișierele din sql/, în ordinea numelui — nu le alege '
+                . 'pe sprânceană, o listă scrisă cu mâna e exact felul în care se uită o migrare. '
+                . 'Pe server o face singur instaleaza-vps.sh, iar la actualizare actualizeaza-vps.sh; '
+                . 'de mână, bucla din docs/08-publicare-vps-hostinger.md. Local: '
+                . 'docs/01-instalare-locala.md. Fișierul scris lângă fiecare nume de mai sus e '
+                . 'chiar migrarea care n-a intrat.',
+            $lipsaSchema !== []
         );
 
         // Coloanele adăugate ulterior, prin migrarea 003.
@@ -339,6 +400,168 @@ if ($hasConfig) {
                 . 'Importă sql/009_pontaj_si_roluri.sql din phpMyAdmin.',
             false
         );
+
+        /* ------------------------------------------- restul migrărilor -- */
+
+        // Blocurile de mai sus s-au oprit la 009, iar `sql/` a ajuns la 018.
+        // Adică aceeași scădere ca la lista de tabele, cu altă față: o
+        // actualizare rămasă pe drum, oriunde între 010 și 018, trecea prin
+        // pagina asta fără un cuvânt — tocmai pagina pe care o deschide omul ca
+        // să afle dacă instalarea e întreagă.
+        //
+        // De ce nu sunt scrise una câte una, ca 006–009: acolo fiecare migrare
+        // are de spus altă poveste și o spune singură. Aici sunt opt, toate cu
+        // aceeași formă („au intrat coloanele/rândurile ei?"), iar opt blocuri
+        // copiate ar fi fost opt locuri de ținut minte. Tabelul de mai jos e
+        // unul singur, iar `.claude/test-doc-actualizari.mjs` (regula
+        // „verifica.php numeste fiecare migrare din sql") cere ca FIECARE fișier
+        // din `sql/` să fie numit undeva în pagina asta. O migrare nouă
+        // înroșește proba până când cineva scrie ce se vede din ea — sau de ce
+        // nu se vede nimic.
+        //
+        // Coloanele și cheile scrise pe fiecare rând NU pot îmbătrâni, și asta
+        // nu din noroc: un fișier din `sql/` nu se mai schimbă după ce a plecat
+        // pe un server adevărat — corectura se face într-o migrare NOUĂ, nu în
+        // una veche. Deci singurul lucru care poate apărea vreodată e un fișier
+        // nou, iar tocmai pe el îl păzește proba de mai sus. Ce îmbătrânea până
+        // acum era lista fișierelor, nu cuprinsul lor.
+        //
+        // `017_procent_recomandare.sql` e numită aici anume, și tot aici i se
+        // scrie pricina: ea NU se vede în bază. Scrie un singur rând în
+        // `settings`, `referral_rate_default`, pe care `008` îl pusese deja (cu
+        // valoarea 0), deci prezența rândului nu deosebește o bază cu 017 de una
+        // fără. Iar valoarea nu se poate judeca: 017 o îndreaptă la 5 numai
+        // acolo unde n-a atins-o omul, și un zero pus de patron rămâne zero.
+        // O verificare care ar cere „5" ar da roșu pe o instalare cinstită. Se
+        // verifică în Setări → General, cum scrie docs/08.
+        $altele = [
+            '004_variante_pe_pozitie.sql' => [
+                'nume'    => 'Variantele pe poziție (migrarea 004)',
+                'coloane' => ['order_items' => ['variant'], 'order_request_items' => ['variant'],
+                              'notifications' => ['seen_at']],
+                'setari'  => [],
+                'ce'      => 'Țin varianta aleasă pe fiecare rând de comandă și clipa în care a fost '
+                    . 'văzut un anunț. Fără ele, comanda pierde varianta, iar clopoțelul nu mai știe ce e citit.',
+            ],
+            '010_origine_cont.sql' => [
+                'nume'    => 'Originea conturilor (migrarea 010)',
+                'coloane' => ['users' => ['self_registered', 'vouched_at', 'vouched_by']],
+                // Urma pe care migrarea și-o scrie singură după ce judecă
+                // conturile vechi (010, la coadă). E singurul rând din `settings`
+                // care spune sigur „010 a rulat".
+                'setari'  => ['migration_010_origin_judged'],
+                'ce'      => 'Spun care cont s-a înscris singur și cine l-a girat. Fără ele, pagina '
+                    . 'Conturi nu poate deosebi un client venit de pe site de unul făcut de patron.',
+            ],
+            '011_reducere_pachet_test.sql' => [
+                'nume'    => 'Reducerile pe comandă (migrarea 011)',
+                'coloane' => ['orders' => ['promo'], 'order_requests' => ['promo'],
+                              'order_items' => ['list_price'], 'order_request_items' => ['list_price']],
+                'setari'  => [],
+                'ce'      => 'Țin numele reducerii și prețul de listă de dinaintea ei. Fără ele, '
+                    . 'comanda nu mai poate arăta cât s-a scăzut și din ce.',
+            ],
+            '012_comision_scos.sql' => [
+                'nume'    => 'Comisioanele scoase din plată (migrarea 012)',
+                'coloane' => ['referral_commissions' => ['dismissed_at', 'dismissed_by']],
+                'setari'  => [],
+                'ce'      => 'Țin cine și când a scos un comision din plată. Fără ele, panoul '
+                    . 'Recomandări nu poate renunța la un câștig fără să-l șteargă.',
+            ],
+            '013_anunturi_pe_canal.sql' => [
+                'nume'    => 'Anunțurile pe canal (migrarea 013)',
+                'coloane' => ['notifications' => ['event'],
+                              'order_requests' => ['decided_via', 'snoozed_until']],
+                'setari'  => ['notify_email_events', 'notify_whatsapp_events', 'notify_telegram_events',
+                              'notify_telegram_buttons', 'notify_telegram_webhook_secret',
+                              'notify_telegram_webhook_status', 'notify_telegram_actor_id'],
+                'ce'      => 'Țin ce fel de anunț a plecat pe ce canal și cum a fost hotărâtă o cerere. '
+                    . 'Fără ele, Setările nu pot alege ce se trimite pe e-mail, pe WhatsApp și pe Telegram.',
+            ],
+            '014_pontaj_laborator.sql' => [
+                'nume'    => 'Codul de tabletă al pontajului (migrarea 014)',
+                'coloane' => ['users' => ['lab_pin']],
+                'setari'  => [],
+                // Tabelul `lab_shifts` e numărat sus, la tabelele aplicației;
+                // aici rămâne doar coloana, care se pierde separat de el.
+                'ce'      => 'Ține codul cu care intră omul pe tableta din laborator. Fără el, lista '
+                    . 'de nume de pe tabletă rămâne goală, chiar dacă tabelul turelor există.',
+            ],
+            '016_zona_cont.sql' => [
+                'nume'    => 'Zona de livrare pe cont (migrarea 016)',
+                'coloane' => ['users' => ['zone']],
+                'setari'  => [],
+                'ce'      => 'Ține zona în care livrezi fiecărui client. Fără ea, paginile care '
+                    . 'socotesc livrarea răspund „nu pot încă", iar zona se ghicește la fiecare comandă.',
+            ],
+            '018_adresa_si_program.sql' => [
+                'nume'    => 'Adresa și programul public (migrarea 018)',
+                'coloane' => [],
+                'setari'  => ['company_address', 'company_hours'],
+                'ce'      => 'Țin adresa și programul arătate pe site. Fără rândurile lor, casetele '
+                    . 'din Setări → General stau închise și site-ul arată ce scrie în cod.',
+            ],
+        ];
+
+        // Coloanele fiecărui tabel se cer o singură dată, nu o dată pe migrare:
+        // `users` apare în trei rânduri de mai sus, iar un SHOW COLUMNS pe
+        // rând ar fi trei drumuri la server pentru același răspuns.
+        $coloaneLui = [];
+        $vaz = static function (string $t) use (&$coloaneLui, $pdo, $tables): array {
+            if (!in_array($t, $tables, true)) return [];
+            if (!isset($coloaneLui[$t])) {
+                $coloaneLui[$t] = $pdo->query('SHOW COLUMNS FROM ' . $t)->fetchAll(PDO::FETCH_COLUMN);
+            }
+            return $coloaneLui[$t];
+        };
+        $cheiSetari = in_array('settings', $tables, true)
+            ? $pdo->query('SELECT setting_key FROM settings')->fetchAll(PDO::FETCH_COLUMN)
+            : [];
+
+        foreach ($altele as $fisier => $m) {
+            $lipsa = [];
+            // Ce NU s-a putut măsura, și de ce. Fără rândul ăsta, o coloană de
+            // pe un tabel care lipsește ar fi trecut neverificată, iar rândul ar
+            // fi spus „prezente" — adică exact tăcerea verde pe care o repară
+            // lucrarea asta, mutată cu un cot mai încolo. Măsurat: pe o bază
+            // oprită la `002`, unde `referral_commissions` nu există, migrarea
+            // 012 ieșea bifată verde fără să se fi uitat nimeni la nimic.
+            $nestiut = [];
+            foreach ($m['coloane'] as $tabel => $coloane) {
+                if (!in_array($tabel, $tables, true)) {
+                    $nestiut[] = $tabel;
+                    continue;
+                }
+                $are = $vaz($tabel);
+                foreach ($coloane as $c) {
+                    if (!in_array($c, $are, true)) $lipsa[] = $tabel . '.' . $c;
+                }
+            }
+            if ($m['setari'] !== [] && !in_array('settings', $tables, true)) {
+                $nestiut[] = 'settings';
+            } else {
+                foreach ($m['setari'] as $k) {
+                    if (!in_array($k, $cheiSetari, true)) $lipsa[] = 'settings.' . $k;
+                }
+            }
+            $nestiut = array_values(array_unique($nestiut));
+            check(
+                $m['nume'],
+                $lipsa === [] && $nestiut === [],
+                $nestiut !== []
+                    ? 'nu se poate ști: ' . (count($nestiut) === 1 ? 'lipsește tabelul ' : 'lipsesc tabelele ')
+                        . implode(', ', $nestiut)
+                        . ($lipsa === [] ? '' : '; lipsesc și ' . implode(', ', $lipsa))
+                    : ($lipsa === [] ? 'prezente' : 'lipsesc: ' . implode(', ', $lipsa)),
+                ($nestiut !== []
+                    ? 'Tabelele pe care stau coloanele ei nu există încă, deci migrarea asta nu '
+                        . 'poate fi măsurată. Vezi întâi rândul „Tabelele aplicației". '
+                    : '')
+                    . $m['ce'] . ' Importă sql/' . $fisier . ' din phpMyAdmin — sau, mai bine, '
+                    . 'rulează toate fișierele din sql/ în ordinea numelui, cum face instaleaza-vps.sh.',
+                false
+            );
+        }
     } catch (Throwable $e) {
         // Mesajul poate conține numele bazei, dar niciodată parola.
         // Nu îl escapăm aici: șablonul de mai jos escapează tot ce afișează.

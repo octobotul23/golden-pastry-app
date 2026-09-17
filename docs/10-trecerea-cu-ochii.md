@@ -5,8 +5,28 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează în jur de douăzeci și cinci de minute. Nu trebuie făcută dintr-o bucată:
-fiecare din cele șapte plimbări stă singură.
+Durează **cincizeci și șapte de minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele opt plimbări stă singură și își spune la început cât
+ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale bucăților care au
+minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o plimbare, se adună și aici.
+
+Cele opt, în ordinea în care se fac cel mai ușor:
+
+1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
+2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
+3. **Tabla de anunțuri din laborator** — anunțuri, termene, Jurnal.
+4. **Zona pe cont, ruta, și comanda dintr-o apăsare** — plus coșul în două file
+   și trimiterea căzută (4.4).
+5. **Rozeta, unde lipsește poza** — formularul de produs, pe amândouă temele.
+6. **Statisticile, care sunt numai ale fondatorului** — cele trei vederi, data
+   socotită, poarta.
+7. **Comanda anulată, adusă înapoi** — cele trei uși, caseta, anunțul care
+   pleacă la capăt (7.5) și ecranul rămas în urmă: în „Comenzi" (7.6), pe
+   tableta din laborator (7.7) și pe telefonul șoferului (7.8).
+8. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+
+A opta se face la capăt dinadins: prinde într-o singură trecere tot ce ai
+deschis mai devreme.
 
 ---
 
@@ -80,7 +100,9 @@ Ieșirea din cont e butonul **„Ieși"** din bara de sus (pe telefon, **„Ieș
 cont"**, în sertar). Între două conturi, ieși întâi — altfel al doilea intră
 peste sesiunea primului. Dacă ai deja o sesiune deschisă, pagina de intrare nu-ți
 mai cere parola: scrie **„Ai deja o sesiune deschisă pe acest dispozitiv"** și
-îți dă butonul **„Mergi la panoul tău"**.
+îți dă butonul **„Mergi la panoul tău"** — iar pe o sesiune de client, **„Vezi
+comanda mea"**, cu **„Intră în magazin"** dedesubt. Clientul n-are panou de
+lucru, deci butonul nu-i poate promite unul.
 
 **Titlurile mici se desenează cu MAJUSCULE.** Mai jos sunt scrise cum stau în
 cod — „Ceasul de tură", „Raportul de pontaj", „De la" — dar pe ecran le vezi
@@ -121,6 +143,14 @@ Pe telefon, e butonul **☰** din dreapta barei de sus.
   **unsprezece**. Dacă administratorul vede „Statistici", poarta de pe server
   (`GP_STATS_ROLES`) și sertarul s-au despărțit — e defect, și e cel mai supărător
   fel de defect, fiindcă butonul duce la un refuz.
+- **Fondatorul are „Statistici" și în panoul de comenzi, în grupa „În
+  comenzi".** Pe monitor stă în bara din stânga, sub **„Cereri de pe site"**, cu o
+  săgeată → în loc de număr, fiindcă nu e o vedere a panoului, ci altă pagină.
+  Pe telefon e ultimul rând din **„Schimbă ▾"**, după cele patru vederi și
+  înaintea filtrelor. Apasă-l: trebuie să se deschidă Statisticile. Cu
+  `testadmin` grupa rămâne cu cele patru vederi — Comenzi, Rută șofer, Produse,
+  Cereri de pe site — fără „Statistici"; dacă o vede, e același defect ca în
+  sertar.
 - **Agentul `mihai` NU trebuie să cadă pe Comenzi.** Ziua lui începe la
   Recomandări, deși are și Comenzi în sertar.
 - **Nimeni nu vede o intrare pe care apăsând-o capătă „nu ai voie".** Dacă se
@@ -133,11 +163,15 @@ Pe telefon, e butonul **☰** din dreapta barei de sus.
 
 **Apeși:** `demo-cumparator` pe `/clienti/index.html`.
 
-**Trebuie să vezi:** după parolă, browserul pleacă spre **magazinul de
-producție** (`goldenpastry.ro`). Aia e adresa bună — clientul cade în magazin,
-nu într-un panou — dar e pe a treia gazdă, deci local n-ai unde ateriza. Ești
-totuși conectat: **tastează** `http://127.0.0.1:8101/clienti/client.html` și
-continuă de acolo.
+**Trebuie să vezi:** după parolă, browserul cade singur în **„Comanda mea"**
+(`http://127.0.0.1:8101/clienti/client`) — n-ai nimic de tastat. Aia e adresa
+bună: cine își scrie parola vrea să vadă ce a comandat, fiindcă magazinul se
+deschide și fără cont. Dacă în locul ei te trezești în magazin, s-a întors
+purtarea de dinainte de 13 septembrie 2026.
+
+Magazinul e la un clic — butonul **„Intră în magazin"** de pe pagina de intrare
+—, dar acela e o săritură între subdomenii: local te duce pe site-ul adevărat
+(`goldenpastry.ro`). Te întorci tastând `http://127.0.0.1:8101/`.
 
 **Trebuie să vezi**, în sertarul lui: **Comanda mea · Recomandări · Parola mea**
 — „Recomandări" fiindcă are cod (`cumparator`). Intră apoi cu **`testclient`**,
@@ -166,8 +200,9 @@ nou"** scrii patru cifre → **„Salvează codul"**.
 **Probează și refuzul:** încearcă întâi `1234`, apoi `0000`, apoi `4321`.
 
 **Trebuie să vezi**, de fiecare dată, rândul roșu: **„Codul ăsta se ghicește din
-prima (1234, 0000 și frații lor). Alege altul."** Sunt optsprezece coduri
-refuzate — cele cu patru cifre la fel și cele două șiruri drepte. Nu e o regulă
+prima (1234, 0000 și frații lor). Alege altul."** Sunt douăzeci și patru de
+coduri refuzate — zece cu toate cifrele la fel, plus câte șapte pe fiecare din
+cele două șiruri drepte (0123…6789 și 9876…3210). Nu e o regulă
 de tărie (patru cifre n-au cum fi tari), ci una de bun-simț: dacă oricine din
 laborator ghicește din prima codul colegului, pontajul nu mai spune cine a venit.
 
@@ -298,7 +333,7 @@ deasupra comenzilor. Ia unul jos ca să faci loc."**
 
 Textul scris acolo e **dinadins**: un anunț e o vorbă spusă întregii ture, iar
 cine l-a pus și ce scria în el e tocmai ce trebuie să se poată citi peste o lună.
-Codurile de pontaj, în schimb, nu apar niciodată — vezi mai sus.
+Codurile de pontaj, în schimb, nu apar niciodată — vezi 2.5.
 
 ### 3.5 Cine poate și cine nu
 
@@ -332,9 +367,9 @@ din magazin duce tot aici, dar e o legătură între subdomenii — local o tast
 
 ### 4.2 Comanda se umple singură
 
-**Apeși:** după ce contul s-a făcut, browserul pleacă spre magazinul de
-producție. Ești conectat — tastează `http://127.0.0.1:8101/`, alegi un produs și
-mergi la comandă.
+**Apeși:** contul făcut te lasă tot în **„Comanda mea"** — sesiunea e deschisă
+de server, deci drumul e același ca după o intrare cu parolă. De acolo tastează
+`http://127.0.0.1:8101/`, alegi un produs și mergi la comandă.
 
 **Trebuie să vezi:**
 - **nu** ți se mai cer numele, telefonul, adresa și zona — sunt deja pe cont;
@@ -385,6 +420,56 @@ kilometrii, și orele tuturor celorlalte opriri.
 > Setări, purtarea rămâne aceeași. Dar dacă îi **dai un punct pe hartă**, intră
 > pe rută ca oricare alta — și ăla e tot un răspuns bun, dacă asta vrei.
 
+### 4.4 Coșul în două file, și trimiterea căzută
+
+*Patru minute. Pe magazin, fără cont, afară de ultimul pas.*
+
+**Apeși:** deschizi `http://127.0.0.1:8101/` în **două file** ale aceluiași
+browser. În prima pui un produs în coș, apoi treci în a doua, **fără s-o
+reîncarci**.
+
+**Trebuie să vezi** produsul deja în coș și în a doua filă, cu aceeași sumă. Până
+la 2.1.1 a doua filă rămânea cu coșul de la deschidere, iar prima apăsare în ea
+scria coșul ei vechi peste cel nou.
+
+**Apeși:** în a doua filă, **„Golește"**. Te întorci în prima.
+
+**Trebuie să vezi** și prima filă cu coșul gol.
+
+**Apeși:** în prima filă pui un produs, apoi, în aceeași filă, tastezi
+`http://127.0.0.1:8101/lab/index.html`. În a doua filă mai pui un produs. Te
+întorci în prima și apeși săgeata **„Înapoi"** a browserului.
+
+**Trebuie să vezi** magazinul cu **amândouă** produsele în coș, nu doar cu primul.
+Browserul ține pagina în memorie și o arată pe loc la „Înapoi"; acum pagina își
+recitește coșul când e adusă așa înapoi.
+
+**Apeși:** cu un produs în coș → **„Finalizare comandă"** → completezi numele și
+telefonul → `F12` → fila **Network** → în lista de sus, unde scrie **„No
+throttling"**, alegi **„Offline"** → **„Trimite cererea"**.
+
+**Trebuie să vezi**, în caseta roșie de deasupra butonului: *„Legătura la
+internet s-a întrerupt chiar în timp ce trimiteam cererea, așa că nu știm dacă a
+ajuns la noi."*, urmată de îndemnul să nu o trimiți din nou pe loc, ci să scrii
+pe WhatsApp, cu butonul verde de dedesubt. Coșul rămâne plin, iar butonul
+**„Trimite cererea"** se aprinde la loc.
+
+Același pas, cu **`testclient`** (intri pe `/clienti/index.html`, apoi tastezi
+magazinul): caseta spune *„Înainte s-o trimiți din nou, uită-te în «Comanda
+mea», din meniul contului"*. Cu **`testadmin`**, trimite la **Comenzi**, la
+**„Cereri de pe site"**. Pe `http://127.0.0.1:8101/en/`, toate trei sunt în
+engleză.
+
+> **De ce nu „încearcă din nou".** Legătura cade des tocmai după ce serverul a
+> scris cererea, iar răspunsul se pierde pe drum. Serverul nu recunoaște încă o
+> a doua trimitere a aceleiași cereri, deci un „încearcă din nou" ar fi adus în
+> laborator două cereri identice. Un **refuz** al serverului (telefon greșit,
+> produs scos din gamă) nu e o cădere din rețea și rămâne cu vorbele lui, ca
+> până acum.
+
+La capăt pui lista din Network înapoi pe **„No throttling"** — altfel nimic din ce
+urmează nu mai ajunge la server.
+
 ---
 
 ## 5 · Rozeta, unde lipsește poza
@@ -417,9 +502,11 @@ practic invizibil ziua.
 *Cinci minute. Panoul cel mai nou, și singurul din casă cu o poartă mai strâmtă
 decât a administratorului.*
 
-**Apeși:** intri cu `demo-fondator` și apeși **„Statistici"** în sertar. Dacă
-baza de probă e goală pe intervalul de pornire, pune întâi în filtre un interval
-în care chiar sunt comenzi — pagina nu inventează cifre, și pe gol arată gol.
+**Apeși:** intri cu `demo-fondator` și apeși **„Statistici"** în sertar (sau, în
+panoul de comenzi, în grupa **„În comenzi"**). Pe amândouă le-ai numărat deja la
+1; aici se probează pagina din spatele lor. Dacă baza de probă e goală pe
+intervalul de pornire, pune întâi în filtre un interval în care chiar sunt
+comenzi — pagina nu inventează cifre, și pe gol arată gol.
 
 ### 6.1 Cele trei vederi
 
@@ -487,7 +574,397 @@ socotite din rolul omului, nu scrise de mână.
 
 ---
 
-## 7 · Telefon, tabletă, calculator
+## 7 · Comanda anulată, adusă înapoi
+
+*Treisprezece minute. O comandă se scoate din „Anulată" pe trei uși — butonul
+„Reface comanda" din formular, lista „Etapa" din fișa rapidă și lista „Stare" a
+formularului, la salvare —, iar toate trei trec prin aceeași casetă. La capăt,
+echipa află: pleacă anunțul „Comandă refăcută" (7.5), iar doi oameni pe aceeași
+comandă nu se mai scriu unul peste altul — în „Comenzi" (7.6), pe tableta din
+laborator (7.7) și pe telefonul șoferului (7.8).*
+
+### 7.1 Din fișa rapidă, pe o comandă de azi
+
+**Apeși:** `testadmin` → `/lab/comenzi.html` → pe rândul unei comenzi de azi sau
+de mâine, butonul mic **„Vezi produsele"** (se deschide fișa) → la **„Etapa"**
+alegi **„Anulată"**.
+
+**Trebuie să vezi:** comanda trece în „Anulată" pe loc, fără nicio întrebare.
+Anularea din fișă merge direct, ca până acum.
+
+**Apeși:** tot în fișă, la **„Etapa"**, alegi **„La ambalare"**.
+
+**Trebuie să vezi:**
+- peste fișă, caseta **„Refaci comanda #…?"**, iar lista de etape de dedesubt
+  **tot pe „Anulată"** — nimic n-a plecat încă la server;
+- în notă, **etapa aleasă**: *„Se întoarce în «La ambalare», reapare pe panoul
+  din laborator și pe ruta șoferului, iar marfa e din nou pusă deoparte în
+  depozit. Scăderea din raft se face când ajunge iar la «Predată», cu «Scade din
+  stoc» din Depozit."* Dacă scrie „În așteptare", ăla e un defect;
+- **niciun** rând galben: ziua comenzii nu e în trecut;
+- butoanele **„Lasă-o anulată"** și **„Reface comanda"**.
+
+**Apeși „Lasă-o anulată".** Caseta se închide, comanda rămâne „Anulată".
+
+**Alegi iar „La ambalare" → „Reface comanda".** Comanda e în **„La ambalare"**,
+iar sus scrie *„Comanda #… s-a întors în «La ambalare»."*
+
+Mutările între etapele din flux (de pildă „La ambalare" → „Predată") merg în
+continuare direct, fără casetă.
+
+### 7.2 Spre „Predată"
+
+**Apeși:** pe aceeași comandă, din fișă, **„Anulată"**, apoi **„Predată"**.
+
+**Trebuie să vezi** în casetă: *„Trece direct în «Predată»: marfa nu se mai pune
+deoparte, ci așteaptă scăderea din raft, cu «Scade din stoc» din Depozit."* — nu
+promisiunea cu panoul și ruta. Apeși **„Lasă-o anulată"**, apoi o aduci înapoi
+în etapa în care era, tot prin casetă.
+
+### 7.3 Pe o zi care a trecut
+
+Îți trebuie o comandă de ieri sau mai veche, care **nu** e „Predată" (ca să nu
+umbli la stoc). Pune sus filtrul **„Toate zilele · cu istoric"**. Dacă baza de
+probă n-are niciuna, sari peste 7.3: proba automată acoperă cazul.
+
+**Apeși:** fișa ei → **„Anulată"** → apoi o etapă din flux, de pildă **„La
+dospit"**.
+
+**Trebuie să vezi:**
+- nota **fără** „reapare pe panoul din laborator și pe ruta șoferului";
+- între notă și butoane, un **rând galben**: *„Ziua comenzii e în trecut și
+  trebuie mutată. Refăcută așa, rămâne pe ziua veche și nu reapare nici pe
+  panoul din laborator, nici pe ruta șoferului, care pornesc de la azi. Alege în
+  câmpul «Zi» al comenzii o zi de azi încolo, salvează, apoi refă comanda."*
+
+**Apeși „Lasă-o anulată"**, apoi **„Editează comanda"** → în subsol, **„Reface
+comanda"**. **Trebuie să vezi** același rând galben, pe cealaltă ușă. Apeși
+**„Lasă-o anulată"**.
+
+Ieși, intră cu **`demo-manager`** și alege din nou o etapă din fișa aceleiași
+comenzi. Rândul galben se încheie altfel: *„Ziua se mută dintr-un cont de
+administrator: cere-i s-o mute, apoi refă comanda."* — managerul n-are câmpul
+„Zi". Apeși **„Lasă-o anulată"**.
+
+Alege acum **„Predată"**: rândul spune *„Ziua comenzii e în trecut. Trecută în
+«Predată», rămâne predată pe ziua aceea: e bine numai dacă atunci a fost
+livrată…"*. Apeși **„Lasă-o anulată"**.
+
+La capăt, pune comanda înapoi în etapa în care o găsiseși: **„Reface comanda"**
+din casetă. Ziua nu se mută, deci rămâne cum era.
+
+### 7.4 A treia ușă: lista „Stare" a formularului, la salvare
+
+Ușa asta nu mută numai etapa: pleacă tot formularul, într-o singură salvare.
+De-aia caseta arată la fel, dar butoanele spun altceva.
+
+**Apeși:** `testadmin` → `/lab/comenzi.html` → pe o comandă de azi sau de mâine,
+**„Vezi produsele"** → **„Editează comanda"** → în formular, la **„Stare"**,
+alegi **„Anulată"** → **„Salvează modificările"**.
+
+**Trebuie să vezi:** comanda trece în „Anulată" pe loc, **fără casetă**.
+Anularea din formular merge direct, ca până acum.
+
+**Apeși:** iar **„Editează comanda"** pe ea și schimbi **două** lucruri: la
+**„Stare"** alegi **„La ambalare"**, iar în **„Telefon"** mai adaugi o cifră.
+Apeși **„Salvează modificările"**.
+
+**Trebuie să vezi:**
+- **aceeași casetă** „Refaci comanda #…?", cu nota pe **etapa aleasă**: *„Se
+  întoarce în «La ambalare»…"*. Dacă scrie „În așteptare", ăla e un defect:
+  caseta trebuie să spună unde duce chiar lista din formular;
+- **formularul rămâne dedesubt**, cu tot ce ai tastat, iar comanda de pe rând e
+  tot „Anulată": n-a plecat nimic la server;
+- butoanele, altele decât pe celelalte două uși: **„Înapoi la formular"** și
+  **„Salvează și reface"**.
+
+**Apeși „Înapoi la formular".** Caseta se închide, formularul rămâne deschis, cu
+„La ambalare" în listă și cu cifra în plus la telefon — nimic nu s-a pierdut.
+
+**Apeși din nou „Salvează modificările" → „Salvează și reface".** Comanda e în
+**„La ambalare"** *și* cu telefonul schimbat: o singură salvare, nu două.
+
+**Apeși:** tot din formular, pune-o iar pe **„Anulată"**, salvezi, apoi
+**„Editează comanda"** → la „Stare" alegi **„Predată"** → **„Salvează
+modificările"**. **Trebuie să vezi** în casetă nota cu scăderea din raft
+(*„Trece direct în «Predată»…"*), nu promisiunea cu panoul și ruta. Apeși
+**„Înapoi la formular"**, pui la loc etapa în care o găsiseși și salvezi.
+
+**Pe o zi care a trecut** (aceeași comandă ca la 7.3, dacă ai avut una): o
+anulezi din formular, apoi, tot din formular, alegi o etapă din flux și salvezi.
+Rândul galben e cel de la 7.3, dar **sfatul se încheie altfel**: *„Alege în
+câmpul «Zi» o zi de azi încolo și salvează din nou: ziua și etapa pleacă în
+aceeași salvare."* Apeși **„Înapoi la formular"**, muți **„Zi"** pe mâine
+*fără* să atingi lista „Stare" și apeși iar **„Salvează modificările"**:
+**caseta apare fără rândul galben**, fiindcă se cântărește ziua de DUPĂ salvare.
+Apeși **„Salvează și reface"** și pune comanda înapoi cum ai găsit-o.
+
+### 7.5 Anunțul „Comandă refăcută"
+
+Pe calculatorul tău e-mailurile nu pleacă în lume: cad în cutia locală
+**Mailpit**, pe `http://127.0.0.1:8025`. Acolo vezi ce ar fi primit patronul pe
+telefon. Dacă adresa nu răspunde, pornește
+`C:\laragon\bin\mailpit\1.22.3\mailpit.exe` și lasă fereastra deschisă.
+
+**Apeși:** `testadmin` → `/lab/setari.html` → fila **„Notificări"**. Cartonașul
+**E-mail** trebuie să fie pornit și să aibă o adresă în „Adresa care primește
+anunțul" (oricare: nu pleacă nimic). Sus, în **„Ce anunțuri primești, și pe
+unde"**, bifezi **E-mail** pe rândul **„Comandă anulată"** și îl lași nebifat pe
+**„Comandă gata"** → **„Salvează"**.
+
+**Trebuie să vezi:** sub „Comandă anulată", ajutorul spune și *„Pe aceleași
+canale pleacă și «Comandă refăcută», dacă o aduci înapoi."* Un rând **„Comandă
+refăcută"** **nu** există: n-are bifă a lui, dinadins.
+
+**Apeși:** `/lab/comenzi.html` → pe o comandă de azi sau de mâine, din fișă,
+**„Anulată"**, apoi **„La ambalare"** → **„Reface comanda"**. Deschizi Mailpit.
+
+**Trebuie să vezi** două mesaje noi cu aceeași referință: **„Comandă anulată
+#…"** și, deasupra lui, **„Comandă refăcută #…"**. În corpul celui de sus scrie
+*„Etapă: Anulată → La ambalare"*. Dacă lipsește „Comandă refăcută", pe server a
+rămas API-ul vechi.
+
+**Apeși:** în Setări bifezi **E-mail** și pe **„Comandă gata"**, salvezi, apoi
+din fișa aceleiași comenzi **„Anulată"** → **„Predată"** → **„Reface comanda"**.
+
+**Trebuie să vezi** trei mesaje noi. Citite de jos în sus, în ordinea în care au
+plecat: **„Comandă anulată"**, **„Comandă refăcută"**, **„Comandă gata"**. Două
+mesaje la aceeași apăsare sunt hotărârea patronului: comanda a fost și adusă
+înapoi, și predată, iar ultimul mesaj rămâne cel adevărat.
+
+**Apeși:** în Setări scoți bifa **E-mail** de pe **„Comandă anulată"** și salvezi,
+apoi din fișă **„Anulată"** → **„La ambalare"** → **„Reface comanda"**.
+
+**Trebuie să vezi** în Mailpit **niciun** mesaj nou: fără bifa anulării, pe
+canalul acela nu vine niciunul din cele două.
+
+**Apeși:** pui bifele la loc, apoi faci același drum de pe **ușa salvării**
+(7.4): din formular, „Anulată" → salvezi → „La ambalare" plus o cifră în plus la
+telefon → **„Salvează și reface"**.
+
+**Trebuie să vezi** în Mailpit **un singur** „Comandă refăcută" pentru apăsarea
+asta. Două ar însemna două cereri la server pentru o salvare, adică două rânduri
+de anunțuri pentru patron.
+
+La capăt, pune comanda înapoi în etapa în care o găsiseși (din fișă, direct) și
+lasă bifele din Setări cum le-ai găsit.
+
+### 7.6 Doi oameni pe aceeași comandă: cine ajunge al doilea
+
+*Patronul și cea care ia comenzile la telefon stau amândoi în „Comenzi", pe
+aceeași comandă. Cine apasă al doilea nu mai scrie peste mutarea celuilalt:
+serverul îl oprește, iar pagina îi spune ce s-a întâmplat și unde a ajuns
+comanda.*
+
+**Pregătești:** aceeași pagină `/lab/comenzi.html` în **două file**, amândouă cu
+`testadmin`. Le spunem **A** și **B**. Alegi o comandă de azi sau de mâine și
+lucrezi numai pe ea.
+
+**Prima ușă: caseta lăsată deschisă.**
+
+**Apeși:** în fila B, din fișa comenzii, **„Anulată"** (merge direct). Treci în
+fila A, o reîncarci (ca să vadă și ea „Anulată") și, din fișă, alegi **„La
+ambalare"** → se deschide caseta **„Refaci comanda #…?"**. **Lași caseta
+deschisă** și treci iar în fila B: acolo, din fișa aceleiași comenzi, o refaci tu
+— **„La dospit"** → **„Reface comanda"**. Te întorci în fila A și apeși, în
+caseta rămasă deschisă, **„Reface comanda"**.
+
+**Trebuie să vezi** în fila A: caseta se închide, iar sus apare un chenar
+**roșu**: *„Comanda #… a fost schimbată între timp de altcineva: acum e «La
+dospit». N-am refăcut-o."* Tabelul și fișa arată pe loc **„La dospit"** — lista
+s-a citit din nou —, iar comanda **nu** s-a dus în „La ambalare". Dacă în locul
+chenarului roșu scrie „s-a întors în «La ambalare»", pe server a rămas API-ul
+vechi.
+
+**A doua ușă: formularul lăsat deschis.**
+
+**Apeși:** în fila A, pe aceeași comandă, **„Editează comanda"**; mai adaugi o
+cifră la telefon, dar **nu salvezi**. Treci în fila B și, din fișă, muți comanda
+în **„În cuptor"**. Înapoi în fila A, în formularul rămas deschis, alegi la
+**„Stare"** → **„La ambalare"** și apeși **„Salvează modificările"**.
+
+**Trebuie să vezi** în fila A: **formularul rămâne deschis**, cu telefonul tastat
+în el, iar deasupra butoanelor, în chenar roșu: *„Comanda #… a fost schimbată
+între timp de altcineva: acum e «În cuptor». Nu s-a salvat nimic: modificările
+tale au rămas în formular."* În fila B, comanda e tot în **„În cuptor"**, iar
+**telefonul a rămas cel vechi** — din salvarea aceea n-a plecat nimic, nici
+măcar câmpurile care n-au nicio legătură cu etapa.
+
+**Apeși:** în fila A închizi formularul cu **„Anulează"** (butonul de jos, nu
+etapa), pui comanda înapoi în etapa în care ai găsit-o și închizi una din file.
+
+### 7.7 Ecranul rămas în urmă: tableta din laborator
+
+*Patru minute. Îți trebuie două file deschise pe `lab.`, amândouă cu
+`testadmin`. Aceeași pază ca la 7.6, dar pe panoul din laborator, unde nu e nici
+casetă, nici formular — numai un card și un buton.*
+
+**Partea întâi: cardul comenzii anulate pleacă singur de pe ecran.**
+
+**Apeși:** în fila întâi, `/lab/laborator.html`. Alegi de pe listă o comandă de
+azi și o lași pe ecran. **Treci pe fila a doua.**
+
+**Apeși:** în fila a doua, `/lab/comenzi.html` → pe aceeași comandă, din fișă, la
+**„Etapa"** alegi **„Anulată"**. Merge direct, fără casetă — anularea din fișă n-a
+cerut niciodată încuviințare (7.1); caseta se deschide numai la **ieșirea** din
+„Anulată".
+
+**Apeși:** te întorci la fila întâi, **fără s-o reîncarci**.
+
+**Trebuie să vezi:** cardul comenzii **nu mai e pe panou**, din clipa întoarcerii.
+Panoul își cere lista la patru secunde și stă pe loc cât fila e ascunsă, dar la
+revenire citește **pe loc**, fără să aștepte tura următoare. O comandă moartă nu
+rămâne pe ecranul din laborator, oricât ar fi stat tableta cu fața la perete.
+Dacă după o clipă cardul e tot acolo, ăla e defectul.
+
+**Apeși:** în fila a doua, aduci comanda înapoi în etapa în care era: din fișă,
+etapa ei → caseta **„Refaci comanda #…?"** → **„Reface comanda"**. În fila întâi,
+cardul se întoarce la cel mult patru secunde.
+
+**Partea a doua: mesajul serverului, cu împrospătarea tăiată pentru o clipă.**
+
+Ca să vezi chiar mesajul trebuie să apeși pe un card sub care comanda e deja
+anulată — adică pe un ecran rămas în urmă. Partea întâi tocmai a arătat că panoul
+nu te lasă să rămâi: la patru secunde, și încă o dată la întoarcerea pe filă, își
+recitește lista, iar cardul piere înainte să apuci să-l atingi. **Nu fiindcă paza
+ar fi slabă, ci fiindcă panoul e prea harnic.** Deci îi tăiem lista cu mâna, cât
+să încapă o apăsare.
+
+**Apeși:** în fila întâi, `F12` → fila **„Network" („Rețea")** → la lista de
+viteze din capul ei alegi **„Offline"**. Lași fereastra deschisă și **treci pe
+fila a doua**.
+
+**Apeși:** în fila a doua, din fișă, **„Anulată"**.
+
+**Apeși:** te întorci la fila întâi. Panoul cere lista la revenire, nu primește
+nimic și rămâne cu cea veche — cardul e tot acolo, pe etapa lui. Pui înapoi **„No
+throttling"** în locul lui „Offline" și apeși **îndată** butonul de pe card, cel
+care duce comanda în etapa următoare. **Ai cel mult patru secunde**: prima tură
+care prinde iar rețeaua ia cardul de pe ecran.
+
+**Trebuie să vezi:** sus, mesajul **„Comanda #… a fost schimbată între timp: acum
+e «Anulată». N-am mutat-o."** — nu „Nu s-a salvat". Mesajul stă până îl închizi
+tu, deci nu-l pierzi nici dacă între timp cardul a plecat; și pleacă, fiindcă
+după refuz panoul recitește lista pe loc. În fila a doua, comanda e tot
+**„Anulată"**.
+
+**Apeși:** `/lab/jurnal.html`, filtrul de zonă **„Comenzi"**, cauți referința
+comenzii.
+
+**Trebuie să vezi** rândul anulării de adineauri și **niciun** rând de modificare
+scris la ora apăsării de pe card. Un `order_update · Comandă #…: Anulată → …` pus
+la ora aceea ar însemna că mutarea a trecut totuși, iar mesajul de pe ecran a
+mințit. Serverul refuză sub lacăt, înainte de orice scriere: nu umblă la depozit,
+nu scrie în Jurnal, nu pune niciun anunț la coadă — de-aia Jurnalul e locul unde
+minciuna s-ar vedea.
+
+**Dacă ai pierdut cursa** și cardul a dispărut înainte să apeși, refă comanda din
+fila a doua și încearcă din nou. Dacă o pierzi de fiecare dată, taie numai cererea
+listei, nu toată rețeaua: în „Network", clic-dreapta pe rândul `orders?day=…` →
+**„Block request URL"**. Atunci panoul rămâne în urmă cât vrei tu, iar apăsarea de
+pe card pleacă nestingherită — ea merge pe altă adresă, `/orders/<număr>`. La
+capăt scoți regula din lista de blocări, altfel panoul rămâne mort și în plimbările
+următoare.
+
+**Apeși:** pe cardul unei comenzi pe care n-a atins-o nimeni între timp, de două
+ori repede, două etape una după alta.
+
+**Trebuie să vezi:** amândouă etapele se scriu, în ordinea apăsării — cardul
+rămâne pe a doua, și după împrospătare. Niciun mesaj de „schimbată între timp":
+apăsările pe card nu trec prin împrospătare, ci printr-un lanț al lor, ținut
+pe fiecare comandă în parte, iar a doua pleacă abia după ce prima s-a scris. Fără
+lanț, a doua ar porni cu etapa de dinaintea primei și ar lua un refuz pe degeaba.
+
+La capăt, pune comanda înapoi în etapa în care o găsiseși.
+
+### 7.8 Ecranul rămas în urmă: telefonul șoferului
+
+*Trei minute. Aceeași pază ca la 7.7, pe celălalt ecran de tură. Aici nu-ți
+trebuie nimic din „Network": foaia de drum se împrospătează la CINCISPREZECE
+secunde, nu la patru, și nu se recitește la întoarcerea pe filă. Cursa se prinde
+din prima, cu mâna goală.*
+
+Șoferul e la a treia oprire, cu telefonul în buzunar de zece minute.
+Administratorul anulează comanda. Șoferul scoate telefonul și apasă **„Marchează
+livrat"** pe o listă veche de-un sfert de minut. Ce vede el în clipa aia n-a
+văzut nimeni, în niciun browser — de-asta e scrisă bucata de față.
+
+**Pregătești:** două file, amândouă cu `testadmin`.
+
+- **A**, a administratorului: `/lab/comenzi.html`.
+- **B**, a șoferului: `/lab/ruta.html`, pe ziua de azi, îngustată la telefon —
+  `F12` → butonul cu telefon și tabletă → **390** (ca la 8).
+
+Amândouă cu același cont, ca la 7.7: sesiunea e a browserului, nu a filei, deci
+un al doilea cont ar intra peste primul în amândouă. Dacă vrei totuși ecranul
+șoferului cu contul lui, deschide fila B într-o fereastră privată, cu
+`testangajat` — rolul „angajat" are panoul „Rută".
+
+Alegi o comandă de azi care **nu e livrată** și are cel puțin două opriri
+înaintea ei, ca ecranul să fie derulat, ca al lui.
+
+**Apeși:** în fila B, pe cartonul ei, ca să se **deschidă** — la butonul
+„Marchează livrat" se ajunge numai prin carton. Deschide-l ACUM, nu după: cele
+cincisprezece secunde le vrei întregi pentru apăsare, iar deschiderea unui carton
+șterge și mesajul de pe ecran.
+
+**Apeși:** treci în fila A → pe aceeași comandă, din fișă, la **„Etapa"** alegi
+**„Anulată"** (merge direct, fără casetă — 7.1). Te întorci pe loc în fila B și
+te uiți întâi dacă **cartonul mai e pe listă**. El e ceasul tău: ruta arată numai
+comenzile vii, deci cât timp cartonul e acolo, lista din telefon e cea veche.
+
+- **e tot acolo, deschis** → ecranul e rămas în urmă, exact ca în buzunar. Apeși.
+- **a pierit** → tura de cincisprezece secunde a apucat să treacă și lista s-a pus
+  la zi. Refaci comanda din fila A — etapa ei → caseta **„Refaci comanda #…?"** →
+  **„Reface comanda"** — și încerci din nou, mai repede. Nu-ți trebuie să apeși pe
+  o listă pusă la zi: acolo nu mai e nimic de probat.
+
+**Apeși:** în fila B, **„Marchează livrat"**.
+
+**Trebuie să vezi**, toate cinci:
+
+1. **Mesajul e roșu.** Sus, sub antet: *„Comanda #… a fost schimbată între timp:
+   acum e «Anulată». N-am mutat-o."* E singurul loc din toată reparația unde
+   vestea e roșie, nu neutră. Ca să ai cu ce compara, marchează pe urmă o livrare
+   care merge: aceeași casetă, în același loc, pe verde. Dacă și refuzul iese
+   verde, culoarea nu se mai uită la ce s-a întâmplat.
+2. **Încape pe 390.** Se rupe în rânduri întregi, nu taie niciun cuvânt, nu iese
+   din chenar și nu împinge pagina în lateral.
+3. **Îl vezi fără să derulezi?** Mesajul se așază deasupra listei, iar tu ai
+   apăsat la a treia oprire, cu pagina derulată. Dacă a trebuit să urci ca să-l
+   găsești, **scrie-o ca defect**: pe un telefon scos din buzunar, un mesaj pe
+   care nu-l vezi e un mesaj care n-a fost dat.
+4. **Cartonul sare înapoi, apoi piere de tot.** La apăsare se strânge și trece o
+   clipă pe livrat — bulină **✓**, antet verde —, ca și când ar fi mers; așa face
+   și când chiar merge. După refuz, foaia de drum se recitește pe loc, iar
+   oprirea **nu mai e pe listă**: ruta duce comenzile vii, iar una anulată n-are
+   ce căuta în mașină. Dacă era o oprire numerotată, cele de după ea se trag cu
+   una mai sus, iar numărătoarea din capul paginii scade cu o livrare. Clipa de
+   verde poate fi prea scurtă ca s-o prinzi pe local — ce se cere aici e **unde
+   ajunge cartonul**, nu cât a ținut verdele.
+5. **Mesajul rămâne peste dispariție.** Aici e tot rostul bucății: oprirea îi
+   piere de sub deget tocmai cât citește, iar dacă ar pleca și mesajul odată cu
+   ea, șoferul ar rămâne cu o listă mai scurtă cu una și fără nicio vorbă despre
+   ce s-a întâmplat — exact felul în care se nasc telefoanele în laborator. Nu se
+   stinge singur, nici după ce trece o tură de cincisprezece secunde peste el:
+   pleacă abia când șoferul atinge un carton sau schimbă ziua.
+
+**Apeși:** `/lab/jurnal.html`, filtrul de zonă **„Comenzi"**, cauți referința
+comenzii.
+
+**Trebuie să vezi** rândul anulării de adineauri și **niciun** rând scris la ora
+apăsării de pe telefon. Un `order_update · Comandă #…: Anulată → Predată` pus la
+ora aia ar însemna că livrarea a trecut totuși și că mesajul roșu a mințit — iar
+pe deasupra, că din „Anulată" s-a ieșit, deci pe canalele din Setări a plecat un
+„Comandă refăcută" (7.5) pentru o comandă pe care patronul tocmai o oprise.
+Serverul refuză sub lacăt, înainte de orice scriere: de-aia Jurnalul e locul
+unde s-ar vedea minciuna.
+
+La capăt, refaci comanda din fila A și pui fila B înapoi pe lățimea ei.
+
+---
+
+## 8 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -503,12 +980,28 @@ deschide) → scrii lățimea de mână.
 **Trebuie să vezi**, la toate trei: **niciun rând de text tăiat**, niciun tabel
 care împinge pagina în lateral, niciun buton mai mic decât un deget pe 390.
 
+Pentru deget, pragul e **44 px pe înălțime**, și e ținut pentru butoanele
+principale. În F12 se vede așa: alegi săgeata din colțul din stânga al
+uneltelor și treci cu ea peste buton, iar eticheta scrie mărimea, de pildă
+`button.st-capbtn 107.33 × 44` — al doilea număr e înălțimea. Pe 390 uită-te
+întâi la locurile care au fost sub prag până la 2.1.1:
+
+- în Statistici, **capetele de coloană** care sortează mesele (aveau 18 px) și
+  **rândurile din legenda inelului** (30 px);
+- pe rută (`/lab/ruta.html`), **„← Alege panoul" din subsol** (21 px), lângă
+  „Resetează bifele";
+- **„← Alege panoul" de pe ecranul de refuz** din rută, comenzi, conturi și
+  laborator (26 px, chiar sub „Ieși din cont"). Ecranul îl vezi intrând cu un
+  cont care n-are panoul, de pildă `testangajat` pe `/lab/conturi.html`.
+
+Mai sunt ținte între 30 și 43 px, și se știu — vezi „Ce NU e defect aici".
+
 Tabelele late (raportul de pontaj, lista de comenzi) au voie să se **deruleze în
 cutia lor**. Ce n-au voie e să miște pagina întreagă.
 
-**Statisticile se probează la toate trei vederile**, nu doar la una: e aceeași
-pagină croită de trei ori, deci sunt trei așezăminte de verificat la fiecare
-lățime. Inelul are voie să se micșoreze, dar nu să-și taie scrisul de pe felii.
+**Statisticile se probează la toate trei vederile** (cele de la 6.1), nu doar la
+una: e aceeași pagină croită de trei ori, deci sunt trei așezăminte de verificat
+la fiecare lățime. Inelul are voie să se micșoreze, dar nu să-și taie scrisul de pe felii.
 
 ---
 
@@ -516,10 +1009,12 @@ lățime. Inelul are voie să se micșoreze, dar nu să-și taie scrisul de pe f
 
 Ca să nu cauți ce nu s-a stricat:
 
-- **Săriturile între subdomenii te duc pe site-ul adevărat.** „Comanda mea",
-  „Intră în cont", aterizarea clientului după parolă — în pachet sunt adrese de
+- **Săriturile între subdomenii te duc pe site-ul adevărat.** „Comanda mea" din
+  panou, „Intră în cont" și „Intră în magazin" — în pachet sunt adrese de
   producție, și așa trebuie. Local te întorci tastând adresa din tabelul de sus.
-  **Sertarul panoului, în schimb, trebuie să meargă apăsat.**
+  **Sertarul panoului, în schimb, trebuie să meargă apăsat.** Și aterizarea
+  clientului după parolă: ea NU e o săritură — cade pe `/clienti/client`, pe
+  aceeași gazdă, deci local funcționează.
 - **`/lab/intrare.html` dă 404.** Pagina de intrare se cheamă `index.html` în
   pachet, pe amândouă subdomeniile. Merg și adresele scurte, fără `.html`, exact
   ca pe server: `/lab/pontaj`, `/lab/comenzi`, `/clienti/client`.
@@ -540,6 +1035,15 @@ Ca să nu cauți ce nu s-a stricat:
   rând care spune pe ce temei s-au socotit cifrele, exact ca în desen. Temeiul se
   schimbă din fișa de filtre (6.3), care e a întregii pagini — deci și a
   tabloului.
+- **Pe 390 mai sunt ținte între 30 și 43 px, și se știu.** Pragul de 44 px e
+  ținut pentru butoanele principale. O listă cunoscută, de vreo treizeci de
+  ținte mai mici, măsurată în runda 2.1.1, rămâne pentru o rundă următoare:
+  chipurile și scurtăturile din Statistici (40–42 px), butonul **„Ieși"** de
+  lângă numele tău din sertar (40 px), bifa din Recomandări (30 px), butoanele
+  mici din Produse și Setări (32 px) și câteva casete de 38–40 px din Depozit,
+  Conturi și Comenzi. Tot de acolo: **pe tabletă (820) capetele de coloană din
+  Statistici au încă 18 px** — banda de tabletă n-a intrat în 2.1.1. Nu le
+  scrie ca defecte noi; un buton principal sub 44 px pe 390, da.
 
 ---
 
@@ -558,11 +1062,11 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele șapte ies, proba automată se mai trece o dată pe deasupra:
+Când toate cele opt ies, proba automată se mai trece o dată pe deasupra:
 
 ```bash
 node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.0.4`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.1.1`.

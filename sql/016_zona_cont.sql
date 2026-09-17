@@ -1,10 +1,11 @@
 -- Migrarea 016 — zona ține de cont, și mai e o zonă
 --
 -- Se rulează o singură dată, după 015. Poate fi rulată de câte ori vrei fără
--- pagubă: coloana nouă se adaugă numai dacă lipsește, zona nouă se pune în
--- listă numai dacă nu e deja acolo, iar completarea conturilor vechi se uită
--- numai la cele rămase necompletate. Nicio valoare scrisă de patron din Setări
--- nu e atinsă.
+-- pagubă: coloana nouă se adaugă numai dacă lipsește, iar cei doi pași care
+-- scriu date — zona nouă în listă și completarea conturilor vechi — se fac
+-- NUMAI în rularea care adaugă coloana. Orice rulare de după o găsește deja
+-- acolo și nu mai atinge nici lista, nici conturile: o zonă redenumită din
+-- Setări sau ștearsă de pe un cont rămâne cum a lăsat-o omul. Vezi pasul 0.
 --
 -- Rulare locală (Laragon):  mysql -u root gp_dev < sql/016_zona_cont.sql
 -- Rulare pe VPS:            bash actualizeaza-vps.sh (le rulează pe toate, în ordine)
@@ -65,6 +66,47 @@ SET NAMES utf8mb4;
 -- jos una de alta la prima corectură de diacritice.
 SET @zona := 'În afara Bucureștiului și Ilfovului';
 
+-- ------------------------------------------------------ 0. opritorul --
+
+-- „DE CÂTE ORI VREI FĂRĂ PAGUBĂ" ERA ADEVĂRAT NUMAI PE O BAZĂ PE CARE N-A
+-- UMBLAT NIMENI. `actualizeaza-vps.sh` rulează la FIECARE actualizare toate
+-- migrările de la 003 în sus, deci pașii 2 și 3 de mai jos rulau și ei de
+-- fiecare dată, luni după prima lor rulare. Paza lor era „numai dacă
+-- lipsește" — iar patronul face tocmai lipsa aceea, cu mâna:
+--
+--   * redenumește zona a opta din Setări, ori o scoate din listă fiindcă nu
+--     mai livrează departe. Pasul 2 nu mai găsea numele și îl punea iar la
+--     coadă: două zone fără punct care spun același lucru, ori o zonă scoasă
+--     dinadins care se întoarce singură în formularul clientului;
+--   * șterge zona de pe un cont, din Conturi. Ștergerea scrie NULL
+--     (api/routes/users.php, `zone_field(...) ?: null`), deci pasul 3 avea
+--     iar ce „completa" și punea la loc zona din ultima comandă — de pildă
+--     „Ilfov"-ul pus de operatoare unui client din Ploiești pe vremea când
+--     lista se oprea la Ilfov. De-acolo, cererea următoare a clientului își
+--     lua zona de pe cont, iar oprirea intra iar în ordinea rutei.
+--
+-- Opritorul e coloana însăși: se numără ÎNAINTE de pasul 1, într-o variabilă,
+-- ca `@pcat_gol` din sql/003. Numărată după `ALTER`, coloana ar fi mereu
+-- acolo, iar pașii n-ar rula niciodată — nici măcar prima dată.
+--
+-- DE CE NU O URMĂ ÎN `settings`, CA LA 010. Pe serverul unde 016 a rulat
+-- deja, urma n-ar exista încă, deci pașii s-ar mai face o dată — adică tocmai
+-- paguba de mai sus, la actualizarea care aduce reparația. Coloana e acolo de
+-- la prima rulare, deci răspunsul ei e bun din prima zi.
+--
+-- Pe o instalare nouă coloana lipsește din 001, deci pașii rulează: lista din
+-- 002 are deja zona (pasul 2 n-are ce adăuga), iar clienți încă nu sunt
+-- (pasul 3 n-are ce completa).
+--
+-- Ce NU apără: o rulare ruptă între `ALTER` și pasul 3. Coloana ar rămâne, iar
+-- pașii n-ar mai rula. De-aia `actualizeaza-vps.sh` se oprește la prima eroare
+-- și spune cum se pune la loc copia bazei făcută înainte de migrări; după
+-- punere, coloana lipsește iar și totul se face de la capăt. Cu `--fara-copie`
+-- n-ai copie, deci n-ai nici drumul ăsta înapoi.
+SET @coloana_noua := (SELECT COUNT(*) = 0 FROM information_schema.COLUMNS
+                       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'
+                         AND COLUMN_NAME = 'zone');
+
 -- ------------------------------------------- 1. zona ține de cont --
 
 -- VARCHAR(64), ca `orders.zone` și `order_requests.zone`: e același fel de
@@ -92,7 +134,10 @@ INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
   ('delivery_zones', '["Sector 1","Sector 2","Sector 3","Sector 4","Sector 5","Sector 6","Ilfov","În afara Bucureștiului și Ilfovului"]', 0);
 
 -- Iar pe o bază care are deja lista — cu zonele ei, oricare ar fi — se adaugă
--- numai numele nou, la capăt.
+-- numai numele nou, la capăt. Și asta numai în rularea care aduce coloana
+-- (pasul 0): `JSON_SEARCH` caută NUMELE, nu hotărârea patronului, deci o zonă
+-- redenumită sau scoasă din Setări nu mai era găsită și se punea la loc la
+-- fiecare actualizare.
 --
 -- Paza pe `JSON_VALID` stă într-un IF, nu într-un AND din WHERE: pe MySQL,
 -- `JSON_SEARCH` peste un text care nu e JSON nu întoarce NULL, ci oprește
@@ -108,7 +153,8 @@ INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
 -- api/lib/settings.php), deci spațiul n-are nicio urmare — dar cine compară
 -- vreodată valoarea ca text să știe de ce nu seamănă cu sămânța din 002.
 SET @sql := IF(
-  (SELECT COUNT(*) FROM settings
+  @coloana_noua = 1
+  AND (SELECT COUNT(*) FROM settings
     WHERE setting_key = 'delivery_zones' AND JSON_VALID(value)) = 1,
   'UPDATE settings
       SET value = JSON_ARRAY_APPEND(value, ''$'', @zona)
@@ -135,21 +181,40 @@ PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 -- câștiga nimic dintr-o verificare care ar cere JSON înăuntrul unui UPDATE, și
 -- am putea pierde o zonă bună dintr-o listă scrisă strâmb.
 --
--- `u.zone IS NULL` face pasul repetabil: la a doua rulare nu mai are ce
--- completa. Un client fără nicio comandă rămâne NULL, și așa trebuie — n-avem
--- de unde ști.
-UPDATE users u
-   SET u.zone = (
-         SELECT o.zone
-           FROM orders o
-          WHERE o.customer_id = u.id
-            AND o.zone IS NOT NULL
-            AND CHAR_LENGTH(o.zone) > 0
-          ORDER BY o.id DESC
-          LIMIT 1
-       )
- WHERE u.role = 'client'
-   AND u.zone IS NULL;
+-- `u.zone IS NULL` NU făcea pasul repetabil, deși așa scria aici. Ștergerea
+-- zonei din Conturi scrie tot NULL, deci la actualizarea următoare pasul avea
+-- din nou ce „completa": zona pe care omul tocmai o ștersese. Repetabil îl
+-- face opritorul de sus — pasul rulează numai în rularea care aduce coloana,
+-- când nimeni n-a apucat încă să scrie vreo zonă pe vreun cont. Condiția
+-- rămâne: nu costă nimic și spune pe față ce se completează.
+--
+-- Urmarea, spusă pe față: zona de pe cont se ia din comenzi o singură dată pe
+-- instalare. Un client făcut după aceea fără zonă n-o mai capătă la nicio
+-- actualizare — și-o alege el în formular, ori i-o pui tu din Conturi.
+--
+-- Un client fără nicio comandă rămâne NULL, și așa trebuie — n-avem de unde
+-- ști.
+--
+-- Se scrie cu PREPARE, ca pasul 2, ca să fie adevărat pe litere că o rulare
+-- de după nu atinge conturile: acolo UPDATE-ul nici nu se pregătește, se
+-- rulează în locul lui un `SELECT 1`.
+-- Apostrofurile dinăuntru se dublează.
+SET @sql := IF(@coloana_noua = 1,
+  'UPDATE users u
+      SET u.zone = (
+            SELECT o.zone
+              FROM orders o
+             WHERE o.customer_id = u.id
+               AND o.zone IS NOT NULL
+               AND CHAR_LENGTH(o.zone) > 0
+             ORDER BY o.id DESC
+             LIMIT 1
+          )
+    WHERE u.role = ''client''
+      AND u.zone IS NULL',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- Ce NU face migrarea asta, ca să nu se caute mai târziu:
 --

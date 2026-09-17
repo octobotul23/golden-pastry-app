@@ -431,6 +431,21 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
    scurtăturile din bară cresc, fiindcă un buton de 30px se ratează. */
 .st-chip{min-height:40px;padding:8px 14px}
 .st-cseg button{padding:9px 13px;min-height:42px}
+/* PRAGUL DE DEGET, 44px, hotărârea patronului. Măsurat la 390: capetele care
+   sortează mesele A și C ieșeau de 18px, fiindcă banda de 1150 de mai sus le
+   pune `min-height:0` ca antetul stivuit să nu crească, iar 11px de scris cu
+   `line-height:1.6` fac 17,6. Rândurile din legenda inelului ieșeau de 30px.
+   Regulile stau AICI, după banda de 1150: au aceeași tărie ca `min-height:0`
+   de acolo, deci câștigă numai fiindcă vin mai jos în fișier. Mutate deasupra
+   ei, s-ar citi bine și n-ar face nimic.
+   Antetul stivuit crește (măsurat: 108 → 214px), iar patronul a primit asta.
+   Legenda renunță la golul de 7px dintre rânduri: golul trece în țintă, în loc
+   de loc mort între două ținte, și lista crește mai puțin (213 → 264px, nu 299).
+   Pe monitor nu se schimbă nimic. Pe tabletă (761–1150px) capetele rămân de
+   18px: banda de tabletă n-a intrat în lucrarea asta și e știută. */
+.st-capbtn{min-height:44px}
+.st-leg{gap:0}
+.st-legrand{min-height:44px}
 .st-azile{width:100%}
 .st-azile select,.st-azile input{min-height:40px}
 .st-cdr{margin-left:0;width:100%}

@@ -147,13 +147,13 @@ function route_orders_list(): void
     // întotdeauna la capătul de jos al ei.
     //
     // Fereastra de zile înseamnă „mă interesează bucata asta de calendar”, și e
-    // cerută de laborator (Panou Laborator.dc.html:458) și de fila de intrare:
+    // cerută de laborator (o zi, ?day=), de panoul de comenzi și de fila de intrare:
     // azi..azi+6. Citită de la coadă, ca până acum, tăietura de 500 mânca
     // tocmai ziua de azi și pe cea de mâine — comenzile care se coc — și lăsa
     // în listă capătul cel mai depărtat, care nu se face încă. Cerută anume, o
     // fereastră se citește deci de la capătul ei apropiat.
     //
-    // Fără fereastră, panoul de administrare vrea ce e proaspăt: acolo ordinea
+    // Fără fereastră (Depozit, pagina clientului) se vrea ce e proaspăt: ordinea
     // rămâne cea dinainte, iar tăietura cade pe comenzile vechi.
     $fereastra = $day !== '' || $from !== '' || $to !== '';
     $ordine    = $fereastra ? 'o.day ASC, o.seq ASC' : 'o.day DESC, o.seq DESC';
@@ -231,8 +231,8 @@ function route_orders_list(): void
     // Taietura se spune in continuare, dar acum se poate si numara.
     //
     // `truncated` ramane pentru apelantii care nu cer pagini: fila
-    // clientului, depozitul, panoul de laborator. Cifrele noi sunt in plus,
-    // nu in loc — un apelant care nu le citeste nu simte nimic.
+    // clientului si panoul de laborator (depozitul ia `pending` din stoc). Cifrele
+    // noi sunt in plus, nu in loc — un apelant care nu le citeste nu simte nimic.
     json_out([
         'orders'    => $orders,
         'truncated' => count($orders) >= $limita,
@@ -670,6 +670,22 @@ function route_orders_create(): void
 const ORDER_FIELDS_STAFF = ['status'];
 
 /**
+ * Câmpuri care NU se scriu în comandă: spun doar pe ce stare s-a bazat omul.
+ *
+ * Azi unul singur, `from` — etapa pe care o avea comanda pe ecranul de pe care
+ * s-a apăsat. Serverul o compară cu etapa din bază și, dacă între timp s-a
+ * schimbat, refuză mutarea cu 409 `status_changed`, fără să scrie nimic.
+ *
+ * Stau deoparte de ORDER_FIELDS_STAFF fiindcă poarta de mai jos judecă ce se
+ * SCHIMBĂ în comandă, iar `from` nu schimbă nimic: pus în lista aceea, ar fi
+ * arătat ca un al doilea câmp pe care contul de tură are voie să-l editeze —
+ * exact neînțelegerea din care se nasc porți largi. Iar lăsat pe dinafara
+ * amândurora, tableta din laborator ar fi luat 403 `staff_field_denied` la
+ * fiecare apăsare, adică paza ar fi închis tocmai ecranul pe care îl apără.
+ */
+const ORDER_FIELDS_PRECONDITION = ['from'];
+
+/**
  * PATCH /orders/{id} — orice câmp al comenzii, inclusiv pozițiile.
  *
  * Ruta accepta doar status, note, zi, interval, zonă și mod de onorare. Formularul
@@ -686,6 +702,12 @@ const ORDER_FIELDS_STAFF = ['status'];
  * (`honored_prices()` + `price_items()`).
  *
  * Din contul de tură trece o singură cheie, vezi ORDER_FIELDS_STAFF mai sus.
+ *
+ * Pe lângă câmpurile comenzii, cererea poate aduce `from` — etapa pe care o
+ * avea comanda pe ecranul de pe care s-a apăsat (ORDER_FIELDS_PRECONDITION).
+ * Dat și nepotrivit cu ce e în bază, ruta refuză cu 409 `status_changed` și
+ * întoarce etapa de acum în `error.current`, fără să scrie nimic. Lipsa lui se
+ * poartă ca până acum.
  *
  * Când corectura atinge o comandă deja scăzută din depozit, marfa se întoarce
  * întâi în depozit (`stock_unsync_order()`) și comanda redevine „de scăzut".
@@ -706,7 +728,7 @@ function route_orders_update(string $id): void
     // odată cu apăsarea firească a brutarului, exact pe drumul pe care nimeni
     // nu se uită.
     if (!e_admin($u)) {
-        $oprite = array_values(array_diff(array_keys($b), ORDER_FIELDS_STAFF));
+        $oprite = array_values(array_diff(array_keys($b), ORDER_FIELDS_STAFF, ORDER_FIELDS_PRECONDITION));
         if ($oprite) {
             fail(
                 'Din contul de personal se poate schimba doar starea comenzii, adică etapa ei. '
@@ -826,6 +848,42 @@ function route_orders_update(string $id): void
         }
         $sets[] = 'status = ?';
         $vals[] = $b['status'];
+    }
+
+    // ETAPA PE CARE A VĂZUT-O OMUL CÂND A APĂSAT.
+    //
+    // Nu e un câmp al comenzii, deci nu intră în `$sets`: e o condiție pusă
+    // mutării. Ecranele de tură se uită la o listă adusă acum câteva secunde —
+    // tableta din laborator se împrospătează la patru secunde și STĂ PE LOC cât
+    // fila e ascunsă, iar telefonul șoferului la cincisprezece. Între timp
+    // administratorul poate anula comanda, ori o poate muta el însuși mai
+    // departe. Apăsarea de pe ecranul rămas în urmă ajungea aici ca orice
+    // apăsare, iar ruta o scria: comanda anulată învia în tăcere, reapărea în
+    // laborator și pe rută, iar pe canalele casei pleca și „Comandă refăcută"
+    // — spre PATRON, nu spre cumpărător. Destinatarul oricărui anunț de etapă
+    // se naște într-un singur loc, din trei setări ale casei
+    // (`notify_email_to` / `notify_whatsapp_to` / `notify_telegram_chat_id`,
+    // v. `send_channel()` din api/lib/notify.php); niciun anunț de etapă nu s-a
+    // uitat vreodată la e-mailul sau la telefonul scrise pe comandă.
+    //
+    // Lipsa lui înseamnă „nu știu de pe ce plec" și se poartă exact ca până
+    // acum: paginile vechi rămase în memoria unui browser nu se rup.
+    //
+    // Se verifică aici doar că e o etapă cunoscută; comparația cu baza se face
+    // mai jos, SUB LACĂT (v. tranzacția). O etapă necunoscută e 400, nu 409:
+    // nu s-a schimbat nimic între timp, ci cererea e strâmbă — cel mai des o
+    // pagină rămasă cu o listă de etape redenumită de atunci din Setări.
+    $from = null;
+    if (array_key_exists('from', $b)) {
+        $from = is_string($b['from']) ? $b['from'] : '';
+        if (!in_array($from, order_statuses(), true)) {
+            fail(
+                'Etapa de plecare („from") nu e una cunoscută. Valori permise: '
+                    . implode(', ', order_statuses()) . '. Reîncarcă pagina.',
+                400,
+                'bad_from'
+            );
+        }
     }
     if (array_key_exists('notes', $b)) {
         // Aceeași măsură ca la creare. Aici se scria `trim((string) …)` direct
@@ -1067,6 +1125,54 @@ function route_orders_update(string $id): void
         try {
             $pdo->beginTransaction();
 
+            // Comparația cu etapa văzută de om, dacă a trimis-o.
+            //
+            // Se citește SUB LACĂT, nu din `$o`: rândul de la intrarea în rută
+            // s-a citit fără blocare, iar între el și clipa asta încape
+            // întreagă mutarea făcută din alt panou. Cu `FOR UPDATE`, cine
+            // ajunge al doilea așteaptă până se încheie prima scriere și abia
+            // apoi compară — deci ori trece, ori pleacă cu 409, niciodată „a
+            // citit vechiul și a scris peste". Aceeași măsură ca la acceptarea
+            // unei cereri (api/routes/requests.php · `already_handled`).
+            //
+            // Refuzul se dă ÎNAINTE de orice scriere: nu se atinge depozitul,
+            // nu se scrie în jurnal, nu se pune niciun anunț la coadă. Cele
+            // două din urmă stau oricum după bucla asta, deci ieșirea de aici
+            // le sare pe amândouă.
+            if ($from !== null) {
+                $acum = (string) (one(
+                    'SELECT status FROM orders WHERE id = ? FOR UPDATE',
+                    [(int) $id]
+                )['status'] ?? '');
+                if ($acum !== $from) {
+                    $pdo->rollBack();
+                    // `fail()` nu poate duce și etapa de acum, iar pagina are
+                    // nevoie de ea ca să spună omului ce s-a întâmplat, fără
+                    // încă o cerere. Aceeași formă ca la orice refuz —
+                    // { error: { code, message } } —, cu un câmp în plus.
+                    //
+                    // Etapa stă între ghilimelele casei, „ … ”, ca la fratele
+                    // lui de la ușa producției (`:1616`). Închidea cu ghilimeaua
+                    // dreaptă, iar cele două refuzuri trebuie să fie copiate
+                    // literă cu literă, nu doar asemănătoare (v. comentariul de
+                    // la `:1600`). Paznicul e în `.claude/check-php.mjs`.
+                    json_out([
+                        'error' => [
+                            'code'    => 'status_changed',
+                            'message' => 'Comanda ' . (((string) $o['ref']) ?: '#' . $o['seq'])
+                                . ' a fost schimbată între timp: acum e „' . $acum . '”. N-am mutat-o.',
+                            'current' => $acum,
+                        ],
+                    ], 409);
+                }
+                // Etapa de acum, luată de sub lacăt, devine etapa „de dinainte"
+                // pentru jurnalul și anunțurile de mai jos. `$o` s-a citit
+                // înaintea tranzacției: când cele două se despart, adevărată e
+                // asta, iar rândul de jurnal „Anulată → Predată" trebuie să
+                // numească etapa de pe care s-a plecat cu adevărat.
+                $o['status'] = $acum;
+            }
+
             // Returul se scrie ÎNAINTE de rescrierea pozițiilor. De când
             // ieșirile poartă `order_id`, calea obișnuită citește din registru
             // și n-ar mai avea nevoie de ordinea asta — dar plasa pentru
@@ -1286,7 +1392,9 @@ function route_orders_update(string $id): void
     // Un singur cârlig acoperă TOATE drumurile prin care se schimbă o comandă,
     // fiindcă `orders.status` se scrie într-un singur loc din tot codul: chiar
     // ruta asta. Inclusiv butonul „Șterge comanda", care de fapt trimite un
-    // PATCH pe etapa de anulare (Administrare Comenzi.dc.html:1961-1965).
+    // PATCH pe etapa de anulare — v. `askDelete` din „Administrare Comenzi".
+    // Numele funcției, nu numărul rândului: rândurile paginii se mută la
+    // fiecare lucrare, iar o trimitere putrezită duce cititorul în alt cod.
     //
     // De aceea anularea și dezanularea se poartă simetric fără să scrie nimeni
     // regula a doua oară: `referral_commission_sync()` recitește starea
@@ -1316,20 +1424,28 @@ function route_orders_update(string $id): void
         'linked'   => !empty($comision['legat_acum']),
     ];
 
-    // Cele două fapte pe care patronul le poate cere pe telefon: comanda a
-    // ajuns gata, ori a fost anulată. Locul e ales, nu întâmplător: `orders.status`
-    // se scrie într-un SINGUR loc în tot programul — ruta asta — inclusiv de
-    // butonul „Șterge comanda", care de fapt trimite un PATCH pe etapa de
-    // anulare. Un cârlig aici acoperă toate drumurile, exact ca
-    // `referral_commission_sync()` de deasupra.
+    // Faptele pe care patronul le poate cere pe telefon: comanda a ajuns gata,
+    // a fost anulată, ori a fost refăcută după o anulare. Locul e ales, nu
+    // întâmplător: `orders.status` se scrie într-un SINGUR loc în tot programul —
+    // ruta asta. Aici ajung butonul „Șterge comanda" (un PATCH pe etapa de
+    // anulare), perechea lui „Reface comanda" (un PATCH pe începutul fluxului),
+    // lista de etape din formular și din fișa deschisă din listă, tableta din
+    // laborator și ruta șoferului. Un cârlig aici acoperă toate drumurile,
+    // exact ca `referral_commission_sync()` de deasupra.
     //
     // Se întreabă întâi, se trimite abia apoi. Fără întrebare, FIECARE apăsare
     // de „La dospit" de pe tableta din laborator — sutele zilei — ar pleca pe
-    // drumul lung al lui `json_out_early()`, ca să nu anunțe nimic.
-    $vechi  = (string) $o['status'];
-    $nou    = (string) $out['status'];
-    $anunt  = notify_order_status_event($vechi, $nou);
-    if ($anunt === null || !notify_channels_for($anunt)) {
+    // drumul lung al lui `json_out_early()`, ca să nu anunțe nimic. Întrebarea
+    // cuprinde TOATE anunțurile trecerii, nu doar primul: o comandă anulată
+    // mutată pe „Predată" e și refăcută, și gata, iar un canal bifat numai la
+    // una dintre ele trebuie să-și primească mesajul.
+    $vechi     = (string) $o['status'];
+    $nou       = (string) $out['status'];
+    $deAnuntat = array_filter(
+        array_keys(notify_order_status_events($vechi, $nou)),
+        static fn(string $e): bool => (bool) notify_channels_for($e)
+    );
+    if (!$deAnuntat) {
         json_out(['order' => $out]);
     }
 
@@ -1379,7 +1495,9 @@ function route_orders_update(string $id): void
  * Ce NU face: materiile prime nu se întorc niciodată de la sine. Comanda
  * anulată după opt croasante făcute lasă făina consumată și cele opt croasante
  * `+1` pe stocul de finit — sunt în congelator și se vând altcuiva. Un consum
- * e un fapt, o rezervare e o promisiune; faptele nu se desfac.
+ * e un fapt, o rezervare e o promisiune; faptele nu se desfac. Asta e despre
+ * producția raportată ÎNAINTE de anulare; raportul care sosește DUPĂ e altă
+ * poveste și se refuză — vezi comentariul lung de la citirea de sub lacăt.
  *
  * Stocul are voie să iasă pe minus. Făina a plecat fizic indiferent ce crede
  * aplicația, iar un refuz aici ar face aplicația să mintă despre ce e în
@@ -1417,11 +1535,25 @@ function route_order_production(string $id): void
     // rândurile prinse cu FOR UPDATE blocate până când găzduirea închide
     // conexiunea — iar tabletele din laborator s-ar opri una după alta pe
     // aceeași comandă. Toate refuzurile de mai jos trec pe aici.
-    $opreste = static function (string $mesaj, int $status, string $cod) use ($pdo): void {
+    //
+    // `$peDeasupra` e pentru refuzul care are de spus mai mult decât un text:
+    // azi doar cel al comenzii anulate, care duce și etapa de acum, în
+    // `current`. `fail()` scrie numai { code, message }, iar pagina are nevoie
+    // de etapă ca să spună omului ce s-a întâmplat fără încă o cerere — exact
+    // ca la ușa de etapă (`route_orders_update`), de unde e copiată forma.
+    // Cheile de temelie se pun primele, ca răspunsul să se citească la fel
+    // indiferent pe care din cele două uși a bătut tableta.
+    $opreste = static function (string $mesaj, int $status, string $cod, array $peDeasupra = []) use ($pdo): void {
         if ($pdo->inTransaction()) {
             $pdo->rollBack();
         }
-        fail($mesaj, $status, $cod);
+        if (!$peDeasupra) {
+            fail($mesaj, $status, $cod);
+        }
+        json_out(['error' => array_merge(
+            ['code' => $cod ?: (string) $status, 'message' => $mesaj],
+            $peDeasupra
+        )], $status);
     };
 
     $planuit = [];
@@ -1430,9 +1562,68 @@ function route_order_production(string $id): void
     $fara    = [];
 
     try {
-        $o = one('SELECT id, ref, customer_name FROM orders WHERE id = ? FOR UPDATE', [(int) $id]);
+        // `status` și `seq` nu se citeau până acum: primul, fiindcă ruta nu
+        // întreba niciodată pe ce etapă e comanda (vezi refuzul de mai jos); al
+        // doilea, fiindcă mesajul refuzului numește comanda ca peste tot în
+        // casă — referința, ori numărul zilei când referința e goală.
+        $o = one('SELECT id, ref, seq, customer_name, status FROM orders WHERE id = ? FOR UPDATE', [(int) $id]);
         if (!$o) {
             $opreste('Comanda nu există.', 404, 'not_found');
+        }
+
+        // RAPORTUL CARE SOSEȘTE DUPĂ ANULARE NU SE SCRIE.
+        //
+        // Tableta din laborator stă cu ecranul stins de douăzeci de minute, iar
+        // lista de pe ea e de atunci: `gp.poll` nu cere nimic cât fila e
+        // ascunsă. Administratorul anulează comanda #1042 — a sunat clientul —,
+        // marfa se întoarce în depozit. Brutarul ia tableta, deschide fișa
+        // cardului care e încă acolo și apasă „Toate gata". Până acum ruta
+        // scria liniștită: făina IEȘEA din rafturi pentru comanda nimănui,
+        // patruzeci de croasante urcau pe stocul de finit, `done_qty` se umplea
+        // și rezervările treceau pe consumate — iar răspunsul era 200, fără
+        // niciun semn. Apoi omul apăsa butonul de etapă de deasupra, pe același
+        // card, și primea „Comanda #1042 a fost schimbată între timp". Două
+        // apăsări la o secundă distanță: una păzită, una nu — iar cea nepăzită
+        // era tocmai cea care umblă la bani.
+        //
+        // NU SE CEARTĂ CU „faptele nu se desfac" de la capul funcției. Acolo e
+        // vorba de producția raportată ÎNAINTE de anulare: croasantele acelea
+        // chiar s-au făcut, făina chiar a ieșit din sac, iar rândurile lor rămân
+        // scrise — marfa e în congelator și se vinde altcuiva. Aici e vorba de
+        // raportul care sosește DUPĂ: el nu însemnează o faptă întâmplată, o
+        // naște. Una păzește ce s-a făcut, cealaltă oprește ce nu s-a făcut.
+        //
+        // ÎNGUSTĂ DINADINS: numai etapa de anulare, niciodată „Predată" și
+        // nicio altă etapă. `trimiteProd` din „Panou Laborator" pleacă abia
+        // după 600 ms de liniște, fiindcă cine face patruzeci de croasante apasă
+        // de patruzeci de ori. Dacă șoferul marchează „livrat" exact în secunda
+        // aceea, un refuz pe „Predată" ar rupe o cursă NORMALĂ, în care nimeni
+        // n-a greșit nimic și bucățile chiar s-au făcut. Anularea e altă
+        // poveste: comanda a murit, iar marfa nu mai are stăpân.
+        //
+        // Etapa de anulare nu se scrie aici pe litere: lista de etape e
+        // editabilă din Setări, deci se cere de la `status_cancelled()`
+        // (api/lib/settings.php). Aceeași pază ca la numărătoarea zilelor și la
+        // filtrul rutei: funcția întoarce ȘIRUL GOL când setarea e necompletată
+        // și nicio etapă din listă nu se potrivește, iar o comparație fără
+        // paza asta ar refuza tocmai comenzile cu etapa goală — adică ar opri
+        // laboratorul pentru o setare nepusă.
+        //
+        // Refuzul are aceeași formă ca la ușa de etapă: 409, cod
+        // `status_changed`, cu etapa de acum în `error.current` — copiată
+        // literă cu literă, nu doar asemănătoare. Pagina deosebește refuzul de
+        // o pană de rețea uitându-se la cod și la `current`; cu altă formă pe
+        // ușa asta, tableta ar fi trebuit să învețe două feluri de a citi
+        // același lucru, iar al doilea s-ar fi uitat la prima corectură.
+        $anulata = status_cancelled();
+        if ($anulata !== '' && (string) $o['status'] === $anulata) {
+            $opreste(
+                'Comanda ' . (((string) $o['ref']) ?: '#' . $o['seq'])
+                    . ' a fost schimbată între timp: acum e „' . $anulata . '”. N-am notat producția.',
+                409,
+                'status_changed',
+                ['current' => $anulata]
+            );
         }
 
         // Zăvor și pe poziții, nu doar pe comandă: `PATCH /orders` le șterge și

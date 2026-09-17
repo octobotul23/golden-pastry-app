@@ -145,7 +145,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 <button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
-<a href="Intrare.dc.html" style="font-size:14px;color:rgba(255,255,255,.72);text-decoration:none;padding-top:4px">← Alege panoul</a>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;color:rgba(255,255,255,.72);text-decoration:none">← Alege panoul</a>
 </div>
 </div>
 </div>
@@ -182,6 +182,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="flex:1">{{ n.label }}</span>
 <span class="h-numeric" style="opacity:.75">{{ n.count }}</span>
 </button>
+</sc-for>
+<sc-for list="{{ spreStatistici }}" as="st" hint-placeholder-count="1">
+<a href="{{ st.href }}" style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.05);color:var(--h-cream-100);font-family:var(--h-font-body);font-size:14px;font-weight:600;text-decoration:none">
+<span style="flex:1">{{ st.et }}</span>
+<span aria-hidden="true" style="opacity:.75">→</span>
+</a>
 </sc-for>
 </div>
 </div>
@@ -273,6 +279,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ v.mark }}</span>
 </button>
 </sc-for>
+<sc-for list="{{ spreStatistici }}" as="st" hint-placeholder-count="1">
+<a href="{{ st.href }}" style="display:flex;align-items:center;gap:12px;min-height:56px;padding:0 14px;border-radius:15px;border:1px solid var(--h-line);background:var(--h-bg-sunk);color:var(--h-fg);font-family:var(--h-font-body);font-size:16px;font-weight:600;text-align:left;text-decoration:none">
+<span style="flex:1;min-width:0">{{ st.et }}</span>
+<span aria-hidden="true" style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">→</span>
+</a>
+</sc-for>
 <sc-if value="{{ showFilters }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;flex-direction:column;gap:8px">
 <p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Ziua</p>
@@ -306,6 +318,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="{{ msgCls }}" style="margin:16px 28px 0;border-radius:14px;padding:12px 16px;align-items:center;animation:pf-fade .25s var(--h-ease-out)">
 <p class="h-alert__title" style="margin:0;font-size:15px">{{ msg }}</p>
 <button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onMsgClose }}" style="margin-left:auto;height:40px;width:40px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ taiat }}" hint-placeholder-val="{{ false }}">
+<div data-adm="taiat" class="h-alert h-alert--warning" style="display:flex;align-items:flex-start;gap:10px;margin:16px 28px 0;padding:12px 14px;border-radius:14px;font-size:14px;line-height:1.5">
+<span aria-hidden="true" style="font-size:16px;line-height:1.3">⚠</span>
+<span>Săptămâna de lucru are mai mult de 500 de comenzi, iar serverul trimite cel mult atâtea; au rămas pe dinafară cele din zilele cele mai depărtate. Tabelul de comenzi e întreg, fiindcă se cere pe pagini. Cifrele de sus, numărul din meniu, ruta șoferului și „Produse cerute” sunt însă socotite numai din comenzile care au încăput, deci pot fi mai mici decât adevărul. Nu reordona și nu optimiza ruta unei zile cât vezi semnul acesta: ordinea s-ar salva numai pentru opririle de pe ecran.</span>
 </div>
 </sc-if>
 
@@ -362,7 +381,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      n-ar avea ce să arate. Cele 1092px sunt suma coloanelor plus spațiile
      plus marginile — sub lățimea de la 1440 (1117px), ca acolo să nu apară
      nicio bară de derulare. -->
-<div data-adm="desktoptable" class="h-card" style="padding:0;border-radius:18px;overflow-x:auto;overflow-y:hidden">
+<div data-adm="desktoptable" class="h-card" style="padding:0;border-radius:18px;overflow-x:auto;overflow-y:hidden;flex:none">
 <div data-adm="thead" style="display:grid;grid-template-columns:88px minmax(128px,1.8fr) 92px 104px minmax(104px,1.5fr) 44px 120px 292px;gap:12px;min-width:1092px;padding:12px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
 <span>Ref.</span><span>Client</span><span>Canal</span><span>Ziua</span><span>Produse</span><span style="text-align:right">Buc.</span><span>Stare</span><span style="text-align:right">Acțiuni</span>
 </div>
@@ -466,13 +485,6 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 </div>
-
-<sc-if value="{{ taiat }}" hint-placeholder-val="{{ false }}">
-<div style="display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid var(--h-warn-line, var(--h-line));border-radius:14px;background:var(--h-warn-bg, var(--h-bg-surface))">
-<span aria-hidden="true" style="font-size:16px;line-height:1.3">⚠</span>
-<span style="font-size:13px;line-height:1.5;color:var(--h-fg-muted)">Săptămâna asta are peste 500 de comenzi, iar serverul a dat numai atâtea. Rândurile de mai jos sunt în regulă — ele se cer pe pagini — dar cifrele de sus și ruta șoferului sunt socotite din ce a încăput, deci pot fi mai mici decât adevărul. Cere o singură zi din filtrul de sus ca să le vezi întregi.</span>
-</div>
-</sc-if>
 
 <div data-adm="pager" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding-top:2px">
 <span style="font-size:13px;color:var(--h-fg-muted)">{{ pagerText }}</span>
@@ -891,6 +903,14 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ canDelete }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onDeleteFromForm }}" style="height:48px;font-size:15px;color:var(--h-danger)">Șterge comanda</button>
 </sc-if>
+<!-- Drumul înapoi. Se arată NUMAI pe o comandă anulată, și atunci ia locul
+     lui „Șterge comanda": cele două sunt perechi, nu vecini. Butonul n-are
+     `data-adm` dinadins — regulile de telefon (rândurile 93-96) mută după
+     `order` numai butoanele numite, deci ăsta rămâne jos, lângă fratele lui,
+     în loc să sară în fața Salvării. -->
+<sc-if value="{{ potReface }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onRefaceFromForm }}" title="{{ refaceTitlu }}" style="height:48px;font-size:15px;color:var(--h-success)">Reface comanda</button>
+</sc-if>
 <button data-adm="btncancel" type="button" class="h-btn h-btn--secondary" onClick="{{ onCancel }}" style="margin-left:auto;height:48px;font-size:15px">Anulează</button>
 <button data-adm="btnsave" type="button" class="h-btn h-btn--primary" onClick="{{ onSave }}" disabled="{{ saveOff }}" style="height:48px;font-size:16px;min-width:190px">{{ saveLabel }}</button>
 </div>
@@ -961,11 +981,19 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ confirmOpen }}" hint-placeholder-val="{{ false }}">
 <div data-adm="modalwrap" style="position:fixed;inset:0;background:rgba(28,18,11,.55);display:flex;align-items:center;justify-content:center;padding:28px;z-index:50;animation:pf-fade .2s var(--h-ease-out)">
 <div data-adm="modalcard" class="h-card" style="width:470px;padding:26px 28px;border-radius:22px;display:flex;flex-direction:column;gap:14px;animation:pf-pop .28s var(--h-ease-spring)">
-<h2 class="h-h3" style="margin:0;font-size:21px">Anulezi comanda {{ confirmRef }}?</h2>
-<p style="margin:0;font-size:15px;color:var(--h-fg-muted);text-wrap:pretty">{{ confirmCust }} · {{ confirmWhen }}. Dispare de pe panoul din laborator și de pe ruta șoferului, dar rămâne în registru, marcată „Anulată”.</p>
+<h2 class="h-h3" style="margin:0;font-size:21px">{{ confirmTitlu }}</h2>
+<p style="margin:0;font-size:15px;color:var(--h-fg-muted);text-wrap:pretty">{{ confirmCust }} · {{ confirmWhen }}. {{ confirmNota }}</p>
+<!-- Ziua comenzii a trecut: scoasă din „Anulată" (din „Reface comanda", din
+     lista de etape a fișei sau din lista „Stare" a formularului, la salvare),
+     comanda ar rămâne pe o zi dinaintea ferestrei laboratorului și a rutei
+     șoferului. Rândul stă între notă și butoane, ca să fie citit ÎNAINTE de
+     încuviințare. -->
+<sc-if value="{{ confirmZiTrecuta }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.5;text-wrap:pretty">{{ confirmAvert }}</div>
+</sc-if>
 <div style="display:flex;gap:10px;margin-top:6px">
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onConfirmCancel }}" style="flex:1;height:48px;font-size:15px">Păstrează</button>
-<button type="button" class="h-btn h-btn--danger" onClick="{{ onConfirmDelete }}" style="flex:1;height:48px;font-size:15px">Anulează comanda</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onConfirmCancel }}" style="flex:1;height:48px;font-size:15px">{{ confirmNu }}</button>
+<button type="button" class="{{ confirmDaCls }}" onClick="{{ onConfirmDa }}" style="flex:1;height:48px;font-size:15px">{{ confirmDa }}</button>
 </div>
 </div>
 </div>
@@ -1803,6 +1831,55 @@ class Component extends DCLogic {
     this.setState({ formErr: e.message || 'Operația nu a reușit.', saving: false });
   }
 
+  /**
+   * Refuzul „altcineva a mutat comanda între timp" (409 `status_changed`).
+   *
+   * Fiecare cerere care schimbă etapa duce de acum și `from` — etapa pe care o
+   * arăta pagina în clipa apăsării. Serverul o compară cu cea din bază SUB
+   * LACĂT și, dacă diferă, refuză fără să scrie nimic: fără etapă, fără retur
+   * de depozit, fără rând de jurnal, fără niciun anunț la coadă
+   * (`route_orders_update()`, api/routes/orders.php). Pagina se împrospătează
+   * la patru secunde, iar o fișă ori un formular deschise peste o listă veche
+   * sunt tocmai cazul: patronul și cea care ia comenzile la telefon stau
+   * amândoi în „Comenzi", pe aceeași comandă.
+   *
+   * Se cere și etapa de ACUM, nu doar codul: ea vine în `error.current`,
+   * purtată până aici de `detalii` (shared/gp-api.js · GpError). Fără ea n-avem
+   * ce spune omului, deci vestea n-ar fi cu nimic mai bună decât un refuz
+   * oarecare.
+   */
+  altaEtapa(e) {
+    return !!e && e.code === "status_changed" && !!(e.detalii && e.detalii.current);
+  }
+
+  /**
+   * Vestea, în românește. Nimeni n-a greșit nimic: ecranul rămăsese în urmă.
+   *
+   * De aceea nu începe cu „Nu s-a salvat", care ar da vina pe cel care a
+   * apăsat, și spune pe față că a schimbat-o altcineva și unde a ajuns comanda.
+   * `coada` spune ce NU s-a întâmplat, fiindcă e altceva pe fiecare ușă: din
+   * fișă n-a plecat mutarea, din casetă n-a plecat refacerea ori anularea, iar
+   * din formular n-a plecat NIMIC — nici ziua, nici telefonul, nici pozițiile.
+   */
+  mesajAltaEtapa(e, ref, coada) {
+    return "Comanda " + (ref || "") + " a fost schimbată între timp de altcineva: acum e „"
+      + e.detalii.current + "”. " + coada;
+  }
+
+  /**
+   * Lista se citește din nou de la server, după un refuz de felul ăsta.
+   *
+   * Semnele de „am mai văzut asta" se sting întâi: fără ele, un răspuns identic
+   * cu instantaneul din pagină n-ar mai ajunge în stare, iar fișa ar rămâne cu
+   * etapa veche sub ochii omului. Nu se așteaptă nimic după: mesajul e pus deja,
+   * iar `pullOrders`/`pullLista` își prind singure erorile.
+   */
+  recitesteLista() {
+    this.__ordSeen = null;
+    this.__listaSeen = null;
+    return this.pullTot();
+  }
+
   qty(o) { return o.items.reduce((a, i) => a + gp.qty(i.q), 0); }
 
   nextRef(orders) {
@@ -1989,8 +2066,17 @@ class Component extends DCLogic {
      *
      * Acum pozițiile se verifică înainte de trimitere, iar ce nu se potrivește
      * oprește salvarea cu numele scris în clar.
+     *
+     * `casetaIncuviintata` e adevărat când salvarea vine dintr-o casetă de
+     * confirmare deja încuviințată — oricare dintre ele. S-a numit odată
+     * `refacereIncuviintata`, pe vremea când caseta cu „Salvează și…" se
+     * deschidea numai la refacere; de când și „Șterge comanda" din subsolul
+     * formularului trece pe aici, numele acela ar fi mințit la fiecare anulare.
+     * Ce spune el e că omul a văzut deja ce mută salvarea și a zis da, deci
+     * caseta nu se mai deschide o dată (ușa a treia, mai jos), iar etapa
+     * hotărâtă acolo pleacă în ACEEAȘI cerere cu tot ce s-a tastat.
      */
-    const save = () => {
+    const save = (casetaIncuviintata) => {
       // O comandă se trimite o singură dată.
       //
       // Formularul se închide abia în `commit()`, adică după ce răspunde
@@ -2065,6 +2151,54 @@ class Component extends DCLogic {
         notes: f.note.trim(), urgent: !!f.urgent, timed: !!f.timed
       };
 
+      // A TREIA UȘĂ DIN „ANULATĂ": SALVAREA FORMULARULUI.
+      //
+      // Lista „Stare" din formular scotea și ea comanda din „Anulată" — pe
+      // tăcute: fără casetă și fără avertismentul zilei trecute, deși butonul
+      // „Reface comanda" de sub ea și lista de etape a fișei trec amândouă prin
+      // casetă. Hotărârea patronului („aceeași casetă, peste tot pe unde apare")
+      // se aplică și aici.
+      //
+      // Se întreabă DOUĂ lucruri, nu unul:
+      //
+      //   · pleacă etapa în cererea asta? Răspunde chiar `doarSchimbate()`, cea
+      //     care alcătuiește mai jos corpul cererii, deci întrebarea și fapta nu
+      //     se pot contrazice. O comandă anulată între timp de altcineva, pe
+      //     care omul o salvează fără să atingă lista „Stare", n-are ce scoate
+      //     din „Anulată": etapa nici nu pleacă, deci nu se deschide nicio
+      //     casetă.
+      //   · ce etapă are comanda PE SERVER — nu în formular, care tocmai el e
+      //     cel care se schimbă. Se ia din instantaneul proaspăt al listei
+      //     (bătaia de patru secunde), iar dacă lista n-o mai ține — altă
+      //     pagină, alt filtru —, din linia de reper de la deschiderea
+      //     formularului. Așa întreabă și ecranul rămas deschis peste o anulare
+      //     făcută de un coleg.
+      //
+      // Caseta se deschide abia după verificările de mai sus: altfel omul ar
+      // încuviința o salvare care oricum se oprește la prima poziție greșită.
+      // Ziua purtată de casetă e cea din FORMULAR, fiindcă ea pleacă în aceeași
+      // cerere: dacă administratorul a mutat comanda pe o zi de azi încolo,
+      // avertismentul de zi trecută n-are ce spune. Nimic nu pleacă acum:
+      // încuviințarea cheamă înapoi chiar salvarea asta, cu toate câmpurile
+      // schimbate într-o singură cerere.
+      if (f.id && casetaIncuviintata !== true) {
+        const etapaTrimisa = this.doarSchimbate({ status: f.status }, this.__formBase).status;
+        const peServer = this.comandaDupaId(f.id);
+        const etapaServer = peServer ? peServer.status : (this.__formBase ? this.__formBase.status : "");
+        if (etapaTrimisa !== undefined && etapaServer === gp.cancelled() && etapaTrimisa !== gp.cancelled()) {
+          return askReface({
+            id: f.id,
+            ref: (f.ref || "").trim() || (peServer ? peServer.ref : ""),
+            cust: f.cust.trim(), date: f.day, timed: !!f.timed, slot: f.slot,
+            // Etapa pe care o are comanda PE SERVER, nu cea din formular: ea e
+            // și cea despre care caseta îi spune omului că e „Anulată", și cea
+            // care pleacă apoi ca `from`. Cu reperul vechi al formularului,
+            // serverul ar fi refuzat tocmai salvarea încuviințată adineauri.
+            status: etapaServer
+          }, f.status, true);
+        }
+      }
+
       this.__saving = true;
       set({ saving: true, formErr: "" });
 
@@ -2096,10 +2230,82 @@ class Component extends DCLogic {
           schimbat.referralCode = codAcum;
           schimbat.referralLink = true;
         }
+        // ETAPA HOTĂRÂTĂ DE CASETĂ, dusă în ACEEAȘI cerere cu tot ce s-a tastat.
+        //
+        // Butoanele „Reface comanda" și „Șterge comanda" din subsolul
+        // formularului chemau caseta fără să-i spună că întrebarea vine din
+        // salvare: încuviințarea trimitea un PATCH numai cu etapa, iar
+        // `commit()` închidea pe loc formularul. Ziua, telefonul, pozițiile
+        // tastate se pierdeau fără un cuvânt — chiar primejdia pentru care ușa a
+        // treia a căpătat butoanele „Înapoi la formular" / „Salvează și …".
+        // Acum etapa aleasă de casetă (capul fluxului la refacere, etapa de
+        // anulare la anulare) se scrie peste cea din formular și pleacă odată cu
+        // restul: o singură trecere pe server pentru o singură apăsare, deci și
+        // un singur rând de anunțuri spre client.
+        //
+        // Lista derulantă „Stare" NU se atinge, dinadins. Ea e ce a ales omul,
+        // iar formularul se închide oricum la izbândă; scrisă acolo, hotărârea
+        // casetei ar fi rămas pe ecran și după un refuz al serverului, ca și cum
+        // ar fi ales-o el — iar la „Înapoi la formular" lista ar fi arătat
+        // altceva decât înainte de întrebare.
+        //
+        // Se scrie ÎNAINTEA pazei de „nimic de schimbat" de mai jos: la o
+        // refacere ori o anulare fără nicio altă corectură `schimbat` e gol, iar
+        // paza ar fi închis formularul cu „nu avea nimic de schimbat" tocmai
+        // când omul încuviințase mutarea.
+        const etapaCasetei = (casetaIncuviintata === true && S.confirm && S.confirm.etapa)
+          ? S.confirm.etapa : "";
+        if (etapaCasetei && etapaCasetei !== f.status) schimbat.status = etapaCasetei;
         if (!Object.keys(schimbat).length) {
           // Serverul refuză un PATCH gol („Nimic de modificat"), iar omul n-are
           // ce afla din refuzul ăsta: închidem formularul și spunem pe față.
           return this.commit("Comanda " + (f.ref || "") + " nu avea nimic de schimbat.");
+        }
+        // ETAPA VĂZUTĂ DE OM, cât timp salvarea chiar mută comanda.
+        //
+        // `from` pleacă numai când etapa e printre câmpurile schimbate: o
+        // corectură de telefon nu mută nimic, deci n-are ce refuza serverul — cu
+        // `from` la fiecare salvare, o adresă îndreptată pe o comandă pe care
+        // laboratorul tocmai a dus-o mai departe s-ar fi lovit de un 409 pe
+        // degeaba.
+        //
+        // Etapa de plecare e cea din instantaneul de la deschiderea
+        // formularului: lista „Stare" arată tocmai ce era atunci, fiindcă
+        // formularul deschis nu se împrospătează (dinadins — ce a tastat omul
+        // nu se pierde). Deci ea e ce a văzut omul când a ales altă etapă. Cine
+        // deschide fereastra dimineața, pleacă la cuptor și salvează la prânz
+        // „pasul următor" mută comanda de pe o etapă care nu mai există demult;
+        // de acum serverul îl oprește și îi spune unde a ajuns ea.
+        //
+        // Când salvarea vine dintr-o casetă, etapa e cea pe care a arătat-o
+        // CASETA (`dela`): ea s-a uitat în comanda adevărată, nu în lista
+        // „Stare", și i-a spus omului pe față de unde pleacă, iar el a
+        // încuviințat atunci. Cu reperul vechi al formularului, serverul ar fi
+        // refuzat exact salvarea pe care pagina tocmai i-o ceruse.
+        //
+        // GOLUL PE CARE ALEGEREA ASTA ÎL LASĂ, și cine îl acoperă.
+        //
+        // Fără `from`, o salvare care nu atinge etapa trece și peste o comandă
+        // pe care un coleg tocmai a anulat-o: se scriu ziua, telefonul,
+        // pozițiile, iar marfa se întoarce în depozit (`route_orders_update()`
+        // · `$returStoc`), fiindcă serverul n-are ce compara. Administratorul
+        // cu formularul deschis de zece minute corectează adresa, apasă, vede
+        // verde „a fost salvată." și pleacă de la calculator convins că a
+        // îndreptat o comandă vie.
+        //
+        // Paza tot nu se pune aici: cu `from` la fiecare salvare s-ar fi izbit
+        // de 409 și toate corecturile în care nimeni n-a greșit nimic — o
+        // adresă îndreptată pe o comandă pe care laboratorul tocmai a dus-o
+        // mai departe e o faptă bună, nu o ciocnire. Golul se acoperă la
+        // IZBÂNDĂ, în `.then()` de mai jos: răspunsul poartă comanda recitită
+        // din bază, deci și etapa ei de ACUM, iar vestea spune și ce s-a
+        // întâmplat cu comanda între timp. Nu e un refuz — datele chiar s-au
+        // scris —, e o veste.
+        if ('status' in schimbat) {
+          const dela = (casetaIncuviintata === true && S.confirm && S.confirm.dela)
+            ? S.confirm.dela
+            : (this.__formBase ? this.__formBase.status : "");
+          if (dela) schimbat.from = dela;
         }
         gp.patch('/orders/' + f.id, schimbat)
           // Mesajul se scrie din COMANDA ÎNTOARSĂ, nu din formularul de pe
@@ -2111,6 +2317,64 @@ class Component extends DCLogic {
             const o = (r && r.order) || {};
             const ref = o.ref || f.ref || "";
             let m = "Comanda " + ref + " a fost salvată.";
+            // Când caseta a purtat o etapă, mesajul spune ce s-a întâmplat CU
+            // EA, nu doar că s-a salvat. Aceeași apăsare a făcut două lucruri
+            // deodată, iar „a fost salvată." le-ar fi ascuns pe amândouă pe
+            // jumătate — mai ales anularea, care scoate comanda de pe panoul
+            // laboratorului și de pe ruta șoferului. `'status' in schimbat`
+            // fiindcă numai atunci etapa chiar a plecat: din lista „Stare" omul
+            // poate alege tocmai etapa pe care comanda o are deja, caz în care
+            // nu s-a mutat nimic și n-avem ce anunța.
+            if (etapaCasetei && 'status' in schimbat) {
+              m = "Comanda " + ref + (etapaCasetei === gp.cancelled()
+                ? " a fost anulată"
+                : " s-a întors în „" + etapaCasetei + "”")
+                + ", iar modificările din formular s-au salvat odată cu ea.";
+            }
+            // ETAPA DE PE SERVER, LA IZBÂNDĂ: s-a salvat, dar poate nu pe
+            // comanda la care se gândea omul.
+            //
+            // Scenariul e cel de la blocul lui `from` de mai sus: formularul stă
+            // deschis de zece minute, un coleg anulează comanda, iar salvarea
+            // care corectează doar adresa nu duce `from`, deci serverul n-are ce
+            // refuza — și bine face. Scrie tot, întoarce marfa în depozit, și
+            // până acum răspundea „Comanda X a fost salvată.", atât. Omul pleca
+            // de la calculator crezând că a îndreptat o comandă vie.
+            //
+            // Etapa de acum nu se cere printr-o a doua cerere: `route_orders_update()`
+            // recitește comanda din bază după ce a scris și o trimite înapoi
+            // întreagă, deci vine pe gratis, în același răspuns din care se ia
+            // deja referința.
+            //
+            // Se compară cu ce AȘTEPTA pagina să găsească acolo — etapa trimisă,
+            // dacă salvarea a trimis una, altfel cea pe care o arăta formularul.
+            // Așa, o mutare cerută chiar de om nu i se anunță ca o surpriză (a
+            // ajuns unde a cerut), iar una făcută de altcineva se spune și când
+            // salvarea n-a atins deloc lista „Stare".
+            //
+            // RĂMÂNE VERDE, cu coadă. Roșul înseamnă în tot programul „n-a mers,
+            // nu s-a scris nimic" (v. `fail()` și refuzul de 409 de mai jos), iar
+            // aici s-a scris tot, cu retur de depozit cu tot: pe roșu, omul ar
+            // apăsa a doua oară o salvare care nu mai are ce salva, ori ar căuta
+            // ce să repare. Cutia de sus n-are decât două culori, în toate
+            // panourile, și n-are rost să învețe o a treia pe o singură pagină.
+            // Greutatea o duce textul, care numește etapa cu aceleași cuvinte ca
+            // refuzul de 409, ca omul să recunoască aceeași întâmplare.
+            const asteptata = ('status' in schimbat)
+              ? schimbat.status
+              : (this.__formBase ? this.__formBase.status : "");
+            const etapaAcum = o.status || "";
+            if (etapaAcum && asteptata && etapaAcum !== asteptata) {
+              m += etapaAcum === gp.cancelled()
+                ? " Atenție: între timp a fost anulată de altcineva, iar modificările s-au scris pe o comandă anulată — care nu mai e nici pe panoul laboratorului, nici pe ruta șoferului."
+                : " Atenție: între timp a fost schimbată de altcineva, iar acum e „" + etapaAcum + "”; modificările s-au scris pe ea așa cum e acum.";
+              // Reperul se mută pe etapa adevărată, ca după refuzul de 409.
+              // `commit()` închide formularul, deci astăzi mutarea asta n-are pe
+              // cine ajuta — dar reperul lăsat pe o etapă moartă e chiar defectul
+              // de deasupra, iar o zi în care formularul ar rămâne deschis după
+              // salvare n-are voie să-l învie pe tăcute.
+              if (this.__formBase) this.__formBase.status = etapaAcum;
+            }
             // Bifa spune ce s-a întâmplat, nu că s-a trimis ceva. Contul putea
             // avea deja un recomandant, caz în care legătura n-a fost scrisă.
             if (cereLegatura) {
@@ -2120,7 +2384,55 @@ class Component extends DCLogic {
             }
             return this.commit(m);
           })
-          .catch((e) => this.fail(e));
+          .catch((e) => {
+            // Refuzul „s-a schimbat între timp" nu e o greșeală a celui care a
+            // apăsat, iar din salvare n-a plecat NIMIC: nici ziua, nici
+            // telefonul, nici pozițiile. De aceea formularul rămâne deschis, cu
+            // tot ce s-a tastat în el, iar omul hotărăște din nou ce face. Lista
+            // se recitește, ca tabelul din spate să nu mai arate etapa veche.
+            // Un refuz oarecare rămâne spus ca până acum. (`fail()` citește doar
+            // `message`, deci vestea noastră merge pe același drum ca una de la
+            // server, adică în chenarul roșu al formularului.)
+            if (!this.altaEtapa(e)) return this.fail(e);
+            const acum = e.detalii.current;
+            this.fail({ message: this.mesajAltaEtapa(e, (f.ref || "").trim(),
+              "Nu s-a salvat nimic: modificările tale au rămas în formular. "
+              + (acum === f.status
+                ? "În „Stare” ai ales chiar etapa în care a ajuns ea, deci a doua apăsare salvează restul fără să mai miște nimic."
+                : "A doua apăsare o mută din „" + acum + "” în „" + f.status + "”, cu tot ce ai tastat; dacă nu mai vrei mutarea, pune „Stare” înapoi pe „" + acum + "”.")) });
+            this.recitesteLista();
+            // REPERUL SE MUTĂ PE ETAPA ADEVĂRATĂ, altfel a doua apăsare ia
+            // același 409 la nesfârșit.
+            //
+            // `__formBase` e comanda de la deschiderea formularului, iar din ea
+            // se scoate `from`. Rămas neatins după un refuz, el tot spunea
+            // „plec din etapa de acum o oră" — pe care serverul tocmai o găsise
+            // schimbată —, deci orice apăsare următoare pe „Salvează
+            // modificările" retrimitea același `from` vechi și lua același
+            // refuz. Chenarul roșu poftea la o nouă încercare, iar singura
+            // ieșire adevărată era „Anulează", adică pierderea a tot ce s-a
+            // tastat.
+            //
+            // Două lucruri fac mutarea asta cinstită, nu o trecere peste voia
+            // omului:
+            //
+            //   · un 409 se naște NUMAI dacă salvarea chiar a trimis `status`
+            //     (fără el nu pleacă `from`, iar fără `from` serverul nu
+            //     compară nimic). Deci omul chiar alesese o etapă, și ea rămâne
+            //     în lista „Stare" neatinsă: a doua apăsare o duce acolo, de
+            //     data asta pornind de unde e comanda cu adevărat.
+            //   · dacă etapa de pe server e chiar cea aleasă de om — altcineva
+            //     a mutat-o exact unde voia și el —, atunci după mutarea
+            //     reperului `doarSchimbate()` n-o mai găsește schimbată: a doua
+            //     apăsare nu mai trimite `status` deloc, deci nici `from`. Se
+            //     salvează numai ziua, telefonul, pozițiile — și e bine așa,
+            //     fiindcă mutarea e deja făcută.
+            //
+            // Iar dacă etapa de pe server e cea de anulare, a doua apăsare
+            // trece prin ușa a treia (caseta), cu avertismentul de zi trecută
+            // cu tot. Tot bine: nimic nu iese din „Anulată" pe tăcute.
+            if (this.__formBase) this.__formBase.status = acum;
+          });
 
       } else if (f.fromReq) {
         // Acceptarea unei cereri: serverul o transformă în comandă, îi dă
@@ -2203,7 +2515,104 @@ class Component extends DCLogic {
         });
     };
 
-    const askDelete = (o) => set({ confirm: { id: o.id, ref: o.ref, cust: o.cust, when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : "") } });
+    // Aceeași casetă, două rosturi. `fel` nu e podoabă: fără el butonul de
+    // încuviințare n-ar avea din ce afla cine l-a chemat și ar anula tocmai
+    // comanda pe care omul cerea s-o refacă.
+    //
+    // Caseta mai ține patru lucruri. `day` e ziua comenzii, în ISO, pentru
+    // avertismentul de zi trecută (`when` e doar text de afișat): ziua SALVATĂ
+    // pe ușile care trimit numai etapa, ziua din FORMULAR pe ușile care pornesc
+    // o salvare, fiindcă ele duc ziua cu ele. `etapa` e unde ajunge comanda:
+    // aleasă de om în lista de etape a fișei ori în lista „Stare" a
+    // formularului, iar la butoanele subsolului socotită de ele
+    // (`etapaDeIntoarcere()` la refacere, `gp.cancelled()` la anulare). Așa
+    // încuviințarea duce comanda exact acolo, nu altundeva. `salvare` spune că
+    // întrebarea vine din formular — „Salvează modificările" sau unul din
+    // butoanele subsolului —, adică încuviințarea nu mută o etapă, ci face
+    // salvarea întreagă.
+    //
+    // `dela` e etapa pe care o avea comanda în clipa DESCHIDERII casetei — ce
+    // i-a arătat caseta omului, negru pe alb, când l-a întrebat. Ea pleacă la
+    // server ca `from`, nu etapa de la răspuns: între întrebare și apăsarea pe
+    // „Reface comanda" pagina se împrospătează de câteva ori, iar omul a
+    // încuviințat ce scria în casetă, nu ce s-a schimbat sub ea între timp.
+    const intrebare = (fel) => (o, etapa, dinSalvare) => set({ confirm: { fel, id: o.id, ref: o.ref, cust: o.cust, day: o.date, etapa: etapa || "", salvare: !!dinSalvare, dela: o.status || "", when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : "") } });
+    // Unde se întoarce o comandă refăcută: la capul FLUXULUI, nu al listei.
+    // Baza nu ține minte etapa de dinainte de anulare (nicio coloană, iar
+    // jurnalul e text pentru om), deci comanda reintră de unde intră orice
+    // comandă nouă. Dar `gp.flow()` scoate etapa de anulare, iar `gp.statuses()`
+    // nu: ordinea listei se schimbă din Setări și nimeni nu-i păzește poziția,
+    // deci cu lista întreagă butonul „Reface" ar putea ANULA comanda. E chiar
+    // capcana pentru care `gp.flow()` există.
+    const etapaDeIntoarcere = () => gp.flow()[0] || gp.statuses()[0] || "În așteptare";
+    const askDelete = intrebare("anuleaza");
+    const askReface = intrebare("reface");
+    // Comanda pe care o vede caseta deschisă din SUBSOLUL formularului, cusută
+    // din două — la fel ca la ușa a treia, și din aceleași pricini.
+    //
+    // `id` și `status` sunt de pe comanda ADEVĂRATĂ: etapa de acolo pleacă la
+    // server ca `from`, iar lista „Stare" e doar o alegere nesalvată, care n-a
+    // trecut încă pe nicăieri. Restul — numărul, clientul, ziua și ora — e din
+    // FORMULAR, fiindcă încuviințarea salvează într-o singură cerere tot ce s-a
+    // tastat: ziua pe care ajunge comanda e cea din câmpul „Zi", deci ea trebuie
+    // cântărită de avertismentul de zi trecută. Cu ziua salvată, avertismentul
+    // ar fi strigat tocmai când omul mutase comanda pe o zi bună.
+    const comandaSubsolului = (o) => {
+      const fo = S.form || {};
+      return {
+        id: o.id,
+        ref: (fo.ref || "").trim() || o.ref,
+        cust: (fo.cust || "").trim() || o.cust,
+        date: fo.day, timed: !!fo.timed, slot: fo.slot,
+        status: o.status
+      };
+    };
+    // Unde ajunge comanda scoasă din „Anulată": la etapa aleasă în fișă sau în
+    // lista „Stare" a formularului, dacă de acolo a venit întrebarea, altfel la
+    // capul fluxului. O singură socoteală pentru notă și pentru ce pleacă la
+    // server, ca ele să nu se poată contrazice.
+    const etapaRefacerii = () => (S.confirm && S.confirm.etapa) || etapaDeIntoarcere();
+    // Refacerea NU mută ziua. Încuviințarea trimite numai etapa, deci comanda
+    // se întoarce pe ziua ei SALVATĂ — `S.confirm.day`, adică `o.date` —, nu pe
+    // cea aleasă în formular și încă nesalvată. Dacă ziua aceea a trecut,
+    // comanda reintră în flux înaintea ferestrei cu care lucrează laboratorul
+    // și șoferul: panoul din laborator și ruta pornesc amândouă de azi. Serverul
+    // n-o refuză, și bine face: marginea de jos lipsește dinadins
+    // (`valid_day_not_too_far()`, api/lib/http.php), ca administratorul să
+    // poată consemna și o livrare de ieri. Deci semnul se dă aici, în casetă,
+    // pe toate cele trei uși care scot o comandă din „Anulată": butonul „Reface
+    // comanda", lista de etape a fișei și salvarea formularului. Pe primele
+    // două ziua nu se mută, deci se cântărește cea salvată; pe a treia pleacă
+    // în aceeași cerere și ziua din formular, deci ea se cântărește — altfel
+    // avertismentul ar striga tocmai când omul a mutat comanda pe o zi bună.
+    //
+    // „Azi" e ziua patiseriei, `gp.today()` — aceeași după care `treziZiua()`
+    // reface `TODAY` —, citită în clipa desenului, nu la ultima bătaie a
+    // ceasului. O comandă fără zi nu primește avertisment: n-avem ce spune
+    // despre ea, iar `"" < azi` ar ieși adevărat.
+    const refaceInTrecut = !!S.confirm && S.confirm.fel === "reface"
+      && !!S.confirm.day && S.confirm.day < gp.today();
+    // Din fișă se poate alege și etapa de încheiere. Acolo comanda nu mai
+    // intră în flux: marfa nu se mai pune deoparte, iar o zi trecută poate fi
+    // chiar ziua în care a fost livrată. Nota și avertismentul spun altceva.
+    const refacePredata = !!S.confirm && S.confirm.fel === "reface" && etapaRefacerii() === gp.done();
+    // Caseta deschisă de „Salvează modificările" (ușa a treia). Aceeași
+    // întrebare și același avertisment, dar încuviințarea face o SALVARE
+    // întreagă, nu o mutare de etapă — deci butoanele spun altceva. „Lasă-o
+    // anulată" ar fi lăsat să se creadă că restul modificărilor din formular
+    // s-au salvat, iar „Reface comanda" ar fi ascuns că pleacă odată cu etapa și
+    // ziua, clientul, pozițiile. Iar sfatul zilei trecute nu-l mai trimite pe om
+    // să salveze și apoi să refacă: aici sunt același gest.
+    const refaceDinSalvare = !!S.confirm && S.confirm.fel === "reface" && !!S.confirm.salvare;
+    // Aceeași ușă, pentru ANULARE: „Șterge comanda" din subsolul formularului.
+    // Ea avea exact aceeași pierdere ca „Reface comanda" — încuviințarea
+    // trimitea numai etapa și închidea formularul peste tot ce se tastase —,
+    // iar hotărârea rundei a fost dusă peste tot pe unde apare. Deci și aici
+    // încuviințarea face o SALVARE întreagă, nu o mutare de etapă, și butoanele
+    // trebuie s-o spună: „Păstrează" ar fi lăsat să se creadă că doar se închide
+    // caseta, iar „Anulează comanda" ar fi ascuns că pleacă odată cu anularea și
+    // ziua, clientul, pozițiile.
+    const anulareDinSalvare = !!S.confirm && S.confirm.fel !== "reface" && !!S.confirm.salvare;
 
     // `Object.assign` peste rândul desenat, ca eticheta să se lipească de el
     // fără să fie scrisă de două ori: același obiect `r` hrănește și tabelul
@@ -2364,6 +2773,27 @@ class Component extends DCLogic {
 
     const pk = S.peek ? this.comandaDupaId(S.peek) : null;
 
+    // ETAPA ADEVĂRATĂ a comenzii din formular: cea de pe COMANDĂ, nu cea aleasă
+    // în lista derulantă „Stare".
+    //
+    // Cele două butoane ale subsolului se uitau la `S.form.status`, adică la o
+    // alegere care n-a plecat încă nicăieri. Pe o comandă anulată, ales orice
+    // pas din flux în lista „Stare", butonul verde „Reface comanda" se
+    // preschimba pe tăcute în cel roșu „Șterge comanda"; apăsat, întreba
+    // „Anulezi comanda #X?" despre una deja anulată, trimitea
+    // {status:"Anulată", from:"Anulată"} — adică nimic — și anunța izbândă.
+    // Alegerea din listă nu e o faptă: până la „Salvează modificările" comanda e
+    // tot unde a lăsat-o serverul.
+    //
+    // Se socotește o singură dată, aici, ca amândouă steagurile să se hrănească
+    // din ea și să nu se poată contrazice. Cădere pe linia de reper de la
+    // deschiderea formularului când comanda nu mai e în lista filtrată — alt
+    // filtru, altă pagină, altă zi: fără ea etapa ar ieși goală, iar butonul
+    // potrivit ar dispărea pe tăcute de sub ochii omului tocmai când vrea să-l
+    // apese.
+    const cmdForm = S.form && S.form.id ? this.comandaDupaId(S.form.id) : null;
+    const etapaComenzii = cmdForm ? cmdForm.status : (this.__formBase ? this.__formBase.status : "");
+
     const f = S.form || { ref: "", cust: "", chan: "Ridicare", day: TODAY, slot: "08:00", status: "În așteptare", note: "", items: [] };
     const comF = f.commission || null;
     const aduseF = adusDe(comF, null);
@@ -2371,7 +2801,8 @@ class Component extends DCLogic {
     const reqs = (S.requests || []).slice().sort((a, b) => b.at - a.at);
     // Ceasul PATISERIEI, nu al aparatului. `gp.laPatiserie` întoarce aceeași
     // clipă cu câmpurile locale mutate pe Europe/Bucharest, cum citește și
-    // registrul din Depozit (`Depozit.dc.html:713`). Aici era `new Date(ms)`
+    // registrul din Depozit (`Depozit.dc.html`, la maparea mișcărilor din
+    // `pull()`). Aici era `new Date(ms)`
     // pe curat: pe o tabletă lăsată pe UTC, ora de pe card era cu trei ore în
     // urmă vara — cererea sosită la 22:05 se citea „12.09 · 19:05", iar omul
     // care alege de unde începe teancul o credea cea mai veche dintre toate.
@@ -2420,7 +2851,8 @@ class Component extends DCLogic {
     // „🕒 Mai târziu" de sub anunțul din Telegram, singurul lucru din program
     // care punea o cerere deoparte; fără el, filtrul ar fi rămas un buton care
     // arată 0 pentru totdeauna. Cheia `snoozedUntil` vine încă în răspunsul
-    // serverului (api/routes/requests.php:1051), goală pe orice cerere de
+    // serverului (`'snoozedUntil' => $r['snoozed_until'] ?? null` din
+    // `api/routes/requests.php`), goală pe orice cerere de
     // acum încolo, fiindcă în bază coloana a rămas — o migrare adaugă, nu
     // dărâmă. Panoul nu se mai uită la ea.
     //
@@ -2460,6 +2892,10 @@ class Component extends DCLogic {
     // fără legătură și nu apela nimic — datele clientului rămâneau blocate.
     const reopenReq = (r) => trimiteReq(r, 'reopen', "Cererea de la " + cineE(r) + " e din nou în așteptare.");
 
+    // Meniul comun, cerut o singură dată: îl desenează bara și sertarul, iar
+    // grupa „În comenzi” ia din el intrarea „Statistici” (spreStatistici).
+    const meniu = gp.meniu("Comenzi", S.auth);
+
     return {
       // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
       // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
@@ -2471,7 +2907,7 @@ class Component extends DCLogic {
       // e null și lista iese goală — dinadins: mai bine nicio intrare o
       // clipă decât intrări care dispar sub deget. Le compară
       // `.claude/check-meniu.mjs`.
-      meniu: gp.meniu("Comenzi", S.auth),
+      meniu,
       navHere: "Comenzi",
       // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
       // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
@@ -2539,6 +2975,13 @@ class Component extends DCLogic {
         { label: "Produse", count: String(prodList.length), bg: S.view === "produse" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "produse" }) },
         { label: "Cereri de pe site", count: String(cateNoi), bg: S.view === "cereri" ? "rgba(242,166,59,.20)" : "rgba(255,255,255,.05)", fg: "var(--h-cream-100)", onClick: () => set({ view: "cereri" }) }
       ],
+      // „Statistici” în grupa „În comenzi”. NU e o vedere ca „Cereri de pe site”:
+      // e altă pagină, deci o legătură, nu un view. Rândul se ia din meniul
+      // comun, nu dintr-un rol scris aici și nici din gp.eStats: îl vede cine
+      // are „Statistici” în PANOURI_ROL (oglinda lui GP_STATS_ROLES), iar adresa
+      // e cea din gp.MENIU, rescrisă la construire. Lista are zero sau un rând,
+      // deci sc-for ține loc și de sc-if. Poarta adevărată e require_stats().
+      spreStatistici: meniu.filter((m) => m.et === "Statistici"),
       isOrders: S.view === "comenzi",
       isRequests: S.view === "cereri",
       // Starea refuzului se numește „respinsa" în baza de date (ENUM-ul din
@@ -2723,7 +3166,9 @@ class Component extends DCLogic {
         // lor.
         this.setState({ eroare: "" }, () => { this.pullTot(); this.pullRequests(); });
       },
-      taiat: S.taiat,
+      // Semnul stă deasupra filelor, fiindcă privește și ruta și „Produse
+      // cerute”, nu doar tabelul. Pe fila cererilor de pe site n-are ce spune.
+      taiat: S.taiat && S.view !== "cereri",
       // Numerele se scriu întregi — „31–60 din 214" — nu doar „pagina 2".
       // Cifra din dreapta e `total`, socotit de server pe aceleași condiții ca
       // lista (api/routes/orders.php · COUNT fără JOIN), deci e numărul
@@ -2803,7 +3248,15 @@ class Component extends DCLogic {
         ? "Se salvează…"
         : (S.form && S.form.id ? "Salvează modificările" : "Adaugă comanda"),
       saveOff: !!S.saving,
-      canDelete: !!(S.form && S.form.id),
+      // Cele două butoane ale subsolului sunt perechi, nu vecini: unul scoate
+      // comanda din flux, celălalt o aduce înapoi. Pe o comandă deja anulată,
+      // „Șterge comanda" ar fi întrebat „Anulezi comanda #X?" despre una
+      // anulată — de-aia se uită la etapă, nu doar dacă e o comandă. Și se uită
+      // la `etapaComenzii`, etapa de pe COMANDĂ, nu la cea din lista derulantă:
+      // vezi socoteala de mai sus.
+      canDelete: !!(S.form && S.form.id) && etapaComenzii !== gp.cancelled(),
+      potReface: !!(S.form && S.form.id) && etapaComenzii === gp.cancelled(),
+      refaceTitlu: "Iese din „" + gp.cancelled() + "” și se întoarce în „" + etapaDeIntoarcere() + "”.",
       // DE CE CONT S-A LIPIT COMANDA.
       //
       // Serverul o spunea de mult (`customerId`), dar nicio pagină nu citea
@@ -2954,6 +3407,10 @@ class Component extends DCLogic {
       frmRefFg2: (S.form && S.form.id) ? "var(--h-fg)" : "var(--h-fg-muted)",
       onDay: (e) => setF({ day: e.target.value }),
       onSlot: (e) => setF({ slot: e.target.value }),
+      // Alegerea din lista „Stare" schimbă doar formularul; nimic nu pleacă
+      // spre server până la „Salvează modificările". De aceea ieșirea din
+      // „Anulată" se cântărește acolo, în `save()`, nu aici: abia atunci se știe
+      // ce pleacă în cerere și pe ce zi ajunge comanda.
       onStatus: (e) => setF({ status: e.target.value }),
       onNote: (e) => setF({ note: e.target.value }),
       onAddr: (e) => setF({ addr: e.target.value }),
@@ -2963,11 +3420,32 @@ class Component extends DCLogic {
           .map(z => ({ v: z, l: z }))),
       isDelivery: CU_MASINA(f.chan),
       onAddItem: () => set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.concat([{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]) }) })),
-      onSave: save,
+      // Apăsarea nu duce mai departe evenimentul: `save()` primește un singur
+      // argument, iar el spune că salvarea vine dintr-o casetă deja
+      // încuviințată. Legat de-a dreptul la buton, ar fi primit evenimentul de
+      // clic — care e adevărat — și salvarea ar fi sărit peste casetă.
+      onSave: () => save(),
       onCancel: () => { this.__saving = false; set({ form: null, formErr: "", saving: false }); },
+      // AMÂNDOUĂ BUTOANELE SUBSOLULUI TREC PRIN CASETĂ CA O SALVARE.
+      //
+      // Chemau caseta fără al treilea argument, deci ea nu știa de unde vine
+      // întrebarea: încuviințarea trimitea doar {status, from}, iar `commit()`
+      // închidea pe loc formularul. Ziua schimbată, telefonul îndreptat,
+      // pozițiile adăugate se pierdeau fără un cuvânt — chiar primejdia pentru
+      // care ușa a treia a căpătat „Înapoi la formular" / „Salvează și reface".
+      // Cu `dinSalvare` adevărat, încuviințarea cheamă înapoi `save(true)`, iar
+      // etapa hotărâtă aici pleacă în aceeași cerere cu tot ce s-a tastat.
+      //
+      // Al doilea argument e etapa unde duce încuviințarea, socotită din același
+      // loc ca peste tot: capul FLUXULUI la refacere (`etapaDeIntoarcere()`, nu
+      // capul listei — vezi de ce acolo), etapa de anulare la anulare.
       onDeleteFromForm: () => {
         const o = this.comandaDupaId(S.form.id);
-        if (o) askDelete(o);
+        if (o) askDelete(comandaSubsolului(o), gp.cancelled(), true);
+      },
+      onRefaceFromForm: () => {
+        const o = this.comandaDupaId(S.form.id);
+        if (o) askReface(comandaSubsolului(o), etapaDeIntoarcere(), true);
       },
 
       peekOpen: !!pk,
@@ -2998,10 +3476,35 @@ class Component extends DCLogic {
       onPeekStatus: (e) => {
         const et = e.target.value;
         if (!pk || et === pk.status) return;
-        gp.patch('/orders/' + pk.id, { status: et })
+        // Ieșirea din „Anulată" e o refacere, oricare ar fi ușa: trece prin
+        // aceeași casetă ca butonul „Reface comanda", cu același avertisment de
+        // zi trecută, și abia la încuviințare pleacă etapa ALEASĂ aici. Până
+        // atunci starea nu se schimbă, deci lista rămâne pe „Anulată" și la
+        // „Lasă-o anulată". Anularea și mutările între etapele din flux merg
+        // direct, ca până acum.
+        if (pk.status === gp.cancelled()) { askReface(pk, et); return; }
+        // `from` e etapa scrisă în fișă în clipa apăsării — exact ce a văzut
+        // omul când a ales altceva din listă. Fișa se hrănește din lista
+        // împrospătată la patru secunde, dar ea stă deschisă cât vrea omul: o
+        // fișă deschisă de un minut peste o comandă anulată între timp de
+        // colega de la telefon o readucea în flux, iar pe canalele casei pleca
+        // și anunțul „Comandă refăcută" — spre PATRON, nu spre cumpărător:
+        // destinatarul oricărui anunț de etapă se naște din trei setări ale
+        // casei (`send_channel()`, api/lib/notify.php), niciodată din datele
+        // scrise pe comandă. De acum serverul refuză mutarea (409) și spune
+        // unde a ajuns comanda.
+        gp.patch('/orders/' + pk.id, { status: et, from: pk.status })
           .then(() => { this.__ordSeen = null; this.__listaSeen = null; return this.pullTot(); })
           .then(() => set({ msgBad: false, msg: pk.ref + " a trecut în „" + et + "”." }))
-          .catch((err) => set({ msg: err.message, msgBad: true }));
+          .catch((err) => {
+            // La refuzul „s-a schimbat între timp" nimic nu s-a scris pe server,
+            // deci nici pe ecran nu se schimbă nimic ca și cum ar fi mers: se
+            // spune ce s-a întâmplat și se recitește lista, ca fișa să arate pe
+            // loc etapa adevărată. Un refuz oarecare rămâne spus ca până acum.
+            if (!this.altaEtapa(err)) { set({ msg: err.message, msgBad: true }); return; }
+            set({ msgBad: true, msg: this.mesajAltaEtapa(err, pk.ref, "N-am mutat-o.") });
+            this.recitesteLista();
+          });
       },
       stop: (e) => e.stopPropagation(),
       onPeekClose: () => set({ peek: null }),
@@ -3056,14 +3559,96 @@ class Component extends DCLogic {
       confirmRef: S.confirm ? S.confirm.ref : "",
       confirmCust: S.confirm ? S.confirm.cust : "",
       confirmWhen: S.confirm ? S.confirm.when : "",
+      // Rândul galben din casetă, numai la ieșirea din „Anulată" pe o zi
+      // trecută. Nota de deasupra tace atunci despre panoul din laborator și
+      // ruta șoferului, ca să nu promită tocmai ce avertismentul spune că nu se
+      // întâmplă. Sfatul de la capăt ține de cine citește: ziua o mută numai
+      // administratorul (managerul și agentul schimbă din fișă doar etapa).
+      confirmZiTrecuta: refaceInTrecut,
+      confirmAvert: !refaceInTrecut ? ""
+        : (refacePredata
+          ? "Ziua comenzii e în trecut. Trecută în „" + gp.done() + "”, rămâne predată pe ziua aceea: e bine numai dacă atunci a fost livrată. Dacă pleacă de fapt de azi încolo, ziua trebuie mutată întâi. "
+          : "Ziua comenzii e în trecut și trebuie mutată. Refăcută așa, rămâne pe ziua veche și nu reapare nici pe panoul din laborator, nici pe ruta șoferului, care pornesc de la azi. ")
+          + (potEdita
+            ? (refaceDinSalvare
+              ? "Alege în câmpul „Zi” o zi de azi încolo și salvează din nou: ziua și etapa pleacă în aceeași salvare."
+              : "Alege în câmpul „Zi” al comenzii o zi de azi încolo, salvează, apoi refă comanda.")
+            : "Ziua se mută dintr-un cont de administrator: cere-i s-o mute, apoi refă comanda."),
+      // Titlul e același pe toate trei ușile („Reface comanda", lista de etape
+      // a fișei și salvarea formularului), fiindcă toate fac același lucru;
+      // nota spune unde ajunge comanda — capul fluxului sau etapa aleasă —, din
+      // aceeași socoteală care hotărăște și ce pleacă la server.
+      confirmTitlu: !S.confirm ? "" : (S.confirm.fel === "reface"
+        ? "Refaci comanda " + S.confirm.ref + "?"
+        : "Anulezi comanda " + S.confirm.ref + "?"),
+      confirmNota: !S.confirm ? "" : (S.confirm.fel !== "reface"
+        ? "Dispare de pe panoul din laborator și de pe ruta șoferului, dar rămâne în registru, marcată „" + gp.cancelled() + "”."
+          // Nota anulării rămâne întreagă — ea spune ce se întâmplă cu comanda,
+          // iar asta nu se schimbă după ușa pe care a venit întrebarea. Din
+          // formular se mai adaugă un rând, fiindcă acolo apăsarea face două
+          // lucruri deodată, iar omul trebuie să știe că nu-și pierde ce a
+          // tastat — spaima de dinaintea reparației era tocmai asta.
+          + (anulareDinSalvare ? " Modificările din formular — ziua, telefonul, pozițiile — se salvează odată cu anularea, într-o singură cerere." : "")
+        : refacePredata
+          ? "Trece direct în „" + gp.done() + "”: marfa nu se mai pune deoparte, ci așteaptă scăderea din raft, cu „Scade din stoc” din Depozit."
+          : "Se întoarce în „" + etapaRefacerii() + "”" + (refaceInTrecut ? "" : ", reapare pe panoul din laborator și pe ruta șoferului") + ", iar marfa e din nou pusă deoparte în depozit. Scăderea din raft se face când ajunge iar la „" + gp.done() + "”, cu „Scade din stoc” din Depozit."),
+      confirmNu: S.confirm && S.confirm.fel === "reface"
+        ? (refaceDinSalvare ? "Înapoi la formular" : "Lasă-o anulată")
+        : (anulareDinSalvare ? "Înapoi la formular" : "Păstrează"),
+      confirmDa: S.confirm && S.confirm.fel === "reface"
+        ? (refaceDinSalvare ? "Salvează și reface" : "Reface comanda")
+        : (anulareDinSalvare ? "Salvează și anulează" : "Anulează comanda"),
+      confirmDaCls: S.confirm && S.confirm.fel === "reface" ? "h-btn h-btn--primary" : "h-btn h-btn--danger",
       onConfirmCancel: () => set({ confirm: null }),
-      onConfirmDelete: () => {
+      onConfirmDa: () => {
+        const reface = !!S.confirm && S.confirm.fel === "reface";
+        // Caseta a fost deschisă DIN FORMULAR: de „Salvează modificările" (ușa a
+        // treia) ori de unul din butoanele subsolului. Atunci încuviințarea nu
+        // trimite un PATCH al ei, ci face chiar SALVAREA — una singură, cu toate
+        // câmpurile schimbate deodată. Două cereri (una cu etapa, alta cu
+        // restul) ar fi însemnat două treceri pe server, adică și două rânduri
+        // de anunțuri spre patron pentru aceeași apăsare.
+        //
+        // Se întreabă doar `salvare`, nu și `fel`: anularea din subsolul
+        // formularului duce aceeași pierdere ca refacerea, deci merge pe același
+        // drum. Cine se uita numai la refacere lăsa „Șterge comanda" să arunce
+        // în continuare tot ce se tastase.
+        //
+        // Caseta se închide întâi: dacă serverul refuză, greșeala trebuie să se
+        // vadă în formularul rămas deschis, nu sub casetă.
+        if (S.confirm && S.confirm.salvare) {
+          set({ confirm: null });
+          return save(true);
+        }
         const id = S.confirm.id;
         const gone = this.comandaDupaId(id);
-        // Comenzile nu se șterg, se anulează: istoricul trebuie să rămână.
-        gp.patch('/orders/' + id, { status: gp.cancelled() })
-          .then(() => this.commit("Comanda " + (gone ? gone.ref : "") + " a fost anulată."))
-          .catch((e) => this.setState({ msg: e.message, msgBad: true, confirm: null }));
+        // Comenzile nu se șterg, se anulează: istoricul trebuie să rămână. Și
+        // se pot întoarce pe același drum — anularea și dezanularea sunt
+        // aceeași scriere de etapă (`route_orders_update()` din
+        // `api/routes/orders.php`).
+        // La refacere pleacă etapa din `etapaRefacerii()`: capul fluxului din
+        // butonul „Reface comanda", etapa aleasă din lista fișei.
+        const etapa = reface ? etapaRefacerii() : gp.cancelled();
+        // `from` e etapa purtată de casetă (`dela`), adică cea de la
+        // DESCHIDEREA ei: omul a încuviințat ce i s-a arătat acolo, nu ce s-a
+        // schimbat sub casetă cât a citit avertismentul. O casetă fără etapă
+        // n-are ce trimite — paza serverului se pornește numai cu `from`, deci
+        // atunci merge ca înainte, nu se rupe nimic.
+        const dela = S.confirm.dela;
+        const ref = S.confirm.ref;
+        gp.patch('/orders/' + id, dela ? { status: etapa, from: dela } : { status: etapa })
+          .then(() => this.commit("Comanda " + (gone ? gone.ref : "")
+            + (reface ? " s-a întors în „" + etapa + "”." : " a fost anulată.")))
+          .catch((e) => {
+            // Nici refacerea, nici anularea n-au plecat: caseta se închide (n-are
+            // ce mai încuviința nimeni pe o etapă care nu mai e), se spune ce s-a
+            // întâmplat și se recitește lista. Un refuz oarecare rămâne spus ca
+            // până acum.
+            if (!this.altaEtapa(e)) { this.setState({ msg: e.message, msgBad: true, confirm: null }); return; }
+            this.setState({ confirm: null, msgBad: true,
+              msg: this.mesajAltaEtapa(e, ref, reface ? "N-am refăcut-o." : "N-am anulat-o.") });
+            this.recitesteLista();
+          });
       }
     };
   }

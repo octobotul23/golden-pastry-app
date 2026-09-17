@@ -64,6 +64,27 @@ notificările pe canalul respectiv se opresc până le pui la loc.
 
 ---
 
+## Casetele care stau închise
+
+O casetă din **General → Date despre firmă** poate apărea închisă, cu un rând
+colorat sub ea în locul ajutorului obișnuit. Înseamnă că pe server lipsește
+rândul acelei setări: setările se scriu peste rânduri care există, iar rândul
+îl aduce o migrare din `sql/` care n-a intrat încă. Rândul de sub casetă o
+numește: `018_adresa_si_program.sql` pentru **Adresa publică** și **Program de
+lucru**, `017_procent_recomandare.sql` pentru **Procent de recomandare**.
+
+Leacul e actualizarea — `sudo bash actualizeaza-vps.sh`, vezi
+`docs/09-actualizare-vps.md` — apoi reîncarci pagina. Până atunci, pentru adresă
+și program, site-ul arată valorile scrise în cod.
+
+Dacă o asemenea setare ajunge totuși într-o salvare, pagina nu trimite nimic:
+spune care casete n-au rând, le scoate din formular, iar restul modificărilor
+rămân pe ecran pentru o nouă apăsare pe **Salvează**. Serverul face la fel pe
+partea lui: o cerere cu chei fără rând e refuzată întreagă, cu toate cheile
+numite (`unknown_setting`), și nu scrie nimic din ea.
+
+---
+
 ## Punctul de plecare al livrărilor
 
 În fila **General**, ultimele trei câmpuri: numele depozitului și coordonatele
@@ -108,10 +129,53 @@ comanda** și **care o anulează** — de asta depind:
 - pagina clientului (când scrie „Gata");
 - ruta șoferului (comenzile anulate nu apar pe ea);
 - panoul din laborator (comenzile anulate nu apar deloc);
-- scăderea din depozit (se face la comenzile încheiate).
+- scăderea din depozit (se face la comenzile încheiate);
+- anunțurile de pe telefon: „Comandă gata" la intrarea în etapa care încheie,
+  „Comandă anulată" la intrarea în cea care anulează și „Comandă refăcută" la
+  ieșirea din ea. „Comandă refăcută" n-are bifă a ei: pleacă pe exact canalele
+  pe care e bifată „Comandă anulată". O comandă anulată mutată direct în etapa
+  care încheie trimite două mesaje, întâi „Comandă refăcută", apoi „Comandă
+  gata".
 
 Le alegi din două liste derulante, în josul filei **Liste**. În lista de etape
 sunt marcate cu `GATA` și `ANULARE`.
+
+### Ecranul rămas în urmă
+
+Tableta din laborator își împrospătează lista la patru secunde, telefonul
+șoferului la cincisprezece. Cele două nu tac la fel cât ecranul stă stins:
+tableta se oprește de tot cât fila e ascunsă și își recitește lista pe loc la
+întoarcere, pe când foaia de drum își ține tura ei de cincisprezece secunde și
+nimic mai mult — nu se uită dacă șoferul tocmai a scos telefonul din buzunar.
+Oricum ar fi, între ce scrie pe ecran și ce e în baza de date încape o mutare
+făcută între timp de altcineva: un sfert de minut în mâna șoferului, ori cât a
+stat tableta cu fața la perete.
+
+Apăsarea de pe un ecran rămas în urmă se scria fără să întrebe nimic. Cel mai
+urât caz: administratorul anulează o comandă, iar tableta, trezită din somn, o
+împinge mai departe pe flux. Comanda învia în tăcere — reapărea în laborator și
+pe rută, iar echipa primea „Comandă refăcută", deși nimeni n-a refăcut-o.
+
+Acum fiecare apăsare spune serverului și **de pe ce etapă a plecat**. Serverul
+compară etapa aceea cu cea din baza de date, sub lacăt — adică o a doua apăsare
+venită în aceeași clipă din alt panou își așteaptă rândul, nu citește vechiul ca
+să scrie peste — și hotărăște:
+
+- se potrivesc: mutarea se face ca întotdeauna;
+- nu se potrivesc: **nu se scrie nimic**. Nici etapa, nici rândul de jurnal,
+  nici vreun anunț către echipă. Ecranul primește înapoi etapa de acum și scrie
+  omului, în românește: „Comanda #1042 a fost schimbată între timp: acum e
+  „Anulată”. N-am mutat-o." Apoi își recitește lista, ca să arate adevărul.
+
+Nu e o piedică pentru mâna iute. Două apăsări una după alta pe același card —
+„La dospit", apoi „În cuptor" — merg mai departe: a doua pleacă la server abia
+după ce prima s-a scris, deci pornește de pe etapa adevărată. Iar dacă prima
+n-a ajuns, a doua nu mai pleacă deloc: lista tocmai se recitește, și n-are rost
+să se scrie peste ea o etapă pe care serverul n-a văzut-o niciodată.
+
+O pagină veche, rămasă deschisă într-un browser de dinaintea actualizării, nu
+trimite etapa de plecare. Pentru ea nu se schimbă nimic — merge ca până acum, și
+se repară singură la prima reîncărcare.
 
 ### Ce ajunge pe ruta șoferului
 
