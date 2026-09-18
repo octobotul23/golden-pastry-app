@@ -234,6 +234,7 @@ if ($hasConfig) {
             'founder_invites'      => '009_pontaj_si_roluri.sql',
             'lab_shifts'           => '014_pontaj_laborator.sql',
             'lab_messages'         => '015_mesaje_laborator.sql',
+            'request_claims'       => '019_jeton_cerere.sql',
         ];
         $missing = array_values(array_diff(array_keys($need), $tables));
         // Numele lipsă spune singur care fișier n-a intrat, ca în docs/01 și în
@@ -500,6 +501,27 @@ if ($hasConfig) {
                 'setari'  => ['company_address', 'company_hours'],
                 'ce'      => 'Țin adresa și programul arătate pe site. Fără rândurile lor, casetele '
                     . 'din Setări → General stau închise și site-ul arată ce scrie în cod.',
+            ],
+            // `request_claims` e numărat sus, la tabelele aplicației; aici stă
+            // numai lămurirea, ca omul să știe ce pierde fără el.
+            '019_jeton_cerere.sql' => [
+                'nume'    => 'Jetonul cererii de pe site (migrarea 019)',
+                'coloane' => [],
+                'setari'  => [],
+                'ce'      => 'Leagă cererea trimisă de pe site de contul făcut imediat după ea. '
+                    . 'Fără tabelul lui, butonul „Trimite cererea și fă-ți cont” trimite cererea '
+                    . 'la fel, dar contul nou n-o vede în „Comanda mea” până n-o leagă cineva cu mâna.',
+            ],
+            // 020 nu aduce niciun tabel și nicio coloană — numai un index. Nu se
+            // poate pierde nimic fără el, doar se merge mai încet, deci nu are ce
+            // căuta în rândul „de rezolvat”. Stă aici ca să fie numită, atât.
+            '020_rang_client.sql' => [
+                'nume'    => 'Indexul insignei de client (migrarea 020)',
+                'coloane' => [],
+                'setari'  => [],
+                'ce'      => 'Grăbește socoteala insignei de pe fiecare comandă (prima comandă, '
+                    . 'client revenit, fără cont). Fără el insignele ies la fel, doar mai încet: '
+                    . 'nicio poartă din cod nu-l caută.',
             ],
         ];
 

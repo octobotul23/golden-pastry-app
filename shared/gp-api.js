@@ -754,6 +754,25 @@
       request('POST', '/founder/accept', { token: String(token || '') }),
 
     /**
+     * Ce a scris omul în comanda trimisă de pe site, ca să se completeze singur
+     * formularul de cont nou.
+     *
+     * Publică, ca `founderInvite` și din același motiv: cine o cheamă nu are
+     * încă niciun cont — tocmai de aceea o cheamă. Poarta e jetonul însuși,
+     * dat o singură dată, în răspunsul la chiar trimiterea acelei cereri.
+     *
+     * Jetonul pleacă în CORP, nu în adresă, deși ruta e un POST oricum: un GET
+     * cu el în coadă l-ar fi lăsat în jurnalele serverului și în istoricul
+     * browserului, exact ce ocolește pagina când îl șterge din bara de adrese.
+     *
+     * Nu întoarce nici numărul cererii, nici pozițiile, nici totalul — numai
+     * casetele formularului. Cu cât dă mai puțin, cu atât un jeton scăpat
+     * costă mai puțin.
+     */
+    cerereJeton: (jeton) =>
+      request('POST', '/requests/claim', { jeton: String(jeton || '') }),
+
+    /**
      * Adresa paginii de autentificare, cu urma de unde a venit omul.
      *
      * Autentificarea stă într-un singur loc: `Intrare.dc.html`. Panourile
@@ -1256,6 +1275,15 @@
         // lipită de contul greșit arăta exact ca una lipită de cel bun.
         // Fereastra comenzii îl arată acum, ca text, nu ca număr.
         contId: o.customerId === undefined ? null : o.customerId,
+        // A CÂTA COMANDĂ E ASTA pentru contul din spatele ei: „prima",
+        // „revenit" sau „fara-cont". Socoteala e a serverului, peste tot
+        // istoricul (api/lib/orders.php · `rang_client`). Făcută în pagină,
+        // din comenzile aduse, ar fi citit doar fereastra de șapte zile și ar
+        // fi spus „prima comandă" despre un client de trei ani.
+        //
+        // Gol pe un server rămas în urmă — și atunci nu se desenează nicio
+        // insignă, ceea ce e altceva decât a desena una greșită.
+        rangClient: o.rangClient || '',
         items: (o.items || []).map((it) => ({
           q: String(it.qty), n: it.name,
           // Numărul poziției și câte bucăți s-au raportat făcute. `itemId` e
@@ -1291,6 +1319,11 @@
         total: r.total,
         variant: r.variant || 'copt',
         orderRef: r.orderRef || '',
+        // Același rang ca pe comenzi, venit prin celălalt pâlnier al
+        // serverului (`attach_request_items`), ca insigna să se vadă și în
+        // fila „Cereri de pe site" — acolo unde „fără cont" e chiar regula,
+        // nu excepția.
+        rangClient: r.rangClient || '',
         // Cererea n-are comision — rândul se naște abia la acceptare — deci
         // duce codul tastat în coș și contul din spatele lui, dacă mai există.
         // `name` gol înseamnă „cod fără cont activ", nu „fără cod".
@@ -1539,6 +1572,54 @@
      * livrare în lanț frigorific, „copt" pe cel pentru marfă gata de servire.
      */
     variantLabel: (v) => (v === 'congelat' ? 'Congelat' : 'Gata de servire'),
+
+    /**
+     * Insigna care spune cine e clientul din spatele unei comenzi.
+     *
+     * Trei stări, venite de la server în `rangClient`:
+     *
+     *   prima      #1    contul ăsta n-a mai avut nicio comandă înainte
+     *   revenit    ✓✓    a mai comandat — bifa dublă, ca la mesaje
+     *   fara-cont  ●     comanda nu e legată de niciun cont
+     *
+     * SCRISĂ O SINGURĂ DATĂ fiindcă o poartă trei ecrane: rândul din panou,
+     * cardul de telefon și numele din laborator. În trei copii, prima vorbă
+     * schimbată ar fi făcut același semn să spună lucruri diferite pe ecrane
+     * care stau la doi metri unul de altul.
+     *
+     * Semnul singur nu se poate citi de cine îl vede prima oară, de aceea
+     * fiecare are și vorbe: `et` pentru ecranele largi, `titlu` pentru
+     * `title` și `aria-label` — acolo se spune și DE CE, nu doar CE.
+     *
+     * Un rang necunoscut (server rămas în urmă, câmp gol) întoarce `fel` gol,
+     * iar paginile nu desenează nimic. Nicio insignă e răspunsul cinstit când
+     * nu se știe; o insignă greșită ar fi o minciună despre un om.
+     */
+    rangClient(r) {
+      if (r === 'prima') {
+        return {
+          fel: 'prima', semn: '#1', et: 'prima comandă',
+          cls: 'h-badge h-badge--accent',
+          titlu: 'Prima comandă a contului ăstuia. Comenzile anulate nu se numără.',
+        };
+      }
+      if (r === 'revenit') {
+        return {
+          fel: 'revenit', semn: '✓✓', et: 'client revenit',
+          cls: 'h-badge h-badge--success',
+          titlu: 'Contul ăsta a mai comandat până acum.',
+        };
+      }
+      if (r === 'fara-cont') {
+        return {
+          fel: 'fara-cont', semn: '●', et: 'fără cont',
+          cls: 'h-badge h-badge--danger',
+          titlu: 'Comandă fără cont: nu e legată de nimeni, deci omul nu o vede '
+            + 'în „Comanda mea" și nu are istoric.',
+        };
+      }
+      return { fel: '', semn: '', et: '', cls: 'h-badge', titlu: '' };
+    },
 
     /**
      * Cantitatea unei poziții, ca număr.

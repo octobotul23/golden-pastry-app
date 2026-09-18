@@ -22,7 +22,7 @@ la final (`:683-690`), deci nicio urcare nu-l poate atinge din greșeală.
 **Cheia de criptare nu se schimbă niciodată după instalare.** Dacă se schimbă,
 `api/lib/crypto.php:85` întoarce `null`, iar `api/lib/settings.php:36` doar
 scrie o linie în jurnal și merge mai departe — *tăcut*. Efectul vizibil:
-codul tabletelor devine gol, `api/routes/auth.php:355-360` răspunde 503
+codul tabletelor devine gol, `api/routes/auth.php:385-388` răspunde 503
 „Codul panoului nu este configurat", și toată echipa din laborator rămâne
 pe dinafară.
 
@@ -150,7 +150,7 @@ patru subdomeniile odată**.
 
 API-ul e aproape întotdeauna aditiv: rute noi, câmpuri noi, iar paginile vechi
 ignoră ce nu cunosc. Paginile noi, în schimb, cer rute noi. Dacă urci întâi
-paginile, clientul primește pe ecran exact textul de la `api/index.php:316` —
+paginile, clientul primește pe ecran exact textul de la `api/index.php:332` —
 „Rută inexistentă: POST /requests/12/reopen" — iar comanda pur și simplu nu se
 face. Cu ordinea corectă, fereastra e „API nou + pagini vechi", care nu strică
 nimic.
@@ -209,7 +209,7 @@ peste schema nouă. Codul vechi nu știe de coloana nouă și nu o cere;
 funcționează normal tot intervalul.
 
 **De ce nu invers.** Codul nou cere o coloană care încă nu există → PDO ridică
-excepție → `api/index.php:317-323` întoarce „Eroare internă." Nu e o pagină
+excepție → `api/index.php:333-339` întoarce „Eroare internă." Nu e o pagină
 urâtă, e o **oprire**: formularul de comandă cade la trimitere, panoul nu mai
 încarcă lista. Nu există coadă și nu există reîncercare — comenzile din acel
 interval se pierd.
@@ -252,6 +252,8 @@ după nu.
 | `016_zona_cont.sql` | Da — fiecare pas se uită întâi unde trebuie. Adaugă coloana `users.zone` (zona firmei, ca să nu mai fie cerută la fiecare comandă) numai dacă lipsește din `information_schema`. Pune zona „În afara Bucureștiului și Ilfovului" la **coada** listei tale de zone, și numai dacă nu e deja acolo (`JSON_SEARCH`), deci zonele adăugate de tine din Setări rămân neatinse — nu e un `UPDATE` cu lista scrisă în fișier, greșeala pe care a făcut-o `003` și pe care a trebuit s-o luăm înapoi. **Nu atinge `delivery_zone_coords`**: zona nouă rămâne dinadins fără punct pe hartă, fiindcă „restul țării" nu e un loc, iar lipsa punctului e chiar semnalul după care ruta o scoate din ordonare și o arată aparte. Completează zona conturilor de client din zona ultimei lor comenzi. Amândoi pașii cu date — zona în listă și zona pe conturi — se fac **numai în rularea care adaugă coloana** (coloana se numără în `information_schema` înainte de `ALTER`): orice rulare de după o găsește deja acolo și nu mai atinge nici lista, nici conturile. Așa o zonă ștearsă de tine de pe un cont rămâne ștearsă, iar zona din afara orașului, redenumită sau scoasă din Setări, nu se mai întoarce sub numele vechi la fiecare actualizare. Înainte, paza era `u.zone IS NULL` și „numai dacă numele nu e deja acolo" — iar ștergerea din Conturi scrie tocmai NULL, și o redenumire scoate tocmai numele. Urmarea: zona de pe cont se ia din comenzi o singură dată pe instalare; un client făcut după aceea fără zonă și-o alege singur în formular, ori i-o pui tu din Conturi. Nu cere nicio migrare anterioară. |
 | `017_procent_recomandare.sql` | Da — scrie o singură setare și nimic altceva: nicio coloană, niciun tabel, niciun rând de comandă atins. Seamănă rândul `referral_rate_default` dacă lipsește (`INSERT IGNORE`, cu valoarea 5) și îl urcă la **5**, dar **numai dacă rândul e încă cel semănat la instalare**: paza e `updated_by IS NULL`, adică „n-a umblat niciun om la el". Dacă ai pus tu vreodată o cifră din Setări — chiar și zero, dinadins — migrarea te ocolește și la prima rulare, și la a zecea. Comisioanele deja socotite **nu** se ating: procentul se îngheață pe fiecare comandă la nașterea ei, iar îndreptarea rândurilor vechi se face din panoul „Recomandări", la apăsarea ta, nu pe furiș dintr-un fișier `.sql`. Nu cere nicio migrare anterioară: dacă `008` n-a apucat să semene rândul, îl face ea. Ea e și migrarea pe care o numește panoul sub caseta „Procent de recomandare", când rândul lipsește. |
 | `018_adresa_si_program.sql` | Da — scrie două setări și nimic altceva, cu `INSERT IGNORE`: nicio coloană, niciun tabel, niciun rând de comandă atins. Seamănă rândurile `company_address` și `company_hours`, care n-au existat niciodată, deși panoul Setări avea casetele lor de mult, iar pagina publică le citea. Valorile semănate sunt chiar cele scrise în cod ca temei de rezervă (`api/lib/firma.php`, `GP_FIRMA_ADRESA` și `GP_FIRMA_PROGRAM`), ca site-ul să arate la fel în clipa actualizării. La a doua rulare nu se întâmplă nimic: `INSERT IGNORE` trece pe lângă un rând care există, deci adresa pe care ai scris-o tu din Setări **rămâne a ta**. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază — n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Nu cere nicio migrare anterioară. |
+| `019_jeton_cerere.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând de comandă atins. Tabelul `request_claims` ține amprentele jetoanelor cu care se leagă cererea trimisă de pe site de contul făcut imediat după ea. La a doua rulare nu se întâmplă nimic: `IF NOT EXISTS` sare peste tot ce e înăuntru, chei străine cu tot. Cere `001` (are chei străine spre `order_requests` și `users`). |
+| `020_rang_client.sql` | Da — pune un index pe `orders` și nimic altceva, după ce întreabă `information_schema` dacă nu cumva e deja acolo: niciun tabel, nicio coloană, niciun rând atins. E singura migrare care **se poate uita fără pagubă**: fără ea insignele de client ies la fel, doar mai încet. Cere `001`. |
 
 Dacă o versiune viitoare are nevoie de o **setare** nouă, primești un fișier
 separat care conține doar acel `INSERT IGNORE INTO settings`. Nu reimportul
@@ -260,9 +262,9 @@ seed-ului.
 ### Cum verifici că migrarea a intrat
 
 `api/verifica.php` **nu te ajută**: pe o instalare vie răspunde 404
-(`api/verifica.php:636-650`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
-Pentru starea de azi — migrările **003 … 018** — trebuie să întoarcă
-**34 de rânduri**:
+(`api/verifica.php:658-673`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
+Pentru starea de azi — migrările **003 … 020** — trebuie să întoarcă
+**36 de rânduri**:
 
 ```sql
 SELECT TABLE_NAME, COLUMN_NAME
@@ -287,17 +289,29 @@ UNION ALL
 SELECT TABLE_NAME, '(tabel)'
   FROM information_schema.TABLES
  WHERE TABLE_SCHEMA = DATABASE()
-   AND TABLE_NAME IN ('founder_invites', 'lab_shifts', 'lab_messages')
+   AND TABLE_NAME IN ('founder_invites', 'lab_shifts', 'lab_messages',
+                      'request_claims')
 UNION ALL
 SELECT 'settings', CONCAT(setting_key, ' = ', value)
   FROM settings
- WHERE setting_key IN ('referral_rate_default', 'company_address', 'company_hours');
+ WHERE setting_key IN ('referral_rate_default', 'company_address', 'company_hours')
+UNION ALL
+SELECT TABLE_NAME, INDEX_NAME
+  FROM information_schema.STATISTICS
+ WHERE TABLE_SCHEMA = DATABASE()
+   AND INDEX_NAME = 'ix_orders_client_rang'
+   AND SEQ_IN_INDEX = 1;
 ```
 
-**Mai puține rânduri decât 34 → citește care lipsesc.** Numele coloanei îți
+**Mai puține rânduri decât 36 → citește care lipsesc.** Numele coloanei îți
 spune singur unde s-a oprit importul: `referral_rate` e din 008, `vouched_at`
 din 010, `promo` din 011, `dismissed_at` din 012, `snoozed_until` din 013,
-`lab_pin` din 014, `zone` din 016.
+`lab_pin` din 014, `zone` din 016, tabelul `request_claims` din 019, iar
+indexul `ix_orders_client_rang` din 020.
+
+Singurul rând care poate lipsi fără pagubă e ultimul: `020` pune un index și
+atât. Fără el insignele de client ies la fel, doar mai încet — nicio poartă din
+cod nu-l caută. Celelalte lipsuri sunt lucrări care nu merg.
 
 Cele trei rânduri de la coadă sunt tabele, nu coloane: `founder_invites` e din
 `009` — singura migrare care nu adaugă nicio coloană, fiindcă ea doar lărgește
@@ -460,7 +474,7 @@ Pentru comenzile vechi, singura legătură rămâne însemnarea
 (`„#1042 Restaurant Bistro"`) — dar și referința, și numele clientului se pot
 schimba din formularul comenzii, deci o comandă redenumită de atunci nu se mai
 găsește nici așa. Tocmai de aceea codul reparat nu se mai leagă de însemnare, ci
-citește returul din registru, pe `order_id` (`api/lib/orders.php:812`).
+citește returul din registru, pe `order_id` (`api/lib/orders.php:1148`).
 
 Ce faci cu ce iese: adaugă în Depozit o mișcare de **intrare** cu diferența
 (`iesit_net - pe_comanda`), pe articolul din registru, cu motivul „Corectură
@@ -622,7 +636,7 @@ lipește-le înapoi sub blocul generat, după extragere.
 ### 5. Urcare întreruptă la jumătate
 
 `support.js` trunchiat → pagina cu ambele limbi și `{{ }}` pe ecran. Un fișier
-din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:317-323`.
+din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:333-339`.
 Vestea bună: comenzile și cererile rulează în tranzacții, deci **nu rămân
 comenzi pe jumătate în bază**.
 
@@ -630,9 +644,9 @@ comenzi pe jumătate în bază**.
 
 Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
-(`Site Public.dc.html:2009`), deci o schimbare de preț se vede corect. **Dar
-dispariția e complet tăcută**: `:2427` scoate din catalog orice produs care nu
-are **amândouă** prețurile, iar `:2601` filtrează din coș rândurile rămase fără
+(`Site Public.dc.html:2200`), deci o schimbare de preț se vede corect. **Dar
+dispariția e complet tăcută**: `:2717` scoate din catalog orice produs care nu
+are **amândouă** prețurile, iar `:2912` filtrează din coș rândurile rămase fără
 pereche, fără niciun mesaj.
 
 Singura excepție e coșul refăcut din **„Comandă din nou”** (butonul de pe

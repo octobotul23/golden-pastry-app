@@ -506,6 +506,39 @@ function price_honored_note(array $priced): string
 }
 
 /**
+ * Pozițiile primite din corpul cererii, verificate ca număr.
+ *
+ * Regula — „cel puțin un produs, cel mult 200" — era scrisă de trei ori,
+ * cuvânt cu cuvânt: la crearea comenzii, la rescrierea pozițiilor ei și la
+ * acceptarea unei cereri. Odată cu tarifarea care nu scrie
+ * (`POST /orders/quote`) ar fi ajuns la cinci copii, iar cinci copii ale
+ * aceleiași reguli se depărtează una de alta exact în ziua în care contează:
+ * panoul ar arăta un preț pentru un coș pe care salvarea îl refuză, sau
+ * invers — și tocmai potrivirea dintre cifra de pe ecran și cea salvată e
+ * lucrul pentru care există tarifarea.
+ *
+ * Plafonul nu e o formalitate: `price_items()` face câte o interogare pe
+ * poziție, iar tarifarea se cere la fiecare modificare a formularului.
+ *
+ * `route_requests_create()` rămâne dinadins pe dinafară: acolo coșul GOL e
+ * îngăduit — o cerere fără poziții e o cerere de ofertă — și are refuzurile
+ * lui, cu alte cuvinte („Lista de produse nu are forma așteptată.",
+ * „Prea multe poziții în cerere.").
+ *
+ * @return array<int|string, mixed>
+ */
+function cos_de_tarifat($items): array
+{
+    if (!is_array($items) || !$items) {
+        fail('Comanda trebuie să conțină cel puțin un produs.', 422, 'empty_order');
+    }
+    if (count($items) > 200) {
+        fail('Prea multe poziții în comandă.', 422, 'too_many_items');
+    }
+    return $items;
+}
+
+/**
  * Calculează prețurile pornind de la catalog, onorând ce s-a promis deja.
  *
  * Varianta se ia de pe fiecare poziție, iar `$variant` e doar implicitul
@@ -700,6 +733,290 @@ function order_variant_of(array $priced): string
     return count($v) === 1 ? $v[0] : 'mixt';
 }
 
+/**
+ * Prima comandă NEANULATĂ a fiecărui cont, dintr-o singură interogare.
+ *
+ * Materia primă a insignei de client. Se cere O DATĂ pentru tot lotul, ca și
+ * pozițiile din `attach_items()`, fiindcă socoteala făcută în pagină ar minți:
+ * registrul e tăiat la 500 de rânduri pe zi, deci „a mai comandat" s-ar fi
+ * judecat după ce a încăput pe ecran, nu după ce are contul. E chiar paguba pe
+ * care Depozitul a reparat-o mutând „Rezervat" pe server.
+ *
+ * ANULATELE NU SE NUMĂRĂ: o comandă anulată nu face din nimeni client fidel,
+ * iar un „#1" mutat de pe comanda adevărată pe una anulată ar fi o minciună la
+ * prima vedere. Numele etapei NU se scrie în cod — se ia din Setări, prin
+ * `status_cancelled()`, ca la `route_orders_counts()` și la Statistici: o casă
+ * care și-a redenumit etapele n-ar mai fi fost numărată cum trebuie. Șirul gol
+ * înseamnă „instalarea asta n-are etapă de anulare", iar atunci condiția
+ * lipsește cu totul din interogare: trimis ca parametru, '' ar fi scos tăcut
+ * din numărătoare comenzile cu etapă goală.
+ *
+ * Se judecă după `id`, nu după `created_at`: două comenzi luate în aceeași
+ * secundă au aceeași clipă, dar nu același rând, iar atunci amândouă ar fi
+ * ieșit „prima".
+ *
+ * FĂRĂ FUNCȚII DE FEREASTRĂ (`ROW_NUMBER() OVER …`), oricât ar fi de potrivite:
+ * schema declară „MySQL 5.7+ / MariaDB 10.3+" (`sql/001_schema.sql:2`), iar
+ * MariaDB 10.3 nu le are. O interogare care merge în producție și pică la
+ * dezvoltare se descoperă la cea mai proastă oră cu putință.
+ *
+ * @param array<int, int|null> $conturi
+ * @return array<int, int>  customer_id => id-ul celei mai vechi comenzi neanulate
+ */
+function primele_comenzi(array $conturi): array
+{
+    $conturi = array_values(array_unique(array_filter(array_map('intval', $conturi))));
+    if (!$conturi) {
+        return [];
+    }
+
+    $ph   = implode(',', array_fill(0, count($conturi), '?'));
+    $unde = "customer_id IN ($ph)";
+    $vals = $conturi;
+
+    $anulata = status_cancelled();
+    if ($anulata !== '') {
+        $unde  .= ' AND status <> ?';
+        $vals[] = $anulata;
+    }
+
+    $primele = [];
+    foreach (all("SELECT customer_id, MIN(id) AS primul FROM orders WHERE $unde GROUP BY customer_id", $vals) as $r) {
+        $primele[(int) $r['customer_id']] = (int) $r['primul'];
+    }
+    return $primele;
+}
+
+/**
+ * Rangul clientului pe o comandă sau pe o cerere: ce insignă i se cuvine.
+ *
+ * Trei valori, atât:
+ *   `fara-cont` — comanda nu e legată de niciun cont. Și comanda al cărei cont
+ *                 a fost șters ajunge aici: `customer_id` e pus pe NULL de
+ *                 `ON DELETE SET NULL`, iar comanda chiar nu mai e a nimănui.
+ *                 Nu se încearcă recunoașterea după nume — potrivirea pe nume
+ *                 e tocmai ce păzește `client_by_name()`.
+ *   `prima`     — contul n-are nicio comandă neanulată mai veche decât asta.
+ *   `revenit`   — are.
+ *
+ * Pentru o CERERE încă neacceptată `$comandaId` e null: atunci întrebarea e
+ * doar dacă omul a mai comandat vreodată. Cererea deja acceptată își poartă
+ * comanda (`order_requests.order_id`) și primește insigna comenzii ei, ca să
+ * nu scrie „a doua" în fila de cereri și „prima" în registru.
+ *
+ * Când prima comandă neanulată a contului e chiar asta, iese `prima`; de aceea
+ * `<=`, nu `<`. Iar o comandă anulată se judecă după ce a fost înaintea ei: un
+ * cont a cărui primă comandă a fost anulată poate purta „#1" pe amândouă, și
+ * asta e adevărat — niciuna n-a avut una adevărată înaintea ei.
+ *
+ * @param array<int, int> $primele  de la `primele_comenzi()`
+ */
+function rang_client(?int $contId, ?int $comandaId, array $primele): string
+{
+    if ($contId === null) {
+        return 'fara-cont';
+    }
+    $primul = $primele[$contId] ?? null;
+    if ($primul === null) {
+        return 'prima';
+    }
+    return $comandaId !== null && $comandaId <= $primul ? 'prima' : 'revenit';
+}
+
+/* ------------------------------------- jetonul cererii de pe site -- */
+
+/**
+ * A fost importată migrarea 019, cea a jetonului de cerere?
+ *
+ * Aceeași poartă ca `lab_supported()` și `user_origin_supported()`, din același
+ * motiv: codul de pe server poate fi mai nou decât baza lui — din
+ * `--doar-fisiere`, dintr-un import oprit la mijloc, ori din plasturele pus de
+ * mână. În fereastra aceea, o interogare pe `request_claims` ar cădea cu „1146
+ * Table doesn't exist", iar vizitatorul care tocmai a apăsat „Trimite comanda"
+ * ar citi „Eroare internă." în loc să-și vadă comanda plecată.
+ *
+ * Cade ÎNCHIS, spre deosebire de `user_origin_supported()`: fără tabel nu se
+ * naște niciun jeton, iar cererea pleacă exact ca ieri. Închis aici înseamnă
+ * „ca înainte", deci e alegerea sigură.
+ */
+function request_claim_supported(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        return $ok = ((int) scalar(
+            "SELECT COUNT(*) FROM information_schema.TABLES
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'request_claims'"
+        ) === 1);
+    } catch (Throwable $e) {
+        error_log('[gp] nu pot verifica jetoanele de cerere: ' . $e->getMessage());
+        return $ok = false;
+    }
+}
+
+/**
+ * Naște jetonul unei cereri și îl întoarce ÎN CLAR, o singură dată.
+ *
+ * În bază rămâne numai sha256-ul lui (`token_hash()`), ca la resetarea de
+ * parolă: jetonul întreg trăiește o clipă, în răspunsul către browserul care
+ * tocmai a trimis cererea. Nu pleacă pe e-mail și nu se scrie nicăieri
+ * altundeva — e singurul jeton al casei care nu părăsește fila care l-a cerut.
+ *
+ * Întoarce null dacă nu se poate, și atunci cererea pleacă exact ca până azi:
+ * omul a apăsat ca să comande, nu ca să-și facă cont, iar o piedică la jeton
+ * n-are voie să-i oprească comanda.
+ */
+function request_claim_new(int $requestId, int $minute): ?string
+{
+    if (!request_claim_supported()) {
+        return null;
+    }
+    try {
+        $jeton = random_token();
+        q(
+            'INSERT INTO request_claims (request_id, token_hash, expires_at)
+             VALUES (?, ?, UTC_TIMESTAMP() + INTERVAL ? MINUTE)',
+            [$requestId, token_hash($jeton), $minute]
+        );
+        return $jeton;
+    } catch (Throwable $e) {
+        error_log('[gp] jetonul cererii ' . $requestId . ' nu s-a putut scrie: ' . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Cererea din spatele unui jeton, FĂRĂ să-l stingă.
+ *
+ * De aici își umple formularul de înscriere casetele: numele, telefonul,
+ * e-mailul, adresa și zona scrise în comandă. Datele NU pot călători prin
+ * adresă — și nici n-ar avea voie —, iar `sessionStorage` nu trece nici el:
+ * „Site Public" stă pe goldenpastry.ro, „Intrare" pe clienti.goldenpastry.ro,
+ * adică două origini deosebite. Prin adresă trece numai jetonul, care e un
+ * secret fără înțeles, ca linkul de parolă nouă; datele le dă serverul, celui
+ * care are jetonul.
+ *
+ * Nu stinge nimic: omul poate reîncărca pagina de înscriere de zece ori fără
+ * să-și piardă legătura cu comanda.
+ *
+ * @return array|null  rândul cererii, sau null dacă jetonul nu e (mai) bun
+ */
+function request_claim_peek(string $jeton): ?array
+{
+    if (!request_claim_supported() || !preg_match('/^[0-9a-f]{64}$/', $jeton)) {
+        return null;
+    }
+    $c = one(
+        'SELECT request_id FROM request_claims
+          WHERE token_hash = ? AND used_at IS NULL AND expires_at > UTC_TIMESTAMP()',
+        [token_hash($jeton)]
+    );
+    return $c ? one('SELECT * FROM order_requests WHERE id = ?', [(int) $c['request_id']]) : null;
+}
+
+/**
+ * Stinge jetonul și leagă de contul nou cererea — și comanda născută din ea.
+ *
+ * Întoarce id-ul cererii legate, sau null dacă n-a legat nimic. NU aruncă
+ * niciodată și nu oprește nimic: contul se face oricum. Omul a apăsat „Creează
+ * cont", iar o socoteală de legături n-are voie să-i refuze contul.
+ *
+ * `client_by_name()` rămâne neatinsă. Jetonul e o dovadă de altă natură —
+ * „browserul ăsta a trimis cererea asta" — nu o lărgire a potrivirii după nume:
+ * dă o singură cerere, nimic retroactiv și nimic viitor, iar contul rămâne
+ * `self_registered = 1` cu `vouched_at` NULL. Recunoașterea casei rămâne o
+ * hotărâre de om.
+ */
+function request_claim_use(string $jeton, int $userId): ?int
+{
+    if (!request_claim_supported() || !preg_match('/^[0-9a-f]{64}$/', $jeton)) {
+        return null;
+    }
+
+    $pdo     = db();
+    $propriu = !$pdo->inTransaction();
+    try {
+        if ($propriu) {
+            $pdo->beginTransaction();
+        }
+
+        // Stingerea ȘI verificarea, într-o singură instrucțiune. Două file care
+        // apasă deodată: prima ia zăvorul rândului, a doua îl găsește cu
+        // `used_at` scris și nu mai prinde nimic — deci una leagă, cealaltă nu,
+        // fără eroare pe ecran și fără dublare. Despărțite într-un SELECT și un
+        // UPDATE, amândouă ar fi văzut jetonul liber.
+        $stins = q(
+            'UPDATE request_claims SET used_at = UTC_TIMESTAMP(), used_by = ?
+              WHERE token_hash = ? AND used_at IS NULL AND expires_at > UTC_TIMESTAMP()',
+            [$userId, token_hash($jeton)]
+        )->rowCount();
+        if ($stins !== 1) {
+            if ($propriu) {
+                $pdo->commit();
+            }
+            return null;
+        }
+
+        $c     = one('SELECT request_id FROM request_claims WHERE token_hash = ?', [token_hash($jeton)]);
+        $reqId = (int) ($c['request_id'] ?? 0);
+        $req   = $reqId
+            ? one('SELECT id, order_id, customer_id FROM order_requests WHERE id = ?', [$reqId])
+            : null;
+        if (!$req) {
+            if ($propriu) {
+                $pdo->commit();
+            }
+            return null;
+        }
+
+        $legat = false;
+
+        // Cererea deja acceptată și-a născut comanda, iar „Comanda mea" se uită
+        // la `orders.customer_id` — deci saltul ăsta e tocmai ce face jetonul de
+        // folos când patronul a fost mai iute decât omul.
+        if ($req['order_id'] !== null) {
+            $legat = q(
+                'UPDATE orders SET customer_id = ? WHERE id = ? AND customer_id IS NULL',
+                [$userId, (int) $req['order_id']]
+            )->rowCount() === 1;
+            if (!$legat) {
+                // Comanda e deja a altui cont: la acceptare, administratorul a
+                // corectat numele, iar `client_by_name()` a legat-o de contul
+                // acela. Atunci NU se leagă nici cererea. O cerere a unui cont
+                // cu comanda ei a altuia ar fi mai rea decât nimic — contul nou
+                // ar vedea, cu preț cu tot, o comandă pe care casa a dat-o
+                // altcuiva. Jetonul rămâne stins: a fost folosit.
+                if ($propriu) {
+                    $pdo->commit();
+                }
+                return null;
+            }
+        }
+
+        // `AND customer_id IS NULL` e plasa: jetonul LEAGĂ CE E NELEGAT, nu
+        // mută ce e legat.
+        if (q(
+            'UPDATE order_requests SET customer_id = ? WHERE id = ? AND customer_id IS NULL',
+            [$userId, $reqId]
+        )->rowCount() === 1) {
+            $legat = true;
+        }
+
+        if ($propriu) {
+            $pdo->commit();
+        }
+        return $legat ? $reqId : null;
+    } catch (Throwable $e) {
+        if ($propriu && $pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        error_log('[gp] jetonul cererii nu s-a putut folosi: ' . $e->getMessage());
+        return null;
+    }
+}
+
 /** Atașează pozițiile la comenzi, printr-o singură interogare. */
 /**
  * @param bool $cuRecomandare Trece și `referralCode` în JSON.
@@ -742,7 +1059,20 @@ function attach_items(array $orders, bool $cuRecomandare = false): array
         ];
     }
 
-    return array_map(static function (array $o) use ($byOrder, $cuRecomandare) {
+    // Al câtelea client e omul de pe comandă — o singură interogare pe tot
+    // lotul, ca și pozițiile de mai sus.
+    //
+    // Se socotește ÎNTOTDEAUNA, nu în spatele unui steag ca `$cuRecomandare`:
+    // steagul acela ascunde o înțelegere de bani între patron și agent, iar
+    // rangul n-are ce ascunde — clientul își vede propriul rang pe propriile
+    // comenzi. Un steag în plus ar fi însemnat o insignă care lipsește de pe o
+    // singură pagină, și tocmai de pe aceea de care era nevoie.
+    $primele = primele_comenzi(array_map(
+        static fn($o) => $o['customer_id'] === null ? 0 : (int) $o['customer_id'],
+        $orders
+    ));
+
+    return array_map(static function (array $o) use ($byOrder, $cuRecomandare, $primele) {
         return [
             'id'           => (int) $o['id'],
             'seq'          => (int) $o['seq'],
@@ -754,6 +1084,12 @@ function attach_items(array $orders, bool $cuRecomandare = false): array
             'fulfillment'  => $o['fulfillment'],
             'channel'      => $o['channel'],
             'customerId'   => $o['customer_id'] === null ? null : (int) $o['customer_id'],
+            // Insigna de client: `fara-cont`, `prima` sau `revenit`.
+            'rangClient'   => rang_client(
+                $o['customer_id'] === null ? null : (int) $o['customer_id'],
+                (int) $o['id'],
+                $primele
+            ),
             'customerName' => $o['customer_name'],
             'phone'        => $o['phone'],
             'address'      => $o['address'],

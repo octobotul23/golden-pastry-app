@@ -66,6 +66,90 @@ nelegată și clientul n-o vede în panoul lui. Redenumește unul dintre conturi
 > fără client, fără niciun semn că s-a pierdut ceva.
 
 ---
+## Contul făcut imediat după comandă
+
+În fereastra de finalizare de pe `goldenpastry.ro`, vizitatorul are de acum
+două butoane: **„Trimite cererea"** și **„Trimite cererea și fă-ți cont"**.
+
+Al doilea nu amână nimic. Cererea pleacă în clipa apăsării, exact ca la primul
+buton, și o vezi în panou pe loc. Abia după ce a plecat, omul e dus pe pagina
+de înscriere, cu numele firmei, telefonul, e-mailul și codul de recomandare
+deja scrise. Îi rămân de ales numai numele de utilizator și parola.
+
+**Dacă se răzgândește acolo și închide fila, cererea rămâne trimisă.** Nu se
+pierde nimic: e o cerere ca oricare alta, fără cont, cu bulina roșie pe ea.
+
+Butonul se arată numai vizitatorilor. Cine e deja intrat în contul lui n-are ce
+cont să-și mai facă.
+
+### Cum se leagă cererea de contul făcut după ea
+
+Legătura nu se face după nume. Numele se poate tasta de oricine, iar pe ușa
+aceea stă de o rundă o pază anume: un cont făcut pe site nu moștenește comenzile
+scrise pe numele lui până nu garantează cineva din casă pentru el.
+
+Aici dovada e de altă natură. La trimiterea cererii, serverul dă browserului un
+**jeton de o singură folosință** — un secret pe care nu-l mai are nimeni
+altcineva și care spune un singur lucru: *browserul ăsta e chiar cel care a
+trimis cererea asta*. Jetonul pleacă odată cu înscrierea, leagă acea cerere (și
+comanda născută din ea, dacă ai apucat s-o accepți între timp) de contul nou, și
+se stinge. A doua oară nu mai merge, și nu spune nimic despre cererile altora.
+
+În baza de date nu stă jetonul, ci numai amprenta lui. Dacă cineva ar citi
+tabelul, n-ar putea deschide cu el nimic.
+
+Jetonul ține **o oră**. Cât să-ți faci contul, nu cât să te răzgândești mâine.
+
+### Ce nu se completează singur
+
+Formularul de pe site nu cere vizitatorului adresa și zona de livrare — le
+stabiliți voi la confirmare. Deci nici pe pagina de înscriere nu au de unde
+veni: casetele acelea rămân goale, iar omul le scrie el sau i le completați voi
+mai târziu, din Conturi.
+
+### Dacă a trecut ora
+
+Contul se face oricum. Omul vede un ecran care îi spune pe față ce s-a
+întâmplat: **contul e gata și e intrat în el, comanda e la noi și se pregătește,
+dar n-o va găsi în „Comanda mea"** — legătura a expirat. Nu se inventează nimic
+și nu se cere nimic din nou. O legați voi, la telefon, din formularul comenzii.
+
+---
+
+## Insigna de pe comandă: cine e omul
+
+Pe fiecare comandă și pe fiecare cerere, în panoul de comenzi și în Panoul
+Laborator, stă un semn care spune dintr-o privire pe cine ai în față:
+
+| Semn | Înseamnă |
+|---|---|
+| pastilă **#1** | prima comandă a acestui cont |
+| **bifă dublă**, ca la WhatsApp | cont care a mai comandat |
+| **bulină roșie** | comandă fără cont |
+
+Fiecare poartă numele scris în cuvinte, și pentru ochi (`title`), și pentru
+cititorul de ecran: un semn fără nume nu se poate citi de cine îl vede prima
+oară.
+
+Trei lucruri de știut despre cifra din spatele lor:
+
+- **Comenzile anulate nu se numără.** O comandă anulată nu face din nimeni
+  client fidel, deci a doua comandă a unui cont a cărui primă comandă s-a
+  anulat poartă tot **#1**. Anulata rămâne și ea cu **#1**, fiindcă nu există
+  nicio comandă neanulată mai veche decât ea.
+- **Contul șters lasă comanda fără cont.** Comanda rămâne în registru, dar
+  legătura cu contul se rupe, deci capătă **bulina roșie**. Nu e o greșeală de
+  arătat: comanda chiar nu mai e a nimănui. Nu se încearcă recunoașterea după
+  nume — potrivirea pe nume e exact ce păzește casa de la o rundă încoace.
+- **Socoteala se face pe server, o dată pentru tot lotul.** Nu se numără din
+  comenzile aduse pe ecran: lista e tăiată la 500 de rânduri pe zi, iar o
+  numărătoare făcută în pagină ar spune „prima comandă" despre un client cu
+  treizeci, doar fiindcă restul n-au încăput pe ecran.
+
+Pe un server rămas în urmă, care nu trimite încă rangul, nu apare nicio
+insignă — nimic nu se rupe.
+
+---
 
 ## Dacă și-a uitat parola
 

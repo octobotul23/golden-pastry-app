@@ -223,6 +223,25 @@ function route_register(): void
         $name
     );
 
+    // Cererea trimisă de pe site, înainte ca omul să aibă cont, se leagă acum
+    // de contul lui — dacă a venit cu jetonul primit atunci.
+    // `request_claim_use()` (api/lib/orders.php) stinge jetonul o singură
+    // dată, leagă numai ce e nelegat și NU aruncă niciodată: contul e deja
+    // scris și sesiunea deja deschisă, deci o socoteală de legături n-are ce
+    // să mai strice aici.
+    //
+    // Un `jeton` trimis spre un server rămas în urmă e ignorat, nu refuzat:
+    // ruta citește numai câmpurile pe care le știe. Contul se face oricum.
+    $cerereLegata = isset($b['jeton'])
+        ? request_claim_use(trim((string) $b['jeton']), $id)
+        : null;
+    if ($cerereLegata !== null) {
+        // Altfel legătura ar apărea din senin în „Comanda mea", fără nimeni
+        // care să poată spune de unde.
+        audit('request_claim', 'request', (string) $cerereLegata,
+            'Cerere legată de contul nou, cu jetonul de la trimitere', $id, $name);
+    }
+
     $nou = one('SELECT * FROM users WHERE id = ?', [$id]);
 
     $raspuns = [
@@ -236,6 +255,16 @@ function route_register(): void
         // Cine l-a adus, ca pagina să poată spune „mulțumim, ai venit de la Ana".
         'referredBy'  => $adusDe ? $adusDe['name'] : null,
     ];
+
+    // Ce s-a întâmplat cu jetonul, ca pagina să nu tacă. `legat: false` nu
+    // spune DE CE — expirat, folosit, necunoscut, toate arată la fel, altfel
+    // răspunsul ar deveni un oracol care spune dacă un jeton a existat.
+    if (isset($b['jeton'])) {
+        $raspuns['cerere'] = [
+            'legat'     => $cerereLegata !== null,
+            'requestId' => $cerereLegata,
+        ];
+    }
 
     // Anunțul „cont nou" pleacă DUPĂ răspuns, ca la comanda nouă și din același
     // motiv: cine tocmai și-a făcut cont stă cu ochii pe butonul „Creează cont",

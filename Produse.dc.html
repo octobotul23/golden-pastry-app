@@ -16,6 +16,7 @@
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
 <link rel="stylesheet" href="shared/gp-nav.css">
+<link rel="stylesheet" href="shared/gp-bara.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -405,12 +406,16 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <p style="margin:0;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ recHint }}</p>
 </div>
-<div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:6px;border-top:1px solid var(--h-line)">
-<button type="button" class="{{ saveCls }}" onClick="{{ onSave }}" style="height:48px;font-size:15px;font-weight:700;margin-top:14px;flex:1;min-width:160px">{{ saveLabel }}</button>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCancel }}" style="height:48px;font-size:15px;margin-top:14px">Renunță</button>
-</div>
-
 <p style="margin:0;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ formHint }}</p>
+
+<!-- Butoanele stăteau la capătul unei foi lungi: după fotografie, rețetă și
+     recomandări, pe telefon se ajungea la ele numai derulând până jos. Rămân
+     unde erau — la capăt, unde le caută mâna — dar se lipesc de marginea de
+     jos a foii, deci nu mai ies din ecran. Stilul e în shared/gp-bara.css. -->
+<div data-pr="savebar" class="gp-bara gp-bara--foaie">
+<button type="button" class="{{ saveCls }}" onClick="{{ onSave }}" style="height:48px;font-size:15px;font-weight:700;flex:1;min-width:160px">{{ saveLabel }}</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCancel }}" style="height:48px;font-size:15px">Renunță</button>
+</div>
 </div>
 </div>
 </sc-if>

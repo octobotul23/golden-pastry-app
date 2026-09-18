@@ -1069,4 +1069,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.1.1`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.2.0`.

@@ -518,13 +518,34 @@ function route_requests_create(): void
     $req = attach_request_items([one('SELECT * FROM order_requests WHERE id = ?', [$id])])[0];
     audit('request_create', 'request', (string) $id, 'Cerere de la ' . $customerName);
 
+    // Jetonul cu care omul își leagă cererea de contul pe care și-l face în
+    // clipa următoare. Numai pentru VIZITATORUL ANONIM care a apăsat chiar
+    // „Trimite comanda și fă-ți cont": un secret care nu trebuie nimănui nu se
+    // face. Cererea scrisă de personal pentru altcineva nu primește jeton —
+    // altfel jetonul ar fi o cale de a da cererea unui client unui cont
+    // oarecare; nici cea a clientului deja intrat în cont, care e legată.
+    //
+    // Se naște DUPĂ commit, ca adresa pusă pe cont mai sus și din același
+    // motiv: o piedică la jeton n-are voie să piardă cererea. `request_claim_new()`
+    // își înghite singură necazurile și întoarce null.
+    $minuteJeton = (int) config('claim_minutes', 30);
+    $jeton = ($user === null && $customerId === null && !empty($b['vreauCont']))
+        ? request_claim_new($id, $minuteJeton)
+        : null;
+
+    $raspuns = ['request' => $req];
+    if ($jeton !== null) {
+        $raspuns['jeton']       = $jeton;
+        $raspuns['jetonMinute'] = $minuteJeton;
+    }
+
     // Răspunsul pleacă înaintea anunțurilor, nu după ele. Cererea e deja
     // scrisă în bază, iar anunțurile se duc pe rând la e-mail, la Meta și la
     // Telegram, unde un furnizor căzut ține conexiunea până la cincisprezece
     // secunde de fiecare dată. Trimise întâi, țineau vizitatorul de pe site cu
     // butonul „Se trimite…" apăsat o jumătate de minut pentru o cerere care
     // reușise, și țineau ocupat câte un proces PHP tot atâta.
-    json_out_early(['request' => $req], 201);
+    json_out_early($raspuns, 201);
 
     // De aici încolo nimic nu mai ajunge la client: răspunsul a plecat cu 201,
     // fiindcă asta s-a și întâmplat — cererea a fost salvată. Un anunț care nu
@@ -538,6 +559,57 @@ function route_requests_create(): void
     // Fără oprirea asta, dispecerul din index.php ar chema fail(...) după
     // rută și ar lipi octeți în plus la un răspuns deja trimis.
     exit;
+}
+
+/* ------------------------------------------- jetonul, citit fără stins -- */
+
+/**
+ * POST /requests/claim { jeton } — datele cererii, pentru formularul de cont.
+ *
+ * Nu stinge jetonul și nu scrie nimic. Rostul ei e să umple casetele
+ * formularului de înscriere cu ce a scris omul în comandă: numele, telefonul,
+ * e-mailul, adresa, zona. Fără ea, datele ar fi trebuit să treacă prin adresă
+ * — și datele personale n-au ce căuta într-o adresă —, iar `sessionStorage`
+ * nu le poate duce: magazinul stă pe goldenpastry.ro, „Intrare" pe
+ * clienti.goldenpastry.ro, adică două origini deosebite.
+ *
+ * RUTĂ PUBLICĂ, DINADINS: cine o cheamă n-are încă niciun cont, tocmai de aceea
+ * o cheamă. Poarta e jetonul însuși — 256 de biți dați o singură dată, în
+ * răspunsul la chiar trimiterea acelei cereri. Nu se poate ghici, iar cu el nu
+ * se deschide nimic altceva: o singură cerere, atât.
+ *
+ * Fără sesiune, `check_csrf()` se întoarce oricum de la ușă, deci ruta nu
+ * trebuie trecută în `csrf_exempt()` — și nici nu se cuvine: lista aceea e
+ * pentru scutiri, nu pentru cereri care n-au ce scuti.
+ */
+function route_requests_claim(): void
+{
+    $b   = body();
+    $req = request_claim_peek(trim((string) ($b['jeton'] ?? '')));
+
+    if (!$req) {
+        // UN SINGUR MOTIV PENTRU TOATE EȘECURILE — expirat, folosit, necunoscut,
+        // bază fără migrare. Deosebite, răspunsul ar fi devenit un oracol care
+        // spune dacă un jeton a existat vreodată.
+        fail(
+            'Legătura cu comanda a expirat sau a fost deja folosită. '
+                . 'Fă-ți contul și te sunăm noi — comanda ta a plecat deja.',
+            410,
+            'expired_token'
+        );
+    }
+
+    // NUMAI ce se pune în formular. Cererea are și poziții, și total, și
+    // mențiuni; niciuna n-are ce căuta într-un răspuns care pleacă fără
+    // sesiune. Cu cât dă mai puțin, cu atât un jeton scăpat costă mai puțin.
+    json_out(['cerere' => [
+        'customerName' => $req['customer_name'],
+        'phone'        => $req['phone'],
+        'email'        => $req['email'],
+        'address'      => $req['address'],
+        'zone'         => $req['zone'],
+        'ref'          => $req['referral_code'] ?? null,
+    ]]);
 }
 
 /* ------------------------------------------------------------ acceptare -- */
@@ -698,14 +770,9 @@ function route_requests_accept(string $id): void
     $total    = $req['total'];
     $nota     = '';
     if (array_key_exists('items', $b)) {
-        if (!is_array($b['items']) || !$b['items']) {
-            fail('Comanda trebuie să conțină cel puțin un produs.', 422, 'empty_order');
-        }
-        if (count($b['items']) > 200) {
-            fail('Prea multe poziții în comandă.', 422, 'too_many_items');
-        }
+        $pozitii = cos_de_tarifat($b['items']);
         [$priced, $sum] = price_items(
-            $b['items'],
+            $pozitii,
             require_variant($b['variant'] ?? null, $implicit),
             honored_prices($items),
             array_filter(array_column($items, 'product_id'), static fn($x) => $x !== null)
@@ -1187,12 +1254,29 @@ function attach_request_items(array $rows): array
     }
     $adus = $coduri ? referral_owners_for_codes($coduri) : [];
 
-    return array_map(static function (array $r) use ($byReq, $adus) {
+    // Al câtelea client e omul de pe cerere. Aceeași socoteală ca la comenzi,
+    // din același ajutor (`api/lib/orders.php`): două scrieri ale aceleiași
+    // idei s-ar fi depărtat la prima schimbare, iar insigna ar fi spus altceva
+    // în fila „Cereri de pe site" decât în registrul de comenzi.
+    $primele = primele_comenzi(array_map(
+        static fn($r) => $r['customer_id'] === null ? 0 : (int) $r['customer_id'],
+        $rows
+    ));
+
+    return array_map(static function (array $r) use ($byReq, $adus, $primele) {
         $cod = $r['referral_code'] ?? null;
         $cod = is_string($cod) && $cod !== '' ? $cod : null;
         return [
             'id'           => (int) $r['id'],
             'customerId'   => $r['customer_id'] === null ? null : (int) $r['customer_id'],
+            // Insigna de client. Cererea deja acceptată o ia pe cea a comenzii
+            // născute din ea; cea încă neacceptată spune doar dacă omul a mai
+            // comandat vreodată.
+            'rangClient'   => rang_client(
+                $r['customer_id'] === null ? null : (int) $r['customer_id'],
+                $r['order_id'] === null ? null : (int) $r['order_id'],
+                $primele
+            ),
             'customerName' => $r['customer_name'],
             'phone'        => $r['phone'],
             'email'        => $r['email'],

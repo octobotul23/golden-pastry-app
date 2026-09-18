@@ -238,6 +238,67 @@ răspundea „grupa are 3 produse în ea" — două cifre care se contraziceau p
 același ecran, fără să ai de unde ști de unde ies cele trei.
 
 ---
+## Catalogul, în formularul de comandă
+
+`lab.goldenpastry.ro/comenzi` — la fiecare poziție a comenzii.
+
+Până acum, „Nume produs" era o casetă de scris liberă. Numele scris trebuia să
+nimerească **exact** un produs din catalog, altfel salvarea era refuzată la
+sfârșit, după ce scriseseși toată comanda: *„Produsele «X» nu există în
+catalog"*. Refuzul era corect, dar venea prea târziu și fără să-ți spună ce să
+scrii în loc.
+
+Acum catalogul vine în întâmpinare, în trei feluri.
+
+### Scrii două litere, îți arată ce ai
+
+Sub casetă apare o listă scurtă cu produsele care se potrivesc: **numele,
+gramajul și prețul bucății** — prețul variantei alese pe poziție, congelat sau
+copt. „cr" scoate croissantele. Potrivirea nu se uită la diacritice și nici la
+majuscule, și caută oriunde în nume, nu doar la început.
+
+Alegi unul din listă și poziția rămâne legată de produsul acela din catalog,
+nu de numele lui scris. Dacă produsul e redenumit mâine, comanda nu se rupe.
+
+### Sau deschizi lista întreagă
+
+Lângă **+ Adaugă poziție** stă un buton care deschide catalogul grupat pe
+grupe, cu prețul fiecărei bucăți. E pentru când clientul îți spune „ceva cu
+mere" și nu știi cum se cheamă în catalog.
+
+### Ce nu e în catalog merge în „Mențiuni"
+
+Caseta nu mai primește nume care nu există în catalog. O cerere ieșită din
+comun — un tort scris pe comandă, o ambalare anume — se scrie în **Mențiuni**,
+unde a fost locul ei dintotdeauna. Refuzul de la salvare a rămas pe loc, ca
+plasă de siguranță; doar că acum nu mai are ce prinde.
+
+---
+
+## Banii, cât scrii comanda
+
+Fiecare poziție arată **preț/bucată × cantitate = sumă**, iar antetul
+formularului arată totalul lângă numărul de bucăți. Lista de comenzi arată și
+ea suma fiecărei comenzi.
+
+Cifrele **nu se socotesc în pagină**. La fiecare schimbare — alt produs, altă
+cantitate, altă variantă — formularul cere serverului să tarifeze, iar pe ecran
+ajunge exact ce s-ar scrie în bază dacă ai apăsa „Salvează". Pricina e chiar
+cea din capul acestui ghid: o înmulțire făcută în browser ar minți la prima
+comandă **editată**.
+
+Când deschizi o comandă veche și îi adaugi o bucată, bucățile de dinainte își
+păstrează prețul promis atunci; numai bucata nouă ia prețul de azi. O socoteală
+din pagină ar fi înmulțit tot cu prețul de azi și ți-ar fi arătat o sumă cu care
+clientul nu fusese de acord.
+
+Cât răspunsul e pe drum, cifra veche stă **stinsă**. O sumă despre care nu se
+știe încă dacă mai e adevărată nu se arată ca și cum ar fi.
+
+Dacă serverul e mai vechi și nu știe să tarifeze, formularul **nu arată bani**
+și merge mai departe: nu refuză nicio salvare.
+
+---
 
 ## Ce vede Google
 

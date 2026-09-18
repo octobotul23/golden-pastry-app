@@ -93,7 +93,7 @@ Produse în catalog: 22
 GATA — baza e pregătită.
 ```
 
-**21 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
+**22 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
 numele care lipsește îți spune care migrare n-a intrat: `referral_commissions`
 e din `008`, `founder_invites` din `009`, `lab_shifts` din `014`,
 `lab_messages` din `015`. Fără primul, „Recomandări" nu-ți arată banii; fără

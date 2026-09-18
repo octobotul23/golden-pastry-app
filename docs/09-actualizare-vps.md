@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.1.1/deploy
+  Pachet: /root/plasture-vps 2.2.0/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -249,10 +249,11 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
   trei, pe una actualizată ieri niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
   `sql/018_adresa_si_program.sql`;
-- **21 de tabele** în capul raportului, la „Baza de date" (a douăzeci și una
-  e `lab_messages`, adusă de `015_mesaje_laborator.sql`). Numărul rămâne 21 și
-  după `016`: aceea aduce o coloană (`users.zone`) și o zonă în plus în lista
-  de livrare, nu un tabel;
+- **22 de tabele** în capul raportului, la „Baza de date" (al douăzeci și
+  doilea e `request_claims`, adus de `019_jeton_cerere.sql`). Numărul nu se
+  mișcă nici la `016`, nici la `020`: prima aduce o coloană (`users.zone`) și o
+  zonă în plus în lista de livrare, a doua numai un index
+  (`ix_orders_client_rang` pe `orders`) — niciuna un tabel;
 - linia **`api.DOMENIU răspunde (401)`**. Un **500** înseamnă că o migrare n-a
   intrat: `tail -20 /var/log/apache2/gp-api-error.log`;
 - căile celor două copii — a bazei și a codului.
@@ -306,6 +307,17 @@ prima, iar din salvarea aceea nu se scrie nimic: formularul se salvează întreg
 sau deloc (`unknown_setting`). Până la `018`, aceeași salvare răspundea „ok" și
 nu scria nimic — de-aia adresa firmei a stat ani de zile scrisă în cod, fără ca
 cineva s-o poată schimba.
+
+`019_jeton_cerere.sql` se vede în numărul de tabele: e `request_claims`, al
+douăzeci și doilea. Fără el, butonul „Trimite cererea și fă-ți cont" de pe site
+trimite cererea la fel — nu se pierde nicio comandă —, dar contul făcut imediat
+după ea n-o vede în „Comanda mea" până n-o legați voi cu mâna.
+
+`020_rang_client.sql` nu se vede nicăieri în raport: pune un index pe `orders`,
+atât. E singura migrare care **se poate uita fără pagubă** — fără ea insignele
+de client (prima comandă / client revenit / fără cont) ies la fel, doar
+socoteala lor merge mai încet. Dacă vrei s-o vezi cu ochii:
+`SHOW INDEX FROM orders WHERE Key_name = 'ix_orders_client_rang'`.
 
 Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
 adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:442`,

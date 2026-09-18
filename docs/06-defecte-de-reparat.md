@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**357 de defecte confirmate** — 10 critice, 106 grave, 156 medii, 85 mici.
-**350 reparate**, 7 rămase.
+**363 de defecte confirmate** — 10 critice, 106 grave, 160 medii, 87 mici.
+**354 reparate**, 9 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-149 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+155 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -30,12 +30,12 @@ Aceeași listă, cu filtre și căutare:
 |---|---|---|---|
 | Critice | 10 | 0 | 10 |
 | Grave | 104 | 2 | 106 |
-| Medii | 155 | 1 | 156 |
-| Mici | 81 | 4 | 85 |
+| Medii | 159 | 1 | 160 |
+| Mici | 81 | 6 | 87 |
 
 ---
 
-## Ce e reparat — 350
+## Ce e reparat — 354
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -1100,6 +1100,22 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:2047` · *mediu*
   Reparat pe 16 septembrie 2026, în runda 2.1.1. Citirea coșului stă într-o singură metodă, `recitesteCosul()` (`Site Public.dc.html:2047`). Ea se cheamă la montare (:1833), la `pageshow` NUMAI cu `persisted` (:1841, ca prima arătare să nu calce reluarea din adresă) și la `storage` pe cheia `gp-cart-v1` sau pe cheia goală a browserului golit (:1847). Golirea venită din altă filă trece prin `dezarmeaza`, ca oricare alta. Ce s-a citit se ține în `__cosScris` (:2055), iar `componentDidUpdate` scrie coșul numai când diferă de el (:2008). Așa o desenare fără umblat la coș nu mai calcă browserul, iar două file nu se învârt una pe alta. Ascultătoarele pleacă în `componentWillUnmount` (:2021, :2022). Tot aici, trimiterea căzută din rețea (`Site Public.dc.html:4048`) spune acum că nu se știe dacă cererea a ajuns și trimite clientul în „Comanda mea”, personalul la „Cereri de pe site”, iar vizitatorul pe WhatsApp, în română și în engleză; refuzurile serverului rămân cu vorbele lor. Păzit de cele 20 de reguli noi din check-site-public. docs/10 are plimbarea 4.4, iar trimiterile din docs/07 s-au mutat la :2009, :2427 și :2601.
 
+- [x] **Pe cardul de produs, insigna cu gramajul fuge la dreapta cu fiecare cifră a cantității, iar de la două cifre în sus iese din card și se taie**
+  `Site Public.dc.html:2839` · *mediu*
+  `prodBody` a primit `min-width:0` pe amândouă așezările, deci corpul cardului se poate strânge sub conținutul lui. Rândul cantității (`prodQtyRow`) a primit `flex-wrap:wrap` și `min-width:0`: steperul are lățime fixă (132px pe telefon) și nu se strânge, așa că la patru cifre suma coboară pe rândul ei în loc să împingă cardul. Suma de pe card a căpătat cheie aparte, `prodLineTotal`, cu `margin-left:auto;text-align:right` — ca să-și țină dreapta și când a coborât —, ca să nu se atingă `lineTotalStyle`, pe care o mai poartă două rânduri din coș. Măsurat din nou cu Playwright, la 390 / 820 / 1440 și la 1 / 10 / 100 / 1000 de bucăți: capătul insignei e același la toate patru (342 / 759 / 335 px) și nu mai iese din card niciodată. Probe: .claude/check-site-public.mjs, secțiunea „gramajul fugea la dreapta când creștea cantitatea" — șase reguli, dovedite că se înroșesc rulate peste pagina din GPA 2.1.0 (GP_SITE_PUBLIC).
+
+- [x] **În bara de jos a magazinului, butonul care ridică coșul era 22 de pixeli de deget și arăta ca un text, nu ca un buton**
+  `Site Public.dc.html:686` · *mediu*
+  Butonul a primit un coș desenat în pagină înaintea sumei (SVG scris acolo, ca pictograma de WhatsApp de alături — niciun fișier de adus, deci bara nu rămâne goală pe rețea slabă) și o săgeată după ea, care arată în sus cât coșul e închis și se întoarce în jos cât e deschis. Rotirea se ia din ACEEAȘI stare ca `aria-expanded` (`cosJos`), ca desenul și vorba spusă cititorului de ecran să nu poată ajunge să spună lucruri diferite. Amândouă desenele sunt `aria-hidden` — numele butonului rămâne `aria-label` cu `ctaVeziCos`, care trece prin `t()` — și amândouă `flex:none`, ca să nu se strângă când suma crește. Butonul a căpătat `min-height:2.75rem`: măsurat din nou la 390 px, are 44 de pixeli ca vecinii lui, iar bara a rămas de 94 px (rândul ei era oricum înalt de 44). La 1 și la 1000 de bucăți nimic nu iese din ecran. Probe: .claude/check-site-public.mjs, secțiunea „coșul de lângă sumă, în bara de jos” — douăsprezece reguli, dintre care zece dovedite că se înroșesc rulate peste pagina din GPA 2.1.0 (GP_SITE_PUBLIC); celelalte două sunt adevărate și acolo, fiindcă păzesc numele și starea pe care butonul le avea dinainte.
+
+- [x] **Banda cu variantele de pe telefon se dădea lipicioasă și nu era: derulat prin catalog, comutatorul congelat/gata de servire ieșea din ecran și nu se mai putea găsi**
+  `Site Public.dc.html:369` · *mediu*
+  Banda a plecat cu totul, iar în locul ei a venit o pastilă `position:fixed` în colțul din dreapta sus, cu amândouă semnele deodată: un fulg de nea și un clopot de servire cu trei fire de abur. `fixed` nu pățește ce pățește `sticky`, fiindcă se așază după ecran, nu după cutia din care face parte — bara de jos a coșului o dovedește de mult. Locul l-a ales măsurătoarea, nu gustul: în antet sigla ține x 37–223 la y 33–67, iar rândul FD/RO/EN/meniu ține y 82–126, deci colțul x 230–370 / y 10–75 e singurul gol; mijlocul de sus ar fi căzut peste sigla „Golden Pastry". Etajul e 101: peste antet (100), ca să nu se ascundă sub el cât pagina stă nederulată, dar sub perdeaua meniului de cont (110), sub bara de jos (120) și sub cele două ferestre (149/150 și 159/160). Fiecare semn are 44 de pixeli de deget, deși desenul are 20, și își poartă numele în `aria-label` și `title`; desenele sunt `aria-hidden`, ca numele să nu se spună de două ori. La apăsare, sub pastilă apare o clipă o căsuță rotunjită cu numele variantei în care s-a trecut — măsurat: mai era acolo la 1000 ms, plecase la 1900. Măsurat derulat la 1429: pastila stătea tot la 12–64. Lămurirea variantei a rămas în curgerea paginii, iar cartonașul cu cuvinte de pe calculator e neatins. Probe: .claude/check-site-public.mjs, secțiunea „comutatorul plutitor: fulgul și clopotul" — 23 de reguli, 21 dovedite că se înroșesc rulate peste pagina din GPA 2.1.0 (GP_SITE_PUBLIC).
+
+- [x] **„Deschide în filă nouă" nu funcționa pe nicio legătură a magazinului: `nav()` dădea `preventDefault()` fără să se uite la tastele apăsate**
+  `Site Public.dc.html:2270` · *mediu*
+  S-a scris `altundeva(e)` (linia 1374) — o singură funcție care spune dacă apăsarea cere altă filă — și e întrebată la începutul lui `nav()` și al lui `deschideVederea()`. Cere ȘI ca nodul apăsat să fie o legătură adevărată cu `href`: jumătate din chemările lui `nav()` stau pe `<button>` („Cere ofertă", butoanele din meniu), iar acolo browserul n-are ce deschide în altă filă — dacă i s-ar fi dat drumul și pe ele, un Ctrl-clic pe buton n-ar mai fi făcut absolut nimic. Păzită de două reguli din `check-site-public.mjs`.
+
 - [x] **Adresa publică și programul aveau casete în Setări, dar niciun rând în tabel: patronul scria, apăsa „Salvează", primea „ok", și nu se schimba nimic. Niciodată**
   `sql/002_seed.sql:89` · *mediu*
   Hotărârea patronului: „Rândurile, ȘI un refuz lămurit". Partea aceasta e rândurile. O migrare nouă, `sql/018_adresa_si_program.sql`, le seamănă cu `INSERT IGNORE`, pornind de la chiar valorile scrise azi în cod (`seo/index.php`), ca site-ul să arate la fel în clipa actualizării — se schimbă doar cine ține valoarea: baza, nu fișierul. `INSERT IGNORE`, nu `REPLACE`: migrările se rulează de câte ori e nevoie, iar adresa pe care patronul a scris-o din Setări nu trebuie să se întoarcă la cea din cod la următoarea actualizare. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază, fiindcă n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Temeiul de rezervă din cod rămâne, dinadins, și e verificat cu `?:`, nu cu `??`: o casetă golită din panou salvează șir gol, deci `??` ar lăsa pagina fără adresă în loc s-o întoarcă pe cea din cod. Cele trei ghiduri (07, 08, 09) spun acum cum se verifică `018`, iar tabelul „Ce se poate reimporta și ce nu" o are pe rândul ei.
@@ -1472,7 +1488,7 @@ Se văd și încurcă, dar se pot ocoli sau nu apar zilnic.
 
 ---
 
-## Mici — 4 rămase
+## Mici — 6 rămase
 
 Nepotriviri și texte care mint mărunt.
 
@@ -1499,6 +1515,18 @@ Nepotriviri și texte care mint mărunt.
   **Ce e greșit:** Măsurat chiar în fișiere, cu `.claude/check-sigle.mjs`: `assets/logo-alb.png` (192×192) are cerneala aurie — culoarea cea mai deasă e `#BD9749` — iar `assets/logo-auriu.png` (256×256) are cerneala albă, `#FEFEFE`. Numele spun invers. Cele 14 pagini care pun o siglă o cer de 36 de ori, toate pe „alb”, adică cer albul tocmai ca să capete aurul; pe ecran iese bine, fiindcă fișierul e aurul. Cele două desene nu sunt nici măcar aceeași rozetă: „alb” are petale subțiri (91% din pătrat e străveziu), „auriu” are petale groase (75%).
   **Ce pățește omul:** Nu mai e o presupunere: s-a întâmplat. Cine a scris pătratul din locul fotografiei lipsă, în Catalog, voia aur pe un cartonaș deschis la culoare, a cerut firește „auriu” și a primit alb pe crem — contrast 1,22:1, adică un pătrat gol. A stat așa până a fost măsurat (vezi fișa `Produse.dc.html:493`). Cealaltă jumătate a capcanei e încă deschisă: cineva poate „repara” într-o zi nepotrivirea schimbând fișierele între ele, și atunci toate cele 36 de trimiteri își pierd deodată aurul.
   **Dovada:** `Măsurat cu 'node .claude/check-sigle.mjs', care desface PNG-ul cu zlib și numără numai pixelii cu totul opaci: 'assets/logo-alb.png' → cerneala '#BD9749' (auriu), 91% din pătrat străveziu, 192×192. 'assets/logo-auriu.png' → cerneala '#FEFEFE' (alb), 75% străveziu, 256×256. Contrastul pe fundalul '--h-bg-sunk' al temei: aurul dă 2,21:1 pe cremul de zi și 7,02:1 pe ciocolatiul de noapte; albul dă 1,22:1 și 19,01:1. Folosirea: 36 de trimiteri în 14 pagini, toate spre 'logo-alb.png'; după reparația din Catalog, 'logo-auriu.png' nu mai e chemat de nicio pagină.`
+
+- [ ] **Antetul magazinului e scris lipicios, dar nu se lipește de nimic: aceeași pricină ca banda variantelor, `overflow-x:hidden` pe învelișul paginii**
+  `Site Public.dc.html:62`
+  **Ce e greșit:** Antetul cu sigla, limbile și meniul e scris `position:sticky;top:0;z-index:100`, cu un fundal în degrade făcut anume ca textul să treacă frumos pe sub el la derulare — adică e gândit până la capăt ca antet care rămâne pe ecran. Nu rămâne. Învelișul de la linia 60 are `overflow-x:hidden`, iar asta îl face butoi de derulare și anulează orice `sticky` dinăuntru. Măsurat: derulat la 1200, antetul stătea la -1200; cu `overflow-x` pus pe `visible` în browser, sărea înapoi la 0 pe loc.
+  **Ce pățește omul:** Omul derulează catalogul pe telefon și vrea să treacă la „Distribuție" sau să schimbe limba. Meniul e în antet, iar antetul a rămas la începutul paginii: trebuie să deruleze tot înapoi. Pe calculator e același lucru, doar că derularea e mai ieftină.
+  **Dovada:** `derulat la 1200, pe 390 px: antetul, position:sticky top:0 -> top = -1200 acelasi antet, cu overflow-x:visible pus din browser -> top = 0`
+
+- [ ] **Butoanele „Închide" ale celor trei ferestre au 36 de pixeli înălțime, sub pragul de deget de 44 pe care casa și-l cere singură**
+  `Site Public.dc.html:497`
+  **Ce e greșit:** Foaia coșului (linia 497), fereastra produsului (616) și fereastra de finalizare (957) au același buton de închidere, scris cu `min-height:2.25rem` — 36 de pixeli. Pragul casei e 44: e scris pe față în `shared/gp-bara.css` (`.gp-bara .h-btn { min-height: 44px }`) și tot el s-a cerut în runda asta la butonul-sumă din bara de jos, care avea 22. Cele trei butoane de închidere au rămas la 36.
+  **Ce pățește omul:** Pe telefon, cu fereastra deschisă, omul vrea s-o închidă și nimerește pe lângă butonul din colțul de sus. Paguba e mică fiindcă butonul poartă și cuvântul „Închide" (78 de pixeli lățime, deci ținta întreagă are 78x36) și fiindcă perdeaua de dedesubt închide și ea la atingere — dar e sub ce cere casa.
+  **Dovada:** `măsurat pe 390x844, cu fereastra produsului deschisă: butonul „Închide" la x=265 y=113, 78x36. Vecinii din aceeași fereastră — „Adaugă" și „Cere ofertă" — au 46.`
 
 ---
 

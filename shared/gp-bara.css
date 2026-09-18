@@ -1,0 +1,116 @@
+/*
+ * Golden Pastry — bara de salvare care nu se caută prin derulare.
+ *
+ * Pățania: în Setări, „Salvează" și „Renunță" stăteau mereu la vedere într-un
+ * antet care NU e lipicios. Pe telefon, derulat până la tabla de anunțuri,
+ * butoanele ieșiseră de mult din ecran — omul schimba ceva, cobora, și nu mai
+ * avea cu ce salva fără să urce înapoi. Iar când nu era nimic de salvat, cele
+ * două butoane stăteau totuși acolo și cereau o apăsare degeaba.
+ *
+ * Bara de aici face amândouă: se arată NUMAI când chiar s-a schimbat ceva, și
+ * o dată arătată rămâne pe ecran cât ține derularea.
+ *
+ * Stilurile stau AICI, într-un singur fișier, nu în blocul <style> al fiecărei
+ * pagini — din pricina scrisă în capul lui `shared/gp-nav.css`: copiile de CSS
+ * se depărtează una de alta, și atunci aceeași bară ar sta cu câțiva pixeli
+ * mai sus într-o pagină decât în alta, cu alte colțuri și alt umbră.
+ *
+ * Două locuri de prins, fiindcă în casă butoanele astea apar în două feluri:
+ *
+ *   .gp-bara--sus     într-o PAGINĂ întreagă (Setări). Lipicioasă de sus: cât
+ *                     antetul e încă pe ecran stă sub el, fără să-l acopere —
+ *                     deci ☰ rămâne atins —, iar de cum a trecut antetul, se
+ *                     prinde de marginea de sus a ecranului.
+ *
+ *   .gp-bara--foaie   într-o FOAIE care se derulează singură (formularul de
+ *                     comandă, formularul de produs). Lipicioasă de jos, adică
+ *                     chiar acolo unde butoanele stau deja — nu li se schimbă
+ *                     locul, li se ia numai putința de a fugi din ecran.
+ *
+ * `.claude/build-deploy.mjs` copiază folderul `shared` întreg și trece
+ * fișierele .css prin aceeași rescriere de legături ca paginile.
+ */
+
+.gp-bara {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--h-line);
+  border-radius: 14px;
+  background: var(--h-bg-surface);
+  /* Umbră, nu doar chenar: bara trece PESTE conținut la derulare, iar fără
+     umbră textul de dedesubt părea că intră în ea. */
+  box-shadow: 0 6px 20px rgba(28, 18, 11, .16);
+  /* Crestătura telefonului, pe lat. Pe înălțime bara nu atinge marginile de
+     sus și de jos ale ecranului — de aceea numai stânga și dreapta. */
+  padding-left: max(14px, env(safe-area-inset-left));
+  padding-right: max(14px, env(safe-area-inset-right));
+}
+
+/* Vorba dinaintea butoanelor („Ai modificări nesalvate"). Împinge butoanele la
+   dreapta, și se strânge prima când rândul nu mai încape. */
+.gp-bara__spus {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--h-warning-fg);
+}
+
+/* Pragul de deget al casei. Butoanele își păstrează clasa `h-btn`, deci
+   culorile vin din temă; de aici vine numai înălțimea, ca să nu se scrie în
+   trei pagini trei cifre deosebite. */
+.gp-bara .h-btn {
+  min-height: 44px;
+  flex: none;
+}
+
+/* --- într-o pagină întreagă ------------------------------------------- */
+
+.gp-bara--sus {
+  position: sticky;
+  top: 0;
+  /* Sub orice fereastră: cea mai joasă din casă stă la 40 (formularul de
+     comandă), iar antetul lipicios de pe telefon la 20. Bara trece peste
+     conținut, nu peste ferestre. */
+  z-index: var(--gp-bara-z, 22);
+  animation: gp-bara-vine .18s var(--h-ease-out);
+}
+
+/* --- într-o foaie care se derulează singură --------------------------- */
+
+.gp-bara--foaie {
+  position: sticky;
+  bottom: 0;
+  /* Înăuntrul foii, deci numărul se măsoară numai față de frații ei. */
+  z-index: 3;
+  /* Jos, crestătura chiar e în drum. */
+  padding-bottom: max(10px, env(safe-area-inset-bottom));
+}
+
+@keyframes gp-bara-vine {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Cine a cerut mai puțină mișcare o primește: bara apare, dar nu alunecă. */
+@media (prefers-reduced-motion: reduce) {
+  .gp-bara--sus { animation: none; }
+}
+
+/* Pe telefon rândul se rupe, iar butoanele se întind pe toată lățimea: două
+   butoane înguste, unul lângă altul, se apasă greșit. */
+@media (max-width: 760px) {
+  .gp-bara {
+    flex-wrap: wrap;
+  }
+  .gp-bara__spus {
+    flex: 1 1 100%;
+  }
+  .gp-bara .h-btn {
+    flex: 1 1 130px;
+  }
+}

@@ -121,6 +121,12 @@ $routes = [
 
     ['GET',    '/requests',          'requests', 'route_requests_list'],
     ['POST',   '/requests',          'requests', 'route_requests_create'],
+    // Datele cererii, date celui care are jetonul primit la trimiterea ei, ca
+    // să-și poată umple formularul de cont. Nu stinge jetonul și nu scrie
+    // nimic. Stă deasupra rutelor cu `#`: azi nu există niciun /requests/{id}
+    // cu două segmente, deci „claim" n-ar avea cu ce se ciocni — dar locul e
+    // ales ca regula să nu atârne de ce NU există încă.
+    ['POST',   '/requests/claim',    'requests', 'route_requests_claim'],
     ['POST',   '/requests/#/accept', 'requests', 'route_requests_accept'],
     ['POST',   '/requests/#/reject', 'requests', 'route_requests_reject'],
     // Refuzul se poate întoarce: o cerere respinsă din greșeală trebuie să
@@ -134,6 +140,10 @@ $routes = [
     // potrivire câștigă. Pusă după, ruta asta n-ar fi chemată niciodată —
     // "counts" ar intra ca id de comandă și ar ieși 404.
     ['GET',    '/orders/counts',     'orders',   'route_orders_counts'],
+    // Tot înaintea lui /orders/#, din aceeași pricină. Azi nu există POST pe
+    // /orders/#, deci ciocnirea n-ar apărea — dar regula nu se cuvine să
+    // atârne de ce NU există încă.
+    ['POST',   '/orders/quote',      'orders',   'route_orders_quote'],
     ['GET',    '/orders/#',          'orders',   'route_orders_get'],
     ['PATCH',  '/orders/#',          'orders',   'route_orders_update'],
 
@@ -141,6 +151,12 @@ $routes = [
     // în plus la PATCH: acolo angajatul are voie doar la etapă
     // (`ORDER_FIELDS_STAFF`), iar raportarea scrie și în registrul depozitului.
     ['POST',   '/orders/#/production', 'orders', 'route_order_production'],
+
+    // Cât ar costa rescrierea pozițiilor unei comenzi, fără să scrie nimic.
+    // Rută deosebită de /orders/quote fiindcă poarta e alta: aici trece numai
+    // cine are voie să scrie pe comanda aceea. Cu un singur drum, poarta s-ar
+    // fi ales dintr-un câmp din corp.
+    ['POST',   '/orders/#/quote',    'orders',   'route_orders_quote_edit'],
 
     ['GET',    '/routes',            'orders',   'route_driver_routes'],
     // Numărul de opriri pe mai multe zile deodată. Meniul de zile al șoferului

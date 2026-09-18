@@ -426,7 +426,15 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <button data-lb="cardmove" type="button" class="{{ o.upCls }}" onClick="{{ o.onUp }}" title="Mută mai sus" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↑</button>
 <button data-lb="cardmove" type="button" class="{{ o.downCls }}" onClick="{{ o.onDown }}" title="Mută mai jos" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↓</button>
 </div>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
 <span style="font-family:var(--h-font-display);font-size:21px;font-weight:600;line-height:1.15">{{ o.cust }}</span>
+<!-- Pe carton încape numai semnul; vorbele întregi stau în `title` și în
+     `aria-label`, ca insigna să se poată citi și de cine o vede întâia
+     oară. Lipsește cu totul pe un server rămas în urmă. -->
+<sc-if value="{{ o.rang }}" hint-placeholder-val="{{ false }}">
+<span data-lb="rang" class="{{ o.rangCls }}" title="{{ o.rangTitlu }}" aria-label="{{ o.rangTitlu }}" style="font-size:11px;flex:none">{{ o.rangSemn }}</span>
+</sc-if>
+</div>
 <div style="display:flex;flex-direction:column;gap:4px">
 <sc-for list="{{ o.items }}" as="it" hint-placeholder-count="2">
 <div style="display:flex;gap:10px;font-size:15px">
@@ -470,7 +478,12 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <div style="display:flex;align-items:flex-start;gap:10px">
 <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ detail.ref }} · {{ detail.slot }}</span>
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
 <span style="font-family:var(--h-font-display);font-size:23px;font-weight:600;line-height:1.15">{{ detail.cust }}</span>
+<sc-if value="{{ detail.rang }}" hint-placeholder-val="{{ false }}">
+<span data-lb="rang" class="{{ detail.rangCls }}" title="{{ detail.rangTitlu }}" aria-label="{{ detail.rangTitlu }}" style="font-size:11px;flex:none">{{ detail.rangSemn }} {{ detail.rangEt }}</span>
+</sc-if>
+</div>
 </div>
 <button type="button" aria-label="Închide fișa comenzii" class="h-btn h-btn--ghost" onClick="{{ detail.onClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;border-radius:12px;flex:none">×</button>
 </div>
@@ -1706,8 +1719,16 @@ class Component extends DCLogic {
       const st = ord.status;
       const b = bucati(ord);
       const nou = eNoua(ord);
+      // CINE E CLIENTUL: „#1" la prima lui comandă, bifa dublă dacă a mai
+      // comandat, bulină roșie dacă n-are cont. Socoteala e a serverului,
+      // iar vorbele vin din `gp.rangClient` — același loc din care le ia și
+      // panoul de comenzi. Laboratorul și panoul stau la doi metri unul de
+      // altul: același semn n-are voie să spună lucruri deosebite.
+      const rg = gp.rangClient(ord.rangClient);
       return Object.assign({}, ord, {
         status: st, statusCls: ST[st] || "h-badge",
+        rang: rg.fel, rangSemn: rg.semn, rangEt: rg.et,
+        rangCls: rg.cls, rangTitlu: rg.titlu,
         // Congelat sau gata de servire: fără asta laboratorul nu are de unde
         // ști ce pregătește, deși de varianta aleasă depinde și prețul plătit.
         variant: gp.variantLabel(ord.variant),
@@ -1763,7 +1784,7 @@ class Component extends DCLogic {
       onDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(key, ids, i, 1); }
     }));
 
-    let detail = { canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, onAllDone: () => {}, onClose: () => {} };
+    let detail = { rang: "", rangSemn: "", rangEt: "", rangCls: "h-badge", rangTitlu: "", canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, onAllDone: () => {}, onClose: () => {} };
     let hasDetail = false;
     flat.forEach(ord => {
       const t = ord.slot || "";
@@ -1771,8 +1792,14 @@ class Component extends DCLogic {
       hasDetail = true;
       const st = ord.status;
       const b = bucati(ord);
+      const rgD = gp.rangClient(ord.rangClient);
       detail = {
         ref: ord.ref, cust: ord.cust, chan: ord.chan, chanCls: CH(ord.chan),
+        // În fișă încap și vorbele, nu doar semnul: aici se uită cineva care
+        // tocmai a apăsat pe comandă, nu cineva care trece cu ochii peste
+        // coadă.
+        rang: rgD.fel, rangSemn: rgD.semn, rangEt: rgD.et,
+        rangCls: rgD.cls, rangTitlu: rgD.titlu,
         variant: gp.variantLabel(ord.variant),
         variantCls: ord.variant === "congelat" ? "h-badge h-badge--accent" : "h-badge h-badge--honey",
         slot: ord.timed ? "ora " + t + " fix" : "poziția " + (ids.indexOf(ord.id) >= 0 ? ids.indexOf(ord.id) + 1 : "—"),

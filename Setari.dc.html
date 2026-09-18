@@ -16,6 +16,7 @@
 <helmet data-dc-atomics>
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
 <link rel="stylesheet" href="shared/gp-nav.css">
+<link rel="stylesheet" href="shared/gp-bara.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
@@ -53,8 +54,6 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
    dedesubt, pe toată lățimea. Fără regula asta „WhatsApp" se rupea în două
    rânduri în interiorul chenarului. */
 [data-st=anuntrand]{flex-direction:column!important;gap:10px!important}
-[data-st=savebar]{flex-wrap:wrap!important;margin-left:0!important;width:100%!important}
-[data-st=savebar]>button{flex:1 1 130px!important}
 }
 </style>
 </helmet>
@@ -157,13 +156,6 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <h1 class="h-h3" style="margin:0;font-size:24px">Setări</h1>
 <span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
 </div>
-<div data-st="savebar" style="margin-left:auto;display:flex;align-items:center;gap:10px">
-<sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
-<span style="font-size:13px;color:var(--h-warning-fg);font-weight:600">Modificări nesalvate</span>
-</sc-if>
-<button type="button" class="{{ resetCls }}" onClick="{{ onReset }}" style="height:44px;font-size:14px">Renunță</button>
-<button type="button" class="{{ saveCls }}" onClick="{{ onSave }}" style="height:44px;font-size:15px;font-weight:700">{{ saveLabel }}</button>
-</div>
 </div>
 
 <sc-if value="{{ msg }}" hint-placeholder-val="{{ false }}">
@@ -205,6 +197,21 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <div data-st="body" style="flex:1;display:flex;flex-direction:column;gap:18px;padding:20px 28px 40px;min-width:0">
+
+<!-- „Salvează" și „Renunță" stăteau în antetul de sus, care NU e lipicios:
+     derulat până la tabla de anunțuri, ieșiseră de mult din ecran. Și stăteau
+     acolo mereu, chiar când n-aveai ce salva.
+     Acum apar numai când `dirty`, primul lucru din corpul paginii, și se
+     lipesc de marginea de sus a ecranului de cum a trecut antetul — deci nu
+     acoperă niciodată ☰, care stă mai sus, în bara laterală.
+     Stilul e în shared/gp-bara.css, o singură dată pentru toate paginile. -->
+<sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+<div data-st="savebar" class="gp-bara gp-bara--sus">
+<span class="gp-bara__spus">Ai modificări nesalvate</span>
+<button type="button" class="{{ resetCls }}" onClick="{{ onReset }}" style="font-size:14px">Renunță</button>
+<button type="button" class="{{ saveCls }}" onClick="{{ onSave }}" style="font-size:15px;font-weight:700">{{ saveLabel }}</button>
+</div>
+</sc-if>
 
 <div data-st="tabs" style="display:flex;gap:6px;flex-wrap:wrap">
 <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
@@ -1310,13 +1317,13 @@ class Component extends DCLogic {
     // de acolo, după un drum degeaba.
     const tgStare = v("notify_telegram_webhook_status", "nelegat");
     const tgLegPiedica = dirty
-      ? "Ai modificări nesalvate. Legarea folosește datele salvate pe server — apasă „Salvează” de jos, apoi leagă botul."
+      ? "Ai modificări nesalvate. Legarea folosește datele salvate pe server — apasă „Salvează” din bara de sus, apoi leagă botul."
       : (!tgSet
         ? "Salvează întâi tokenul botului, apoi leagă-l."
         : (v("notify_telegram_chat_id") === ""
           ? "Salvează întâi Chat ID-ul, altfel botul n-are cui răspunde."
           : ""));
-    const testHint = dirty ? "Testul folosește datele salvate pe server, nu pe cele de pe ecran. Apasă „Salvează” sus, apoi testează." : "";
+    const testHint = dirty ? "Testul folosește datele salvate pe server, nu pe cele de pe ecran. Apasă „Salvează” din bara de sus, apoi testează." : "";
 
     // Titlul casetei roșii, scris după ce chiar e în listă. Două minciuni
     // reparate deodată:
@@ -1600,7 +1607,7 @@ class Component extends DCLogic {
             + ", dar fără nicio bifă pe " + (tacute.length === 1 ? "coloana" : "coloanele")
             + " de mai sus — deci nu " + (tacute.length === 1 ? "trimite" : "trimit") + " nimic.";
         }
-        return "Bifele se salvează cu butonul „Salvează” de jos, ca restul setărilor.";
+        return "Bifele se salvează cu butonul „Salvează”, care apare sus de cum schimbi ceva.";
       })(),
 
       mailOn: on("notify_email_enabled"),

@@ -16,6 +16,7 @@
 <helmet data-dc-atomics="">
 <link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
 <link rel="stylesheet" href="shared/gp-nav.css">
+<link rel="stylesheet" href="shared/gp-bara.css">
 <link rel="stylesheet" href="shared/gp-recomandari.css">
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
@@ -382,11 +383,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      plus marginile — sub lățimea de la 1440 (1117px), ca acolo să nu apară
      nicio bară de derulare. -->
 <div data-adm="desktoptable" class="h-card" style="padding:0;border-radius:18px;overflow-x:auto;overflow-y:hidden;flex:none">
-<div data-adm="thead" style="display:grid;grid-template-columns:88px minmax(128px,1.8fr) 92px 104px minmax(104px,1.5fr) 44px 120px 292px;gap:12px;min-width:1092px;padding:12px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
-<span>Ref.</span><span>Client</span><span>Canal</span><span>Ziua</span><span>Produse</span><span style="text-align:right">Buc.</span><span>Stare</span><span style="text-align:right">Acțiuni</span>
+<div data-adm="thead" style="display:grid;grid-template-columns:88px minmax(104px,1.8fr) 92px 104px minmax(84px,1.5fr) 88px 120px 292px;gap:12px;min-width:1092px;padding:12px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
+<span>Ref.</span><span>Client</span><span>Canal</span><span>Ziua</span><span>Produse</span><span style="text-align:right;line-height:1.35">Buc. · Sumă</span><span>Stare</span><span style="text-align:right">Acțiuni</span>
 </div>
 <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
-<div data-adm="row" style="display:grid;grid-template-columns:88px minmax(128px,1.8fr) 92px 104px minmax(104px,1.5fr) 44px 120px 292px;gap:12px;min-width:1092px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--h-line);background:{{ r.rowBg }}" style-hover="background:var(--h-bg-sunk)">
+<div data-adm="row" style="display:grid;grid-template-columns:88px minmax(104px,1.8fr) 92px 104px minmax(84px,1.5fr) 88px 120px 292px;gap:12px;min-width:1092px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--h-line);background:{{ r.rowBg }}" style-hover="background:var(--h-bg-sunk)">
 <div style="display:flex;align-items:center;gap:6px;min-width:0">
 <button type="button" onClick="{{ r.onPeek }}" title="Vezi produsele" style="flex:none;width:34px;height:34px;padding:0;border:1px solid var(--h-line);border-radius:10px;background:var(--h-bg-surface);color:var(--h-fg-muted);display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="border-color:var(--h-accent);color:var(--h-accent-fg);background:var(--h-accent-soft)">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -399,6 +400,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;flex-direction:column;gap:2px;min-width:0">
 <div style="display:flex;align-items:center;gap:8px;min-width:0">
 <span style="font-size:16px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.cust }}</span>
+<!-- Cine e clientul: „#1" la prima lui comandă, bifa dublă dacă a mai
+     comandat, bulină roșie dacă n-are cont. Pe masa de calculator încape
+     numai semnul; vorbele întregi stau în `title` și în `aria-label`, ca
+     semnul să se poată citi și de cine îl vede întâia oară. -->
+<sc-if value="{{ r.rang }}" hint-placeholder-val="{{ false }}">
+<span data-adm="rang" class="{{ r.rangCls }}" title="{{ r.rangTitlu }}" aria-label="{{ r.rangTitlu }}" style="font-size:11px;flex:none">{{ r.rangSemn }}</span>
+</sc-if>
 <sc-if value="{{ r.urgent }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--danger" style="font-size:11px;flex:none">Urgent</span>
 </sc-if>
@@ -410,7 +418,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="{{ r.chanCls }}" style="font-size:12px;justify-self:start">{{ r.chan }}</span>
 <span style="font-size:14px;color:var(--h-fg-muted)">{{ r.when }}</span>
 <span style="font-size:14px;line-height:1.4;color:var(--h-fg-muted);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;overflow:hidden;overflow-wrap:break-word">{{ r.itemsLine }}</span>
-<span class="h-numeric" style="font-size:15px;font-weight:700;text-align:right">{{ r.qty }}</span>
+<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:0">
+<span class="h-numeric" style="font-size:15px;font-weight:700">{{ r.qty }}</span>
+<sc-if value="{{ r.bani }}" hint-placeholder-val="{{ false }}">
+<span data-adm="rowbani" class="h-numeric" style="font-size:12px;color:var(--h-fg-muted);white-space:nowrap">{{ r.bani }}</span>
+</sc-if>
+</div>
 <span class="{{ r.statusCls }}" style="font-size:12px;justify-self:start">{{ r.status }}</span>
 <div data-adm="actions" style="display:flex;gap:6px;justify-content:flex-end;min-width:0">
 <sc-if value="{{ potEdita }}" hint-placeholder-val="{{ true }}">
@@ -439,6 +452,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
 <span style="font-size:17px;font-weight:700;line-height:1.25">{{ r.cust }}</span>
+<!-- Pe telefon rândul se poate înfășura, deci semnul vine cu vorbele lui
+     scrise lângă el. `title` și `aria-label` rămân totuși: ele spun DE CE,
+     nu doar CE. -->
+<sc-if value="{{ r.rang }}" hint-placeholder-val="{{ false }}">
+<span data-adm="rang" class="{{ r.rangCls }}" title="{{ r.rangTitlu }}" aria-label="{{ r.rangTitlu }}" style="font-size:11px;flex:none">{{ r.rangSemn }} {{ r.rangEt }}</span>
+</sc-if>
 <sc-if value="{{ r.urgent }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--danger" style="font-size:11px;flex:none">Urgent</span>
 </sc-if>
@@ -456,6 +475,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;flex-direction:column;align-items:flex-end;flex:none">
 <span class="h-numeric" style="font-family:var(--h-font-display);font-size:27px;font-weight:700;line-height:1">{{ r.qty }}</span>
 <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">buc.</span>
+<sc-if value="{{ r.bani }}" hint-placeholder-val="{{ false }}">
+<span data-adm="cardbani" class="h-numeric" style="margin-top:5px;font-size:14px;font-weight:600;color:var(--h-fg-muted);white-space:nowrap">{{ r.bani }}</span>
+</sc-if>
 </div>
 </div>
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -527,6 +549,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 
 <div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-if value="{{ r.rang }}" hint-placeholder-val="{{ false }}">
+<span data-adm="rang" class="{{ r.rangCls }}" title="{{ r.rangTitlu }}" aria-label="{{ r.rangTitlu }}" style="font-size:11px">{{ r.rangSemn }} {{ r.rangEt }}</span>
+</sc-if>
 <span class="h-badge h-badge--accent" style="font-size:11px">{{ r.wantLabel }}</span>
 <sc-if value="{{ r.segment }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge" style="font-size:11px">{{ r.segment }}</span>
@@ -818,8 +843,23 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;align-items:center;gap:10px">
 <span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Poziții</span>
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ frm.qtyTotal }} bucăți</span>
-<button data-adm="additem" type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onAddItem }}" style="margin-left:auto;min-height:44px">+ Adaugă poziție</button>
+<!-- Totalul comenzii, de la server. Se stinge cât răspunsul e pe drum: o
+     sumă rămasă aprinsă lângă o cantitate tocmai schimbată arată adevărată
+     și nu mai e. Lipsește cu totul când serverul n-are ruta de tarifare —
+     formularul merge atunci exact ca până acum, fără bani, dar salvând. -->
+<sc-if value="{{ frm.total }}" hint-placeholder-val="{{ false }}">
+<span data-adm="formtotal" class="h-numeric" title="{{ frm.totalTitlu }}" style="font-size:14px;font-weight:700;color:{{ frm.totalCol }}">{{ frm.total }}</span>
+</sc-if>
+<button data-adm="dincatalog" type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onDeschideCatalog }}" style="margin-left:auto;min-height:44px">Din catalog</button>
+<button data-adm="additem" type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onAddItem }}" style="min-height:44px">+ Adaugă poziție</button>
 </div>
+<!-- Refuzul venit de la tarifare: produs fără preț, cantitate strâmbă, total
+     peste ce încape în coloană. Se arată CÂT SE SCRIE comanda, nu după ce
+     s-a scris toată și s-a apăsat „Salvează" — ăsta e chiar câștigul rutei.
+     O pană de rețea nu scrie nimic aici. -->
+<sc-if value="{{ tarifErr }}" hint-placeholder-val="{{ false }}">
+<div data-adm="tariferr" role="status" style="padding:8px 12px;border-radius:10px;background:var(--h-danger-bg, var(--h-bg-sunk));border:1px solid var(--h-danger);color:var(--h-danger);font-size:13px;line-height:1.45">{{ tarifErr }}</div>
+</sc-if>
 <div style="display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ frm.items }}" as="it" hint-placeholder-count="2">
 <!-- Rândul se înfășoară, altfel pe telefon numele produsului dispare. Cantitatea
@@ -831,15 +871,43 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      pe ele două e partea care oprește strângerea; fără el, `width` singur nu
      apără nimic într-un rând flexibil. Tiparul e cel de la rețete, din
      `Produse.dc.html`. Pe ecran lat totul rămâne pe un rând, ca până acum. -->
+<div style="display:flex;flex-direction:column;gap:4px">
 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
 <input class="h-input h-numeric" value="{{ it.q }}" onChange="{{ it.onQ }}" inputMode="decimal" style="width:84px;height:46px;font-size:16px;text-align:right">
-<input class="h-input" value="{{ it.n }}" onChange="{{ it.onN }}" placeholder="Nume produs" style="flex:1 1 180px;min-width:150px;height:46px;font-size:16px">
+<input class="h-input" value="{{ it.n }}" onChange="{{ it.onN }}" placeholder="Nume produs" autoComplete="off" style="flex:1 1 180px;min-width:150px;height:46px;font-size:16px">
 <select class="h-input" value="{{ it.variant }}" onChange="{{ it.onV }}" style="width:170px;flex:none;height:46px;font-size:14px">
 <sc-for list="{{ variantOpts }}" as="v" hint-placeholder-count="2">
 <option value="{{ v.v }}">{{ v.l }}</option>
 </sc-for>
 </select>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ it.onDel }}" title="Scoate produsul din comandă" aria-label="Scoate produsul din comandă" style="flex:none;height:46px;width:46px;padding:0;font-size:18px;color:var(--h-danger)">×</button>
+</div>
+<!-- Lista scurtă de sub caseta de nume: „cr" scoate croissantele, cu gramaj
+     și cu prețul variantei alese pe rândul ăsta. Se închide singură de îndată
+     ce numele scris nimerește un produs, deci nu-i trebuie o închidere pe
+     „ai plecat din casetă" — care s-ar fi bătut cap în cap cu apăsarea pe
+     chiar rândul din listă. Rândurile au 44px, ca orice țintă de deget. -->
+<sc-if value="{{ it.sugAre }}" hint-placeholder-val="{{ false }}">
+<div data-adm="sugestii" role="listbox" style="display:flex;flex-direction:column;gap:2px;padding:4px;border-radius:12px;border:1px solid var(--h-line);background:var(--h-bg-surface);box-shadow:0 6px 18px rgba(0,0,0,.08)">
+<sc-for list="{{ it.sug }}" as="p" hint-placeholder-count="3">
+<button type="button" role="option" onClick="{{ p.onPick }}" style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:var(--h-fg);font-family:var(--h-font-body);font-size:14px;text-align:left;cursor:pointer">
+<span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</span>
+<span class="h-numeric" style="flex:none;font-size:12px;color:var(--h-fg-muted)">{{ p.detaliu }}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<!-- Numele care nu duce nicăieri. Refuzul de la salvare rămâne pe loc, ca
+     plasă; ăsta e doar semnul dat la timp, cu locul unde se scriu
+     preparatele din afara catalogului. -->
+<sc-if value="{{ it.faraProdus }}" hint-placeholder-val="{{ false }}">
+<span data-adm="faracatalog" style="font-size:12px;line-height:1.45;color:var(--h-fg-subtle)">Nu e niciun produs cu numele ăsta în catalog. Scrie-l în „Notă pentru laborator".</span>
+</sc-if>
+<!-- Banii rândului. Acolo unde s-a onorat un preț promis, se văd amândouă
+     feliile: „10 × 3,49 + 1 × 5,49 = 40,39 RON". -->
+<sc-if value="{{ it.bani }}" hint-placeholder-val="{{ false }}">
+<span data-adm="banirand" class="h-numeric" style="align-self:flex-end;font-size:12px;color:{{ it.baniCol }}">{{ it.bani }}</span>
+</sc-if>
 </div>
 </sc-for>
 </div>
@@ -899,7 +967,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 16px;font-size:14px">{{ formErr }}</div>
 </sc-if>
 
-<div data-adm="modalfoot" style="display:flex;align-items:center;gap:10px;margin-top:4px">
+<!-- Rândul de butoane se lipește de marginea de jos a formularului. Comanda
+     cu zece poziții se scria până jos, iar „Salvează" rămânea cu un ecran mai
+     departe; acum stă tot la capăt, dar nu mai fuge. Regulile de telefon de la
+     rândurile 93-96 rămân valabile: `order` mută Salvarea și Anularea în fața
+     fraților lor, iar `.gp-bara` din shared/gp-bara.css dă numai chenarul,
+     umbra și pragul de deget. -->
+<div data-adm="modalfoot" class="gp-bara gp-bara--foaie" style="display:flex;align-items:center;gap:10px;margin-top:4px">
 <sc-if value="{{ canDelete }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onDeleteFromForm }}" style="height:48px;font-size:15px;color:var(--h-danger)">Șterge comanda</button>
 </sc-if>
@@ -916,6 +990,43 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </div>
 </div>
+
+<!-- CATALOGUL ÎNTREG, pentru cine nu știe numele produsului pe de rost.
+     Stă înăuntrul formularului, deci moare odată cu el; și stă peste el, la
+     44 — deasupra formularului (40), sub fișa comenzii (45) și sub caseta de
+     încuviințare (50), care n-au voie să fie acoperite de nimic.
+     Nu se închide la fiecare alegere: de cele mai multe ori se iau mai
+     multe produse deodată, iar o fereastră care se închide singură ar
+     trebui redeschisă la fiecare rând. -->
+<sc-if value="{{ catalogDeschis }}" hint-placeholder-val="{{ false }}">
+<div data-adm="modalwrap" style="position:fixed;inset:0;background:rgba(28,18,11,.55);display:flex;align-items:center;justify-content:center;padding:28px;z-index:44;animation:pf-fade .2s var(--h-ease-out)" onClick="{{ onInchideCatalog }}">
+<div data-adm="modalcard" class="h-card" style="width:560px;max-height:86vh;overflow-y:auto;padding:22px 24px;border-radius:22px;display:flex;flex-direction:column;gap:16px;animation:pf-pop .28s var(--h-ease-spring)" onClick="{{ stop }}">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<h2 class="h-h3" style="margin:0;font-size:20px">Din catalog</h2>
+<span style="font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ catalogNota }}</span>
+</div>
+<button data-adm="modalclose" type="button" aria-label="Închide catalogul" class="h-btn h-btn--ghost" onClick="{{ onInchideCatalog }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
+</div>
+<sc-if value="{{ catalogGol }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:14px;padding:12px 16px;font-size:14px;line-height:1.45">Catalogul nu a venit de la server. Scrie numele produsului în caseta lui — salvarea spune dacă nimerește.</div>
+</sc-if>
+<sc-for list="{{ catalogGrupe }}" as="g" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:6px">
+<h3 style="margin:0;font-family:var(--h-font-body);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ g.name }}</h3>
+<sc-for list="{{ g.prod }}" as="p" hint-placeholder-count="3">
+<button data-adm="catalogprod" type="button" onClick="{{ p.onPick }}" style="display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:1px solid var(--h-line);border-radius:12px;background:var(--h-bg-surface);color:var(--h-fg);font-family:var(--h-font-body);font-size:14px;text-align:left;cursor:pointer">
+<span style="flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</span>
+<span class="h-numeric" style="flex:none;font-size:12px;color:var(--h-fg-muted)">{{ p.detaliu }}</span>
+<span aria-hidden="true" style="flex:none;width:22px;text-align:center;font-size:18px;font-weight:700;color:var(--h-accent)">+</span>
+</button>
+</sc-for>
+</div>
+</sc-for>
+<button data-adm="catalogata" type="button" class="h-btn h-btn--primary" onClick="{{ onInchideCatalog }}" style="align-self:flex-end;height:48px;font-size:15px;min-width:150px">Gata</button>
+</div>
+</div>
+</sc-if>
 </sc-if>
 
 <sc-if value="{{ peekOpen }}" hint-placeholder-val="{{ false }}">
@@ -1003,8 +1114,20 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <script type="text/x-dc" data-dc-script>
 // Catalogul, ca să putem trimite serverului productId când personalul
 // introduce o comandă direct din panou.
+//
+// Grupele vin în aceeași cerere și se păstrează pentru fereastra „Din
+// catalog", unde produsele stau așezate pe grupe, ca pe site.
+//
+// Aducerea se ține minte ca făgăduință, nu doar ca rezultat: fereastra se
+// deschide DUPĂ ea, deci nu poate ieși goală pe o legătură înceată. Pe o
+// pagină abia deschisă ar fi arătat o listă pustie, iar omul n-ar fi avut
+// de unde ști că nu catalogul e gol, ci cererea încă pe drum.
 let CATALOG = [];
-gp.get('/products').then((r) => { CATALOG = r.products || []; }).catch(() => {});
+let GRUPE = [];
+const CATALOG_ADUS = gp.get('/products').then((r) => {
+  CATALOG = r.products || [];
+  GRUPE = r.categories || [];
+}).catch(() => {});
 /**
  * Numele scris în panou, potrivit cu un produs din catalog.
  *
@@ -1047,6 +1170,164 @@ const fmtDay = (iso) => {
 };
 
 const bani = (n) => (Math.round((Number(n) || 0) * 100) / 100).toFixed(2).replace(".", ",") + " RON";
+
+/** Aceeași cifră, fără „RON": pentru locurile unde moneda se scrie o dată. */
+const cifra = (n) => (Math.round((Number(n) || 0) * 100) / 100).toFixed(2).replace(".", ",");
+
+/**
+ * Produsele din catalog care se potrivesc cu ce s-a tastat.
+ *
+ * Potrivirea la SALVARE rămâne exactă (`productIdByName`) — acolo o greșeală
+ * costă marfă făcută degeaba. Aici, cât omul încă scrie, potrivirea e pe
+ * subșir: „cr" scoate croissantele. Normalizarea e aceeași, `fara()`, ca
+ * „strudel" să găsească „Ștrudel".
+ *
+ * Se întorc cel mult opt: o listă mai lungă acoperă formularul de dedesubt pe
+ * un ecran de telefon, iar cine tastează două litere caută oricum mai departe.
+ * Cele care încep cu ce s-a scris vin primele — „cr" trebuie să scoată
+ * „Croissant" înaintea lui „Tartă cu cremă".
+ */
+/**
+ * Produsul care se mai poate PUNE pe o comandă.
+ *
+ * Unul scos din catalog se poate ține pe o comandă veche, dar nu se mai
+ * poate adăuga: serverul îl refuză cu `bad_product` (api/lib/orders.php ·
+ * `price_items`). Azi cernerea nu prinde nimic — panoul cere `/products`
+ * fără `all`, deci primește numai catalogul viu —, dar rămâne scrisă: ziua
+ * în care panoul ar cere și produsele scoase, amândouă listele ar oferi
+ * lucruri pe care serverul nu le primește.
+ */
+const inCatalog = (p) => p.active !== false;
+
+const sugestiiDinCatalog = (text, variant) => {
+  const n = fara(text);
+  if (n.length < 2) return [];
+  const v = variant === "congelat" ? "congelat" : "copt";
+  const potrivite = CATALOG.filter((p) => inCatalog(p) && fara(p.name).indexOf(n) >= 0);
+  // Cine începe cu textul scris e mai aproape de ce caută omul decât cine îl
+  // poartă pe la mijloc.
+  potrivite.sort((a, b) => {
+    const ia = fara(a.name).indexOf(n) === 0 ? 0 : 1;
+    const ib = fara(b.name).indexOf(n) === 0 ? 0 : 1;
+    return ia !== ib ? ia - ib : String(a.name).localeCompare(String(b.name), "ro");
+  });
+  return potrivite.slice(0, 8).map((p) => ({
+    id: p.id, name: p.name,
+    grams: p.grams ? String(p.grams) + " g" : "",
+    // Prețul variantei alese pe rândul acela: același număr pe care îl va
+    // folosi serverul. Lipsa lui se spune pe față — un produs fără preț pentru
+    // varianta aia oprește salvarea, deci e bine să se vadă de aici.
+    pret: (v === "congelat" ? p.priceFrozen : p.priceBaked) == null
+      ? "fără preț"
+      : bani(v === "congelat" ? p.priceFrozen : p.priceBaked)
+  }));
+};
+
+/**
+ * Pozițiile formularului care au ce căuta la tarifare.
+ *
+ * Produsul se alege după ACEEAȘI regulă ca la salvare (vezi `save()`):
+ * `productId` adus odată cu comanda ține cât timp numele n-a fost atins;
+ * de îndată ce s-a scris altceva, se caută din nou după nume. Dacă cele
+ * două reguli s-ar depărta, cifra de pe ecran ar fi a altei comenzi decât
+ * cea care pleacă la apăsarea butonului.
+ *
+ * Rândurile fără produs sau fără cantitate cad: un formular pe jumătate
+ * scris trebuie să-și arate totalul de până acum, nu un refuz.
+ */
+/**
+ * Cantitatea scrisă în casetă, citită după regula SALVĂRII.
+ *
+ * Zecimalele sunt permise fiindcă baza le păstrează (DECIMAL(10,2)) și o
+ * comandă veche trebuie să se poată salva mai departe; ce nu e număr, sau nu
+ * e pozitiv, sau trece de zece mii, se refuză cu `null`.
+ *
+ * Stă aici, nu în clasă, fiindcă o citesc două drumuri: salvarea (prin
+ * `citesteCantitate`) și tarifarea (prin `liniiDeTarifat`). Cu `gp.qty()` la
+ * al doilea drum, „20000" sau „3,456" ar fi plecat la tarifare, ar fi primit
+ * un total, și abia butonul de salvare ar fi spus că nu se poate — adică
+ * exact cifra care minte, pe care lucrarea asta o scoate din panou.
+ */
+const cantitateBuna = (v) => {
+  const t = String(v == null ? "" : v).trim().replace(",", ".");
+  if (!/^\d+(?:\.\d{1,2})?$/.test(t)) return null;
+  const n = parseFloat(t);
+  if (!(n > 0) || n > 10000) return null;
+  return n;
+};
+
+const liniiDeTarifat = (items) => (items || [])
+  // `rand` e rândul din formular de pe care a plecat linia. Nu pleacă la
+  // server (se scoate în `cerTarifAcum`): e pentru drumul de întoarcere, ca
+  // sumele să se așeze înapoi exact pe rândurile care le-au cerut.
+  .map((i, rand) => ({
+    rand,
+    productId: (i.productId && fara(i.n) === fara(i.n0 || "")) ? i.productId : productIdByName(i.n),
+    qty: cantitateBuna(i.q),
+    // Aceeași strângere a variantei ca la salvare: orice altceva decât
+    // „congelat" e „copt". Scris `i.variant || "copt"`, un cuvânt străin ar
+    // fi plecat la tarifare și s-ar fi izbit de `bad_variant`, în vreme ce
+    // salvarea l-ar fi trecut liniștită drept „copt".
+    variant: i.variant === "congelat" ? "congelat" : "copt"
+  }))
+  .filter((i) => i.productId && i.qty !== null && i.qty > 0);
+
+/**
+ * Sumele venite de la server, împărțite înapoi pe rândurile formularului.
+ *
+ * DE CE E NEVOIE DE ÎMPĂRȚIRE. Serverul nu întoarce totdeauna câte o poziție
+ * pentru fiecare rând scris: `price_items()` desface un rând în două când o
+ * parte din bucăți au preț promis și restul prețul de azi (zece ștrudele la
+ * 3,49 plus al unsprezecelea la 5,49), și lipește la loc două rânduri vecine
+ * care au același produs, aceeași variantă și același preț.
+ *
+ * DE CE MERGE ÎN ORDINE. Serverul tarifează pozițiile în ordinea în care i le
+ * trimitem și adaugă feliile tot în ordine, iar singura lipire e între felii
+ * VECINE. Deci consumând din coadă, pe rând, cât cere fiecare rând, fiecare
+ * rând primește exact feliile lui — și când două rânduri au fost lipite într-o
+ * singură poziție, și când unul a fost desfăcut în două.
+ *
+ * DACĂ SOCOTEALA NU SE ÎNCHIDE, nu se arată nimic. O cifră lângă un rând
+ * despre care nu se știe sigur că e a lui e mai rea decât un rând gol: omul
+ * ar citi-o, ar crede-o, și ar spune-o clientului.
+ */
+const impartePeRanduri = (items, tarif) => {
+  const gol = (items || []).map(() => null);
+  if (!tarif || !tarif.items || !tarif.items.length) return gol;
+  const coada = tarif.items.map((p) => ({ qty: Number(p.qty) || 0, unit: Number(p.unitPrice) || 0 }));
+  const iesire = gol.slice();
+  // Se merge pe CHIAR liniile care au plecat la server, în ordinea lor, nu
+  // pe rândurile brute ale formularului. Citite a doua oară, cu altă regulă,
+  // rândurile s-ar fi putut cerne altfel — iar un singur rând în plus sau în
+  // minus mută toate feliile de după el pe rândul vecin.
+  const cerute = liniiDeTarifat(items);
+  let k = 0;
+  for (let c = 0; c < cerute.length; c++) {
+    let cer = cerute[c].qty;
+    const felii = [];
+    // Pragul e de a suta parte dintr-o bucată: cantitățile sunt zecimale
+    // (o jumătate de tavă), iar scăderile repetate lasă firimituri.
+    while (cer > 0.005 && k < coada.length) {
+      const ia = Math.min(cer, coada[k].qty);
+      if (ia > 0.005) felii.push({ qty: ia, unit: coada[k].unit });
+      coada[k].qty -= ia;
+      cer -= ia;
+      if (coada[k].qty <= 0.005) k++;
+    }
+    if (cer > 0.005) return gol;
+    iesire[cerute[c].rand] = { felii, suma: felii.reduce((a, x) => a + x.unit * x.qty, 0) };
+  }
+  return iesire;
+};
+
+/** Rândul de bani de sub o poziție: „10 × 3,49 = 34,90 RON". */
+const baniiRandului = (felie) => {
+  if (!felie || !felie.felii.length) return "";
+  const bucati = felie.felii
+    .map((x) => gp.qtyLabel(x.qty) + " × " + cifra(x.unit))
+    .join(" + ");
+  return bucati + " = " + bani(felie.suma);
+};
 
 /**
  * Eticheta „Adus de …", pentru comanda sau cererea dată.
@@ -1288,7 +1569,21 @@ class Component extends DCLogic {
     auth: readAuth(), offline: "",
     // Cât ține cererea de salvare. Fără ea, butonul rămâne aprins între
     // apăsare și răspuns, iar al doilea clic pleacă tot spre server.
-    saving: false
+    saving: false,
+    // BANII FORMULARULUI, socotiți de server (`POST /orders/quote`).
+    //
+    // `tarif` e răspunsul întreg — aceleași cifre pe care le-ar scrie
+    // salvarea —, `tarifStare` spune cât de proaspăt e (vezi `renderVals`),
+    // iar `tarifErr` poartă refuzul serverului (preț lipsă, cantitate peste
+    // cap) ca să se vadă cât se scrie comanda, nu abia la salvare.
+    //
+    // Pornesc goale, nu lipsă: un server rămas în urmă n-are ruta, iar
+    // atunci formularul rămâne exact cum e azi — fără bani pe ecran.
+    tarif: null, tarifStare: "gol", tarifErr: "",
+    // Rândul de poziție sub care stă deschisă lista de sugestii; -1 = niciunul.
+    sugRand: -1,
+    // Fereastra cu tot catalogul, deschisă din antetul pozițiilor.
+    catalogDeschis: false
   };
 
   componentDidMount() {
@@ -1299,7 +1594,7 @@ class Component extends DCLogic {
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
       const st = this.state || {};
-      if (st.menu || st.form || st.peek || st.confirm) this.setState({ menu: false, form: null, peek: null, confirm: null, formErr: "" });
+      if (st.menu || st.form || st.peek || st.confirm) this.setState({ menu: false, form: null, peek: null, confirm: null, formErr: "", catalogDeschis: false });
     };
     window.addEventListener("popstate", this.__gpBack);
     if (!window.__gpNav) {
@@ -1557,6 +1852,93 @@ class Component extends DCLogic {
     return this.pullLista(1, patch);
   }
 
+  /**
+   * Cât costă ce e în formular acum — cerut de la server, nu socotit aici.
+   *
+   * O înmulțire făcută în pagină ar minți în patru feluri, toate scrise în
+   * `price_items()`: prețurile deja promise clientului, felierea unei poziții
+   * în două rânduri cu două prețuri, produsele scoase între timp din catalog,
+   * și varianta luată de pe fiecare poziție. Omul ar vedea o sumă pe ecran și
+   * ar salva alta.
+   *
+   * Se cere cu întârziere scurtă, nu la fiecare tastă: cine scrie „100" trece
+   * prin „1" și „10", iar fiecare din ele ar fi plecat ca o cerere. Ceasul se
+   * ia de la capăt la fiecare atingere, deci pleacă una singură, la sfârșit.
+   */
+  cerTarif(schimbaSuma) {
+    clearTimeout(this.tTarif);
+    // Ce se vede se stinge pe loc, dar numai când s-a atins ceva care chiar
+    // schimbă suma: cantitatea, varianta, un rând scos. O sumă rămasă
+    // aprinsă lângă o cantitate tocmai schimbată e mai rea decât niciuna —
+    // arată adevărată și nu mai e.
+    //
+    // Numele tastat literă cu literă NU stinge nimic: „croi" nu e alt produs
+    // decât „croiss", e același drum spre el. Dacă ar stinge, cifra ar
+    // clipi tot timpul cât scrie omul, iar clipitul ar ajunge să nu mai
+    // însemne nimic tocmai când chiar înseamnă ceva.
+    if (schimbaSuma && this.state.tarifStare === "bun") this.setState({ tarifStare: "vechi" });
+    this.tTarif = setTimeout(() => this.cerTarifAcum(), 300);
+  }
+
+  /** Chiar cererea, după ce s-a liniștit tastatura. */
+  cerTarifAcum() {
+    const f = this.state.form;
+    if (!f) return;
+    const linii = liniiDeTarifat(f.items);
+    if (!linii.length) {
+      this.__tarifAmprenta = "";
+      this.setState({ tarif: null, tarifStare: "gol", tarifErr: "" });
+      return;
+    }
+
+    // Dacă nimic din ce contează la preț nu s-a schimbat, nu se cere nimic.
+    // Aici ajung toate tastările din caseta de nume care n-au schimbat
+    // produsul — adică aproape toate.
+    const amprenta = JSON.stringify(linii) + "|" + (f.id || "");
+    if (amprenta === this.__tarifAmprenta && this.state.tarif) {
+      if (this.state.tarifStare !== "bun") this.setState({ tarifStare: "bun" });
+      return;
+    }
+    this.__tarifAmprenta = amprenta;
+    this.setState({ tarifStare: "vechi" });
+
+    // Numărul cererii: răspunsurile nu se întorc neapărat în ordinea în care
+    // au plecat, iar unul întârziat ar fi scris peste cifra cea nouă suma
+    // dinaintea ei. Se primește numai ultimul cerut.
+    const nr = (this.__tarifNr = (this.__tarifNr || 0) + 1);
+    // Comanda care există se tarifează pe cealaltă rută: acolo se onorează
+    // prețurile promise pe bucățile ei. Ruta comenzii noi le-ar fi arătat pe
+    // toate la prețul de azi.
+    const drum = f.id ? "/orders/" + f.id + "/quote" : "/orders/quote";
+    this.setState({ tarifStare: this.state.tarif ? "vechi" : "asteapta" });
+
+    // `rand` rămâne acasă: serverul primește doar cele trei câmpuri pe care
+    // le știe, aceleași pe care i le trimite și salvarea.
+    const trimise = linii.map((i) => ({ productId: i.productId, qty: i.qty, variant: i.variant }));
+    gp.post(drum, { items: trimise, variant: f.variant || "copt" })
+      .then((r) => {
+        if (nr !== this.__tarifNr) return;
+        this.setState({ tarif: r, tarifStare: "bun", tarifErr: "" });
+      })
+      .catch((e) => {
+        if (nr !== this.__tarifNr) return;
+        // UN SERVER RĂMAS ÎN URMĂ NU ARE VOIE SĂ OPREASCĂ NIMIC. Fără ruta de
+        // tarifare, formularul merge mai departe exact ca până acum: nu arată
+        // bani, dar salvează la fel. De aceea nu se scrie nimic în `formErr`,
+        // care ar fi stat în drumul butonului „Salvează".
+        //
+        // Refuzurile adevărate — produs fără preț, cantitate strâmbă — se
+        // arată, fiindcă tocmai ele sunt câștigul: omul află cât încă scrie
+        // comanda, nu după ce a scris-o toată.
+        const stiut = e && (e.code === "missing_price" || e.code === "bad_product"
+          || e.code === "bad_qty" || e.code === "total_too_big");
+        this.setState({
+          tarif: null,
+          tarifStare: "fara",
+          tarifErr: stiut ? (e.message || "") : ""
+        });
+      });
+  }
   /** O comandă după număr, căutată și în pagina de tabel, și în fereastră. */
   comandaDupaId(id) {
     const S = this.state;
@@ -1643,16 +2025,13 @@ class Component extends DCLogic {
    * de un croasant, cu alertă verde de reușită. Serverul chiar refuză
    * cantitățile ≤ 0 (api/lib/orders.php, `bad_qty`), dar nu apuca să le vadă.
    */
-  citesteCantitate(v) {
-    const t = String(v == null ? "" : v).trim().replace(",", ".");
-    // Zecimalele sunt permise fiindcă baza le păstrează (DECIMAL(10,2)) și o
-    // comandă veche trebuie să se poată salva mai departe; ce nu e număr,
-    // sau nu e pozitiv, se refuză.
-    if (!/^\d+(?:\.\d{1,2})?$/.test(t)) return null;
-    const n = parseFloat(t);
-    if (!(n > 0) || n > 10000) return null;
-    return n;
-  }
+  // Rămâne ca metodă fiindcă o cheamă `save()` și `antetDin()` cu `this.`,
+  // dar regula însăși stă afară (`cantitateBuna`): o citește și tarifarea,
+  // care nu e metodă. Două citiri ale aceleiași casete ar fi una prea mult —
+  // `gp.qty("20000")` întoarce 20000, `cantitateBuna("20000")` întoarce
+  // `null`, iar ecranul ar fi arătat totalul unei comenzi care nu se poate
+  // salva.
+  citesteCantitate(v) { return cantitateBuna(v); }
 
   /**
    * Comanda venită de la server, în exact forma trimisă înapoi la salvare.
@@ -1987,6 +2366,11 @@ class Component extends DCLogic {
     // la salvare se compară cu ea, ca să nu plece înapoi câmpuri neatinse.
     const openForm = (o) => (this.__saving = false, this.__formBase = o ? this.antetDin(o) : null, set({
       formErr: "", saving: false,
+      // Banii comenzii de dinainte nu au voie să clipească pe comanda asta:
+      // `cerTarif()` de la capătul rândului cere cifrele noi, dar abia peste
+      // o clipă, iar până atunci ecranul ar fi arătat totalul altcuiva.
+      tarif: null, tarifStare: "asteapta", tarifErr: "",
+      sugRand: -1, catalogDeschis: false,
       form: o
         ? {
             id: o.id, ref: o.ref, cust: o.cust, chan: o.chan, day: o.date, slot: o.slot,
@@ -2040,14 +2424,26 @@ class Component extends DCLogic {
             phone: "", addr: "", zone: defaultZone(), variant: "copt",
             items: [{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]
           }
-    }));
+    }), this.cerTarif());
 
     const setF = (patch) => set(s => ({ form: Object.assign({}, s.form, patch), formErr: "" }));
-    const setItem = (i, patch) => set(s => {
-      const items = s.form.items.slice();
-      items[i] = Object.assign({}, items[i], patch);
-      return { form: Object.assign({}, s.form, { items }), formErr: "" };
-    });
+    const setItem = (i, patch) => {
+      set(s => {
+        const items = s.form.items.slice();
+        items[i] = Object.assign({}, items[i], patch);
+        return { form: Object.assign({}, s.form, { items }), formErr: "" };
+      });
+      // Prețul se recere numai când s-a schimbat ceva care îl schimbă.
+      // Numele tastat literă cu literă nu-l schimbă — `productId` da —, iar
+      // o cerere la fiecare tastă ar fi stins cifra de pe ecran degeaba, tot
+      // timpul cât scrie omul.
+      const schimbaSuma = ("q" in patch) || ("variant" in patch) || ("productId" in patch);
+      // Și numele poate schimba prețul — alege alt produs —, deci se recere
+      // și la el; dar fără să stingă cifra, fiindcă de cele mai multe ori
+      // tastarea nu schimbă încă niciun produs. Amprenta din `cerTarifAcum()`
+      // taie cererile care n-ar aduce nimic nou.
+      if (schimbaSuma || ("n" in patch)) this.cerTarif(schimbaSuma);
+    };
 
     /**
      * Salvează formularul — tot formularul.
@@ -2618,11 +3014,24 @@ class Component extends DCLogic {
     // fără să fie scrisă de două ori: același obiect `r` hrănește și tabelul
     // de pe monitor, și cardul de pe telefon. `adusClsTap` e aceeași etichetă
     // pe țintă de deget — cardul apare numai sub 1000px, unde se apasă.
-    const rows = filtered.map(o => { const ad = adusDe(o.commission, null); return Object.assign({
+    const rows = filtered.map(o => { const ad = adusDe(o.commission, null); const rg = gp.rangClient(o.rangClient); return Object.assign({
       ref: o.ref, cust: o.cust, chan: o.chan, chanCls: CH(o.chan),
       when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : ""),
       itemsLine: o.items.map(i => i.q + " " + i.n).join(" · "),
       qty: gp.qtyLabel(this.qty(o)), status: o.status, statusCls: ST[o.status] || "h-badge",
+      // Suma comenzii, așa cum a socotit-o serverul la salvare. Sosea de
+      // mult în răspuns (`gp-api.js` · `total`) și se arunca aici: registrul
+      // număra bucăți, nu bani. Gol când lipsește — comenzile scrise înainte
+      // ca panoul să ceară produse din catalog n-au preț pe poziții, iar un
+      // „0,00 RON" pus în locul necunoscutului ar fi o minciună liniștită.
+      bani: o.total == null ? "" : bani(o.total),
+      // INSIGNA DE CLIENT, din rangul socotit de server. Cele patru câmpuri
+      // vin dintr-un singur loc (`gp.rangClient`), fiindcă același semn se
+      // desenează și în rândul de calculator, și în cardul de telefon, și
+      // în laborator. `fel` gol înseamnă „nu se știe" — atunci nu se
+      // desenează nimic, ceea ce e altceva decât a desena greșit.
+      rang: rg.fel, rangSemn: rg.semn, rangEt: rg.et,
+      rangCls: rg.cls, rangTitlu: rg.titlu,
       note: o.note || "",
       urgent: !!o.urgent,
       rowBg: o.urgent ? "var(--h-jam-soft)" : "transparent",
@@ -2797,6 +3206,118 @@ class Component extends DCLogic {
     const f = S.form || { ref: "", cust: "", chan: "Ridicare", day: TODAY, slot: "08:00", status: "În așteptare", note: "", items: [] };
     const comF = f.commission || null;
     const aduseF = adusDe(comF, null);
+
+    // ------------------------------------------------ banii formularului --
+    //
+    // `S.tarif` e răspunsul rutei de tarifare, adică exact ce s-ar scrie la
+    // salvare. `S.tarifStare` spune dacă cifra de pe ecran mai e adevărată:
+    //   bun      — proaspătă, se scrie cu cerneală întreagă
+    //   vechi    — s-a schimbat ceva și răspunsul e pe drum: se stinge
+    //   asteapta — prima cerere, încă n-avem nimic de arătat
+    //   gol      — formular fără nicio poziție întreagă
+    //   fara     — serverul n-a putut răspunde
+    //
+    // „fara" NU e o pană: un server rămas în urmă n-are ruta de tarifare, iar
+    // atunci formularul trebuie să meargă exact ca până acum — fără bani pe
+    // ecran, dar salvând la fel. De aceea nimic de aici nu atinge `formErr`.
+    const tarifStare = S.tarifStare || "gol";
+    const feliileFormularului = impartePeRanduri(f.items || [], S.tarif);
+    const areBani = !!S.tarif && (tarifStare === "bun" || tarifStare === "vechi");
+    const baniStinsi = tarifStare !== "bun";
+    // Cerneala stinsă e chiar cea cu care pagina scrie de mult lucrurile
+    // nesigure; nu se inventează o culoare nouă pentru asta.
+    const baniCol = baniStinsi ? "var(--h-fg-subtle)" : "var(--h-fg-muted)";
+    // TOTALUL PARȚIAL SE SPUNE PE FAȚĂ. Un rând început și nelegat de niciun
+    // produs — un nume pe jumătate scris, unul care nu e în catalog, o
+    // cantitate strâmbă — nu pleacă la tarifare, deci nu intră în total.
+    // Suma de pe ecran ar fi atunci adevărată, dar despre altă comandă decât
+    // cea din fața omului. Salvarea oricum se va opri la rândul acela; până
+    // atunci, cifra spune singură că nu-i întreagă.
+    const randuriScrise = (f.items || []).filter((i) => String(i.n || "").trim()).length;
+    const tarifPartial = liniiDeTarifat(f.items || []).length < randuriScrise;
+
+    // ------------------------------------------------ sugestiile la scris --
+    //
+    // Se desenează numai sub rândul pe care se scrie ACUM (`S.sugRand`), și
+    // numai cât numele scris nu nimerește încă un produs: de îndată ce
+    // nimerește, lista n-ar mai avea ce să spună și ar sta degeaba peste
+    // formular. Așa se închide singură, fără să mai fie nevoie de o închidere
+    // pe „ai plecat din casetă" — care s-ar fi bătut cap în cap cu apăsarea pe
+    // chiar rândul din listă.
+    const sugRand = S.sugRand == null ? -1 : S.sugRand;
+    const randulSug = sugRand >= 0 ? (f.items || [])[sugRand] : null;
+    const sugGasit = randulSug ? productIdByName(randulSug.n) : null;
+    const sugLista = (randulSug && sugGasit === null)
+      ? sugestiiDinCatalog(randulSug.n, randulSug.variant)
+      : [];
+    // Numele scris care nu e nici în catalog, nici pe drumul vreunui produs:
+    // se spune pe loc, nu abia la salvare, după ce s-a scris toată comanda.
+    // Îndemnul duce spre „Notă pentru laborator", fiindcă acolo e locul
+    // preparatelor din afara catalogului.
+    const sugFaraNimic = !!randulSug && sugGasit === null
+      && fara(randulSug.n).length >= 2 && sugLista.length === 0;
+
+    // ------------------------------------------ fereastra „Din catalog" --
+    //
+    // Lista întreagă, așezată pe grupe, pentru cine nu știe numele pe de
+    // rost. Prețul scris e al variantei FORMULARULUI — chiar varianta pe
+    // care o primește rândul nou —, deci cifra de pe listă e cea care se va
+    // socoti, nu una de altă coloană.
+    const vForm = f.variant === "congelat" ? "congelat" : "copt";
+    const pretulLui = (p) => {
+      const v = vForm === "congelat" ? p.priceFrozen : p.priceBaked;
+      return v == null ? "fără preț" : bani(v);
+    };
+    // Aceeași cernere ca la sugestii: ce nu se mai poate pune pe o comandă
+    // nu se arată în nicio listă din care se alege.
+    const deAles = CATALOG.filter(inCatalog);
+    const slugurile = GRUPE.map((g) => g.slug);
+    // „Fără grupă" se adaugă numai dacă are cine să stea în ea: un produs a
+    // cărui grupă e stinsă sau ștearsă n-are voie să dispară din listă —
+    // altfel s-ar putea comanda la telefon, dar nu din panou.
+    // Alegerea din fereastră iese pe ACELAȘI drum ca alegerea din sugestii:
+    // scrie `n`, `n0` și `productId`. `n0` lângă `n` e ce face regula de la
+    // salvare să recunoască un produs ales pe față, nu unul ghicit din nume.
+    const alegeDinCatalog = (p) => {
+      set((s) => {
+        const vechi = s.form.items || [];
+        // Produsul deja pus, cu aceeași variantă: i se adaugă o bucată. Așa
+        // socotește și serverul — `price_items()` lipește feliile alăturate
+        // cu același produs și aceeași variantă —, deci lista nu se umple cu
+        // rânduri care oricum s-ar strânge la loc pe bonul clientului.
+        const acelasi = vechi.findIndex((i) => i.productId === p.id
+          && (i.variant || "copt") === vForm && fara(i.n) === fara(p.name));
+        if (acelasi >= 0) {
+          const puse = vechi.slice();
+          puse[acelasi] = Object.assign({}, puse[acelasi], { q: String(gp.qty(puse[acelasi].q) + 1) });
+          return { form: Object.assign({}, s.form, { items: puse }), formErr: "" };
+        }
+        // Rândul gol cu care se deschide formularul se umple, nu se sare:
+        // altfel fiecare comandă nouă ar începe cu un rând fără nimic în el,
+        // pe care l-ar fi șters omul cu mâna.
+        const gol = vechi.findIndex((i) => !String(i.n || "").trim() && !i.productId);
+        const rand = { q: "1", n: p.name, n0: p.name, productId: p.id, variant: vForm };
+        const puse = gol >= 0 ? vechi.map((i, j) => (j === gol ? rand : i)) : vechi.concat([rand]);
+        return { form: Object.assign({}, s.form, { items: puse }), formErr: "" };
+      });
+      set({ sugRand: -1 });
+      this.cerTarif(true);
+    };
+
+    const catalogGrupe = !S.catalogDeschis ? [] : GRUPE
+      .map((g) => ({ name: g.name, slug: g.slug }))
+      .concat([{ name: "Fără grupă", slug: null }])
+      .map((g) => ({
+        name: g.name,
+        prod: deAles
+          .filter((p) => (g.slug === null ? slugurile.indexOf(p.category) < 0 : p.category === g.slug))
+          .map((p) => ({
+            name: p.name,
+            detaliu: (p.grams ? p.grams + " g · " : "") + pretulLui(p),
+            onPick: () => alegeDinCatalog(p)
+          }))
+      }))
+      .filter((g) => g.prod.length > 0);
 
     const reqs = (S.requests || []).slice().sort((a, b) => b.at - a.at);
     // Ceasul PATISERIEI, nu al aparatului. `gp.laPatiserie` întoarce aceeași
@@ -3005,8 +3526,14 @@ class Component extends DCLogic {
       reqRows: reqShown.map(r => {
         const st = r.status || "nou";
         const ad = adusDe(null, r.referral);
+        const rg = gp.rangClient(r.rangClient);
         return {
           id: r.id,
+          // Aceeași insignă ca pe comenzi. Aici „fără cont" e regula, nu
+          // excepția — dar tocmai de aceea se vede pe loc care cerere a venit
+          // de la un om care ARE cont, și care nu.
+          rang: rg.fel, rangSemn: rg.semn, rangEt: rg.et,
+          rangCls: rg.cls, rangTitlu: rg.titlu,
           // Cardul citea câmpurile din prototip (`company`, `person`, `segment`,
           // `wantWhen`), care nu mai există: cererea vine acum de la server, cu
           // altă formă. Rezultatul era că FIECARE cerere apărea drept „Vizitator
@@ -3342,6 +3869,25 @@ class Component extends DCLogic {
       // fi întors amândouă aceeași valoare și bifa ar fi rămas pe loc.
       onRefLeaga: () => set(s => ({ form: Object.assign({}, s.form, { refLeaga: !s.form.refLeaga }), formErr: "" })),
 
+      // Refuzul serverului la tarifare — preț lipsă, cantitate peste cap —,
+      // spus cât se scrie comanda. Gol când nu e niciun refuz ȘI când
+      // serverul n-are ruta: acolo nu e nimic de spus omului, formularul
+      // merge mai departe exact ca până acum.
+      tarifErr: S.tarifErr || "",
+      // Fereastra se deschide după ce catalogul a sosit, ca să nu se arate
+      // goală pe o legătură înceată. Sugestiile se închid odată cu ea: două
+      // liste de produse deodată, una peste alta, n-ar ști care ascultă.
+      onDeschideCatalog: () => { CATALOG_ADUS.then(() => set({ catalogDeschis: true, sugRand: -1 })); },
+      onInchideCatalog: () => set({ catalogDeschis: false }),
+      catalogDeschis: !!S.catalogDeschis,
+      catalogNota: vForm === "congelat"
+        ? "Prețurile de mai jos sunt cele pentru marfă congelată. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată."
+        : "Prețurile de mai jos sunt cele pentru marfă gata de servit. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată.",
+      catalogGrupe: catalogGrupe,
+      // Catalogul care n-a venit nu se arată ca un catalog gol: omul trebuie
+      // să afle că lipsa e a cererii, nu a produselor.
+      catalogGol: !!S.catalogDeschis && catalogGrupe.length === 0,
+
       frm: {
         ref: f.ref, cust: f.cust, phone: f.phone || "", day: f.day, slot: f.slot,
         status: f.status, note: f.note, refCode: f.refCode || "",
@@ -3350,12 +3896,47 @@ class Component extends DCLogic {
         // depozit. Gol înseamnă „fără zonă", ceea ce serverul acceptă.
         addr: f.addr || "", zone: f.zone || "",
         qtyTotal: gp.qtyLabel(f.items.reduce((a, i) => a + gp.qty(i.q), 0)),
+        // Totalul comenzii, de la server. Gol înseamnă „încă nu se știe" sau
+        // „serverul n-are ruta" — și în amândouă cazurile nu se scrie nicio
+        // cifră, fiindcă o cifră socotită aici ar minți la prima onorare de
+        // preț promis.
+        total: areBani ? bani(S.tarif.total) + (tarifPartial ? " · parțial" : "") : "",
+        totalCol: baniCol,
+        totalTitlu: tarifPartial
+          ? "Suma rândurilor legate de un produs din catalog. Rândurile încă "
+            + "nescrise nu intră în ea, iar salvarea se va opri la ele."
+          : "Totalul socotit de server, cu prețurile promise onorate. Aceeași "
+            + "sumă se scrie la salvare.",
         items: f.items.map((it, i) => ({
           q: it.q, n: it.n, variant: it.variant || "copt",
+          // Banii rândului: „10 × 3,49 = 34,90 RON", iar acolo unde s-au
+          // onorat prețuri promise, amândouă feliile: „10 × 3,49 + 1 × 5,49".
+          bani: areBani ? baniiRandului(feliileFormularului[i]) : "",
+          baniCol: baniCol,
+          // Lista scurtă de sub caseta de nume, numai pe rândul care se scrie.
+          sugAre: sugRand === i && sugLista.length > 0,
+          sug: sugRand === i ? sugLista.map((p) => ({
+            name: p.name,
+            // Gramajul și prețul, ca omul să aleagă fără să deschidă catalogul.
+            detaliu: (p.grams ? p.grams + " · " : "") + p.pret,
+            onPick: () => {
+              // `n0` se pune odată cu `n`: așa regula de la salvare („numele
+              // n-a fost atins de când a venit produsul") recunoaște că
+              // produsul ăsta a fost ales pe față, nu ghicit după nume.
+              setItem(i, { n: p.name, n0: p.name, productId: p.id });
+              set({ sugRand: -1 });
+            }
+          })) : [],
+          // Numele scris care nu duce nicăieri. Refuzul de la salvare rămâne
+          // pe loc, ca plasă; ăsta e doar semnul dat la timp.
+          faraProdus: sugRand === i && sugFaraNimic,
           onQ: (e) => setItem(i, { q: e.target.value }),
-          onN: (e) => setItem(i, { n: e.target.value }),
+          onN: (e) => { setItem(i, { n: e.target.value }); set({ sugRand: i }); },
           onV: (e) => setItem(i, { variant: e.target.value }),
-          onDel: () => set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.filter((_, j) => j !== i) }) }))
+          onDel: () => {
+            set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.filter((_, j) => j !== i) }), sugRand: -1 }));
+            this.cerTarif(true);
+          }
         }))
       },
       // Fiecare poziție își alege varianta: aceeași comandă poate cuprinde și
@@ -3419,13 +4000,18 @@ class Component extends DCLogic {
         .concat((ZONES_OF().indexOf(f.zone) >= 0 || !f.zone ? ZONES_OF() : [f.zone].concat(ZONES_OF()))
           .map(z => ({ v: z, l: z }))),
       isDelivery: CU_MASINA(f.chan),
-      onAddItem: () => set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.concat([{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]) }) })),
+      onAddItem: () => {
+        set(s => ({ form: Object.assign({}, s.form, { items: s.form.items.concat([{ q: "1", n: "", variant: "copt", productId: null, n0: "" }]) }) }));
+        // Rândul nou e gol, deci nu schimbă suma — dar schimbă numerotarea
+        // feliilor, iar sugestiile deschise pe alt rând n-au ce căuta pe el.
+        set({ sugRand: -1 });
+      },
       // Apăsarea nu duce mai departe evenimentul: `save()` primește un singur
       // argument, iar el spune că salvarea vine dintr-o casetă deja
       // încuviințată. Legat de-a dreptul la buton, ar fi primit evenimentul de
       // clic — care e adevărat — și salvarea ar fi sărit peste casetă.
       onSave: () => save(),
-      onCancel: () => { this.__saving = false; set({ form: null, formErr: "", saving: false }); },
+      onCancel: () => { this.__saving = false; set({ form: null, formErr: "", saving: false, catalogDeschis: false }); },
       // AMÂNDOUĂ BUTOANELE SUBSOLULUI TREC PRIN CASETĂ CA O SALVARE.
       //
       // Chemau caseta fără al treilea argument, deci ea nu știa de unde vine

@@ -154,6 +154,10 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 <span style="font-size:13px;line-height:1.5;color:rgba(255,255,255,.55)">Îți ține adresa și telefonul, ca să nu le mai scrii la fiecare comandă, și îți arată tot ce ai comandat până acum.</span>
 </div>
 
+<sc-if value="{{ cerNota }}" hint-placeholder-val="{{ false }}">
+<div style="padding:12px 14px;border-radius:14px;background:rgba(154,199,164,.14);border:1px solid rgba(154,199,164,.45);color:#F6EDE1;font-size:13px;line-height:1.55">{{ cerNota }}</div>
+</sc-if>
+
 <sc-if value="{{ regInvite }}" hint-placeholder-val="{{ false }}">
 <div style="padding:12px 14px;border-radius:14px;background:rgba(242,166,59,.14);border:1px solid rgba(242,166,59,.42);color:#F6EDE1;font-size:13px;line-height:1.55">{{ regInvite }}</div>
 </sc-if>
@@ -201,6 +205,14 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 <button type="button" onClick="{{ onRegister }}" disabled="{{ gbusy }}" style="min-height:54px;border:0;border-radius:16px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:17px;font-weight:700;cursor:pointer">{{ regLabel }}</button>
 </sc-if>
 <button type="button" onClick="{{ onRegClose }}" style="min-height:46px;border:0;border-radius:12px;background:transparent;color:rgba(255,255,255,.55);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">← Am deja cont</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ cerRupt }}" hint-placeholder-val="{{ false }}">
+<div style="padding:22px 20px;border-radius:22px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;flex-direction:column;gap:14px">
+<span style="font-size:16px;font-weight:600;color:var(--h-cream-100)">Contul e gata</span>
+<div style="padding:12px 14px;border-radius:14px;background:rgba(242,166,59,.14);border:1px solid rgba(242,166,59,.42);color:#F6EDE1;font-size:13px;line-height:1.55">{{ cerRuptText }}</div>
+<button type="button" onClick="{{ onCerRuptOk }}" style="min-height:54px;border:0;border-radius:16px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:17px;font-weight:700;cursor:pointer">Mergi la contul meu</button>
 </div>
 </sc-if>
 
@@ -390,7 +402,13 @@ class Component extends DCLogic {
     // stare, ștergerea casetei ar fi stins și bannerul, iar scrierea altui cod
     // l-ar fi făcut să mintă: ar fi spus „ai ajuns aici prin recomandarea"
     // unui om pe al cărui link nimeni n-a intrat.
-    gref2: "" };
+    gref2: "",
+    // Comanda trimisă de pe magazin, adusă încoace cu jetonul din „?cerere=”.
+    // `cerJeton` e jetonul curățat din adresă și pleacă odată cu înscrierea;
+    // `cerNota` e vorba verde din capul formularului; `cerRupt` și `cerCine`
+    // sunt cartonașul de după o înscriere în care legătura n-a mai prins —
+    // contul e făcut, dar comanda a rămas nelegată, iar omul trebuie să afle.
+    cerJeton: "", cerNota: "", cerRupt: false, cerCine: null };
 
   componentDidMount() {
     /**
@@ -475,6 +493,74 @@ class Component extends DCLogic {
           .catch((e) => this.setState({ fdErr: e.message || "Linkul nu mai e bun." }));
       }
     } catch (e) { /* adresă neobișnuită — mergem mai departe fără token */ }
+
+    // Comanda trimisă de pe magazin, de către un om fără cont, cu butonul
+    // „Trimite cererea și fă-ți cont”. Cererea e DEJA la patiserie: aici nu se
+    // mai trimite nimic, se face doar contul care o ia în primire.
+    //
+    // În adresă vine NUMAI jetonul — 64 de cifre care nu spun nimic despre
+    // nimeni. Numele, telefonul și e-mailul se cer de la server, cu el, fiindcă
+    // datele personale n-au ce căuta într-o bară de adrese: rămân în istoric,
+    // pleacă mai departe ca „referrer” și se citesc peste umăr. Jetonul însuși
+    // se șterge din adresă pe loc, ca „?parola=” și „?fondator=” de mai sus și
+    // din aceeași pricină — mai ales că legăturile din pagină cară `location.search`
+    // mai departe pe fiecare panou deschis de aici (v. ascultătorul de clic).
+    //
+    // „?cont=1” e drumul pe care pleacă același buton când serverul n-a dat
+    // niciun jeton (migrare nerulată, o piedică la scrierea lui): formularul de
+    // cont se deschide oricum, doar gol. Butonul a promis un cont.
+    try {
+      const q = new URLSearchParams(location.search);
+      const jet = q.get("cerere") || "";
+      const areJeton = /^[0-9a-f]{64}$/.test(jet);
+      if (areJeton || q.get("cont") === "1") {
+        // Formularul de cont nou, deschis din prima desenare. `view: "client"`
+        // fiindcă omul vine din magazin: el e cumpărător, nu personal.
+        this.setState({ reg: true, view: "client" });
+        const curat = location.pathname + location.search
+          .replace(/[?&]cerere=[0-9a-f]{64}/, "")
+          .replace(/[?&]cont=1/, "")
+          .replace(/^&/, "?");
+        history.replaceState(null, "", curat);
+      }
+      if (areJeton) {
+        this.setState({
+          cerJeton: jet,
+          cerNota: "Comanda ta a plecat deja la patiserie — nu mai trebuie trimisă o dată. Fă-ți contul ca s-o vezi în „Comanda mea” și ca data viitoare să nu-ți mai scrii datele."
+        });
+        gp.cerereJeton(jet)
+          .then((d) => {
+            const c = (d && d.cerere) || {};
+            const pune = {};
+            // Numai casetele care chiar au ce primi. Un câmp gol scris peste
+            // ce a apucat omul să tasteze i-ar șterge munca: răspunsul vine de
+            // la server, deci poate ajunge și după prima literă scrisă.
+            //
+            // Numele vine din caseta „Companie” a comenzii, care e
+            // obligatorie în formularul magazinului — deci nu e niciodată
+            // numele de umplutură pe care pagina îl pune când nu are nimic.
+            if (c.customerName) pune.gn = String(c.customerName);
+            if (c.phone) pune.gph = String(c.phone);
+            if (c.email) pune.gm = String(c.email);
+            // Adresa și zona vin goale pentru un vizitator — formularul
+            // magazinului nici nu i le cere; caseta de adresă se arată numai
+            // clientului cu cont și omului din echipă. Rândurile rămân
+            // fiindcă aceeași cerere poate veni și cu ele scrise.
+            if (c.address) pune.gad = String(c.address);
+            if (c.zone) pune.gzone = String(c.zone);
+            // Codul de recomandare e cel care A PLECAT CU COMANDA, deci e
+            // adevărul; dar nu se pune peste unul scris de mână între timp.
+            if (c.ref && !this.state.gref2) pune.gref2 = String(c.ref);
+            if (Object.keys(pune).length) this.setState(pune);
+          })
+          .catch(() => this.setState({
+            // Un singur mesaj pentru toate eșecurile, ca pe server: expirat,
+            // folosit, necunoscut — toate arată la fel, altfel pagina ar
+            // deveni un oracol care spune dacă un jeton a existat vreodată.
+            cerNota: "Comanda ta a plecat deja la patiserie și rămâne acolo. Legătura cu ea a expirat, deci casetele de mai jos au rămas goale — scrie-le tu, iar noi îți legăm comanda de cont la telefon."
+          }));
+      }
+    } catch (e) { /* adresă neobișnuită — mergem mai departe fără comandă */ }
 
     // Panourile nu-și mai țin fiecare formularul lui de autentificare — el e
     // aici, într-un singur loc. Ca omul să nu-și piardă locul, panoul lasă în
@@ -749,7 +835,7 @@ class Component extends DCLogic {
       this.__reg = true;
       this.setState({ gbusy: true, gerr: "" });
       try {
-        const r = await gp.register({
+        const date = {
           username: u, name: nume, password: p,
           email: m, phone: String(S.gph).trim(),
           // Adresa și zona firmei. Amândouă pot fi goale — cine își face cont
@@ -762,14 +848,44 @@ class Component extends DCLogic {
           // sau venit din link. Unul greșit nu oprește nimic: serverul face
           // contul oricum, doar fără recomandant.
           ref: String(S.gref2 || "").trim()
-        });
+        };
+        // Jetonul comenzii trimise de pe magazin, dacă omul a venit încoace pe
+        // butonul „Trimite cererea și fă-ți cont”. Serverul îl stinge o
+        // singură dată, în aceeași tranzacție cu facerea contului.
+        //
+        // Se pune în corp NUMAI când chiar există, nu și gol. Serverul
+        // răspunde cu `cerere: { legat }` ori de câte ori câmpul e trimis
+        // (`isset`), iar un jeton gol ar fi ieșit de acolo cu `legat: false` —
+        // adică fiecare om care-și face cont de-a dreptul, fără să fi comandat
+        // nimic, ar fi primit cartonașul care-i spune că s-a rupt legătura cu
+        // o comandă pe care n-a trimis-o niciodată.
+        if (S.cerJeton) date.jeton = S.cerJeton;
+        const r = await gp.register(date);
         this.__reg = false;
         // Codul s-a consumat: dacă omul se întoarce pe pagină, nu mai are ce
         // recomandare să ducă mai departe.
         gp.forgetReferral();
         // Sesiunea e deja deschisă de server, deci mergem exact pe drumul pe
         // care ar fi mers după o autentificare obișnuită.
-        this.setState({ auth: r.user, reg: false, gbusy: false, gpw: "", gref: "", gref2: "" });
+        // Contul e făcut și sesiunea e deschisă — dar comanda n-a mai putut fi
+        // legată de el: jetonul expirase, fusese folosit, sau baza n-are încă
+        // migrarea. Nu e o eroare de înscriere și n-are voie să arate ca una;
+        // însă nici nu se poate trece sub tăcere, fiindcă omul ar intra în
+        // „Comanda mea”, n-ar găsi nimic și ar crede că i s-a pierdut comanda.
+        // Se oprește aici, cu un cartonaș care spune ce e, și merge mai departe
+        // când apasă el.
+        //
+        // `S.cerJeton &&` e paza dinspre serverul rămas în urmă: unul care nu
+        // știe de jetoane nu întoarce deloc `cerere`, deci `legat === false`
+        // nu se poate aprinde din senin.
+        if (S.cerJeton && r && r.cerere && r.cerere.legat === false) {
+          return this.setState({ cerRupt: true, cerCine: r.user, reg: false,
+            gbusy: false, gpw: "", gref: "", gref2: "", cerJeton: "", cerNota: "" });
+        }
+        // Jetonul se stinge din stare odată cu codul de recomandare de
+        // deasupra, și din aceeași pricină: dacă omul se întoarce pe pagină,
+        // n-are ce comandă să mai lege — serverul l-a stins deja și el.
+        this.setState({ auth: r.user, reg: false, gbusy: false, gpw: "", gref: "", gref2: "", cerJeton: "", cerNota: "" });
         goAfterLogin(r.user);
       } catch (e) {
         this.__reg = false;
@@ -971,7 +1087,7 @@ class Component extends DCLogic {
       // Pe clienti.goldenpastry.ro nu are ce căuta intrarea pentru personal:
       // acolo rămâne doar formularul de client, fără selector. GP_SITE e pus de
       // scriptul de publicare, în fișierul fiecărui subdomeniu.
-      showModeToggle: window.GP_SITE !== "clienti" && !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && !S.reg,
+      showModeToggle: window.GP_SITE !== "clienti" && !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && !S.reg && !S.cerRupt,
       isClientMode: !eEchipa,
       isStaffMode: eEchipa,
       tabClient: eEchipa ? tabAltul : tabAles,
@@ -1068,12 +1184,16 @@ class Component extends DCLogic {
       // corect (cookie-ul e valabil, serverul îl verifică la fiecare cerere),
       // dar din afară arăta exact ca o parolă sărită. Acum pagina spune cine
       // ești, unde intri și cum ieși.
-      notSignedIn: !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && !S.reg,
+      // `!S.cerRupt` pe amândouă, și aici și la formularul de cont: după o
+      // înscriere reușită în care jetonul n-a mai prins, contul EXISTĂ și
+      // sesiunea e deschisă — un formular de autentificare pus sub cartonașul
+      // care spune „Contul e gata” ar fi o contrazicere pe același ecran.
+      notSignedIn: !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && !S.reg && !S.cerRupt,
 
       /* --- cont nou --- */
       // Aceleași condiții ca la formularul de intrare, plus steagul propriu:
       // cele două cartonașe se înlocuiesc, nu se suprapun.
-      showRegister: !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && S.reg,
+      showRegister: !S.auth && !S.rtoken && !S.rdone && !S.fdTok && !S.fdGata && !S.forgot && S.reg && !S.cerRupt,
       regOpen: true,
       // Butonul spune de la început dacă omul a venit pe un link de recomandare.
       regCta: S.gref ? "Fă-ți cont — ai venit pe o invitație" : "Fă-ți cont",
@@ -1083,6 +1203,17 @@ class Component extends DCLogic {
       regInvite: S.gref
         ? "Ai ajuns aici prin recomandarea cuiva. Codul „" + S.gref + "” e trecut mai jos — îl poți schimba sau șterge."
         : "",
+      // Vorba despre comanda deja trimisă. Verde, nu galbenă ca bannerul de
+      // recomandare de deasupra: sunt două lucruri deosebite și pot sta pe
+      // ecran deodată — cine a intrat în magazin pe linkul cuiva și a comandat
+      // le are pe amândouă.
+      cerNota: S.cerNota,
+      // Contul s-a făcut, dar comanda n-a mai putut fi legată de el. Se spune
+      // pe față, fiindcă altfel omul intră în „Comanda mea”, n-o găsește și
+      // crede că i s-a pierdut comanda.
+      cerRupt: S.cerRupt,
+      cerRuptText: "Contul tău e gata și ești deja intrat în el. Comanda trimisă adineauri a rămas însă nelegată de cont — legătura ei a expirat — deci n-o vei găsi în „Comanda mea”. Comanda e la noi și se pregătește; sun-ne dacă vrei s-o vezi și în cont, ți-o legăm noi.",
+      onCerRuptOk: () => goAfterLogin(S.cerCine),
       gref2: S.gref2,
       refHint: S.gref
         ? "Vine de pe linkul pe care ai intrat. Rămâne pe contul tău la înscriere."

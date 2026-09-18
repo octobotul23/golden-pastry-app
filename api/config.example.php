@@ -95,6 +95,13 @@ return [
     // scris, fiindcă pagina nu e la rădăcina serverului.
     'reset_url'            => '',
 
+    // --- contul făcut imediat după comandă -------------------------------
+    // Cererea trimisă de pe site pleacă cu un jeton de o folosință, ca omul
+    // care își face contul în minutul următor să-și vadă comanda pe loc, fără
+    // să aștepte să fie garantat de casă. Cât ține jetonul: destul cât să
+    // scrii un nume și o parolă, nu cât să te răzgândești mâine.
+    'claim_minutes'        => 30,
+
     // --- conturi făcute de pe site --------------------------------------
     // /auth/register e singura rută care scrie în `users` fără sesiune, deci
     // fără prag un script poate umple tabelul peste noapte. Zece conturi pe oră

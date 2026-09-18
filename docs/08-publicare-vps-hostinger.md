@@ -226,8 +226,8 @@ Migrările `003`–`006` n-au ce face la o instalare nouă: schema le conține
 deja. `007` **nu** — măsurat în `001_schema.sql`: `referral_code`,
 `referred_by` și `referred_at` nu apar nicăieri în el, iar `users.role` e tot
 `ENUM('admin','angajat','client')`, fără `manager` și `agent_vanzari`. Așa că
-cele care contează sunt **`007`–`018`** — schema nu le are (cea mai nouă e
-`018_adresa_si_program.sql`). Bucla de mai jos le rulează pe toate, de la `003` în sus, și e bine așa:
+cele care contează sunt **`007`–`020`** — schema nu le are (cea mai nouă e
+`020_rang_client.sql`). Bucla de mai jos le rulează pe toate, de la `003` în sus, și e bine așa:
 fiecare se uită întâi în `information_schema` și, dacă are deja ce caută, nu
 face nimic. Nu le alege pe sprânceană — o listă scrisă cu mâna e exact felul în
 care se uită o migrare.
@@ -239,10 +239,10 @@ for f in /root/deploy/sql/[0-9][0-9][0-9]_*.sql; do
 done
 ```
 
-Verifici: **21 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
+Verifici: **22 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
 puține, numele care lipsește îți spune care migrare n-a intrat:
 `referral_commissions` e din `008`, `lab_shifts` din `014`, `lab_messages`
-din `015`. Fără primul, pagina „Recomandări" răspunde „Eroare internă"; fără
+din `015`, `request_claims` din `019`. Fără primul, pagina „Recomandări" răspunde „Eroare internă"; fără
 celelalte două, „Pontaj" și tabla de anunțuri din Panoul Laborator răspund
 lămurit că lipsește migrarea — vezi `lab_supported()` și
 `lab_board_supported()`. (`instaleaza-vps.sh` face bucla asta singur.)
@@ -275,6 +275,20 @@ Ilfovului" la coada listei, **fără coordonate**, iar formularul de cont nou di
 „Conturi" trebuie să aibă caseta „Zona". Fără ea, zona de pe cont răspunde 503
 cu un mesaj care spune limpede ce lipsește, iar restul aplicației merge mai
 departe.
+
+`019_jeton_cerere.sql` **se vede** în numărul de tabele: ea aduce
+`request_claims`, al douăzeci și doilea. Acolo stau amprentele jetoanelor cu
+care se leagă cererea trimisă de pe site de contul făcut imediat după ea. Fără
+tabel, butonul „Trimite cererea și fă-ți cont” trimite cererea la fel — nu se
+pierde nicio comandă —, dar contul nou n-o vede în „Comanda mea” până n-o
+leagă cineva cu mâna, din formularul comenzii.
+
+`020_rang_client.sql` nu se vede nici în tabele, nici în coloane, nici în
+setări: ea pune un **index** pe `orders`, pentru insigna care spune dacă omul e
+la prima comandă ori a mai comandat. E singura migrare din toate care **se
+poate uita fără pagubă**: fără ea insignele ies la fel, doar socoteala lor
+merge mai încet. Dacă vrei totuși s-o vezi:
+`SHOW INDEX FROM orders WHERE Key_name = 'ix_orders_client_rang'`.
 
 ---
 

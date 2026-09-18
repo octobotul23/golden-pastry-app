@@ -364,6 +364,158 @@ function route_orders_get(string $id): void
     json_out(['order' => $out]);
 }
 
+/* ------------------------------------------------------------- tarifare -- */
+
+/**
+ * Răspunsul unei tarifări: exact ce s-ar scrie, cu numele sub care panoul redă
+ * deja o comandă salvată (`attach_items()`).
+ *
+ * Scris o singură dată, fiindcă îl dau două rute. Două copii ar fi ajuns să
+ * numească altfel aceleași cifre, iar pagina ar fi arătat bani pe un drum și
+ * nimic pe celălalt.
+ */
+function tarifare_raspuns(array $priced, float $total): array
+{
+    $pozitii = [];
+    foreach ($priced as $p) {
+        $pozitii[] = [
+            'productId' => (int) $p['id'],
+            'name'      => $p['name'],
+            'qty'       => (float) $p['qty'],
+            'unitPrice' => (float) $p['unit'],
+            // Suma rândului se socotește aici, nu în pagină: altfel ar ieși din
+            // înmulțirea a două zecimale rotunjite altfel decât le rotunjește
+            // casa, iar rândurile n-ar mai da totalul de dedesubt.
+            'lineTotal' => round((float) $p['unit'] * (float) $p['qty'], 2),
+            'variant'   => $p['variant'],
+            // Prețul de azi, lângă cel pus pe hârtie. De obicei e aceeași
+            // cifră; când diferă, tocmai diferența e ce trebuie să se vadă —
+            // s-a onorat un preț promis mai demult.
+            'listPrice' => $p['catalog'] === null ? null : (float) $p['catalog'],
+        ];
+    }
+
+    return [
+        'items' => $pozitii,
+        // Rotunjit ca la INSERT (`round($total, 2)`), altfel cifra de pe ecran
+        // n-ar fi chiar cea care ajunge în `orders.total`.
+        'total' => round($total, 2),
+        // Varianta comenzii, dedusă din poziții, ca la scriere: formularul
+        // poate cuprinde și congelate, și coapte, iar atunci comanda e „mixt".
+        'variant' => order_variant_of($priced),
+        // Rândul care s-ar scrie în jurnal dacă s-a onorat ceva sub catalog.
+        // Gol când nu s-a onorat nimic, adică aproape întotdeauna.
+        'note' => price_honored_note($priced),
+    ];
+}
+
+/**
+ * POST /orders/quote — cât ar costa o comandă NOUĂ, fără să scrie nimic.
+ *
+ * Formularul din panou arăta bucăți, nu bani, deși serverul socotește prețul
+ * la fiecare salvare. O înmulțire făcută în pagină ar minți în patru feluri,
+ * toate scrise în `price_items()`: prețurile deja promise, felierea unei
+ * poziții în două rânduri cu două prețuri, produsele scoase între timp din
+ * catalog și varianta luată de pe fiecare poziție (care poate da „mixt").
+ * Omul ar vedea o sumă pe ecran și ar salva alta — paguba scrisă în
+ * `docs/04-catalogul-de-produse.md`.
+ *
+ * Ruta cheamă ACELEAȘI funcții ca scrierea, cu aceiași parametri, și întoarce
+ * ce s-ar scrie, rotunjit cum rotunjește INSERT-ul. Fiind fără scriere, nu
+ * atinge depozitul, nu rezervă nimic, nu scrie în jurnal și nu trimite niciun
+ * anunț.
+ *
+ * POARTA E A SCRIERII, nu una nouă spre prețuri: `require_staff()`, ca
+ * `route_orders_create()`. Catalogul cu prețuri e oricum public
+ * (`GET /products`); ce adaugă ruta e socoteala casei, iar aceea se cuvine
+ * numai personalului.
+ *
+ * NU PRIMEȘTE NICIO IDENTITATE. Corpul e `{ items, variant? }` — fără client,
+ * fără cont, fără cod de recomandare. Ce nu primește, nu poate scurge: nu e
+ * nevoie nici de `client_by_name_in_scope()`, nici de marginea agentului.
+ *
+ * Refuzurile rămân ale serverului (`bad_product`, `missing_price`,
+ * `total_too_big`): omul află de prețul lipsă în timp ce scrie comanda, nu
+ * după ce a scris-o toată și apasă „Salvează".
+ *
+ * De ce POST, deși nu scrie: coșul e o listă, iar o listă de poziții într-un
+ * query string ajunge în jurnalele serverului și în `Referer`. Prețul e că
+ * ruta intră prin `check_csrf()` — și e bine că intră.
+ */
+function route_orders_quote(): void
+{
+    require_staff();
+    $b = body();
+
+    // Comanda care EXISTĂ se tarifează pe cealaltă rută, fiindcă acolo poarta e
+    // alta. Fără refuzul ăsta, panoul care editează o comandă ar putea nimeri
+    // aici din greșeală și ar arăta prețul de azi peste bucățile deja promise —
+    // adică exact minciuna pentru care s-a scris ruta.
+    if (isset($b['orderId']) && $b['orderId'] !== '' && $b['orderId'] !== null) {
+        fail(
+            'Tarifarea unei comenzi care există se cere la POST /orders/{id}/quote.',
+            422,
+            'bad_route'
+        );
+    }
+
+    $items = cos_de_tarifat($b['items'] ?? null);
+
+    // Varianta decide prețul și se poate da pe fiecare poziție, ca la creare.
+    [$priced, $total] = price_items($items, require_variant($b['variant'] ?? null));
+
+    json_out(tarifare_raspuns($priced, $total));
+}
+
+/**
+ * POST /orders/#/quote — cât ar costa RESCRIEREA pozițiilor unei comenzi.
+ *
+ * Geamăna de deasupra, pentru comanda care există deja. Repetă, cuvânt cu
+ * cuvânt, apelul din `route_orders_update()`: aceleași prețuri onorate
+ * (`honored_prices()`) și aceeași îngăduință pentru produsele scoase între
+ * timp din catalog. Deci răspunsul e exact ce ar scrie `PATCH /orders/#`.
+ *
+ * DE CE E RUTĂ DEOSEBITĂ, ȘI NU UN `orderId` ÎN CORPUL CELEI DE SUS. Poarta e
+ * alta: aici trece numai cine are voie să scrie pe comanda aceea. Cu un singur
+ * drum, poarta s-ar fi ales dintr-un câmp din corp — tiparul din care ies
+ * scurgerile. Din contul comun al tabletelor, o tarifare cu `orderId` ar fi
+ * spus, după 404 față de 403, care numere de comandă există în casă, și ar fi
+ * arătat prețurile negociate ale oricui.
+ *
+ * Poarta e chiar a lui `PATCH` — aceeași funcție, `poarta_scrierii_comenzii()`,
+ * nu o copie a ei.
+ */
+function route_orders_quote_edit(string $id): void
+{
+    $u = require_staff();
+    $b = body();
+
+    // `items` nu e în ORDER_FIELDS_STAFF, deci din contul de tură cererea se
+    // oprește aici, cu același 403 și același mesaj ca la salvare.
+    poarta_scrierii_comenzii($u, $b, $id);
+
+    $o = one('SELECT variant FROM orders WHERE id = ?', [(int) $id]);
+    if (!$o) {
+        fail('Comanda nu există.', 404, 'not_found');
+    }
+
+    $items    = cos_de_tarifat($b['items'] ?? null);
+    $implicit = require_variant($b['variant'] ?? null, valid_variant($o['variant']));
+    $vechile  = all(
+        'SELECT product_id, variant, qty, done_qty, unit_price FROM order_items WHERE order_id = ? ORDER BY id',
+        [(int) $id]
+    );
+
+    [$priced, $total] = price_items(
+        $items,
+        $implicit,
+        honored_prices($vechile),
+        array_filter(array_column($vechile, 'product_id'), static fn($x) => $x !== null)
+    );
+
+    json_out(tarifare_raspuns($priced, $total));
+}
+
 /* --------------------------------------------------------------- creare -- */
 
 /**
@@ -450,13 +602,7 @@ function route_orders_create(): void
         }
     }
 
-    $items = $b['items'] ?? [];
-    if (!is_array($items) || !$items) {
-        fail('Comanda trebuie să conțină cel puțin un produs.', 422, 'empty_order');
-    }
-    if (count($items) > 200) {
-        fail('Prea multe poziții în comandă.', 422, 'too_many_items');
-    }
+    $items = cos_de_tarifat($b['items'] ?? null);
 
     // `gmdate()` dă ziua UTC. Între 00:00 și 03:00 ora României — tocmai orele
     // în care laboratorul lucrează pentru livrarea de dimineață — o comandă
@@ -686,6 +832,48 @@ const ORDER_FIELDS_STAFF = ['status'];
 const ORDER_FIELDS_PRECONDITION = ['from'];
 
 /**
+ * Poarta de dinaintea oricărei citiri, pentru scrisul pe o comandă anume.
+ *
+ * O ține `PATCH /orders/#` și o ține la fel `POST /orders/#/quote`, care
+ * arată ce ar scrie acel PATCH. Scrisă de două ori, s-ar fi despărțit la
+ * prima schimbare, iar copia rămasă în urmă ar fi devenit ușa largă:
+ * tarifarea spune, pe lângă preț, și dacă o comandă există.
+ *
+ * Nu citește nimic din bază — tocmai ăsta e rostul ei. Vezi lămuririle
+ * dinăuntru, mutate aici întregi din `route_orders_update()`.
+ */
+function poarta_scrierii_comenzii(array $u, array $b, string $id): void
+{
+    // Poarta stă înaintea oricărei citiri din bază: din contul comun al
+    // tabletelor nu trebuie să se poată afla nici măcar dacă o comandă există,
+    // încercând să i se schimbe clientul.
+    //
+    // Cererea se oprește întreagă, nu se curăță de câmpurile interzise: un
+    // `customerName` strecurat lângă `status` ar fi trecut altfel neobservat
+    // odată cu apăsarea firească a brutarului, exact pe drumul pe care nimeni
+    // nu se uită.
+    if (!e_admin($u)) {
+        $oprite = array_values(array_diff(array_keys($b), ORDER_FIELDS_STAFF, ORDER_FIELDS_PRECONDITION));
+        if ($oprite) {
+            fail(
+                'Din contul de personal se poate schimba doar starea comenzii, adică etapa ei. '
+                    . 'Câmpuri refuzate: ' . implode(', ', $oprite) . '. '
+                    . 'Restul se corectează din „Administrare Comenzi", cu un cont de administrator.',
+                403,
+                'staff_field_denied'
+            );
+        }
+    }
+
+    // Marginea agentului stă tot înaintea citirii, din același motiv ca poarta
+    // de mai sus: altfel un agent ar afla, după 404 față de 403, care numere de
+    // comandă există în casă. Vezi referral_agent_scope().
+    if ($u['role'] === 'agent_vanzari' && !referral_agent_sees_order((int) $u['id'], (int) $id)) {
+        fail('Comanda nu e a unui cumpărător adus de tine.', 403, 'forbidden');
+    }
+}
+
+/**
  * PATCH /orders/{id} — orice câmp al comenzii, inclusiv pozițiile.
  *
  * Ruta accepta doar status, note, zi, interval, zonă și mod de onorare. Formularul
@@ -719,33 +907,9 @@ function route_orders_update(string $id): void
     $u = require_staff();
     $b = body();
 
-    // Poarta stă înaintea oricărei citiri din bază: din contul comun al
-    // tabletelor nu trebuie să se poată afla nici măcar dacă o comandă există,
-    // încercând să i se schimbe clientul.
-    //
-    // Cererea se oprește întreagă, nu se curăță de câmpurile interzise: un
-    // `customerName` strecurat lângă `status` ar fi trecut altfel neobservat
-    // odată cu apăsarea firească a brutarului, exact pe drumul pe care nimeni
-    // nu se uită.
-    if (!e_admin($u)) {
-        $oprite = array_values(array_diff(array_keys($b), ORDER_FIELDS_STAFF, ORDER_FIELDS_PRECONDITION));
-        if ($oprite) {
-            fail(
-                'Din contul de personal se poate schimba doar starea comenzii, adică etapa ei. '
-                    . 'Câmpuri refuzate: ' . implode(', ', $oprite) . '. '
-                    . 'Restul se corectează din „Administrare Comenzi", cu un cont de administrator.',
-                403,
-                'staff_field_denied'
-            );
-        }
-    }
-
-    // Marginea agentului stă tot înaintea citirii, din același motiv ca poarta
-    // de mai sus: altfel un agent ar afla, după 404 față de 403, care numere de
-    // comandă există în casă. Vezi referral_agent_scope().
-    if ($u['role'] === 'agent_vanzari' && !referral_agent_sees_order((int) $u['id'], (int) $id)) {
-        fail('Comanda nu e a unui cumpărător adus de tine.', 403, 'forbidden');
-    }
+    // Poarta stă mai sus, scrisă o singură dată: o ține și tarifarea care
+    // arată ce ar scrie PATCH-ul ăsta (`POST /orders/#/quote`).
+    poarta_scrierii_comenzii($u, $b, $id);
 
     $o = one('SELECT * FROM orders WHERE id = ?', [(int) $id]);
     if (!$o) {
@@ -1039,13 +1203,7 @@ function route_orders_update(string $id): void
     // întreagă.
     $facut  = [];
     if (array_key_exists('items', $b)) {
-        $items = $b['items'];
-        if (!is_array($items) || !$items) {
-            fail('Comanda trebuie să conțină cel puțin un produs.', 422, 'empty_order');
-        }
-        if (count($items) > 200) {
-            fail('Prea multe poziții în comandă.', 422, 'too_many_items');
-        }
+        $items = cos_de_tarifat($b['items']);
         $implicit = require_variant($b['variant'] ?? null, valid_variant($o['variant']));
         $vechile  = all(
             'SELECT product_id, variant, qty, done_qty, unit_price FROM order_items WHERE order_id = ? ORDER BY id',
