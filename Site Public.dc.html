@@ -58,11 +58,70 @@
   </style>
 </helmet>
 
-<div style="background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body);min-height:100vh;overflow-x:hidden">
+<!-- `overflow-x:clip`, NU `hidden`. Diferența dintre ele e tot defectul
+       antetului lipicios, deschis în docs/06.
 
-  <div style="position:sticky;top:0;z-index:100;padding:1rem clamp(1.25rem,4vw,3rem) 0;background:linear-gradient(180deg,var(--h-bg-page) 55%,transparent)">
-    <header class="h-header" style="max-width:1740px;margin-inline:auto;position:relative">
-      <a class="h-logo" href="{{ hrefHome }}" data-spa="1" onClick="{{ goHome }}" style="gap:0.6rem">
+       CSS-ul nu îngăduie `overflow` tăiat pe o axă și liber pe cealaltă: pus
+       `hidden` pe orizontală, `overflow-y` se face singur `auto` — măsurat,
+       calculatul ieșea `hidden/auto`. Iar un `auto` face din învelișul ăsta un
+       BUTOI DE DERULARE, și orice `position:sticky` dinăuntru se lipește de
+       butoi, nu de fereastră. De-aia antetul, scris lipicios de la bun început,
+       sta la y −1200 când omul derulase 1200.
+
+       `clip` taie la fel de bine, dar NU face butoi: calculatul iese
+       `clip/visible`, iar antetul rămâne la y 0 la orice derulare. Măsurat pe
+       390 și pe 1440, fără curgere pe orizontală la niciuna.
+
+       Tot de aici vine și pricina pentru care comutatorul de variantă e scris
+       `fixed` (v. comentariul lui): `fixed` nu se lipea de butoi. Rămâne
+     `fixed` — plutește dinadins peste catalog. -->
+<div style="background:var(--h-bg-page);color:var(--h-fg);font-family:var(--h-font-body);min-height:100vh;overflow-x:clip">
+
+  <!-- ÎNVELIȘUL ĂSTA E UN CONTEXT DE STIVUIRE, și de-aia cifra de pe el nu e
+       înălțimea antetului, ci a ÎNTREGULUI grup: antet + meniul de cont +
+       sertarul. `position:sticky` împreună cu `z-index` face o lume închisă:
+       numerele scrise pe copii — perdeaua contului (110), lista contului
+       (120), perdeaua sertarului (129), sertarul (130) — se socotesc numai
+       între ele, înăuntru. Față de restul paginii intră toate cu cifra de AICI,
+       una singură.
+       A stat 100, și era prea jos. Pastila (101), butonul de WhatsApp (110) și
+       bara coșului (120) stau în AFARA învelișului, deci pictau peste sertar
+       și peste meniul contului oricât de mari erau cifrele scrise pe ele:
+       sertarul scria 130 și tot ieșea dedesubt. Așa se acoperea meniul tocmai
+       când omul îl deschidea ca să-l citească.
+       125 e ales anume: peste bara coșului (120), cea mai de sus dintre cele
+       din afară, și sub fereastra produsului (139) — ferestrele trebuie să
+       acopere antetul, că de-aia sunt ferestre. Dacă adaugi vreodată un
+       plutitor nou în afara învelișului, cifra lui trebuie să rămână sub 125;
+       `check-site-public` păzește chiar asta și se înroșește. -->
+  <div style="position:sticky;top:0;z-index:125;padding:1rem clamp(1.25rem,4vw,3rem) 0;background:linear-gradient(180deg,var(--h-bg-page) 55%,transparent)">
+    <!-- ARANJAREA DE TELEFON SE SCRIE AICI, NU ÎN `hearth.css`.
+         Banda de la `.h-header` (max-width: 40rem) pune `flex-wrap:wrap` și
+         rupe antetul în două rânduri. Pe telefon stilul de mai jos aduce
+         `display:grid`, care face `flex-wrap` să nu însemne nimic — deci banda
+         aceea nu-l mai rearanjează, oricât ar părea că o face. Cine caută
+         pricina unui antet strâmb pe telefon o caută în `antetStil`.
+
+         Trei coloane, `1fr auto 1fr`: cele două margini capătă ACEEAȘI lățime,
+         deci sigla din mijloc iese la mijlocul adevărat al ecranului, nu la
+         mijlocul a ce-a rămas. De-aia și ☰, și butonul contului sunt 44×44:
+         lățimi egale, nu doar ținte de deget destul de mari.
+
+         Blocul `accOpen` de mai jos nu strică cele trei coloane: perdeaua lui e
+         `fixed` și cartonașul `absolute`, adică amândouă scoase din curgere,
+         deci nu sunt căsuțe de grilă. -->
+    <header class="h-header" style="{{ antetStil }}">
+      <sc-if value="{{ mob }}">
+        <button type="button" aria-label="{{ menuLabel }}" aria-expanded="{{ menuExpanded }}" onClick="{{ toggleMenu }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;min-height:2.75rem;flex:none;justify-self:start;padding:0;border:1px solid var(--h-line-strong);border-radius:14px;background:var(--h-bg-raised);color:var(--h-fg);cursor:pointer">
+          <sc-if value="{{ menuClosed }}" hint-placeholder-val="{{ true }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+          </sc-if>
+          <sc-if value="{{ menuOpen }}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </sc-if>
+        </button>
+      </sc-if>
+      <a class="h-logo" href="{{ hrefHome }}" data-spa="1" onClick="{{ goHome }}" style="gap:0.6rem;justify-self:center;min-width:0">
         <img src="./ratio-1x1-golden-pastryuntitled-design-3-mt7jbr2f-anx6.png" alt="Golden Pastry" style="width: 2.1rem; height: 2.1rem; object-fit: contain">
         <span style="display:flex;flex-direction:column;line-height:1.05">
           <span style="font-family:var(--h-font-display);font-size:1.0625rem;font-weight:700;letter-spacing:0.01em">Golden Pastry</span>
@@ -78,29 +137,28 @@
         <a class="h-nav__link" href="{{ hrefContact }}" data-spa="1" aria-current="{{ curContact }}" onClick="{{ goContact }}">{{ navContact }}</a>
       </nav>
       </sc-if>
+      <!-- Dreapta ține UN singur lucru, de 44×44, ca să fie pereche cu ☰ din
+           stânga și ca sigla să stea la mijloc cu adevărat.
+
+           „Intră" a rămas fără vorbă pe telefon, și e o alegere, nu o scăpare:
+           la 390 px sigla ține 186 px, iar cele două margini ar fi avut de
+           împărțit 115 — destul pentru două butoane de 44, prea puțin pentru
+           unul de 72. Patronul a cerut sigla la mijloc, pe un rând; vorba
+           „Intră" se mută, întreagă, în sertar. Numele lui îl spun `aria-label`
+           și `title`, ca la WhatsApp și la comutatorul de variantă.
+
+           RO/EN a plecat și el în sertar: pe telefon limba se schimbă o dată,
+           nu la fiecare pagină, iar în antet mânca 102 px din 350. -->
       <sc-if value="{{ mob }}">
-        <div style="display:flex;align-items:center;gap:0.4rem;margin-left:auto">
+        <div style="display:flex;align-items:center;justify-content:flex-end;justify-self:end">
           <sc-if value="{{ anon }}" hint-placeholder-val="{{ true }}">
-          <a class="h-btn h-btn--secondary" href="Intrare.dc.html" style="flex:none;min-height:2.25rem;height:2.25rem;padding:0 0.7rem;font-size:0.75rem;font-weight:700;letter-spacing:0.02em;gap:0.35rem;text-decoration:none;white-space:nowrap">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path></svg>
-            {{ ctaLogin }}
+          <a class="h-btn h-btn--secondary" href="Intrare.dc.html" aria-label="{{ ctaLogin }}" title="{{ ctaLogin }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;min-height:2.75rem;flex:none;padding:0;text-decoration:none">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path></svg>
           </a>
           </sc-if>
           <sc-if value="{{ signed }}" hint-placeholder-val="{{ false }}">
-            <button type="button" aria-label="{{ accMenuLabel }}" aria-expanded="{{ accExpanded }}" onClick="{{ toggleAcc }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.25rem;height:2.25rem;flex:none;padding:0;border:0;border-radius:999px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:0.75rem;font-weight:700;cursor:pointer">{{ accInitials }}</button>
+            <button type="button" aria-label="{{ accMenuLabel }}" aria-expanded="{{ accExpanded }}" onClick="{{ toggleAcc }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;min-height:2.75rem;flex:none;padding:0;border:0;border-radius:999px;background:var(--h-accent);color:#1B120B;font-family:var(--h-font-body);font-size:0.8125rem;font-weight:700;cursor:pointer">{{ accInitials }}</button>
           </sc-if>
-          <div role="group" aria-label="Language" style="display:inline-flex;gap:0.2rem;padding:0.2rem;background:var(--h-bg-sunk);border-radius:999px">
-            <button type="button" aria-pressed="{{ isRo }}" onClick="{{ setRo }}" style="{{ roBtn }}">RO</button>
-            <button type="button" aria-pressed="{{ isEn }}" onClick="{{ setEn }}" style="{{ enBtn }}">EN</button>
-          </div>
-          <button type="button" aria-label="{{ menuLabel }}" aria-expanded="{{ menuExpanded }}" onClick="{{ toggleMenu }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;flex:none;border:1px solid var(--h-line-strong);border-radius:14px;background:var(--h-bg-raised);color:var(--h-fg);cursor:pointer">
-            <sc-if value="{{ menuClosed }}" hint-placeholder-val="{{ true }}">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
-            </sc-if>
-            <sc-if value="{{ menuOpen }}">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"></path></svg>
-            </sc-if>
-          </button>
         </div>
       </sc-if>
       <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
@@ -144,13 +202,57 @@
         </div>
       </sc-if>
     </header>
+    <!-- SERTARUL E O FEREASTRĂ, nu o bucată de pagină.
+         Cum era, stătea în curgere și ÎMPINGEA catalogul în jos: fără fundal,
+         fără strat, fără Escape, și cu pagina derulându-se liniștit pe sub el.
+
+         Perdeaua și foaia sunt FRAȚI, nu unul în celălalt — ca foaia coșului
+         (:491) și fereastra de finalizare (:950). Așa o apăsare din foaie nu
+         are pe unde să urce la perdea, deci nu trebuie oprită nicăieri: cine
+         apasă pe perdea a apăsat pe perdea.
+
+         Straturile se așază în scara casei, fără s-o mute pe niciuna:
+         antet 100 → pastilă 101 → perdeaua contului 110 → bara coșului 120 →
+         SERTAR 129/130 → fereastra produsului 139/140 → foaia coșului 149/150
+         → finalizarea 159/160. Peste bara coșului dinadins: cât sertarul e
+         deschis, nimic de dedesubt nu se mai poate apăsa.
+
+         Cele trei ferestre nu pot sta deodată pe ecran: perdeaua fiecăreia
+         acoperă butoanele celorlalte. De-aia sertarul intră în aceeași socoteală
+         de istoric ca ele (`potrivesteIstoricul`) — pe telefon, „înapoi" îl
+         închide, în loc să scoată omul din magazin. -->
     <sc-if value="{{ menuOpen }}">
-      <nav aria-label="Main" style="max-width:1740px;margin:0.65rem auto 0;padding:0.75rem;background:var(--h-bg-raised);border:1px solid var(--h-line);border-radius:20px;box-shadow:var(--h-shadow-3);display:flex;flex-direction:column;gap:0.15rem">
+      <div onClick="{{ inchideMeniu }}" aria-hidden="true" style="position:fixed;left:0;right:0;top:0;bottom:0;z-index:129;background:rgba(0,0,0,0.55)"></div>
+      <nav aria-label="Main" style="position:fixed;left:0;right:0;top:0;z-index:130;max-height:100dvh;overflow-y:auto;overscroll-behavior:contain;padding:calc(0.75rem + env(safe-area-inset-top)) 0.75rem calc(1rem + env(safe-area-inset-bottom));background:var(--h-bg-page);border-bottom:1px solid var(--h-line);border-radius:0 0 20px 20px;box-shadow:0 14px 40px rgba(0,0,0,0.38);display:flex;flex-direction:column;gap:0.15rem">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;padding:0 0.2rem 0.55rem;margin-bottom:0.3rem;border-bottom:1px solid var(--h-line)">
+          <span class="h-caption" style="font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ menuLabel }}</span>
+          <button type="button" aria-label="{{ ctaInchide }}" onClick="{{ inchideMeniu }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;min-height:2.75rem;flex:none;padding:0;border:1px solid var(--h-line-strong);border-radius:14px;background:var(--h-bg-raised);color:var(--h-fg);cursor:pointer">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+          </button>
+        </div>
         <a href="{{ hrefHome }}" data-spa="1" aria-current="{{ curHome }}" onClick="{{ goHome }}" style="{{ mLink }}">{{ navHome }}</a>
         <a href="{{ hrefCat }}" data-spa="1" aria-current="{{ curCat }}" onClick="{{ goCat }}" style="{{ mLink }}">{{ navCat }}</a>
         <a href="{{ hrefDist }}" data-spa="1" aria-current="{{ curDist }}" onClick="{{ goDist }}" style="{{ mLink }}">{{ navDist }}</a>
         <a href="{{ hrefAbout }}" data-spa="1" aria-current="{{ curAbout }}" onClick="{{ goAbout }}" style="{{ mLink }}">{{ navAbout }}</a>
         <a href="{{ hrefContact }}" data-spa="1" aria-current="{{ curContact }}" onClick="{{ goContact }}" style="{{ mLink }}">{{ navContact }}</a>
+        <!-- RO/EN a coborât din antet aici. Pe telefon limba se alege o dată,
+             nu la fiecare pagină, iar în antet ținea 102 px din 350 — tocmai
+             lățimea care nu lăsa sigla să stea la mijloc. -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:0.6rem;margin-top:0.45rem;padding:0.35rem 0.85rem 0">
+          <span style="color:var(--h-fg-subtle);font-size:0.9375rem;font-weight:600">{{ navLimba }}</span>
+          <div role="group" aria-label="{{ navLimba }}" style="display:inline-flex;gap:0.2rem;padding:0.2rem;background:var(--h-bg-sunk);border-radius:999px">
+            <button type="button" aria-pressed="{{ isRo }}" onClick="{{ setRo }}" style="{{ roBtn }}">RO</button>
+            <button type="button" aria-pressed="{{ isEn }}" onClick="{{ setEn }}" style="{{ enBtn }}">EN</button>
+          </div>
+        </div>
+        <!-- „Intră" și-a lăsat vorba aici: în antet e numai pictograma, ca
+             sigla să încapă la mijloc. -->
+        <sc-if value="{{ anon }}" hint-placeholder-val="{{ true }}">
+        <a class="h-btn h-btn--secondary h-btn--block" href="Intrare.dc.html" style="margin-top:0.45rem;min-height:2.75rem;gap:0.5rem;text-decoration:none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path></svg>
+          {{ ctaLogin }}
+        </a>
+        </sc-if>
         <button type="button" class="h-btn h-btn--primary h-btn--block" style="margin-top:0.5rem;min-height:2.75rem" onClick="{{ goContact }}">{{ ctaQuote }}</button>
         <a class="h-btn h-btn--block" href="{{ waHelloHref }}" target="_blank" rel="noopener" style="margin-top:0.4rem;min-height:2.75rem;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-1);gap:0.5rem;text-decoration:none">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
@@ -369,11 +471,16 @@
 
     <!-- Banda cu cele două butoane-cuvinte a plecat de aici, sus, în pastila
          plutitoare (căută `tierPlutitor`). Se dădea drept lipicioasă
-         (`position:sticky;top:4.6rem`) și NU era: învelișul paginii (:60) are
-         `overflow-x:hidden`, iar asta face din el un butoi de derulare — orice
-         `sticky` dinăuntru se lipește de un butoi care se duce și el în sus.
-         Măsurat: derulat la 1200 px, banda stătea la -764, adică nicăieri. De
-         asta cerea patronul un comutator care chiar rămâne pe ecran.
+         (`position:sticky;top:4.6rem`) și NU era: învelișul paginii avea pe
+         atunci `overflow-x:hidden`, care făcea din el un butoi de derulare —
+         orice `sticky` dinăuntru se lipea de un butoi care se ducea și el în
+         sus. Măsurat: derulat la 1200 px, banda stătea la -764, adică nicăieri.
+         De asta cerea patronul un comutator care chiar rămâne pe ecran.
+
+         BUTOIUL NU MAI E: învelișul s-a făcut `overflow-x:clip` (v. capul
+         paginii), deci `sticky` merge iar. Comutatorul rămâne totuși plutitor
+         și mutat aici, fiindcă asta a cerut patronul — să fie mereu la îndemână
+         peste catalog, nu numai cât antetul e pe ecran.
          Lămurirea variantei rămâne în curgere, unde stătea: ea se citește o
          dată, nu se caută de zece ori. -->
     <sc-if value="{{ mob }}">
@@ -494,7 +601,7 @@
           <sc-if value="{{ cosJos }}" hint-placeholder-val="{{ false }}">
             <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;margin:0 -1rem;padding:0.55rem 1rem;background:var(--h-bg-page);border-bottom:1px solid var(--h-line)">
               <span aria-hidden="true" style="flex:none;width:2.5rem;height:0.25rem;border-radius:999px;background:var(--h-line-strong)"></span>
-              <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideCos }}" style="flex:none;min-height:2.25rem">{{ ctaInchide }}</button>
+              <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideCos }}" style="flex:none;min-height:2.75rem">{{ ctaInchide }}</button>
             </div>
           </sc-if>
           <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
@@ -613,7 +720,7 @@
     <sc-if value="{{ areVedere }}" hint-placeholder-val="{{ false }}">
       <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem clamp(1rem,4vw,1.5rem);background:var(--h-bg-page);border-bottom:1px solid var(--h-line)">
         <p class="h-h4" style="margin:0;min-width:0;font-family:var(--h-font-display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="{{ pvFisaHref }}" data-spa="1" onClick="{{ pvGoFisa }}" style="color:inherit;text-decoration:none" style-hover="text-decoration:underline">{{ pvName }}</a></p>
-        <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideVedere }}" style="flex:none;min-height:2.25rem">{{ ctaInchide }}</button>
+        <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideVedere }}" style="flex:none;min-height:2.75rem">{{ ctaInchide }}</button>
       </div>
     </sc-if>
     <section style="{{ pvSectionStyle }}">
@@ -716,19 +823,34 @@
        orice `sticky` dinăuntru — chiar așa a ajuns banda de dinainte să stea
        la -764 px când omul derula la 1200. `fixed` nu pățește asta, iar bara
        de jos a coșului o dovedește de multă vreme.
-       Locul: colțul din dreapta sus. Măsurat pe 390 px, în antet sigla ține
-       x 37–223 la y 33–67, iar rândul FD/RO/EN/☰ ține y 82–126: colțul
-       x 230–370 / y 10–75 e singurul loc gol de acolo. Mijlocul de sus ar fi
-       căzut peste „Golden Pastry".
-       `z-index:101`: peste antet (100), ca să nu se ascundă sub el cât pagina
-       stă nederulată, dar sub perdeaua meniului de cont (110), sub bara de jos
-       (120) și sub cele două ferestre (149/150 și 159/160) — când se deschide
-       una, comutatorul stă sub întuneric ca tot restul paginii. -->
+       LOCUL S-A MUTAT, fiindcă s-a mutat și antetul. Stătea în colțul din
+       dreapta-sus, singurul gol de pe un antet de două rânduri. Antetul are
+       acum UN rând, cu sigla la mijloc și butonul contului tocmai în colțul
+       acela — deci comutatorul ar fi căzut peste el.
+       Acum stă SUB antet, la mijloc: acolo se citește ca un filtru al
+       catalogului, care și este. `left:50%` cu `translateX(-50%)` îl pune la
+       mijlocul ecranului, nu la mijlocul a ce-a rămas.
+       `top`-ul e înălțimea antetului de telefon plus un deget de aer. Antetul
+       are acum `overflow-x:clip` deasupra lui, deci chiar se lipește: cifra
+       ține la orice derulare, nu doar la pagina nemișcată.
+       `z-index:101` îl ține SUB tot ce ține de antet. Aici a stat scrisă o
+       socoteală greșită, și merită păstrată ca învățătură: „peste antet (100),
+       dar sub perdeaua meniului de cont (110)". Jumătatea a doua e cu
+       NEPUTINȚĂ — perdeaua aceea e ÎNĂUNTRUL învelișului antetului, care e un
+       context de stivuire, deci nu se măsoară niciodată cu 101; se măsoară cu
+       cifra învelișului. Iar jumătatea întâi cerea chiar paguba: pastila peste
+       tot grupul antetului, adică peste sertar și peste meniul contului.
+       Acum învelișul e la 125, deci 101 înseamnă limpede: sub antet, sub
+       amândouă meniurile lui, sub bara de jos (120) și sub cele două ferestre
+       (149/150 și 159/160) — când se deschide una, comutatorul stă sub
+       întuneric ca tot restul paginii.
+       Și nu se ascunde sub antet, fiindcă nu-l atinge: măsurat la 390, antetul
+       de telefon se termină la 78, iar pastila începe la 84. -->
   <sc-if value="{{ tierPlutitor }}">
-    <div style="position:fixed;top:calc(0.75rem + env(safe-area-inset-top));right:max(0.75rem, env(safe-area-inset-right));z-index:101;display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;pointer-events:none">
+    <div style="{{ pastilaPoz }}">
       <div role="group" aria-label="{{ catSwitchLabel }}" style="display:flex;gap:0.2rem;padding:0.2rem;background:var(--h-bg-sunk);border:1px solid var(--h-line);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,0.28);pointer-events:auto">
-        <button type="button" aria-pressed="{{ isFrozen }}" aria-label="{{ tabFrozen }}" title="{{ tabFrozen }}" onClick="{{ setFrozen }}" style="{{ frozenPastila }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><path d="M12 3v18M3.6 7.5L20.4 17.2M20.4 7.5L3.6 17.2M12 6.8L9.7 4.5M12 6.8L14.3 4.5M12 17.2L9.7 19.5M12 17.2L14.3 19.5M6.6 9.4L3.5 8.6M6.6 9.4L5.8 6.3M17.4 14.6L20.5 15.4M17.4 14.6L18.2 17.7M6.6 14.6L5.8 17.7M6.6 14.6L3.5 15.4M17.4 9.4L18.2 6.3M17.4 9.4L20.5 8.6"></path></svg></button>
-        <button type="button" aria-pressed="{{ isBaked }}" aria-label="{{ tabBaked }}" title="{{ tabBaked }}" onClick="{{ setBaked }}" style="{{ bakedPastila }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><path d="M3 20h18"></path><path d="M5 20a7 7 0 0 1 14 0"></path><path d="M12 13v-1.3"></path><circle cx="12" cy="10.4" r="1.2"></circle><path d="M8.4 8.4c1-1-1-2 0-3M12 7.8c1-1-1-2 0-3M15.6 8.4c1-1-1-2 0-3"></path></svg></button>
+        <button type="button" aria-pressed="{{ isFrozen }}" aria-label="{{ tabFrozen }}" title="{{ tabFrozen }}" onClick="{{ setFrozen }}" style="{{ frozenPastila }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><g data-semn="brate" stroke="#5FC2EC" stroke-width="3.2"><path d="M12 3v18M19.36 7.75L4.64 16.25M19.36 16.25L4.64 7.75"></path><path d="M12 6.3L14.2 4.6M12 6.3L9.8 4.6M16.68 9.15L19.4 10.1M16.68 9.15L17 6.4M16.68 14.85L17 17.6M16.68 14.85L19.4 13.9M12 17.7L9.8 19.4M12 17.7L14.2 19.4M7.32 14.85L4.6 13.9M7.32 14.85L7 17.6M7.32 9.15L7 6.4M7.32 9.15L4.6 10.1"></path></g><g data-semn="sclipire" stroke="#DCF2FD" stroke-width="1.6"><path d="M12 3v18M19.36 7.75L4.64 16.25M19.36 16.25L4.64 7.75"></path><path d="M12 6.3L14.2 4.6M12 6.3L9.8 4.6M16.68 9.15L19.4 10.1M16.68 9.15L17 6.4M16.68 14.85L17 17.6M16.68 14.85L19.4 13.9M12 17.7L9.8 19.4M12 17.7L14.2 19.4M7.32 14.85L4.6 13.9M7.32 14.85L7 17.6M7.32 9.15L7 6.4M7.32 9.15L4.6 10.1"></path></g><path data-semn="miez" d="M12 9.4L14.25 10.7L14.25 13.3L12 14.6L9.75 13.3L9.75 10.7Z" fill="#EAF8FE" stroke="#5FC2EC" stroke-width="1.1"></path></svg></button>
+        <button type="button" aria-pressed="{{ isBaked }}" aria-label="{{ tabBaked }}" title="{{ tabBaked }}" onClick="{{ setBaked }}" style="{{ bakedPastila }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><g transform="rotate(-12 12 7.4)"><path data-semn="cupola" d="M5.2 9.5a6.8 6.8 0 0 1 13.6 0Z" fill="#F0A93F"></path><path data-semn="buza" d="M3.6 11.2h16.8" stroke="#F0A93F" stroke-width="2.1"></path><circle data-semn="manerul" cx="12" cy="1.9" r="1.4" fill="#F0A93F"></circle><path data-semn="gatul" d="M12 3.5V2.4" stroke="#F0A93F" stroke-width="1.9"></path></g><g data-semn="abur" stroke="#FFDD9B" stroke-width="1.7"><path d="M8.6 18c1-1.15-1-2.3 0-3.45M12 18c1-1.15-1-2.3 0-3.45M15.4 18c1-1.15-1-2.3 0-3.45"></path></g><path data-semn="tava" d="M3.1 19.5h17.8c0 1.55-1.25 2.8-2.8 2.8H5.9c-1.55 0-2.8-1.25-2.8-2.8Z" fill="#F0A93F"></path></svg></button>
       </div>
       <!-- Vorba de după apăsare e pentru OCHI. Cititorul de ecran află deja
            din `aria-pressed`, care se schimbă în aceeași clipă; o încăpere
@@ -954,7 +1076,7 @@
     <sc-if value="{{ finalizare }}" hint-placeholder-val="{{ false }}">
       <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem clamp(1rem,4vw,1.5rem);background:var(--h-bg-page);border-bottom:1px solid var(--h-line)">
         <p class="h-h4" style="margin:0;font-family:var(--h-font-display)">{{ finalTitlu }}</p>
-        <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideFinal }}" style="flex:none;min-height:2.25rem">{{ ctaInchide }}</button>
+        <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideFinal }}" style="flex:none;min-height:2.75rem">{{ ctaInchide }}</button>
       </div>
     </sc-if>
     <sc-if value="{{ onContact }}">
@@ -1057,12 +1179,13 @@
           </div>
           <!-- PENTRU CE CLIENT E COMANDA.
                Se desenează numai pentru cine are ogradă la `GET /clients`:
-               administratorul și fondatorul caută printre toți clienții,
-               agentul de vânzări numai printre cei aduși de codul lui.
-               Managerul și angajatul n-o văd deloc — serverul le-ar răspunde
-               403, iar o casetă care promite ce serverul refuză e mai rea
-               decât lipsa ei. Paza adevărată stă în `client_scope_for()`
-               (api/lib/orders.php); rândurile de aici sunt oglinda ei. -->
+               administratorul, fondatorul și managerul caută printre toți
+               clienții, agentul de vânzări numai printre cei aduși de codul
+               lui. Angajatul n-o vede deloc — serverul i-ar răspunde 403, iar
+               o casetă care promite ce serverul refuză e mai rea decât lipsa
+               ei. Paza adevărată stă în `client_scope_for()`
+               (api/lib/orders.php); `gp.eCautaClienti()` e oglinda ei, scrisă
+               o singură dată pentru toate paginile. -->
           <sc-if value="{{ cautaClient }}" hint-placeholder-val="{{ false }}">
             <div style="display:flex;flex-direction:column;gap:0.6rem;padding:0.9rem 1rem;border-radius:16px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
               <sc-if value="{{ cautCaseta }}" hint-placeholder-val="{{ true }}">
@@ -2001,7 +2124,7 @@ class Component extends DCLogic {
       // pagina, ca până acum.
       if (this.__foaieInIstoric) {
         this.__foaieInIstoric = false;
-        this.setState({ cosJos: false, finalizare: false, vedere: null });
+        this.setState({ cosJos: false, finalizare: false, vedere: null, menuOpen: false });
         return;
       }
       const r = rutaDinAdresa();
@@ -2078,6 +2201,13 @@ class Component extends DCLogic {
       const m = window.innerWidth < 1080;
       if (m !== this.state.mob) this.setState({ mob: m, menuOpen: false });
     };
+    // Escape închide sertarul. Nu și celelalte ferestre: ele n-au avut
+    // niciodată Escape, iar a le da acum unul e altă lucrare — fișă în docs/06.
+    this._onEsc = (ev) => {
+      if (ev.key !== 'Escape') return;
+      if (this.state.menuOpen) this.setState({ menuOpen: false });
+    };
+    window.addEventListener('keydown', this._onEsc);
     window.addEventListener('resize', this._onResize);
     window.addEventListener('scroll', this._onScroll, { passive: true });
     window.addEventListener('resize', this._onScroll);
@@ -2170,7 +2300,7 @@ class Component extends DCLogic {
    * dintr-un lucru pe care l-a deschis o dată.
    */
   potrivesteIstoricul() {
-    const deschis = !!(this.state.cosJos || this.state.finalizare)
+    const deschis = !!(this.state.cosJos || this.state.finalizare || this.state.menuOpen)
       || this.state.vedere !== null;
     if (deschis === this.__foaieInIstoric) return;
     if (typeof history === 'undefined' || !history.pushState) return;
@@ -2187,8 +2317,36 @@ class Component extends DCLogic {
     try { history.back(); } catch (err) { /* noop */ }
   }
 
+  /**
+   * Derularea paginii, legată cât stă sertarul deschis.
+   *
+   * Pe `documentElement`, nu pe `body`: de când învelișul paginii nu mai e
+   * butoi de derulare (`overflow-x:clip`), cel care se derulează e documentul.
+   *
+   * Se ține minte ce era acolo înainte și se pune înapoi, nu se șterge: dacă
+   * altcineva scrie vreodată ceva pe `overflow`-ul documentului, sertarul nu i-o
+   * ia cu el la închidere.
+   */
+  legDerularea(leg) {
+    // Gazda poate desena pagina fără browser — proba magazinului chiar o
+    // face. Atunci nu e nicio derulare de legat, deci nici de ce să pice.
+    const d = typeof document === 'undefined' ? null : document.documentElement;
+    if (!d || !d.style) return;
+    if (leg) {
+      if (this.__derulareaLegata) return;
+      this.__derulareaVeche = d.style.overflow;
+      this.__derulareaLegata = true;
+      d.style.overflow = 'hidden';
+      return;
+    }
+    if (!this.__derulareaLegata) return;
+    this.__derulareaLegata = false;
+    d.style.overflow = this.__derulareaVeche || '';
+  }
+
   componentDidUpdate() {
     this.potrivesteIstoricul();
+    this.legDerularea(!!this.state.menuOpen);
     if (this._onScroll) this._onScroll();
     // Coșul se scrie numai când diferă de ce știe fila că e deja în browser.
     // Scris la fiecare desenare, cum era, o filă cu coșul vechi în memorie — a
@@ -2223,6 +2381,11 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     if (this._raf) cancelAnimationFrame(this._raf);
+    if (this._onEsc) window.removeEventListener('keydown', this._onEsc);
+    // Derularea se dezleagă ORICUM la plecare: o pagină părăsită cu sertarul
+    // deschis ar fi lăsat în urmă un `overflow:hidden` pe care nimeni nu-l mai
+    // stinge, adică un site care nu se mai derulează.
+    this.legDerularea(false);
     window.removeEventListener('scroll', this._onScroll);
     window.removeEventListener('resize', this._onScroll);
     window.removeEventListener('resize', this._onResize);
@@ -2579,7 +2742,7 @@ class Component extends DCLogic {
     // Managerul și angajatul sunt personal, dar n-au ogradă — lor caseta nici
     // nu li se desenează. `gp.eAdmin()` ține la un loc administratorul și
     // fondatorul, ca peste tot în casă.
-    const cautaClient = staff && (gp.eAdmin(A) || A.role === 'agent_vanzari');
+    const cautaClient = staff && gp.eCautaClienti(A);
     // 29-b · FORMULARUL CLIENTULUI INTRAT.
     //
     // Până acum trecea prin același formular ca un străin: pe telefon se
@@ -2703,12 +2866,24 @@ class Component extends DCLogic {
       ? t('Congelate', 'Frozen')
       : t('Gata de servire', 'Ready to serve'));
 
+    // Cele două semne nu mai iau culoarea de la buton: fulgul e albastru rece,
+    // clopotul e chihlimbar cald, fiindcă asta CHIAR spun cele două variante —
+    // patronul a cerut anume culoare, cu două modele în față. Culorile sunt
+    // scrise de-a dreptul, nu prin simboluri de temă, fiindcă magazinul își
+    // pune singur `data-theme="dark"` (v. :2014): nu există fundal deschis pe
+    // care să nimerească. Dacă tema aia se schimbă vreodată, aici e locul.
+    //
+    // Urmarea: `color` nu mai stinge semnul nepresat, cum făcea până acum.
+    // De-aia starea se spune acum și prin transparență. Fără rândul ăsta,
+    // amândouă semnele ar arde la fel de tare și butonul apăsat n-ar mai avea
+    // decât fundalul lui ca să se deosebească — măsurat pe 390: fundalul
+    // singur e #2E2119 peste #130E0B, adică prea puțin ca să se vadă.
     const tierPastila = (on) =>
       'display:inline-flex;align-items:center;justify-content:center;min-width:2.75rem;min-height:2.75rem;padding:0;border:0;border-radius:999px;cursor:pointer;'
-      + 'transition:background-color var(--h-dur-base) var(--h-ease-out),color var(--h-dur-base) var(--h-ease-out);'
+      + 'transition:background-color var(--h-dur-base) var(--h-ease-out),color var(--h-dur-base) var(--h-ease-out),opacity var(--h-dur-base) var(--h-ease-out);'
       + (on
-        ? 'background:var(--h-bg-raised);color:var(--h-fg);box-shadow:var(--h-shadow-1)'
-        : 'background:transparent;color:var(--h-fg-muted)');
+        ? 'background:var(--h-bg-raised);color:var(--h-fg);box-shadow:var(--h-shadow-1);opacity:1'
+        : 'background:transparent;color:var(--h-fg-muted);opacity:0.55');
 
     // [grupa, id, numeRO, numeEN, gramaj, prețHoReCa, prețRaft, descRO, descEN, noutate, poză]
     // Vine din baza de date, prin pullCatalog(). Era scris aici, ca listă
@@ -3100,6 +3275,21 @@ class Component extends DCLogic {
       menuExpanded: String(!!this.state.menuOpen),
       menuLabel: t('Meniu', 'Menu'),
       toggleMenu: () => this.setState((st) => ({ menuOpen: !st.menuOpen })),
+      inchideMeniu: () => this.setState({ menuOpen: false }),
+      navLimba: t('Limbă', 'Language'),
+      // ANTETUL DE TELEFON, scris cu cifre într-un singur loc.
+      //
+      // `1fr auto 1fr`: marginile capătă lățimi EGALE, deci sigla din mijloc
+      // iese la mijlocul ecranului. Cu `space-between` ar fi ieșit la mijlocul
+      // a ce rămâne între două capete de lățimi deosebite — adică strâmb.
+      //
+      // `display:grid` face `flex-wrap:wrap` din `hearth.css` (banda de 40rem)
+      // să nu mai însemne nimic: de-aia antetul nu se mai rupe în două rânduri.
+      // `gap` se rescrie mic, fiindcă cel din clasă (1.5rem) ar fi mâncat 48 px
+      // din 350 ca gol între coloane.
+      antetStil: mob
+        ? 'max-width:1740px;margin-inline:auto;position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.5rem;min-height:3.5rem;padding:0.5rem 0.75rem'
+        : 'max-width:1740px;margin-inline:auto;position:relative',
       mLink: 'display:flex;align-items:center;min-height:2.75rem;padding:0 0.85rem;border-radius:12px;text-decoration:none;color:var(--h-fg);font-weight:600;font-size:1rem',
       prodGrid: mob
         ? 'display:flex;flex-direction:column;gap:0.6rem'
@@ -4004,6 +4194,12 @@ class Component extends DCLogic {
       // să fie acolo ÎNAINTE de primul produs pus în coș — el hotărăște ce
       // prețuri se văd.
       tierPlutitor: mob && p === 'catalog',
+      // Sub antet, la mijloc. Cifra e înălțimea antetului de telefon — rândul
+      // MĂSURATĂ, nu socotită: la 390 px blocul antetului ține y 0–78, deci
+      // pastila începe la 84 și rămâne dedesubt, nu peste el.
+      // `align-items:center` în loc de `flex-end`: lămurirea de după apăsare
+      // stătea lipită de marginea din dreapta fiindcă acolo stătea și pastila.
+      pastilaPoz: 'position:fixed;top:calc(5.25rem + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:101;display:flex;flex-direction:column;align-items:center;gap:0.4rem;pointer-events:none',
       setFrozen: () => this.treciLa('frozen'),
       setBaked: () => this.treciLa('baked'),
       areTierSpus: !!this.state.tierSpus,

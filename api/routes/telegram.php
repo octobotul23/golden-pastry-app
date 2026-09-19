@@ -115,25 +115,47 @@ function route_telegram_webhook(): void
         json_out(['ok' => true]);
     }
 
-    // ------------------------------------------------- poarta 3: omul
-    $actor = telegram_actor();
-    if ($actor === null) {
-        telegram_spune($cb, false,
-            'Botul nu e legat de niciun cont de administrator. Intră în Setări → Notificări și apasă „Leagă botul".');
-        json_out(['ok' => true]);
-    }
-
     // ------------------------------------------------------------- fapta
     //
     // `callback_data` are 64 de octeți cu totul, de aceea forma e scurtă:
     // literă, două puncte, id, două puncte, literă. Vezi `telegram_request_buttons()`
     // din api/lib/notify.php pentru cum se scrie.
+    //
+    // DESPICATĂ ÎNAINTEA PORȚII 3, de la 2.2.1 încoace. Pricina e o capcană de
+    // ordine: poarta 3 cere un cont pe numele căruia să lucreze apăsarea, dar
+    // LEGAREA e tocmai fapta omului care încă n-are niciun cont legat. Lăsată
+    // după poartă, singura apăsare de care are nevoie cel nelegat ar fi fost
+    // singura pe care n-ar fi putut-o face.
+    //
+    // Mutarea nu slăbește nimic: porțile 1 și 2 — secretul și conversația — au
+    // trecut deja, și numai ele hotărăsc cine ajunge aici. Poarta 3 nu spune
+    // „cine intră", ci „pe numele cui se scrie fapta".
     $date = explode(':', (string) ($cb['data'] ?? ''));
     if (count($date) !== 3 || !ctype_digit($date[1])) {
         telegram_spune($cb, false, 'Buton necunoscut. Probabil e dintr-un mesaj mai vechi decât programul.');
         json_out(['ok' => true]);
     }
     [$fel, $id, $fapta] = [$date[0], (int) $date[1], $date[2]];
+
+    // ------------------------------------------ legarea: fapta fără actor
+    //
+    // Nu hotărăște nimic și nu atinge nicio cerere: scrie doar CINE a apăsat,
+    // pe rândul cererii de legare. Legătura însăși se face din pagina celui
+    // care a cerut-o, cu sesiunea lui — v. api/lib/telegram-legaturi.php.
+    if ($fel === 'leg') {
+        telegram_buton_legare($cb, $id, $fapta);
+        json_out(['ok' => true]);
+    }
+
+    // ------------------------------------------------- poarta 3: omul
+    $actor = telegram_actor($cb, $pricina);
+    if ($actor === null) {
+        telegram_spune($cb, false, $pricina === 'fara_drept'
+            ? 'Contul tău de Telegram e legat, dar nu are drept de hotărâre. '
+                . 'Cere unui administrator să te pună la loc, apoi încearcă din nou.'
+            : 'Botul nu e legat de niciun cont de administrator. Intră în Setări → Notificări și apasă „Leagă botul".');
+        json_out(['ok' => true]);
+    }
 
     // Două ramuri, și `default` pentru tot restul. Butoanele scoase — „Mai
     // târziu" pe cerere, „Am văzut" și „Etapa următoare" pe comandă — zac încă
@@ -192,24 +214,110 @@ function telegram_cerere_respinsa(array $cb, array $actor, int $id): void
  * mai încurce pe nimeni.
  */
 
+/**
+ * „Eu sunt" — apăsarea care PROPUNE o legătură, fără să lege nimic.
+ *
+ * Singura faptă de sub anunțuri care nu cere un actor: v. lămurirea din
+ * dispecer. Nu atinge nicio comandă și nicio cerere, nu scrie în Jurnal —
+ * fiindcă n-are pe numele cui să scrie, și tocmai asta se hotărăște aici.
+ *
+ * Toastul spune pe față ce s-a întâmplat și ce urmează, ca omul să nu creadă
+ * că e gata: apăsarea e jumătate de faptă, cealaltă jumătate e la el pe ecran.
+ */
+function telegram_buton_legare(array $cb, int $linkId, string $jeton): void
+{
+    $tgId = (int) ($cb['from']['id'] ?? 0);
+    $nume = trim(
+        (string) ($cb['from']['first_name'] ?? '') . ' ' . (string) ($cb['from']['last_name'] ?? '')
+    );
+    $user = (string) ($cb['from']['username'] ?? '');
+    if ($user !== '') {
+        $nume = ($nume === '' ? '' : $nume . ' ') . '@' . $user;
+    }
+    if ($nume === '') {
+        $nume = 'Telegram #' . $tgId;
+    }
+
+    if ($tgId <= 0) {
+        telegram_spune($cb, false, 'Nu pot citi cine a apăsat. Încearcă din nou.');
+        return;
+    }
+
+    $r = telegram_legare_apasata($linkId, $jeton, $tgId, $nume);
+    match ($r['stare']) {
+        'legat_propus' => telegram_spune($cb, true,
+            'Am însemnat că ai apăsat tu. Intră în Setări → Notificări, pe contul tău, '
+                . 'și încuviințează — abia atunci apăsările încep să-ți poarte numele.'),
+        'expirat' => telegram_spune($cb, false,
+            'Cererea de legare a expirat. Cere una nouă din Setări → Notificări.'),
+        'deja' => telegram_spune($cb, false,
+            'Legătura asta s-a făcut deja. Dacă vrei să o schimbi, dezleagă întâi din Setări.'),
+        default => telegram_spune($cb, false,
+            'Butonul ăsta nu mai e bun. Probabil e dintr-un mesaj vechi; cere o legare nouă din Setări.'),
+    };
+}
+
 /* =================================================== mașinăria de trecere = */
 
 /**
- * Contul pe numele căruia lucrează apăsările, sau `null`.
+ * Contul pe numele căruia lucrează apăsarea, sau `null`.
  *
- * Scris la legarea botului, nu ghicit din cine a apăsat: identitățile din
- * Telegram nu se pot potrivi în niciun fel cu conturile din aplicație, iar un
- * „cine o fi" scris în Jurnal e mai rău decât nimic.
+ * AICI A SCRIS, PÂNĂ LA 2.2.1: „scris la legarea botului, nu ghicit din cine a
+ * apăsat: identitățile din Telegram nu se pot potrivi în niciun fel cu
+ * conturile din aplicație, iar un «cine o fi» scris în Jurnal e mai rău decât
+ * nimic".
+ *
+ * Era adevărat, și era răspunsul cinstit: nu exista nicio potrivire. Ce s-a
+ * schimbat nu e hotărârea, ci temeiul ei — `api/lib/telegram-legaturi.php` face
+ * potrivirea care lipsea, iar omul și-o scrie singur pe cont, în doi pași, din
+ * sesiunea lui. Nu se mai ghicește nimic: sau se ȘTIE cine a apăsat, sau se
+ * cade înapoi pe actorul global, exact ca înainte.
+ *
+ * Fără pasul ăsta, lucrarea care scoate autorul la vedere ar fi scris un nume
+ * GREȘIT pe ecran, tocmai pe calea pentru care a fost cerută — ceea ce e mai
+ * rău decât nepotrivirea de până acum, ascunsă în bază.
+ *
+ * TREI IEȘIRI, și cea din mijloc e miezul:
+ *
+ *   apăsătorul e legat și are drept   → lucrează pe numele LUI
+ *   apăsătorul e legat, fără drept    → `null` + pricina „fara_drept"; NU se
+ *                                       cade pe actorul global, fiindcă asta ar
+ *                                       scrie apăsarea unui om scos din
+ *                                       administratori pe numele patronului
+ *   apăsătorul nu e legat             → actorul global, ca în 2.2.0
  *
  * Se verifică de fiecare dată, nu o singură dată la legare: între timp contul
  * poate fi dezactivat sau scos din administratori, și atunci butoanele trebuie
  * să înceteze să lucreze pe loc — la fel ca sesiunile, care se închid când se
- * schimbă codul tabletelor.
+ * schimbă codul tabletelor. Verificarea e ACEEAȘI pentru amândouă căile.
+ *
+ * @param array|null   $cb      apăsarea, din care se citește `from.id`
+ * @param string|null  $pricina „fara_drept" | „nelegat", pentru vorba din toast
  */
-function telegram_actor(): ?array
+function telegram_actor(?array $cb = null, ?string &$pricina = null): ?array
 {
+    $pricina = null;
+
+    // --- întâi cine a apăsat CHIAR ACUM ---------------------------------
+    $tgId = (int) ($cb['from']['id'] ?? 0);
+    $alLui = telegram_contul_dupa_id($tgId);
+    if ($alLui !== null) {
+        if ((int) $alLui['active'] === 1 && in_array($alLui['role'], GP_ADMIN_ROLES, true)) {
+            return $alLui;
+        }
+        // Legat, dar fără drept. Aici NU se cade înapoi: căderea ar însemna că
+        // apăsarea unui om închis sau scos din administratori se scrie în
+        // Jurnal pe numele celui care a legat botul. Adică exact minciuna de
+        // reparat, făcută dintr-un om care nici n-avea voie să apese.
+        $pricina = 'fara_drept';
+        error_log('[gp] telegram: apăsare de la un cont legat fără drept (#' . $alLui['id'] . '), oprită');
+        return null;
+    }
+
+    // --- altfel, actorul global de până acum ----------------------------
     $id = (int) setting('notify_telegram_actor_id');
     if ($id <= 0) {
+        $pricina = 'nelegat';
         return null;
     }
     $u = one(
@@ -219,7 +327,15 @@ function telegram_actor(): ?array
         [$id]
     );
     if (!$u || (int) $u['active'] !== 1 || !in_array($u['role'], GP_ADMIN_ROLES, true)) {
+        $pricina = 'nelegat';
         return null;
+    }
+    if ($tgId > 0 && telegram_legaturi_suportate()) {
+        // Nu e o greșeală — e purtarea de până acum, păstrată dinadins ca o
+        // instalare pe jumătate urcată să meargă mai departe. Dar merită scris
+        // în jurnalul serverului, fiindcă e singura clipă în care numele din
+        // Jurnal nu e al celui care a apăsat.
+        error_log('[gp] telegram: apăsătorul ' . $tgId . ' nu e legat; fapta se scrie pe contul #' . $id);
     }
     // `csrf_token` lipsește dinadins: pe drumul ăsta nu există sesiune, deci
     // nici token. `check_csrf()` a trecut deja, înaintea rutei, pe o cerere
@@ -562,4 +678,139 @@ function telegram_seteaza(string $cheie, string $valoare, array $u): void
     q('UPDATE settings SET value = ?, updated_by = ? WHERE setting_key = ?',
         [$valoare, (int) $u['id'], $cheie]);
     settings_all(true);
+}
+
+/* ======================================== Telegramul meu, nu al botului == */
+
+/**
+ * GET /telegram/me — sunt legat? cine a apăsat? mai am vreme?
+ *
+ * `require_admin()`, nu `require_auth()`: numai `GP_ADMIN_ROLES` pot hotărî
+ * cereri de sub anunțuri (`route_requests_accept/reject` sunt toate
+ * `require_admin()`), deci o legătură pe alt rol n-ar putea fi folosită
+ * niciodată. Ar fi stare moartă care seamănă cu o unealtă.
+ */
+function route_telegram_me(): void
+{
+    $u = require_admin();
+
+    if (!telegram_legaturi_suportate()) {
+        // Nu e o eroare, e un server fără migrarea 021. Pagina spune „nu se
+        // poate încă", nu „a picat ceva".
+        json_out(['suportat' => false, 'legat' => false, 'cerere' => null]);
+    }
+
+    $legat = (int) (scalar('SELECT telegram_user_id FROM users WHERE id = ?', [(int) $u['id']]) ?? 0);
+    $c = telegram_legarea_mea((int) $u['id']);
+
+    json_out([
+        'suportat' => true,
+        'legat'    => $legat > 0,
+        // Id-ul de Telegram NU pleacă spre pagină. Nu-i trebuie: ea are de
+        // arătat „ești legat" și numele apăsătorului, iar un număr care
+        // identifică un om în afara aplicației n-are ce căuta într-un răspuns
+        // pe care îl poate citi orice administrator din consola browserului.
+        'cerere'   => $c === null ? null : [
+            'apasat'    => $c['pressed_tg_id'] !== null,
+            'numeleLui' => $c['pressed_name'],
+            'apasatLa'  => $c['pressed_at'],
+            'expiraLa'  => $c['expires_at'],
+            'folosit'   => $c['used_at'] !== null,
+        ],
+    ]);
+}
+
+/**
+ * POST /telegram/me/link — trimite în grup butonul „eu sunt".
+ *
+ * Mesajul pleacă în grupul personalului fiindcă botul n-are voie să vadă altă
+ * conversație (`notify_telegram_chat_id`). Deci scrie pe față AL CUI e butonul:
+ * colegii trebuie să poată vedea că nu e al lor înainte să apese, iar cel care
+ * apasă greșit află pe loc din toast că n-a legat nimic.
+ */
+function route_telegram_me_link(): void
+{
+    $u = require_admin();
+
+    if (!telegram_legaturi_suportate()) {
+        fail('Serverul n-are încă tabelele pentru legarea pe om (migrarea 021).', 422, 'not_supported');
+    }
+    $chat = setting('notify_telegram_chat_id');
+    if ($chat === '') {
+        fail('Salvează întâi Chat ID-ul în Setări, altfel butonul n-are unde să plece.', 422, 'no_telegram_chat');
+    }
+    if (setting('notify_telegram_webhook_status') !== 'legat') {
+        // Un buton sub un webhook nelegat se desenează frumos și nu face nimic
+        // — aceeași pricină pentru care `send_telegram()` nu pune butoane fără
+        // `telegram_buttons_live()`.
+        fail('Leagă întâi botul (butonul „Leagă botul" de mai sus), apoi contul tău.', 422, 'no_webhook');
+    }
+
+    $jeton = telegram_cerere_legare((int) $u['id']);
+    $id    = (int) scalar('SELECT id FROM telegram_links WHERE user_id = ?', [(int) $u['id']]);
+
+    try {
+        send_telegram(
+            $chat,
+            'Cine e „' . $u['name'] . '" pe Telegram?' . "\n\n"
+                . 'Dacă tu ești, apasă butonul. Apăsarea nu leagă nimic singură: '
+                . $u['name'] . ' trebuie să încuviințeze din contul lui.' . "\n"
+                . 'Butonul e bun ' . GP_TGLINK_MINUTE . ' de minute.',
+            [[['text' => '👤 Eu sunt ' . $u['name'], 'callback_data' => 'leg:' . $id . ':' . $jeton]]]
+        );
+    } catch (Throwable $e) {
+        // Cererea deschisă se stinge: altfel ar rămâne un rând care așteaptă o
+        // apăsare pe un buton care n-a plecat nicăieri.
+        telegram_dezleaga((int) $u['id']);
+        fail('Mesajul n-a plecat: ' . $e->getMessage(), 502, 'telegram_send_failed');
+    }
+
+    // Jetonul NU se scrie în Jurnal, ca niciun alt secret al casei.
+    audit('telegram_self_link_cerut', 'user', (string) $u['id'],
+        'A cerut legarea contului de Telegram; butonul a plecat în grup');
+
+    json_out(['ok' => true, 'minute' => GP_TGLINK_MINUTE]);
+}
+
+/**
+ * POST /telegram/me/confirm — „da, eu am apăsat".
+ *
+ * AICI, și numai aici, se scrie `users.telegram_user_id`. Id-ul nu vine din
+ * cerere, ci de pe rândul scris la apăsare: dacă l-ar trimite pagina, omul
+ * și-ar putea trece pe cont numărul altuia, iar apăsările aceluia i-ar purta
+ * numele — adică minciuna de reparat, pusă la loc cu mâna lui.
+ */
+function route_telegram_me_confirm(): void
+{
+    $u = require_admin();
+
+    $r = telegram_incuviinteaza((int) $u['id']);
+    if (!$r['ok']) {
+        [$vorba, $cod] = match ($r['pricina']) {
+            'neapasat'   => ['Nimeni n-a apăsat încă butonul din grup.', 'not_pressed'],
+            'expirat'    => ['Cererea a expirat. Cere una nouă.', 'expired'],
+            'deja'       => ['Legătura s-a făcut deja.', 'already'],
+            'luat'       => ['Telegramul ăsta e legat de contul „' . $r['nume'] . '". '
+                             . 'Dezleagă-l de acolo întâi.', 'taken'],
+            default      => ['Legarea pe om nu e pornită pe serverul ăsta.', 'not_supported'],
+        };
+        fail($vorba, 409, $cod);
+    }
+
+    audit('telegram_self_link', 'user', (string) $u['id'],
+        'Cont legat de Telegram („' . $r['nume'] . '"); de-acum apăsările lui îi poartă numele');
+
+    json_out(['ok' => true, 'numeleLui' => $r['nume']]);
+}
+
+/** DELETE /telegram/me/link — contul nu mai are Telegram. */
+function route_telegram_me_unlink(): void
+{
+    $u = require_admin();
+
+    telegram_dezleaga((int) $u['id']);
+    audit('telegram_self_unlink', 'user', (string) $u['id'],
+        'Cont dezlegat de Telegram; apăsările lui se scriu iar pe contul care a legat botul');
+
+    json_out(['ok' => true]);
 }

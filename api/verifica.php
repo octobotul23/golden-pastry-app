@@ -235,6 +235,8 @@ if ($hasConfig) {
             'lab_shifts'           => '014_pontaj_laborator.sql',
             'lab_messages'         => '015_mesaje_laborator.sql',
             'request_claims'       => '019_jeton_cerere.sql',
+            'telegram_links'       => '021_raspundere.sql',
+            'lab_production'       => '021_raspundere.sql',
         ];
         $missing = array_values(array_diff(array_keys($need), $tables));
         // Numele lipsă spune singur care fișier n-a intrat, ca în docs/01 și în
@@ -522,6 +524,34 @@ if ($hasConfig) {
                 'ce'      => 'Grăbește socoteala insignei de pe fiecare comandă (prima comandă, '
                     . 'client revenit, fără cont). Fără el insignele ies la fel, doar mai încet: '
                     . 'nicio poartă din cod nu-l caută.',
+            ],
+            // `telegram_links` și `lab_production` sunt numărate sus, la tabelele
+            // aplicației; aici stă coloana lui `users` și lămurirea a ce se pierde.
+            '021_raspundere.sql' => [
+                'nume'    => 'Cine a făcut și cine era de tură (migrarea 021)',
+                'coloane' => ['users' => ['telegram_user_id']],
+                'setari'  => [],
+                'ce'      => 'Țin trei lucruri deodată. Coloana leagă contul omului de Telegramul '
+                    . 'lui, ca fapta apăsată pe telefon să poarte numele celui care a apăsat, nu '
+                    . 'pe al celui care a legat botul; fără ea, toate faptele venite din Telegram '
+                    . 'ies pe seama unui singur om. Tabelul `telegram_links` ține cererile de '
+                    . 'legare cât sunt în așteptare; fără el, legarea nu se poate porni deloc. '
+                    . 'Tabelul `lab_production` ține fiecare bucată numărată în laborator cu '
+                    . 'clipa ei; fără el, raportul de producție pe tură iese gol — nu dă eroare, '
+                    . 'doar nu are ce număra.',
+            ],
+            // 022 nu aduce niciun tabel — numai patru coloane pe `order_requests`,
+            // toate NULL sau cu implicit, deci rândurile vechi rămân întregi.
+            '022_cerere_de_la_personal.sql' => [
+                'nume'    => 'Cererea scrisă de personal (migrarea 022)',
+                'coloane' => ['order_requests' => ['fulfillment', 'urgent', 'timed', 'created_by']],
+                'setari'  => [],
+                'ce'      => 'Țin ce a ales omul care a luat telefonul: modul de onorare, graba și '
+                    . 'ora fixă, plus cine a scris cererea. Fără ele, agentul de vânzări și '
+                    . 'angajatul încă pot trimite cereri, dar alegerile lor se pierd tăcut între '
+                    . 'formular și acceptare: comanda născută cade pe modul implicit, nu e urgentă '
+                    . 'chiar dacă a fost cerută așa, și poartă numele celui care a apăsat '
+                    . '„Acceptă”, nu al celui care a scris-o.',
             ],
         ];
 

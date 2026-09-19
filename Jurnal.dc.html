@@ -217,7 +217,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span>Ora</span><span>Cont</span><span>Zonă</span><span>Ce s-a schimbat</span>
 </div>
 <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="6">
-<div data-jr="row" style="display:grid;grid-template-columns:74px 190px 132px minmax(0,1fr);gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--h-line)">
+<!-- Rândul e un BUTON, nu un div cu `onClick`: așa îl găsește tastatura, îl
+     citește cititorul de ecran și îl deschide Enter. `data-jr="row"` rămâne,
+     fiindcă pe el se sprijină rearanjarea de pe telefon (foaia de sus, :24). -->
+<button type="button" data-jr="row" onClick="{{ r.onOpen }}" title="{{ r.titlu }}" style="display:grid;grid-template-columns:74px 190px 132px minmax(0,1fr);gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--h-line);width:100%;box-sizing:border-box;text-align:left;font:inherit;color:inherit;background:none;border-left:0;border-right:0;border-top:0;cursor:pointer">
 <span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ r.time }}</span>
 <div data-jr="who" style="display:flex;align-items:center;gap:8px;min-width:0">
 <span style="font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span>
@@ -225,7 +228,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <span class="{{ r.pageCls }}" style="font-size:11px;justify-self:start">{{ r.page }}</span>
 <span data-jr="act" style="font-size:15px;line-height:1.4;color:var(--h-fg-muted)">{{ r.action }}</span>
-</div>
+</button>
 </sc-for>
 </div>
 </div>
@@ -264,6 +267,107 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 
 </div>
+
+<!-- FEREASTRA UNUI RÂND (§A3). Tiparul casei: perdea fixă peste tot ecranul,
+     card `h-card` la mijloc. Butonul de închidere are 44 de pixeli, pragul de
+     deget pe care casa și-l cere singură (`shared/gp-bara.css`) — cele trei
+     ferestre ale magazinului sunt încă la 36, și e o fișă deschisă în
+     docs/06. Perdeaua închide la atingere, Escape la fel. -->
+<sc-if value="{{ detOpen }}" hint-placeholder-val="{{ false }}">
+<div data-jr="detwrap" onClick="{{ onDetClose }}" style="position:fixed;inset:0;background:rgba(28,18,11,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:60;animation:pf-fade .2s var(--h-ease-out)">
+<!-- Apăsarea pe card nu urcă la perdea: altfel orice atingere înăuntru ar
+     închide fereastra pe care omul tocmai o citește. -->
+<div data-jr="detcard" class="h-card" onClick="{{ onDetKeep }}" style="width:640px;max-width:100%;max-height:88vh;overflow-y:auto;padding:22px 24px;border-radius:22px;display:flex;flex-direction:column;gap:16px;animation:pf-pop .28s var(--h-ease-spring)">
+
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<h2 class="h-h3" style="margin:0;font-size:20px;line-height:1.25">{{ detTitlu }}</h2>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ detSub }}</span>
+</div>
+<button type="button" aria-label="Închide fereastra acțiunii" class="h-btn h-btn--ghost" onClick="{{ onDetClose }}" style="margin-left:auto;height:44px;width:44px;min-height:44px;padding:0;font-size:20px;flex:none">×</button>
+</div>
+
+<div data-jr="detfapte" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Când</span>
+<span class="h-numeric" style="font-size:15px">{{ detCand }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Cine</span>
+<span style="font-size:15px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">{{ detCine }} <span class="{{ detRolCls }}" style="font-size:10px">{{ detRol }}</span></span>
+</div>
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">De la</span>
+<span class="h-numeric" style="font-size:15px">{{ detIp }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Zonă</span>
+<span class="{{ detZonaCls }}" style="font-size:11px;align-self:flex-start">{{ detZona }}</span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:5px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Ce s-a schimbat</span>
+<p style="margin:0;font-size:16px;font-weight:600;line-height:1.4">{{ detActiune }}</p>
+<!-- Amănuntul ÎNTREG. În listă stă lipit de acțiune, pe un rând care se taie
+     la marginea coloanei; aici are voie să curgă. -->
+<sc-if value="{{ detAreDetaliu }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:15px;line-height:1.5;color:var(--h-fg-muted);white-space:pre-wrap;overflow-wrap:anywhere">{{ detDetaliu }}</p>
+</sc-if>
+</div>
+
+<sc-if value="{{ detAreLink }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onDetLink }}" style="min-height:44px;font-size:15px;align-self:flex-start">{{ detLinkEt }}</button>
+</sc-if>
+<sc-if value="{{ detSters }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-faint)">{{ detStersLinie }}</p>
+</sc-if>
+
+<div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--h-line);padding-top:14px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ detIstTitlu }}</span>
+
+<sc-if value="{{ detIstEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+<p style="margin:0;font-size:14px;line-height:1.45">{{ detIstEroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onDetIstRetry }}" style="min-height:44px;font-size:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ detIstAsteapta }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;color:var(--h-fg-faint)">Se caută…</p>
+</sc-if>
+
+<sc-if value="{{ detIstGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;color:var(--h-fg-faint)">{{ detIstGolLinie }}</p>
+</sc-if>
+
+<sc-for list="{{ detIst }}" as="h" hint-placeholder-count="4">
+<div style="display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--h-line)">
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ h.cand }}</span>
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+<span style="font-size:15px;line-height:1.4">{{ h.text }}</span>
+<div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+<span style="font-size:12px;color:var(--h-fg-faint)">{{ h.cine }}</span>
+<!-- De unde vine rândul, când nu vine de pe lucrul apăsat. Așa se vede pe
+     față nașterea unei comenzi ieșite dintr-o cerere: ea e scrisă pe CERERE,
+     nu pe comandă, și fără insigna asta ar părea că s-a scris pe comandă. -->
+<sc-if value="{{ h.dinAlta }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge" style="font-size:10px">{{ h.deUnde }}</span>
+</sc-if>
+</div>
+</div>
+</div>
+</sc-for>
+
+<sc-if value="{{ detIstMai }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;color:var(--h-fg-faint)">{{ detIstMaiLinie }}</p>
+</sc-if>
+</div>
+
+</div>
+</div>
+</sc-if>
+
 </sc-if>
 
 </x-dc>
@@ -292,13 +396,40 @@ const z = (n) => (n < 10 ? "0" : "") + n;
 const dayKey = (ms) => { const d = new Date(ms); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
 const MON = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
 
+/**
+ * Adresa altei pagini, cu întrebarea ei, peste întrebarea paginii de acum.
+ *
+ * DE CE NU O LEGĂTURĂ OBIȘNUITĂ. Paginile casei prind toate apăsările pe
+ * `a[href$=".dc.html"]` și lipesc `location.search` la coadă (cârligul de la
+ * `componentDidMount`), ca parametrii de previzualizare să treacă mai departe.
+ * O legătură care are deja o întrebare a ei ar ieși de-acolo cu DOUĂ semne de
+ * întrebare — „Conturi.dc.html?cont=7?dc=1" —, adică o adresă stricată; și
+ * numai atunci când pagina de acum a fost deschisă cu o întrebare, deci
+ * niciodată la o probă obișnuită și întotdeauna în previzualizare. Se face
+ * deci aici, întreagă și o singură dată, iar butonul rămâne BUTON: pe butoane
+ * cârligul acela nici nu se uită.
+ */
+const catre = (pagina, cheie, val) => {
+  const p = new URLSearchParams(location.search || "");
+  p.set(cheie, String(val));
+  return pagina + "?" + p.toString();
+};
+
 class Component extends DCLogic {
   // „search” este ce scrie omul în casetă, „q” este căutarea pe care a făcut-o
   // serverul și căreia îi aparțin intrările din „log”. Sunt două lucruri
   // diferite: între apăsarea tastei și răspuns trece timp, iar un răspuns
   // întârziat despre altă căutare trebuie recunoscut și aruncat, ca omul să nu
   // vadă rezultatele cuvântului pe care tocmai l-a șters.
-  state = { navOpen: false, log: [], pg: 1, pages: 1, total: 0, auth: null, who: "Toate", page: "Toate", search: "", q: "", eroare: "", eroareMai: "", loaded: false };
+  state = { navOpen: false, log: [], pg: 1, pages: 1, total: 0, auth: null, who: "Toate", page: "Toate", search: "", q: "", eroare: "", eroareMai: "", loaded: false,
+    // FEREASTRA UNUI RÂND. `deschis` e rândul apăsat (obiectul din `log`, nu
+    // numărul lui: rândul poate ieși din listă la următoarea reîmprospătare,
+    // iar fereastra n-are voie să se golească sub degetul omului).
+    //
+    // `ist` e istoria lucrului despre care e rândul, cerută de la server cu
+    // `?entity=&entityId=`; `subiect` e ce ESTE lucrul acela — titlul
+    // ferestrei și cheia butonului care duce la el.
+    deschis: null, ist: [], istTotal: 0, istGata: false, istEroare: "", subiect: null };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
@@ -362,12 +493,21 @@ class Component extends DCLogic {
       });
     this.onStore = () => this.pull(1);
     window.addEventListener("storage", this.onStore);
+    // Escape închide fereastra, ca peste tot în casă. Numai ea: meniul de pe
+    // telefon are butonul lui, iar o tastă care închide două lucruri deodată
+    // lasă omul fără să știe pe care l-a închis.
+    this.onEsc = (ev) => {
+      if (ev.key !== "Escape") return;
+      if (this.state.deschis) this.setState({ deschis: null });
+    };
+    window.addEventListener("keydown", this.onEsc);
   }
 
   componentWillUnmount() {
     if (this.stopPoll) this.stopPoll();
     clearTimeout(this.tCauta);
     window.removeEventListener("storage", this.onStore);
+    window.removeEventListener("keydown", this.onEsc);
   }
 
   /**
@@ -400,7 +540,19 @@ class Component extends DCLogic {
           role: e.role || '',
           page: e.entity || '',
           action: e.action,
-          detail: e.detail || ''
+          detail: e.detail || '',
+          // CE ARUNCA MAPAREA. Serverul trimite de la bun început `entity`,
+          // `entityId` și `ip` (api/routes/log.php). Pagina ținea din ele
+          // numai `entity`, și pe acela sub alt nume — `page` —, fiindcă îl
+          // folosea doar ca ZONĂ, pentru butoanele de filtrare de sus. Deci un
+          // rând știa din ce colț al casei vine, dar nu DESPRE CE e; iar IP-ul,
+          // scris la fiecare acțiune, nu ajungea nicăieri pe ecran.
+          //
+          // `page` rămâne cum era: filtrele lucrează pe el, iar un nume
+          // schimbat aici s-ar fi rupt în cinci locuri fără niciun câștig.
+          entity: e.entity || '',
+          entityId: e.entityId == null ? '' : String(e.entityId),
+          ip: e.ip || ''
         }));
 
         // Prima pagină înlocuiește lista; „mai vechi" o completează. Fără asta,
@@ -491,6 +643,58 @@ class Component extends DCLogic {
     return this.pull(1, term);
   }
 
+  /**
+   * Deschide rândul apăsat.
+   *
+   * Se ține OBIECTUL, nu numărul lui. Jurnalul se reîmprospătează din cinci în
+   * cinci secunde, iar dacă între timp rândul iese din felia adusă — altcineva
+   * a mai scris cincizeci de acțiuni — o fereastră care l-ar căuta după număr
+   * s-ar goli singură sub degetul omului, fără ca el să fi apăsat nimic.
+   */
+  deschide(rand) {
+    this.setState({ deschis: rand, ist: [], istTotal: 0, istGata: false, istEroare: "", subiect: null });
+    this.incarcaIstoric(rand);
+  }
+
+  /**
+   * Tot ce s-a mai scris despre același lucru.
+   *
+   * Cererea merge pe CHEIE — `?entity=&entityId=` —, nu pe căutarea de text de
+   * sus: aceea lucrează cu `LIKE`, iar „#101" ar aduce și rândurile lui
+   * „#1010". Serverul urmează și legătura dintre o comandă și cererea din care
+   * s-a născut (api/routes/log.php), deci nașterea unei comenzi venite de pe
+   * site apare aici chiar dacă e scrisă pe cerere.
+   */
+  incarcaIstoric(rand) {
+    const ent = rand ? (rand.entity || "") : "";
+    const id  = rand ? (rand.entityId || "") : "";
+    // Un rând fără obiect — o intrare în cont, o setare fără număr — n-are
+    // istorie de cerut. Fereastra lui se deschide oricum: clipa întreagă, omul,
+    // IP-ul și amănuntul netăiat sunt tot ce s-a scris despre el, și tot e mai
+    // mult decât încape în rândul din listă.
+    if (!ent || !id) { this.setState({ istGata: true }); return; }
+
+    // Între cerere și răspuns omul poate apăsa alt rând. Fără semnul ăsta,
+    // istoria cerută prima și sosită a doua s-ar așeza sub titlul celeilalte —
+    // aceeași capcană ca la căutarea de sus, și la fel de tăcută.
+    const semn = ent + ":" + id;
+    this.semnIst = semn;
+    this.setState({ istEroare: "", istGata: false });
+
+    gp.get("/log?entity=" + encodeURIComponent(ent) + "&entityId=" + encodeURIComponent(id))
+      .then((r) => {
+        if (this.semnIst !== semn) return;
+        this.setState({
+          ist: r.entries || [], istTotal: r.total || 0,
+          subiect: r.subject || null, istGata: true
+        });
+      })
+      .catch((e) => {
+        if (this.semnIst !== semn) return;
+        this.setState({ istEroare: gp.motiv(e, "istoria acțiunii"), istGata: true });
+      });
+  }
+
   renderVals() {
     const S = this.state, set = (x) => this.setState(x);
     const auth = S.auth;
@@ -534,9 +738,67 @@ class Component extends DCLogic {
             roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
             page: ZLAB[e.page] || e.page || "—",
             pageCls: PCLS[e.page] || "h-badge",
-            action: (e.action || "") + (e.detail ? " · " + e.detail : "")
+            action: (e.action || "") + (e.detail ? " · " + e.detail : ""),
+            titlu: "Deschide acțiunea",
+            onOpen: () => this.deschide(e)
           };
         })
+      };
+    });
+
+    /* ---- fereastra unui rând ----
+     *
+     * Totul se socotește o dată, aici, și se întinde în chei mai jos. Rândul
+     * deschis poate fi `null` — atunci fereastra nici nu e în pagină —, deci
+     * fiecare cheie are grijă de cazul acela singură.
+     */
+    const D = S.deschis;
+    const sub = S.subiect;
+    const dEnt = D ? (D.entity || "") : "";
+    const dId  = D ? (D.entityId || "") : "";
+    const dNume = ZLAB[dEnt] || dEnt || "";
+    const dRol = D ? (D.role || "") : "";
+    const dRolEt = dRol === "agent_vanzari" ? "agent vânzări" : (dRol || "—");
+    const dRolCls = dRol === "admin" ? "h-badge h-badge--honey" : dRol === "client" ? "h-badge h-badge--accent" : "h-badge";
+
+    // Numărul din titlu. La o COMANDĂ se arată referința ei (`#1009`), cea pe
+    // care o știe omul de pe hârtii; la orice altceva, numărul din bază, care e
+    // tot ce există. Referința nu se ia de la cerere: acolo `ref` e a comenzii
+    // în care s-a prefăcut, iar scrisă în titlu ar boteza cererea cu numărul
+    // altui lucru.
+    const dNumar = (dEnt === "order" && sub && sub.ref) ? sub.ref : ("#" + dId);
+    const dCandDt = D ? new Date(D.at) : null;
+    const detCand = dCandDt
+      ? (dCandDt.getDate() + " " + MON[dCandDt.getMonth()] + " " + dCandDt.getFullYear()
+         + ", " + z(dCandDt.getHours()) + ":" + z(dCandDt.getMinutes()) + ":" + z(dCandDt.getSeconds()))
+      : "";
+    const detTitlu = !D ? ""
+      : (!dEnt ? "Acțiune fără obiect"
+        : dNume + " " + dNumar + (sub && sub.label ? " · " + sub.label : ""));
+    const detSub = !D ? ""
+      : ("Acțiunea #" + D.id + (dEnt ? " · " + dEnt + ":" + dId : " · fără obiect"));
+
+    // UNDE DUCE BUTONUL. `ref` e, prin înțelegerea cu serverul, referința
+    // comenzii spre care se poate merge: a comenzii însăși, sau a celei în care
+    // s-a prefăcut cererea. Contul se cheamă după NUMĂR, nu după nume de
+    // utilizator: numele n-are ce căuta într-o adresă web.
+    const linkRef = sub && sub.ref ? sub.ref : "";
+    const linkCont = (sub && sub.entity === "user" && sub.exists) ? sub.id : 0;
+    const detAreLink = !!(linkRef || linkCont);
+    const detLinkEt = linkRef ? "Vezi comanda " + linkRef : "Vezi contul";
+
+    const detIst = (S.ist || []).map((h) => {
+      const hd = new Date(gp.utc(h.createdAt));
+      const hId = h.entityId == null ? "" : String(h.entityId);
+      return {
+        cand: hd.getDate() + " " + MON[hd.getMonth()] + ", " + z(hd.getHours()) + ":" + z(hd.getMinutes()),
+        text: (h.action || "") + (h.detail ? " · " + h.detail : ""),
+        cine: h.user || "Sistem",
+        // Rândul nu vine de pe lucrul apăsat, ci de pe perechea lui. Se spune,
+        // ca nașterea unei comenzi ieșite dintr-o cerere — scrisă pe CERERE,
+        // nu pe comandă — să nu pară scrisă acolo unde nu e.
+        dinAlta: (h.entity || "") !== dEnt || hId !== dId,
+        deUnde: (ZLAB[h.entity] || h.entity || "—") + " #" + (hId || "?")
       };
     });
 
@@ -713,6 +975,45 @@ class Component extends DCLogic {
       pagePick: S.page,
       pageOpts: zonele.map(optiune),
       onPagePick: (e) => set({ page: e.target.value }),
+
+      // ---- fereastra unui rând ----
+      detOpen: !!D,
+      detTitlu,
+      detSub,
+      detCand,
+      detCine: D ? (D.name || D.u || "—") : "",
+      detRol: dRolEt,
+      detRolCls: dRolCls,
+      // IP-ul e scris la fiecare acțiune și nu se vedea nicăieri. E singurul
+      // lucru din rând care spune DE UNDE s-a apăsat.
+      detIp: D ? (D.ip || "—") : "",
+      detZona: D ? (ZLAB[D.page] || D.page || "—") : "",
+      detZonaCls: D ? (PCLS[D.page] || "h-badge") : "h-badge",
+      detActiune: D ? (D.action || "—") : "",
+      detDetaliu: D ? (D.detail || "") : "",
+      detAreDetaliu: !!(D && D.detail),
+      detAreLink,
+      detLinkEt,
+      onDetLink: () => {
+        if (linkRef) location.href = catre("Administrare Comenzi.dc.html", "q", linkRef);
+        else if (linkCont) location.href = catre("Conturi.dc.html", "cont", linkCont);
+      },
+      detSters: !!(sub && !sub.exists),
+      detStersLinie: "Lucrul acesta nu mai există în sistem — a fost șters. Rândurile de mai jos sunt tot ce a rămas din el.",
+      detIstTitlu: "Tot ce s-a mai scris despre asta",
+      detIstEroare: S.istEroare,
+      detIstAsteapta: !!D && !S.istGata && !S.istEroare,
+      detIstGol: !!D && S.istGata && !S.istEroare && detIst.length === 0,
+      detIstGolLinie: (D && D.entity)
+        ? "Nimic scris despre asta."
+        : "Acțiunea nu e scrisă pe niciun lucru anume, deci n-are istorie.",
+      detIst,
+      detIstMai: S.istTotal > detIst.length,
+      detIstMaiLinie: "Se văd primele " + detIst.length + " din " + S.istTotal + ".",
+      onDetClose: () => set({ deschis: null }),
+      // Apăsarea pe card nu urcă la perdea, care închide.
+      onDetKeep: (ev) => { if (ev && ev.stopPropagation) ev.stopPropagation(); },
+      onDetIstRetry: () => this.incarcaIstoric(S.deschis),
 
       groups,
       // Subsolul și „Încarcă mai vechi” țin de câte intrări s-au adus, nu de

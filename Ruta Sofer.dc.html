@@ -73,12 +73,40 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 
 <div data-rt="days" style="display:flex;align-items:center;gap:8px">
-<button type="button" onClick="{{ onMenuOpen }}" style="flex:1;min-width:0;min-height:52px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:7px 13px;border-radius:14px;background:var(--h-bg-raised);border:1px solid var(--h-line);color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
+<button type="button" onClick="{{ onMenuOpen }}" style="flex:1;min-width:0;min-height:52px;display:flex;align-items:center;gap:9px;padding:7px 13px;border-radius:14px;background:var(--h-bg-raised);border:1px solid var(--h-line);color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
 <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Ziua rutei</span>
 <span style="max-width:100%;font-size:15px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ currentLabel }}</span>
+</span>
+<span style="flex:none;font-size:15px;color:var(--h-fg-subtle)">▾</span>
 </button>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onMenuOpen }}" style="flex:none;min-height:52px;padding:0 15px;font-size:15px;border-radius:14px;white-space:nowrap">Schimbă ▾</button>
+<!-- „Schimbă ▾" ducea exact unde ducea și butonul lat de lângă el: două ținte
+     pentru un singur înțeles, pe un ecran de 390px unde fiecare pixel e
+     cerut. Săgeata a intrat în butonul lat, iar locul rămas îl ia singura ușă
+     spre trecut.
+     Insigna cu cifră apare NUMAI când chiar a rămas ceva nefinalizat. Un zero
+     desenat acolo ar fi o grijă pe degeaba, în fiecare zi, pentru un om care
+     conduce. -->
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onIstoricOpen }}" style="flex:none;min-height:52px;padding:0 14px;font-size:15px;border-radius:14px;white-space:nowrap;display:flex;align-items:center;gap:7px">
+<span>Istoric</span>
+<sc-if value="{{ restanteInsigna }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger h-numeric" style="font-size:11px;padding:1px 6px">{{ restanteInsigna }}</span>
+</sc-if>
+</button>
 </div>
+
+<!-- Banda zilei alese din calendar.
+     Fereastra nu mai pornește neapărat de azi, iar un ecran care arată ruta de
+     acum trei zile fără să spună asta e chiar capcana de care se ferea
+     reparația trecerii în ziua nouă: opriri deja livrate, sub o etichetă care
+     pare a zilei. Eticheta scrie ziua întreagă, iar butonul de întors la azi
+     stă lângă ea, nu îngropat în foaia de istoric. -->
+<sc-if value="{{ ancorat }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:10px;padding:8px 8px 8px 12px;border-radius:13px;background:var(--h-bg-raised);border:1px solid var(--h-accent)">
+<span style="flex:1;min-width:0;font-size:13px;line-height:1.35;color:var(--h-fg-muted)">{{ ancoraEticheta }}</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onAzi }}" style="flex:none;min-height:44px;padding:0 13px;font-size:14px;border-radius:12px;white-space:nowrap">Înapoi la azi</button>
+</div>
+</sc-if>
 
 <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
 <div style="position:fixed;inset:0;z-index:80;background:rgba(11,7,5,.72);display:flex;flex-direction:column;justify-content:flex-end">
@@ -94,6 +122,88 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ m.mark }}</span>
 </button>
 </sc-for>
+</div>
+</div>
+</sc-if>
+
+<!-- ISTORICUL.
+     Două întrebări deosebite, într-o singură foaie, în ordinea în care le pune
+     un om: „ce mi-a rămas?" înaintea lui „ce era în ziua de atunci?".
+     Restanțele sunt o listă care se GĂSEȘTE — nimeni nu știe pe ce zi a rămas
+     o livrare, deci nu se poate căuta în calendar. Calendarul e pentru ziua
+     pe care omul o știe. -->
+<sc-if value="{{ istoricOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:80;background:rgba(11,7,5,.72);display:flex;flex-direction:column;justify-content:flex-end">
+<div style="width:100%;flex:none;max-height:90vh;overflow-y:auto;padding:16px 16px 22px;border-radius:22px 22px 0 0;background:var(--h-bg-surface);border-top:1px solid var(--h-line);display:flex;flex-direction:column;gap:14px;animation:rt-in .22s var(--h-ease-out)">
+
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Istoric</span>
+<button type="button" aria-label="Închide istoricul" class="h-btn h-btn--ghost" onClick="{{ onIstoricClose }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="h-eyebrow" style="font-size:11px">{{ restanteTitlu }}</span>
+<span style="font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ restanteSub }}</span>
+
+<sc-if value="{{ restanteEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:0;border-radius:13px;padding:11px 13px;font-size:14px;display:flex;flex-direction:column;gap:9px;align-items:flex-start">
+<span style="line-height:1.45">{{ restanteEroare }}</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onRestanteReincearca }}" style="min-height:44px;padding:0 14px;font-size:14px;border-radius:12px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<sc-for list="{{ restante }}" as="r" hint-placeholder-count="3">
+<button type="button" onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:11px;min-height:60px;padding:9px 13px;border-radius:15px;border:1px solid var(--h-line);background:var(--h-bg-raised);color:var(--h-fg);font-family:var(--h-font-body);text-align:left;cursor:pointer">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">
+<span style="font-size:15px;font-weight:700;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.cust }}</span>
+<span style="font-size:12px;color:var(--h-fg-subtle);line-height:1.35">{{ r.sub }}</span>
+</div>
+<span class="{{ r.etapaCls }}" style="font-size:11px;flex:none">{{ r.etapa }}</span>
+<span style="flex:none;font-size:17px;color:var(--h-fg-subtle)">▸</span>
+</button>
+</sc-for>
+</div>
+
+<div style="height:1px;background:var(--h-line)"></div>
+
+<!-- Calendarul, cu aceeași socoteală ca al laboratorului: șase rânduri de
+     șapte, mereu, fiindcă o lună de 31 de zile care începe duminica are
+     nevoie de șase. Numărul fix ține grila de aceeași înălțime de la o lună
+     la alta — altfel foaia sare sub degetul celui care schimbă luna, iar
+     butonul „luna următoare" fuge de sub el. -->
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<span style="font-family:var(--h-font-display);font-size:17px;font-weight:600;line-height:1.2">{{ calTitlu }}</span>
+<span style="font-size:12px;color:var(--h-fg-subtle);line-height:1.35">{{ calSub }}</span>
+</div>
+<button type="button" aria-label="Luna dinainte" class="h-btn h-btn--ghost" onClick="{{ onLunaPrev }}" style="flex:none;height:46px;width:46px;min-height:46px;padding:0;font-size:19px;border-radius:13px">‹</button>
+<button type="button" aria-label="Luna următoare" class="h-btn h-btn--ghost" onClick="{{ onLunaNext }}" style="flex:none;height:46px;width:46px;min-height:46px;padding:0;font-size:19px;border-radius:13px">›</button>
+</div>
+
+<sc-if value="{{ calEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="margin:0;border-radius:13px;padding:11px 13px;font-size:14px;display:flex;flex-direction:column;gap:9px;align-items:flex-start">
+<span style="line-height:1.45">{{ calEroare }}</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCalReincearca }}" style="min-height:44px;padding:0 14px;font-size:14px;border-radius:12px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+<sc-for list="{{ calZile }}" as="z" hint-placeholder-count="7">
+<span style="text-align:center;font-size:11px;letter-spacing:.04em;color:var(--h-fg-subtle);padding-bottom:2px">{{ z }}</span>
+</sc-for>
+</div>
+
+<div data-rt="calgrid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">
+<sc-for list="{{ calCelule }}" as="c" hint-placeholder-count="42">
+<button type="button" aria-label="{{ c.iso }}" onClick="{{ c.onClick }}" style="min-height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:4px 2px;border-radius:12px;border:1px solid {{ c.bd }};background:{{ c.bg }};color:{{ c.fg }};font-family:var(--h-font-body);cursor:pointer">
+<span style="font-size:15px;font-weight:{{ c.greu }};line-height:1.1">{{ c.zi }}</span>
+<span class="h-numeric" style="font-size:11px;opacity:.82;line-height:1.1">{{ c.n }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+
 </div>
 </div>
 </sc-if>
@@ -301,14 +411,71 @@ const HQ_OF = () => gp.hq();
 // totul, fiindcă cererea pleca cu ziua de ieri. De aceea fereastra se poate
 // reface: vezi refreshDays() din clasă, aceeași reparație ca în Panou
 // Laborator.
-let GPDAYS, DAYS, DLONG, ISOOF;
+//
+// Fereastra se poate ANCORA pe o zi aleasă din calendar. Gol înseamnă „de
+// azi", adică purtarea dintotdeauna.
+//
+// De ce era nevoie. Adminul poate scrie o comandă oriunde într-o fereastră de
+// un AN (`orderWindow`, api/routes/lists.php), iar șoferul vedea șapte zile:
+// azi plus șase. O comandă scrisă pentru săptămâna viitoare, sau consemnată
+// pe ziua de ieri, era trimisă de server la orice cerere — pagina nu întreba
+// niciodată despre ziua ei. Nu apărea nicăieri pe telefon și nimic nu spunea
+// că lipsește. Măsurat: din zilele −3, −1, +7, +10 și +30, serverul dă
+// opririle pe toate; ecranul nu putea ajunge la niciuna.
+//
+// Cât timp e ancorată, trecerea peste miezul nopții n-o mai mută: ziua a
+// ales-o omul, nu ceasul. Aceeași hotărâre ca în Panou Laborator.
+let ANCORA = "";
+let GPDAYS, DAYS, DLONG;
 const buildDays = () => {
-  GPDAYS = gp.days(7);
-  DAYS = GPDAYS.map(d => ({ v: d.v, l: d.short }));
-  DLONG = GPDAYS.reduce((a, d) => { a[d.v] = d.long.charAt(0).toUpperCase() + d.long.slice(1); return a; }, {});
-  ISOOF = GPDAYS.reduce((a, d) => { a[d.v] = d.iso; return a; }, {});
+  GPDAYS = gp.days(7, ANCORA);
+  DAYS = GPDAYS.map(d => ({ v: d.v, iso: d.iso, l: d.short }));
+  DLONG = GPDAYS.reduce((a, d) => { a[d.iso] = d.long.charAt(0).toUpperCase() + d.long.slice(1); return a; }, {});
 };
 buildDays();
+
+// CHEIA ZILEI E ISO-UL, NU ZIUA DIN LUNĂ, și merită spus de ce.
+//
+// `gp.toPageOrder` dă comenzii și `day` („18"), și `date` („2026-09-18").
+// Pagina lucra pe `day`, iar într-o fereastră de șapte zile asta e o cheie
+// bună: nu există două zile cu același număr. Din clipa în care calendarul
+// poate duce fereastra oriunde, nu mai e: „18" e și 18 septembrie, și 18
+// august. Ziua deschisă, opririle filtrate și numărătoarea din meniu s-ar fi
+// potrivit între luni deosebite, tăcut — adică ecranul ar fi arătat ruta unei
+// alte luni sub eticheta celei alese. `ISOOF` a dispărut cu totul: era harta
+// de la ziua din lună la ISO, iar acum cheia E ISO-ul.
+const pad2 = (n) => (n < 10 ? "0" : "") + n;
+const isoOf = (d) => d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+/**
+ * O zi ISO, ca dată LOCALĂ.
+ *
+ * `new Date("2026-09-12")` o citește ca miez de noapte UTC, deci la est de
+ * Greenwich cade pe ziua dinainte. Aceeași grijă ca în Panou Laborator și ca
+ * în `gp.days(n, deLa)`.
+ */
+const dinIso = (iso) => {
+  const p = String(iso).split("-").map(Number);
+  const d = new Date(p[0], (p[1] || 1) - 1, p[2] || 1);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+// Numele lunilor, pentru titlul calendarului. Nu e o listă care crește.
+const LUNI = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie",
+  "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+const ZILE_CAL = ["Lu", "Ma", "Mi", "Jo", "Vi", "Sâ", "Du"];
+/**
+ * Cum se scrie o zi: „Joi 18 septembrie".
+ *
+ * Zilele din fereastră le are deja `DLONG`. Pentru o restanță de acum trei
+ * săptămâni se cere de la `gp.days(1, iso)` — singurul loc din casă care știe
+ * cum se scrie o zi în românește. Scrisă a doua oară aici, ar fi fost o listă
+ * de nume de zile care se desparte de cealaltă la prima corectură.
+ */
+const etZi = (iso) => {
+  if (DLONG[iso]) return DLONG[iso];
+  const d = gp.days(1, iso)[0];
+  return d ? d.long.charAt(0).toUpperCase() + d.long.slice(1) : String(iso || "");
+};
 const SPEED = 22, SERVICE = 6;
 
 /**
@@ -329,7 +496,22 @@ const CE_PANOU = "ruta șoferului";
 const vedePanoul = (a) => (gp.PANOURI_ROL[(a && a.role) || ""] || []).indexOf(PANOUL) >= 0;
 
 class Component extends DCLogic {
-  state = { navOpen: false, auth: null, orders: [], counts: {}, day: DAYS[0].v, loaded: {}, open: null, toast: "", toastBad: false, menu: false, eroare: "", contorRupt: false, orderDay: "", listsReady: false };
+  state = {
+    navOpen: false, auth: null, orders: [], counts: {}, day: DAYS[0].iso, loaded: {},
+    open: null, toast: "", toastBad: false, menu: false, eroare: "", contorRupt: false,
+    orderDay: "", listsReady: false,
+    // Ziua de la care pornește fereastra, oglinda lui `ANCORA` de la nivel de
+    // modul. Stă și în stare fiindcă `renderVals()` nu poate citi decât de
+    // aici, iar banda „te uiți la o zi trecută" se aprinde după ea.
+    ancora: "",
+    // Foaia de istoric și calendarul din ea.
+    istoric: false, calLuna: "", calEroare: "",
+    // Ce a rămas în urmă: opririle zilelor trecute care nu s-au încheiat.
+    // `restanteGata` deosebește „am întrebat, nu-i nimic" de „încă n-am
+    // întrebat" — fără el, insigna ar spune „0" înainte de primul răspuns,
+    // adică ar liniști înainte de a ști.
+    restante: [], restanteGata: false, restanteEroare: "",
+  };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -348,7 +530,10 @@ class Component extends DCLogic {
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
       const st = this.state || {};
-      if (st.menu) this.setState({ menu: false });
+      // Butonul „înapoi" închide foaia de deasupra, oricare ar fi ea. Istoricul
+      // se închide primul: el poate sta peste alegerea zilei, nu invers.
+      if (st.istoric) this.setState({ istoric: false });
+      else if (st.menu) this.setState({ menu: false });
     };
     window.addEventListener("popstate", this.__gpBack);
     if (!window.__gpNav) {
@@ -369,24 +554,33 @@ class Component extends DCLogic {
     const d = read(DKEY, {});
     // Ziua cu care se deschide pagina, pe ceasul patiseriei.
     //
-    // Era ceasul telefonului, iar zilele din sertar vin de la
-    // `gp.days()` — adică de la ceasul patiseriei. Pe un telefon pe alt fus
-    // cele două nu se potriveau: `day` ieșea un număr care nu există în
-    // sertar, `ISOOF[day]` venea nedefinit, ruta se cerea pentru ziua bună,
-    // iar `stopsFor()` o filtra după ziua greșită. Rezultatul: sertarul scria
-    // „2 opriri", iar ecranul rămânea gol. Paza de nepotrivire prinde asta
-    // acum și o spune, dar mai bine să nu se nască.
-    const today = gp.acumLaPatiserie();
-    const p2 = (n) => (n < 10 ? "0" : "") + n;
-
+    // Era ceasul telefonului, iar zilele din sertar vin de la `gp.days()` —
+    // adică de la ceasul patiseriei. Pe un telefon pe alt fus cele două nu se
+    // potriveau: ziua aleasă nu era niciuna din sertar, ruta se cerea pentru
+    // ziua bună, iar `stopsFor()` o filtra după cea greșită. Rezultatul:
+    // sertarul scria „2 opriri", iar ecranul rămânea gol.
+    //
+    // De când cheia e ISO-ul, drumul ăsta s-a închis de la sine: `gp.today()`
+    // dă chiar ziua pe care o are sertarul, deci nu mai există o a doua
+    // socoteală care să iasă altfel. Paza de nepotrivire rămâne — ea acoperă
+    // și drumurile pe care nu le știm.
     this.setState({
       // Ce a încărcat șoferul în mașină rămâne pe telefonul lui: e starea
       // acelui dispozitiv, nu a comenzii.
       loaded: (d && d.loaded) || {},
-      day: p2(today.getDate())
+      // Ziua de azi pe CEASUL PATISERIEI, prin `gp.today()`, nu pe al
+      // telefonului. Pagina se deschide întotdeauna pe azi: ziua rămasă de
+      // ieri în `localStorage` n-a fost niciodată citită, și e bine — șoferul
+      // care pornește mașina vrea ruta de azi.
+      day: gp.today(),
     });
 
     this.pull();
+    // Ce a rămas în urmă se cere O DATĂ, la deschidere, nu la fiecare tură de
+    // cincisprezece secunde: e o întrebare peste treizeci de zile, iar
+    // răspunsul ei se schimbă numai când chiar se închide o livrare — moment
+    // în care o cere `markDone` singur.
+    this.pullRestante();
     // Tura periodică se uită întâi la dată: dacă s-a schimbat ziua, fereastra
     // se reface și ruta se cere singură pentru ziua nouă.
     this.timer = setInterval(() => { if (!this.refreshDays()) this.pull(); }, 15000);
@@ -412,11 +606,17 @@ class Component extends DCLogic {
    * cerută de aici și apelantul nu mai trebuie să cheme `pull()`.
    */
   refreshDays() {
+    // ZIUA ANCORATĂ NU SE MUTĂ LA MIEZUL NOPȚII. Omul s-a uitat la ruta de pe
+    // 14, iar ceasul care trece nu e un motiv s-o schimbe sub ochii lui — el
+    // se întoarce la azi apăsând, nu așteptând. Fără rândul ăsta, tura de
+    // cincisprezece secunde ar fi smuls fereastra înapoi la azi în prima
+    // noapte, iar ecranul ar fi arătat altceva decât ce alesese.
+    if (ANCORA) return false;
     if (gp.today() === GPDAYS[0].iso) return false;
-    const iso = ISOOF[this.state.day] || "";
+    const iso = this.state.day;
     buildDays();
-    const gasit = GPDAYS.find(d => d.iso === iso);
-    const day = gasit ? gasit.v : DAYS[0].v;
+    // Ziua la care se uita rămâne aleasă cât timp mai încape în fereastră.
+    const day = GPDAYS.some(d => d.iso === iso) ? iso : DAYS[0].iso;
     this.__seen = null;
     this.__counted = null;
     this.persistDriver({ day });
@@ -435,7 +635,7 @@ class Component extends DCLogic {
     // 403 la fiecare cincisprezece secunde, iar ecranul de refuz e deja peste
     // el. Poarta e pe „știu și nu are", nu pe „nu știu".
     if (this.state.auth && !vedePanoul(this.state.auth)) return;
-    const iso = ISOOF[this.state.day] || gp.today();
+    const iso = this.state.day || gp.today();
 
     // Listele se mai cer, dacă prima cerere a picat.
     //
@@ -458,7 +658,12 @@ class Component extends DCLogic {
     // „0 opriri”, iar șoferul nu avea de unde ști că mâine are livrări.
     gp.get('/routes/counts?from=' + GPDAYS[0].iso + '&to=' + GPDAYS[GPDAYS.length - 1].iso)
       .then((r) => {
-        const c = JSON.stringify((r && r.counts) || {});
+        // Răspunsul se ADUNĂ peste ce era, nu îl înlocuiește: fereastra de
+        // șapte zile și luna deschisă în calendar scriu în același dicționar,
+        // cheile sunt zile ISO și nu se ciocnesc. Înlocuit, fiecare tură de
+        // cincisprezece secunde ar fi șters cifrele lunii de sub calendarul
+        // deschis, iar el ar fi rămas gol sub degetul omului.
+        const c = JSON.stringify(Object.assign({}, this.state.counts, (r && r.counts) || {}));
         if (c !== this.__counted) { this.__counted = c; this.setState({ counts: JSON.parse(c) }); }
         if (this.state.contorRupt) this.setState({ contorRupt: false });
       })
@@ -484,7 +689,7 @@ class Component extends DCLogic {
         //
         // Se compară cu ziua din stare CITITĂ ACUM, nu cu `iso` de la
         // plecare: între timp șoferul poate să fi ales deja altceva.
-        const ziuaAcum = ISOOF[this.state.day] || gp.today();
+        const ziuaAcum = this.state.day || gp.today();
         if (r && r.day && r.day !== ziuaAcum) return;
         const list = (r.stops || []).map(gp.toPageOrder);
         const next = JSON.stringify(list);
@@ -512,7 +717,7 @@ class Component extends DCLogic {
         // acum. Fără rândul ăsta, șoferul apasă o zi nouă, ea se încarcă
         // bine, și peste ea se aprinde cartonul roșu al zilei de dinainte —
         // un mesaj adevărat despre o întrebare la care nimeni nu mai ține.
-        if (iso !== (ISOOF[this.state.day] || gp.today())) return;
+        if (iso !== (this.state.day || gp.today())) return;
         if (e.isAuth) gp.toLogin();
         else this.setState({ eroare: gp.motiv(e, "ruta zilei") });
       });
@@ -524,6 +729,7 @@ class Component extends DCLogic {
    * Ruta se cere din nou de la server: opririle unei zile nu se mai află în
    * ce a fost încărcat pentru ziua curentă.
    */
+  /** Trece pe altă zi din fereastră. `day` e ISO-ul zilei, nu ziua din lună. */
   goDay(day, closeMenu) {
     this.persistDriver({ day });
     this.__seen = null;
@@ -560,7 +766,9 @@ class Component extends DCLogic {
    * încă ține opririle zilei dinainte.
    */
   stopsFor(day) {
-    const all = this.state.orders.filter(o => o.day === day);
+    // Filtrul e pe `date` (ISO), nu pe `day` (ziua din lună): v. lămurirea de
+    // la `isoOf`. Cu calendarul deschis, „18" ar fi potrivit și 18 august.
+    const all = this.state.orders.filter(o => o.date === day);
     return all.slice().sort((a, b) => {
       const ra = a.routeSeq, rb = b.routeSeq;
       if (ra !== null && rb !== null) return ra - rb;
@@ -579,15 +787,154 @@ class Component extends DCLogic {
    * cere de la server o singură zi: în meniu, orice altă zi scria „0 opriri”
    * chiar dacă avea livrări, iar șoferul trecea peste ea fără să o deschidă.
    */
-  dayCount(day) {
+  dayCount(iso) {
     const counts = this.state.counts || {};
-    const iso = ISOOF[day];
     return iso && counts[iso] ? Number(counts[iso]) || 0 : 0;
+  }
+
+  /* ------------------------------------------------------------ istoric -- */
+
+  /**
+   * Cere numărătoarea unui interval, pentru calendar.
+   *
+   * Aceeași rută ca fereastra de șapte zile (`/routes/counts`), fiindcă
+   * trebuie să numere după ACEEAȘI regulă: ce e oprire și ce nu hotărăște
+   * `route_stop_filter()` pe server. Numărată altfel — de pildă cu
+   * `/orders/counts`, care numără toate comenzile — o zi cu patru ridicări și
+   * o livrare ar fi scris „5" în calendar și ar fi arătat o singură oprire la
+   * deschidere. Exact contrazicerea pentru care s-a născut `/routes/counts`.
+   */
+  pullCounts(from, to) {
+    return gp.get('/routes/counts?from=' + from + '&to=' + to)
+      .then((r) => {
+        const c = Object.assign({}, this.state.counts, (r && r.counts) || {});
+        this.__counted = JSON.stringify(c);
+        const patch = { counts: c };
+        if (this.state.calEroare) patch.calEroare = "";
+        this.setState(patch);
+      })
+      .catch((e) => {
+        if (e.isAuth) { gp.toLogin(); return; }
+        // Cifrele care n-au venit nu se dau drept zero: calendarul spune de ce
+        // nu le poate arăta, iar căsuțele rămân fără cifră — adică „nu știu".
+        this.setState({ calEroare: gp.motiv(e, "numărul de opriri pe zile") });
+      });
+  }
+
+  /** Ce a rămas în urmă: opririle zilelor trecute care nu s-au încheiat. */
+  pullRestante() {
+    if (this.state.auth && !vedePanoul(this.state.auth)) return;
+    return gp.get('/routes/restante')
+      .then((r) => {
+        this.setState({
+          restante: (r.stops || []).map(gp.toPageOrder),
+          restanteGata: true,
+          restanteEroare: "",
+        });
+      })
+      .catch((e) => {
+        if (e.isAuth) { gp.toLogin(); return; }
+        // `restanteGata` rămâne cum era. O listă care n-a venit n-are voie să
+        // se dea drept „nu ai nimic de recuperat" — aceeași regulă ca la
+        // `contorRupt`.
+        this.setState({ restanteEroare: gp.motiv(e, "comenzile rămase în urmă") });
+      });
+  }
+
+  /** Prima zi a lunii arătate în calendar, ca ISO. */
+  lunaCal() {
+    if (this.state.calLuna) return this.state.calLuna;
+    const baza = dinIso(this.state.ancora || this.state.day || gp.today());
+    return isoOf(new Date(baza.getFullYear(), baza.getMonth(), 1));
+  }
+
+  /**
+   * Cele 42 de căsuțe ale lunii arătate, cu numărul de opriri al fiecăreia.
+   *
+   * Șase rânduri de șapte, mereu: o lună de 31 de zile care începe duminica
+   * are nevoie de șase. Numărul fix ține grila de aceeași înălțime de la o
+   * lună la alta — altfel foaia sare sub deget la schimbarea lunii.
+   *
+   * Săptămâna începe luni, cum se numără la noi; `getDay()` numără de la
+   * duminică, de-aia mutarea cu `+ 6) % 7`.
+   */
+  celuleCal() {
+    const p1 = dinIso(this.lunaCal());
+    const luna = p1.getMonth();
+    const start = new Date(p1);
+    start.setDate(1 - ((p1.getDay() + 6) % 7));
+    // Ceasul patiseriei, nu al telefonului: căsuța însemnată spune „azi", iar
+    // „azi" e ziua după care se face ruta. Pe un telefon pe alt fus semnul
+    // cădea pe căsuța vecină — adică pe altă rută.
+    const aziIso = gp.today();
+    const out = [];
+    for (let i = 0; i < 42; i++) {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      const iso = isoOf(d);
+      out.push({
+        iso, zi: String(d.getDate()),
+        inLuna: d.getMonth() === luna,
+        azi: iso === aziIso,
+        deschisa: iso === this.state.day,
+        n: (this.state.counts || {})[iso] || 0,
+      });
+    }
+    return out;
+  }
+
+  /** Deschide istoricul și cere numărătoarea lunii arătate. */
+  deschideIstoric(lunaIso) {
+    const luna = lunaIso || this.lunaCal();
+    this.setState({ istoric: true, calLuna: luna, calEroare: "" }, () => {
+      // Se cere exact intervalul DESENAT, nu luna: prima și ultima săptămână
+      // arată și zile din lunile vecine, iar o căsuță fără cifră ar părea o zi
+      // liberă. 42 de zile încap în plafonul rutei de numărat (92).
+      const p1 = dinIso(luna);
+      const s = new Date(p1);
+      s.setDate(1 - ((p1.getDay() + 6) % 7));
+      const e = new Date(s);
+      e.setDate(s.getDate() + 41);
+      this.pullCounts(isoOf(s), isoOf(e));
+      // Restanțele se împrospătează la deschidere: între două deschideri poate
+      // să se fi închis una din birou.
+      this.pullRestante();
+    });
+  }
+
+  /** Sare cu `delta` luni în calendar (−1 înapoi, +1 înainte). */
+  saltLuna(delta) {
+    const p1 = dinIso(this.lunaCal());
+    this.deschideIstoric(isoOf(new Date(p1.getFullYear(), p1.getMonth() + delta, 1)));
+  }
+
+  /**
+   * Mută fereastra de șapte zile ca să înceapă cu ziua cerută.
+   *
+   * Pagina rămâne pagina UNEI zile: nu capătă o a doua listă și nici o a doua
+   * noțiune de „ziua deschisă". Se mută doar de unde pornește fereastra, iar
+   * tot restul — filele, kilometrii, bifele de încărcare, butonul de livrat —
+   * merge neschimbat. `iso` gol înseamnă „înapoi la azi".
+   */
+  mutaFereastra(iso, deschide) {
+    ANCORA = iso || "";
+    buildDays();
+    this.__seen = null;
+    // Contorul ferestrei vechi nu minte — cheile sunt zile ISO — dar
+    // `__counted` trebuie golit, altfel răspunsul ferestrei noi ar părea
+    // neschimbat și n-ar mai intra în stare.
+    this.__counted = null;
+    const day = DAYS[0].iso;
+    this.persistDriver({ day });
+    this.setState({
+      ancora: ANCORA, day, open: deschide || null, istoric: false, menu: false,
+      toast: "", eroare: "", orderDay: "",
+    }, () => this.pull());
   }
 
   __gpSync() {
     const st = this.state || {};
-    const now = !!(st.menu);
+    const now = !!(st.menu || st.istoric);
     if (now === this.__gpOvWas) return;
     this.__gpOvWas = now;
     try {
@@ -609,7 +956,11 @@ class Component extends DCLogic {
     // din ziua asta" e adevărat și nefolositor. Contradicția se spune numai
     // când e o contradicție: am întrebat despre ziua asta, am primit opriri,
     // și niciuna nu trece filtrul ei.
-    const ziuaDeschisa = ISOOF[S.day] || gp.today();
+    const ziuaDeschisa = S.day || gp.today();
+    // E o zi din trecut? Atunci jumătate din ecran vorbește despre un drum
+    // care nu mai e de făcut, și trebuie să tacă: „Următoarea · oprirea 3" pe
+    // ruta de marțea trecută e o poruncă, nu o informație.
+    const ziuaTrecuta = ziuaDeschisa < gp.today();
     const nepotrivire = list.length === 0 && S.orders.length > 0
       && S.orderDay === ziuaDeschisa && !S.eroare;
     // Oprire fără interval → fără NaN pe tot restul rutei (vezi Administrare).
@@ -716,6 +1067,12 @@ class Component extends DCLogic {
             toast: delivered ? o.cust + " — livrarea a fost anulată." : o.cust + " · " + o.ref + " marcat livrat. Laboratorul vede „" + gp.done() + "”.",
             toastBad: false
           });
+          // Lista restanțelor se cerne după etapă, deci apăsarea asta tocmai a
+          // schimbat-o — în amândouă felurile: o livrare închisă iese din ea,
+          // una descuiată pe o zi trecută intră. Se cere abia ACUM, în
+          // `.then()`: cerută odată cu apăsarea, ar fi plecat pe lângă un
+          // server care încă n-a scris nimic și ar fi adus lista veche.
+          this.pullRestante();
           return true;
         })
         .catch((e) => {
@@ -878,10 +1235,11 @@ class Component extends DCLogic {
     // `list` ar număra și opririle de deoparte, care n-au poziție.
     const urmRuta = peRuta.find(o => o.status !== gp.done());
     const afaraRamase = deoparte.filter(o => o.status !== gp.done()).length;
+    const nerezolvate = list.filter(o => o.status !== gp.done()).length;
     // Ziua spune pe față ce cuprinde: numărul de sus e tot ce datorează ziua,
     // iar partea care nu intră pe rută se spune imediat, nu se află în mașină.
     const opriri = (n) => n + (n === 1 ? " oprire" : " opriri");
-    const ziuaCuprinde = DLONG[S.day] + " · " + opriri(list.length)
+    const ziuaCuprinde = etZi(S.day) + " · " + opriri(list.length)
       + (deoparte.length ? ", din care " + deoparte.length + " în afara orașului" : "");
 
     // E cineva anume dincolo de ecran, sau e tura întreagă pe contul comun?
@@ -950,22 +1308,103 @@ class Component extends DCLogic {
       // Butonul „Ziua rutei" e îngust și taie cu trei puncte, deci poartă
       // forma scurtă; propoziția întreagă stă în rândul de deasupra lui, unde
       // încape. Erau același text fiindcă nu se deosebeau, nu fiindcă trebuie.
-      currentLabel: DLONG[S.day] + " · " + opriri(list.length),
+      currentLabel: etZi(S.day) + " · " + opriri(list.length),
       menuDays: DAYS.map(d => {
-        const n = this.dayCount(d.v);
+        const n = this.dayCount(d.iso);
         return {
-          label: DLONG[d.v] || d.l,
+          label: DLONG[d.iso] || d.l,
           // „—” înseamnă „nu știu”, nu „zero”: numărătoarea n-a răspuns.
           count: S.contorRupt ? "—" : n + (n === 1 ? " oprire" : " opriri"),
-          mark: d.v === S.day ? "✓" : "",
-          bg: d.v === S.day ? "var(--h-accent-soft)" : "var(--h-bg-raised)",
-          bd: d.v === S.day ? "var(--h-accent)" : "var(--h-line)",
-          onClick: () => this.goDay(d.v, true)
+          mark: d.iso === S.day ? "✓" : "",
+          bg: d.iso === S.day ? "var(--h-accent-soft)" : "var(--h-bg-raised)",
+          bd: d.iso === S.day ? "var(--h-accent)" : "var(--h-line)",
+          onClick: () => this.goDay(d.iso, true)
         };
       }),
       days: DAYS.map(d => ({
-        l: d.l, cls: d.v === S.day ? "h-btn h-btn--primary h-btn--sm" : "h-btn h-btn--secondary h-btn--sm",
-        onClick: () => this.goDay(d.v, false)
+        l: d.l, cls: d.iso === S.day ? "h-btn h-btn--primary h-btn--sm" : "h-btn h-btn--secondary h-btn--sm",
+        onClick: () => this.goDay(d.iso, false)
+      })),
+
+      /* ---------------------------------------------------------- istoric -- */
+
+      // Insigna de pe butonul „Istoric": un ȘIR, gol când n-are ce spune.
+      // `restanteGata` e lacătul — înainte de primul răspuns nu se scrie nimic,
+      // fiindcă „0" acolo ar liniști înainte de a ști.
+      restanteInsigna: (S.restanteGata && S.restante.length) ? String(S.restante.length) : "",
+      istoricOpen: S.istoric,
+      onIstoricOpen: () => this.deschideIstoric(),
+      onIstoricClose: () => this.setState({ istoric: false }),
+
+      // Fereastra ancorată se spune pe ecran, nu se ghicește din etichetă.
+      ancorat: !!S.ancora,
+      ancoraEticheta: S.ancora
+        ? (ziuaTrecuta ? "Te uiți înapoi: " : "Te uiți înainte: ") + etZi(S.day).toLowerCase()
+        : "",
+      onAzi: () => this.mutaFereastra(""),
+
+      // Titlul spune în ce stare suntem, nu doar ce secțiune e: „Nimic rămas
+      // în urmă" scris deasupra lui „se caută…" ar fi o veste bună dată
+      // înainte de a ști, adică exact felul de afirmație pe care pagina asta
+      // și-a interzis-o peste tot (v. `noStops`, `contorRupt`).
+      restanteTitlu: !S.restanteGata ? "Se caută ce a rămas"
+        : S.restante.length ? "Rămase nefinalizate" : "Nimic rămas în urmă",
+      restanteSub: !S.restanteGata
+        ? "Se caută comenzile zilelor trecute care n-au fost încheiate…"
+        : S.restante.length
+          ? "Livrări din zilele trecute care n-au ajuns la „" + gp.done()
+            + "”. Apasă una ca să deschizi ziua ei."
+          : "Toate livrările din ultimele treizeci de zile au fost încheiate.",
+      restanteEroare: S.restanteEroare,
+      onRestanteReincearca: () => { this.setState({ restanteEroare: "" }); this.pullRestante(); },
+      restante: S.restante.map((o) => ({
+        cust: o.cust || "fără nume",
+        sub: etZi(o.date) + " · " + o.ref + " · " + gp.qtyLabel(this.qty(o)) + " buc.",
+        etapa: o.status,
+        // Etapa se colorează după CÂT DE DEPARTE e de încheiere, nu după nume:
+        // etapele se redenumesc din Setări.
+        etapaCls: etapaGata(o.status) ? "h-badge h-badge--warning" : "h-badge",
+        // Duce fereastra pe ziua ei ȘI deschide chiar oprirea apăsată: altfel
+        // omul ar fi ajuns pe o listă de unsprezece opriri fără să știe care
+        // dintre ele era cea pe care a apăsat-o.
+        onClick: () => this.mutaFereastra(o.date, o.id),
+      })),
+
+      calTitlu: (() => {
+        const p = dinIso(this.lunaCal());
+        return LUNI[p.getMonth()] + " " + p.getFullYear();
+      })(),
+      calSub: S.calEroare ? "Cifrele lipsesc — v. mai jos." : (() => {
+        const p = dinIso(this.lunaCal());
+        const c = S.counts || {};
+        let n = 0;
+        // Se numără ZILELE LUNII, nu cele 42 de căsuțe: prima și ultima
+        // săptămână arată și zile din lunile vecine, iar ele sunt numărate în
+        // totalul lunii lor, nu al acesteia.
+        for (let z = 1; z <= 31; z++) {
+          const d = new Date(p.getFullYear(), p.getMonth(), z);
+          if (d.getMonth() !== p.getMonth()) break;
+          n += Number(c[isoOf(d)] || 0);
+        }
+        return n ? opriri(n) + " în luna asta" : "Nicio oprire în luna asta";
+      })(),
+      onLunaPrev: () => this.saltLuna(-1),
+      onLunaNext: () => this.saltLuna(1),
+      calEroare: S.calEroare,
+      onCalReincearca: () => this.deschideIstoric(this.lunaCal()),
+      calZile: ZILE_CAL,
+      calCelule: this.celuleCal().map((c) => ({
+        iso: c.iso, zi: c.zi,
+        // Zero nu se scrie. Patruzeci și două de zerouri fac cifrele
+        // adevărate de negăsit; o căsuță goală se citește dintr-o privire.
+        n: c.n ? String(c.n) : "",
+        // Ziua deschisă e PLINĂ, azi e doar CONTURAT. Dacă amândouă ar fi
+        // pline, n-ai ști pe care te uiți.
+        bg: c.deschisa ? "var(--h-accent)" : c.n ? "var(--h-bg-raised)" : "transparent",
+        bd: c.deschisa ? "var(--h-accent)" : c.azi ? "var(--h-accent-fg)" : "var(--h-line)",
+        fg: c.deschisa ? "var(--h-fg-on-accent)" : c.inLuna ? "var(--h-fg)" : "var(--h-fg-faint)",
+        greu: c.n ? "700" : "500",
+        onClick: () => this.mutaFereastra(c.iso),
       })),
       stops,
       // Cartonul „Nicio livrare în ziua asta” e o AFIRMAȚIE: am întrebat, nu-i
@@ -1025,7 +1464,13 @@ class Component extends DCLogic {
       // Trei stări, nu două: mai e o oprire pe rută · ruta s-a terminat dar
       // au rămas livrări în afara orașului · nu mai e nimic. A doua lipsea, și
       // ecranul ar fi scris „Rută încheiată" cu marfa pentru Ploiești în mașină.
-      nextLabel: urmRuta ? "Următoarea · oprirea " + (peRuta.indexOf(urmRuta) + 1)
+      // Pe o zi TRECUTĂ insigna nu mai îndrumă, ci consemnează. „Următoarea ·
+      // oprirea 3" citit pe ruta de marțea trecută trimite un om la un drum
+      // făcut demult; iar „Rută încheiată" pe o zi cu două livrări nepredate
+      // ar fi de-a dreptul fals. Se spune ce a rămas, și atât.
+      nextLabel: ziuaTrecuta
+        ? (next ? nerezolvate + " nefinalizate" : list.length ? "Zi încheiată" : "Zi liberă")
+        : urmRuta ? "Următoarea · oprirea " + (peRuta.indexOf(urmRuta) + 1)
         : afaraRamase ? (afaraRamase === 1 ? "Rămâne una în afara orașului"
           : "Rămân " + afaraRamase + " în afara orașului")
         : list.length ? "Rută încheiată" : "Liber",

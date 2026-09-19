@@ -679,3 +679,58 @@ function route_change_password(): void
     audit('password_change', 'user', (string) $u['id']);
     json_out(['ok' => true]);
 }
+
+/**
+ * „Păstrez parola actuală" — steagul se stinge, parola rămâne.
+ *
+ * Alegerea de la prima intrare are două butoane, iar ăsta e al doilea. Până
+ * acum contul cu `must_change_password = 1` avea o singură ieșire: o parolă
+ * nouă. Cine își alesese parola chiar la facerea contului era pus s-o schimbe
+ * fără niciun rost — iar poarta din `require_auth()` îi închidea tot restul
+ * aplicației până atunci.
+ *
+ * CE NU FACE, și de ce fiecare lipsă e o hotărâre:
+ *
+ *   · NU cere parola curentă. Omul e deja înăuntru, cu sesiunea lui; o parolă
+ *     cerută aici n-ar dovedi nimic în plus și ar face din „păstrez" un
+ *     formular, adică tocmai lucrul de care fuge ecranul ăsta.
+ *   · NU taie celelalte sesiuni. La schimbare se taie fiindcă parola veche
+ *     poate fi știută de altcineva; aici nu s-a schimbat nimic, deci o
+ *     deconectare ar fi o pedeapsă fără pricină.
+ *   · NU atinge `password_resets`. Un link de „am uitat parola" cerut înainte
+ *     rămâne bun: parola de pe cont e tot cea veche, deci nimic nu s-a
+ *     depărtat de el.
+ *
+ * `password_changed_at` SE SCRIE, totuși. Coloana înseamnă „de când e parola
+ * asta alegerea omului, nu a administratorului" — iar din clipa asta chiar e:
+ * a văzut întrebarea pe ecran și a ales s-o țină. Lăsată goală, pagina Conturi
+ * ar fi arătat mai departe „parolă neschimbată niciodată" pentru un cont care
+ * nu mai are nimic de schimbat.
+ *
+ * Jurnalul primește `password_kept`, nu `password_change`: patronul trebuie
+ * să poată deosebi un cont cu parolă nouă de unul cu parola primită, păstrată
+ * dinadins. Sunt două fapte deosebite, cu urmări deosebite.
+ */
+function route_keep_password(): void
+{
+    // `require_auth()` și nu `require_staff()`: patronul a ales ca ORICINE are
+    // steagul să poată păstra, personalul inclusiv. Urmarea, spusă o dată:
+    // cine a făcut contul rămâne cu o parolă care intră în el.
+    $u = require_auth();
+
+    // Fără steag n-are ce păstra — și n-are ce stinge. Nu e o greșeală a
+    // omului, e o apăsare a doua oară pe același buton (două file deschise, un
+    // buton apăsat de două ori), deci răspunsul e același ca la prima. Un 409
+    // aici ar fi arătat pe ecran ca o defecțiune pentru o apăsare nevinovată.
+    if ((int) ($u['must_change_password'] ?? 0) !== 1) {
+        json_out(['ok' => true, 'changed' => false]);
+    }
+
+    q(
+        'UPDATE users SET must_change_password = 0, password_changed_at = UTC_TIMESTAMP()
+          WHERE id = ?',
+        [$u['id']]
+    );
+    audit('password_kept', 'user', (string) $u['id'], $u['name'] . ' a păstrat parola primită');
+    json_out(['ok' => true, 'changed' => true]);
+}

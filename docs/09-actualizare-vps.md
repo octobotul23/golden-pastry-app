@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.2.0/deploy
+  Pachet: /root/plasture-vps 2.2.4/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -248,12 +248,16 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
   de cât de veche e instalarea: pe una lăsată în urmă cu trei versiuni se aprind
   trei, pe una actualizată ieri niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
-  `sql/018_adresa_si_program.sql`;
-- **22 de tabele** în capul raportului, la „Baza de date" (al douăzeci și
-  doilea e `request_claims`, adus de `019_jeton_cerere.sql`). Numărul nu se
-  mișcă nici la `016`, nici la `020`: prima aduce o coloană (`users.zone`) și o
-  zonă în plus în lista de livrare, a doua numai un index
-  (`ix_orders_client_rang` pe `orders`) — niciuna un tabel;
+  `sql/022_cerere_de_la_personal.sql`;
+- **24 de tabele** în capul raportului, la „Baza de date" (ultimele două sunt
+  `telegram_links` și `lab_production`, aduse de `021_raspundere.sql`). Numărul
+  nu se mișcă nici la `016`, nici la `020`: prima aduce o coloană (`users.zone`)
+  și o zonă în plus în lista de livrare, a doua numai un index
+  (`ix_orders_client_rang` pe `orders`) — niciuna un tabel. `021` îl mișcă cu
+  **două**, deși aduce patru lucruri: celelalte două sunt tot o coloană
+  (`users.telegram_user_id`) și tot un index (`ix_orders_autor`). `022` nu-l
+  mișcă deloc: ea pune patru coloane pe `order_requests`, un index și o cheie
+  străină, deci raportul arată tot **24** și după ea;
 - linia **`api.DOMENIU răspunde (401)`**. Un **500** înseamnă că o migrare n-a
   intrat: `tail -20 /var/log/apache2/gp-api-error.log`;
 - căile celor două copii — a bazei și a codului.
@@ -314,10 +318,40 @@ trimite cererea la fel — nu se pierde nicio comandă —, dar contul făcut im
 după ea n-o vede în „Comanda mea" până n-o legați voi cu mâna.
 
 `020_rang_client.sql` nu se vede nicăieri în raport: pune un index pe `orders`,
-atât. E singura migrare care **se poate uita fără pagubă** — fără ea insignele
+atât. E prima migrare care **se poate uita fără pagubă** — fără ea insignele
 de client (prima comandă / client revenit / fără cont) ies la fel, doar
 socoteala lor merge mai încet. Dacă vrei s-o vezi cu ochii:
 `SHOW INDEX FROM orders WHERE Key_name = 'ix_orders_client_rang'`.
+
+`021_raspundere.sql` se vede pe jumătate: cele două tabele noi urcă numărul de
+la 22 la **24**, dar coloana și indexul din ea nu se văd nicăieri în raport.
+Ce lipsește dacă lipsesc, pe rând. Fără `telegram_links`, butonul „Leagă
+Telegramul" din „Parola mea" nu pornește. Fără `users.telegram_user_id`, orice
+comandă acceptată dintr-un buton de Telegram iese pe numele celui care a legat
+botul întâia oară — oricine ar fi apăsat, și **fără niciun semn**: codul cade
+înapoi pe felul de dinainte, care avea un singur nume pentru tot grupul. Fără
+`lab_production`, raportul de producție pe tură din „Pontaj" iese **gol, nu cu
+eroare** — lipsa asta se descoperă la prima plată, nu la actualizare, deci e
+singura din toate care merită privită cu ochii chiar în ziua actualizării:
+`SELECT COUNT(*) FROM lab_production` după ce laboratorul a numărat ceva.
+Indexul `ix_orders_autor` e ca al lui `020`, se poate uita fără pagubă.
+
+`022_cerere_de_la_personal.sql` **nu se vede nicăieri în raport**: nici tabel,
+nici setare — patru coloane pe `order_requests` (`fulfillment`, `urgent`,
+`timed`, `created_by`), indexul `ix_req_autor` și cheia străină `fk_req_autor`.
+O ceri singur: `SHOW COLUMNS FROM order_requests LIKE 'created_by'`.
+De ea atârnă hotărârea din 18 septembrie 2026 — comanda intră de-a dreptul în
+sistem numai scrisă de administrator, manager sau fondator, restul personalului
+scrie o **cerere**. Fără `fulfillment`, modul de onorare ales de cel care a
+vorbit cu clientul se pierde între formular și acceptare, iar
+`default_fulfillment()` alege în locul lui, **tăcut și pe altceva**. Fără
+`urgent` și `timed`, graba nu ajunge la cel care apasă „Acceptă". Fără
+`created_by`, comanda născută din cererea agentului poartă numele
+administratorului care a acceptat-o, iar agentul dispare din propria lui muncă;
+și, fiindcă tot ea deosebește cererea scrisă de personal (are autor) de cea a
+vizitatorului (n-are), fără ea comenzile personalului ies însemnate „site" pe
+nedrept. Niciuna din cele patru nu dă eroare: se pierd tăcut, ca
+`lab_production`.
 
 Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
 adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:442`,

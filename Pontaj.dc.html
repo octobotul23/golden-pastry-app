@@ -292,6 +292,73 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!-- ═══════════════════════ producția pe tură ════════════════════ -->
+
+<sc-if value="{{ areProductie }}" hint-placeholder-val="{{ true }}">
+<div data-pt="card" style="border:1px solid var(--h-line);border-radius:18px;background:var(--h-bg-surface);padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+<span class="h-eyebrow" style="font-size:12px">Producția pe tură</span>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ prodSub }}</span>
+</div>
+
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-subtle)">{{ prodLamurire }}</p>
+
+<sc-if value="{{ prodEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Producția nu s-a încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ prodEroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearcaProd }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ prodNesuportat }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px dashed var(--h-line);border-radius:14px;padding:22px;text-align:center;display:flex;flex-direction:column;gap:6px">
+<span style="font-size:16px;font-weight:700">Registrul producției nu e încă în bază.</span>
+<span style="font-size:14px;color:var(--h-fg-subtle);line-height:1.5">Rulează sql/021_raspundere.sql. Până atunci laboratorul raportează mai departe, dar bucățile nu capătă ceas, deci nu se pot potrivi cu turele.</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ prodGol }}" hint-placeholder-val="{{ false }}">
+<div style="border:1px dashed var(--h-line);border-radius:14px;padding:22px;text-align:center;display:flex;flex-direction:column;gap:6px">
+<span style="font-size:16px;font-weight:700">Nimic raportat în zilele alese.</span>
+<span style="font-size:14px;color:var(--h-fg-subtle);line-height:1.5">Bucățile intră aici pe măsură ce laboratorul le numără din „Panou Laborator".</span>
+</div>
+</sc-if>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:10px">
+<sc-for list="{{ prodOameni }}" as="p" hint-placeholder-count="4">
+<div class="{{ p.cls }}" style="border-radius:14px;padding:13px 15px;display:flex;flex-direction:column;gap:3px">
+<span style="font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.nume }}</span>
+<span class="h-numeric" style="font-size:22px;font-weight:700;line-height:1.15">{{ p.bucati }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ p.sub }}</span>
+<sc-if value="{{ p.areSteag }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--warning" style="align-self:flex-start;margin-top:4px">{{ p.steag }}</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ prodZile }}" as="z" hint-placeholder-count="8">
+<div data-pt="rand" class="{{ z.cls }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:12px 15px;border-radius:14px">
+<span style="min-width:112px;font-size:15px;font-weight:600">{{ z.zi }}</span>
+<span class="h-numeric" style="min-width:104px;font-size:16px;font-weight:700">{{ z.bucati }}</span>
+<span class="h-numeric" style="min-width:104px;font-size:15px;color:var(--h-fg-subtle)">{{ z.comenzi }}</span>
+<span style="flex:1 1 150px;min-width:0;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ z.cine }}</span>
+<sc-if value="{{ z.areEt }}" hint-placeholder-val="{{ false }}">
+<span class="{{ z.etCls }}">{{ z.et }}</span>
+</sc-if>
+<sc-if value="{{ z.areNota }}" hint-placeholder-val="{{ false }}">
+<p style="flex:1 1 100%;margin:0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ z.nota }}</p>
+</sc-if>
+</div>
+</sc-for>
+</div>
+
+</div>
+</sc-if>
+
 </div>
 </div>
 </div>
@@ -403,6 +470,19 @@ const oreEt = (min) => {
   return m ? h + " h " + m + " min" : h + " h";
 };
 
+/**
+ * Bucățile, scrise ca la tejghea: „8", nu „8,00"; „8,5" rămâne cu jumătatea ei.
+ *
+ * Aceeași tăiere ca pe server (`$nr` din `route_order_production()`), ca aceeași
+ * cifră să arate la fel și în mesajul din Telegram, și în raportul de-aici.
+ * Semnul minus rămâne: o zi pe minus înseamnă o corecție scrisă azi pentru o
+ * zi trecută, iar ascunsul semnului ar face dintr-o scădere o producție.
+ */
+const buc = (x) => {
+  const s = (Number(x) || 0).toFixed(2).replace(".", ",");
+  return s.replace(/0+$/, "").replace(/,$/, "");
+};
+
 const ROL_ET = {
   admin: "administrator", fondator: "fondator", manager: "manager",
   angajat: "angajat", utilizator_lab: "om de laborator",
@@ -424,6 +504,13 @@ class Component extends DCLogic {
     gataSemn: "", gataTitlu: "", gataRand: "",
     de: minusZile(azi(), 13), pana: azi(), cine: "",
     ture: [], peOm: [], raportGata: false, eroareRaport: "",
+    // Raportul de producție ține de aceleași două date („De la", „Până la"),
+    // dar de niciun om: el nu se filtrează pe „Cine", fiindcă bucățile sunt
+    // ale TUREI, nu ale omului. `prodSuportat` e răspunsul serverului la
+    // „există registrul?", nu o părere a paginii — fără migrarea 021 raportul
+    // vine gol și cu `supported: false`, nu cu o eroare.
+    prodZile: [], prodOameni: [], prodTotal: null, prodSuportat: true,
+    prodGata: false, prodEroare: "",
     inchideId: 0, inchideCine: "", inchideZi: "", inchideOra: "", inchideNota: "",
     inchideEroare: "", inchideLucru: false
   };
@@ -462,7 +549,7 @@ class Component extends DCLogic {
         if (!user) gp.toLogin();
         else {
           this.stopPoll = gp.poll(() => this.pull(), 15000);
-          if (gp.eRaportPontaj(user)) this.incarcaRaport();
+          if (gp.eRaportPontaj(user)) { this.incarcaRaport(); this.incarcaProductie(); }
         }
       });
   }
@@ -561,7 +648,9 @@ class Component extends DCLogic {
         // timp ce lumea pontează ar fi citit altfel un total de acum un sfert
         // de oră, fără nimic pe ecran care să spună că e vechi.
         this.pull();
-        if (gp.eRaportPontaj(this.state.auth)) this.incarcaRaport();
+        // Și producția, nu doar orele: o pontare schimbă ferestrele turelor,
+        // deci schimbă CINE era de tură peste bucățile raportate azi.
+        if (gp.eRaportPontaj(this.state.auth)) { this.incarcaRaport(); this.incarcaProductie(); }
         this.tGata = setTimeout(() => this.laLista(), 6000);
       })
       .catch((e) => {
@@ -604,6 +693,40 @@ class Component extends DCLogic {
       });
   }
 
+  /**
+   * Ce a ieșit din laborator în zilele alese, pe zi și pe tură.
+   *
+   * Sora lui `incarcaRaport()` de deasupra, cu aceeași pază împotriva
+   * răspunsului întârziat: între cerere și răspuns omul mai schimbă o dată
+   * intervalul, iar un răspuns despre alte zile decât cele de acum n-are voie
+   * să ajungă pe ecran. Cele două cereri se țin minte deosebit, fiindcă pleacă
+   * deosebit — filtrul „Cine" o mișcă doar pe cealaltă.
+   */
+  incarcaProductie(de, pana) {
+    const a = de === undefined ? this.state.de : de;
+    const b = pana === undefined ? this.state.pana : pana;
+    if (!a || !b) return;
+    const cerere = a + "|" + b;
+    this.cerereProd = cerere;
+    return gp.get("/lab/production?from=" + encodeURIComponent(a) + "&to=" + encodeURIComponent(b))
+      .then((r) => {
+        if (this.cerereProd !== cerere) return;
+        this.setState({
+          prodZile: r.days || [], prodOameni: r.people || [],
+          prodTotal: r.totals || null, prodSuportat: r.supported !== false,
+          prodGata: true, prodEroare: ""
+        });
+      })
+      .catch((e) => {
+        if (this.cerereProd !== cerere) return;
+        if (e.isAuth) gp.toLogin();
+        else this.setState({
+          prodZile: [], prodOameni: [], prodTotal: null,
+          prodGata: true, prodEroare: gp.motiv(e, "raportul de producție")
+        });
+      });
+  }
+
   inchide(t) {
     this.setState({
       inchideId: t.id, inchideCine: t.name + " · venit " + ora(t.startedAt)
@@ -624,7 +747,11 @@ class Component extends DCLogic {
     })
       .then(() => {
         this.setState({ inchideId: 0, inchideLucru: false });
+        // Tura care era deschisă până acum acoperea totul până în clipa asta;
+        // cu plecarea scrisă, fereastra ei se strânge — deci se schimbă și cine
+        // apare peste bucățile zilelor de după ea.
         this.incarcaRaport();
+        this.incarcaProductie();
         this.pull();
       })
       .catch((e) => {
@@ -761,6 +888,51 @@ class Component extends DCLogic {
       };
     });
 
+    /* --------------------------------------- producția pe tură -- */
+
+    const prodT = S.prodTotal;
+    // Suprapunerea se spune o dată, sus, nu pe fiecare rând: e o regulă de
+    // citire a întregului tabel, nu o însușire a unei zile anume.
+    const prodSuprapus = S.prodZile.some((z) => z.shared);
+    const prodZile = S.prodZile.map((z) => {
+      const cine = (z.people || []).length
+        ? z.people.map((o) => o.name).join(", ")
+        : "nimeni pontat";
+      // Un singur semn pe rând, ca la raportul de ore. Tura fără plecare
+      // pontată trece înaintea golului: pe ea se poate face ceva chiar acum,
+      // cu „Scrie plecarea" din raportul de deasupra.
+      const steag = z.stale ? "tură fără plecare pontată"
+        : z.looseEntries ? "bucăți fără tură" : "";
+      return {
+        zi: ziEt(z.day),
+        bucati: buc(z.pieces) + " buc.",
+        comenzi: z.orders + (z.orders === 1 ? " comandă" : " comenzi"),
+        cine: cine,
+        cls: steag ? "h-alert h-alert--warning" : "h-card",
+        areEt: steag !== "",
+        et: steag,
+        etCls: "h-badge h-badge--warning",
+        // Golul se scrie cu cifra lui, nu doar cu un steag: „trei bucăți" e o
+        // întrebare la care se poate răspunde, „ceva lipsește" nu e.
+        areNota: z.looseEntries > 0,
+        nota: z.looseEntries
+          ? buc(z.loosePieces) + " buc. din ziua asta n-au căzut pe nicio tură ("
+            + z.looseEntries + (z.looseEntries === 1 ? " raportare" : " raportări")
+            + "): ori s-a lucrat fără pontaj, ori cineva a numărat de-acasă."
+          : ""
+      };
+    });
+
+    const prodOameni = S.prodOameni.map((p) => ({
+      nume: p.name,
+      bucati: buc(p.pieces) + " buc.",
+      sub: p.shifts + (p.shifts === 1 ? " tură" : " ture")
+        + " · " + p.orders + (p.orders === 1 ? " comandă" : " comenzi"),
+      cls: p.stale ? "h-alert h-alert--warning" : "h-card",
+      areSteag: !!p.stale,
+      steag: "tură fără plecare pontată"
+    }));
+
     // Lista de nume din filtru se face din turele venite, nu din tableta de
     // sus: pe tabletă apare cine ARE cod acum, iar în raport trebuie să se
     // poată alege și cineva căruia i s-a luat codul între timp — altfel orele
@@ -852,14 +1024,35 @@ class Component extends DCLogic {
       pana: S.pana,
       cine: S.cine,
       cineOpts: cineOpts,
-      onDe: (e) => { const v = e.target.value; this.setState({ de: v }); this.incarcaRaport(v); },
-      onPana: (e) => { const v = e.target.value; this.setState({ pana: v }); this.incarcaRaport(undefined, v); },
+      // Cele două date mișcă amândouă rapoartele; „Cine" numai pe cel de ore.
+      onDe: (e) => { const v = e.target.value; this.setState({ de: v }); this.incarcaRaport(v); this.incarcaProductie(v); },
+      onPana: (e) => { const v = e.target.value; this.setState({ pana: v }); this.incarcaRaport(undefined, v); this.incarcaProductie(undefined, v); },
       onCine: (e) => { const v = e.target.value; this.setState({ cine: v }); this.incarcaRaport(undefined, undefined, v); },
       randuri: randuri,
       peOm: peOm,
       faraTure: S.raportGata && !S.eroareRaport && ture.length === 0,
       eroareRaport: S.eroareRaport,
       onReincearcaRaport: () => { this.setState({ eroareRaport: "" }); this.incarcaRaport(); },
+
+      areProductie: vedeRaport,
+      prodSub: !S.prodGata || !prodT ? "" : (prodT.entries
+        ? buc(prodT.pieces) + " buc. · "
+          + prodT.orders + (prodT.orders === 1 ? " comandă" : " comenzi") + " · "
+          + prodT.entries + (prodT.entries === 1 ? " raportare" : " raportări")
+        : ""),
+      // Regula de citire a tabelului, spusă înaintea lui. Când turele chiar
+      // s-au suprapus, se spune pe față că rândurile oamenilor NU se adună —
+      // altfel patronul adună coloana și capătă de două ori bucățile.
+      prodLamurire: (prodSuprapus
+        ? "În unele zile au fost doi oameni de tură în aceeași clipă, deci bucățile apar întregi la amândoi: raportul spune cine era acolo, nu cine a pus mâna. Cifra care se adună e cea a zilei."
+        : "Bucățile sunt ale turei: raportul spune cine era în laborator când s-au făcut, nu cine a pus mâna pe ele.")
+        + (S.cine ? " Filtrul „Cine” nu se aplică aici." : ""),
+      prodZile: prodZile,
+      prodOameni: prodOameni,
+      prodGol: S.prodGata && !S.prodEroare && S.prodSuportat && prodZile.length === 0,
+      prodNesuportat: S.prodGata && !S.prodEroare && !S.prodSuportat,
+      prodEroare: S.prodEroare,
+      onReincearcaProd: () => { this.setState({ prodEroare: "" }); this.incarcaProductie(); },
 
       inchideDeschis: S.inchideId > 0,
       inchideCine: S.inchideCine,

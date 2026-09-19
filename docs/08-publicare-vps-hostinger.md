@@ -239,10 +239,11 @@ for f in /root/deploy/sql/[0-9][0-9][0-9]_*.sql; do
 done
 ```
 
-Verifici: **22 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
+Verifici: **24 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
 puține, numele care lipsește îți spune care migrare n-a intrat:
 `referral_commissions` e din `008`, `lab_shifts` din `014`, `lab_messages`
-din `015`, `request_claims` din `019`. Fără primul, pagina „Recomandări" răspunde „Eroare internă"; fără
+din `015`, `request_claims` din `019`, iar `telegram_links` și `lab_production`
+din `021`. Fără primul, pagina „Recomandări" răspunde „Eroare internă"; fără
 celelalte două, „Pontaj" și tabla de anunțuri din Panoul Laborator răspund
 lămurit că lipsește migrarea — vezi `lab_supported()` și
 `lab_board_supported()`. (`instaleaza-vps.sh` face bucla asta singur.)
@@ -285,10 +286,49 @@ leagă cineva cu mâna, din formularul comenzii.
 
 `020_rang_client.sql` nu se vede nici în tabele, nici în coloane, nici în
 setări: ea pune un **index** pe `orders`, pentru insigna care spune dacă omul e
-la prima comandă ori a mai comandat. E singura migrare din toate care **se
+la prima comandă ori a mai comandat. E prima migrare din toate care **se
 poate uita fără pagubă**: fără ea insignele ies la fel, doar socoteala lor
 merge mai încet. Dacă vrei totuși s-o vezi:
 `SHOW INDEX FROM orders WHERE Key_name = 'ix_orders_client_rang'`.
+
+`021_raspundere.sql` **se vede** în numărul de tabele: ea aduce `telegram_links`
+și `lab_production`, al douăzeci și treilea și al douăzeci și patrulea. Mai
+aduce o coloană (`users.telegram_user_id`) și un index (`ix_orders_autor`) —
+singura migrare care le are pe toate trei felurile deodată, de-aceea numărul de
+tabele singur n-o dovedește întreagă.
+
+Ce face fiecare bucată, și ce se pierde fără ea. `telegram_links` ține cererile
+de legare a contului cu Telegramul, cu amprenta jetonului, ca `password_resets`
+și `request_claims`; fără tabel, butonul „Leagă Telegramul" din „Parola mea" nu
+pornește deloc. Coloana `users.telegram_user_id` spune **cine a apăsat** butonul
+din grup: fără ea, orice comandă născută dintr-un buton de Telegram iese pe
+numele celui care a legat botul întâia oară, oricine ar fi apăsat — și o face
+tăcut, fiindcă `telegram_actor()` cade înapoi pe setarea globală de dinainte.
+`lab_production` ține ce s-a făcut în laborator, cu ceasul pe fiecare rând;
+fără el, **raportul de producție pe tură iese gol, nu cu eroare** — adică se
+descoperă abia la prima plată. Indexul `ix_orders_autor` e singurul care se
+poate uita fără pagubă, ca `020`; îl vezi cu
+`SHOW INDEX FROM orders WHERE Key_name = 'ix_orders_autor'`.
+
+`022_cerere_de_la_personal.sql` **nu se vede deloc** în numărul de tabele, ca
+`017`: ea adaugă patru coloane pe `order_requests` — `fulfillment`, `urgent`,
+`timed`, `created_by` — plus indexul `ix_req_autor` și cheia străină
+`fk_req_autor`. Deci numărul rămâne **24**, iar dovada ei se cere anume:
+`SHOW COLUMNS FROM order_requests LIKE 'created_by'`.
+
+E migrarea fără de care hotărârea din 18 septembrie 2026 nu se poate ține:
+comanda intră de-a dreptul în sistem numai când o scrie un administrator, un
+manager sau fondatorul; agentul de vânzări și restul personalului scriu o
+**cerere**, care se încuviințează. Cererea mergea pe drumul site-ului, iar
+drumul acela purta mai puțin decât o comandă: fără `fulfillment`, modul de
+onorare ales de cel care a vorbit cu clientul se pierde, și hotărăște
+`default_fulfillment()` în locul lui; fără `urgent` și `timed`, graba nu ajunge
+la cel care apasă „Acceptă"; fără `created_by`, comanda născută din cererea
+agentului poartă numele administratorului care a acceptat-o, iar agentul
+dispare din propria lui muncă. Tot `created_by` spune și **de unde** a venit
+cererea — una scrisă de personal are autor, cea a vizitatorului nu —, deci fără
+ea comenzile personalului ies însemnate „site" pe nedrept. Niciuna din cele
+patru nu dă eroare când lipsește: se pierd tăcut, ca `lab_production`.
 
 ---
 

@@ -65,6 +65,55 @@ nelegată și clientul n-o vede în panoul lui. Redenumește unul dintre conturi
 > Belvedere" apărea în laborator și pe ruta șoferului drept „Administrator" —
 > fără client, fără niciun semn că s-a pierdut ceva.
 
+### Nu mai scrii numele din cap: îl cauți
+
+Cum tastezi în caseta **Client**, sub ea apare lista clienților care se
+potrivesc, cu **telefonul** lângă nume — lucrul după care omul de la comenzi
+recunoaște clientul dintr-o ochire. Alegi unul și se umplu singure numele,
+telefonul, adresa și zona **ultimei lui comenzi** — nu cele de pe cont: adresa
+contului poate fi cea de acasă, pe când marfa merge de trei luni la birou.
+
+**Felul livrării nu se ia**, deși îl știm. El schimbă banii (taxa de curier), iar
+o comandă care se scumpește singură fiindcă ai ales un client din listă e tocmai
+soiul de surpriză de care ne ferim. Scrie în dosar, ca să-l poți pune cu mâna.
+
+**Te uiți înainte să alegi.** Cu mausul deasupra unui rând — sau, pe telefon,
+ținând degetul pe el — se deschide dosarul scurt al clientului: câte comenzi a
+făcut și cât a lăsat în casă, ultima comandă (ziua, intervalul, felul livrării),
+unde s-a dus marfa ultima oară, telefonul și e-mailul. Apăsarea lungă deschide
+dosarul, nu alege clientul — altfel „uită-te înainte să alegi" s-ar fi prefăcut
+în „te-ai uitat, gata, ai ales".
+
+Dacă acel cont s-a făcut singur de pe site și nu l-a recunoscut încă nimeni din
+casă, dosarul o spune pe față: **comanda se scrie, dar nu se leagă de el** până
+nu-l întărește cineva din „Conturi". Nu e o poartă — numele se poate alege
+oricum —, e o urmare pe care trebuie s-o afli *înainte*, nu peste o săptămână,
+când clientul întreabă de ce nu-și vede comanda în panoul lui.
+
+Cine vede lista vede numai clienții lui: agentul de vânzări îi vede pe cei aduși
+de el, administratorul, managerul și fondatorul văd toată ograda. Marginea stă pe
+server, într-un singur loc (`client_scope_for()`, `api/lib/orders.php`); caseta
+din pagină doar o oglindește, fiindcă o listă care promite ce serverul refuză e
+mai rea decât lipsa ei.
+
+### Codul de recomandare, la comanda nouă
+
+Formularul se deschide cu **codul tău** scris deja, dar poți pune altul: comanda
+poate fi adusă de un coleg, iar tu doar o scrii. Asta valabil pentru oricine
+poate naște o comandă — administrator, manager, fondator.
+
+Două lucruri rămân neschimbate, și e bine de știut de ce:
+
+- **Nu te poți recomanda pe tine.** Dacă cel cu codul e chiar cumpărătorul,
+  legătura nu se scrie, iar în jurnal rămâne `referral_self_blocked`.
+- **Pe o comandă deja salvată, codul îl schimbă tot numai administratorul.**
+  Vezi „Ce poate fiecare rol", la coada ghidului.
+
+Un cod pus la **nașterea** comenzii leagă contul cumpărătorului de recomandant
+pentru totdeauna, dacă acela n-avea încă unul. La **corectarea** unei comenzi
+vechi, legătura nu se mai scrie singură: acolo trebuie bifat anume, tocmai
+fiindcă legatul e o faptă care se cere pe față.
+
 ---
 ## Contul făcut imediat după comandă
 
@@ -185,11 +234,35 @@ conturi rândul lui arată insigna **PAROLĂ PROVIZORIE**, iar dedesubt scrie
 sunt în starea asta, ca să nu le cauți rând cu rând.
 
 La prima intrare cu o parolă provizorie, omul e dus direct la pagina
-**Parola mea** și nu ajunge nicăieri altundeva până nu și-o schimbă. Pagina
-cere parola de acum, apoi pe cea nouă de două ori, minim 8 caractere — și are
-un buton care propune una. Se ajunge la ea oricând, nu doar la prima intrare:
-din meniul lateral al panourilor, din antetul panoului clientului, și din
-meniul contului din magazin.
+**Parola mea** și nu ajunge nicăieri altundeva până nu alege. Pagina nu-i mai
+pune formularul în față, ci **întrebarea**, cu două butoane:
+
+- **„Vreau să-mi schimb parola"** deschide, peste pagină, o fereastră cu
+  formularul de întotdeauna: parola de acum, apoi cea nouă de două ori, minim 8
+  caractere, cu butonul care propune una.
+- **„Păstrez parola actuală"** stinge semnul pe loc și îl duce în cont, fără să
+  schimbe nimic. Parola rămâne cea dictată de tine.
+
+Se ajunge la pagină oricând, nu doar la prima intrare: din meniul lateral al
+panourilor, din antetul panoului clientului, și din meniul contului din
+magazin. Întrebarea se arată **numai** cât timp contul poartă semnul; după, e
+formularul obișnuit.
+
+**Cine poate păstra: oricine are semnul, personalul inclusiv.** A fost o
+alegere a patronului, luată știind urmarea, și e bine să fie scrisă aici:
+parola pe care ai dictat-o tu la telefon rămâne o parolă care intră în acel
+cont, iar pentru un cont de personal asta înseamnă comenzile, conturile și
+datele celorlalți. Dacă ai dictat parola cu voce tare într-o încăpere plină,
+schimb-o tu însuți din „Conturi" — butonul „Parolă nouă" pune semnul la loc.
+
+**Păstrarea se scrie în Jurnal** (`password_kept`), lângă schimbările de parolă.
+Deci se poate afla oricând cine a ales să rămână cu parola dictată, și când.
+
+> Alegerea asta nu slăbește cu nimic poarta de pe server. Contul cu semnul pus
+> tot nu ajunge nicăieri până nu trece prin pagina Parola mea: serverul refuză
+> orice altă cerere cu 403, iar „Păstrez" e singura ușă nouă pe care o lasă
+> deschisă. Pe un server încă neactualizat, butonul „Păstrez" ia 404, iar
+> pagina cade înapoi pe schimbarea obligatorie de dinainte — nu se blochează.
 
 Din clipa în care și-a pus parola lui, rândul din Conturi se schimbă în
 „parolă proprie, schimbată <data>". Insigna dispare.
@@ -289,10 +362,17 @@ casă, cine cumpără cel mai mult, ce se vinde și ce nu) sunt ale celui care �
 firma. Oglinda de pe server e `GP_STATS_ROLES` (`api/lib/auth.php`), singura
 listă de roluri din casă mai strâmtă decât `GP_ADMIN_ROLES`.
 
-**Managerul și agentul, în „Comenzi", doar mută etapa.** Văd lista, deschid o
-comandă, o trec dintr-o etapă în alta și pot lua o comandă nouă la telefon.
-Formularul de editare — client, adresă, poziții, cod de recomandare — rămâne al
-administratorului.
+**Managerul scrie comenzi de-a dreptul; agentul scrie cereri.** De la hotărârea
+din 18 septembrie 2026, comanda intră pe loc în laborator numai scrisă de
+administrator, manager sau fondator. Managerul poate deci lua o comandă la
+telefon și o poate scrie el, cu ce cod de recomandare vrea. Agentul de vânzări
+și contul de tură nu mai pot: ei scriu o **cerere**, care așteaptă o apăsare.
+
+**Formularul de editare al unei comenzi DEJA SALVATE — client, adresă, poziții,
+cod de recomandare — rămâne al administratorului.** Din contul de personal se
+schimbă numai etapa. Asimetria e voită: la naștere scrie oricine poate naște, la
+corectare scrie cine răspunde de bani. O comandă salvată are deja socoteli făcute
+pe ea, poate chiar o plată; una care abia se naște n-are ce răsturna.
 
 **Agentul vede în „Comenzi" numai comenzile oamenilor aduși de el** — ale
 cumpărătorilor legați de codul lui pentru totdeauna și cele care poartă codul
@@ -303,17 +383,45 @@ cerându-le după număr. Marginea stă pe server, într-un singur loc
 
 **Agentul de vânzări face conturi de cumpărători**, din pagina „Recomandări",
 lângă „Copiază codul". Contul nou e legat pe loc de codul lui, iar parola pe
-care i-o dă cumpărătorului e provizorie: acesta o schimbă la prima intrare.
-Agentul nu poate cere alt rol decât „client", și nu poate alege recomandantul —
-acela e el, întotdeauna.
+care i-o dă cumpărătorului e provizorie: acesta alege la prima intrare, ca mai
+sus. Agentul nu poate cere alt rol decât „client", și nu poate alege
+recomandantul — acela e el, întotdeauna.
+
+**Butonul e acolo din prima zi, și pentru agentul care n-a cerut niciodată un
+cod.** Până de curând nu era: butonul se arăta doar dacă agentul avea deja cod
+de recomandare, iar codul se făcea apăsând altundeva pe aceeași pagină, un pas
+pe care nimic nu i-l spunea. Un agent proaspăt deschidea „Recomandări", nu
+vedea niciun buton de cont, și nu avea de unde ști că-i lipsește un pas, nu un
+drept. Acum codul se naște singur, pe server, în clipa în care agentul face
+primul cont — din numele lui, cu aceeași socoteală prin care se nasc toate
+codurile casei, ca să nu iasă două coduri deosebite pentru același om.
+
+Refuzul a rămas însă acolo unde chiar e o alegere greșită: administratorul care
+cere anume „leagă contul de mine" fără să aibă el cod primește mai departe
+eroarea, fiindcă acolo nu lipsește o pornire, ci s-a cerut un lucru care nu se
+poate.
+
+Mai e un caz, rar, în care și agentul primește refuz: **numele lui nu mai dă
+niciun cod liber.** Codurile se fac din nume, iar într-o casă cu trei Maria
+Popescu toate variantele care se pot scoate din numele acela pot fi deja luate.
+Mesajul îl spune pe față și îi arată calea: un cod ales de mână, din „Conturi".
+Nu e același lucru cu lipsa de pornire de mai sus, și de-asta i se scrie
+altceva.
 
 Iar în „Comenzi", între cele două trepte de personal:
 
-| | administrator / fondator | restul personalului |
-|---|---|---|
-| **Acceptă, respinge sau redeschide o cerere de pe site** | da | **nu** |
-| **Stabilește ordinea opririlor pe rută** | da | **nu** |
-| Editează comanda: client, adresă, poziții, cod de recomandare | da | **nu** |
+| | administrator / fondator | manager | restul personalului |
+|---|---|---|---|
+| **Scrie o comandă nouă, de-a dreptul** | da | **da** | **nu** — scrie o cerere |
+| **Acceptă, respinge sau redeschide o cerere** | da | **da** | **nu** |
+| **Stabilește ordinea opririlor pe rută** | da | **nu** | **nu** |
+| Editează comanda salvată: client, adresă, poziții, cod de recomandare | da | **nu** | **nu** |
+
+Managerul a intrat pe primele două rânduri la 18 septembrie 2026. Acceptarea
+unei cereri **este** nașterea unei comenzi, doar pe celălalt drum — sunt
+singurele două din casă. Lăsată numai pe administrator, poarta i-ar fi spus
+managerului „scrie tu una nouă în loc s-o accepți pe asta", adică exact comanda
+pe care are voie s-o scrie, numai că fără clientul și pozițiile scrise deja.
 
 Primele două rânduri erau, până de curând, deschise întregii ture.
 Ecranul „Administrare Comenzi" se închidea corect pentru angajați, dar serverul

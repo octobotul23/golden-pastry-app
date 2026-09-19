@@ -391,6 +391,280 @@ function route_lab_shift_update(string $idTxt): void
     json_out(['shift' => lab_shift_public($r ?: [])]);
 }
 
+/**
+ * GET /lab/production?from=&to= — bucățile făcute, pe zi și pe tură.
+ *
+ * ÎNTREBAREA PATRONULUI, cuvânt cu cuvânt: „vreau să știu doar cine era de tură
+ * când s-a făcut comanda". Deci raportul NU împarte bucățile pe oameni și nu
+ * pretinde că știe cine a pus mâna pe ce. Spune două lucruri deosebite:
+ *
+ *   · cât s-a făcut, pe zi — cifra adevărată, cea care se adună;
+ *   · cine era în laborator în clipele alea — nume, nu porții.
+ *
+ * DE-AICI IESE SINGURA CAPCANĂ A RAPORTULUI. Când doi oameni sunt de tură în
+ * aceeași clipă, bucățile apar ÎNTREGI la amândoi. Nu e o greșeală, e chiar
+ * răspunsul la întrebarea pusă — dar înseamnă că rândurile oamenilor NU se
+ * adună între ele. Cifra care se adună e cea a zilei, iar `shared` spune pe
+ * care zi s-au suprapus ture. Cine ar vrea vreodată să schimbe asta în porții
+ * (bucăți ÷ oameni de tură) să știe că inventează o măsurătoare pe care n-a
+ * făcut-o nimeni: nimeni n-a numărat cine a pus mâna pe croasant.
+ *
+ * CE ÎNSEAMNĂ „BUCĂȚI": suma DELTELOR, cu semn. O corecție în jos scade,
+ * fiindcă bucățile alea n-au existat. Deci o zi poate ieși și pe minus, dacă
+ * azi s-a corectat un raport scris ieri — și e drept așa, ziua de ieri le are.
+ *
+ * TURA DESCHISĂ se socotește până acum. Pentru cea de azi ăsta e adevărul curat
+ * — omul chiar e acolo —, și e tocmai vederea pentru care s-a cerut raportul:
+ * se citește la mijlocul turei. Pentru una UITATĂ deschisă din altă zi, marginea
+ * din dreapta e o presupunere, nu un pontaj; de-aceea `stale` se cară mai
+ * departe peste tot unde ajunge tura aia — pe tură, pe om și pe zi —, ca cifra
+ * să nu se citească drept pontaj. O tură de noapte începută aseară și încă în
+ * lucru poartă același semn, fiindcă `lab_shifts` nu le deosebește (v.
+ * `route_lab_shifts`); rândul se îndreaptă scriind ora de plecare uitată, prin
+ * `PATCH /lab/shifts/#`.
+ *
+ * CE NU CADE PE NICIO TURĂ se numără deoparte, în `loose*`. Golul ăla e o
+ * informație, nu un rest: ori s-a lucrat fără pontaj, ori cineva a raportat
+ * de-acasă. Topit în total, n-ar mai întreba nimeni de ce.
+ */
+function route_lab_production(): void
+{
+    require_shifts();
+    require_lab();
+
+    $azi  = today_local();
+    $to   = valid_day(trim((string) ($_GET['to'] ?? '')) ?: $azi);
+    $from = valid_day(trim((string) ($_GET['from'] ?? ''))
+        ?: (new DateTimeImmutable($to))->modify('-13 days')->format('Y-m-d'));
+    if ($to < $from) {
+        [$from, $to] = [$to, $from];
+    }
+    if ((new DateTimeImmutable($from))->modify('+1 year')->format('Y-m-d') < $to) {
+        fail('Intervalul cerut e mai lung de un an.', 422, 'range_too_long');
+    }
+
+    // Fără migrarea 021 raportul iese GOL, nu cu eroare. `api/` și paginile se
+    // urcă în aceeași rulare, dar migrarea se dă de mână, uneori mai târziu;
+    // între cele două clipe pagina n-are de ce să arate un ecran roșu pentru un
+    // raport care încă n-are de unde avea rânduri. `supported` spune de ce e gol.
+    if (!lab_production_suportata()) {
+        json_out([
+            'from'   => $from, 'to' => $to, 'supported' => false,
+            'days'   => [], 'shifts' => [], 'people' => [],
+            'totals' => [
+                'pieces' => 0.0, 'entries' => 0, 'orders' => 0,
+                'loosePieces' => 0.0, 'looseEntries' => 0,
+            ],
+        ]);
+    }
+
+    $randuri = all(
+        'SELECT id, order_id, item_id, name, delta, at, day
+           FROM lab_production
+          WHERE day BETWEEN ? AND ?
+          ORDER BY at, id',
+        [$from, $to]
+    );
+
+    // Turele care POT acoperi clipele de mai sus: cele din fereastră, cu o zi în
+    // plus la stânga pentru tura de noapte începută aseară, plus toate cele
+    // rămase deschise, oricât de vechi — una uitată deschisă acoperă, după
+    // socoteala de mai jos, tot ce s-a făcut de-atunci, și tocmai de-aia trebuie
+    // să apară, însemnată, nu să lipsească. Căutarea celor deschise nu poate
+    // folosi `ix_lab_shift_open` (e `(user_id, ended_at)`, iar noi n-avem omul),
+    // deci trece o dată prin tabel; într-o patiserie sănătoasă turele deschise
+    // sunt o mână de rânduri, iar când nu mai sunt, raportul o spune singur.
+    $ture = all(
+        'SELECT s.id, s.user_id, s.day, s.started_at, s.ended_at, u.name
+           FROM lab_shifts s
+           JOIN users u ON u.id = s.user_id
+          WHERE (s.day BETWEEN ? AND ?) OR s.ended_at IS NULL
+          ORDER BY s.started_at, s.id',
+        [(new DateTimeImmutable($from))->modify('-1 day')->format('Y-m-d'), $to]
+    );
+
+    $acum = now_local();
+    $fer  = [];
+    foreach ($ture as $t) {
+        $deschisa = $t['ended_at'] === null;
+        $start    = (string) $t['started_at'];
+        $stop     = $deschisa ? $acum : (string) $t['ended_at'];
+        $fer[] = [
+            'id'        => (int) $t['id'],
+            'userId'    => (int) $t['user_id'],
+            'name'      => (string) $t['name'],
+            'day'       => (string) $t['day'],
+            'startedAt' => $start,
+            'endedAt'   => $deschisa ? null : $stop,
+            'open'      => $deschisa,
+            'stale'     => $deschisa && (string) $t['day'] < $azi,
+            // Ceasul dat înapoi în ultima duminică din octombrie poate lăsa o
+            // plecare scrisă ÎNAINTEA venirii; `route_lab_shifts` numește asta
+            // `backwards` și refuză să scadă minutele. Aici fereastra iese goală
+            // și tura nu prinde nimic — se spune pe față, nu se ghicește o
+            // margine pe care n-a scris-o nimeni.
+            'backwards' => $stop < $start,
+            'start'     => $start,
+            'stop'      => $stop,
+            'pieces'    => 0.0, 'entries' => 0, 'orders' => [],
+        ];
+    }
+
+    $peZi    = [];
+    $comenzi = [];
+    $slobod  = ['pieces' => 0.0, 'entries' => 0];
+
+    foreach ($randuri as $r) {
+        $zi    = (string) $r['day'];
+        $clipa = (string) $r['at'];
+        $delta = (float) $r['delta'];
+        // `order_id` cade pe NULL când comanda se șterge. Bucățile rămân — s-au
+        // făcut —, dar nu mai au ce număra la „comenzi atinse": un NULL numărat
+        // ca o comandă ar inventa una, iar mai multe NULL-uri ar topi zeci de
+        // comenzi șterse într-una singură. Deci numai id-urile adevărate intră.
+        $oid   = $r['order_id'] === null ? 0 : (int) $r['order_id'];
+
+        if (!isset($peZi[$zi])) {
+            $peZi[$zi] = [
+                'day' => $zi, 'pieces' => 0.0, 'entries' => 0, 'orders' => [],
+                'people' => [], 'stale' => false, 'shared' => false,
+                'loosePieces' => 0.0, 'looseEntries' => 0,
+            ];
+        }
+        $peZi[$zi]['pieces'] += $delta;
+        $peZi[$zi]['entries']++;
+        if ($oid > 0) {
+            $peZi[$zi]['orders'][$oid] = true;
+            $comenzi[$oid] = true;
+        }
+
+        $prinse = 0;
+        foreach ($fer as $i => $t) {
+            if ($clipa < $t['start'] || $clipa > $t['stop']) {
+                continue;
+            }
+            $prinse++;
+            $fer[$i]['pieces'] += $delta;
+            $fer[$i]['entries']++;
+            if ($oid > 0) {
+                $fer[$i]['orders'][$oid] = true;
+            }
+            $peZi[$zi]['people'][$t['userId']] = $t['name'];
+            if ($t['stale']) {
+                $peZi[$zi]['stale'] = true;
+            }
+        }
+        if ($prinse > 1) {
+            $peZi[$zi]['shared'] = true;
+        }
+        if ($prinse === 0) {
+            $peZi[$zi]['loosePieces'] += $delta;
+            $peZi[$zi]['looseEntries']++;
+            $slobod['pieces'] += $delta;
+            $slobod['entries']++;
+        }
+    }
+
+    $peOm        = [];
+    $turePublice = [];
+    foreach ($fer as $t) {
+        // Turele aduse de dincolo de fereastră — cea de aseară, cele uitate
+        // deschise — se arată numai dacă au prins ceva. Altfel au fost chemate
+        // ca să poată prinde, nu ca să umple raportul cu zile necerute.
+        if ($t['entries'] === 0 && ($t['day'] < $from || $t['day'] > $to)) {
+            continue;
+        }
+        $k = $t['userId'];
+        if (!isset($peOm[$k])) {
+            $peOm[$k] = [
+                'userId' => $k, 'name' => $t['name'], 'shifts' => 0,
+                'pieces' => 0.0, 'entries' => 0, 'orders' => [], 'stale' => false,
+            ];
+        }
+        $peOm[$k]['shifts']++;
+        $peOm[$k]['pieces']  += $t['pieces'];
+        $peOm[$k]['entries'] += $t['entries'];
+        foreach (array_keys($t['orders']) as $oid) {
+            $peOm[$k]['orders'][$oid] = true;
+        }
+        if ($t['stale']) {
+            $peOm[$k]['stale'] = true;
+        }
+
+        $turePublice[] = [
+            'id'        => $t['id'],
+            'userId'    => $k,
+            'name'      => $t['name'],
+            'day'       => $t['day'],
+            'startedAt' => $t['startedAt'],
+            'endedAt'   => $t['endedAt'],
+            'open'      => $t['open'],
+            'stale'     => $t['stale'],
+            'backwards' => $t['backwards'],
+            'pieces'    => round($t['pieces'], 2),
+            'entries'   => $t['entries'],
+            'orders'    => count($t['orders']),
+        ];
+    }
+
+    $zile = [];
+    foreach ($peZi as $z) {
+        $oameniZi = [];
+        foreach ($z['people'] as $uid => $nume) {
+            $oameniZi[] = ['userId' => (int) $uid, 'name' => (string) $nume];
+        }
+        usort($oameniZi, static fn (array $a, array $b): int => strcmp($a['name'], $b['name']));
+        $zile[] = [
+            'day'          => $z['day'],
+            'pieces'       => round($z['pieces'], 2),
+            'entries'      => $z['entries'],
+            'orders'       => count($z['orders']),
+            'people'       => $oameniZi,
+            'stale'        => $z['stale'],
+            'shared'       => $z['shared'],
+            'loosePieces'  => round($z['loosePieces'], 2),
+            'looseEntries' => $z['looseEntries'],
+        ];
+    }
+
+    $oameni = [];
+    foreach ($peOm as $o) {
+        $o['pieces'] = round($o['pieces'], 2);
+        $o['orders'] = count($o['orders']);
+        $oameni[] = $o;
+    }
+
+    // Aceeași rânduială ca la `GET /lab/shifts`, ca cele două rapoarte să se
+    // citească unul lângă altul fără să-ți mute ochii: zilele de la cea mai
+    // proaspătă în jos, oamenii pe nume.
+    usort($zile, static fn (array $a, array $b): int => strcmp($b['day'], $a['day']));
+    usort($oameni, static fn (array $a, array $b): int => strcmp((string) $a['name'], (string) $b['name']));
+    usort($turePublice, static fn (array $a, array $b): int => strcmp($b['day'], $a['day'])
+        ?: (strcmp($a['name'], $b['name'])
+        ?: strcmp((string) $a['startedAt'], (string) $b['startedAt'])));
+
+    $totalBucati = 0.0;
+    foreach ($randuri as $r) {
+        $totalBucati += (float) $r['delta'];
+    }
+
+    json_out([
+        'from'      => $from,
+        'to'        => $to,
+        'supported' => true,
+        'days'      => $zile,
+        'shifts'    => $turePublice,
+        'people'    => $oameni,
+        'totals'    => [
+            'pieces'       => round($totalBucati, 2),
+            'entries'      => count($randuri),
+            'orders'       => count($comenzi),
+            'loosePieces'  => round($slobod['pieces'], 2),
+            'looseEntries' => $slobod['entries'],
+        ],
+    ]);
+}
+
 /* ------------------------------ tabla de anunțuri (migrarea 015) -- */
 
 /**

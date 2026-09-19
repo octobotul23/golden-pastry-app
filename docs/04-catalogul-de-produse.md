@@ -263,8 +263,37 @@ nu de numele lui scris. Dacă produsul e redenumit mâine, comanda nu se rupe.
 ### Sau deschizi lista întreagă
 
 Lângă **+ Adaugă poziție** stă un buton care deschide catalogul grupat pe
-grupe, cu prețul fiecărei bucăți. E pentru când clientul îți spune „ceva cu
-mere" și nu știi cum se cheamă în catalog.
+grupe. E pentru când clientul îți spune „ceva cu mere" și nu știi cum se
+cheamă în catalog.
+
+Fereastra arată, la fiecare produs, **poza lui**, numele, gramajul și prețul
+bucății — prețul variantei alese pe comandă, congelat sau copt. Produsele fără
+fotografie poartă rozeta casei, ca să rămână un rând de aceeași înălțime, nu o
+gaură.
+
+**Ce ai pus deja se vede, cu cantitate cu tot.** Produsele care au cel puțin o
+bucată pe comandă stau pe **fundal de miere, cu chenar auriu**, iar cifra lor e
+scrisă în casetă. Fără asta, omul care deschide catalogul a doua oară nu-și mai
+amintește ce a pus și pune încă o dată.
+
+Cantitatea se schimbă din trei feluri, toate în fereastră:
+
+- **apeși rândul** (sau **+**) — încă o bucată;
+- **−** — una mai puțin; la zero, poziția dispare cu totul din comandă, fiindcă
+  un rând cu „0" pe el nu e o poziție, e un gunoi pe care l-ai fi șters cu mâna;
+- **scrii cifra** de-a dreptul în casetă — cât ai scris, atât rămâne; `0` scoate
+  produsul.
+
+Cifra din fereastră vorbește despre **produs**, nu despre un rând anume: dacă
+ai scris croissante pe două poziții, ea le adună. Scrisă cu mâna, le și strânge
+la un loc, într-o singură poziție — altfel suma de deasupra n-ar mai fi cea
+tastată. Iar `+` pe un produs deja pus îngroașă poziția lui, nu face una nouă:
+serverul oricum lipește la tarifare pozițiile alăturate cu același produs și
+aceeași variantă, deci lista nu se umple cu rânduri care s-ar strânge la loc pe
+bonul clientului.
+
+Rândul gol cu care se deschide un formular nou **se umple**, nu se sare. Altfel
+fiecare comandă ar începe cu o poziție fără nimic în ea.
 
 ### Ce nu e în catalog merge în „Mențiuni"
 

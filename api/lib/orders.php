@@ -198,7 +198,23 @@ function client_display_name(?string $firma, ?string $nume): string
 function client_scope_for(array $u): ?array
 {
     $rol = (string) ($u['role'] ?? '');
-    if (in_array($rol, GP_ADMIN_ROLES, true)) {
+    // `GP_ORDER_CREATE_ROLES`, nu `GP_ADMIN_ROLES`: de la 19 septembrie 2026
+    // regula e „cine poate scrie comanda poate căuta clientul". Managerul a
+    // intrat aici la cererea patronului — „când scrii numele clientului să ai o
+    // căutare prin istoricul clienților și să-i poți alege" —, iar deschiderea
+    // nu-i arată nimic nou: numele, telefonul și adresa fiecărui client îi trec
+    // oricum prin mână la `GET /orders`, pe comenzile pe care le mută zilnic
+    // dintr-o etapă în alta. Ce capătă e o cale de a le NIMERI, în loc să le
+    // scrie din memorie — adică mai puține comenzi legate de contul greșit.
+    //
+    // Deschiderea atinge toate trei ușile care trec pe aici, și e bine că le
+    // atinge pe toate: căutarea (`GET /clients`), alegerea unui cont ANUME
+    // (`client_in_scope()`, la `POST /requests`) și legarea după nume
+    // (`client_by_name_in_scope()`). Managerul putea deja, de mult, să lege
+    // comanda de contul clientului scriind numele — v. lămurirea de la
+    // `client_by_name_in_scope()`. Alegerea cu degetul e drumul mai SIGUR
+    // dintre cele două: un nume tastat poate nimeri alt cont, un cont ales nu.
+    if (in_array($rol, GP_ORDER_CREATE_ROLES, true)) {
         return ['toti' => true, 'agent' => 0];
     }
     if ($rol === 'agent_vanzari') {
@@ -263,12 +279,18 @@ function client_in_scope(array $u, int $clientId): bool
  * Rândurile probei au fost șterse și contul pus la loc pe NULL.
  *
  * OGRADA E NUMAI PENTRU CINE ARE UNA — hotărârea patronului, seara de
- * 14 septembrie. `client_scope_for()` întoarce `null` pentru manager și
- * angajat, dar `null` acolo înseamnă „n-are unealta de căutat clienți", nu
- * „n-are niciun client". Citit ca ogradă goală, managerul ar fi rămas fără
- * singurul drum prin care comanda luată de el la telefon ajunge în contul
- * clientului — el nici nu poate căuta (403 `client_search_denied`), deci n-ar
- * fi avut cu ce înlocui. Gaura era a agentului; leacul se oprește la el.
+ * 14 septembrie. `client_scope_for()` întoarce `null` pentru cine n-are
+ * unealta de căutat clienți, iar `null` acolo înseamnă chiar asta, nu „n-are
+ * niciun client". Citit ca ogradă goală, omul ar fi rămas fără singurul drum
+ * prin care comanda luată de el la telefon ajunge în contul clientului — n-ar
+ * fi avut cu ce înlocui căutarea pe care n-o are. Gaura era a agentului;
+ * leacul se oprește la el.
+ *
+ * DE LA 19 SEPTEMBRIE 2026 asta îl privește numai pe `angajat`: managerul a
+ * primit ogradă întreagă odată cu căutarea (v. `client_scope_for()`), deci
+ * pentru el ramura de mai jos nu mai cade pe `null`, ci pe `toti` — și dă
+ * același răspuns ca până acum, fiindcă o ogradă care cuprinde toți clienții nu
+ * respinge pe niciunul. Purtarea nu s-a schimbat; s-a schimbat doar drumul.
  *
  * Tăcerea la refuz e dinadins, și se deosebește de 403-ul de pe `customerId`:
  * acolo omul a ALES un cont și merită să afle că n-are voie la el; aici a scris
@@ -823,6 +845,130 @@ function rang_client(?int $contId, ?int $comandaId, array $primele): string
     return $comandaId !== null && $comandaId <= $primul ? 'prima' : 'revenit';
 }
 
+/**
+ * Numele oamenilor care au scris comenzile din lot.
+ *
+ * O SINGURĂ interogare pe tot lotul, ca `primele_comenzi()` de mai sus și ca
+ * pozițiile din `attach_items()`. Un `SELECT` pe rând ar fi însemnat cinci sute
+ * de drumuri la bază pentru o listă de-o zi — chiar paguba pe care lotul
+ * rangului a ocolit-o.
+ *
+ * `orders.created_by` se scrie din 001 pe amândouă căile prin care se naște o
+ * comandă (`route_orders_create()` și `route_requests_accept()`), dar până azi
+ * nu-l citea nimeni.
+ *
+ * @param array<int, int|null> $conturi
+ * @return array<int, string>  id de cont => numele lui
+ */
+function autorii_comenzilor(array $conturi): array
+{
+    $conturi = array_values(array_unique(array_filter(array_map('intval', $conturi))));
+    if (!$conturi) {
+        return [];
+    }
+
+    $ph = implode(',', array_fill(0, count($conturi), '?'));
+    $autori = [];
+    foreach (all("SELECT id, name FROM users WHERE id IN ($ph)", $conturi) as $r) {
+        $autori[(int) $r['id']] = (string) $r['name'];
+    }
+    return $autori;
+}
+
+/**
+ * Dosarul scurt al unui pumn de clienți: câte comenzi, ultima, cât a lăsat.
+ *
+ * ÎNCĂRCĂTOR PE LOT, ca `autorii_comenzilor()` de mai sus și din aceeași
+ * pricină: căutarea întoarce până la doisprezece clienți, iar o socoteală pe
+ * rând ar fi însemnat douăzeci și patru de interogări la FIECARE literă tastată
+ * în caseta de nume. Două interogări pentru tot lotul, oricâți ar fi.
+ *
+ * DE CE DOUĂ ȘI NU UNA: prima numără și adună, a doua aduce ultima comandă
+ * întreagă. Puse laolaltă, ar fi cerut o funcție de fereastră
+ * (`ROW_NUMBER() OVER`), pe care n-o are orice MySQL pe care ar putea sta casa;
+ * așa, amândouă sunt SQL pe care îl înțelege și unul vechi.
+ *
+ * „ULTIMA" ÎNSEAMNĂ ULTIMA SCRISĂ (`MAX(id)`), nu ultima zi de livrare. Omul de
+ * la telefon întreabă „ce mi-a cerut data trecută?", iar răspunsul e comanda pe
+ * care a scris-o cel mai recent — chiar dacă e pentru o zi care n-a venit încă.
+ * Din ea se iau adresa, zona și intervalul, fiindcă tocmai ele se repetă.
+ *
+ * COMENZILE ANULATE NU SE NUMĂRĂ. Un client cu trei comenzi anulate n-a
+ * cumpărat nimic, iar o adresă luată de pe o comandă anulată e chiar cea care
+ * n-a mers. Etapa de anulare vine din Setări (`status_cancelled()`), nu e
+ * scrisă în cod.
+ */
+function dosare_clienti(array $conturi): array
+{
+    $conturi = array_values(array_unique(array_filter(array_map('intval', $conturi))));
+    if (!$conturi) {
+        return [];
+    }
+
+    $ph      = implode(',', array_fill(0, count($conturi), '?'));
+    $anulata = status_cancelled();
+    $dosare  = [];
+
+    foreach (all(
+        "SELECT customer_id, COUNT(*) AS n, COALESCE(SUM(total), 0) AS tot
+           FROM orders WHERE customer_id IN ($ph) AND status <> ?
+          GROUP BY customer_id",
+        array_merge($conturi, [$anulata])
+    ) as $r) {
+        $dosare[(int) $r['customer_id']] = [
+            'orders'  => (int) $r['n'],
+            'spent'   => (float) $r['tot'],
+            'day'     => '',
+            'slot'    => '',
+            'zone'    => '',
+            'address' => '',
+            'fulfillment' => '',
+        ];
+    }
+
+    foreach (all(
+        "SELECT o.customer_id, o.day, o.slot, o.zone, o.address, o.fulfillment
+           FROM orders o
+           JOIN (SELECT customer_id, MAX(id) AS ultima
+                   FROM orders WHERE customer_id IN ($ph) AND status <> ?
+                  GROUP BY customer_id) x ON x.ultima = o.id",
+        array_merge($conturi, [$anulata])
+    ) as $r) {
+        $id = (int) $r['customer_id'];
+        if (!isset($dosare[$id])) {
+            continue;
+        }
+        $dosare[$id]['day']         = (string) ($r['day'] ?? '');
+        $dosare[$id]['slot']        = (string) ($r['slot'] ?? '');
+        $dosare[$id]['zone']        = (string) ($r['zone'] ?? '');
+        $dosare[$id]['address']     = (string) ($r['address'] ?? '');
+        $dosare[$id]['fulfillment'] = (string) ($r['fulfillment'] ?? '');
+    }
+
+    return $dosare;
+}
+
+/**
+ * Cine a scris comanda: numele lui, sau null dacă nu se poate ști.
+ *
+ * Trei feluri de null, toate adevărate și niciunul o greșeală de arătat:
+ *   - comenzile de dinaintea coloanei, care n-au `created_by`;
+ *   - contul șters între timp — `created_by` n-are cheie străină, deci numărul
+ *     rămâne pe comandă, dar nu mai are pereche în `users`;
+ *   - cererile trimise de pe site, care nu sunt scrise de nimeni din casă.
+ *
+ * Pagina nu arată nimic în locurile astea. Un „—" ar fi spus că lipsește ceva.
+ *
+ * @param array<int, string> $autori  de la `autorii_comenzilor()`
+ */
+function autor_comanda(?int $contId, array $autori): ?string
+{
+    if ($contId === null) {
+        return null;
+    }
+    return $autori[$contId] ?? null;
+}
+
 /* ------------------------------------- jetonul cererii de pe site -- */
 
 /**
@@ -852,6 +998,45 @@ function request_claim_supported(): bool
         ) === 1);
     } catch (Throwable $e) {
         error_log('[gp] nu pot verifica jetoanele de cerere: ' . $e->getMessage());
+        return $ok = false;
+    }
+}
+
+/**
+ * A fost importată migrarea 022, cea a cererii scrise de personal?
+ *
+ * Aceeași poartă ca `request_claim_supported()` de deasupra și ca
+ * `promo_supported()`, din același motiv: fișierele urcă pe server înaintea
+ * importului, iar în fereastra aceea o scriere pe coloanele noi ar cădea cu
+ * „Unknown column" — pe `POST /requests`, adică tocmai în fața vizitatorului
+ * care apasă „Trimite comanda".
+ *
+ * TOATE PATRU SAU NICIUNA, ca la `promo_supported()`. Migrarea le aduce
+ * împreună, deci o bază cu trei din patru e o migrare oprită la mijloc, nu o
+ * stare în care s-ar putea merge mai departe cu grijă. Numărate una câte una,
+ * fiecare scriere ar fi cerut poarta ei, iar cea uitată ar fi căzut exact pe
+ * ruta publică.
+ *
+ * Cade ÎNCHIS: fără coloane, cererea pleacă întocmai ca ieri — fără mod de
+ * onorare, fără grabă, fără autor —, iar acceptarea cade pe
+ * `default_fulfillment()`, cum a făcut dintotdeauna pentru cele de pe site.
+ * Ce se pierde e alegerea agentului, și se pierde ZGOMOTOS: pagina „Verificare"
+ * numește coloanele lipsă pe nume (api/verifica.php).
+ */
+function request_staff_supported(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        return $ok = ((int) scalar(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'order_requests'
+                AND COLUMN_NAME IN ('fulfillment', 'urgent', 'timed', 'created_by')"
+        ) === 4);
+    } catch (Throwable $e) {
+        error_log('[gp] nu pot verifica cererile scrise de personal: ' . $e->getMessage());
         return $ok = false;
     }
 }
@@ -1020,6 +1205,9 @@ function request_claim_use(string $jeton, int $userId): ?int
 /** Atașează pozițiile la comenzi, printr-o singură interogare. */
 /**
  * @param bool $cuRecomandare Trece și `referralCode` în JSON.
+ * @param bool $cuAutor       Trece și `creatDe` — numele celui care a scris
+ *                            comanda. Numai spre personal, niciodată spre
+ *                            client: e numele unui angajat, nu al lui.
  *
  * Implicit NU, fiindcă printre apelanți e și lista clientului. Cine l-a
  * adus în casă și cât câștigă acela din el e o înțelegere între patron și
@@ -1031,7 +1219,7 @@ function request_claim_use(string $jeton, int $userId): ?int
  * corecteze. Lipsește (rămâne null) pe o instalare fără migrarea 008 —
  * coloana nu există, iar `$o[...] ?? null` o trece fără să se plângă.
  */
-function attach_items(array $orders, bool $cuRecomandare = false): array
+function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor = false): array
 {
     $orders = array_values(array_filter($orders));
     if (!$orders) {
@@ -1072,7 +1260,25 @@ function attach_items(array $orders, bool $cuRecomandare = false): array
         $orders
     ));
 
-    return array_map(static function (array $o) use ($byOrder, $cuRecomandare, $primele) {
+    // Cine a scris comanda — tot o singură interogare pe lot.
+    //
+    // DE CE ARE STEAG AL LUI, și nu merge pe `$cuRecomandare` deși azi amândouă
+    // înseamnă „cel care se uită nu e clientul". Sunt două secrete deosebite:
+    // acela ascunde o înțelegere de bani între patron și agent, ăsta ascunde
+    // NUMELE unui angajat de ochii cumpărătorului. Cine cumpără n-are de ce să
+    // afle care om din casă i-a scris comanda. Puse pe același steag, prima
+    // schimbare a unuia l-ar fi mutat tăcut și pe celălalt.
+    //
+    // Nu se socotește „întotdeauna", cum se face rangul: rangul e despre omul
+    // care se uită și el și-l poate vedea pe-al lui, autorul e despre altcineva.
+    $autori = $cuAutor
+        ? autorii_comenzilor(array_map(
+            static fn($o) => isset($o['created_by']) && $o['created_by'] !== null ? (int) $o['created_by'] : 0,
+            $orders
+        ))
+        : [];
+
+    return array_map(static function (array $o) use ($byOrder, $cuRecomandare, $cuAutor, $primele, $autori) {
         return [
             'id'           => (int) $o['id'],
             'seq'          => (int) $o['seq'],
@@ -1090,6 +1296,13 @@ function attach_items(array $orders, bool $cuRecomandare = false): array
                 (int) $o['id'],
                 $primele
             ),
+            // Cine a scris-o. Null pentru cine nu e din casă — v. steagul de sus.
+            'creatDe'      => $cuAutor
+                ? autor_comanda(
+                    isset($o['created_by']) && $o['created_by'] !== null ? (int) $o['created_by'] : null,
+                    $autori
+                )
+                : null,
             'customerName' => $o['customer_name'],
             'phone'        => $o['phone'],
             'address'      => $o['address'],

@@ -490,6 +490,12 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <span class="{{ detail.chanCls }}" style="font-size:12px">{{ detail.chan }}</span>
 <span class="{{ detail.variantCls }}" style="font-size:12px">{{ detail.variant }}</span>
+<!-- Cine a scris comanda. Lipsește cu totul pe un server rămas în urmă, pe
+     comenzile venite de pe site și pe cele scrise de un cont șters între
+     timp — toate trei tăcerile sunt lămurite la `gp.creatDe`. -->
+<sc-if value="{{ detail.creatDe }}" hint-placeholder-val="{{ false }}">
+<span data-lb="autor" class="h-badge" title="{{ detail.creatDeTitlu }}" style="font-size:12px">{{ detail.creatDe }}</span>
+</sc-if>
 <span class="{{ detail.statusCls }}" style="font-size:12px">{{ detail.status }}</span>
 </div>
 <sc-if value="{{ detail.note }}" hint-placeholder-val="{{ false }}">
@@ -1784,7 +1790,7 @@ class Component extends DCLogic {
       onDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(key, ids, i, 1); }
     }));
 
-    let detail = { rang: "", rangSemn: "", rangEt: "", rangCls: "h-badge", rangTitlu: "", canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, onAllDone: () => {}, onClose: () => {} };
+    let detail = { rang: "", rangSemn: "", rangEt: "", rangCls: "h-badge", rangTitlu: "", creatDe: "", creatDeTitlu: "", canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, onAllDone: () => {}, onClose: () => {} };
     let hasDetail = false;
     flat.forEach(ord => {
       const t = ord.slot || "";
@@ -1793,6 +1799,15 @@ class Component extends DCLogic {
       const st = ord.status;
       const b = bucati(ord);
       const rgD = gp.rangClient(ord.rangClient);
+      // CINE A SCRIS COMANDA — numai în fișă, nu și pe cartonul din coadă.
+      //
+      // Cartonul se citește de la doi metri, în picioare, cu mâinile ocupate:
+      // acolo încap numărul de bucăți și atât. Numele celui care a scris
+      // comanda nu ajută pe nimeni CÂT timp coace; ajută atunci când ceva nu se
+      // potrivește — o cantitate ciudată, o mențiune de neînțeles — și atunci
+      // omul oricum a apăsat deja pe comandă ca să-i vadă fișa. Pus și pe
+      // carton, ar fi stat în drumul singurului lucru pentru care există.
+      const cdD = gp.creatDe(ord.creatDe);
       detail = {
         ref: ord.ref, cust: ord.cust, chan: ord.chan, chanCls: CH(ord.chan),
         // În fișă încap și vorbele, nu doar semnul: aici se uită cineva care
@@ -1800,6 +1815,7 @@ class Component extends DCLogic {
         // coadă.
         rang: rgD.fel, rangSemn: rgD.semn, rangEt: rgD.et,
         rangCls: rgD.cls, rangTitlu: rgD.titlu,
+        creatDe: cdD.et, creatDeTitlu: cdD.titlu,
         variant: gp.variantLabel(ord.variant),
         variantCls: ord.variant === "congelat" ? "h-badge h-badge--accent" : "h-badge h-badge--honey",
         slot: ord.timed ? "ora " + t + " fix" : "poziția " + (ids.indexOf(ord.id) >= 0 ? ids.indexOf(ord.id) + 1 : "—"),

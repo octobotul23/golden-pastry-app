@@ -13,9 +13,21 @@
  *
  * OGRADA, scrisă o singură dată și numai în SQL:
  *
- *   admin, fondator   — toți clienții;
- *   agent_vanzari     — numai cei aduși de el (`users.referred_by`);
- *   manager, angajat  — nimic, 403.
+ *   admin, fondator, manager — toți clienții;
+ *   agent_vanzari            — numai cei aduși de el (`users.referred_by`);
+ *   angajat                  — nimic, 403.
+ *
+ * Managerul a intrat pe 19 septembrie 2026, la cererea patronului. Pricina, pe
+ * larg, la `client_scope_for()` (api/lib/orders.php): el vede oricum datele
+ * fiecărui client pe comenzile pe care le mută zilnic — ce capătă e o cale de a
+ * le nimeri, nu o vedere nouă.
+ *
+ * FIECARE RÂND POARTĂ UN DOSAR SCURT (`history`): câte comenzi, ultima, unde a
+ * mers și cât a lăsat în casă. Tot patronul l-a cerut: „când ții mouse-ul
+ * deasupra sau apeși lung pe telefon să apară un pop-up cu mai multe amănunte
+ * despre clientul acela înainte să-l alegi". Vine ODATĂ cu lista, nu la
+ * apăsare: altfel fiecare plimbare de deget peste un rând ar fi fost o cerere
+ * la server, iar amănuntele ar fi sosit după ce mâna a plecat mai departe.
  *
  * Îngrădirea NU vine dintr-un parametru al cererii: nu există niciun șir prin
  * care agentul să ceară clienții altcuiva. Identitatea intră din sesiune direct
@@ -132,9 +144,21 @@ function route_clients_search(): void
         array_pop($randuri);
     }
 
-    $rows = array_map(static function (array $r): array {
+    // Dosarele, pe lot: două interogări pentru toată lista, oricât de lungă.
+    // V. `dosare_clienti()`, api/lib/orders.php.
+    $dosare = dosare_clienti(array_map(static fn(array $r): int => (int) $r['id'], $randuri));
+
+    $rows = array_map(static function (array $r) use ($dosare): array {
         $firma = trim((string) ($r['customer_name'] ?? ''));
         $nume  = trim((string) ($r['name'] ?? ''));
+        // Clientul fără nicio comandă are dosar GOL, nu lipsă: pagina desenează
+        // aceeași fereastră, cu „n-a comandat încă" în loc de cifre. Un dosar
+        // care lipsește din răspuns ar fi cerut paginii să deosebească „n-are
+        // comenzi" de „n-am aflat" — două lucruri care arată la fel.
+        $d = $dosare[(int) $r['id']] ?? [
+            'orders' => 0, 'spent' => 0.0, 'day' => '', 'slot' => '',
+            'zone' => '', 'address' => '', 'fulfillment' => '',
+        ];
 
         return [
             'id' => (int) $r['id'],
@@ -152,6 +176,19 @@ function route_clients_search(): void
             // care alege trebuie să știe că numele de pe el n-a fost întărit de
             // nimeni din casă. Însemnul e același cu cel din Conturi.
             'unverified' => (bool) ($r['nerecunoscut'] ?? false),
+            // Dosarul scurt, pentru fereastra de dinaintea alegerii. Cheile sunt
+            // cele ale ULTIMEI comenzi scrise, nu ale contului: adresa de pe
+            // cont poate fi cea de acasă, pe când marfa merge de trei luni la
+            // birou — iar cel care ia comanda pe asta din urmă o caută.
+            'history' => [
+                'orders'      => (int) $d['orders'],
+                'spent'       => round((float) $d['spent'], 2),
+                'lastDay'     => (string) $d['day'],
+                'lastSlot'    => (string) $d['slot'],
+                'lastZone'    => (string) $d['zone'],
+                'lastAddress' => (string) $d['address'],
+                'lastFulfillment' => (string) $d['fulfillment'],
+            ],
         ];
     }, $randuri);
 

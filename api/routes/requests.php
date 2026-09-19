@@ -140,7 +140,9 @@ function route_requests_list(): void
     }
 
     $raspuns = [
-        'requests' => attach_request_items(all($sql, $params)),
+        // Numele celui care a hotărât iese numai pentru cei din casă — cum
+        // iese și autorul comenzii, din aceeași pricină.
+        'requests' => attach_request_items(all($sql, $params), $u['role'] !== 'client'),
         'counts'   => $counts,
     ];
 
@@ -218,6 +220,15 @@ function route_requests_create(): void
     // altfel o cerere ar putea intra pe numele altui client.
     $isClient   = $user && $user['role'] === 'client';
     $customerId = $isClient ? (int) $user['id'] : null;
+
+    // Cererea asta e scrisă de un om al casei, sau vine de pe site?
+    //
+    // Întrebarea e nouă de la 18 septembrie 2026, când `POST /requests` a
+    // devenit și drumul agentului de vânzări și al angajatului: ei scriu o
+    // cerere acolo unde până ieri scriau o comandă (v. `GP_ORDER_CREATE_ROLES`,
+    // api/lib/auth.php). `GP_STAFF_ROLES`, nu „are cont": un client cu cont e
+    // tot lumea de pe site, iar `utilizator_lab` n-are ce scrie aici.
+    $dinCasa = $user && in_array((string) $user['role'], GP_STAFF_ROLES, true);
 
     // Personalul care comandă de pe site o face pentru altcineva, deci numele
     // din formular rămâne al clientului. Înainte, orice cerere trimisă de un
@@ -402,6 +413,38 @@ function route_requests_create(): void
     // mesaj de 2 MB să nu ajungă în e-mailul de notificare.
     $notes = text_field($b['notes'] ?? '', 'Mențiunile', 2000);
 
+    // CE A ALES OMUL CARE A LUAT TELEFONUL (migrarea 022).
+    //
+    // Cele trei câmpuri n-au existat pe cerere fiindcă cererea era a site-ului:
+    // vizitatorul n-are de unde ști ce înseamnă „Curier" la noi în casă. De
+    // când cererea e și drumul agentului, ele sunt chiar ce știe el și nu știe
+    // nimeni altcineva — clientul i-a spus la telefon că o vrea până la zece și
+    // că vine șoferul. Fără ele, alegerile lui se pierdeau tăcut între „Trimite"
+    // și „Acceptă": comanda născută cădea pe `default_fulfillment()` și nu era
+    // urgentă, iar administratorul n-avea de unde bănui că a fost.
+    //
+    // NUMAI DE LA PERSONAL, și nici măcar citite în rest. Deschise, ar fi fost
+    // trei câmpuri pe care orice vizitator le poate trimite prin curl: „urgent"
+    // sare peste toată coada laboratorului, iar modul de onorare s-ar fi ales
+    // de cineva care nu răspunde de el. Pe site nu sunt în formular; aici nu
+    // sunt în cerere.
+    //
+    // GOL NU E O ALEGERE. `fulfillment` rămas gol se scrie NULL, adică „cererea
+    // nu spune", iar acceptarea cade pe implicitul din Setări — exact ca la
+    // cererile de pe site. Scris ca „Livrare", ar fi fost alegerea nimănui,
+    // trecută drept a cuiva.
+    $fulfillment = '';
+    $urgent      = false;
+    $timed       = false;
+    if ($dinCasa) {
+        $fulfillment = trim((string) ($b['fulfillment'] ?? ''));
+        if ($fulfillment !== '' && !in_array($fulfillment, fulfillment_types(), true)) {
+            fail('Mod de onorare necunoscut: ' . $fulfillment, 422, 'bad_fulfillment');
+        }
+        $urgent = !empty($b['urgent']);
+        $timed  = !empty($b['timed']);
+    }
+
     $pdo = db();
     $pdo->beginTransaction();
     try {
@@ -417,6 +460,28 @@ function route_requests_create(): void
             ]
         );
         $id = (int) $pdo->lastInsertId();
+
+        // Cele patru coloane ale migrării 022 se scriu cu un UPDATE, nu în
+        // INSERT-ul de deasupra — același motiv ca la codul de recomandare de
+        // mai jos: numite acolo, ORICE cerere de pe site ar cădea cu „Unknown
+        // column" în toată fereastra dintre urcarea fișierelor și import. Aici,
+        // pe o bază nemigrată, pur și simplu nu se execută nimic și cererea
+        // intră întocmai ca ieri.
+        //
+        // Rămâne în aceeași tranzacție, și nu din grijă pentru o coloană sau
+        // alta: o cerere scrisă de agent care și-ar pierde tocmai autorul n-ar
+        // mai putea fi deosebită de una de pe site, iar comanda născută din ea
+        // s-ar înregistra pe canalul „site" — o minciună scrisă în bază, nu o
+        // lipsă.
+        //
+        // Un singur UPDATE pentru toate patru, fiindcă migrarea le aduce
+        // împreună și `request_staff_supported()` le cere pe toate patru.
+        if ($dinCasa && request_staff_supported()) {
+            q(
+                'UPDATE order_requests SET fulfillment = ?, urgent = ?, timed = ?, created_by = ? WHERE id = ?',
+                [$fulfillment ?: null, $urgent ? 1 : 0, $timed ? 1 : 0, (int) $user['id'], $id]
+            );
+        }
 
         // Codul din coș se scrie cu un UPDATE, nu ca o coloană în INSERT-ul de
         // mai sus — dinadins. Coloana apare abia cu migrarea 008, iar fișierele
@@ -646,13 +711,21 @@ function requests_today_local(): string
  */
 function route_requests_accept(string $id): void
 {
-    // Doar administratorul, nu tot personalul: „Administrare Comenzi” e singura
-    // pagină care acceptă cereri și se închide singură pentru orice alt rol.
-    // Contul comun al tabletelor („panou”, rol angajat) se deschide cu un cod
-    // știut de toată tura, iar cu el acceptarea trecea din consolă: cererea
-    // devenea comandă pe altă zi decât cea cerută de client, iar în jurnal
-    // autorul rămânea „Panou comun”, deci nu se putea afla cine a apăsat.
-    $u  = require_admin();
+    // Nu tot personalul, ci numai cine răspunde de ce intră în laborator:
+    // `GP_ORDER_CREATE_ROLES` — admin, manager, fondator. Contul comun al
+    // tabletelor („panou”, rol angajat) se deschide cu un cod știut de toată
+    // tura, iar cât poarta a fost `require_staff()` acceptarea trecea din
+    // consolă: cererea devenea comandă pe altă zi decât cea cerută de client,
+    // iar în jurnal autorul rămânea „Panou comun”, deci nu se putea afla cine
+    // a apăsat.
+    //
+    // MANAGERUL A INTRAT AICI la 18 septembrie 2026, odată cu hotărârea că el
+    // scrie comenzi de-a dreptul. Acceptarea ESTE nașterea unei comenzi, doar
+    // pe celălalt drum — sunt singurele două din casă. Lăsată pe
+    // `require_admin()`, poarta i-ar fi spus managerului „scrie tu una nouă în
+    // loc s-o accepți pe asta”: aceeași comandă, aceeași zi, dar cererea
+    // clientului rămâne neînchisă și legătura cerere → comandă se rupe.
+    $u  = require_order_create();
     $b  = body();
     $id = (int) $id;
 
@@ -663,6 +736,17 @@ function route_requests_accept(string $id): void
     if ($req['status'] !== 'nou') {
         fail('Cererea a fost deja ' . ($req['status'] === 'acceptata' ? 'acceptată' : 'respinsă') . '.', 409, 'already_handled');
     }
+
+    // CINE A SCRIS CEREREA: omul casei care a luat telefonul, sau nimeni —
+    // atunci a venit de pe site (migrarea 022). `?? null` fiindcă pe o bază
+    // nemigrată `SELECT *` nu aduce coloana deloc, iar `$req['created_by']` ar
+    // fi un indice nedefinit.
+    //
+    // Se citește O SINGURĂ DATĂ, aici, fiindcă răspunde la două întrebări
+    // deosebite mai jos — pe ce canal s-a născut comanda și pe numele cui —,
+    // iar două citiri ale aceleiași coloane se pot despărți la prima
+    // schimbare.
+    $autorCerere = ((int) ($req['created_by'] ?? 0)) ?: null;
 
     $azi = requests_today_local();
     $day = trim((string) ($b['day'] ?? '')) ?: ($req['day'] ?? $azi);
@@ -695,9 +779,18 @@ function route_requests_accept(string $id): void
         fail('Zonă necunoscută: ' . $zone, 422, 'bad_zone');
     }
 
-    // Implicitul se ia din Setări, nu din textul scris aici. V.
-    // `default_fulfillment()`, api/lib/settings.php — și motivul, mai jos.
-    $fulfillment = trim((string) ($b['fulfillment'] ?? '')) ?: default_fulfillment();
+    // Trei trepte, ca la interval și zonă deasupra: ce scrie administratorul
+    // acum, altfel ce a ales cel care a scris cererea (migrarea 022), altfel
+    // implicitul din Setări — nu din textul scris aici; v.
+    // `default_fulfillment()`, api/lib/settings.php, și motivul, mai jos.
+    //
+    // Treapta din mijloc e nouă și e chiar rostul migrării: până la ea,
+    // alegerea agentului nu ajungea nicăieri. Rămâne mijlocie dinadins —
+    // administratorul care schimbă modul la acceptare are în continuare
+    // ultimul cuvânt, fiindcă el vede ziua întreagă și mașina.
+    $fulfillment = trim((string) ($b['fulfillment'] ?? ''))
+        ?: trim((string) ($req['fulfillment'] ?? ''))
+        ?: default_fulfillment();
     if (!in_array($fulfillment, fulfillment_types(), true)) {
         fail('Mod de onorare necunoscut: ' . $fulfillment, 422, 'bad_fulfillment');
     }
@@ -716,8 +809,14 @@ function route_requests_accept(string $id): void
     $address = array_key_exists('address', $b)
         ? (text_field($b['address'], 'Adresa', 255) ?: null)
         : $req['address'];
-    $urgent = !empty($b['urgent']);
-    $timed  = !empty($b['timed']);
+    // Aceeași grijă ca la mențiuni, câteva zeci de rânduri mai jos: câmpul
+    // TRIMIS are întâietate chiar și gol, fiindcă atunci administratorul a
+    // văzut steagul în formular și l-a scos. Câmpul LIPSĂ e altceva — un panou
+    // mai vechi, care nici nu-l trimite — și atunci rămâne ce a cerut cel care
+    // a scris cererea (migrarea 022). Scris ca `!empty($b[...])` singur, cum a
+    // fost până acum, graba cerută de agent se stingea tăcut la acceptare.
+    $urgent = array_key_exists('urgent', $b) ? !empty($b['urgent']) : !empty($req['urgent']);
+    $timed  = array_key_exists('timed', $b)  ? !empty($b['timed'])  : !empty($req['timed']);
 
     // Numele din formular e text, nu identitate. Administratorul corectează la
     // acceptare „Brutăria X" în „Brutăria X S.R.L.", iar `client_by_name()` nu
@@ -845,7 +944,14 @@ function route_requests_accept(string $id): void
                 [
                     $seq, '#' . (1000 + $seq), $customerId, $customerName,
                     $phone, $address, $zone ?: null, $day, $slot ?: null,
-                    $fulfillment, 'site', $first,
+                    // CANALUL SPUNE DE UNDE A VENIT, și până la migrarea 022
+                    // spunea „site" pentru toate — fiindcă toate cererile
+                    // veneau de pe site. De când agentul scrie cereri din
+                    // panou, „site" ar fi fost o minciună scrisă în bază, iar
+                    // orice socoteală pe canale ar fi numărat munca lui la
+                    // rubrica vizitatorilor. Cererea fără autor e, mai departe,
+                    // chiar cea de pe site.
+                    $fulfillment, $autorCerere !== null ? 'panou' : 'site', $first,
                     // Mențiunile trimise de administrator, chiar și goale:
                     // el a văzut nota clientului în formular și a ales să o
                     // șteargă. Cu „?: $req['notes']", golirea era ignorată
@@ -854,7 +960,19 @@ function route_requests_accept(string $id): void
                     array_key_exists('notes', $b)
                         ? (text_field($b['notes'], 'Mențiunile', 2000) ?: null)
                         : $req['notes'],
-                    $total, $id, (int) $u['id'], $variant,
+                    // PE NUMELE CUI SE NAȘTE COMANDA: al celui care a scris
+                    // cererea, dacă a scris-o cineva din casă; altfel al celui
+                    // care a apăsat „Acceptă", ca până acum (cererea de pe site
+                    // n-are alt autor). Agentul care a luat comanda la telefon
+                    // rămâne astfel pe propria lui muncă — altminteri ar fi
+                    // dispărut din ea, iar insigna „Creat de" ar fi arătat pe
+                    // toate comenzile casei numele administratorului de
+                    // serviciu.
+                    //
+                    // CINE A ÎNCUVIINȚAT nu se pierde: stă pe cerere, în
+                    // `handled_by`, și în jurnal, pe fapta `request_accept`.
+                    // Sunt două întrebări, și de-acum au două răspunsuri.
+                    $total, $id, $autorCerere ?? (int) $u['id'], $variant,
                     $urgent ? 1 : 0, $timed ? 1 : 0,
                 ]
             );
@@ -947,7 +1065,7 @@ function route_requests_accept(string $id): void
     // panou (api/routes/orders.php, funcția care scrie comanda nouă):
     // `referral_commission_sync()` scrie `orders.referral_code`, iar un rând
     // citit înaintea lui poartă încă `null` acolo.
-    $order = attach_items([one('SELECT * FROM orders WHERE id = ?', [$orderId])], true)[0];
+    $order = attach_items([one('SELECT * FROM orders WHERE id = ?', [$orderId])], true, true)[0];
     $order['commission'] = $comision === null ? null : [
         'id'       => (int) $comision['id'],
         'referrer' => $comision['referrer_id'] !== null ? (int) $comision['referrer_id'] : null,
@@ -1005,11 +1123,17 @@ function route_requests_accept(string $id): void
 /** POST /requests/{id}/reject */
 function route_requests_reject(string $id): void
 {
-    // Doar administratorul, ca la acceptare. O respingere trimisă din contul
-    // comun al tabletelor trecea cererea definitiv pe „respinsa”, iar de acolo
-    // acceptarea nu mai e posibilă (409 „already_handled”): comanda clientului
-    // se pierdea, iar jurnalul îl trecea pe autor tot ca „Panou comun”.
-    $u  = require_admin();
+    // Ca la acceptare, și din același motiv: `GP_ORDER_CREATE_ROLES`. O
+    // respingere trimisă din contul comun al tabletelor trecea cererea definitiv
+    // pe „respinsa”, iar de acolo acceptarea nu mai e posibilă (409
+    // „already_handled”): comanda clientului se pierdea, iar jurnalul îl trecea
+    // pe autor tot ca „Panou comun”.
+    //
+    // Refuzul e ACEEAȘI autoritate ca încuviințarea, nu una mai mică: cine poate
+    // spune „da” poate spune și „nu”. Despărțite, managerul ar fi putut accepta
+    // orice și n-ar fi putut respinge nimic — iar o cerere pe care n-o vrea i-ar
+    // fi rămas în față până venea un administrator s-o șteargă.
+    $u  = require_order_create();
     $b  = body();
     $id = (int) $id;
 
@@ -1089,9 +1213,10 @@ function route_requests_reject(string $id): void
  */
 function route_requests_reopen(string $id): void
 {
-    // Ca la acceptare și respingere: redeschiderea anulează hotărârea
-    // administratorului, deci nu are ce căuta în contul comun al tabletelor.
-    require_admin();
+    // Ca la acceptare și respingere, pe aceeași listă: redeschiderea anulează o
+    // hotărâre deja luată, deci cere aceeași autoritate ca ea și n-are ce căuta
+    // în contul comun al tabletelor.
+    require_order_create();
     $id = (int) $id;
 
     // Referința comenzii vine odată cu cererea: dacă redeschiderea trebuie
@@ -1213,8 +1338,14 @@ function requests_mark_decided(int $id, ?string $via): void
     }
 }
 
-/** Atașează pozițiile la cereri, printr-o singură interogare. */
-function attach_request_items(array $rows): array
+/**
+ * Atașează pozițiile la cereri, printr-o singură interogare.
+ *
+ * @param bool $cuAutor Scoate și numele celui care a hotărât cererea. Steag,
+ *   nu socoteală din rol, pentru aceeași pricină ca la `attach_items()`:
+ *   pâlnia asta n-are de unde ști cine se uită.
+ */
+function attach_request_items(array $rows, bool $cuAutor = false): array
 {
     $rows = array_values(array_filter($rows));
     if (!$rows) {
@@ -1263,7 +1394,43 @@ function attach_request_items(array $rows): array
         $rows
     ));
 
-    return array_map(static function (array $r) use ($byReq, $adus, $primele) {
+    // Cine a hotărât cererea — a primit-o sau a respins-o. `handled_by` se
+    // scrie de amândouă hotărârile (`:905` și `:1058`) și se golește la
+    // redeschidere (`:1137`): coloana era acolo din 001, întreagă, și n-o citea
+    // nimeni.
+    //
+    // Pentru cererea RESPINSĂ ăsta e SINGURUL nume rămas. Din ea nu se naște
+    // nicio comandă, deci nu există niciun `orders.created_by` care să-l poarte,
+    // iar jurnalul scrie refuzul pe `entity = 'request'`. Fără rândul ăsta,
+    // „cine a refuzat" nu se putea afla de nicăieri din panou.
+    //
+    // Același ajutor ca la comenzi, sub același steag: numele omului din casă
+    // nu se arată cumpărătorului.
+    // ȘI CINE A SCRIS-O, de la migrarea 022 încoace: cererea venită din panou
+    // poartă autorul ei (`created_by`), cea de pe site nu poartă niciunul. Din
+    // asta se vede în „Cereri" dacă hârtia a intrat prin agentul de vânzări sau
+    // a picat de pe site — altfel toate arată la fel, iar administratorul n-are
+    // de unde ști pe cine să întrebe.
+    //
+    // UN SINGUR LOT PENTRU AMÂNDOUĂ ÎNTREBĂRILE. Numele se caută o dată,
+    // fiindcă `autorii_comenzilor()` curăță singură zerourile și repetările:
+    // două loturi ar fi fost două drumuri la bază pe fiecare împrospătare a
+    // panoului, adică la fiecare patru secunde, pentru două jumătăți din
+    // aceeași listă de oameni.
+    $numeDinCasa = $cuAutor
+        ? autorii_comenzilor(array_merge(
+            array_map(
+                static fn($r) => isset($r['handled_by']) && $r['handled_by'] !== null ? (int) $r['handled_by'] : 0,
+                $rows
+            ),
+            array_map(
+                static fn($r) => isset($r['created_by']) && $r['created_by'] !== null ? (int) $r['created_by'] : 0,
+                $rows
+            )
+        ))
+        : [];
+
+    return array_map(static function (array $r) use ($byReq, $adus, $primele, $cuAutor, $numeDinCasa) {
         $cod = $r['referral_code'] ?? null;
         $cod = is_string($cod) && $cod !== '' ? $cod : null;
         return [
@@ -1293,6 +1460,26 @@ function attach_request_items(array $rows): array
             'rejectReason' => $r['reject_reason'],
             'createdAt'    => $r['created_at'],
             'handledAt'    => $r['handled_at'],
+            'hotaratDe'    => $cuAutor
+                ? autor_comanda(
+                    isset($r['handled_by']) && $r['handled_by'] !== null ? (int) $r['handled_by'] : null,
+                    $numeDinCasa
+                )
+                : null,
+            // Cele patru ale migrării 022, cu aceeași grijă ca `referral_code`
+            // de mai sus: pe o bază nemigrată `SELECT r.*` se întoarce fără
+            // ele, deci `?? null` și `!empty()` țin lista întreagă până la
+            // import. Cererea de pe site le are goale oricum — nimeni n-a ales
+            // nimic pentru ea.
+            'fulfillment'  => ($r['fulfillment'] ?? null) ?: null,
+            'urgent'       => !empty($r['urgent']),
+            'timed'        => !empty($r['timed']),
+            'scrisDe'      => $cuAutor
+                ? autor_comanda(
+                    isset($r['created_by']) && $r['created_by'] !== null ? (int) $r['created_by'] : null,
+                    $numeDinCasa
+                )
+                : null,
             // Amândouă vin cu migrarea 013 și amândouă lipsesc dintr-un
             // `SELECT r.*` făcut pe o bază nemigrată — de aceea `?? null`, ca
             // la `referral_code` de mai sus: lista rămâne întreagă până la

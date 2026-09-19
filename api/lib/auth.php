@@ -135,7 +135,18 @@ function request_path(): string
  */
 function password_change_route(string $path): bool
 {
-    return $path === '/auth/password' || str_ends_with($path, '/auth/password');
+    // A DOUA UȘĂ, „păstrez parola actuală", trebuie scrisă aici pe față.
+    //
+    // `str_ends_with($path, '/auth/password')` NU o prinde: calea ei se
+    // termină în `/keep`. Fără rândul de mai jos, omul cu steagul pus ar fi
+    // primit 403 `must_change_password` chiar de la butonul făcut pentru el —
+    // singurul buton care i-l putea stinge. Poarta ar fi apărat ușa ei proprie.
+    foreach (['/auth/password', '/auth/password/keep'] as $usa) {
+        if ($path === $usa || str_ends_with($path, $usa)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function require_auth(): array
@@ -178,10 +189,16 @@ function require_role(string ...$roles): array
  * căutat prin cod. `client` NU e pe listă și nu are ce căuta pe ea.
  *
  * Atenție: „personal" nu înseamnă „administrator". Rutele care cer drepturi
- * depline — conturi, catalog, setări, jurnal, acceptarea cererilor de pe site,
- * ordinea opririlor pe rută — folosesc mai departe require_admin() și
- * rămân închise pentru manager și pentru agentul de vânzări, exact cum sunt
- * pentru angajat.
+ * depline — conturi, catalog, setări, jurnal, ordinea opririlor pe rută —
+ * folosesc mai departe require_admin() și rămân închise pentru manager și
+ * pentru agentul de vânzări, exact cum sunt pentru angajat.
+ *
+ * Iar de la 18 septembrie 2026 „personal" nu mai înseamnă nici „scrie
+ * comenzi": nașterea unei comenzi — `POST /orders` și acceptarea unei cereri —
+ * are lista ei, `GP_ORDER_CREATE_ROLES`, mai largă decât administratorii
+ * (intră și managerul) și mai strâmtă decât personalul (ies agentul de vânzări
+ * și angajatul). Ce le rămâne celor doi prin ușa asta e restul: lista de
+ * comenzi, cotația, mutarea prin etape.
  *
  * Singura excepție e `fondator`, adăugat la coadă odată cu migrarea 009: el
  * e personal ȘI administrator (vezi GP_ADMIN_ROLES mai jos). Restul listei
@@ -294,6 +311,67 @@ function leads_shifts($cine): bool
 {
     $rol = is_array($cine) ? (string) ($cine['role'] ?? '') : (string) $cine;
     return in_array($rol, GP_SHIFTS_ROLES, true);
+}
+
+/**
+ * Cine poate scrie o comandă DIRECT în sistem, fără ca altcineva s-o
+ * încuviințeze.
+ *
+ * HOTĂRÂREA PATRONULUI, 18 septembrie 2026: „comenzile nu apar direct în
+ * sistem decât când sunt adăugate de admin/manager/fondator — restul apar ca
+ * și cereri pentru ei". Până azi ușa era `require_staff()`, adică toți cei
+ * din `GP_STAFF_ROLES`: agentul de vânzări scria o comandă care intra pe loc
+ * în laborator, fără ca cineva s-o fi încuviințat — iar `angajat` putea face
+ * același lucru prin API, deși meniul lui nici n-are Comenzi (`PANOURI_ROL`,
+ * shared/gp-api.js). Așa se închide și gaura aceea, care nu se vedea de
+ * nicăieri din aplicație.
+ *
+ * ACEIAȘI OAMENI CA `GP_SHIFTS_ROLES`, ȘI TOTUȘI ALTĂ LISTĂ. Azi cele două au
+ * exact aceleași trei roluri, deci un alias ar fi mers — și ar fi fost o
+ * capcană. Una răspunde la „cine citește statul de plată", cealaltă la „cine
+ * răspunde de ce intră în laborator": două întrebări deosebite, care se despart
+ * la primul rol nou. Un „șef de tură" care numără orele fără să comande, sau un
+ * „dispecer" care scrie comenzi fără să vadă salariile colegilor — cu o listă
+ * împărțită, oricare din cei doi ar fi căpătat dintr-o mișcare și dreptul
+ * celălalt, fără ca nimeni să fi cerut asta. Două liste care se nimeresc la fel
+ * nu sunt aceeași listă.
+ *
+ * CE NU ÎNCHIDE, spus pe față: numai NAȘTEREA comenzii. Mutarea prin stadii,
+ * cotația și editarea rămân pe `require_staff()`, fiindcă omul din laborator
+ * trebuie să poată duce mai departe o comandă pe care n-avea voie s-o scrie.
+ * Poarta stă pe fapta de a crea, nu pe registru.
+ *
+ * CELE DOUĂ UȘI PE CARE SE NAȘTE O COMANDĂ sunt `route_orders_create()` și
+ * `route_requests_accept()` — atât, iar `.claude/test-comanda-peste-tot.mjs` le
+ * numără tocmai ca să rămână atât. Amândouă trec de-acum prin lista asta, deci
+ * „cererile pot fi aprobate doar de admin/manager/fondator" și „comanda se
+ * scrie doar de ei" sunt o singură regulă, scrisă o singură dată.
+ */
+const GP_ORDER_CREATE_ROLES = ['admin', 'fondator', 'manager'];
+
+/** Scurtătură pentru cine scrie comenzi de-a dreptul. Vezi GP_ORDER_CREATE_ROLES. */
+function require_order_create(): array
+{
+    return require_role(...GP_ORDER_CREATE_ROLES);
+}
+
+/**
+ * Scrie omul ăsta comenzi de-a dreptul? Întrebarea care NU oprește cererea.
+ *
+ * Perechea lui `require_order_create()`, cum e `e_admin()` pentru
+ * `require_admin()`. Formularul de comandă rămâne ACELAȘI pentru toți cei care
+ * îl pot deschide; se schimbă numai ușa pe care pleacă la salvare: `POST
+ * /orders` pentru cine e în listă, `POST /requests` pentru ceilalți. O
+ * întrebare, nu o poartă, fiindcă agentul de vânzări n-a greșit cu nimic —
+ * cererea lui e drumul cuvenit, nu un refuz, și n-are de ce să afle asta
+ * dintr-un 403 după ce a scris toată comanda.
+ *
+ * Oglinda ei din pagină e `gp.eScrieComenzi()` (shared/gp-api.js).
+ */
+function writes_orders($cine): bool
+{
+    $rol = is_array($cine) ? (string) ($cine['role'] ?? '') : (string) $cine;
+    return in_array($rol, GP_ORDER_CREATE_ROLES, true);
 }
 
 /**

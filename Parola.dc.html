@@ -91,7 +91,28 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ provizorie }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--warning" style="border-radius:16px;padding:14px 16px">
 <p class="h-alert__title" style="margin:0;font-size:15px">Pe cont e încă parola primită când ți s-a făcut contul</p>
-<p style="margin:6px 0 0;font-size:14px;line-height:1.55;text-wrap:pretty">O știe și cine ți-a trimis-o. Pune una știută doar de tine.</p>
+<p style="margin:6px 0 0;font-size:14px;line-height:1.55;text-wrap:pretty">{{ provizorieText }}</p>
+</div>
+</sc-if>
+
+<!-- ALEGEREA DE LA PRIMA INTRARE. Până în runda 2.2.1, contul cu parolă
+     provizorie n-avea decât o ieșire: un formular cu trei casete, pus în față
+     înainte ca omul să apuce să vadă aplicația. Pentru cine și-a ales parola
+     chiar la facerea contului, era un drum fără rost — iar poarta din
+     `require_auth()` îi ținea închis tot restul până îl străbătea.
+     Acum întrebarea se pune o dată, cu două butoane, iar formularul de azi
+     rămâne întreg — mutat într-o fereastră, în spatele celui dintâi. -->
+<sc-if value="{{ alegerea }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:22px 20px;border-radius:22px;display:flex;flex-direction:column;gap:14px">
+<p style="margin:0;font-size:15px;line-height:1.6;color:var(--h-fg-muted);text-wrap:pretty">{{ alegereText }}</p>
+
+<sc-if value="{{ pErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px">{{ pErr }}</div>
+</sc-if>
+
+<button type="button" class="h-btn h-btn--primary h-btn--block" onClick="{{ onVreauSchimb }}" style="min-height:54px;font-size:17px">Vreau să schimb parola</button>
+<button type="button" class="h-btn h-btn--ghost h-btn--block" onClick="{{ onPastrez }}" style="min-height:52px;font-size:16px">{{ pastrezLabel }}</button>
+<p style="margin:0;font-size:13px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">{{ pastrezNota }}</p>
 </div>
 </sc-if>
 
@@ -103,7 +124,20 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <sc-if value="{{ deFormular }}" hint-placeholder-val="{{ true }}">
-<div class="h-card" style="padding:22px 20px;border-radius:22px;display:flex;flex-direction:column;gap:14px">
+<!-- UN SINGUR FORMULAR, în două locuri. Învelișul de aici e gol când pagina e
+     deschisă obișnuit („Parola mea", din meniu) și devine perdea fixă când e
+     chemat din alegerea de la prima intrare. O a doua copie a casetelor,
+     scrisă pentru fereastră, s-ar fi depărtat de prima la prima corectură —
+     s-a mai întâmplat în casa asta, cu meniul. -->
+<div style="{{ ferScrim }}" onClick="{{ onFerScrim }}">
+<div class="h-card" style="{{ ferCard }}" onClick="{{ onFerTine }}">
+
+<sc-if value="{{ fereastra }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600;flex:1">Schimbă parola</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onFerInchide }}" title="Închide" aria-label="Închide" style="min-width:44px;min-height:44px;padding:0;font-size:20px;line-height:1">×</button>
+</div>
+</sc-if>
 
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parola de acum
 <input class="h-input" type="password" value="{{ veche }}" onChange="{{ onVeche }}" onKeyDown="{{ onKey }}" autoComplete="current-password" placeholder="cea cu care ai intrat" style="height:50px;font-size:16px">
@@ -127,6 +161,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <button type="button" class="h-btn h-btn--primary h-btn--block" onClick="{{ onSave }}" style="min-height:54px;font-size:17px">{{ saveLabel }}</button>
+</div>
 </div>
 </sc-if>
 
@@ -181,6 +216,11 @@ const MIN = 8;
 
 class Component extends DCLogic {
   state = { navOpen: false, auth: null, loaded: false, veche: "", noua: "", inca: "", err: "", vezi: false, gata: false, salvez: false,
+    // Alegerea de la prima intrare. `fereastra` e formularul de azi, scos în
+    // față peste alegere; `pastrez` și `pErr` sunt ale butonului „păstrez",
+    // ținute deoparte de `err`, care e al formularului: un refuz al unuia
+    // n-are ce căuta pe ecranul celuilalt.
+    fereastra: false, pastrez: false, pErr: "",
     // Cererea de fondator, cu stările ei proprii: nu se amestecă cu `err` și
     // `gata` de la parolă, altfel o cerere eșuată ar șterge de pe ecran
     // mesajul „Parola a fost schimbată" — două lucruri fără nicio legătură.
@@ -188,6 +228,14 @@ class Component extends DCLogic {
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
+    // Escape închide fereastra cu formularul. Ascultătorul stă pe document, nu
+    // pe fereastră: ea se naște și moare la fiecare deschidere, iar unul legat
+    // de ea s-ar pierde odată cu ea. Tiparul e cel din `Statistici.dc.html`.
+    // `componentDidMount` e unul dintre cele TREI cârlige pe care gazda le
+    // cheamă cu adevărat (support.js) — orice altă metodă de ciclu de viață ar
+    // fi cod mort, fără eroare și fără avertisment.
+    this.peTasta = (e) => { if (e.key === "Escape" && this.state.fereastra) this.setState({ fereastra: false }); };
+    document.addEventListener("keydown", this.peTasta);
     gp.me()
       .then((user) => this.setState({
         // `gp.auth()` dă forma cerută de meniu — rol, cod de recomandare,
@@ -201,6 +249,10 @@ class Component extends DCLogic {
       .catch(() => this.setState({ loaded: true }));
   }
 
+  componentWillUnmount() {
+    document.removeEventListener("keydown", this.peTasta);
+  }
+
   /** O parolă lizibilă, destul de lungă ca serverul s-o accepte din prima. */
   propune() {
     let p = WORDS[Math.floor(Math.random() * WORDS.length)] + "-" + (1000 + Math.floor(Math.random() * 9000));
@@ -212,6 +264,9 @@ class Component extends DCLogic {
     const S = this.state;
     const set = (x) => this.setState(x);
     const a = S.auth;
+    // Se socotește o dată: de ea atârnă acum trei chei — ce se arată, ce scrie
+    // în anunț și dacă formularul stă în curgere sau în fereastră.
+    const provizorie = !!(a && a.temp) && !S.gata;
 
     const salveaza = () => {
       const veche = String(S.veche);
@@ -231,6 +286,35 @@ class Component extends DCLogic {
 
 
 
+    // „PĂSTREZ PAROLA ACTUALĂ". Ruta stinge steagul și atât — nu schimbă
+    // parola, nu taie celelalte sesiuni, nu cere parola curentă (omul e deja
+    // înăuntru, cu sesiunea lui).
+    //
+    // JUMĂTATEA URCATĂ: ruta e nouă în runda 2.2.1. Pe un server cu `api/`
+    // vechi iese 404 — și atunci pagina NU se blochează, ci cade înapoi pe
+    // schimbarea obligatorie de până acum: deschide fereastra cu formularul și
+    // scrie de ce. Un ecran cu două butoane din care unul duce într-un chenar
+    // roșu ar fi fost mai rău decât ecranul de dinainte.
+    const pastreaza = () => {
+      if (S.pastrez) return;
+      set({ pastrez: true, pErr: "" });
+      gp.keepPassword()
+        .then(() => {
+          // `gp.primaPagina()` hotărăște unde merge fiecare rol, nu pagina
+          // asta: clientul în magazin, agentul în Recomandări, angajatul în
+          // laborator. Coada de adresă se duce mai departe, ca peste tot —
+          // acolo stă instanța cerută de probe.
+          location.href = gp.primaPagina(a) + (location.search || "");
+        })
+        .catch((e) => {
+          if (e && e.status === 404) {
+            return set({ pastrez: false, fereastra: true, pErr: "",
+              err: "Serverul acesta nu știe încă să păstreze parola primită. Pune una nouă." });
+          }
+          set({ pastrez: false, pErr: (e && e.message) || "Nu am putut păstra parola." });
+        });
+    };
+
     // „Cere drept de fondator". O singură apăsare, nu două ca la ștergeri:
     // nu se strică nimic și nu se schimbă niciun rol. Tot ce se întâmplă e că
     // pleacă un e-mail către adresa firmei — iar textul de deasupra butonului
@@ -247,9 +331,39 @@ class Component extends DCLogic {
     return {
       anonim: S.loaded && !a,
       deschis: !S.loaded || !!a,
-      deFormular: !S.gata,
+      // Formularul se arată ori în curgerea paginii (cont obișnuit), ori în
+      // fereastră (alegerea de la prima intrare, butonul „schimb"). Pe ecranul
+      // alegerii, până la apăsare, nu se arată deloc.
+      deFormular: !S.gata && (!provizorie || S.fereastra),
       gata: S.gata,
-      provizorie: !!(a && a.temp) && !S.gata,
+      provizorie,
+      provizorieText: provizorie
+        ? "O știe și cine ți-a trimis-o. Alege mai jos: pui una nouă, ori o păstrezi pe asta dacă tot tu ai ales-o."
+        : "O știe și cine ți-a trimis-o. Pune una știută doar de tine.",
+
+      /* --- alegerea de la prima intrare --- */
+      alegerea: provizorie && !S.fereastra,
+      alegereText: "Poți să pui acum o parolă știută doar de tine, ori s-o păstrezi pe cea de acum "
+        + "și să intri direct în cont.",
+      pastrezLabel: S.pastrez ? "Se salvează…" : "Păstrez parola actuală",
+      // Urmarea, scrisă pe ecran înainte de apăsare, nu după: patronul a ales
+      // ca oricine are steagul să poată păstra, personalul inclusiv.
+      pastrezNota: "Dacă o păstrezi, parola rămâne și cea știută de cine ți-a făcut contul.",
+      pErr: S.pErr,
+      onVreauSchimb: () => set({ fereastra: true, pErr: "", err: "" }),
+      onPastrez: () => pastreaza(),
+
+      /* --- fereastra cu formularul --- */
+      fereastra: S.fereastra,
+      ferScrim: S.fereastra
+        ? "position:fixed;inset:0;z-index:150;background:rgba(18,12,8,.62);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto"
+        : "",
+      ferCard: S.fereastra
+        ? "padding:22px 20px;border-radius:22px;display:flex;flex-direction:column;gap:14px;width:100%;max-width:420px;max-height:calc(100vh - 40px);overflow:auto"
+        : "padding:22px 20px;border-radius:22px;display:flex;flex-direction:column;gap:14px",
+      onFerScrim: () => { if (S.fereastra) set({ fereastra: false }); },
+      onFerTine: (e) => e.stopPropagation(),
+      onFerInchide: () => set({ fereastra: false }),
       sub: a ? "Contul „" + a.name + "”" : "Intră în cont ca să-ți poți schimba parola",
 
       veche: S.veche, noua: S.noua, inca: S.inca, err: S.err,

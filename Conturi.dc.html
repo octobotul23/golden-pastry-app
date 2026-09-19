@@ -287,6 +287,35 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!-- CĂUTAREA. Lista de conturi vine ÎNTREAGĂ de la server (`GET /users`,
+     `:866`), deci filtrul stă aici, în pagină: nu mai e nimic de cerut,
+     răspunde la fiecare tastă și merge și cu netul căzut. Dacă vreodată lista
+     va veni pe pagini de la server, căutarea trebuie să urce acolo — altfel ar
+     căuta numai în pagina de pe ecran și ar spune „niciun cont" despre unul
+     care există.
+     Se caută în nume, utilizator, e-mail, firma clientului, zonă ȘI rol. Rolul
+     e înăuntru dinadins: „agent" scoate toți agenții dintr-o tastare, iar ăsta
+     e cel mai des motivul pentru care se deschide pagina.
+     ȘI SE CAUTĂ FĂRĂ DIACRITICE, în amândouă părțile. Într-o casă cu
+     Gheorghiță și Mărioara, o căutare care cere semnele scrise întocmai nu
+     găsește nimic: nimeni nu scrie „ț" pe tastatura telefonului. Lămurirea
+     întreagă e lângă `faraSemne`, în logică. -->
+<div style="max-width:760px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<input class="h-input" type="search" value="{{ cauta }}" onChange="{{ onCauta }}" placeholder="Caută după nume, utilizator, e-mail, firmă sau rol" aria-label="Caută printre conturi" style="flex:1 1 280px;min-width:0;height:44px;font-size:15px">
+<sc-if value="{{ cautaPusa }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onCautaSterge }}" style="min-height:44px;flex:none">Golește</button>
+</sc-if>
+</div>
+
+<sc-if value="{{ cautaPusa }}" hint-placeholder-val="{{ false }}">
+<p role="status" style="margin:0;font-size:13px;color:var(--h-fg-faint)">{{ cautaSocoteala }}</p>
+</sc-if>
+
+<!-- O listă care se golește fără o vorbă arată ca o pagină stricată. -->
+<sc-if value="{{ cautaNimic }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Niciun cont nu se potrivește cu <strong>{{ cautaCeva }}</strong>. Se caută după nume, utilizator, e-mail, firma clientului, zonă sau rol — semnele de pe litere nu contează.</p>
+</sc-if>
+
 <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="2">
 <div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:14px;border-color:{{ a.bd }}">
 
@@ -560,6 +589,23 @@ const logAct = () => {};
 // Conturile vin de la server (GET /users). Nu mai există nicio listă locală:
 // varianta veche ținea aici parolele în clar, vizibile din „View source".
 // Traducem forma API-ului în forma folosită de pagină.
+/**
+ * Contul cerut din altă pagină, ca lista să se deschidă chiar pe el.
+ *
+ * Vine din fereastra unui rând de Jurnal (§A3): „Vezi contul". Se cheamă după
+ * NUMĂR, nu după numele de utilizator — un nume, oricare, n-are ce căuta
+ * într-o adresă web (regula casei, docs/03), iar numărul nu spune nimic despre
+ * nimeni. Numele de utilizator, de care are nevoie deschiderea fișei, se află
+ * din lista adusă de la server, nu din adresă.
+ *
+ * Zero înseamnă „nu s-a cerut nimic": tot zero iese și dintr-o adresă scrisă
+ * de mână aiurea, deci nu se deschide nimic din greșeală.
+ */
+const CERUT_CONT = (() => {
+  try { return Math.max(0, parseInt(new URLSearchParams(location.search || "").get("cont") || "", 10) || 0); }
+  catch (e) { return 0; }
+})();
+
 const fromApi = (x) => ({
   id: x.id,
   u: x.username,
@@ -725,7 +771,7 @@ class Component extends DCLogic {
   // fiind input controlat de React fără stare locală — își pierdea litera pe
   // loc și o primea înapoi abia cu răspunsul serverului. Cine scria mai
   // repede decât rețeaua rămânea cu numele trunchiat.
-  state = { navOpen: false, users: [], auth: null, resets: [], edit: null, draft: {}, sterg: null, n1: "", n2: "", err: "", fresh: {}, form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "", nBusy: false, pNew: "", pErr: "", pCode: null, pCodeErr: "", msg: "", msgBad: false, offline: "", eroare: "", loaded: false, refReady: false,
+  state = { navOpen: false, cauta: "", users: [], auth: null, resets: [], edit: null, draft: {}, sterg: null, n1: "", n2: "", err: "", fresh: {}, form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "", nBusy: false, pNew: "", pErr: "", pCode: null, pCodeErr: "", msg: "", msgBad: false, offline: "", eroare: "", loaded: false, refReady: false,
     // Comisioanele stau pe migrarea 008, codurile pe 007: două steaguri, nu
     // unul. `refDefault` e procentul global din Setări — caseta goală înseamnă
     // „ia-l pe el", iar propoziția aia trebuie să poată spune cât e.
@@ -803,7 +849,7 @@ class Component extends DCLogic {
         this.setState({ auth: gp.auth(user) });
         if (!gp.eAdmin(user)) return null;
         this.pullPanelCode();
-        return this.pullUsers();
+        return this.pullUsers().then(() => this.deschideCerutul());
       })
       .catch((e) => {
         // Serverul nu răspunde. Nu trimitem pe nimeni la autentificare: acolo
@@ -823,6 +869,28 @@ class Component extends DCLogic {
    * paginii se cheamă `pull…` (vezi „Panou Laborator": `pull`, `pullCounts`),
    * iar butonul „Încearcă din nou" al casetei de eroare o cheamă pe asta.
    */
+  /**
+   * Deschide fișa contului cerut prin adresă, o singură dată.
+   *
+   * DUPĂ lista de conturi, fiindcă adresa poartă numărul, iar fișa se deschide
+   * pe numele de utilizator — legătura dintre ele o știe numai lista.
+   *
+   * O SINGURĂ DATĂ, și de-aia `this.cerutFacut`: `pullUsers()` se cheamă din
+   * nou la fiecare salvare și la fiecare ștergere, iar fără lacăt fișa cerută
+   * la deschiderea paginii s-ar redeschide peste umărul omului la fiecare
+   * faptă a lui.
+   *
+   * Un număr care nu se găsește — cont șters între timp, adresă veche — nu
+   * deschide nimic și nu se plânge: lista e pe ecran, întreagă, și asta e tot
+   * ce poate spune pagina cu adevărat.
+   */
+  deschideCerutul() {
+    if (!CERUT_CONT || this.cerutFacut) return;
+    this.cerutFacut = true;
+    const acc = (this.state.users || []).find((x) => x.id === CERUT_CONT);
+    if (acc) this.setState({ edit: acc.u, n1: "", n2: "", err: "" });
+  }
+
   pullUsers(patch) {
     return gp.get("/users")
       .then((r) => this.setState(Object.assign({
@@ -1161,7 +1229,22 @@ class Component extends DCLogic {
       pica();
     };
 
-    const accounts = S.users.map(acc => {
+    // FĂRĂ SEMNE ȘI FĂRĂ MAJUSCULE, în amândouă părțile. `normalize("NFD")`
+    // desface litera cu semn în literă + semn aparte (ș → s + virgulă dedesubt,
+    // ă → a + căciulă), iar semnele se aruncă. Așa „gheorghita" îl găsește pe
+    // „Gheorghiță", și „Gheorghiță" îl găsește pe „Gheorghita" scris de o mână
+    // grăbită — altfel căutarea ar fi mers numai pentru cine scrie numele
+    // întocmai, adică aproape pentru nimeni.
+    // Se desface ȘI ce s-a tastat, ȘI ce e în cont: o singură parte curățată
+    // ar fi fost mai rea decât nimic, fiindcă ar fi mers într-un sens și nu în
+    // celălalt, iar omul n-ar fi avut cum ghici în care.
+    const faraSemne = (x) => (x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const cautat = faraSemne(S.cauta.trim());
+    const potrivite = !cautat ? S.users : S.users.filter(acc =>
+      [acc.name, acc.u, acc.mail, acc.cust, acc.zona, ROLE_L[roleOf(acc)]]
+        .some(camp => faraSemne(camp).indexOf(cautat) >= 0));
+
+    const accounts = potrivite.map(acc => {
       const editing = S.edit === acc.u;
       const isMe = me === acc.u;
       const rl = roleOf(acc);
@@ -1681,6 +1764,14 @@ class Component extends DCLogic {
           () => { this.pullUsers(); this.pullPanelCode(); });
       },
       accounts,
+      cauta: S.cauta,
+      onCauta: (e) => set({ cauta: e.target.value }),
+      onCautaSterge: () => set({ cauta: "" }),
+      cautaPusa: cautat.length > 0,
+      cautaNimic: cautat.length > 0 && potrivite.length === 0,
+      cautaCeva: S.cauta.trim(),
+      cautaSocoteala: potrivite.length + " din " + S.users.length
+        + (S.users.length === 1 ? " cont" : " conturi"),
 
       /* --- linkurile de recomandare, strânse la un loc --- */
       // Codul era greu de găsit: stătea pe cardul fiecărui cont, iar ca să dai

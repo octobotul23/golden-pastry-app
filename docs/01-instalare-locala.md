@@ -86,19 +86,22 @@ Se rulează de câte ori vrei: fiecare migrare se uită întâi în
 **Cum verifici.** Ultimele rânduri ale uneltei sunt chiar verificarea:
 
 ```
-Tabele în gp_dev: 21
-audit_log, founder_invites, lab_messages, lab_shifts, login_attempts, ...
+Tabele în gp_dev: 24
+audit_log, founder_invites, lab_messages, lab_production, lab_shifts, ...
 Produse în catalog: 22
 
 GATA — baza e pregătită.
 ```
 
-**22 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
+**24 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
 numele care lipsește îți spune care migrare n-a intrat: `referral_commissions`
 e din `008`, `founder_invites` din `009`, `lab_shifts` din `014`,
-`lab_messages` din `015`. Fără primul, „Recomandări" nu-ți arată banii; fără
-celelalte două, „Pontaj" și tabla de anunțuri din Panoul Laborator răspund
-lămurit că lipsește migrarea. Și dacă în dreptul vreunui fișier scrie un număr
+`lab_messages` din `015`, `request_claims` din `019`, iar `telegram_links` și
+`lab_production` din `021`. Fără primul, „Recomandări" nu-ți arată banii; fără
+`lab_shifts` și `lab_messages`, „Pontaj" și tabla de anunțuri din Panoul
+Laborator răspund lămurit că lipsește migrarea. Ultimele două tac în schimb:
+fără `telegram_links` butonul de legare a Telegramului nu pornește, iar fără
+`lab_production` raportul de producție pe tură iese **gol**, nu cu eroare. Și dacă în dreptul vreunui fișier scrie un număr
 de erori, nu trece peste: eroarea e tipărită dedesubt, cu instrucțiunea lângă
 ea.
 

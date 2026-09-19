@@ -365,15 +365,58 @@ function route_users_create(): void
         // Luat de acolo, ar fi fost mereu null și fiecare cont făcut de aici ar
         // fi ieșit nelegat — adică exact munca pentru care există butonul.
         $codul = referral_public((int) $eu['id']);
+        $pricina = null;
+
+        if ($codul === null && !e_admin($eu)) {
+            // AGENTUL ÎȘI FACE CODUL AICI, nu e trimis după el.
+            //
+            // Defectul, întreg: butonul „fă un cont de cumpărător" se arată
+            // numai cui ARE deja un cod (`potFaceCont`, Recomandari.dc.html),
+            // iar codul se face din ALT buton, pe care nimic nu-l lega de
+            // primul. Deci un agent proaspăt nu vedea butonul deloc — și dacă
+            // l-ar fi văzut, ajungea aici, la un 409 care îl trimitea la un
+            // administrator pentru un pas pe care putea să-l facă singur
+            // (`canMake`, GET /referrals). Patronul a spus-o scurt: „agentul nu
+            // are cum să creeze conturi noi".
+            //
+            // Codul se face în PHP, nu într-o migrare: se scoate din NUMELE
+            // omului, cu dezambiguizare la ciocnire (`referral_assign()`), iar
+            // SQL-ul n-ar fi ajuns la aceleași litere. Două generatoare
+            // deosebite ar fi dat două coduri deosebite pentru același om.
+            //
+            // `referral_self_assign()` e ACELAȘI pe care îl cheamă butonul din
+            // „Recomandări", și nu strică un cod pus deja: chemat de două ori,
+            // îl întoarce pe cel dintâi.
+            if (referral_self_assign((int) $eu['id'], $pricina) !== null) {
+                $codul = referral_public((int) $eu['id']);
+                audit('referral_self_code', 'user', (string) $eu['id'],
+                    $eu['name'] . ' → ' . ($codul['code'] ?? '?') . ' (făcut la primul cont adus)');
+            }
+        }
+
         if ($codul === null) {
             // Refuz, nu cont nelegat în tăcere: cine cere legarea o cere
             // fiindcă de-asta face contul. Un „gata" peste o legătură care nu
             // s-a scris e chiar defectul reparat aici, mutat cu un pas mai
             // încolo.
+            //
+            // Pentru ADMINISTRATORUL care a cerut `linkToMe` fără cod, refuzul
+            // rămâne cel de dinainte: acolo chiar e o alegere greșită, nu o
+            // lipsă de pornire — codul lui se dă din „Conturi", de mână.
+            // Pentru agent, s-a ajuns aici numai fiindcă numele lui nu dă
+            // niciun cod, și atunci asta se spune, nu altceva.
             fail(
-                'Contul tău nu are încă un cod de recomandare, deci cumpărătorul n-ar avea cum '
-                  . 'să fie legat de tine. Codul se dă din „Conturi", de la butonul de lângă cont — '
-                  . 'cere-i unui administrator dacă tu n-ai acces acolo.',
+                $pricina === null
+                    ? 'Contul tău nu are încă un cod de recomandare, deci cumpărătorul n-ar avea cum '
+                        . 'să fie legat de tine. Codul se dă din „Conturi", de la butonul de lângă cont — '
+                        . 'cere-i unui administrator dacă tu n-ai acces acolo.'
+                    : ($pricina === 'toate_luate'
+                        ? 'Numele „' . $eu['name'] . '" e prea des întâlnit: toate codurile care se pot '
+                            . 'face din el sunt deja luate. Cere-i unui administrator un cod ales de mână, '
+                            . 'din „Conturi", și apoi fă contul.'
+                        : 'Nu am putut face un cod de recomandare din numele „' . $eu['name'] . '", '
+                            . 'deci cumpărătorul n-ar avea cum să fie legat de tine. Cere-i unui '
+                            . 'administrator un cod ales de mână, din „Conturi".'),
                 409,
                 'no_referral_code'
             );

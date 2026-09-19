@@ -59,6 +59,8 @@ require __DIR__ . '/lib/notify.php';
 require __DIR__ . '/lib/referral.php';
 require __DIR__ . '/lib/promo.php';
 require __DIR__ . '/lib/firma.php';
+require __DIR__ . '/lib/telegram-legaturi.php';
+require __DIR__ . '/lib/productie.php';
 
 cors((array) config('allowed_origins', []));
 
@@ -92,6 +94,7 @@ $routes = [
     ['POST',   '/auth/logout',       'auth',     'route_logout'],
     ['GET',    '/auth/me',           'auth',     'route_me'],
     ['POST',   '/auth/password',     'auth',     'route_change_password'],
+    ['POST',   '/auth/password/keep', 'auth',    'route_keep_password'],
     ['POST',   '/auth/panel',        'auth',     'route_panel_login'],
     ['POST',   '/auth/forgot',       'auth',     'route_forgot'],
     ['POST',   '/auth/reset',        'auth',     'route_reset'],
@@ -163,6 +166,10 @@ $routes = [
     // îl scotea din comenzile zilei deschise — singurele pe care le are pagina
     // — deci scria „0 opriri" în dreptul tuturor celorlalte zile.
     ['GET',    '/routes/counts',     'orders',   'route_driver_route_counts'],
+    // Ce a rămas în urmă: opririle zilelor trecute care nu s-au încheiat.
+    // `/routes` de deasupra e ruta UNEI zile — o livrare ratată ieri nu se
+    // mai vedea nicăieri de pe telefonul șoferului.
+    ['GET',    '/routes/restante',   'orders',   'route_driver_restante'],
     // Fereastra îngustă a clientului și a agentului: numai cifre și nume de
     // zone, plus opririle lui. `/routes` de deasupra nu se putea lărgi — e
     // `require_ops()` și întoarce comenzi întregi, cu nume și adrese.
@@ -190,6 +197,13 @@ $routes = [
     ['POST',   '/lab/clock',         'lab',      'route_lab_clock'],
     ['GET',    '/lab/shifts',        'lab',      'route_lab_shifts'],
     ['PATCH',  '/lab/shifts/#',      'lab',      'route_lab_shift_update'],
+
+    // Raportul de producție, pe zi și pe tură (migrarea 021). Aceeași poartă
+    // ca raportul de ore de deasupra — `require_shifts()` —, fiindcă e același
+    // lucru citit din alt unghi: ce a ieșit din laborator în orele alea. Nu în
+    // Statistici, unde poarta e numai a fondatorului: managerul conduce tura,
+    // deci el are nevoie de cifra ei.
+    ['GET',    '/lab/production',    'lab',      'route_lab_production'],
 
     // Tabla de anunțuri de pe ecranul laboratorului. Citește oricine ține
     // ecranul deschis, inclusiv contul `panou` al tabletei (`require_ops()`);
@@ -282,6 +296,14 @@ $routes = [
     ['POST',   '/telegram/webhook',  'telegram', 'route_telegram_webhook'],
     ['POST',   '/telegram/link',     'telegram', 'route_telegram_link'],
     ['POST',   '/telegram/unlink',   'telegram', 'route_telegram_unlink'],
+    // Telegramul OMULUI, nu al botului. Toate au segmente fixe, deci ordinea
+    // între ele e liberă; stau lângă cele de sus fiindcă se citesc împreună.
+    // Pe „/telegram/" nu există niciun tipar cu „#", deci nu e nimic de pus
+    // înainte ca să nu fie înghițite.
+    ['GET',    '/telegram/me',       'telegram', 'route_telegram_me'],
+    ['POST',   '/telegram/me/link',  'telegram', 'route_telegram_me_link'],
+    ['POST',   '/telegram/me/confirm', 'telegram', 'route_telegram_me_confirm'],
+    ['DELETE', '/telegram/me/link',  'telegram', 'route_telegram_me_unlink'],
 ];
 
 /** Potrivește ruta și extrage segmentele variabile. */

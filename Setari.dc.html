@@ -416,6 +416,41 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <span class="h-help">{{ tgLegHelp }}</span>
 </div>
+
+<!-- Contul MEU de Telegram. Altă cutie, dinadins: cea de sus leagă botul de
+     toată casa și se apasă o dată, asta leagă un singur om și se apasă de
+     fiecare dintre ei. Amestecate, „Dezleagă botul" și „Dezleagă-mi contul"
+     ar fi stat unul lângă altul, iar apăsarea greșită taie butoanele
+     tuturor. Cutia nu se desenează deloc pe un server fără migrarea 021. -->
+<sc-if value="{{ euAre }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:12px;padding:14px;border:1px solid var(--h-line);border-radius:14px;background:var(--h-bg-surface)">
+<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+<div style="display:flex;flex-direction:column;gap:5px;flex:1;min-width:220px">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:15px;font-weight:600">Contul meu de Telegram</span>
+<span class="{{ euStareCls }}" style="font-size:10px">{{ euStareEt }}</span>
+</div>
+<span style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ euNota }}</span>
+</div>
+</div>
+<sc-if value="{{ euApasat }}" hint-placeholder-val="{{ true }}">
+<div class="h-alert h-alert--accent" style="border-radius:12px;padding:10px 14px">
+<p class="h-alert__title" style="margin:0;font-size:14px;line-height:1.55">{{ euApasatorEt }}</p>
+</div>
+</sc-if>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<sc-if value="{{ euApasat }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onEuConfirm }}" disabled="{{ euConfirmOff }}" style="height:46px;font-size:14px">{{ euConfirmLabel }}</button>
+</sc-if>
+<sc-if value="{{ euLegat }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onEuDezleg }}" disabled="{{ euConfirmOff }}" style="height:46px;font-size:14px;color:var(--h-danger)">{{ euDezlegLabel }}</button>
+</sc-if>
+<sc-if value="{{ euNelegat }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onEuCere }}" disabled="{{ euCereOff }}" title="{{ euCereHint }}" style="height:46px;font-size:14px">{{ euCereLabel }}</button>
+</sc-if>
+</div>
+</div>
+</sc-if>
 </div>
 
 </sc-if>
@@ -707,7 +742,16 @@ class Component extends DCLogic {
     eroareSetari: "",
     // "" · "link" · "unlink". Ține butonul apăsat cât ține drumul până la
     // Telegram — legarea e un apel afară, nu o scriere locală, și poate dura.
-    linking: ""
+    linking: "",
+    // Legătura dintre CONTUL ĂSTA și un Telegram anume — alta decât legarea
+    // botului de mai sus, deși stau una lângă alta. Botul se leagă o dată, de
+    // toată casa; asta se leagă de un singur om, și numai el o poate face.
+    //
+    // `null` înseamnă „încă nu știm", nu „nu e nimic": cutia nu se desenează
+    // până nu răspunde serverul, ca să nu scrie „nelegat" peste un cont legat.
+    eu: null,
+    // "" · "cer" · "incuviintez" · "dezleg"
+    euLucru: ""
   };
 
   componentDidMount() {
@@ -747,6 +791,10 @@ class Component extends DCLogic {
         if (!user) { gp.toLogin(); return; }
         this.setState({ auth: gp.auth(user) });
         if (!gp.eAdmin(user)) { this.setState({ loaded: true }); return; }
+        // Aici, nu în `pull()`: „Trimite test" și „Leagă botul" cheamă
+        // `pull()`, iar legătura pe om nu se schimbă de la niciuna din ele.
+        // O cerere în plus la fiecare apăsare ar fi fost un drum degeaba.
+        this.euCitesc();
         return this.pull();
       })
       .catch((e) => {
@@ -1033,6 +1081,50 @@ class Component extends DCLogic {
       // atinge `msg`, deci mesajul de mai sus rămâne pe ecran.
       .then(() => this.pull())
       .catch((e) => this.setState({ linking: "", err: e.message }));
+  }
+
+  /**
+   * Legătura dintre contul ăsta și un Telegram anume, citită de pe server.
+   *
+   * Nu aruncă niciodată. Un refuz — rol fără drept, server fără migrarea 021,
+   * rețea căzută — stinge cutia și atât: restul Setărilor n-are nicio treabă
+   * cu ea, iar o bară roșie peste tot formularul pentru o cutie care oricum
+   * n-avea ce arăta ar fi fost o alarmă despre nimic.
+   */
+  euCitesc() {
+    return gp.get("/telegram/me")
+      .then((r) => this.setState({ eu: r || null }))
+      .catch(() => this.setState({ eu: null }));
+  }
+
+  /**
+   * Cele trei fapte ale legăturii pe om: cer, încuviințez, dezleg.
+   *
+   * ÎNCUVIINȚAREA nu trimite nimic: id-ul de Telegram se ia de pe rândul
+   * scris la apăsare, pe server (`telegram_incuviinteaza()`). Dacă l-ar
+   * trimite pagina, omul și-ar putea trece pe cont numărul altuia — și de
+   * atunci apăsările aceluia i-ar purta numele. Cererea spune doar „da", nu
+   * „da, ăsta".
+   *
+   * Nu trece prin „Salvează", ca și legarea botului: nimic din ce scrie nu se
+   * tastează în formular.
+   */
+  euFapta(ce) {
+    this.setState({ euLucru: ce, err: "", msg: "" });
+    const drum = ce === "dezleg"
+      ? gp.del("/telegram/me/link")
+      : gp.post(ce === "cer" ? "/telegram/me/link" : "/telegram/me/confirm", {});
+    return drum
+      .then((r) => this.setState({
+        euLucru: "",
+        msg: ce === "cer"
+          ? "Butonul a plecat în grupul de pe Telegram. Apasă-l de pe telefonul tău, apoi întoarce-te aici și încuviințează."
+          : (ce === "incuviintez"
+            ? "Gata. De acum, ce apeși de pe telefon se scrie în Jurnal pe numele tău."
+            : "Contul tău nu mai e legat de Telegram. Apăsările tale se scriu iar pe contul care a legat botul.")
+      }))
+      .then(() => this.euCitesc())
+      .catch((e) => this.setState({ euLucru: "", err: e.message }));
   }
 
   test(channel) {
@@ -1324,6 +1416,23 @@ class Component extends DCLogic {
           ? "Salvează întâi Chat ID-ul, altfel botul n-are cui răspunde."
           : ""));
     const testHint = dirty ? "Testul folosește datele salvate pe server, nu pe cele de pe ecran. Apasă „Salvează” din bara de sus, apoi testează." : "";
+
+    // --- contul MEU de Telegram, altceva decât botul casei ----------------
+    //
+    // Cutia se desenează numai când serverul a răspuns ȘI știe despre ea. Pe
+    // un server fără migrarea 021 nu apare nimic — nici eroare, nici buton
+    // mort: exact purtarea de până acum, cum cere „La publicare”.
+    const EU = S.eu;
+    const euCerere = (EU && EU.cerere) || null;
+    // Ceasul vine în UTC, ca tot ce scrie baza cu `UTC_TIMESTAMP()`.
+    // `gp.utc()` îl citește ca atare, în loc să-l creadă ora de aici — iar
+    // greșeala aia n-ar fi arătat un mesaj strâmb, ci o cerere vie dată drept
+    // expirată (sau invers) exact la două-trei ceasuri distanță.
+    const euExpirat = !!(euCerere && euCerere.expiraLa && gp.utc(euCerere.expiraLa) <= Date.now());
+    const euAsteapta = !!(euCerere && !euCerere.folosit && !euExpirat);
+    const euApasat = !!(euAsteapta && euCerere.apasat);
+    const euLegat = !!(EU && EU.legat);
+    const euCine = (euCerere && euCerere.numeleLui) || "";
 
     // Titlul casetei roșii, scris după ce chiar e în listă. Două minciuni
     // reparate deodată:
@@ -1679,14 +1788,56 @@ class Component extends DCLogic {
       tgLegHint: tgLegPiedica,
       // Rândul de jos spune ce se întâmplă ACUM, nu ce ar trebui să facă omul:
       // ce trebuie făcut stă în textul de sub deget, pe buton.
+      //
+      // Propoziția dinaintea rundei 2.2.1 — „cine apasă lucrează pe contul
+      // care a legat botul” — a încetat să fie adevărată în ziua în care
+      // `telegram_actor()` a început să caute întâi apăsătorul. A rămas
+      // adevărată numai pentru cine NU și-a legat contul, deci se spune așa,
+      // cu cutia de dedesubt arătată ca ieșire.
       tgLegHelp: tgStare === "legat"
-        ? "Botul ascultă apăsările. Cine apasă lucrează pe contul care a legat botul — faptele apar în Jurnal pe numele acela, nu pe „Sistem”."
+        ? "Botul ascultă apăsările. Cine nu și-a legat contul de mai jos lucrează pe contul care a legat botul — faptele apar în Jurnal pe numele acela, nu pe „Sistem”."
         : (tgStare === "eroare"
           ? "Ultima legare nu a ținut și butoanele nu lucrează. Verifică tokenul și Chat ID-ul, apoi încearcă din nou."
           : "Cât timp botul nu e legat, anunțurile pleacă fără butoane. Legarea se face de pe adresa publică, pe https — "
             + "Telegram nu acceptă un server de acasă, deci butonul funcționează abia după publicare. Pe WhatsApp "
             + "butoanele merg numai în șabloanele aprobate de Meta, iar răspunsul vine ca mesaj scris, nu ca apăsare: "
             + "de aceea cutia asta e numai la Telegram."),
+
+      /* --- contul meu de Telegram --- */
+      euAre: !!(EU && EU.suportat),
+      euLegat,
+      // `sc-if` nu știe să nege — are numai `value`. Deci perechea se scrie
+      // aici, ca ramura „altfel" să fie o valoare adevărată, nu un atribut
+      // închipuit: unul necunoscut ar fi fost înghițit fără o vorbă, iar
+      // butonul ar fi apărut exact pe dos.
+      euNelegat: !euLegat,
+      euApasat,
+      euStareEt: euLegat ? "Legat" : (euApasat ? "Te așteaptă pe tine" : (euAsteapta ? "Butonul e în grup" : "Nelegat")),
+      euStareCls: euLegat
+        ? "h-badge h-badge--success"
+        : (euApasat ? "h-badge h-badge--accent" : "h-badge h-badge--honey"),
+      euNota: euLegat
+        ? "Ce apeși tu sub anunțuri se scrie în Jurnal pe numele tău, nu pe contul care a legat botul."
+        : (euApasat
+          ? "Cineva a apăsat butonul trimis pentru tine. Încuviințează NUMAI dacă ai apăsat tu: de-atunci încolo, apăsările lui îți poartă numele."
+          : (euAsteapta
+            ? "Butonul te așteaptă în grupul de pe Telegram. Apasă-l de pe telefonul tău, apoi întoarce-te aici."
+            : "Cât timp contul tău nu e legat, ce apeși de pe telefon se scrie pe contul care a legat botul — nu pe al tău.")),
+      // Numele vine de pe Telegram, așa cum și l-a pus omul. Se arată tocmai
+      // ca să se poată vedea că NU e al tău înainte de a apăsa „Da, eu am
+      // apăsat" — ăsta e singurul lucru care stă între grup și identitatea ta.
+      euApasatorEt: euApasat ? "A apăsat: " + (euCine || "cineva fără nume pe Telegram") : "",
+      euCereLabel: S.euLucru === "cer" ? "Se trimite…" : (euAsteapta ? "Trimite alt buton" : "Leagă-mi contul"),
+      onEuCere: () => this.euFapta("cer"),
+      // Serverul refuză oricum fără webhook legat (`no_webhook`). Refuzul se
+      // spune de aici, în românește, înaintea drumului — ca la „Leagă botul".
+      euCereOff: S.euLucru !== "" || tgStare !== "legat",
+      euCereHint: tgStare === "legat" ? "" : "Leagă întâi botul, mai sus: butonul tău pleacă tot prin el.",
+      euConfirmLabel: S.euLucru === "incuviintez" ? "Se leagă…" : "Da, eu am apăsat",
+      onEuConfirm: () => this.euFapta("incuviintez"),
+      euConfirmOff: S.euLucru !== "",
+      euDezlegLabel: S.euLucru === "dezleg" ? "Se dezleagă…" : "Dezleagă-mi contul",
+      onEuDezleg: () => this.euFapta("dezleg"),
 
       /* --- liste --- */
       lists,

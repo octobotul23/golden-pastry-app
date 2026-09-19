@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**363 de defecte confirmate** — 10 critice, 106 grave, 160 medii, 87 mici.
-**354 reparate**, 9 rămase.
+**385 de defecte confirmate** — 10 critice, 112 grave, 176 medii, 87 mici.
+**378 reparate**, 7 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-155 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+177 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -29,13 +29,13 @@ Aceeași listă, cu filtre și căutare:
 | Gravitate | Reparate | Rămase | Total |
 |---|---|---|---|
 | Critice | 10 | 0 | 10 |
-| Grave | 104 | 2 | 106 |
-| Medii | 159 | 1 | 160 |
-| Mici | 81 | 6 | 87 |
+| Grave | 110 | 2 | 112 |
+| Medii | 175 | 1 | 176 |
+| Mici | 83 | 4 | 87 |
 
 ---
 
-## Ce e reparat — 354
+## Ce e reparat — 378
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -92,6 +92,10 @@ reparația la loc și văzând-o picând.
   `.claude/build-deploy.mjs:374` · *grav*
   Acelaşi lucru spus a doua oară, pe alt modul: un bloc `mod_headers` care pune `Cache-Control: no-cache, must-revalidate` pe pagini. Nu e o repetare din neatenţie — cele două se sprijină pe module diferite, iar unul dintre ele lipseşte tocmai acolo unde contează. mod_headers e aprins pe orice instalare a aplicaţiei (fără el n-ar merge nici antetele de securitate, nici „noindex"-ul panourilor), deci blocul lucrează oricum, fără să fie nevoie de vreo comandă dată pe server. „no-cache, must-revalidate", nu „no-store": pagina are voie să stea în cache, dar browserul e dator să întrebe serverul de fiecare dată dacă s-a schimbat.
 
+- [x] **Ajutorul care taie corecția ceasului căuta un rând care nu mai există, ieșea cu cod 2 și omora `test-ceas-patiserie` cu totul — 68 de reguli nemăsurate, raportate ca o eroare de proces, nu ca o regulă picată**
+  `.claude/ceas-un-caz.mjs:30` · *grav*
+  Reparat în runda 2.2.1. Tăietura se mută pe ramura care chiar înseamnă „ceasul patiseriei” (`: gp.acumLaPatiserie();` → `: new Date();`), deci spune exact ce spunea: fără corecție, ziua vine din ceasul aparatului. Când fereastra e ancorată pe o zi anume, ziua vine din adresă și n-are ce corecta — lămurire scrisă lângă tăietură, cu data la care s-a mutat. [19 septembrie 2026]
+
 - [x] **Generatorul de semințe `gen-seed.mjs` a rămas în urma fișierului pe care îl scrie: rulat azi, ar șterge contul de sistem „panou" (tabletele n-ar mai putea intra), coordonatele sediului, etapele cu rol special, zonele adevărate și tot blocul de categorii**
   `.claude/gen-seed.mjs:37` · *grav*
   Generatorul nu mai poate pierde nimic în tăcere: înainte de scriere compară ce urmează să iasă cu ce e ACUM în fișierul țintă și, dacă s-ar pierde ceva, nu scrie nimic și spune exact ce — tabelele care ar dispărea cu totul (product_categories, users), cheile care ar dispărea (hq_label, hq_lat, hq_lng, order_status_done, order_status_cancelled, delivery_zone_coords) și setările scrise de mână pe care le-ar da înapoi la valoarea din prototip (delivery_zones: zonele adevărate ale firmei față de cartierele inventate), cu amândouă valorile puse una sub alta. Plasa se uită la VALORI, nu doar la chei: delivery_zones e în amândouă fișierele, deci o comparație de chei ar fi lăsat-o să se întoarcă la prototip fără niciun sunet. Poarta e îngustă, nu un „nu" permanent: un fișier care nu există încă se scrie, iar o a doua rulare peste propria ieșire trece — refuză doar când chiar s-ar pierde ceva. Ce NU s-a făcut, dinadins: generatorul tot nu știe blocurile lipsă, fiindcă proiectul a hotărât deja că sql/002_seed.sql se ține de mână; cheile noi se scriu în amândouă fișierele, iar mesajul de refuz o spune pe față. Probat: rulat pe fișierul adevărat refuză cu cod 1 și lasă fișierul neatins (md5 identic).
@@ -99,6 +103,10 @@ reparația la loc și văzând-o picând.
 - [x] **Patru suite ieșeau silnic din mijlocul lor, peste `finally`-ul care punea casa la loc: `process.exit()` nu rulează `finally`, deci baza de dezvoltare rămânea cu setările stricate pentru suita următoare**
   `.claude/test-defect-anunturi-esuate.mjs:216` · *grav*
   S-a scris o `class ProbaOprita extends Error` și un `opreste(motiv)` care ARUNCĂ în loc să iasă: un `throw` din mijlocul lui `try` iese **prin** `finally`, deci punerea la loc se face. La coadă, `catch` lasă orice altă excepție să treacă mai departe și o prinde numai pe a lui, iar pricina se scrie în românește **după** ce casa a fost pusă la loc; sfârșitul e `process.exitCode = 1`, nu `process.exit()`. Ieșirile dinaintea lui `try` au rămas neatinse — acolo n-are ce sări. La fel în `test-defect-paza-zonelor`, `test-defect-raft-fantoma` și `test-defect-usa-fondator`. Comentariul mincinos s-a înlocuit — de două ori, fiindcă și a doua măsurătoare avea o variabilă ascunsă. Întâi scria „se încheie cu 127, din pricina prizelor lăsate deschise de `fetch`”; apoi „cu `0xC0000409`, și numai când serverul stă în ACELAȘI proces”. A treia măsurătoare — opt variante, `scratchpad/runda-2-1-1/dovezi/cine-prabuseste-de-fapt.mjs` — le-a împăcat: patruzeci de cereri trimise UNA CÂTE UNA se încheie cu 1, și cu serverul în același proces, și cu el în altul; aceleași patruzeci trimise DEODATĂ prăbușesc procesul, în amândouă locurile și fie că li s-au citit corpurile, fie că nu. Deci variabila e CONCURENȚA, nu locul serverului; iar urma e libuv, nu `fetch`: `Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src/win/async.c:94`. Și cele două cifre n-au fost niciodată în ceartă: ACELAȘI eveniment se vede ca 127 printr-un shell și ca 3221226505 prin `spawnSync` din Node. Așadar `process.exit()` strică două lucruri deosebite — sare peste `finally` ORICÂND, fără nicio condiție, iar peste cereri în zbor prăbușește procesul în loc să-l încheie — și `throw`-ul le ocolește pe amândouă. Pe suitele astea, care trimit cererile una câte una, lovea numai primul; e destul. [17 septembrie 2026]
+
+- [x] **O probă care MOARE în loc să pice ia cu ea toate regulile de după: ciotului de șofer îi lipsea `pullRestante()`, iar eroarea cădea ÎNĂUNTRUL unui `.then()` — lanțul rămânea respins, a doua apăsare nu mai pleca niciodată, iar proba se prăbușea cu TypeError peste trei secțiuni întregi**
+  `.claude/test-defect-etapa-veche.mjs:613` · *grav*
+  Reparat în runda 2.2.1. Ciotul de șofer capătă `pullRestante()` — martor, nu purtare: numără recitirile —, cu lămurirea de ce există; iar blocul de după e păzit de `if (!cereri[1])`, care preface moartea într-o regulă picată, cu numele ei („a doua apăsare a plecat, ca să am ce refuza cu 409”). S-a adăugat și regula care lipsea: „și lista restanțelor odată cu ea, fiindcă o livrare închisă o schimbă”. [19 septembrie 2026]
 
 - [x] **Probele care strică dinadins surse ale proiectului puneau la loc doar dintr-un „finally": un Ctrl-C lăsa fișierul stricat, tăcut, iar următoarea construire îl ducea în pachetul de urcat pe server**
   `.claude/test-seo-dovada.mjs:252` · *grav*
@@ -280,6 +288,14 @@ reparația la loc și văzând-o picând.
   `api/routes/orders.php:1618` · *grav*
   Reparat pe 16 septembrie 2026, în runda 2.1.1. Citirea de sub lacăt duce acum și `status` (și `seq`, pentru numele comenzii din mesaj). Când `status_cancelled()` nu e șirul gol și comanda stă pe etapa aceea, `$opreste()` face rollback și răspunde 409, cod `status_changed`, cu etapa de acum în `error.current` — aceeași formă ca la ușa de etapă, copiată literă cu literă. Paza sirului gol e obligatorie: `status_cancelled()` poate întoarce ȘIRUL GOL când setarea e necompletată (v. `api/routes/stats.php:29-33`), iar o comparație naivă ar refuza atunci comenzile cu etapa goală. ÎNGUSTĂ DINADINS: pe „Predată" și pe orice altă etapă raportul trece mai departe, fiindcă `trimiteProd` pleacă abia după 600 ms de liniște și un refuz acolo ar rupe o cursă NORMALĂ cu „livrat"-ul șoferului. În pagină, `catch`-ul lui `trimiteProd` (`Panou Laborator.dc.html:1495-1516`) deosebește acum un refuz de o pană de rețea și spune în românește ce nu s-a notat, în loc de „Nu s-a salvat: …" — adică nu mai dă vina pe internet pentru o hotărâre a administratorului.
 
+- [x] **Orice om al casei putea scrie o comandă care intra pe loc în laborator, fără ca nimeni s-o fi încuviințat: agentul de vânzări și angajatul aveau ruta deschisă, iar angajatul n-o avea nici măcar în meniu — comanda lui exista, intra în producție și pe rută, și nu trecuse pe la niciun ochi**
+  `api/routes/orders.php:548` · *grav*
+  Reparat în runda 2.2.1. Regula nu e o poartă, e un DRUM — îngustată numai poarta, agentul ar fi completat tot formularul ca să primească 403 la apăsarea butonului, adică un refuz în locul unei unelte. Deci s-au mutat trei lucruri deodată: (i) POARTA — `GP_ORDER_CREATE_ROLES` (admin, fondator, manager), cu `require_order_create()` pe nașterea comenzii și pe toate trei hotărârile cererii (acceptare, respingere, redeschidere: cine poate spune „da" trebuie să poată spune și „nu"); dinadins NU e alias la `GP_SHIFTS_ROLES`, deși azi sunt aceiași trei oameni, fiindcă sunt două întrebări deosebite; (ii) DRUMUL — migrarea 022 dă cererii cele patru lucruri care-i lipseau (`fulfillment`, `urgent`, `timed`, `created_by`), citite numai de la cei din casă, iar acceptarea cade pe ele în loc de `default_fulfillment()`; de autor atârnă și canalul („panou" când cererea are autor, „site" când n-are — altfel munca agentului s-ar fi socotit la rubrica vizitatorilor) și numele de pe comandă (agentul rămâne pe propria lui muncă, iar cine a încuviințat se ține deosebit, în `handled_by`); (iii) PAGINA — același formular, dar salvarea își alege ușa din capul locului (`gp.eScrieComenzi`), iar fila „Cereri" se scoate din amândouă meniurile printr-o singură listă, `FILE_VAZUTE`, ca să nu rămână una în urma celeilalte. Păzit de `.claude/test-cerere-de-la-personal.mjs`: 41 trecute · 0 eșuate, cu 24 de stricăciuni dovedite că aprind fiecare exact regula ei. [18 septembrie 2026]
+
+- [x] **O comandă scrisă cu un cod de recomandare lega contul cumpărătorului de agent PE VECI, fără bifă și fără o vorbă pe ecran**
+  `api/routes/orders.php:768` · *grav*
+  `route_orders_create()` trece mai departe `!empty($b['referralLink'])`, iar pagina arată aceeași bifă ca la corectare, nebifată din pornire. Secțiunea „11 bis” din `test-recomandari` măsoară amândouă jumătățile, iar martorul ei e comanda URMĂTOARE, fără cod. [19 septembrie 2026]
+
 - [x] **Două acceptări simultane ale aceleiași cereri produc două comenzi**
   `api/routes/requests.php:225` · *grav*
   Acceptarea blochează cererea în tranzacție (SELECT … FOR UPDATE) și o marchează numai dacă e încă „nou” (UPDATE … AND status = 'nou'); dacă marcarea nu atinge niciun rând, tranzacția se dă înapoi și cererea a doua primește 409. Probă în .claude/test-flow.mjs: chiar instrucțiunea de marcare, scoasă din sursă și rulată a doua oară peste cererea acceptată, nu are voie să atingă niciun rând.
@@ -456,6 +472,10 @@ reparația la loc și văzând-o picând.
   `Ruta Sofer.dc.html:1042` · *grav*
   Vestea verde s-a mutat în `.then()`, deci se scrie numai după ce serverul a răspuns; primul `setState` poartă acum `toast: ""`, ca să stingă orice veste veche cât ține așteptarea. Caseta roșie a intrat ÎNĂUNTRUL blocului `position:sticky;top:0`, deci rămâne lipită de marginea de sus oricât s-ar derula ruta; cea verde a rămas dedesubt. Fiindcă `<sc-if>` primește o valoare, nu o expresie, iar cele două casete stau în locuri deosebite ale paginii, ele nu pot fi aceeași casetă vopsită altfel: s-au scris două steaguri împerecheate, `toastRau` și `toastBun`, amândouă din același izvor (`S.toast` și `S.toastBad`), deci una o stinge totdeauna pe cealaltă. [16 septembrie 2026]
 
+- [x] **Ecranul șoferului vedea numai șapte zile înainte, pe când o comandă se poate scrie pe orice zi dintr-un an — și, de către personal, chiar pe una trecută: comanda scrisă de administrator în afara celor șapte zile exista, era pe rută, era numărată, și nu se putea ajunge la ea de pe telefon**
+  `Ruta Sofer.dc.html:431` · *grav*
+  Reparat în runda 2.2.1. `gp.days(n)` capătă al doilea parametru, `deLa`: singurul fel în care o pagină poate privi înapoi, fiindcă `+ i` merge numai înainte. Gol înseamnă azi, deci `gp.today()` și repararea trecerii în ziua nouă rămân cu un ceas care merge; un ISO stricat cade tăcut pe azi. Pagina șoferului capătă meniul „Istoric", cu două întrebări deosebite în ordinea în care le pune un om: RESTANȚELE (ruta nouă `GET /routes/restante`, opririle zilelor trecute neîncheiate — se GĂSESC, fiindcă nimeni nu știe pe ce zi a rămas o livrare) și CALENDARUL laboratorului, aceeași grilă de 42 de căsuțe, prin care se alege o zi știută. Ziua aleasă mută toată fereastra de șapte zile și se spune pe ecran, cu „Înapoi la azi" lângă ea; pe o zi trecută insigna nu mai îndrumă („Următoarea · oprirea 3" pe ruta de marțea trecută e o poruncă, nu o informație), ci consemnează ce a rămas. Cheile meniului au trecut de pe ziua din lună pe ISO, iar plafonul lui `GET /routes/counts` a urcat de la 31 la 92 de zile — la 31, calendarul lua 422 fix pe luna pe care omul voia s-o vadă. Păzit de `.claude/check-ruta-istoric.mjs`; că o comandă născută oricum se vede pe toate ecranele e păzit deosebit, de `.claude/test-comanda-peste-tot.mjs`. `check-ruta-istoric`: 39 trecute · 0 picate, cu nouă stricăciuni dovedite că aprind fiecare exact regula ei; `test-comanda-peste-tot`: 155 trecute · 0 eșuate, cu cinci stricăciuni dovedite. [18 septembrie 2026]
+
 - [x] **sitemap.xml trimite Google la patru adrese care nu există (404)**
   `seo/sitemap.php:20` · *grav*
   Harta declara catalog/, distribution/, about/ și contact/ — adrese care nu există: magazinul are o singură pagină reală, restul se comută în browser. Motoarele le cereau pe rând și primeau 404, apoi le raportau în Search Console. Probă: test-seo cere de la server fiecare adresă din sitemap; „fiecare adresă din sitemap există pe server”.
@@ -492,6 +512,10 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:1783` · *grav*
   Hotărârea patronului: „Paza întreabă dacă e ceva de văzut". `stacked` devine adevărat și când coșul n-are cutie de așezare — `a.offsetParent === null` ori `a.offsetHeight === 0`. Bucla se oprește din prima trecere, pune `transform` gol și `this._off = 0`, exact ramura care exista deja. Cele două întrebări nu sunt una singură scrisă de două ori: `offsetParent === null` prinde ascunderea și scoaterea din curgere (`position: fixed`), iar `offsetHeight === 0` prinde coșul strâns într-un părinte fără înălțime, care ARE offsetParent. Stau ÎNAINTEA celorlalte două măsurători, fiindcă acelea sunt tocmai cele care mint pe zerouri. Repară oriunde s-ar ascunde coșul, nu doar pe telefon, și e chiar înțelesul pe care îl are deja numele `stacked`: „nu-l pluti".
 
+- [x] **Învelișul antetului din magazin își închidea propriile meniuri într-o lume la înălțimea 100, iar comutatorul congelate / gata de servire, bara coșului și butonul de WhatsApp — toate din afara lui — pictau peste sertarul deschis și peste meniul contului**
+  `Site Public.dc.html:80` · *grav*
+  Reparat în runda 2.2.1, la cererea patronului. Învelișul a urcat de la 100 la 125: peste bara coșului (120), cea mai de sus dintre cele din afară, și sub fereastra produsului (139), fiindcă ferestrele trebuie să poată acoperi antetul. Nu s-a umblat la niciuna din cifrele dinăuntru — ele erau deja în ordinea bună între ele. Lângă înveliș s-a scris de ce cifra aceea nu e a antetului, ci a întregului grup, și ce trebuie păzit când se adaugă un plutitor nou. Măsurat după: sertarul și perdeaua ies deasupra, pastila dedesubt, iar perdeaua acoperă și butonul de WhatsApp — deci nimic de dedesubt nu se mai poate apăsa cât sertarul e deschis. `check-site-public`: 425 trecute · 0 picate. [18 septembrie 2026]
+
 - [x] **Adresa clientului încape în cerere (255) dar nu pe cont (190): cererea se salvează, iar clientul primește „Eroare internă”**
   `sql/001_schema.sql:21` · *grav*
   Migrarea `sql/004_variante_pe_pozitie.sql` lărgește `users.address` la VARCHAR(255), cât are și cererea. Adresa nu se mai trunchiază la salvarea contului.
@@ -508,13 +532,29 @@ reparația la loc și văzând-o picând.
   `.claude/build-deploy.mjs:262` · *mediu*
   robots.txt-ul panourilor spune acum Allow: / — interdicția rămâne în antetul X-Robots-Tag, pe care robotul îl citește doar dacă are voie să ceară pagina. Probe: check-deploy „robots.txt-ul panourilor nu mai interzice crawlarea”, „robotul are voie să intre ca să citească interdicția”, „interdicția rămâne pusă în antet”.
 
+- [x] **Cele două paze ale numelor `.dc.html` numărau și comentariile: o lămurire scrisă într-o pagină oprea construirea pachetului cu două probleme mincinoase**
+  `.claude/build-deploy.mjs:220` · *mediu*
+  Un singur ajutor, `faraComentarii()`, scris lângă `rewriteLinks()` și chemat de amândouă pazele. Șterge numai rândurile care ÎNCEP cu `//`, `*` sau `/*`, plus blocurile `<!-- -->`, și păstrează rândurile golite, ca numerele lor să rămână bune. Se ascunde NUMAI pentru numărat: în pachet pleacă textul întreg, neatins. Scutirea pe foldere a rămas pe loc, cu o lămurire lângă ea care spune că nu mai e singura. [19 septembrie 2026]
+
+- [x] **Regula „pâlnia cere numele o singură dată pe lot” număra și comentariul care numește funcția: o lămurire scrisă chiar despre ea a făcut-o să vadă două chemări acolo unde codul are una**
+  `.claude/check-comanda-autor.mjs:132` · *mediu*
+  Reparat în runda 2.2.1. Cele două reguli care numără și măsoară poziții lucrează pe `funelCod` / `cFunelCod` — pâlniile trecute prin `faraComentarii`, ca `lotCod` și `purCod` de deasupra lor. Regulile care caută prezența unui câmp rămân pe textul întreg: acolo comentariul nu strică. [19 septembrie 2026]
+
 - [x] **Proba pachetului cerea ca pagina să aibă sloturi goale, deci striga „defect” exact când pozele erau puse la loc**
   `.claude/check-deploy.mjs:51` · *mediu*
   Premisa se citește acum din cod, nu din pagină: verificarea cere ca `Site Public.dc.html` să ducă `image-slot.js`, iar scriptul să aibă și `fetch(STATE_FILE)`, și `const url = this._userUrl || srcAttr`. Astea trei sunt chiar ce ține pericolul viu, și nu se schimbă când umpli sloturile. Comentariul de deasupra scrie amândouă variantele greșite dinainte, ca a treia să nu le repete. Măsurată prin două reveniri de sens diferit: scos `<script src="./image-slot.js">` din pagină → pică; schimbat `const url = this._userUrl || srcAttr` în `const url = srcAttr` → pică. Verificarea pe `.htaccess` a rămas neatinsă: ea era corectă, doar paznicul ei mințea.
 
+- [x] **Proba pachetului de publicare a MURIT, nu a picat: rescrierea scoasă din build a început să cheme un ajutor pe care lista de bucăți nu-l scotea**
+  `.claude/check-deploy.mjs:320` · *mediu*
+  Două îndreptări, nu una. Ajutorul s-a trecut în lista de bucăți, lângă cel care îl cheamă; și chemarea a intrat sub `try`, cu o regulă nouă care spune limpede „rescrierea scoasă din build chiar se poate CHEMA". A treia oară când cineva adaugă un ajutor, proba se înroșește cu numele lui, în loc să moară. [19 septembrie 2026]
+
 - [x] **Sonda de învechire a pachetului nu se uita niciodată în `sql/`: o migrare nouă nu apărea printre fișierele schimbate de la construire**
   `.claude/check-pachet.mjs:257` · *mediu*
   `'sql'` adăugat la folderele urmărite din `CE_PLEACA`, cu un comentariu care spune de ce lipsea și ce se rupe fără el. Ca partea care citește pachetul să nu rămână în urmă, s-a scos o constantă nouă `FOLDERE_PACHET` (gazdele din `DIR` plus `sql`), folosită și de bucla care află momentul construirii, și de `amprentelePachetului()` — altfel o migrare atinsă de o unealtă, dar neschimbată, ar fi ieșit „schimbată” la fiecare rulare, adică tocmai zgomotul împotriva căruia e scris antetul fișierului. [16 septembrie 2026]
+
+- [x] **A treia copie a aceleiași paze: `check-pachet` număra tot comentariile, deci se plângea de o pagină pe care construirea o dăduse deja bună**
+  `.claude/check-pachet.mjs:225` · *mediu*
+  Același ajutor, `faraComentarii()`, scris și aici, cu o lămurire care spune unde mai stă unul la fel. Se ascunde NUMAI pentru numărat: pachetul de pe disc rămâne neatins. [19 septembrie 2026]
 
 - [x] **Verificarea cheilor duplicate din `state` nu rulează pe 6 din 14 pagini, printre ele cele mai mari trei**
   `.claude/check-pages.mjs:140` · *mediu*
@@ -532,9 +572,33 @@ reparația la loc și văzând-o picând.
   `.claude/check-panouri.mjs:638` · *mediu*
   Reparat pe 16 septembrie 2026. `poarta(fisier)` întoarce acum `null` în loc să arunce, iar un al doilea ajutor, `deCePoarta(fisier)`, spune în cuvinte ce lipsește: care din cele două mărci nu se mai găsește în marcaj, sau că refuzul e scris înaintea lacătului, deci bucata dintre ele e goală. Fiecare pagină capătă o regulă a ei, cu nume — «<Pagina>: poarta se găsește în pagină (lacăt, apoi refuz)» —, iar regula veche despre parolă nu mai citește dintr-o bucată care nu există. Cheia de registru a rămas `<fișier>:poartă`, neschimbată. Dovada `runda-2-1-1/dovezi/dovada-resturi.mjs`: S1 (refuzul redenumit pe Conturi) → 4 reguli picate, proba merge până la capăt; S2 (lacătul redenumit pe Conturi) → 2 reguli, fiindcă ecranul de refuz rămâne întreg; S3 (refuzul redenumit pe Administrare Comenzi) → 4 reguli, iar vecina rămâne verde. `check-panouri`: 852 · 0 → **854 · 0** după punctul ăsta. [16 septembrie 2026]
 
+- [x] **Regula care păzește rozeta din locul fotografiei lipsă se uita într-o singură pagină, scrisă cu mâna — a doua, apărută azi, nu era măsurată de nimeni**
+  `.claude/check-sigle.mjs:315` · *mediu*
+  Regula caută acum `const FOTO_LIPSA = "…"` în toate paginile `*.dc.html`, cu comentariile ascunse, și cântărește fiecare găsită pe numele ei de pagină și de rând. Deasupra lor stă un martor — „am găsit pătratul din locul fotografiei lipsă (are ce măsura regula de mai jos)" — fără de care o redenumire a constantei ar goli lista și proba ar trece verde fără să fi măsurat nimic. [19 septembrie 2026]
+
 - [x] **Mesajul căderii din rețea s-a schimbat în pagină, dar regula și documentul de predare au rămas amândouă la textul vechi: suita a stat roșie mai bine de o zi, iar predarea promitea patronului un îndemn care nu mai există**
   `.claude/check-site-public.mjs:596` · *mediu*
   Cele două reguli din `.claude/check-site-public.mjs` au fost rescrise ca să ceară ce face pagina acum, și li s-a adăugat paza defectului găsit: mesajul vizitatorului nu are voie să pomenească niciun buton și niciun WhatsApp. S-a mai pus o regulă care cere ca numărul de telefon să vină din Setări, în amândouă limbile, ca să nu ajungă scris de mână în pagină — un al doilea loc din care patiseria ar uita să-l schimbe. Fragmentul de predare `reia-riscuri.md` s-a adus la zi în amândouă locurile, cu pricina scrisă pe față (de ce NU WhatsApp, deși butonul verde e acolo), iar pasul din „Ce verifici după” cere acum numărul din Setări și spune limpede că nu trebuie să scrie nicăieri „WhatsApp”. Martorii `grep -cF "cannot tell whether it reached us"` n-au fost atinși: textul acela nu s-a schimbat. [17 septembrie 2026]
+
+- [x] **Felia din care se citește stilul comutatorului de variantă se oprea la jumătatea funcției: capătul căutat, `);`, se găsește mai întâi înăuntrul lui `var(--h-ease-out);`, deci orice regulă care s-ar fi uitat mai jos de primul rând ar fi măsurat un text care nu era acolo**
+  `.claude/check-site-public.mjs:2293` · *mediu*
+  Reparat în runda 2.2.1, la redesenarea semnelor. Capătul feliei e acum `');`, cu ghilimea, și lângă el stă scris de ce: fără ghilimea, tăietura se oprește la `var(--h-ease-out);`. Găsit nu prin citire, ci fiindcă o regulă nouă a ieșit roșie pe cod bun și felia a fost tipărită ca să se vadă ce cuprinde. Regula nouă care l-a scos la iveală a și rămas ca pază: cere ca în felie să stea deodată `opacity:1` și o transparență mai mică de unu — adică ceva de pe rândul al treilea, tocmai bucata pe care felia scurtă n-o avea. Dacă tăietura se scurtează vreodată la loc, regula aceea se înroșește pe loc. `check-site-public`: **423 trecute · 0 picate**. [18 septembrie 2026]
+
+- [x] **Regula care păzea cele două semne ale comutatorului le numea prin CIFRELE desenului — o copie scrisă de mână a unui `path` SVG —, deci orice redesenare o înroșea fără ca ceva să fie stricat**
+  `.claude/check-site-public.mjs:2220` · *mediu*
+  Reparat în runda 2.2.1. Fiecare bucată a celor două desene își poartă acum numele chiar în marcaj — `data-semn="cupola"`, `"buza"`, `"abur"`, `"tava"`, `"brate"`, `"miez"` — iar regulile cer NUMELE, nu cifrele. Un desen refăcut care ține cupola, buza, aburii și tava trece; unul care pierde aburii se înroșește, ca înainte. Firele de abur se NUMĂRĂ din desen (trebuie să fie trei), nu se citează. Și s-a adăugat o regulă care măsoară chiar însușirea de care se plânsese patronul: capacul trebuie să stea RIDICAT, adică buza mai jos decât marginea cupolei, cu dunga întunecată între ele — o lipire la loc a celor două ar trece altfel neobservată, iar semnul s-ar întoarce la clopotul închis care semăna a lampă de birou. La scrierea ei s-a făcut, și s-a prins, chiar greșeala pe care o păzește: ajutorul care citește numărul de după o cheie tăia de la începutul cheii, nu de după ea, deci scotea abscisa în loc de ordonată și declara capacul închis pe un desen în care era ridicat. `check-site-public`: 422 · 1 → **423 trecute · 0 picate**. [18 septembrie 2026]
+
+- [x] **Regula care păzea comutatorul cerea exact paguba — «peste antet (100)» —, iar cealaltă jumătate a ei, «sub perdeaua meniului de cont (110)», era cu neputință: perdeaua aceea trăiește într-un context de stivuire în care 110 nu se întâlnește niciodată cu 101**
+  `.claude/check-site-public.mjs:2193` · *mediu*
+  Reparat în runda 2.2.1. În locul ei stau trei reguli care citesc TOATE cifrele din marcaj, niciuna scrisă de mână: învelișul trebuie să fie peste tot ce plutește în afara lui (pastilă, WhatsApp, bara coșului), sub fereastra produsului, iar pastila sub înveliș. Lângă ele e scrisă lămurirea contextului de stivuire, ca următorul om să nu refacă socoteala greșită. Dovedit prin stricare: cu învelișul la loc la 100, două reguli se înroșesc și niciuna pe deasupra. `check-site-public`: 423 → 425 trecute · 0 picate. [18 septembrie 2026]
+
+- [x] **Regula sertarului punea față în față cifra sertarului cu cea a barei coșului — două numere din contexte de stivuire deosebite, care nu se compară niciodată: aritmetică ce părea că spune ceva și nu spunea nimic**
+  `.claude/check-site-public.mjs:3073` · *mediu*
+  Reparat în runda 2.2.1. Regula compară acum numai frați din aceeași lume — sertarul față de meniul contului, amândoi înăuntrul învelișului —, iar «peste bara coșului» se păzește acolo unde chiar se hotărăște: la înveliș, cu regula nouă de la `:80`. Lângă ea e scris de ce cifrele dinăuntru n-au voie puse față în față cu cele din afară. `check-site-public`: 425 trecute · 0 picate. [18 septembrie 2026]
+
+- [x] **Regula care ținea ograda paginii publice lipită de cea a serverului avea lista de roluri bătută la mașină în ea — deci nu putea crește odată cu ograda, și a picat pe un cod întreg la prima lărgire**
+  `.claude/check-site-public.mjs:1461` · *mediu*
+  Reparat în runda 2.2.1. Nu se mai copiază nicio listă: o regulă cere ca pagina să cheme UN singur ajutor, iar alta MĂSOARĂ ograda — rolurile din `GP_ORDER_CREATE_ROLES` plus ramura scrisă anume în `client_scope_for()`, citite din PHP-ul de pe disc, față în față cu rolurile din `gp.eCautaClienti`, citite din ajutor. A treia regulă e martorul care spune că amândouă citirile au găsit ceva, ca o comparație între două mulțimi goale să nu treacă drept potrivire. [19 septembrie 2026]
 
 - [x] **Verificarea check-sql nu se uită niciodată la datele inițiale: regula caută „INSERT INTO”, iar seed-ul folosește „INSERT IGNORE INTO”**
   `.claude/check-sql.mjs:36` · *mediu*
@@ -548,6 +612,10 @@ reparația la loc și văzând-o picând.
   `.claude/curata-probe.mjs:210` · *mediu*
   Trei reparații, de la simptom spre cauză. (1) Cele trei nume lipsă s-au scris în `PREFIXE_DE_TEST` („Probă Comision %", „Probă Procent %", „Probă Bani %"). (2) Mai adânc: o CONVENȚIE, `curata-probe.mjs:210` — un nume care începe cu „Probă " sau „Proba " se șterge fiindcă așa se numește, fără să mai trebuiască găsit în cod. Niciun client adevărat nu se numește așa, iar scriptul refuză oricum să pornească pe altă bază decât cea de dezvoltare. Lista scrisă de mână rămâne plasă de siguranță pentru probele care nu țin convenția („Bistro Din Greșeală", „HAMMER zi"). Așa, orice probă viitoare e curățată chiar dacă `numeleDinProbe()` n-o poate citi. (3) `test-roluri.mjs:921` nu mai cere numai pagina întâi: citește paginile până la capăt, ca „administratorul le vede pe toate trei" să fie un răspuns despre drepturi, nu despre cât de aglomerată e ziua.
 
+- [x] **Curățenia nu mătura niciodată anunțurile rămase fără comandă: 27.833 de rânduri strânse tăcut de la prima rulare, până când o probă despre Setări n-a mai prididit să-și golească lista și a picat arătând cu degetul spre anunțul altei probe**
+  `.claude/curata-probe.mjs:584` · *mediu*
+  Reparat în runda 2.2.1. Ajutor nou `potrivitInSubiect()`, frate cu `potrivitInNota()`, care caută numele de probă în subiectul anunțului — ancorat pe „de la ”, ca `%Probă %` să nu prindă orice subiect în care apare cuvântul. Intrarea nouă șterge anunțurile butonului de test și pe cele ORFANE cu nume de probă; anunțurile care AU comandă nu se ating, fiindcă acolo hotărăște comanda, și hotărăște deja. Numele `Cofetăria Rămasă În Urmă` a intrat în listă, cu lămurirea de ce lipsea. [19 septembrie 2026]
+
 - [x] **O probă afirmă în titlu că un cont a fost șters, dar verifică doar că i-a primit numărul**
   `.claude/test-api.mjs:163` · *mediu*
   `check('contul temporar a fost șters', !!id, …)` afirma ștergerea în nume, dar verifica prezența numărului primit la creare, iar rezultatul lui `del()` se arunca. Acum: const sters = id ? await del(admin, '/users/' + id) : null; const dupa = await get(admin, '/users'); const maiExista = (dupa.data?.users || []).some((u) => u.username === tmpUser); check('contul temporar a fost șters', sters?.status === 200 && sters?.
@@ -555,6 +623,10 @@ reparația la loc și văzând-o picând.
 - [x] **Unelte din .claude/ lăsau corpul răspunsului necitit după `await fetch(...)`: pe node 24 priza rămasă deschisă omora o probă de mai încolo cu „AssertionError: !this.paused" din undici, iar nicio regulă nu se uita după asta**
   `.claude/test-api.mjs:965` · *mediu*
   Reparat pe 16 septembrie 2026, în două jumătăți. (1) Corpurile se citesc: `await res.arrayBuffer();` în cele șaisprezece locuri din `.claude/`, împrăștiate în douăsprezece fișiere — le adună `grep -n "arrayBuffer()" .claude/*.mjs`, fără santinela scrisă ca text din `test-defect-unelte.mjs` și fără măsurătoarea de poze din `test-seo.mjs`, care își citea corpul dinainte —, fiecare cu un rând de comentariu care spune de ce se citește un corp de care n-avem nevoie. (2) O regulă statică nouă îl păzește de acum înainte: grupa «fetch: niciun răspuns lăsat necitit» din `.claude/test-defect-unelte.mjs:1113`. Citește toate fișierele `.mjs` din `.claude/`, împerechează parantezele lui `fetch` sărind peste ce e în ghilimele, lasă în pace `OPTIONS` și `HEAD` (n-au corp), sare peste șiruri și comentarii, și caută două feluri de scăpare: `(await fetch(...)).ceva` fără citire, și `const v = await fetch(...)` fără nicio citire a lui `v` în bucata de cod care urmează. Pârăște `fișier:rând` cu pricina în paranteză. Șase santinele scrise în probă o țin cinstită în amândouă felurile. `test-defect-unelte`: 93 · 0 → **100 · 0**; `test-api`: **158 · 0**. [16 septembrie 2026]
+
+- [x] **Poarta de ogradă de pe `POST /orders` nu mai putea fi înroșită de nicio scenă vie: o regulă care nu poate pica nu e o regulă**
+  `.claude/test-defect-cont-uzurpat.mjs:612` · *mediu*
+  Unsprezece reguli noi în secțiunea „J. sursa” a probei, împărțite în trei: ușile de naștere cheamă ocolul de ogradă și nu chemarea goală; ograda se citește din lista casei; și niciun rol de pe acea listă nu are ograda strâmtă. [19 septembrie 2026]
 
 - [x] **Trei probe își făceau curat cu DELETE pe o rută care nu există: fiecare cerere lua 405, nimeni nu se uita la răspuns, iar comenzile de probă rămâneau în bază la fiecare rulare**
   `.claude/test-defect-lista-comenzi.mjs:436` · *mediu*
@@ -572,9 +644,17 @@ reparația la loc și văzând-o picând.
   `.claude/test-parola.mjs:357` · *mediu*
   Proba își face singură contul dacă nu-l găsește: caută `testclient` în `users`, iar dacă lipsește intră ca administrator și îl creează prin API cu aceleași date pe care i le dă `test-api` (nume, client, telefon, adresă de e-mail — proba are nevoie și de adresă, fiindcă verifică „se cere link și după e-mail, nu doar după utilizator”). Dacă nici administratorul nu răspunde, proba se oprește spunând ce-i lipsește, nu cu o eroare de MySQL. Dovadă: pe instanța proaspătă de pe 8203, aceeași probă dă acum 51 trecute · 0 eșuate — cât și pe „gp_dev”.
 
+- [x] **Paznicul plasturelui cântărește fiecare martor pe marfă și citește ștampila din document — dar capitolul de cifre de la coada aceluiași document nu-l citește nimeni, și tocmai el rămăsese al pachetului dinainte: 27 de martori în loc de 43, 363 de defecte în loc de 365**
+  `.claude/test-plasa-rsync.mjs:1194` · *mediu*
+  Reparat în runda 2.2.1. Capitolul de cifre capătă paznicul lui, scris pe aceeași cumpătare ca martorii: numerele se CITESC din proză și se cântăresc pe lucrul pe care-l numără — câți martori are documentul se numără chiar în document, câte migrări are pachetul se numără în `deploy/sql/`, iar cele trei cifre ale defectelor se numără în `.claude/defecte.json`, unde se schimbă la fiecare rundă. Nicio cifră ținută pe lângă. Are și paza de la urmă, ca martorii: dacă tiparele n-ar mai prinde proza, regula strigă în loc să treacă verde pe zero cântăriri. Iar lămurirea amprentei e acum scrisă pe adevăr — urmărește `shared/gp-api.js` — și trimite la martorii 42 și 43 pentru paginile schimbate azi. [18 septembrie 2026]
+
 - [x] **Dovada probelor de SEO se înroșește din când în când fără nicio vină a codului: rulată în suită, o stricăciune se vede pe pagina de acasă, dar nu și pe celelalte zece adrese**
   `.claude/test-seo-dovada.mjs:217` · *mediu*
   Reparat pe 15 septembrie 2026 în unealtă, nu în server. Pricina rulării de pe 13 septembrie nu se mai poate afla, iar leacul nu pretinde că a aflat-o. S-a găsit însă o cale care dă exact simptomul: o rulare a lui `test-seo` care moare la mijloc. Vechiul `ruleaza()` citea numai rândurile FAIL, deci judeca ce apucase să se tipărească. Reprodus pe codul vechi, neatins, cu `GP_BASE` spre un API care nu există (test-seo moare după pagina de acasă): **3 trecute · 25 eșuate**, cu textul din fișă cuvânt cu cuvânt („au picat în schimb: are titlu · titlul spune ce vinde firma”). Mai rău, lumea bună a ieșit VERDE pe o rulare care nu se uitase la nicio pagină (`runda-2-1-1/dovezi/seo-inainte-L3-vechi.log`). De acum unealta nu mai judecă o rulare neîntreagă, în trei bucăți. (1) `citesteRularea()` (`.claude/test-seo-dovada.mjs:268`) socotește o rulare întreagă numai când are socoteala de la capăt și aceasta se potrivește cu rândurile FAIL. Altfel scoate pricina opririi: eroarea, codul de rețea și rândul din test-seo, când Node îl arată. (2) `ruleazaIntreg()` reia o dată o rulare moartă și o numără în rândul de la capăt („· N rulări reluate”). A doua moarte nu mai e judecată: pică regula «fiecare rulare a lui test-seo a mers până la capăt», sub numele harnașamentului, nu al SEO-ului. (3) Bănuiala din fișă (serverul servește altceva decât pachetul scris) e păzită direct. Fiecare stricăciune pune sub `declare(strict_types=1);` un antet `X-Gp-Dovada` cu nume nou. Unealta îl cere înainte și după test-seo pe toate cele zece adrese din `PAGINI` (citite din `test-seo.mjs`, nu doar `/`) și pe `/sitemap.xml`. Dacă lipsește pe vreuna, pică «fiecare stricăciune a ajuns pe serverul pachetului înainte de judecată» sau «… a rămas pe server până la capătul rulării», cu adresa și cu starea copiei de pe disc. Ce NU dovedește semnul: că fiecare cerere din mijlocul rulării a văzut pachetul stricat. Pe codul bun, la toate cele 22 de stricăciuni (21 × 10 adrese + 1 × harta, înainte și după), semnul a venit din prima încercare; nicio întârziere tipărită. Probe: `test-seo-dovada` 28 · 0 → **31 · 0**; `test-defect-unelte` 85 · 0 → **93 · 0** (8 reguli noi pe `citesteRularea`, pe ieșirea reală a unei rulări moarte cu ECONNREFUSED). Dovada `runda-2-1-1/dovezi/dovada-seo-flake-259.mjs` are 15 stricăciuni, fiecare cu lista exactă de reguli picate, iar codul bun e verde la început și la sfârșit. Statice, 9: pe rând, fiecare bucată din `citesteRularea`. Vii, 6, pe 8101: pachetul neconstruit și pachetul bun pus la loc sub rulare pică fiecare regula lor de harnașament. Cu fiecare test-seo mort pică numai «a mers până la capăt», iar lumea bună nu mai e judecată. Moartea numai la prima încercare trece (31 · 0, 23 reluate); aceeași fără reluare pică. Semnul trimis numai pe `/` pică «a ajuns pe server» cu „/catalog a dat 200, cu antetul lipsă”. Stricăciunile vii rulează sub adăpostul `dovada-seo-flake-259`, nu sub `seo-dovada`. Cele statice rulează sub paza dovezii, legată de ieșire, fiindcă `test-defect-unelte` golește orice adăpost (fișa `.claude/test-defect-unelte.mjs:852`, găsită la prima rulare a dovezii). Rularea a doua: 15/15 exacte, 0 greșeli, 617 s. md5 identic la cele patru fișiere, adăpost gol, iar ultima reconstruire a pachetului a făcut-o unealta bună (`check-pachet` 7 · 0 după ea). [15 septembrie 2026]
+
+- [x] **Regula „«Am văzut» stinge rândurile arătate” cerea ca TOATĂ casa să fie goală, nu doar rândurile arătate — o afirmație care ținea proba ostatică la tot ce rulase înaintea ei**
+  `.claude/test-settings.mjs:777` · *mediu*
+  Reparat în runda 2.2.1. Se ține minte ce id-uri s-au arătat și se cere ca NICIUNUL dintre ele să nu mai fie în listă — nici în răspunsul apăsării, nici la reîncărcarea setărilor; ce mai e în casă de la alții nu e treaba regulii. Un martor („am avut ce stinge”) ține regula să nu treacă verde pe o listă goală. Golirea de la început merge acum până la 800 de rânduri și SPUNE dacă n-a prididit, cu comanda de curățenie în mesaj. [19 septembrie 2026]
 
 - [x] **Migrarea care repară comisioanele de 0,00 RON era raportată „era deja aplicată" chiar la prima ei rulare: bilanțul măsoară schema, iar ea nu atinge schema**
   `actualizeaza-vps.sh:402` · *mediu*
@@ -655,6 +735,10 @@ reparația la loc și văzând-o picând.
 - [x] **„Șterge comanda” din subsolul formularului avea exact aceeași pierdere: mențiunea scrisă la anulare se ducea odată cu formularul**
   `Administrare Comenzi.dc.html:3381` · *mediu*
   Același drum ca la refacere: caseta primește `comandaSubsolului(o)`, `gp.cancelled()` și `dinSalvare` adevărat. Steagul `anulareDinSalvare` dă butoanelor „Înapoi la formular” / „Salvează și anulează” și adaugă la nota anulării că modificările din formular se salvează odată cu ea. `onConfirmDa` se uită acum doar la `S.confirm.salvare`, nu și la `fel`, ca hotărârea rundei să fie dusă peste tot pe unde apare. [16 septembrie 2026]
+
+- [x] **Managerul avea de trei săptămâni dreptul să accepte cereri, dar niciun buton: pagina întreba `isAdmin`, serverul `require_order_create()`**
+  `Administrare Comenzi.dc.html:4171` · *mediu*
+  `potAccepta` se sprijină pe `potEdita`, care de-acum înseamnă `GP_ORDER_CREATE_ROLES`, iar lămurirea spune ce cer chiar rutele. [19 septembrie 2026]
 
 - [x] **Eticheta grupei arată „0 produse”, dar ștergerea grupei e refuzată fiindcă serverul numără și produsele scoase din catalog**
   `api/lib/catalog.php:47` · *mediu*
@@ -771,6 +855,10 @@ reparația la loc și văzând-o picând.
 - [x] **Ecranul rămas în urmă muta o comandă schimbată între timp: tableta trezită din somn readucea în lucru o comandă anulată de mult, în tăcere, iar de la runda asta pleca pe canalele casei și „Comandă refăcută”, spre patron**
   `api/routes/orders.php:1137` · *mediu*
   Reparat pe 15 septembrie 2026, în runda 2.1.1. SERVER: cererea poate aduce `from`, etapa văzută de om. `ORDER_FIELDS_PRECONDITION` (api/routes/orders.php:686) e o listă a doua, deoparte de `ORDER_FIELDS_STAFF`: poarta contului de tură (api/routes/orders.php:731) o lasă să treacă, dar `from` nu e un câmp care se scrie — trimis singur, cererea rămâne „Nimic de modificat” (422). `from` se judecă ca etapă cunoscută înainte de orice (400 `bad_from`). Comparația stă ÎN tranzacție (api/routes/orders.php:1137), cu `SELECT status … FOR UPDATE`, nu din rândul citit la intrarea în rută: cine ajunge al doilea așteaptă prima scriere și abia apoi compară, deci ori trece, ori pleacă cu 409, niciodată „a citit vechiul și a scris peste” — aceeași măsură ca la acceptarea unei cereri (api/routes/requests.php · `already_handled`). Refuzul e 409 cu `code: 'status_changed'` și etapa de acum în `error.current` (json_out, fiindcă `fail()` n-are cum duce un câmp în plus), dat ÎNAINTE de orice scriere: fără etapă, fără retur de depozit, fără rând de jurnal, fără niciun anunț la coadă. Când `from` se potrivește, etapa luată de sub lacăt devine etapa „de dinainte” pentru jurnal și anunțuri. Fără `from`, ruta se poartă exact ca înainte, deci o pagină rămasă deschisă într-un browser nu se rupe. PAGINI: „Panou Laborator” (writeStatus, Panou Laborator.dc.html:1344) și „Ruta Șofer” (markDone, Ruta Sofer.dc.html:665) trimit `from` = etapa de pe card în clipa apăsării, și tratează 409 cu un mesaj în românește care numește comanda și etapa de acum, apoi recitesc lista. Apăsarea dublă merge printr-un lanț pe COMANDĂ (Panou Laborator.dc.html:1395, Ruta Sofer.dc.html:703): a doua apăsare pleacă abia după ce prima s-a scris, deci `from`-ul ei e adevărat; dacă prima n-a ajuns, a doua nu mai pleacă deloc. Cu nimic pe drum, cererea pleacă SINCRON, nu peste o tură de microtask-uri. `shared/gp-api.js:103` poartă acum obiectul `error` întreg în `err.detalii`, ca pagina să vadă `current`. Ghid: docs/02-panoul-de-setari.md, „Ecranul rămas în urmă”.
+
+- [x] **Managerul putea SCRIE o comandă cu orice câmp, dar nu putea CORECTA niciunul: poarta de la `PATCH` întreba altceva decât ușa de la `POST`**
+  `api/routes/orders.php:909` · *mediu*
+  `poarta_scrierii_comenzii()` întreabă acum `writes_orders($u)`, adică `GP_ORDER_CREATE_ROLES`. Pagina a căpătat `potRuta`/`rutaDoarVede` pentru cele trei butoane de rută și pentru săgețile de pe opriri, iar `test-roluri` are reguli noi pe amândouă. [19 septembrie 2026]
 
 - [x] **hq_lat / hq_lng se salvează nevalidate: virgula zecimală mută punctul de plecare al rutei**
   `api/routes/products.php:69` · *mediu*
@@ -1448,6 +1536,14 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:946` · *mic*
   Substituentul trece prin `t()`, ca vecinii lui: `phEmail: t('nume@companie.ro', 'name@company.com')`. Textul a intrat și în lista `roInMarcaj` din `.claude/check-site-public.mjs` — prinsă după text, nu după diacritice, fiindcă tocmai lipsa lor o făcuse nevăzută. Dovada roșu/verde: 116 trecute · 1 picat pe codul stricat, 117 · 0 pe cel reparat.
 
+- [x] **Antetul magazinului e scris lipicios, dar nu se lipește de nimic: aceeași pricină ca banda variantelor, `overflow-x:hidden` pe învelișul paginii**
+  `Site Public.dc.html:78` · *mic*
+  Reparat în runda 2.2.1, §E, cu UN SINGUR CUVÂNT. Pricina, scrisă limpede: CSS-ul nu îngăduie `overflow` tăiat pe o axă și liber pe cealaltă — pus `hidden` pe orizontală, `overflow-y` se face singur `auto`, iar un `auto` face din înveliș butoi de derulare. Măsurat înainte, calculatul ieșea chiar `hidden/auto`. Învelișul e acum `overflow-x:clip`, care taie la fel dar NU face butoi: calculatul iese `clip/visible`. Măsurat după, la derulare 1500: antetul la y 0, la 390, la 820 și la 1440, fără scurgere pe lățime la niciuna — deci reparația aduce înapoi și antetul de CALCULATOR, care era stricat la fel (măsurat: y -1500 la 1440 px), lucru pe care fișa veche nu-l bănuia, fiindcă măsurase numai pe telefon. Reparația NU e cea din plan (`position:fixed` plus un spațiu sus cât antetul): aceea ar fi cerut o înălțime socotită de două ori, o dată pe telefon și o dată pe calculator, și ar fi mutat toată pagina în jos; `clip` lasă antetul în curgere, cum a fost gândit, fără nicio mutare de așezare. Cade astfel și teama scrisă în fișa veche — că scoaterea lui `hidden` ar lăsa pagina fără paza de scurgere pe lățime: `clip` taie exact cât tăia `hidden`. Rămâne adevărat doar că antetul mănâncă acum 56 de pixeli din ecran cât e pe el, dar aceea e chiar purtarea pentru care a fost scris `position:sticky`. Comutatorul de variantă rămâne totuși `fixed`, dinadins: patronul l-a cerut la îndemână peste tot catalogul, nu numai cât antetul e pe ecran. Regulă în `.claude/check-site-public.mjs`, secțiunea §E, dovedită stricând-o la loc (`clip` întors în `hidden`).
+
+- [x] **Butoanele „Închide" ale celor trei ferestre au 36 de pixeli înălțime, sub pragul de deget de 44 pe care casa și-l cere singură**
+  `Site Public.dc.html:587` · *mic*
+  Reparat în runda 2.2.1, §E: toate trei au trecut de la `min-height:2.25rem` la `2.75rem`, adică de la 36 la 44 de pixeli. S-au ridicat deodată, cum cerea chiar fișa asta: cele trei ferestre arată la fel, iar una singură ridicată ar fi făcut din ea oaia neagră. Hotărârea de arătare a venit odată cu §E, în care patronul a cerut așezarea de pe telefon refăcută. Regula din `.claude/check-site-public.mjs` le numără pe AMÂNDOUĂ felurile — zero rămase la 2.25rem, trei ajunse la 2.75rem — fiindcă o regulă care caută numai 2.75rem ar fi trecut verde și cu un al patrulea buton adăugat la 36. Butonul de închidere al ferestrei noi din Jurnal (§A3) s-a născut direct la 44, din aceeași pricină.
+
 - [x] **Coloana `order_requests.decided_via`, adusă de 013 ca să se știe PE UNDE a fost decisă o cerere (panou sau Telegram), nu e scrisă de nicăieri**
   `sql/013_anunturi_pe_canal.sql:102` · *mic*
   Coloana se scrie acum de la amândouă ușile: `api/routes/requests.php` pune „panou” la hotărârea luată din ecran, `api/routes/telegram.php` pune „telegram” la cea luată din butoanele anunțului, iar ocolirea scrisă lângă ele lasă acceptarea să meargă și pe un server care n-a primit încă migrarea 013. Probe: `.claude/test-defect-amanare-oarba.mjs` și `.claude/test-defect-amanare-mincinoasa.mjs` (amândouă verificate stricând reparația la loc).
@@ -1488,7 +1584,7 @@ Se văd și încurcă, dar se pot ocoli sau nu apar zilnic.
 
 ---
 
-## Mici — 6 rămase
+## Mici — 4 rămase
 
 Nepotriviri și texte care mint mărunt.
 
@@ -1510,23 +1606,11 @@ Nepotriviri și texte care mint mărunt.
   **Ce pățește omul:** Nu pățește nimeni nimic azi. Mâine, cineva care citește blocul crede că „migrarea 003” e acoperită și adaugă altundeva o verificare pe care o socotește făcută aici.
   **Dovada:** `Măsurat de banda O: 'grep -n "ADD COLUMN" sql/003_route_order.sql' dă cinci coloane; blocul de la 'api/verifica.php:264' se uită la două.`
 
-- [ ] **Numele celor două sigle sunt exact pe dos: `logo-alb.png` e aurie, `logo-auriu.png` e albă — iar toate cele 36 de trimiteri din pagini cheamă „alb” ca să capete aur**
+- [ ] **Numele celor două sigle sunt exact pe dos: `logo-alb.png` e aurie, `logo-auriu.png` e albă — iar toate cele 37 de trimiteri din pagini cheamă „alb” ca să capete aur**
   `assets/logo-alb.png:1`
-  **Ce e greșit:** Măsurat chiar în fișiere, cu `.claude/check-sigle.mjs`: `assets/logo-alb.png` (192×192) are cerneala aurie — culoarea cea mai deasă e `#BD9749` — iar `assets/logo-auriu.png` (256×256) are cerneala albă, `#FEFEFE`. Numele spun invers. Cele 14 pagini care pun o siglă o cer de 36 de ori, toate pe „alb”, adică cer albul tocmai ca să capete aurul; pe ecran iese bine, fiindcă fișierul e aurul. Cele două desene nu sunt nici măcar aceeași rozetă: „alb” are petale subțiri (91% din pătrat e străveziu), „auriu” are petale groase (75%).
-  **Ce pățește omul:** Nu mai e o presupunere: s-a întâmplat. Cine a scris pătratul din locul fotografiei lipsă, în Catalog, voia aur pe un cartonaș deschis la culoare, a cerut firește „auriu” și a primit alb pe crem — contrast 1,22:1, adică un pătrat gol. A stat așa până a fost măsurat (vezi fișa `Produse.dc.html:493`). Cealaltă jumătate a capcanei e încă deschisă: cineva poate „repara” într-o zi nepotrivirea schimbând fișierele între ele, și atunci toate cele 36 de trimiteri își pierd deodată aurul.
-  **Dovada:** `Măsurat cu 'node .claude/check-sigle.mjs', care desface PNG-ul cu zlib și numără numai pixelii cu totul opaci: 'assets/logo-alb.png' → cerneala '#BD9749' (auriu), 91% din pătrat străveziu, 192×192. 'assets/logo-auriu.png' → cerneala '#FEFEFE' (alb), 75% străveziu, 256×256. Contrastul pe fundalul '--h-bg-sunk' al temei: aurul dă 2,21:1 pe cremul de zi și 7,02:1 pe ciocolatiul de noapte; albul dă 1,22:1 și 19,01:1. Folosirea: 36 de trimiteri în 14 pagini, toate spre 'logo-alb.png'; după reparația din Catalog, 'logo-auriu.png' nu mai e chemat de nicio pagină.`
-
-- [ ] **Antetul magazinului e scris lipicios, dar nu se lipește de nimic: aceeași pricină ca banda variantelor, `overflow-x:hidden` pe învelișul paginii**
-  `Site Public.dc.html:62`
-  **Ce e greșit:** Antetul cu sigla, limbile și meniul e scris `position:sticky;top:0;z-index:100`, cu un fundal în degrade făcut anume ca textul să treacă frumos pe sub el la derulare — adică e gândit până la capăt ca antet care rămâne pe ecran. Nu rămâne. Învelișul de la linia 60 are `overflow-x:hidden`, iar asta îl face butoi de derulare și anulează orice `sticky` dinăuntru. Măsurat: derulat la 1200, antetul stătea la -1200; cu `overflow-x` pus pe `visible` în browser, sărea înapoi la 0 pe loc.
-  **Ce pățește omul:** Omul derulează catalogul pe telefon și vrea să treacă la „Distribuție" sau să schimbe limba. Meniul e în antet, iar antetul a rămas la începutul paginii: trebuie să deruleze tot înapoi. Pe calculator e același lucru, doar că derularea e mai ieftină.
-  **Dovada:** `derulat la 1200, pe 390 px: antetul, position:sticky top:0 -> top = -1200 acelasi antet, cu overflow-x:visible pus din browser -> top = 0`
-
-- [ ] **Butoanele „Închide" ale celor trei ferestre au 36 de pixeli înălțime, sub pragul de deget de 44 pe care casa și-l cere singură**
-  `Site Public.dc.html:497`
-  **Ce e greșit:** Foaia coșului (linia 497), fereastra produsului (616) și fereastra de finalizare (957) au același buton de închidere, scris cu `min-height:2.25rem` — 36 de pixeli. Pragul casei e 44: e scris pe față în `shared/gp-bara.css` (`.gp-bara .h-btn { min-height: 44px }`) și tot el s-a cerut în runda asta la butonul-sumă din bara de jos, care avea 22. Cele trei butoane de închidere au rămas la 36.
-  **Ce pățește omul:** Pe telefon, cu fereastra deschisă, omul vrea s-o închidă și nimerește pe lângă butonul din colțul de sus. Paguba e mică fiindcă butonul poartă și cuvântul „Închide" (78 de pixeli lățime, deci ținta întreagă are 78x36) și fiindcă perdeaua de dedesubt închide și ea la atingere — dar e sub ce cere casa.
-  **Dovada:** `măsurat pe 390x844, cu fereastra produsului deschisă: butonul „Închide" la x=265 y=113, 78x36. Vecinii din aceeași fereastră — „Adaugă" și „Cere ofertă" — au 46.`
+  **Ce e greșit:** Măsurat chiar în fișiere, cu `.claude/check-sigle.mjs`: `assets/logo-alb.png` (192×192) are cerneala aurie — culoarea cea mai deasă e `#BD9749` — iar `assets/logo-auriu.png` (256×256) are cerneala albă, `#FEFEFE`. Numele spun invers. Cele 14 pagini care pun o siglă o cer de 37 de ori, toate pe „alb”, adică cer albul tocmai ca să capete aurul; pe ecran iese bine, fiindcă fișierul e aurul. Cele două desene nu sunt nici măcar aceeași rozetă: „alb” are petale subțiri (91% din pătrat e străveziu), „auriu” are petale groase (75%).
+  **Ce pățește omul:** Nu mai e o presupunere: s-a întâmplat. Cine a scris pătratul din locul fotografiei lipsă, în Catalog, voia aur pe un cartonaș deschis la culoare, a cerut firește „auriu” și a primit alb pe crem — contrast 1,22:1, adică un pătrat gol. A stat așa până a fost măsurat (vezi fișa `Produse.dc.html:493`). Cealaltă jumătate a capcanei e încă deschisă: cineva poate „repara” într-o zi nepotrivirea schimbând fișierele între ele, și atunci toate cele 37 de trimiteri își pierd deodată aurul.
+  **Dovada:** `Măsurat cu 'node .claude/check-sigle.mjs', care desface PNG-ul cu zlib și numără numai pixelii cu totul opaci: 'assets/logo-alb.png' → cerneala '#BD9749' (auriu), 91% din pătrat străveziu, 192×192. 'assets/logo-auriu.png' → cerneala '#FEFEFE' (alb), 75% străveziu, 256×256. Contrastul pe fundalul '--h-bg-sunk' al temei: aurul dă 2,21:1 pe cremul de zi și 7,02:1 pe ciocolatiul de noapte; albul dă 1,22:1 și 19,01:1. Folosirea: 37 de trimiteri în 14 pagini, toate spre 'logo-alb.png' — a 37-a e 'Administrare Comenzi.dc.html:1188', 'const FOTO_LIPSA' din fereastra de catalog a formularului de comandă, pusă pe 19 septembrie 2026 (a doua oară când numărul ăsta a trebuit îndreptat: 33 → 34, apoi 36 → 37 — de-aia îl numără acum proba la fiecare rulare); după reparația din Catalog, 'logo-auriu.png' nu mai e chemat de nicio pagină.`
 
 ---
 

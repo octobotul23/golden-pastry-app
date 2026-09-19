@@ -1411,7 +1411,16 @@ class Component extends DCLogic {
       // urmează codul și nu matricea rolului (shared/gp-api.js · `gp.meniu`),
       // amândoi ajung chiar în pagina asta, deci butonul nu mai e o
       // închipuire.
-      potFaceCont: !!(a && S.cod && (gp.eAdmin(a) || a.role === "agent_vanzari")),
+      //
+      // AGENTUL NU MAI ARE NEVOIE DE COD CA SĂ VADĂ BUTONUL (runda 2.2.1).
+      // `S.cod` rămâne cerut pentru ADMINISTRATOR, fiindcă pentru el serverul
+      // chiar refuză fără cod — codul lui se dă de mână, din „Conturi". Pentru
+      // agent, serverul și-l face singur la primul cont adus
+      // (`route_users_create()`), deci butonul ascuns în spatele codului era
+      // singurul lucru care-l oprea: un agent proaspăt nu-l vedea niciodată, și
+      // nimic de pe ecran nu-i spunea că-i lipsește un pas pe care putea să-l
+      // facă singur.
+      potFaceCont: !!(a && (a.role === "agent_vanzari" || (S.cod && gp.eAdmin(a)))),
       contDeschis: !!c.open,
       contToggleEt: c.open ? "Renunț" : "Fă un cont de cumpărător",
       onContToggle: () => setC({ open: !c.open, err: "", gata: "", atentie: "" }),

@@ -659,6 +659,20 @@
     changePassword: (currentPassword, newPassword) =>
       request('POST', '/auth/password', { currentPassword, newPassword }),
 
+    /**
+     * „Păstrez parola actuală": stinge steagul de la prima intrare, atât.
+     *
+     * Nu ia niciun argument, dinadins — nici contul. Cine apasă se știe din
+     * sesiune, pe server. Un identificator aici ar fi însemnat că se poate
+     * cere stingerea steagului altcuiva.
+     *
+     * Ruta e nouă în runda 2.2.1. Pe un server cu fișierele vechi iese 404, iar
+     * pagina cade atunci înapoi pe schimbarea obligatorie de până acum — vezi
+     * `onPastrez` din Parola.dc.html. Ajutorul nu înghite nimic: 404-ul trebuie
+     * să ajungă la pagină ca s-o poată face.
+     */
+    keepPassword: () => request('POST', '/auth/password/keep', {}),
+
     /* --------------------------------------- recomandări cu comisioane -- */
 
     /**
@@ -882,6 +896,63 @@
     eRaportPontaj(cine) {
       const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
       return rol === 'admin' || rol === 'fondator' || rol === 'manager';
+    },
+
+    /**
+     * „Scrie comanda de-a dreptul, sau trimite o cerere?"
+     *
+     * Perechea din pagină a lui `GP_ORDER_CREATE_ROLES` / `writes_orders()`
+     * din api/lib/auth.php. Serverul păzește — `POST /orders` răspunde 403
+     * celorlalți —, iar rândul ăsta hotărăște numai pe ce ușă pleacă
+     * formularul la salvare și dacă fila „Cereri de pe site" se desenează.
+     *
+     * DE CE O ÎNTREBARE PUSĂ ÎNAINTE, și nu un refuz aflat după. Formularul de
+     * comandă e ACELAȘI pentru toți cei care îl pot deschide: agentul scrie
+     * clientul, ziua, pozițiile, tot. Aflat abia la apăsarea butonului, refuzul
+     * ar veni peste o muncă deja făcută, iar omul n-ar avea ce face cu el —
+     * cererea lui e drumul cuvenit, nu o greșeală. Așa, butonul îi spune de la
+     * bun început că trimite spre aprobare.
+     *
+     * DE CE NU `eRaportPontaj`, care azi întoarce exact același răspuns pentru
+     * exact aceleași trei roluri. Fiindcă întrebările sunt deosebite — „citește
+     * statul de plată" și „răspunde de ce intră în laborator" — și se despart
+     * la primul rol nou. Aceeași pricină, scrisă pe larg, stă lângă
+     * `GP_ORDER_CREATE_ROLES`: două liste care se nimeresc la fel nu sunt
+     * aceeași listă.
+     */
+    eScrieComenzi(cine) {
+      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
+      return rol === 'admin' || rol === 'fondator' || rol === 'manager';
+    },
+
+    /**
+     * „Poate căuta un client după nume?"
+     *
+     * Perechea din pagină a lui `client_scope_for()` (api/lib/orders.php).
+     * Serverul păzește — `GET /clients` răspunde 403 `client_search_denied`
+     * celorlalți —, iar rândul ăsta hotărăște numai dacă se DESENEAZĂ caseta de
+     * căutare. O casetă care promite ce serverul refuză e mai rea decât lipsa
+     * ei: omul scrie un nume, nu se întâmplă nimic, și nu află de ce.
+     *
+     * PATRU ROLURI, DOUĂ OGRĂZI. Admin, fondator și manager caută printre toți
+     * clienții casei; agentul de vânzări numai printre cei aduși de el.
+     * Deosebirea dintre cele două ogrăzi NU se ia de aici, ci din SQL, unde e
+     * scrisă o singură dată: pagina întreabă doar „se desenează caseta?".
+     *
+     * DE CE NU `eScrieComenzi`, care azi întoarce același răspuns pentru trei
+     * din cele patru. Fiindcă întrebările sunt deosebite — „naște comanda" și
+     * „știe pentru cine o naște" — iar agentul le desparte chiar acum: el nu
+     * scrie comenzi, dar își caută clienții. Aceeași pricină, scrisă pe larg,
+     * stă lângă `GP_ORDER_CREATE_ROLES` în api/lib/auth.php.
+     *
+     * Managerul a intrat pe 19 septembrie 2026, la cererea patronului: „când
+     * scrii numele clientului să ai o căutare prin istoricul clienților și
+     * să-i poți alege".
+     */
+    eCautaClienti(cine) {
+      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
+      return rol === 'admin' || rol === 'fondator' || rol === 'manager'
+        || rol === 'agent_vanzari';
     },
 
     /**
@@ -1284,6 +1355,11 @@
         // Gol pe un server rămas în urmă — și atunci nu se desenează nicio
         // insignă, ceea ce e altceva decât a desena una greșită.
         rangClient: o.rangClient || '',
+        // Cine a SCRIS comanda, nu cine a cumpărat-o. Vine numai celor din
+        // casă; serverul îl lasă gol pentru cumpărător, iar un server rămas în
+        // urmă nu trimite deloc cheia. Amândouă ies `null`, iar `gp.creatDe()`
+        // nu desenează nimic — v. lămurirea de la el.
+        creatDe: o.creatDe || null,
         items: (o.items || []).map((it) => ({
           q: String(it.qty), n: it.name,
           // Numărul poziției și câte bucăți s-au raportat făcute. `itemId` e
@@ -1324,6 +1400,24 @@
         // fila „Cereri de pe site" — acolo unde „fără cont" e chiar regula,
         // nu excepția.
         rangClient: r.rangClient || '',
+        // Cine a HOTĂRÂT cererea. Pe cererea încă nehotărâtă e gol — n-a
+        // hotărât nimeni încă —, iar pe cea respinsă e singurul nume rămas:
+        // din ea nu s-a născut nicio comandă care să-l poarte.
+        creatDe: r.hotaratDe || null,
+        // CINE A SCRIS-O, de la migrarea 022 încoace, și e altceva decât cine a
+        // hotărât-o: cererea scrisă de agentul de vânzări în panou poartă
+        // numele lui de la bun început, cât încă e pe „nou" și nimeni n-a
+        // hotărât nimic. Fără el, hârtia agentului arată la fel cu una picată
+        // de pe site, iar administratorul n-are pe cine întreba ce s-a vorbit
+        // la telefon. Gol înseamnă „chiar de pe site".
+        scrisDe: r.scrisDe || null,
+        // Ce a ales omul care a luat telefonul (tot migrarea 022). Pe cererea
+        // de pe site sunt goale, fiindcă vizitatorul n-a ales nimic — iar gol
+        // se citește la acceptare ca „cade pe implicitul din Setări", nu ca o
+        // alegere.
+        fulfillment: r.fulfillment || '',
+        urgent: !!r.urgent,
+        timed: !!r.timed,
         // Cererea n-are comision — rândul se naște abia la acceptare — deci
         // duce codul tastat în coș și contul din spatele lui, dacă mai există.
         // `name` gol înseamnă „cod fără cont activ", nu „fără cod".
@@ -1622,6 +1716,63 @@
     },
 
     /**
+     * Insigna care spune cine a scris comanda — sau cine a hotărât cererea.
+     *
+     * `orders.created_by` se scrie din 001 pe amândouă căile prin care se naște
+     * o comandă, iar `order_requests.handled_by` la fiecare hotărâre. Până azi
+     * nu le citea nimeni: fapta era în bază, dar nu pe niciun ecran.
+     *
+     * SCRISĂ O SINGURĂ DATĂ, ca `rangClient` de deasupra și din aceeași
+     * pricină: o poartă patru ecrane — rândul din panou, cardul de telefon,
+     * cardul de cereri și panoul de laborator. În patru copii, prima vorbă
+     * schimbată ar fi făcut același nume să fie scris altfel pe ecrane care
+     * stau la doi metri unul de altul.
+     *
+     * TREI TĂCERI, toate cinstite, toate ieșind pe aceeași ușă (`are: false`):
+     *
+     *   server rămas în urmă   cheia nu vine deloc  → `undefined`
+     *   se uită cumpărătorul   serverul o lasă goală → `null`
+     *   contul e șters         numele nu se mai găsește → `null`
+     *
+     * Ultima merită spusă apăsat: `orders.created_by` n-are cheie străină
+     * (sql/001_schema.sql:213), deci id-ul rămâne scris după ștergerea
+     * contului, dar numele nu se mai poate afla. O insignă goală, sau un „#14",
+     * n-ar spune nimănui nimic; nicio insignă e răspunsul cinstit când nu se
+     * știe. Aceeași alegere ca la un rang necunoscut.
+     *
+     * Insigna e neutră dinadins, fără `--accent` sau `--success`: nu e o stare
+     * a comenzii, e o însemnare despre cine a atins-o, și stă lângă insigna de
+     * client, care CHIAR e o stare. Două insigne colorate una lângă alta s-ar
+     * fi citit ca două stări.
+     */
+    creatDe(nume, ce) {
+      const n = typeof nume === 'string' ? nume.trim() : '';
+      if (n === '') {
+        return { are: false, nume: '', et: '', cls: 'h-badge', titlu: '' };
+      }
+      // ETICHETA E ACEEAȘI VORBĂ pentru amândouă hârtiile, fiindcă e aceeași
+      // faptă: cineva din casă a scris-o cu mâna lui. Se schimbă numai
+      // lămurirea de sub mouse, fiindcă urmarea E alta — o comandă e deja în
+      // laborator, o cerere abia așteaptă o apăsare. Un al doilea desenator ar
+      // fi însemnat aceeași insignă scrisă de două ori, iar a doua ar fi rămas
+      // în urmă la prima schimbare de formă.
+      //
+      // Al doilea parametru lipsă înseamnă „comandă", deci toate chemările de
+      // până azi spun exact ce spuneau.
+      return {
+        are: true,
+        nume: n,
+        et: 'Creat de ' + n,
+        cls: 'h-badge',
+        titlu: ce === 'cerere'
+          ? 'Cererea a fost scrisă în panou de ' + n
+            + '. N-a intrat încă în laborator — intră abia dacă o accepți.'
+          : 'Comanda a fost scrisă în sistem de ' + n
+            + '. Nu înseamnă că el a și făcut marfa.',
+      };
+    },
+
+    /**
      * Cantitatea unei poziții, ca număr.
      *
      * Baza ține cantitățile în DECIMAL(10,2), iar formularul din panou le
@@ -1811,7 +1962,7 @@
       return gp.laPatiserie(new Date());
     },
 
-    days(n = 7) {
+    days(n = 7, deLa = '') {
       const DOW = ['Dum', 'Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm'];
       const DOWL = ['duminică', 'luni', 'marți', 'miercuri', 'joi', 'vineri', 'sâmbătă'];
       const MON = ['ian', 'feb', 'mar', 'apr', 'mai', 'iun', 'iul', 'aug', 'sep', 'oct', 'noi', 'dec'];
@@ -1838,7 +1989,28 @@
       // trimite: `gp.lists()` reține răspunsul o singură dată, deci ziua ar
       // ÎNGHEȚA — și ar rupe exact reparațiile de trecere în ziua nouă
       // (`refreshDays`, `treziZiua`), care au nevoie de un ceas care merge.
-      const base = gp.acumLaPatiserie();
+      //
+      // `deLa` MUTĂ BAZA pe o zi aleasă de om, și e singurul fel în care
+      // fereastra se poate uita înapoi: socoteala de mai jos merge numai
+      // înainte (`+ i`), deci fără ea trecutul nu există pentru nicio pagină
+      // care cheamă funcția asta. Gol înseamnă „de azi", adică purtarea
+      // dintotdeauna — `gp.today()` cheamă `days(1)` fără el, deci ceasul
+      // rămâne un ceas care merge, iar reparațiile de trecere în ziua nouă
+      // (`refreshDays`, `treziZiua`) au mai departe pe ce se sprijini.
+      //
+      // Ziua se desface pe componente, nu prin `new Date(iso)`: acela o
+      // citește ca miez de noapte UTC, deci la est de Greenwich cade pe ziua
+      // dinainte — fereastra ar porni cu o zi mai devreme decât a apăsat omul,
+      // iar el ar vedea ruta de alaltăieri sub eticheta de ieri. Aceeași
+      // grijă e scrisă și în `dinIso` din Panou Laborator, din același motiv.
+      //
+      // Ce nu se potrivește tiparului cade înapoi pe ceasul patiseriei, tăcut
+      // și dinadins: o zi stricată în adresă nu e un motiv să rămână panoul
+      // gol, iar ziua bună se vede scrisă pe ecran.
+      const aleasa = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(deLa || ''));
+      const base = aleasa
+        ? new Date(Number(aleasa[1]), Number(aleasa[2]) - 1, Number(aleasa[3]))
+        : gp.acumLaPatiserie();
       base.setHours(0, 0, 0, 0);
       const out = [];
       for (let i = 0; i < n; i++) {
