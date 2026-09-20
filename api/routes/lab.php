@@ -928,3 +928,480 @@ function route_lab_message_delete(string $idTxt): void
 
     json_out(['ok' => true]);
 }
+
+/* ------------- ordinea de lucru și împărțirea producției (migrarea 023) -- */
+
+/**
+ * PUT /lab/ordine — în ce ordine lucrează laboratorul ziua.
+ *
+ * Croită după sora ei gata scrisă, `route_driver_reorder()`
+ * (api/routes/orders.php): ștergem întâi ordinea zilei, apoi scriem pozițiile
+ * una câte una, FILTRAT PE ZI, totul într-o tranzacție. Filtrul pe zi e cel
+ * care oprește mutarea unei comenzi din altă zi; ștergerea dinainte e cea care
+ * face ca o comandă scoasă din listă să-și recapete locul firesc, în loc să
+ * rămână cu poziția veche.
+ *
+ * DAR CU `require_ops()`, NU `require_admin()`. Sora ei e închisă la
+ * administrator dinadins, și comentariul ei spune de ce: ordinea opririlor o
+ * pune biroul, iar serverul lăsat deschis întregului personal însemna că
+ * „ordinea se putea răsturna din contul comun al tabletelor, iar șoferul pleca
+ * pe alt traseu decât cel stabilit". AICI LUCRUL E PE DOS: tocmai contul comun
+ * al tabletelor trebuie să poată aranja — el e în fața cuptorului —, iar paguba
+ * e mică și de-o zi. Două rute surori cu două drepturi deosebite, fiecare cu
+ * pricina scrisă lângă ea.
+ *
+ * Corpul cererii: { day: 'YYYY-MM-DD', ids: [12, 7, 30] }.
+ * O listă goală șterge ordinea de mână și revine la ordinea numerelor.
+ */
+function route_lab_ordine(): void
+{
+    require_ops();
+    $b   = body();
+    $zi  = valid_day(trim((string) ($b['day'] ?? '')));
+    $ids = $b['ids'] ?? [];
+    if (!is_array($ids)) {
+        fail('Lista de comenzi trebuie să fie un tablou de id-uri.', 422, 'bad_ids');
+    }
+    // `lab_seq` e SMALLINT UNSIGNED: peste 65535 MySQL ar da eroare, iar pe o
+    // configurație blândă ar tăia tăcut la 65535 și toate comenzile de după ar
+    // ajunge pe aceeași poziție. Panoul arată oricum cel mult 500 pe zi.
+    if (count($ids) > 1000) {
+        fail('Prea multe comenzi într-o singură rearanjare.', 422, 'too_many_ids');
+    }
+
+    db()->beginTransaction();
+    try {
+        q('UPDATE orders SET lab_seq = NULL WHERE day = ?', [$zi]);
+
+        $pos = 0;
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            if ($id <= 0) {
+                continue;
+            }
+            q('UPDATE orders SET lab_seq = ? WHERE id = ? AND day = ?', [$pos, $id, $zi]);
+            $pos++;
+        }
+        db()->commit();
+    } catch (Throwable $e) {
+        db()->rollBack();
+        throw $e;
+    }
+
+    audit('lab_reorder', 'lab', $zi, $pos > 0 ? $pos . ' comenzi' : 'ordine ștearsă');
+    json_out(['ok' => true, 'day' => $zi, 'orders' => $pos]);
+}
+
+/**
+ * Ziua, zăvorâtă, cu pozițiile produsului cerut — temelia celor două rute de
+ * mai jos.
+ *
+ * CHEAMĂ-O DIN TRANZACȚIE: pune `FOR UPDATE` pe comenzile zilei.
+ *
+ * ZĂVORÂREA SE FACE ÎN ORDINEA `id`, NU ÎN ORDINEA DE LUCRU. Aici a greșit
+ * ciorna rundei, și greșeala ar fi costat scump: `route_stock_sync()` ia
+ * comenzile `ORDER BY id FOR UPDATE`, și tot pe `id` le ia și
+ * `route_order_production()`. Zăvorâte în ordinea `lab_seq`, două tranzacții
+ * ar putea apuca aceleași două rânduri în ordine inversă — IMPAS, în mijlocul
+ * turei, cu aluatul pe masă. Se zăvorăsc pe `id`, și abia apoi se așază în
+ * ordinea de lucru, în PHP, unde nicio bază nu mai are ce bloca.
+ *
+ * ORDINEA DE LUCRU: `lab_seq` întâi, cele nearanjate la coadă, iar între egale
+ * numărul zilei (`seq`). Aceeași ordine pe care o arată panoul, fiindcă
+ * `GET /orders` întoarce ziua `ORDER BY day ASC, seq ASC` — dacă cele două
+ * s-ar despărți, omul ar vedea împărțindu-se altundeva decât se uită.
+ *
+ * POTRIVIREA POZIȚIE → PRODUS oglindește felul în care panoul strânge rândurile
+ * raftului: după numărul produsului când îl are, după nume numai pentru
+ * pozițiile scrise de mână, care n-au număr. Scrisă altfel decât acolo, caseta
+ * ar spune „170 / 300" și ar umple alte trei sute.
+ *
+ * @return array{0: array, 1: array} [comenzile zilei în ordinea de lucru,
+ *         pozițiile produsului, așezate pe id-ul comenzii]
+ */
+function lab_ziua_si_produsul(string $zi, int $pid, string $nume): array
+{
+    $comenzi = all(
+        'SELECT id, ref, seq, customer_name, status, lab_seq FROM orders WHERE day = ? ORDER BY id FOR UPDATE',
+        [$zi]
+    );
+
+    usort($comenzi, static function (array $a, array $b): int {
+        $la = $a['lab_seq'] === null ? PHP_INT_MAX : (int) $a['lab_seq'];
+        $lb = $b['lab_seq'] === null ? PHP_INT_MAX : (int) $b['lab_seq'];
+        return $la !== $lb ? $la <=> $lb : (int) $a['seq'] <=> (int) $b['seq'];
+    });
+
+    $pePoz = [];
+    foreach (productie_pozitii(array_map(static fn(array $o): int => (int) $o['id'], $comenzi)) as $p) {
+        $potrivit = $pid > 0
+            ? (int) ($p['product_id'] ?? 0) === $pid
+            : (($p['product_id'] ?? null) === null && (string) $p['name'] === $nume);
+        if ($potrivit) {
+            $pePoz[(int) $p['order_id']][] = $p;
+        }
+    }
+
+    return [$comenzi, $pePoz];
+}
+
+/**
+ * Cum se numește produsul cerut, în cuvintele cererii — pentru mesaje.
+ */
+function lab_numele_produsului(int $pid, string $nume): string
+{
+    return $nume !== '' ? $nume : 'produsul #' . $pid;
+}
+
+/**
+ * Cele două câmpuri care spun CARE produs, citite la fel de amândouă rutele.
+ *
+ * @return array{0: int, 1: string}
+ */
+function lab_produsul_cerut(array $b): array
+{
+    $pid  = ($b['productId'] ?? null) === null ? 0 : (int) $b['productId'];
+    $nume = trim((string) ($b['name'] ?? ''));
+    if ($pid <= 0 && $nume === '') {
+        fail('Spune care produs s-a făcut: numărul lui, ori numele scris pe poziție.', 422, 'bad_product');
+    }
+    return [$pid, $nume];
+}
+
+/**
+ * POST /lab/productie/imparte — câte bucăți s-au făcut, împărțite pe ziua asta.
+ *
+ * HOTĂRÂREA PATRONULUI, 19 septembrie 2026: se tastează „tocmai am mai făcut
+ * N", iar cifra cade pe comenzile zilei DE SUS ÎN JOS, în ordinea de lucru.
+ *
+ * DE CE E O RUTĂ, ȘI NU N CERERI DIN BROWSER. Două tablete care introduc în
+ * aceeași clipă ar umple de două ori aceleași comenzi — fiecare a citit lista
+ * înainte ca cealaltă să scrie. Iar o cădere la jumătatea celor N cereri ar
+ * lăsa ziua strâmbă, cu făina scăzută pentru bucăți care nu figurează nicăieri.
+ * Aici totul stă într-o singură tranzacție: ori intră toată cifra, ori niciuna.
+ *
+ * SURPLUSUL NU SE REFUZĂ ȘI NU SE PIERDE. Ce trece peste tot ce cerea ziua se
+ * scrie ca marfă a casei: intrare pe finit cu `order_id = NULL`, consumul de
+ * materie primă, și un rând în registrul de producție fără comandă — tabelul a
+ * fost făcut anume cu `order_id` care primește NULL. Fără rândul acela, cine
+ * face douăzeci de bucăți în plus a muncit degeaba în raportul de tură.
+ *
+ * ȘI ASTA E TOTUL, o singură dată. Mașinăria care scrie (`productie_aplica()`)
+ * pune deja intrarea pe finit pentru bucățile căzute pe comenzi. Dacă
+ * împărțirea ar mai adăuga o mișcare cu cantitatea ÎNTREAGĂ, raftul ar arăta
+ * +220 pentru 120 de croasante. Hotărârea patronului — „în depozit intră
+ * întreaga cantitate produsă" — se ține din cele două bucăți: cele căzute pe
+ * comenzi plus prisosul.
+ *
+ * SE SAR comenzile anulate și cele ajunse la etapa finală. Ruta veche, pe o
+ * singură comandă, nu sare peste etapa finală dinadins: acolo un om atinge
+ * anume o comandă și știe ce face. Aici alege mașina, iar o comandă plecată la
+ * client n-are ce primi.
+ *
+ * Corpul: { day, productId | name, qty }. Răspunsul spune ce s-a așezat, ce a
+ * trecut peste, și LOTUL — lista exactă a pozițiilor atinse, pe care „Înapoi"
+ * o dă îndărăt prin `POST /lab/productie/desfa`.
+ */
+function route_lab_productie_imparte(): void
+{
+    $u = require_ops();
+    $b = body();
+
+    $zi           = valid_day(trim((string) ($b['day'] ?? '')));
+    [$pid, $nume] = lab_produsul_cerut($b);
+    $cat          = num_field($b['qty'] ?? null, 'Cantitatea făcută', 0.01, 99999999.99, 'bad_qty');
+
+    // Cifrele din mesaje se scriu ca la tejghea: „8”, nu „8,00”.
+    $nr = static fn(float $x): string => rtrim(rtrim(number_format($x, 2, ',', ''), '0'), ',');
+
+    $pdo = db();
+    $pdo->beginTransaction();
+
+    // `fail()` încheie scriptul pe loc. Chemat cu tranzacția deschisă, ar lăsa
+    // comenzile zilei prinse cu FOR UPDATE până când găzduirea închide
+    // conexiunea — adică toată ziua blocată pentru toată tura. Același tipar ca
+    // `$opreste` din `route_order_production()`.
+    $opreste = static function (string $mesaj, int $status, string $cod) use ($pdo): void {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        fail($mesaj, $status, $cod);
+    };
+
+    $miscari = 0;
+    $fara    = [];
+    $lot     = [];
+    $ramas   = $cat;
+
+    try {
+        [$comenzi, $pePoz] = lab_ziua_si_produsul($zi, $pid, $nume);
+
+        if (!$pePoz) {
+            // Panoul arată numai produse care SUNT pe comenzile zilei, deci o
+            // cerere fără nicio potrivire înseamnă ori un ecran rămas în urmă,
+            // ori o zi golită între timp. Un surplus scris pe un produs pe care
+            // ziua nu-l cunoaște ar fi o intrare în depozit pe care n-o poate
+            // lega nimeni de nimic — mai bine se spune.
+            $opreste(
+                'Produsul „' . lab_numele_produsului($pid, $nume) . '” nu e pe nicio comandă din '
+                    . $zi . '. Reîncarcă lista: între timp ziua s-a schimbat.',
+                422,
+                'product_not_today'
+            );
+        }
+
+        // Identitatea produsului pentru prisos — raftul lui și rețeta lui — se
+        // ia de pe PRIMA poziție potrivită, nu dintr-o a doua căutare scrisă
+        // aici: potrivirea poziție → articol de depozit are un singur izvor
+        // (`productie_pozitii()`), iar o a doua ar fi tocmai felul în care
+        // producția ar intra într-un raft și scăderea ar ieși din altul.
+        $intaia = $pePoz[array_key_first($pePoz)][0];
+        $reteta = productie_retete([(int) ($intaia['product_id'] ?? 0)]);
+        $linii  = $reteta[(int) ($intaia['product_id'] ?? 0)] ?? [];
+
+        $anulata = status_cancelled();
+        $finala  = status_done();
+
+        foreach ($comenzi as $o) {
+            if ($ramas <= 0) {
+                break;
+            }
+            $st = (string) $o['status'];
+            if (($anulata !== '' && $st === $anulata) || ($finala !== '' && $st === $finala)) {
+                continue;
+            }
+            $oid = (int) $o['id'];
+            if (!isset($pePoz[$oid])) {
+                continue;
+            }
+
+            // Aceeași însemnare ca la raportarea de pe fișă, ca rândurile să se
+            // citească pereche în registrul depozitului: „#1042 Bistro”.
+            $nota = trim((string) ($o['ref'] ?? '') . ' ' . (string) ($o['customer_name'] ?? ''));
+
+            foreach ($pePoz[$oid] as $p) {
+                if ($ramas <= 0) {
+                    break;
+                }
+                $cerut = (float) $p['qty'];
+                $facut = (float) $p['done_qty'];
+                $gol   = round($cerut - $facut, 2);
+                if ($gol <= 0) {
+                    continue;
+                }
+                $pune = round(min($gol, $ramas), 2);
+                if ($pune <= 0) {
+                    continue;
+                }
+
+                $urma = productie_aplica($p, $pune, round($facut + $pune, 2), $linii, $nota, (int) $u['id'], $oid);
+                $miscari += $urma['miscari'];
+                if ($urma['fara'] !== null) {
+                    $fara[] = $urma['fara'];
+                }
+                $lot[]  = ['o' => $oid, 'i' => (int) $p['id'], 'd' => $pune];
+                $ramas  = round($ramas - $pune, 2);
+            }
+        }
+
+        $prisos = round($ramas, 2);
+        if ($prisos > 0) {
+            // Marfa casei: nu e a nimănui, deci nu are poziție și nu are
+            // comandă. `productie_aplica()` citește tocmai lipsa lui `id` ca
+            // „n-are unde scrie `done_qty` și n-are cui stinge rezervări”.
+            $alCasei = [
+                'name'       => (string) $intaia['name'],
+                'product_id' => $intaia['product_id'],
+                'item_id'    => $intaia['item_id'],
+                'item_name'  => $intaia['item_name'],
+            ];
+            $urma = productie_aplica(
+                $alCasei,
+                $prisos,
+                null,
+                $linii,
+                'Peste necesarul zilei ' . $zi,
+                (int) $u['id'],
+                null
+            );
+            $miscari += $urma['miscari'];
+            if ($urma['fara'] !== null) {
+                $fara[] = $urma['fara'];
+            }
+            $lot[] = ['o' => null, 'i' => null, 'd' => $prisos];
+        }
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    $asezat = round($cat - $ramas, 2);
+    audit(
+        'lab_production_split',
+        'lab',
+        $zi,
+        lab_numele_produsului($pid, $nume) . ' · ' . $nr($cat) . ' buc. · ' . $nr($asezat)
+            . ' pe comenzi · ' . $nr(max($ramas, 0)) . ' peste · ' . $miscari . ' mișcări de stoc'
+    );
+
+    json_out([
+        'day'     => $zi,
+        'qty'     => $cat,
+        'placed'  => $asezat,
+        'surplus' => round(max($ramas, 0), 2),
+        'moves'   => $miscari,
+        // Pozițiile fără articol finit în depozit: intrarea n-a avut unde se
+        // scrie. Pagina le arată, ca lipsa să nu se descopere abia la scădere.
+        'missing' => array_values(array_unique($fara)),
+        // Lotul, pentru „Înapoi". Nu e o scădere ghicită: e chiar ce s-a scris.
+        'lot'     => $lot,
+    ]);
+}
+
+/**
+ * POST /lab/productie/desfa — „Înapoi": dă îndărăt exact ultima împărțire.
+ *
+ * DE CE UN LOT, ȘI NU O CIFRĂ CU MINUS. O scădere de N bucăți ar trebui să
+ * ghicească de unde le ia. Luată de jos în sus, ar scoate bucăți din alte
+ * poziții decât cele umplute — dacă între timp un coleg a mai raportat ceva,
+ * omul care apasă „Înapoi" ar desface munca aceluia, nu pe a lui. Cu lotul,
+ * desfacerea atinge exact rândurile pe care le-a scris împărțirea.
+ *
+ * DE CE E TOTUȘI PĂZITĂ. Lotul vine din browser, deci e o CERERE, nu un
+ * adevăr. Fiecare poziție se recitește sub zăvor și se scade numai cât mai e
+ * acolo: dacă între timp cineva a corectat în jos, nu se coboară sub zero, și
+ * nu se scade de două ori dacă omul apasă „Înapoi" de două ori.
+ *
+ * Corpul: { day, productId | name, lot: [{o, i, d}, …] }.
+ */
+function route_lab_productie_desfa(): void
+{
+    $u = require_ops();
+    $b = body();
+
+    $zi           = valid_day(trim((string) ($b['day'] ?? '')));
+    [$pid, $nume] = lab_produsul_cerut($b);
+    $lot          = $b['lot'] ?? null;
+    if (!is_array($lot) || !$lot) {
+        fail('Spune ce lot se dă îndărăt.', 422, 'empty_lot');
+    }
+    if (count($lot) > 1000) {
+        fail('Prea multe poziții într-un singur lot.', 422, 'too_many_lot');
+    }
+
+    $nr = static fn(float $x): string => rtrim(rtrim(number_format($x, 2, ',', ''), '0'), ',');
+
+    $pdo = db();
+    $pdo->beginTransaction();
+    $opreste = static function (string $mesaj, int $status, string $cod) use ($pdo): void {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        fail($mesaj, $status, $cod);
+    };
+
+    $miscari = 0;
+    $luat    = 0.0;
+
+    try {
+        [, $pePoz] = lab_ziua_si_produsul($zi, $pid, $nume);
+        if (!$pePoz) {
+            $opreste(
+                'Produsul „' . lab_numele_produsului($pid, $nume) . '” nu mai e pe nicio comandă din '
+                    . $zi . '. N-am ce da îndărăt.',
+                422,
+                'product_not_today'
+            );
+        }
+
+        $dupaId = [];
+        foreach ($pePoz as $poz) {
+            foreach ($poz as $p) {
+                $dupaId[(int) $p['id']] = $p;
+            }
+        }
+        $intaia = $pePoz[array_key_first($pePoz)][0];
+        $reteta = productie_retete([(int) ($intaia['product_id'] ?? 0)]);
+        $linii  = $reteta[(int) ($intaia['product_id'] ?? 0)] ?? [];
+
+        foreach ($lot as $rand) {
+            if (!is_array($rand)) {
+                $opreste('Lotul are un rând care nu se poate citi.', 422, 'bad_lot');
+            }
+            $cat = num_field($rand['d'] ?? null, 'Cantitatea din lot', 0.01, 99999999.99, 'bad_lot_qty');
+            $poz = ($rand['i'] ?? null) === null ? 0 : (int) $rand['i'];
+
+            if ($poz === 0) {
+                // Rândul prisosului: n-are poziție și n-are comandă, deci nu se
+                // poate plafona din `done_qty`. Se dă îndărăt întreg — e chiar
+                // marfa casei, scrisă adineaori de aceeași apăsare.
+                $alCasei = [
+                    'name'       => (string) $intaia['name'],
+                    'product_id' => $intaia['product_id'],
+                    'item_id'    => $intaia['item_id'],
+                    'item_name'  => $intaia['item_name'],
+                ];
+                $urma = productie_aplica(
+                    $alCasei,
+                    -$cat,
+                    null,
+                    $linii,
+                    'Luat înapoi din prisosul zilei ' . $zi,
+                    (int) $u['id'],
+                    null
+                );
+                $miscari += $urma['miscari'];
+                $luat    = round($luat + $cat, 2);
+                continue;
+            }
+
+            if (!isset($dupaId[$poz])) {
+                // Poziția a fost rescrisă între timp (`PATCH /orders` le șterge
+                // și le scrie la loc). Nu e o eroare a omului: ce voia să dea
+                // îndărăt nu mai există, deci nu mai are ce strica.
+                continue;
+            }
+            $p     = $dupaId[$poz];
+            $facut = (float) $p['done_qty'];
+            $scade = round(min($cat, max($facut, 0)), 2);
+            if ($scade <= 0) {
+                continue;
+            }
+
+            $o    = one('SELECT ref, customer_name FROM orders WHERE id = ?', [(int) $p['order_id']]);
+            $nota = trim((string) ($o['ref'] ?? '') . ' ' . (string) ($o['customer_name'] ?? ''));
+
+            $urma = productie_aplica(
+                $p,
+                -$scade,
+                round($facut - $scade, 2),
+                $linii,
+                $nota,
+                (int) $u['id'],
+                (int) $p['order_id']
+            );
+            $miscari += $urma['miscari'];
+            $luat     = round($luat + $scade, 2);
+        }
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    audit(
+        'lab_production_undo',
+        'lab',
+        $zi,
+        lab_numele_produsului($pid, $nume) . ' · −' . $nr($luat) . ' buc. · ' . $miscari . ' mișcări de stoc'
+    );
+
+    json_out(['day' => $zi, 'taken' => $luat, 'moves' => $miscari]);
+}

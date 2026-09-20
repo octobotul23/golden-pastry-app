@@ -78,7 +78,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div data-jr="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
 <div data-jr="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
-<div data-jr="sidehead" style="display:flex;align-items:center;gap:12px">
+<div data-jr="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
 <img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
@@ -86,7 +86,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
-<div data-jr="nav" style="display:flex;flex-direction:column;gap:6px">
+<div data-jr="nav" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
 <span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
@@ -96,7 +96,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 </sc-for>
 </div>
-<div data-jr="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div data-jr="sidefoot" style="flex:none;margin-top:auto;display:flex;flex-direction:column;gap:10px">
 <!-- Pastila cu numele se arată numai când se știe al cui e numele. Fără
      lacăt, cât ținea cererea /auth/me pe monitor se vedea o pastilă goală cu
      „administrator" scris sub ea — pagina afirma cine se uită la ea înainte
@@ -113,6 +113,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 <a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
 <p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Jurnalul ține minte tot ce s-a întâmplat pe server: cine a intrat, ce comandă a schimbat, ce mișcare de stoc a trecut — de pe orice dispozitiv, nu doar de pe acesta.</p>
+<gp-versiune></gp-versiune>
 </div>
 </div>
 <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
@@ -145,6 +146,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
 </sc-if>
 <a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+<gp-versiune></gp-versiune>
 </div>
 </div>
 </sc-if>

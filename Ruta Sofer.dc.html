@@ -299,7 +299,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <a href="{{ s.nav }}" target="_blank" rel="noopener" class="h-btn h-btn--secondary" style="flex:1;min-height:50px;font-size:15px;text-decoration:none">Navighează</a>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ s.onAll }}" style="flex:1;min-height:50px;font-size:15px">Tot încărcat</button>
 </div>
-<button type="button" class="{{ s.doneCls }}" onClick="{{ s.onDone }}" style="min-height:56px;font-size:17px;font-weight:700">{{ s.doneLabel }}</button>
+<button type="button" class="{{ s.doneCls }}" onClick="{{ s.onDone }}" disabled="{{ s.doneOff }}" title="{{ s.doneTitlu }}" style="min-height:56px;font-size:17px;font-weight:700">{{ s.doneLabel }}</button>
+<!-- Lămurirea stă SUB buton, nu numai în `title`: pe telefon nu există „mouse-ul
+     deasupra", deci un `title` singur ar fi fost scris pentru nimeni. -->
+<sc-if value="{{ s.doneNota }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;line-height:1.45;color:var(--h-fg-subtle)">{{ s.doneNota }}</p>
+</sc-if>
 </div>
 </sc-if>
 </div>
@@ -380,6 +385,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
 </sc-if>
 <a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+<gp-versiune></gp-versiune>
 </div>
 </div>
 </sc-if>
@@ -998,6 +1004,25 @@ class Component extends DCLogic {
     const legs = peRuta.map(o => { const p = this.pos(o), d = this.km(prev, p); prev = p; total += d; return d; });
     let clock = peRuta.length ? minsOr(peRuta[0].slot, 8 * 60) - legs[0] / SPEED * 60 : 0;
 
+    // CINE POATE SPUNE „A AJUNS LA CLIENT" (runda 2.3.0, lucrarea 9).
+    //
+    // Semnul stă pe CONT, nu pe panou. Contul `angajat` are și panoul
+    // Laborator, și pe ăsta: o oprire pusă numai în laborator s-ar fi ocolit
+    // dintr-o filă, cu același om și aceeași parolă. Serverul îl cere oricum
+    // (403 `delivery_denied`, v. `poarta_scrierii_comenzii()`); rândul de aici
+    // e ca omul să nu apese ca să afle.
+    //
+    // CÂT NU S-A ÎNTORS ÎNCĂ `/auth/me`, ȘI PE UN SERVER FĂRĂ MIGRAREA 023,
+    // BUTONUL RĂMÂNE APRINS. O poartă care se închide singură în fereastra de
+    // urcare oprește livrările zilei — adică face chiar paguba de care fuge —,
+    // iar dacă semnul chiar lipsește, refuzul serverului spune pe față ce e de
+    // bifat și unde. Aceeași alegere ca `lab_production_suportata()`.
+    const poateLivra = !S.auth || S.auth.poateConfirmaLivrarea !== false;
+    // ANULAREA LIVRĂRII NU CERE SEMNUL. Ea duce comanda ÎNDĂRĂT, la etapa
+    // dinaintea celei finale — pe care serverul o primește de la orice cont de
+    // personal —, și e singura cale de întors dintr-o apăsare greșită. Stinsă
+    // odată cu cealaltă, o livrare marcată din greșeală ar fi rămas așa până
+    // se trezea cineva la birou.
     const toggleItem = (o, i) => {
       const cur = (S.loaded[o.id] || []).slice();
       const at = cur.indexOf(i);
@@ -1015,6 +1040,11 @@ class Component extends DCLogic {
     };
     const markDone = (o) => {
       const delivered = o.status === gp.done();
+      // Cureaua de siguranță a butonului stins: `disabled` e o purtare a
+      // ecranului, iar ecranul poate rămâne în urmă (semnul se ia de pe cont
+      // la încărcare, iar patronul îl poate scoate între timp). Aici se
+      // termină drumul, nu la desen.
+      if (!delivered && !poateLivra) return;
       // Anularea livrării întoarce comanda la etapa dinaintea celei finale, oricare
       // ar fi ea în Setări. Era scris „La ambalare”, care poate nici să nu existe.
       const cyc = gp.flow();
@@ -1220,6 +1250,15 @@ class Component extends DCLogic {
           + encodeURIComponent((o.addr || o.cust) + (laRuta ? ", București" : "")),
         doneCls: done ? "h-btn h-btn--ghost h-btn--block" : "h-btn h-btn--primary h-btn--block",
         doneLabel: done ? "Anulează livrarea" : "Marchează livrat",
+        doneOff: !done && !poateLivra,
+        // Lămurirea nu spune „n-ai voie", ci CE LIPSEȘTE, PE CE CONT și CINE o
+        // pune. Un refuz care nu-și spune leacul se preface într-un telefon la
+        // birou, în mijlocul turei, cu mașina trasă pe dreapta.
+        doneNota: !done && !poateLivra
+          ? "Contul ăsta n-are semnul „poate confirma livrarea”, deci nu poate pune "
+            + "etapa „" + gp.done() + "”. Se bifează în „Conturi”, pe contul șoferului."
+          : "",
+        doneTitlu: !done && !poateLivra ? "Semnul „poate confirma livrarea” lipsește de pe cont." : "",
         onDone: () => markDone(o)
       };
     };

@@ -553,6 +553,21 @@ if ($hasConfig) {
                     . 'chiar dacă a fost cerută așa, și poartă numele celui care a apăsat '
                     . '„Acceptă”, nu al celui care a scris-o.',
             ],
+            // 023 nu aduce niciun tabel — două coloane, pe două tabele deosebite,
+            // amândouă cu implicit, deci rândurile vechi rămân întregi.
+            '023_laboratorul_si_livrarea.sql' => [
+                'nume'    => 'Ordinea laboratorului și dreptul de livrare (migrarea 023)',
+                'coloane' => ['orders' => ['lab_seq'], 'users' => ['poate_confirma_livrarea']],
+                'setari'  => [],
+                'ce'      => 'Prima ține ordinea în care laboratorul lucrează ziua, ca ea să fie a '
+                    . 'casei și nu a ecranului de pe care s-a aranjat; fără ea tableta aranjează '
+                    . 'pentru ea singură, iar împărțirea cantităților produse — care merge de sus '
+                    . 'în jos pe lista aceea — umple alte comenzi după fiecare tabletă. A doua '
+                    . 'spune cine poate confirma livrarea; fără ea paza CADE DESCHISĂ și etapa '
+                    . 'finală se poate pune din nou din laborator, adică exact purtarea de '
+                    . 'dinainte. O poartă care se închide singură într-o fereastră de actualizare '
+                    . 'ar fi mai rea decât paguba de care fuge.',
+            ],
         ];
 
         // Coloanele fiecărui tabel se cer o singură dată, nu o dată pe migrare:

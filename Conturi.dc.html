@@ -91,7 +91,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div data-ct="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
 <div data-ct="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
-<div data-ct="sidehead" style="display:flex;align-items:center;gap:12px">
+<div data-ct="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
 <img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
@@ -99,7 +99,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
-<div data-ct="nav" style="display:flex;flex-direction:column;gap:6px">
+<div data-ct="nav" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
 <span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
@@ -109,7 +109,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 </sc-for>
 </div>
-<div data-ct="sidefoot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<div data-ct="sidefoot" style="flex:none;margin-top:auto;display:flex;flex-direction:column;gap:10px">
 <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
 <div style="display:flex;flex-direction:column;min-width:0;flex:1">
 <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
@@ -119,6 +119,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
 <p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Parolele sunt criptate pe server și nu pot fi citite de nimeni — nici de tine, nici de mine. Dacă un coleg și-o uită, generezi una nouă.</p>
+<gp-versiune></gp-versiune>
 </div>
 </div>
 <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
@@ -151,6 +152,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
 </sc-if>
 <a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+<gp-versiune></gp-versiune>
 </div>
 </div>
 </sc-if>
@@ -506,6 +508,20 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 </div>
 </sc-if>
 
+<!-- SEMNUL „POATE CONFIRMA LIVRAREA" (runda 2.3.0, lucrarea 9).
+     Stă în AFARA lui `a.notSystem` de mai jos, spre deosebire de rol și de
+     ștergere: tocmai contul de sistem al tabletelor e cel despre care s-a cerut
+     lucrarea, iar un rând nedesenat acolo ar fi ascuns răspunsul.
+     Lămurirea de dedesubt nu e decor: bifa singură spune „da/nu", nu spune ce
+     se întâmplă cu ea, și mai ales nu spune de ce la administrator livrarea
+     merge cu bifa goală. -->
+<sc-if value="{{ a.livrareShown }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:5px;padding:11px 13px;border-radius:13px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<label class="h-switch"><input type="checkbox" checked="{{ a.livrareOn }}" onChange="{{ a.onLivrare }}"><span>Poate confirma livrarea</span></label>
+<span style="font-size:12px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ a.livrareNota }}</span>
+</div>
+</sc-if>
+
 <div data-ct="cardfoot" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <sc-if value="{{ a.canEditPass }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--primary" onClick="{{ a.onEdit }}" style="min-height:46px;font-size:15px">Schimbă parola</button>
@@ -652,6 +668,13 @@ const fromApi = (x) => ({
   //
   // Rămân goale pe o instalare fără migrarea 010 — serverul nu trimite
   // câmpurile, iar blocul din card nu se desenează deloc (`S.origine`).
+  // Semnul „poate confirma livrarea" (migrarea 023). E CE SCRIE PE CONT, nu
+  // dreptul de fapt: pentru administrator și fondator dreptul vine din rol,
+  // chiar cu bifa goală (v. `poate_confirma_livrarea()`, api/lib/auth.php).
+  // Pe o bază fără migrare serverul trimite `false` pentru toți și, deodată,
+  // `livrare: false` la rădăcină — de acolo se află că rândul nu se desenează
+  // deloc, ca să nu iasă o bifă care se lovește de 503.
+  livrare: x.poateConfirmaLivrarea === true,
   self: x.selfRegistered === true,
   vouchAt: gp.utc(x.vouchedAt),
   vouchBy: x.vouchedByName || "",
@@ -907,6 +930,10 @@ class Component extends DCLogic {
         origine: r.origine === true,
         // Același fel de steag, pentru migrarea 014.
         pontaj: r.pontaj === true,
+        // Și pentru migrarea 023. Fără el n-am putea deosebi „niciun cont n-are
+        // încă semnul" — starea firească în ziua dintâi, fiindcă semnul se
+        // naște închis pentru toți — de „coloana nici nu există".
+        livrare: r.livrare === true,
         // Răspunsul bun stinge caseta. Fără rândul ăsta singurul loc care o
         // stingea era „Încearcă din nou”, iar drumul până la ecranul care se
         // contrazice singur e scurt: cererea dintâi pică, caseta roșie se
@@ -1255,6 +1282,34 @@ class Component extends DCLogic {
         roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
         roleHint: ROLE_HINT[rl] || "",
         isClient: rl === "client",
+        // --- „poate confirma livrarea" (runda 2.3.0, lucrarea 9) ---
+        //
+        // Numai pe conturile de personal: un client n-are ce confirma, iar
+        // rândul pe cardul lui ar fi fost o întrebare fără înțeles pe fiecare
+        // dintre sutele de conturi de client. Contul de sistem („panou",
+        // tejgheaua tabletelor din laborator) ÎL ARE, dinadins: e chiar contul
+        // din pricina căruia s-a cerut lucrarea, iar un rând nedesenat acolo ar
+        // fi ascuns tocmai răspunsul la întrebarea „de ce nu mai pot marca
+        // livrat de pe tabletă?".
+        livrareShown: S.livrare && rl !== "client",
+        livrareOn: acc.livrare,
+        // Ce scrie pe cont și ce poate omul sunt două lucruri, și rândul le
+        // spune pe amândouă. La administrator și fondator bifa poate fi goală
+        // iar livrarea tot merge — dreptul le vine din rol, din cod. O bifă
+        // care s-ar desena pusă în locul lor ar minți de două ori: ar spune că
+        // e scrisă pe cont, și n-ar putea fi scoasă.
+        livrareNota: gp.eAdmin(rl)
+          ? "Confirmă livrarea oricum: dreptul îi vine din rol, nu din bifa asta."
+          : acc.livrare
+            ? "Poate pune etapa „" + gp.done() + "” din „Ruta șoferului”."
+            : "Fără bifă, „Marchează livrat” e stins pe telefonul lui, iar serverul refuză etapa „" + gp.done() + "”.",
+        onLivrare: (e) => {
+          const v = !!(e && e.target && e.target.checked);
+          if (v === !!acc.livrare) return;
+          this.patchUser(acc, { poateConfirmaLivrarea: v }, { msg: v
+            ? "„" + acc.name + "” poate confirma livrarea."
+            : "„" + acc.name + "” nu mai poate confirma livrarea." });
+        },
         cust: acc.cust || "",
         custEdit: draftVal(acc, "cust", acc.cust || ""),
         onCust: onTasta(acc, "cust"),

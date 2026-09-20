@@ -5,12 +5,12 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **cincizeci și șapte de minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele opt plimbări stă singură și își spune la început cât
+Durează **șaizeci și șase de minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele nouă plimbări stă singură și își spune la început cât
 ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale bucăților care au
 minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o plimbare, se adună și aici.
 
-Cele opt, în ordinea în care se fac cel mai ușor:
+Cele nouă, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -23,9 +23,13 @@ Cele opt, în ordinea în care se fac cel mai ușor:
 7. **Comanda anulată, adusă înapoi** — cele trei uși, caseta, anunțul care
    pleacă la capăt (7.5) și ecranul rămas în urmă: în „Comenzi" (7.6), pe
    tableta din laborator (7.7) și pe telefonul șoferului (7.8).
-8. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+8. **Runda 2.3.0** — comutatorul din magazin (8.1), bara strânsă (8.2),
+   harta din Contact (8.3), versiunea la vedere (8.4), și laboratorul pe
+   telefon: produsele (8.5), tragerea (8.6) și oprirea la „Predată
+   curierului" (8.7).
+9. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A opta se face la capăt dinadins: prinde într-o singură trecere tot ce ai
+A noua se face la capăt dinadins: prinde într-o singură trecere tot ce ai
 deschis mai devreme.
 
 ---
@@ -964,7 +968,166 @@ La capăt, refaci comanda din fila A și pui fila B înapoi pe lățimea ei.
 
 ---
 
-## 8 · Telefon, tabletă, calculator
+## 8 · Runda 2.3.0: comutatorul, bara, harta, versiunea, laboratorul pe telefon
+
+*Nouă minute. Cele șapte bucăți de mai jos sunt lucrările rundei ăsteia, deci
+singurele care n-au mai fost plimbate niciodată.*
+
+Primele patru se fac în magazin, fără cont. Ultimele trei se fac cu
+`demo-manager`, pe telefon (390), în panoul de laborator.
+
+### 8.1 Comutatorul congelat ↔ gata de servire
+
+Magazinul, `http://127.0.0.1:8101/`. Sub titlu stă pastila cu două semne —
+fulgul și cuptorul. Apeși pe fiecare, pe rând, de vreo cinci ori, repede.
+
+**Trebuie să vezi:** un jeton rotund care **alunecă** de sub un semn sub
+celălalt, cu un arc scurt la capăt. Nu sare, nu clipește, nu apare de nicăieri.
+Sub pastilă iese o clipă o vorbă — „Congelate" ori „Gata de servire" — scrisă
+pe **fundal închis, cu o dungă subțire de jur împrejur**, cu literele deschise
+la culoare.
+
+**Nu trebuie să vezi niciun dreptunghi alb.** Nici cât o clipă, nici peste
+semne, nici sub ele. Ăsta era defectul reclamat: un cartonaș aproape alb, de
+82 pe 29, care apărea la trei pixeli sub semne, stătea o secundă și jumătate și
+pleca. Era singura suprafață albă din toată pagina, deci se vede din prima
+dacă a revenit.
+
+Apasă comutatorul și **cu tastatura** — `Tab` până ajungi pe el, apoi `Enter` —
+nu numai cu mouse-ul. E a doua cale spre același simptom, și se probează la
+fel: nimic alb, nicio clipă.
+
+### 8.2 Bara de finalizare din Catalog, strânsă
+
+Tot în magazin, pe telefon (390): `http://127.0.0.1:8101/catalog`. Alegi două
+produse, ca să se ridice bara de jos.
+
+**Trebuie să vezi:** o bară **de un singur rând** — butonul de coș, totalul,
+WhatsApp, „Finalizare" — cu lămurirea scrisă **mărunt sub total**, pe același
+rând, nu dedesubt. Progresul e un **fir subțire lipit de muchia de sus** a
+barei, nu o dungă cu spațiu în jurul ei.
+
+**Și partea care se uită:** derulează lista până la capăt. **Ultimul produs
+trebuie să se vadă întreg**, nu pe jumătate sub bară. Locul de sub listă și
+înălțimea barei se socotesc azi din aceleași numere; dacă ultimul rând intră
+sub bară, cineva le-a despărțit iar în două cifre.
+
+Butoanele rămân la 44 px pe înălțime — se măsoară ca la plimbarea a noua.
+
+### 8.3 Harta din Contact
+
+`http://127.0.0.1:8101/contact`, cartonașul **Depozit**.
+
+**Trebuie să vezi:** o **poză** cu harta și cu un ac pe locul depozitului,
+între program și legătura de dedesubt, cu colțurile rotunjite ca restul
+cartonașelor. Sub ea, mărunt: **© OpenStreetMap contributors**.
+
+Apeși pe poză: se deschide **în filă nouă** harta de la Google, pe punctul
+depozitului. Te întorci în fila veche și te uiți în `F12` → *Network*: la
+deschiderea paginii **nu trebuie să plece nicio cerere către alt site** —
+harta e o poză din pachet, nu o hartă vie. Dacă vezi cereri spre un server de
+dale, poza a fost înlocuită cu o hartă încărcată din lume, și atunci pagina
+are nevoie și de o casetă de consimțământ, care nu există.
+
+### 8.4 `ver. 2.3.0` în colț
+
+Versiunea se vede în **două locuri**, fiindcă panourile de tabletă n-au bară
+laterală deloc — adică tocmai ecranele care pot rămâne cu cod vechi n-ar fi
+avut-o nicăieri.
+
+| Unde | Cum ajungi |
+|---|---|
+| **subsolul sertarului de telefon** | pe 390, butonul cu trei linii, derulezi sertarul până jos — toate paginile de panou, laborator și rută între ele |
+| **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
+
+**Trebuie să scrie** `ver. 2.3.0 · ` și o ștampilă — ziua și ora pachetului, de
+pildă `19 sep 16:48`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
+paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
+`local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
+
+Numărul trebuie să fie **același** cu cel din numele folderului
+`plasture-vps 2.3.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+urca nimic: o versiune care minte face martorii de pe server de necrezut.
+
+### 8.5 „Toate produsele" ajunge pe telefon
+
+De aici încolo: `demo-manager`, pe 390, `/lab/laborator.html`.
+
+Pe muchia din **dreapta** a ecranului stă o clapă înaltă, lipită de margine.
+Scrie pe ea câte bucăți au mai rămas de făcut azi.
+
+**Apeși clapa.** Trebuie să urce de jos foaia cu toate produsele zilei — aceeași
+mișcare ca foaia de detaliu, nu alta. Clapa **dispare** cât e foaia deschisă.
+
+Pe fiecare rând de produs: numele, `făcut / cerut`, dunga de progres, **o
+casetă de număr și un buton „Adaugă"**. Tastatura care se deschide la atingerea
+casetei trebuie să fie cea de **cifre**, nu cea cu litere.
+
+**Nu trebuie să existe nicio bifă** pe rândul produsului. O bifă ar însemna
+„gata tot", adică exact sărirea peste tastare pe care patronul a cerut să n-o
+facem.
+
+Scrii o cifră mică, de pildă 5, și apeși **Adaugă**.
+
+**Trebuie să vezi:** `făcut` crescut cu 5, dunga mișcată, și, lângă rând, un
+buton **„Înapoi"**. Îl apeși: totul se întoarce exact de unde a plecat. Apoi
+alegi o comandă din listă — foaia cu produse trebuie să **se închidă singură**:
+două foi de jos suprapuse înseamnă că una se închide fără să știe nimeni care.
+
+### 8.6 Comenzile se trag cu degetul
+
+Tot acolo, în lista de comenzi. Fiecare card are pe stânga un **mâner hașurat**,
+îngust și înalt.
+
+**Tragi de mâner** și muți un card peste altul. Ordinea trebuie să se schimbe
+sub deget și să rămână schimbată când ridici degetul.
+
+**Și cele două probe care contează cu adevărat:**
+
+1. **Tragi de card, de oriunde în afară de mâner** — de nume, de cifre, de
+   marginea lui. Cardul **nu trebuie să se miște**, iar lista trebuie să se
+   **deruleze** normal sub deget. Dacă lista a înțepenit la atingere, cineva a
+   mutat oprirea gestului de pe mâner pe card, și atunci panoul de laborator nu
+   se mai poate derula deloc pe tabletă.
+2. **Lași ordinea schimbată și deschizi aceeași zi pe alt ecran** — pe
+   calculator, la 1440. Ordinea trebuie să fie **aceeași**: de runda asta o ține
+   serverul, nu ecranul. Săgețile ↑ și ↓ de pe calculator scriu în același loc.
+
+Mai ține degetul pe un card câteva clipe, fără să-l ridici, cât trece o tură de
+împrospătare. Cardul **nu are voie să sară înapoi** de sub deget.
+
+### 8.7 Laboratorul se oprește la „Predată curierului"
+
+Pe `/lab/laborator.html`, iei o comandă și o muți din etapă în etapă cu butonul
+mare.
+
+**Trebuie să vezi:** butonul scrie, la penultima etapă, **„Predată curierului"**.
+Îl apeși, și după el **se stinge**, cu lămurirea că șoferul pune ultima etapă de
+pe telefonul lui. Laboratorul **nu mai poate ajunge** la etapa finală, nici din
+card, nici din foaia de detaliu.
+
+**Capcana care se uită:** pe un card ajuns la etapa finală, butonul **„Înapoi
+la: …"** trebuie să fie tot acolo. Dacă a dispărut, laboratorul a rămas fără
+singura cale de întors tocmai când șoferul apasă din greșeală.
+
+**Apoi partea de pe server**, care e miezul lucrării. Intri cu `testangajat` pe
+`/lab/ruta.html`, pe o comandă de livrat.
+
+**Trebuie să vezi** butonul **„Marchează livrat" stins**, cu o lămurire care
+spune ce lipsește, pe ce cont, și cine o pune: semnul „poate confirma livrarea",
+bifat în Conturi.
+
+Intri în `/lab/conturi.html` cu `testadmin`, pui bifa **„Poate confirma
+livrarea"** pe contul acela, te întorci pe rută și reîmprospătezi. Butonul
+trebuie să se **aprindă** și livrarea să treacă. Scoți bifa la loc, ca să nu
+lași contul de probă cu drepturi în plus.
+
+Oprirea din pagină singură n-ar fi ținut: contul `angajat` are **și** panoul de
+laborator, **și** foaia de drum, deci același om ar fi apăsat pe cealaltă ușă.
+
+---
+
+## 9 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -1062,11 +1225,11 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele opt ies, proba automată se mai trece o dată pe deasupra:
+Când toate cele nouă ies, proba automată se mai trece o dată pe deasupra:
 
 ```bash
 node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.2.4`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.3.0`.

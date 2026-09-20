@@ -205,6 +205,22 @@ $routes = [
     // deci el are nevoie de cifra ei.
     ['GET',    '/lab/production',    'lab',      'route_lab_production'],
 
+    // Ordinea în care laboratorul lucrează ziua, și împărțirea cantităților
+    // produse pe comenzile ei (migrarea 023). Amândouă `require_ops()`, adică
+    // și contul comun al tabletelor: ele stau în fața cuptorului, ele aranjează
+    // și ele raportează. Pricinile, pe larg, lângă fiecare funcție.
+    //
+    // `PUT` pentru ordine, ca la sora ei `PUT /routes`: se trimite lista
+    // ÎNTREAGĂ a zilei, nu o mutare — două tablete care trag în aceeași clipă
+    // își scriu una alteia peste ordine, dar niciuna nu lasă ziua pe jumătate
+    // aranjată.
+    ['PUT',    '/lab/ordine',        'lab',      'route_lab_ordine'],
+    ['POST',   '/lab/productie/imparte', 'lab',  'route_lab_productie_imparte'],
+    // „Înapoi" de lângă caseta de introdus: desface exact lotul pe care
+    // împărțirea tocmai l-a întors. Rută proprie, nu o cifră cu minus pe cea de
+    // deasupra — vezi antetul ei.
+    ['POST',   '/lab/productie/desfa',   'lab',  'route_lab_productie_desfa'],
+
     // Tabla de anunțuri de pe ecranul laboratorului. Citește oricine ține
     // ecranul deschis, inclusiv contul `panou` al tabletei (`require_ops()`);
     // scrie și ia jos cine conduce tura (`require_shifts()`) — dar numai

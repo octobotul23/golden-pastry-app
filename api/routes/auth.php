@@ -350,6 +350,21 @@ function route_me(): void
         // niciodată. Ca `referral` de deasupra: pagina află dinainte ce se
         // poate, ca să nu ofere un buton care n-are unde să ducă.
         'founder'     => founder_supported(),
+        // Poate contul ăsta să spună că o comandă a ajuns la client?
+        //
+        // Steag despre OM, nu despre instalare — spre deosebire de `founder`
+        // de deasupra. Îl citesc două pagini, pentru două lucruri deosebite:
+        // „Ruta Șofer" stinge „Marchează livrat" cu o lămurire, iar „Panou
+        // Laborator" își socotește plafonul (v. `labCeiling` din `/lists`).
+        //
+        // Pagina AFLĂ DINAINTE ce se poate, ca să nu ofere un buton care duce
+        // într-un 403 — dar butonul stins nu e paza. Paza e
+        // `poarta_etapei_finale()`, pe server, fiindcă același cont `angajat`
+        // are și panoul Laborator, și panoul Rută.
+        //
+        // Pe o bază fără migrarea 023 iese `true` pentru toți, adică purtarea
+        // de dinainte: pricina întreagă e în antetul funcției.
+        'poateConfirmaLivrarea' => poate_confirma_livrarea($u),
     ]);
 }
 

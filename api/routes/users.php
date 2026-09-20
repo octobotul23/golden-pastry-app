@@ -145,6 +145,13 @@ function route_users_list(): void
     // din Conturi, nu numai din contul clientului. `public_user()` o ia din rând.
     $areZona = user_zone_supported();
     $extra .= $areZona ? ', u.zone' : '';
+    // Migrarea 023, cu poarta ei: semnul „poate confirma livrarea". Se cere
+    // coloana ca să se poată desena bifa cu ce SCRIE pe cont — nu cu dreptul
+    // de fapt al omului, care pentru administrator și fondator vine din cod
+    // chiar cu bifa goală (v. `poate_confirma_livrarea()`, api/lib/auth.php).
+    // Bifa arată ce se poate schimba de aici; dreptul se citește din `/auth/me`.
+    $areLivrare = livrare_semn_suportat();
+    $extra .= $areLivrare ? ', u.poate_confirma_livrarea' : '';
     $join = $areReferral ? ' LEFT JOIN users r ON r.id = u.referred_by' : '';
     $join .= $areOrigine ? ' LEFT JOIN users v ON v.id = u.vouched_by' : '';
 
@@ -161,7 +168,11 @@ function route_users_list(): void
     // public_user() nu include niciodată password_hash.
     json_out(['referral' => $areReferral, 'referralMoney' => $areBani, 'origine' => $areOrigine,
         'pontaj' => $arePontaj,
-        'referralRateDefault' => $areBani ? referral_default_rate() : 0.0, 'users' => array_map(static function ($r) use ($areBani, $areOrigine) {
+        // A intrat migrarea 023? Fără steagul ăsta pagina n-ar putea deosebi
+        // „niciun cont n-are încă semnul" de „coloana nici nu există" — și ar
+        // desena o bifă pe care serverul o refuză cu 503.
+        'livrare' => $areLivrare,
+        'referralRateDefault' => $areBani ? referral_default_rate() : 0.0, 'users' => array_map(static function ($r) use ($areBani, $areOrigine, $areLivrare) {
         $u                = public_user($r);
         $u['phone']       = $r['phone'];
         $u['active']      = (bool) $r['active'];
@@ -194,6 +205,12 @@ function route_users_list(): void
         $u['selfRegistered'] = $areOrigine ? ((int) $r['self_registered'] === 1) : false;
         $u['vouchedAt']      = $areOrigine ? ($r['vouched_at'] ?? null) : null;
         $u['vouchedByName']  = $areOrigine ? ($r['vouched_by_name'] ?? null) : null;
+        // CE SCRIE PE CONT, nu ce poate omul. Administratorul și fondatorul pot
+        // confirma livrarea din cod, cu bifa goală; bifa asta arată numai ce se
+        // poate pune și scoate de aici, iar pagina spune în dreptul lor că
+        // dreptul le vine din rol. Dacă bifa ar arăta dreptul de fapt, ar
+        // apărea pusă și n-ar putea fi scoasă — o bifă care minte de două ori.
+        $u['poateConfirmaLivrarea'] = $areLivrare ? ((int) $r['poate_confirma_livrarea'] === 1) : false;
         return $u;
     }, $rows)]);
 }
@@ -696,6 +713,30 @@ function route_users_update(string $id): void
         $sets[] = 'zone = ?';
         $vals[] = zone_field($b['zone'] ?? '') ?: null;
     }
+    // Semnul „poate confirma livrarea" (migrarea 023). Nu intră nici el în
+    // bucla de sus: acolo se trec câmpuri de text, iar ăsta e un da/nu.
+    //
+    // REFUZĂ PE FAȚĂ CÂND MIGRAREA LIPSEȘTE, din același motiv ca zona de
+    // deasupra: cine apasă aici e chiar omul care poate importa fișierul, iar
+    // un „gata" peste o bifă care nu s-a scris l-ar trimite să caute defectul
+    // în altă parte — pe ecranul șoferului, unde butonul ar fi rămas la fel.
+    //
+    // NU SE PUNE LA CREARE, dinadins: hotărârea patronului e că semnul se naște
+    // închis pentru toți, iar apoi se bifează anume cine duce marfa. O casetă
+    // pe formularul de cont nou ar fi făcut din asta o alegere care se poate
+    // face din greșeală, la fiecare cont.
+    if (array_key_exists('poateConfirmaLivrarea', $b)) {
+        if (!livrare_semn_suportat()) {
+            fail(
+                'Semnul „poate confirma livrarea" cere migrarea '
+                  . 'sql/023_laboratorul_si_livrarea.sql, care nu a fost încă importată în baza de date.',
+                503,
+                'delivery_flag_unavailable'
+            );
+        }
+        $sets[] = 'poate_confirma_livrarea = ?';
+        $vals[] = $b['poateConfirmaLivrarea'] ? 1 : 0;
+    }
     if (array_key_exists('role', $b)) {
         // Aceeași regulă ca la creare: ce încape în coloană, nu doar ce știe codul.
         $permise = roles_available(ROLES);
@@ -804,6 +845,11 @@ function route_users_update(string $id): void
         'customer_name' => 'firmă',
         'role'          => 'rol',
         'active'        => ['stare', ['1' => 'activ', '0' => 'oprit']],
+        // Semnul de livrare intră în jurnal CU VORBE, nu cu 1 și 0: e un drept,
+        // iar peste șase luni cineva o să caute în jurnal cine i l-a dat
+        // șoferului și când. „poate_confirma_livrarea: 1” ar fi cerut atunci
+        // citirea codului ca să se afle în ce parte bate cifra.
+        'poate_confirma_livrarea' => ['confirmă livrarea', ['1' => 'poate', '0' => 'nu poate']],
     ]);
     $vals[] = $id;
     q('UPDATE users SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);

@@ -152,6 +152,62 @@ function status_cancelled(): string
     return $v !== '' && in_array($v, $all, true) ? $v : '';
 }
 
+/**
+ * Etapele prin care trece o comandă, fără cea de anulare.
+ *
+ * Anularea nu e un pas înainte, e o ieșire din drum: pusă în șir, „înapoi cu o
+ * etapă" de pe ea ar duce la ambalare, iar „mai departe" de la ambalare ar
+ * anula comanda. Panourile o scoteau fiecare pe cont propriu (`gp.flow()` în
+ * browser); de-acum o scoate și serverul, din același izvor, pentru plafonul
+ * de mai jos.
+ */
+function order_flow(): array
+{
+    $anulata = status_cancelled();
+    return array_values(array_filter(
+        order_statuses(),
+        static fn($x) => $anulata === '' || $x !== $anulata
+    ));
+}
+
+/**
+ * Ultima etapă pe care o poate pune LABORATORUL: cea dinaintea celei finale.
+ *
+ * HOTĂRÂREA PATRONULUI, 19 septembrie 2026. Etapa finală înseamnă „ajunsă la
+ * client", iar lista n-are una separată pentru „dată curierului". Laboratorul
+ * o apăsa când termina de ambalat, deci comanda apărea livrată înainte să fi
+ * urcat în mașină.
+ *
+ * SE SOCOTEȘTE, NU SE SCRIE ÎN COD. Lista de etape e editabilă din Setări:
+ * scrisă pe litere („La ambalare"), plafonul ar fi rămas în urmă tăcut la
+ * prima redenumire, iar laboratorul ar fi rămas fie cu o etapă în plus, fie
+ * blocat cu una mai devreme. Tot din Setări se ia și care e cea finală
+ * (`status_done()`), nu „ultima din listă".
+ *
+ * CAZUL SCHILOD, spus pe față: un flux cu O SINGURĂ etapă — care e atunci și
+ * prima, și cea finală — iese cu plafonul tocmai pe ea, deci laboratorul ar
+ * putea-o pune. E o listă de etape pe care n-o are nimeni, iar dacă cineva și-o
+ * face, regula adevărată tot ține: poarta de pe server (`poarta_etapei_finale`,
+ * api/routes/orders.php) întreabă semnul contului, nu plafonul ăsta. Plafonul e
+ * politețea paginii, nu paza.
+ */
+function status_lab_ceiling(): string
+{
+    $flux = order_flow();
+    if (!$flux) {
+        return '';
+    }
+    $i = array_search(status_done(), $flux, true);
+    if ($i === false) {
+        // Etapa finală nu e în flux: setarea arată spre anulare ori spre un
+        // nume care nu mai există. `status_done()` se apără singur de asta, dar
+        // dacă totuși se întâmplă, plafonul e capătul fluxului — adică purtarea
+        // de dinainte de runda 2.3.0, nu un laborator blocat.
+        return $flux[count($flux) - 1];
+    }
+    return $flux[max($i - 1, 0)];
+}
+
 function delivery_slots(): array
 {
     return setting_list('delivery_slots', ['06:30', '08:00', '09:00', '10:00', '12:30', '14:00', '16:00']);

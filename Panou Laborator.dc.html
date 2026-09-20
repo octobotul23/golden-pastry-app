@@ -24,12 +24,50 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 @keyframes lb-blink{0%,100%{opacity:1}50%{opacity:.28}}
 @keyframes lb-up{from{transform:translateY(18px);opacity:0}to{transform:translateY(0);opacity:1}}
 .lb-new{animation:lb-ring 2.4s var(--h-ease-out) infinite}
+/* MÂNERUL DE TRAS, și singurul loc din pagină cu `touch-action:none`.
+   46px înălțime, adică peste pragul de deget al rundei 2.1.1 — se apucă din
+   mers, cu mâna plină de făină.
+
+   LINIA `touch-action:none` STĂ PE PETIC, NICIODATĂ PE CARD, și casa are deja
+   cicatricea care spune de ce: `shared/dc/image-slot.js:301-307` povestește cum
+   aceeași linie stătea odată pe regula de deasupra, adică pe ORICE poză; în
+   catalog poza e o fâșie pe toată înălțimea cardului, deci un deget căzut
+   oriunde pe listă nu mai putea derula pagina. Toată lista murise la atingere.
+   Aici ar muri exact ecranul pe care se lucrează: lista de comenzi a zilei.
+
+   Hașura e `repeating-linear-gradient`, nu o poză și nu un caracter de text: se
+   vede că e de apucat de la un metru, și nu cere nimic de încărcat. */
+.lb-grip{width:28px;height:46px;flex:none;border-radius:9px;border:1px solid var(--h-line);background-image:repeating-linear-gradient(135deg,rgba(246,237,225,.34) 0 2px,transparent 2px 6px);cursor:grab;touch-action:none}
+.lb-grip:active{cursor:grabbing}
+/* Cardul de sub deget: stins pe jumătate și cu chenar întrerupt, ca să se vadă
+   care se mută și care stau. `!important` fiindcă `outline` e scris și în stilul
+   pe element al cardului (acolo e chenarul de „card ales"). */
+.lb-tras{opacity:.55;outline:2px dashed var(--h-accent)!important;outline-offset:-2px}
 .lb-blink{animation:lb-blink 1.6s var(--h-ease-in-out) infinite}
 @media (max-width:900px){
 [data-lb=cardgrid]{grid-template-columns:1fr!important}
 [data-lb=rail]{position:fixed!important;left:0!important;right:0!important;bottom:0!important;width:auto!important;max-height:88vh!important;border-left:0!important;border-top:1px solid rgba(246,237,225,.22)!important;border-radius:22px 22px 0 0!important;z-index:30!important;animation:lb-up .28s var(--h-ease-spring)!important}
 [data-lb=rail][data-detail=false]{display:none!important}
-[data-lb=totals]{display:none!important}
+/* „TOATE PRODUSELE" AJUNGE PE TELEFON (runda 2.3.0, lucrarea 5).
+   Rândul de aici era `[data-lb=totals]{display:none!important}`: totalurile
+   zilei se vedeau numai pe monitor, adică nicăieri unde stă cineva lângă
+   cuptor.
+   FOAIA NU E UNA NOUĂ — e CHIAR RAFTUL de deasupra, cu toată mecanica lui:
+   `lb-up`, colțuri rotunjite sus, `max-height:88vh`, derulare proprie,
+   stratul lui. Un al doilea fel de foaie ar fi însemnat două animații de
+   întreținut și două păreri despre cât de sus urcă o foaie pe un telefon mic,
+   iar cele două s-ar fi despărțit la prima corectură.
+   Raftul se ascundea pe telefon cât nu era aleasă nicio comandă (rândul de
+   deasupra). Acum are un al doilea motiv să se arate: produsele zilei. */
+[data-lb=rail][data-detail=false][data-totals=true]{display:flex!important}
+/* Clapa de pe muchia din dreapta. 46px lățime — peste pragul de deget al
+   rundei 2.1.1 —, iar înălțimea o dă textul scris pe verticală, deci crește
+   odată cu cifra din el și nu poate ieși pe dinafară.
+   Se ascunde cât foaia e deschisă: altfel ar sta peste ea, iar apăsarea pe
+   „Toate produsele" ar fi închis și deschis la nesfârșit aceeași foaie. */
+[data-lb=totaltab]{display:flex!important;position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:29;width:46px;min-height:136px;padding:16px 0;align-items:center;justify-content:center;border-radius:14px 0 0 14px;box-shadow:var(--h-shadow-2)}
+[data-lb=totaltab][data-open=true]{display:none!important}
+[data-lb=tabtext]{writing-mode:vertical-rl;transform:rotate(180deg);font-size:14px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
 /* Antetul rămâne pe UN rând. Cu `wrap`, pe telefon butonul ☰ era cel care
    cădea — singur, sub siglă, iar antetul creștea de la 69px la 129px. Titlul
    are `min-width:0`, deci se poate strânge; ca să nu dea pe dinafară, cele
@@ -42,7 +80,15 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 [data-lb=daypills]{display:none!important}
 [data-lb=sorts]{display:none!important}
 [data-lb=phonemenu]{display:flex!important}
-[data-lb=lanes]{padding:12px 14px 26px!important}
+/* MARGINEA DIN DREAPTA E LOCUL CLAPEI, nu o alegere de aranjare.
+   Clapa „Toate produsele" e `position:fixed` pe muchie, deci plutește peste
+   listă. Măsurat la 375: butonul de etapă al cardului („În cuptor") ajungea
+   până la 347, clapa începe la 329 — se atingeau, iar apăsarea pe buton nimerea
+   clapa. Un buton care acoperă alt buton nu e o clapă, e o capcană.
+   46 lățimea clapei + 12 spațiu = 58. Cardurile se îngustează cu atât, și
+   asta e plata: alternativa era o listă în care butonul cel mai des apăsat
+   deschide altceva. */
+[data-lb=lanes]{padding:12px 58px 26px 14px!important}
 /* PRAGUL DE DEGET, 44px.
    Măsurat la 390: caseta „poziția e gata toată" era 30×30, iar săgețile de
    ordine 38×44 — amândouă sub prag, și amândouă apăsate des, cu mâna plină de
@@ -56,7 +102,11 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 [data-lb=cardmove]{width:44px!important}
 }
 @media (min-width:901px){
-[data-lb=railclose]{display:none!important}
+/* Pe monitor nu există nicio clapă și nicio închidere: raftul din dreapta e
+   deschis tot timpul, ca până acum. Cele două rânduri de aici sunt singurele
+   care țin foaia de telefon departe de ecranul mare. */
+[data-lb=totaltab]{display:none!important}
+[data-lb=totalclose]{display:none!important}
 /* PE LAT, PAGINA ARE O ÎNĂLȚIME, NU UN MINIM.
    Cu `min-height:100vh` pe înveliș, rândul cu cele două coloane creștea cât
    ținea lista de comenzi, iar `overflow-y:auto` de pe coloana de detaliu nu
@@ -87,6 +137,35 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
    la 390 înainte de urcare. */
 @media (max-width:620px){
 [data-lb=mutet]{display:none!important}
+}
+/* PE TELEFONUL ÎNGUST, INSIGNELE COBOARĂ PE RÂNDUL LOR.
+   Antetul cardului ține patru lucruri de lățime fixă și unul care se întinde:
+   mânerul 28 + cifra poziției ~17 + săgețile 2×44 + patru spații de 9 = 160,
+   plus cele 32 de margine ale cardului. Insigna cea mai lată de pe card e
+   „Gata de servire", 129 măsurați la 390. Adică antetul cere 321 ca să stea
+   pe un rând; cardul are lățimea ecranului fără 72 (14 marginea din stânga a
+   listei + 58 locul clapei „Toate produsele"), deci rândul se rupe sub 393.
+   La 375 chiar s-a rupt, și nu frumos: insigna nu se micșorează — scrisul ei
+   nu se taie —, ci IESE PE SUB săgeți. Măsurat: 71 din 213 de insigne
+   acoperite, până la 37 de puncte. Mai rău decât urât: degetul care vrea
+   „mută mai sus" cade pe insignă, și cel care citește varianta o citește pe
+   jumătate.
+   Insignele trec deci pe rândul lor (`order` la coadă, `flex-basis` întreg),
+   iar săgețile se lipesc în dreapta rândului de sus. Cardul crește cu vreo
+   26 de puncte — plata, și e mică: singurul lucru pe care îl mai putea face
+   flexbox de la sine era să micșoreze coloana insignelor, adică exact ce
+   făcea și acum.
+   PRAGUL E SOCOTIT, NU MĂSURAT: 393 rotunjit la 400, ca să prindă telefoanele
+   de 375 și 390 și să lase în pace pe cele de 412 și 430, unde chiar încape.
+   Peste 900 nu se schimbă nimic: acolo cardul e lat cât toată lista.
+   De trecut prin măsurătoarea la 390 la fiecare insignă nouă — o insignă mai
+   lungă mută pragul, și niciun prag scris de mână nu se mută singur. */
+@media (max-width:400px){
+[data-lb=cardhead]{flex-wrap:wrap!important}
+[data-lb=cardtags]{order:9;flex:1 0 100%!important}
+/* Fratele de după insigne în marcaj e săgeata „mai sus" — `order` schimbă
+   desenul, nu rudenia —, deci de la ea se împinge perechea spre dreapta. */
+[data-lb=cardtags]+[data-lb=cardmove]{margin-left:auto}
 }
 </style>
 </helmet>
@@ -200,6 +279,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
 </sc-if>
 <a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+<gp-versiune></gp-versiune>
 </div>
 </div>
 </sc-if>
@@ -394,10 +474,25 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 <div data-lb="cardgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;min-width:0">
 <sc-for list="{{ queue }}" as="o" hint-placeholder-count="6">
-<div class="{{ o.cardCls }}" onClick="{{ o.onSelect }}" style="padding:14px 16px;border-radius:16px;display:flex;flex-direction:column;gap:9px;min-width:0;cursor:pointer;background:{{ o.bg }};border-color:{{ o.bd }};outline:{{ o.outline }};outline-offset:-1px">
-<div style="display:flex;align-items:center;gap:9px">
+<!-- O SINGURĂ INTERPOLARE ÎNTR-UN `class`. NICIODATĂ DOUĂ.
+     Rândul ăsta a fost, o zi, `class="{{ o.cardCls }} {{ o.trasCls }}"` — și
+     atributul a ieșit din rulator GOL. Nu „fără `lb-tras`": gol. Cardul a
+     pierdut și `h-card`, adică chenarul, colțurile și umbra casei, pe TOATE
+     comenzile, nu numai pe cea trasă. Măsurat în pagină: `getAttribute("class")`
+     întorcea `null`, iar `border-width` era `0px`. Nici o eroare, nicăieri.
+     `style` leagă câte interpolări vrei (v. chiar rândul de mai jos, patru), și
+     tot așa `class="h-btn {{ confBtn }}"` — text plus UNA — care merge în
+     „Recomandări". A doua acoladă e cea care stinge atributul, deci cele două
+     clase se lipesc ÎN LOGICĂ, într-un singur câmp (v. `cardCls` la `queue`). -->
+<div class="{{ o.cardCls }}" data-lb-card="{{ o.id }}" onClick="{{ o.onSelect }}" style="padding:14px 16px;border-radius:16px;display:flex;flex-direction:column;gap:9px;min-width:0;cursor:pointer;background:{{ o.bg }};border-color:{{ o.bd }};outline:{{ o.outline }};outline-offset:-1px">
+<div data-lb="cardhead" style="display:flex;align-items:center;gap:9px">
+<!-- Mânerul. Numai de aici se trage cardul; v. `.lb-grip` din foaia de stil de
+     la începutul paginii și ascultătorii din `componentDidMount`. Cine nu
+     trage are săgețile ↑ ↓ din colțul de jos al cardului, care fac exact
+     același lucru și scriu tot pe server. -->
+<span class="lb-grip" data-lb="grip" data-lb-grip="{{ o.id }}" title="Trage de aici ca să muți comanda în ordinea de lucru"></span>
 <span class="h-numeric" style="font-family:var(--h-font-display);font-size:26px;font-weight:700;line-height:1;color:var(--h-accent-fg);flex:none">{{ o.pos }}</span>
-<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+<div data-lb="cardtags" style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
 <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ o.ref }}</span>
 <!-- PASTILA COMENZII ABIA PICATE. Stă prima, lângă referință, fiindcă e
@@ -450,7 +545,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <sc-if value="{{ o.canBack }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ o.onBack }}" title="Înapoi la {{ o.backLabel }}" style="height:44px;width:44px;padding:0;font-size:17px;border-radius:12px">←</button>
 </sc-if>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ o.onAdvance }}" disabled="{{ o.advanceOff }}" style="height:44px;padding:0 12px;font-size:14px;border-radius:12px;white-space:nowrap">{{ o.nextLabel }}</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ o.onAdvance }}" disabled="{{ o.advanceOff }}" title="{{ o.nextTitle }}" style="height:44px;padding:0 12px;font-size:14px;border-radius:12px;white-space:nowrap">{{ o.nextLabel }}</button>
 </div>
 </div>
 </div>
@@ -471,7 +566,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 </div>
 
-<div data-lb="rail" data-detail="{{ hasDetailAttr }}" style="width:380px;flex:none;padding:16px 18px;background:var(--h-bg-surface);border-left:1px solid var(--h-line);display:flex;flex-direction:column;gap:12px;overflow-y:auto">
+<div data-lb="rail" data-detail="{{ hasDetailAttr }}" data-totals="{{ totalsAttr }}" style="width:380px;flex:none;padding:16px 18px;background:var(--h-bg-surface);border-left:1px solid var(--h-line);display:flex;flex-direction:column;gap:12px;overflow-y:auto">
 
 <sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-direction:column;gap:12px;flex:1;min-height:0">
@@ -517,6 +612,9 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <div style="display:flex;flex-direction:column;gap:8px">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ detail.onAllDone }}" style="height:48px;font-size:15px;border-radius:14px">Tot lotul e gata</button>
 <button type="button" class="{{ detail.nextCls }}" onClick="{{ detail.onAdvance }}" disabled="{{ detail.advanceOff }}" style="height:54px;font-size:16px;border-radius:16px">{{ detail.nextLabel }}</button>
+<sc-if value="{{ detail.nextStop }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle);text-align:center">{{ detail.nextNote }}</p>
+</sc-if>
 <sc-if value="{{ detail.canBack }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ detail.onBack }}" style="height:48px;font-size:15px;border-radius:14px">{{ detail.backLabel }}</button>
 </sc-if>
@@ -526,29 +624,64 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 
 <sc-if value="{{ noDetail }}" hint-placeholder-val="{{ true }}">
 <div data-lb="totals" style="display:flex;flex-direction:column;gap:12px;flex:1;min-height:0">
-<p class="h-eyebrow" style="font-size:13px;color:var(--h-accent-fg);margin:0">Total de făcut · {{ dayLabel }}</p>
-<div style="display:flex;flex-direction:column;gap:11px">
-<sc-for list="{{ totals }}" as="t" hint-placeholder-count="6">
-<div style="display:flex;flex-direction:column;gap:5px">
-<div style="display:flex;align-items:baseline;gap:10px">
-<span style="font-size:15px">{{ t.n }}</span>
-<span class="h-numeric" style="margin-left:auto;font-size:15px;font-weight:700">{{ t.q }}</span>
-<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">buc.</span>
+<div style="display:flex;align-items:center;gap:10px">
+<p class="h-eyebrow" style="font-size:13px;color:var(--h-accent-fg);margin:0;flex:1;min-width:0">Total de făcut · {{ dayLabel }}</p>
+<button type="button" data-lb="totalclose" aria-label="Închide produsele zilei" title="Închide" class="h-btn h-btn--ghost" onClick="{{ onTotalsClose }}" style="height:44px;width:44px;padding:0;font-size:20px;border-radius:12px;flex:none">×</button>
 </div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<sc-for list="{{ totals }}" as="t" hint-placeholder-count="6">
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span style="font-size:15px;flex:1;min-width:0">{{ t.n }}</span>
+<span class="h-numeric" style="font-size:16px;font-weight:700;color:{{ t.cifraCol }}">{{ t.facut }}</span>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">/ {{ t.q }} buc.</span>
+</div>
+<!-- DUNGA ȘI-A SCHIMBAT ÎNȚELESUL (runda 2.3.0, lucrarea 6).
+     Arăta procentul din CEL MAI MARE produs al zilei: o cifră care nu
+     răspundea la nicio întrebare a nimănui — croasantele erau mereu pline,
+     tartele mereu un ciot, și așa rămâneau toată ziua, orice s-ar fi făcut.
+     Acum arată cât s-a făcut din cât s-a cerut, și pe telefon, și pe
+     monitor. -->
 <div class="h-progress" style="height:7px;background:rgba(246,237,225,.10)"><div class="h-progress__bar" style="width:{{ t.pct }}"></div></div>
+<div style="display:flex;align-items:center;gap:8px">
+<input class="h-input h-numeric" inputmode="numeric" value="{{ t.val }}" onChange="{{ t.onVal }}" aria-label="Câte bucăți tocmai s-au făcut din {{ t.n }}" title="Câte bucăți tocmai s-au făcut" placeholder="+ câte" style="flex:1;min-width:0;height:46px;font-size:17px;text-align:right;padding:0 12px">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ t.onAdd }}" disabled="{{ t.addOff }}" style="height:46px;padding:0 18px;font-size:15px;border-radius:12px;white-space:nowrap;flex:none">Adaugă</button>
+</div>
+<sc-if value="{{ t.undoOn }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span style="font-size:13px;line-height:1.4;color:var(--h-fg-subtle);flex:1;min-width:120px">{{ t.undoText }}</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ t.onUndo }}" disabled="{{ t.lucru }}" style="height:44px;padding:0 14px;font-size:14px;border-radius:12px;flex:none">Înapoi</button>
+</div>
+</sc-if>
 </div>
 </sc-for>
 </div>
+<p style="margin:0;font-size:13px;color:var(--h-fg-faint)">Cifra e un ADAOS: „tocmai am mai făcut atâtea". Se împart pe comenzile zilei de sus în jos, în ordinea de lucru; ce trece peste necesar rămâne al casei, pe raft.</p>
 <p style="margin:0;font-size:13px;color:var(--h-fg-faint)">Apasă pe o comandă ca să bifezi pozițiile și să-i schimbi starea.</p>
 <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
 <a href="Administrare%20Comenzi.dc.html" class="h-btn h-btn--secondary" style="height:46px;font-size:14px;border-radius:12px;text-decoration:none">Administrare comenzi</a>
 <a href="Intrare.dc.html" class="h-btn h-btn--ghost" style="height:44px;font-size:14px;border-radius:12px;text-decoration:none">← Alege panoul</a>
-<p style="margin:0;font-size:12px;color:var(--h-fg-faint)">Cantitățile făcute se salvează pe server; ordinea cardurilor rămâne a acestui ecran.</p>
+<p style="margin:0;font-size:12px;color:var(--h-fg-faint)">Cantitățile făcute și ordinea de lucru se salvează pe server: le văd toate tabletele din laborator.</p>
 </div>
 </div>
 </sc-if>
 
 </div>
+
+<!-- CLAPA DE PE MUCHIE (runda 2.3.0, lucrarea 5).
+     STĂ ÎN AFARA RAFTULUI, nu doar în afara lui `sc-if` — și asta e tot rostul
+     rândurilor astea. Scrisă înăuntru, clapa moștenea
+     `[data-lb=rail][data-detail=false]{display:none!important}`: pe telefon,
+     cât nu era aleasă nicio comandă — adică exact când ai nevoie de ea —
+     butonul era în DOM, cu textul lui, și măsura zero pe zero. Un buton care
+     există și nu se vede e mai rău decât unul care lipsește: nu-l caută nimeni.
+     Aici, frate cu raftul, se vede și cât e deschisă fișa unei comenzi, deci
+     se trece dintr-o foaie în cealaltă dintr-o apăsare. Pe monitor o ascunde
+     foaia de stil: acolo raftul e deschis tot timpul. -->
+<button type="button" data-lb="totaltab" data-open="{{ totalsAttr }}" onClick="{{ onTotals }}" class="h-btn h-btn--primary" aria-label="{{ tabLabel }}" title="{{ tabLabel }}">
+<span data-lb="tabtext">{{ tabScurt }}</span>
+</button>
+
 </div>
 
 </div>
@@ -876,7 +1009,7 @@ class Component extends DCLogic {
   // înlocuiește la montare cu ce scrie în browserul tabletei (v. `citesteMut`):
   // starea inițială nu poate citi din localStorage, fiindcă acolo se poate
   // arunca, iar un câmp de stare care aruncă ia pagina cu el.
-  state = { navOpen: false, auth: null, orders: FALLBACK, day: 0, filter: "Toate", sort: "interval", sel: null, st: {}, ord: {}, clock: "07:12", mut: false, menu: false, toast: "", eroare: "", taiat: false, cal: false, calLuna: "", calCounts: {}, calPieces: {}, calEroare: "", countsGata: false, ancora: "", orderDay: "", anunturi: [], potPune: false, anuntMax: 5, anuntFoaie: false, anuntText: "", anuntZi: "", anuntOra: "", anuntEroare: "", anuntLucru: false, anuntArm: 0 };
+  state = { navOpen: false, auth: null, orders: FALLBACK, day: 0, filter: "Toate", sort: "interval", sel: null, st: {}, trag: null, totale: false, adaos: {}, lot: null, lucru: false, clock: "07:12", mut: false, menu: false, toast: "", eroare: "", taiat: false, cal: false, calLuna: "", calCounts: {}, calPieces: {}, calEroare: "", countsGata: false, ancora: "", orderDay: "", anunturi: [], potPune: false, anuntMax: 5, anuntFoaie: false, anuntText: "", anuntZi: "", anuntOra: "", anuntEroare: "", anuntLucru: false, anuntArm: 0 };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
@@ -961,6 +1094,222 @@ class Component extends DCLogic {
     this.pollAnunturi = gp.poll(() => this.pullAnunturi(), 30000);
     this.tick();
     this.timer = setInterval(() => this.tick(), 20000);
+
+    // ---- TRAGEREA CARDURILOR CU DEGETUL (runda 2.3.0, lucrarea 8) ----
+    //
+    // Ascultătorii stau pe FEREASTRĂ, în fază de captare, fiindcă marcajul unei
+    // pagini `.dc.html` poate purta numai șase atribute de eveniment —
+    // `onClick`, `onChange`, `onKeyDown`, `onBlur`, `onFocus`, `onSubmit` — iar
+    // `onPointerDown` nu e între ele; `.claude/check-pages.mjs` ține lista și se
+    // înroșește la al șaptelea. Tiparul e cel din „Administrare Comenzi":
+    // funcțiile se țin pe `this.__…`, ca `componentWillUnmount` să le poată lua
+    // înapoi. Cu funcții anonime n-ar mai fi avut ce scoate, iar fiecare intrare
+    // pe panou ar fi lăsat în urmă încă patru ascultători pe fereastră.
+    //
+    // CE CARD E SUB DEGET se află cu `elementFromPoint`, nu măsurând
+    // dreptunghiurile tuturor cardurilor la fiecare mișcare: lista are pe
+    // tabletă douăzeci-treizeci de carduri, iar `getBoundingClientRect` pe
+    // fiecare, de șaizeci de ori pe secundă, ar fi încălzit tocmai ecranul care
+    // stă toată ziua aprins lângă cuptor.
+    const cardDeSub = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      const c = el && el.closest ? el.closest("[data-lb-card]") : null;
+      return c ? Number(c.getAttribute("data-lb-card")) : 0;
+    };
+
+    this.__tragJos = (e) => {
+      // NUMAI DE PE MÂNER. Tras de oriunde altundeva — de pe nume, de pe
+      // insignă, de pe butonul de etapă — cardul nu se mișcă, iar degetul
+      // derulează lista ca până acum.
+      const m = e.target && e.target.closest ? e.target.closest("[data-lb-grip]") : null;
+      if (!m) return;
+      const id = Number(m.getAttribute("data-lb-grip"));
+      const ids = (this.__idsDesenate || []).slice();
+      if (!id || ids.indexOf(id) < 0) return;
+      // `__clicMort`: apăsarea pe mâner NU deschide foaia de detaliu. Fără el,
+      // fiecare tragere s-ar fi încheiat cu un `click` pe card — adică mutai
+      // comanda și ți se deschidea fișa ei peste listă, tocmai când voiai să
+      // muți și următoarea.
+      this.__clicMort = true;
+      this.setState({ trag: { id: id, zi: this.__ziDesenata, ids: ids }, toast: "" });
+    };
+
+    this.__tragMisc = (e) => {
+      const d = this.state.trag;
+      if (!d) return;
+      // Al doilea lacăt împotriva derulării. Primul, și cel care chiar ține pe
+      // telefon, e `touch-action:none` scris pe MÂNER — v. marcajul cardului.
+      if (e.cancelable) e.preventDefault();
+      const peste = cardDeSub(e.clientX, e.clientY);
+      if (!peste || peste === d.id) return;
+      const i = d.ids.indexOf(d.id), j = d.ids.indexOf(peste);
+      if (i < 0 || j < 0 || i === j) return;
+      const ids = d.ids.slice();
+      ids.splice(i, 1);
+      ids.splice(j, 0, d.id);
+      // Prin `setState`, nu prin scris în DOM: la fiecare patru secunde
+      // `pull()` poate redesena toată grila, iar o poziție scrisă cu mâna în
+      // DOM ar fi fost ștearsă în mijlocul tragerii. (Cât ține tragerea,
+      // `pull()` nici nu mai scrie — v. poarta din capul lui.)
+      this.setState({ trag: { id: d.id, zi: d.zi, ids: ids } });
+    };
+
+    this.__tragSus = () => {
+      const d = this.state.trag;
+      if (!d) return;
+      this.setState({ trag: null });
+      this.scrieOrdinea(d.zi, d.ids, d.ids);
+    };
+
+    // Clicul de după tragere se înghite o singură dată. În captare, deci
+    // înainte să ajungă la `onClick`-ul cardului.
+    this.__tragClic = (e) => {
+      if (!this.__clicMort) return;
+      this.__clicMort = false;
+      e.stopPropagation();
+      e.preventDefault();
+    };
+
+    window.addEventListener("pointerdown", this.__tragJos, true);
+    window.addEventListener("pointermove", this.__tragMisc, true);
+    window.addEventListener("pointerup", this.__tragSus, true);
+    // `pointercancel` nu e un lux: pe telefon îl trimite sistemul când urcă
+    // tastatura, când sună cineva, ori când gestul e luat de browser. Fără el,
+    // `state.trag` ar fi rămas pus pe vecie — iar cu el pus, `pull()` tace:
+    // panoul ar fi încremenit cu comenzile de acum un sfert de oră.
+    window.addEventListener("pointercancel", this.__tragSus, true);
+    window.addEventListener("click", this.__tragClic, true);
+  }
+
+  /**
+   * „Tocmai am mai făcut N bucăți din produsul ăsta." (lucrările 6 și 7)
+   *
+   * Cifra e un ADAOS, nu un total — hotărârea patronului. Se împarte pe
+   * comenzile zilei de sus în jos, în ordinea de lucru, iar ce trece peste
+   * necesar rămâne al casei. Toată socoteala e a serverului, într-o singură
+   * tranzacție: din browser, cu N cereri, două tablete care introduc în aceeași
+   * clipă ar umple de două ori aceleași comenzi, iar o cădere la jumătate ar
+   * lăsa ziua strâmbă.
+   *
+   * LOTUL ÎNTORS SE ȚINE MINTE, fiindcă pe el — nu pe o scădere ghicită — îl dă
+   * îndărăt „Înapoi". Între apăsare și răzgândire poate intra munca unui coleg
+   * de pe altă tabletă; o scădere de jos în sus i-ar fi luat-o pe a lui.
+   *
+   * PRODUSUL FĂRĂ RAFT ÎN DEPOZIT NU E UN REFUZ, ci o veste: bucățile chiar
+   * s-au făcut și făina chiar a ieșit din sac, numai intrarea pe finit n-are
+   * unde se scrie. Serverul scrie tot restul și numește produsul; aici se
+   * spune leacul. A refuza ar fi oprit laboratorul din raportat munca pentru o
+   * scăpare de contabilitate.
+   */
+  imparteProductie(zi, produs, cheie, cat) {
+    if (!(cat > 0) || this.state.lucru) return;
+    this.setState({ lucru: true, toast: "" });
+
+    gp.splitProduction(zi, produs, cat)
+      .then((r) => {
+        const adaos = Object.assign({}, this.state.adaos);
+        delete adaos[cheie];
+        const pus = Number(r.placed) || 0;
+        const peste = Number(r.surplus) || 0;
+        const fara = r.missing || [];
+        // `__seen` golit, ca răspunsul următor să fie primit chiar dacă textul
+        // listei iese la fel: cantitățile făcute s-au schimbat în bază.
+        this.__seen = null;
+        this.setState({
+          lucru: false,
+          adaos: adaos,
+          lot: {
+            k: cheie, zi: zi, produs: produs, lot: r.lot || [],
+            text: gp.qtyLabel(pus + peste) + " buc. adăugate: " + gp.qtyLabel(pus)
+              + " pe comenzi" + (peste > 0 ? ", " + gp.qtyLabel(peste) + " peste necesar" : "") + "."
+          },
+          toast: fara.length
+            ? "Bucățile s-au scris pe comenzi și făina s-a scăzut, dar „" + fara.join(", ")
+                + "” n-are articol de depozit — atâta n-a intrat pe raft. Cere-i "
+                + "administratorului să-l facă în „Depozit”, legat de produs."
+            : ""
+        });
+        this.pull();
+      })
+      .catch((e) => {
+        this.setState({
+          lucru: false,
+          toast: e.code === "product_not_today"
+            ? "Produsul ăsta nu e pe nicio comandă a zilei — n-are pe ce cădea. "
+                + "Dacă tot s-a făcut, treci-l pe o comandă din „Comenzi”."
+            : "Nu s-a salvat: " + e.message
+        });
+      });
+  }
+
+  /**
+   * „Înapoi": desface EXACT lotul pe care ultima apăsare l-a pus.
+   *
+   * Nu o scădere de jos în sus, și nici o cerere cu minus pe aceeași rută:
+   * serverul recitește fiecare poziție sub zăvor, plafonează la cât a mai
+   * rămas pe ea, și sare peste cele rescrise între timp din „Comenzi". Lotul e
+   * o CERERE, nu un adevăr — de-asta răspunsul spune cât s-a luat cu adevărat.
+   */
+  desfaProductie() {
+    const l = this.state.lot;
+    if (!l || this.state.lucru) return;
+    this.setState({ lucru: true, toast: "" });
+
+    gp.undoProduction(l.zi, l.produs, l.lot)
+      .then((r) => {
+        this.__seen = null;
+        this.setState({
+          lucru: false, lot: null,
+          toast: "Am dat înapoi " + gp.qtyLabel(Number(r.taken) || 0) + " buc."
+        });
+        this.pull();
+      })
+      .catch((e) => this.setState({ lucru: false, toast: "Nu s-a dat înapoi: " + e.message }));
+  }
+
+  /**
+   * Ordinea de lucru a zilei, mutată pe server.
+   *
+   * Se trimite lista ÎNTREAGĂ a zilei, nu o mutare — ca la ruta șoferului. Două
+   * tablete care aranjează în aceeași clipă își scriu una alteia peste ordine,
+   * dar niciuna nu lasă ziua pe jumătate aranjată.
+   *
+   * Se scrie ÎNTÂI pe ecran și abia apoi pe server, ca apăsarea să nu aibă
+   * sughiț: același tipar ca `writeStatus()` de mai jos, cu `__seen` pus pe
+   * lista nouă, ca răspunsul de la patru secunde să n-o dea îndărăt. Pe refuz,
+   * `__seen` se golește și se cere lista adevărată — ecranul se întoarce la ce
+   * scrie în bază, cu vorbe, nu în tăcere.
+   *
+   * `aleZilei` e lista de pe care se șterg pozițiile vechi, oglindind exact
+   * ruta: `SET lab_seq = NULL WHERE day = ?`, apoi pozițiile. Fără ea, „Ordine
+   * automată" (care trimite lista goală) n-ar fi șters nimic de pe ecran până
+   * la următoarea tură de `pull()`.
+   */
+  scrieOrdinea(zi, ids, aleZilei) {
+    this.__ordPend = { zi: zi, ids: ids.slice() };
+
+    const loc = {};
+    ids.forEach((id, i) => { loc[id] = i; });
+    const ale = {};
+    (aleZilei || ids).forEach((id) => { ale[id] = true; });
+    const next = (this.state.orders || []).map((o) => (ale[o.id]
+      ? Object.assign({}, o, { labSeq: loc[o.id] === undefined ? null : loc[o.id] })
+      : o));
+    this.__seen = JSON.stringify(next);
+    this.setState({ orders: next, toast: "" });
+
+    gp.setLabOrder(zi, ids)
+      .then(() => { this.__ordPend = null; })
+      .catch((e) => {
+        this.__ordPend = null;
+        this.__seen = null;
+        this.setState({
+          toast: e.code === "forbidden"
+            ? "Contul ăsta nu poate aranja ordinea de lucru."
+            : "Nu s-a salvat ordinea: " + e.message
+        });
+        this.pull();
+      });
   }
   componentWillUnmount() {
     clearInterval(this.timer);
@@ -970,6 +1319,11 @@ class Component extends DCLogic {
     window.removeEventListener("popstate", this.__gpBack);
     window.removeEventListener("pointerdown", this.__atingere, true);
     window.removeEventListener("keydown", this.__atingere, true);
+    window.removeEventListener("pointerdown", this.__tragJos, true);
+    window.removeEventListener("pointermove", this.__tragMisc, true);
+    window.removeEventListener("pointerup", this.__tragSus, true);
+    window.removeEventListener("pointercancel", this.__tragSus, true);
+    window.removeEventListener("click", this.__tragClic, true);
   }
 
   /**
@@ -1068,18 +1422,21 @@ class Component extends DCLogic {
       const raw = localStorage.getItem(KEY);
       if (raw) {
         const p = JSON.parse(raw);
-        const ord = {};
-        // Ordinea manuală se ține acum pe `id`. Listele salvate înainte, cu
-        // „#1001", nu mai potrivesc nicio comandă: dacă le-am păstra, panoul ar
-        // arăta butonul „Ordine automată" pentru o ordine care nu se mai aplică.
-        Object.keys(p.ord || {}).forEach(k => {
-          if (!/^d\d{2}$/.test(k)) return;
-          const lista = p.ord[k];
-          if (Array.isArray(lista) && lista.every(x => typeof x === "number")) ord[k] = lista;
-        });
+        // ORDINEA VECHE SE ARUNCĂ (runda 2.3.0, lucrarea 8).
+        //
+        // Stătea aici, în browserul ăsta, iar pagina o spunea chiar ea:
+        // „ordinea cardurilor rămâne a acestui ecran". De când tot pe ea se
+        // împarte producția de sus în jos, o ordine de-o tabletă ar fi însemnat
+        // că aceeași apăsare umple alte comenzi după fiecare ecran. Acum stă pe
+        // server, pe `orders.lab_seq` (migrarea 023), deci e a casei.
+        //
+        // Nu se MUTĂ pe server, se aruncă: era o aranjare de-o zi, iar zilele
+        // pentru care s-a salvat au trecut demult. Rândul de mai jos o scoate
+        // și din localStorage, ca să nu rămână un obiect mort care crește la
+        // fiecare zi deschisă și pe care nimeni nu-l mai citește.
         const bifeVechi = p.done && Object.keys(p.done).length > 0;
-        localStorage.setItem(KEY, JSON.stringify({ st: p.st || {}, ord }));
-        this.setState(Object.assign({ st: p.st || {}, ord }, bifeVechi ? {
+        localStorage.setItem(KEY, JSON.stringify({ st: p.st || {} }));
+        this.setState(Object.assign({ st: p.st || {} }, bifeVechi ? {
           toast: "Bifele de pe poziții s-au mutat pe server și se numără acum în bucăți. "
             + "Cele salvate în browserul acesta nu s-au putut muta — reintrodu la fiecare comandă cât e făcut."
         } : {}));
@@ -1099,6 +1456,14 @@ class Component extends DCLogic {
     // 403 la fiecare tură de patru secunde, iar ecranul de refuz e deja peste
     // el. Poarta e pe „știu și nu are", nu pe „nu știu".
     if (this.state.auth && !vedePanoul(this.state.auth)) return;
+    // CÂT ȚINE O TRAGERE, PANOUL NU SE REDESENEAZĂ.
+    //
+    // Reîmprospătarea de la patru secunde cheamă `setState({orders})`, iar
+    // grila se desenează din nou: cardul de sub deget ar fi sărit înapoi la
+    // locul lui în mijlocul mișcării. Aceeași pază ca `__pending` de la etape,
+    // numai că aici e mai simplu s-o oprești de tot: o tragere ține două-trei
+    // secunde, iar `pointercancel` o încheie chiar dacă degetul se pierde.
+    if (this.state.trag) return;
     const days = DAY_KEYS.map(d => d.date);
     // Ziua deschisă, nu toată fereastra.
     //
@@ -1153,6 +1518,15 @@ class Component extends DCLogic {
           .map((raw) => Object.assign(gp.toPageOrder(raw), { nascutaLa: raw.createdAt || "" }))
           .filter((o) => o.status !== gp.cancelled())
           .map((o) => (asteptate[o.id] ? Object.assign({}, o, { status: asteptate[o.id] }) : o))
+          // Aceeași pază, pentru ordinea tocmai mutată: între `PUT /lab/ordine`
+          // și răspunsul lui poate intra o citire pornită mai devreme, care ar
+          // fi adus pozițiile vechi. Cardurile ar fi sărit înapoi o tură.
+          .map((o) => {
+            const p = this.__ordPend;
+            if (!p || p.zi !== ziua) return o;
+            const i = p.ids.indexOf(o.id);
+            return Object.assign({}, o, { labSeq: i < 0 ? null : i });
+          })
           .map((o) => (o.items || []).some((it) => facute[it.itemId] !== undefined)
             ? Object.assign({}, o, {
                 items: o.items.map((it) => (facute[it.itemId] !== undefined
@@ -1578,7 +1952,7 @@ class Component extends DCLogic {
     this.setState(patch, () => {
       try {
         const s = this.state;
-        localStorage.setItem(KEY, JSON.stringify({ st: s.st, ord: s.ord }));
+        localStorage.setItem(KEY, JSON.stringify({ st: s.st }));
       } catch (e) {}
     });
   }
@@ -1684,7 +2058,29 @@ class Component extends DCLogic {
     const set = (p) => this.setState(p);
     const day = DAY_KEYS[S.day];
 
+    // PÂNĂ UNDE POATE DUCE ECRANUL ĂSTA O COMANDĂ (runda 2.3.0, lucrarea 9).
+    //
+    // Gol = până la capăt. Altfel, etapa dinaintea celei finale: ultimul pas îl
+    // pune cine duce marfa, de pe telefonul lui.
+    //
+    // Atârnă de OM, nu de panou: același cont `angajat` are și ecranul ăsta, și
+    // „Ruta Șofer". Un șofer care se uită aici își vede butoanele întregi.
+    //
+    // Fără `S.auth` încă adus, ori pe un server de dinaintea rundei, iese gol —
+    // adică purtarea de până acum. Aceeași cădere deschisă ca pe server: paza
+    // adevărată e `poarta_etapei_finale()`, iar un ecran care se încuie singur
+    // în fereastra de actualizare ar fi mai rău decât paguba de care fuge.
+    const poateLivra = !S.auth || S.auth.poateConfirmaLivrarea !== false;
+    const plafon = poateLivra ? "" : gp.labCeiling();
+    const laPlafon = (st) => plafon !== "" && st === plafon;
+    // „Etapa nu e nicăieri în ciclu" se socotește O SINGURĂ DATĂ pe card, nu cu
+    // `indexOf` chemat de patru ori. Centură, nu reparație: `pull()` scoate deja
+    // comenzile anulate (`:1155`), deci pe drumul obișnuit `i` nu poate fi `−1`.
+    // Dar o etapă redenumită din Setări cât timp comenzile poartă textul vechi
+    // ar aduce-o aici — iar `CYCLE_OF()[-1 + 1]` e chiar PRIMA etapă, adică un
+    // buton aprins care ar trimite comanda îndărăt la început.
     const advance = (id, cur) => {
+      if (laPlafon(cur)) return;
       const nx = CYCLE_OF()[Math.min(CYCLE_OF().indexOf(cur) + 1, CYCLE_OF().length - 1)];
       // Plafonul de mai sus dă, la ULTIMA etapă, tot etapa de acum — iar
       // cererea plecă oricum. Serverul o primea și scria în jurnal
@@ -1713,16 +2109,20 @@ class Component extends DCLogic {
       (ord.items || []).forEach((it) => { cerut += gp.qty(it.q); facut += facutPe(it); });
       return { cerut, facut };
     };
-    const move = (key, ids, i, dir) => {
+    // Săgețile ↑ ↓ rămân, și scriu tot pe server: pe monitor se apasă cu
+    // mouse-ul, iar cine nu poate trage cu degetul (mănuși, mână ocupată,
+    // cititor de ecran) are aceeași cale, nu una mai scurtă.
+    const move = (ids, i, dir) => {
       const j = i + dir;
       if (j < 0 || j >= ids.length) return;
       const arr = ids.slice();
       const t = arr[i]; arr[i] = arr[j]; arr[j] = t;
-      this.save({ ord: Object.assign({}, S.ord, { [key]: arr }) });
+      this.scrieOrdinea(day.iso, arr, ids);
     };
 
     const deco = (ord) => {
       const st = ord.status;
+      const iCiclu = CYCLE_OF().indexOf(st);
       const b = bucati(ord);
       const nou = eNoua(ord);
       // CINE E CLIENTUL: „#1" la prima lui comandă, bifa dublă dacă a mai
@@ -1756,47 +2156,88 @@ class Component extends DCLogic {
         bd: ord.urgent ? "var(--h-jam)" : "var(--h-line)",
         outline: S.sel === ord.id ? "3px solid var(--h-accent)" : "none",
         progress: nrScurt(b.facut) + "/" + nrScurt(b.cerut) + " buc.",
-        nextLabel: st === gp.done() ? "Finalizată" : CYCLE_OF()[CYCLE_OF().indexOf(st) + 1],
-        onSelect: () => set({ sel: ord.id }),
-        canBack: CYCLE_OF().indexOf(st) > 0,
-        backLabel: CYCLE_OF()[Math.max(CYCLE_OF().indexOf(st) - 1, 0)],
+        nextLabel: st === gp.done() ? "Finalizată"
+          : iCiclu < 0 ? "—"
+          : laPlafon(st) ? "Predată curierului"
+          : CYCLE_OF()[iCiclu + 1],
+        nextTitle: laPlafon(st)
+          ? "Lotul e gata și așteaptă șoferul. „" + gp.done() + "” o pune el, "
+            + "de pe telefonul lui, când marfa ajunge la client."
+          : "",
+        // O SINGURĂ FOAIE ODATĂ, ca până acum între raft și detaliu: alegerea
+        // unei comenzi închide produsele zilei. Pe un telefon, două foi de jos
+        // suprapuse înseamnă că una se închide fără să știe nimeni care.
+        onSelect: () => set({ sel: ord.id, totale: false }),
+        canBack: iCiclu > 0,
+        backLabel: CYCLE_OF()[Math.max(iCiclu - 1, 0)],
         onAdvance: (e) => { if (e && e.stopPropagation) e.stopPropagation(); advance(ord.id, st); },
         // Stins la ultima etapă: eticheta lui spune deja „Finalizată”, deci
         // arăta ca un buton care duce undeva. Nu ducea nicăieri — numai în
         // jurnal.
-        advanceOff: st === gp.done(),
+        //
+        // Stins și la PLAFON, din runda 2.3.0: mai departe nu e treaba
+        // ecranului ăstuia. Butonul stins nu e paza — paza e pe server —, dar
+        // un buton care duce numai într-un 403 e un buton care minte.
+        advanceOff: st === gp.done() || iCiclu < 0 || laPlafon(st),
         onBack: (e) => { if (e && e.stopPropagation) e.stopPropagation(); back(ord.id, st); }
       });
     };
 
     const flat = S.orders.filter(x => x.day === day.date);
-    const key = "d" + day.date;
     let base = flat.filter(x => S.filter === "Toate" || x.chan === S.filter);
     if (S.sort === "urgent") base = base.slice().sort((a, b) => (b.urgent ? 1 : 0) - (a.urgent ? 1 : 0));
     else if (S.sort === "client") base = base.slice().sort((a, b) => a.cust.localeCompare(b.cust, "ro"));
-    const custom = S.ord[key];
-    if (custom) base = base.slice().sort((a, b) => {
-      const ia = custom.indexOf(a.id), ib = custom.indexOf(b.id);
-      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
-    });
-    const ids = base.map(x => x.id);
-    const pieces = base.reduce((a, x) => a + x.items.reduce((s, i) => s + gp.qty(i.q), 0), 0);
-    const queue = base.map((x, i) => Object.assign(deco(x), {
-      pos: String(i + 1),
-      timeLabel: x.timed ? x.slot + " fix" : "",
-      upCls: i > 0 ? "h-btn h-btn--secondary" : "h-btn h-btn--ghost",
-      downCls: i < base.length - 1 ? "h-btn h-btn--secondary" : "h-btn h-btn--ghost",
-      onUp: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(key, ids, i, -1); },
-      onDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(key, ids, i, 1); }
-    }));
 
-    let detail = { rang: "", rangSemn: "", rangEt: "", rangCls: "h-badge", rangTitlu: "", creatDe: "", creatDeTitlu: "", canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, onAllDone: () => {}, onClose: () => {} };
+    // ORDINEA DE LUCRU VINE DE PE SERVER (runda 2.3.0, lucrarea 8).
+    //
+    // `labSeq` e scris pe fiecare comandă, de migrarea 023. Nearanjate = `null`,
+    // adică la coada listei — iar dacă nimeni n-a aranjat nimic, TOATE sunt
+    // `null`, sortarea nu mișcă nimic, și rămâne ordinea de mai sus (interval,
+    // urgente ori client). Așa, o zi neatinsă arată exact ca înainte.
+    const rang = (o) => (o.labSeq === null || o.labSeq === undefined ? Infinity : o.labSeq);
+    const aranjata = base.some((o) => rang(o) !== Infinity);
+    // Cât ține o tragere, ordinea de pe ecran e cea din mână, nu cea din bază:
+    // altfel cardul ar sălta înapoi între două mișcări ale degetului.
+    const trasa = S.trag && S.trag.zi === day.iso ? S.trag.ids : null;
+    if (trasa) base = base.slice().sort((a, b) => {
+      const ia = trasa.indexOf(a.id), ib = trasa.indexOf(b.id);
+      return (ia < 0 ? 1e9 : ia) - (ib < 0 ? 1e9 : ib);
+    });
+    else if (aranjata) base = base.slice().sort((a, b) => rang(a) - rang(b));
+    const ids = base.map(x => x.id);
+    // Lista așa cum se desenează, lăsată la îndemâna ascultătorilor de tragere
+    // (v. `componentDidMount`). Ei se aprind pe fereastră, în afara desenului,
+    // deci n-au de unde ști ce e pe ecran; iar a o citi din DOM ar fi însemnat
+    // două adevăruri despre aceeași listă. Se SCRIE aici, nu se ține ca stare:
+    // e o oglindă a desenului de acum, nu o stare care se schimbă singură.
+    this.__idsDesenate = ids;
+    this.__ziDesenata = day.iso;
+    const pieces = base.reduce((a, x) => a + x.items.reduce((s, i) => s + gp.qty(i.q), 0), 0);
+    const queue = base.map((x, i) => {
+      const d = deco(x);
+      return Object.assign(d, {
+        pos: String(i + 1),
+        timeLabel: x.timed ? x.slot + " fix" : "",
+        upCls: i > 0 ? "h-btn h-btn--secondary" : "h-btn h-btn--ghost",
+        downCls: i < base.length - 1 ? "h-btn h-btn--secondary" : "h-btn h-btn--ghost",
+        onUp: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(ids, i, -1); },
+        onDown: (e) => { if (e && e.stopPropagation) e.stopPropagation(); move(ids, i, 1); },
+        // SEMNUL CARDULUI TRAS SE LIPEȘTE AICI, nu în marcaj: un `class` cu
+        // două interpolări iese gol din rulator (pricina întreagă e scrisă
+        // lângă `data-lb-card`). Deci cardul are un singur câmp de clase, iar
+        // cine adaugă mâine al treilea semn îl lipește tot aici.
+        cardCls: d.cardCls + (S.trag && S.trag.id === x.id ? " lb-tras" : "")
+      });
+    });
+
+    let detail = { rang: "", rangSemn: "", rangEt: "", rangCls: "h-badge", rangTitlu: "", creatDe: "", creatDeTitlu: "", canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, nextStop: false, nextNote: "", onAllDone: () => {}, onClose: () => {} };
     let hasDetail = false;
     flat.forEach(ord => {
       const t = ord.slot || "";
       if (ord.id !== S.sel) return;
       hasDetail = true;
       const st = ord.status;
+      const iDet = CYCLE_OF().indexOf(st);
       const b = bucati(ord);
       const rgD = gp.rangClient(ord.rangClient);
       // CINE A SCRIS COMANDA — numai în fișă, nu și pe cartonul din coadă.
@@ -1842,12 +2283,20 @@ class Component extends DCLogic {
             onPlus: () => pas(1)
           };
         }),
-        nextLabel: st === gp.done() ? "Comandă finalizată" : "Trece la: " + CYCLE_OF()[CYCLE_OF().indexOf(st) + 1],
-        nextCls: st === gp.done() ? "h-btn h-btn--secondary" : "h-btn h-btn--primary",
+        nextLabel: st === gp.done() ? "Comandă finalizată"
+          : iDet < 0 ? "Comandă în afara fluxului"
+          : laPlafon(st) ? "Predată curierului"
+          : "Trece la: " + CYCLE_OF()[iDet + 1],
+        nextCls: st === gp.done() || laPlafon(st) ? "h-btn h-btn--secondary" : "h-btn h-btn--primary",
         onAdvance: () => advance(ord.id, st),
-        advanceOff: st === gp.done(),
-        canBack: CYCLE_OF().indexOf(st) > 0,
-        backLabel: "Înapoi la: " + CYCLE_OF()[Math.max(CYCLE_OF().indexOf(st) - 1, 0)],
+        advanceOff: st === gp.done() || iDet < 0 || laPlafon(st),
+        // Lămurirea stă numai pe foaia de detaliu: acolo e loc. Pe card, unde
+        // butonul are un singur rând, aceeași vorbă stă în `title`.
+        nextStop: laPlafon(st),
+        nextNote: "Lotul e gata și așteaptă șoferul. „" + gp.done() + "” o pune el, de pe "
+          + "telefonul lui, când marfa ajunge la client.",
+        canBack: iDet > 0,
+        backLabel: "Înapoi la: " + CYCLE_OF()[Math.max(iDet - 1, 0)],
         onBack: () => back(ord.id, st),
         // Tot lotul deodată: o singură cerere cu toate pozițiile, nu una pe
         // poziție — ruta le scrie într-o singură tranzacție, deci ori intră tot
@@ -1859,12 +2308,28 @@ class Component extends DCLogic {
       };
     });
 
+    // TOTALURILE ZILEI, ACUM ȘI CU CÂT S-A FĂCUT (lucrările 5 și 6).
+    //
+    // CHEIA GRUPĂRII E ACEEAȘI CA POTRIVIREA SERVERULUI: numărul produsului
+    // când îl are, numele când nu (v. `lab_ziua_si_produsul()`). Grupate numai
+    // pe nume, două comenzi scrise cu același produs dar cu nume diferite — se
+    // întâmplă când produsul se redenumește la mijlocul zilei — ar fi apărut
+    // aici ca două rânduri, fiecare cu caseta lui, iar serverul le-ar fi
+    // împărțit ca unul singur: a doua apăsare ar fi umplut aceleași comenzi.
     const tot = {};
     flat.forEach(ord => (ord.items || []).forEach(i => {
-      tot[i.n] = (tot[i.n] || 0) + gp.qty(i.q);
+      const pid = Number(i.productId) || 0;
+      const k = pid ? "p" + pid : "n" + i.n;
+      if (!tot[k]) tot[k] = { k: k, n: i.n, pid: pid, q: 0, f: 0 };
+      tot[k].q += gp.qty(i.q);
+      tot[k].f += facutPe(i);
     }));
-    const totList = Object.keys(tot).map(k => ({ n: k, q: tot[k] })).sort((a, b) => b.q - a.q);
-    const maxQ = totList.length ? totList[0].q : 1;
+    const totList = Object.keys(tot).map(k => tot[k]).sort((a, b) => b.q - a.q);
+    // Cât a mai rămas de făcut azi, pentru cifra de pe clapă. Plafonat pe
+    // fiecare produs, nu pe sumă: un produs făcut peste necesar ar fi scăzut
+    // altfel din ce a mai rămas la celelalte, iar clapa ar fi spus „mai e
+    // puțin" tocmai când mai era de lucru.
+    const ramasZi = totList.reduce((a, t) => a + Math.max(t.q - t.f, 0), 0);
     // Numărul de comenzi al unei zile din fereastră.
     //
     // De la server cât timp numărătoarea lui a sosit, fiindcă el are toate
@@ -2114,8 +2579,11 @@ class Component extends DCLogic {
         label: s.l, cls: S.sort === s.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
         onClick: () => set({ sort: S.sort === s.v ? "interval" : s.v })
       })),
-      hasCustom: Object.keys(S.ord).length > 0,
-      onResetOrder: () => this.save({ ord: {} }),
+      hasCustom: aranjata,
+      // Lista goală șterge ordinea zilei pe server — `SET lab_seq = NULL WHERE
+      // day = ?`. `ids` se trimite ca „ale zilei", ca pozițiile să se șteargă și
+      // de pe ecran în aceeași clipă, nu la următoarea tură de patru secunde.
+      onResetOrder: () => this.scrieOrdinea(day.iso, [], ids),
       queue,
       // „Nicio comandă în ziua asta” e o afirmație: am întrebat, nu-i nimic.
       // Când cererea a picat, pagina n-a apucat să întrebe — locul cartonului
@@ -2138,10 +2606,51 @@ class Component extends DCLogic {
         + " nepotrivire între numărătoare și listă.",
       eroare: S.eroare,
       onReincearca: () => { this.__seen = null; set({ eroare: "" }); this.pull(); },
-      queueMeta: queue.length + (queue.length === 1 ? " comandă · " : " comenzi · ") + gp.qtyLabel(pieces) + " buc. · mută cu ↑ ↓",
+      queueMeta: queue.length + (queue.length === 1 ? " comandă · " : " comenzi · ") + gp.qtyLabel(pieces) + " buc. · trage de mâner ori mută cu ↑ ↓",
       detail, hasDetail, noDetail: !hasDetail,
       hasDetailAttr: hasDetail ? "true" : "false",
-      totals: totList.map(t => ({ n: t.n, q: gp.qtyLabel(t.q), pct: Math.round(t.q / maxQ * 100) + "%" }))
+      // O SINGURĂ FOAIE ODATĂ (v. `onSelect`): deschiderea produselor închide
+      // fișa comenzii. Raftul de pe telefon are de-acum două pricini să se
+      // arate — o comandă aleasă, ori produsele zilei.
+      onTotals: () => set({ totale: true, sel: null }),
+      onTotalsClose: () => set({ totale: false }),
+      totalsAttr: S.totale ? "true" : "false",
+      // Scris pe clapă: scurt, fiindcă textul e VERTICAL și el dă înălțimea.
+      // Propoziția întreagă stă în `title` și în `aria-label`, deci nici
+      // cititorul de ecran, nici mouse-ul nu pierd nimic.
+      tabScurt: "Produse · " + gp.qtyLabel(ramasZi),
+      tabLabel: "Toate produsele zilei · " + gp.qtyLabel(ramasZi) + " buc. rămase de făcut",
+      totals: totList.map(t => {
+        const val = S.adaos[t.k] === undefined ? "" : S.adaos[t.k];
+        // Virgula e cifra de la tejghea; `Number("2,5")` e `NaN`, iar butonul
+        // ar fi rămas stins fără ca nimeni să priceapă de ce.
+        const cat = Number(String(val).replace(",", "."));
+        // Lotul de dat îndărăt e al ACESTUI produs ȘI al ZILEI DESCHISE. Fără
+        // a doua condiție, trecerea pe altă filă ar fi lăsat butonul „Înapoi"
+        // aprins pe același produs — iar apăsarea lui ar fi scăzut bucăți din
+        // comenzile zilei de ieri.
+        const l = S.lot && S.lot.k === t.k && S.lot.zi === day.iso ? S.lot : null;
+        return {
+          n: t.n,
+          q: gp.qtyLabel(t.q),
+          facut: gp.qtyLabel(t.f),
+          cifraCol: t.q > 0 && t.f >= t.q ? "var(--h-success)" : "var(--h-accent-fg)",
+          // Dunga arată CÂT S-A FĂCUT DIN CÂT S-A CERUT, plafonată la sută:
+          // peste necesar, dunga plină e tot ce poate spune un dreptunghi, iar
+          // cifra de deasupra spune restul.
+          pct: (t.q > 0 ? Math.min(Math.round(t.f / t.q * 100), 100) : 0) + "%",
+          val: String(val),
+          onVal: (e) => set({ adaos: Object.assign({}, S.adaos, { [t.k]: e.target.value }) }),
+          addOff: !(cat > 0) || S.lucru,
+          // Numărul produsului când îl are, numele când nu — aceeași alegere ca
+          // la gruparea de mai sus, ca pagina și serverul să caute la fel.
+          onAdd: () => this.imparteProductie(day.iso, t.pid || t.n, t.k, cat),
+          undoOn: !!l,
+          undoText: l ? l.text : "",
+          lucru: S.lucru,
+          onUndo: () => this.desfaProductie()
+        };
+      })
     };
   }
 }

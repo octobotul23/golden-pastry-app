@@ -928,6 +928,82 @@ function poarta_scrierii_comenzii(array $u, array $b, string $id): void
 }
 
 /**
+ * Poarta etapei FINALE: cine poate spune că o comandă a ajuns la client.
+ *
+ * HOTĂRÂREA PATRONULUI, 19 septembrie 2026: „numai șoferul confirmă livrarea".
+ *
+ * Etapa finală („Predată") înseamnă „ajunsă la client" — lista de etape n-are
+ * una separată pentru predarea către curier. Serverul n-avea nicio regulă de
+ * trecere și niciun drept pe etapă: orice cont de personal putea pune orice
+ * etapă, chiar sărind de la prima la ultima. Laboratorul o apăsa când termina
+ * de ambalat, iar comanda apărea livrată înainte să fi urcat în mașină.
+ *
+ * DE CE NU AJUNGE OPRIREA DIN PAGINĂ. Contul `angajat` are ȘI panoul Laborator,
+ * ȘI panoul Rută. Același om, cu același cont, ar fi apăsat pe cealaltă ușă —
+ * iar butonul stins din „Panou Laborator" ar fi arătat ca o regulă fără să fie
+ * una. Pagina e politețea; regula stă aici.
+ *
+ * DE CE STĂ LÂNGĂ `poarta_scrierii_comenzii()` ȘI SE SCRIE O SINGURĂ DATĂ.
+ * Routerul încarcă un singur fișier de rute pe cerere, deci n-avem de plătit
+ * nimic ca s-o ținem aici; scrisă de două ori, s-ar fi despărțit într-o zi pe
+ * ușa care DESCHIDE, iar despărțirea aia nu s-ar fi văzut din nimic.
+ *
+ * DE CE 403 CU COD PROPRIU, ȘI NICIODATĂ `409 status_changed`. Cele două
+ * înseamnă lucruri deosebite: 409 zice „altcineva a mutat-o între timp,
+ * reîncarcă", iar pagina îl desenează așa, cu etapa de acum în `error.current`.
+ * Un refuz de DREPT îmbrăcat în el ar minți omul („nu s-a schimbat nimic, n-ai
+ * voie") și s-ar bate cap în cap cu paza de concurență, ale cărei două mesaje
+ * sunt cerute identice literă cu literă de `.claude/check-php.mjs`.
+ *
+ * REFUZUL NUMEȘTE LEACUL: pagina și bifa care-l repară. Un refuz greșit se
+ * drege atunci în zece secunde; unul care spune doar „nu ai voie" trimite omul
+ * să sune pe cineva, cu marfa în mână.
+ *
+ * CE NU JUDECĂ POARTA:
+ *   · comanda care E DEJA la etapa finală și rămâne acolo. Formularul din
+ *     „Administrare Comenzi" retrimite etapa nemișcată la fiecare salvare, deci
+ *     fără scutirea asta un manager n-ar mai fi putut îndrepta adresa unei
+ *     comenzi livrate. Poarta judecă MUTAREA spre etapa finală, nu șederea pe ea.
+ *   · întoarcerea ÎNAPOI de pe etapa finală. Aceea e tocmai dregerea unei
+ *     apăsări greșite, și rămâne deschisă tuturor, ca azi.
+ *   · fluxul fără etapă finală în Setări (`status_done()` gol): atunci nu se
+ *     știe care e „ajunsă la client", deci nu se refuză nimic.
+ *
+ * Etapa de acum se citește din rândul adus înaintea tranzacției, nu de sub
+ * lacăt. Fereastra e îngustă și se închide singură: ca scutirea de mai sus să
+ * deschidă ceva, ar trebui ca între citire și scriere altcineva să mute comanda
+ * ÎNAPOI de pe etapa finală, iar cel care scrie să fie tocmai un cont fără semn
+ * care trimite etapa finală — adică apăsarea pe care pagina laboratorului n-o
+ * mai desenează. Cererile care poartă `from` sunt oricum prinse sub lacăt, mai
+ * jos, de paza de concurență.
+ */
+function poarta_etapei_finale(array $u, array $b, array $o): void
+{
+    if (!array_key_exists('status', $b)) {
+        return;
+    }
+    $finala = status_done();
+    if ($finala === '' || (string) $b['status'] !== $finala) {
+        return;
+    }
+    if ((string) $o['status'] === $finala) {
+        return;
+    }
+    if (poate_confirma_livrarea($u)) {
+        return;
+    }
+
+    fail(
+        'Livrarea o confirmă numai cine duce marfa. Comanda se poate trece până la „'
+            . status_lab_ceiling() . '”, iar „' . $finala . '” o pune șoferul de pe telefonul lui. '
+            . 'Dacă trebuie să o poți pune și tu, cere-i administratorului să bifeze „Poate confirma '
+            . 'livrarea” pe contul tău, în „Conturi”.',
+        403,
+        'delivery_denied'
+    );
+}
+
+/**
  * PATCH /orders/{id} — orice câmp al comenzii, inclusiv pozițiile.
  *
  * Ruta accepta doar status, note, zi, interval, zonă și mod de onorare. Formularul
@@ -969,6 +1045,12 @@ function route_orders_update(string $id): void
     if (!$o) {
         fail('Comanda nu există.', 404, 'not_found');
     }
+
+    // Cine poate spune că marfa a ajuns la client. Stă AICI, înaintea oricărei
+    // scrieri și a oricărei tranzacții, ca refuzul să nu lase în urmă nici o
+    // mișcare de stoc, nici un rând de jurnal, nici un anunț la coadă. Pricina
+    // întreagă e în antetul funcției, lângă `poarta_scrierii_comenzii()`.
+    poarta_etapei_finale($u, $b, $o);
 
     $sets = [];
     $vals = [];
@@ -1849,39 +1931,16 @@ function route_order_production(string $id): void
         // depozitarului care tocmai înregistrează o livrare de făină.
         all('SELECT id FROM order_items WHERE order_id = ? ORDER BY id FOR UPDATE', [(int) $id]);
 
-        // Potrivirea poziție → articol finit, copiată literă cu literă din
-        // `route_stock_sync`, filtrul pe `active` inclusiv. Dacă intrarea de la
-        // producție ia un articol și scăderea de la „Predată” altul, croasantul
-        // intră într-un raft și iese din altul: două cifre greșite în loc de una.
+        // Pozițiile, fiecare cu articolul de depozit care îi ține locul.
         //
-        // Costul filtrului, spus pe față: ruta asta scrie și „Corecție
-        // producție”, adică desface o intrare de mai devreme. Dacă între raport
-        // și corectură articolul a fost scos din depozit, corectura nu mai are
-        // unde se scrie — `done_qty` se îndreaptă, dar cifra raftului nu, iar
-        // produsul apare în `missing`. Ieșirea e la îndemână și e aceeași ca la
-        // scădere: articolul se repune din „Scoase din depozit”, în josul
-        // paginii Depozit. Alternativa — să lăsăm producția să intre într-un raft
-        // pe care nu-l vede nimeni — e tocmai defectul reparat aici.
-        $pozitii = all(
-            'SELECT oi.id, oi.product_id, oi.name, oi.qty, oi.done_qty,
-                    si.id AS item_id, si.name AS item_name
-               FROM order_items oi
-               LEFT JOIN stock_items si
-                      ON si.id = (
-                           SELECT s.id
-                             FROM stock_items s
-                            WHERE (
-                                    (s.product_id = oi.product_id AND s.product_id IS NOT NULL)
-                                    OR (s.product_id IS NULL AND s.name = oi.name)
-                                  )
-                              AND s.active = 1
-                            ORDER BY (s.product_id IS NULL), s.id
-                            LIMIT 1
-                         )
-              WHERE oi.order_id = ?
-              ORDER BY oi.id',
-            [(int) $id]
-        );
+        // Potrivirea și pricina ei — filtrul pe `active`, întâietatea
+        // articolului legat de produs — stau în `productie_pozitii()`
+        // (api/lib/productie.php), de unde le ia și ușa care împarte
+        // producția pe ziua întreagă. O singură potrivire, un singur adevăr:
+        // dacă intrarea de la producție ar lua un articol și scăderea de la
+        // etapa finală altul, croasantul ar intra într-un raft și ar ieși din
+        // altul.
+        $pozitii = productie_pozitii([(int) $id]);
 
         $dupaId = [];
         foreach ($pozitii as $p) {
@@ -1930,32 +1989,12 @@ function route_order_production(string $id): void
             }
         }
 
-        // Rețetele, într-o singură interogare pentru toate produsele din raport:
-        // altfel o comandă cu douăzeci de poziții ar face douăzeci de drumuri la
-        // bază pentru ceva ce încape într-un `IN`.
-        $reteta  = [];
-        $produse = [];
-        foreach ($planuit as $pl) {
-            $pid = (int) ($pl['p']['product_id'] ?? 0);
-            if ($pid > 0) {
-                $produse[$pid] = true;
-            }
-        }
-        if ($produse) {
-            $pids  = array_keys($produse);
-            $marks = implode(',', array_fill(0, count($pids), '?'));
-            $linii = all(
-                "SELECT pr.product_id, pr.item_id, pr.qty, si.name AS item_name
-                   FROM product_recipes pr
-                   JOIN stock_items si ON si.id = pr.item_id
-                  WHERE pr.product_id IN ($marks)
-                  ORDER BY pr.id",
-                $pids
-            );
-            foreach ($linii as $l) {
-                $reteta[(int) $l['product_id']][] = $l;
-            }
-        }
+        // Rețetele tuturor produselor din raport, într-o singură interogare —
+        // vezi `productie_retete()`. Cheamă și ușa care împarte producția.
+        $reteta = productie_retete(array_map(
+            static fn(array $pl): int => (int) ($pl['p']['product_id'] ?? 0),
+            $planuit
+        ));
 
         // Aceeași însemnare ca la scădere și la retur, ca rândurile să se
         // citească pereche în registru: „#1042 Restaurant Bistro”.
@@ -1964,85 +2003,28 @@ function route_order_production(string $id): void
         foreach ($planuit as $pl) {
             $p     = $pl['p'];
             $delta = (float) $pl['delta'];
-            $sens  = $delta > 0 ? 1 : -1;
-            $cant  = abs($delta);
-            // Motivele vin din vocabularul paginii Depozit (`IN_R` / `OUT_R`),
-            // ca registrul să se citească la fel indiferent cine a scris rândul.
-            // Corecția are motivul ei: e altceva decât o producție și trebuie să
-            // se vadă din listă că e altceva.
-            $motivFinit   = $delta > 0 ? 'Producție laborator' : 'Corecție producție';
-            $motivMaterii = $delta > 0 ? 'Consum în producție' : 'Corecție producție';
 
-            foreach ($reteta[(int) ($p['product_id'] ?? 0)] ?? [] as $l) {
-                q(
-                    'INSERT INTO stock_moves (item_id, name, qty, direction, reason, note, user_id, order_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    [
-                        (int) $l['item_id'], (string) $l['item_name'],
-                        round($cant * (float) $l['qty'], 4), -$sens,
-                        $motivMaterii, $nota, (int) $u['id'], (int) $id,
-                    ]
-                );
-                $miscari++;
-            }
-
-            if ($p['item_id'] !== null) {
-                q(
-                    'INSERT INTO stock_moves (item_id, name, qty, direction, reason, note, user_id, order_id)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-                    [
-                        (int) $p['item_id'], (string) $p['item_name'],
-                        $cant, $sens, $motivFinit, $nota, (int) $u['id'], (int) $id,
-                    ]
-                );
-                $miscari++;
-            } else {
-                // Lipsa articolului finit nu oprește raportarea: laboratorul chiar
-                // a făcut bucățile, iar materiile prime chiar au ieșit din rafturi.
-                // Doar intrarea pe finit n-are unde se scrie, iar comanda rămâne
-                // oricum blocată la „Predată”, exact ca azi. Se spune, nu se tace.
-                $fara[] = (string) $p['name'];
-            }
-
-            q('UPDATE order_items SET done_qty = ? WHERE id = ?', [round((float) $pl['nou'], 2), (int) $p['id']]);
-
-            // CEASUL. Aceeași atingere, scrisă în două registre deosebite:
-            // `done_qty` ține TOTALUL de acum — tableta trimite totaluri
-            // dinadins, ca o cerere pierdută să se vindece singură la
-            // următoarea —, iar registrul de producție ține DIFERENȚA, cu clipa
-            // ei. Din totaluri nu se poate afla niciodată când s-a lucrat; din
-            // diferențe cu ceas se află și una, și alta.
-            //
-            // `$p['id']` e POZIȚIA de pe comandă. NU `$p['item_id']`: acela e
-            // articolul de depozit potrivit mai sus, cel care uneori lipsește.
-            // Rândul se scrie și pentru pozițiile fără articol finit — registrul
-            // ăsta n-are voie să aibă goluri, fiindcă se citește lângă un stat
-            // de plată. Tocmai golurile sunt pricina pentru care raportul de
-            // tură nu se sprijină pe `stock_moves`, deși și el are ceas.
-            //
-            // Înăuntrul tranzacției, dinadins: un raport care se întoarce din
-            // drum n-are voie să lase în urmă ore de muncă pe care nu le-a
-            // făcut nimeni.
-            lab_production_scrie((int) $id, (int) $p['id'], (string) $p['name'], $delta);
-
-            // Ce s-a produs nu mai e promis: făina a ieșit din raft cu o mișcare
-            // adevărată, scrisă adineaori. Fără rândul ăsta aceeași făină ar fi
-            // numărată de două ori — o dată ca ieșită, o dată ca încă rezervată —
-            // iar „Disponibil" din Depozit ar arăta mai puțin decât are patiseria.
-            //
-            // `r.qty` e cantitatea pe toată poziția (bucăți × rețetă), deci
-            // `r.qty * done_qty / oi.qty` dă exact `done_qty × rețetă`, fără să
-            // mai fie nevoie de o citire a rețetei. Marfa gata rămâne promisă
-            // până pleacă: pe ea o stinge filtrul de status, nu producția.
-            q(
-                "UPDATE stock_reservations r
-                    JOIN order_items oi ON oi.id = r.order_item_id
-                     SET r.consumed = CASE WHEN r.kind = 'materie' AND oi.qty > 0
-                                           THEN r.qty * oi.done_qty / oi.qty
-                                           ELSE 0 END
-                  WHERE r.order_item_id = ?",
-                [(int) $p['id']]
+            // TOATĂ scrierea stă într-un singur loc: consumul de materii
+            // prime, intrarea pe finit, `done_qty`, ceasul din registrul de
+            // producție și stingerea rezervărilor. Aici a stat până în runda
+            // 2.3.0, când s-a deschis a doua ușă — `POST /lab/productie/imparte`,
+            // care împarte o cantitate peste comenzile zilei. Scrisă a doua
+            // oară, s-ar fi despărțit la prima corectură în două adevăruri care
+            // răspund amândouă 200: una care mănâncă făină și una care nu.
+            // Pricina întreagă e în antetul lui `productie_aplica()`.
+            $urma = productie_aplica(
+                $p,
+                $delta,
+                (float) $pl['nou'],
+                $reteta[(int) ($p['product_id'] ?? 0)] ?? [],
+                $nota,
+                (int) $u['id'],
+                (int) $id
             );
+            $miscari += $urma['miscari'];
+            if ($urma['fara'] !== null) {
+                $fara[] = $urma['fara'];
+            }
             $bucati += $delta;
         }
 

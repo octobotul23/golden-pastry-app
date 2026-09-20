@@ -330,6 +330,25 @@ cererea — una scrisă de personal are autor, cea a vizitatorului nu —, deci 
 ea comenzile personalului ies însemnate „site" pe nedrept. Niciuna din cele
 patru nu dă eroare când lipsește: se pierd tăcut, ca `lab_production`.
 
+`023_laboratorul_si_livrarea.sql` **nu se vede nici ea** în numărul de tabele,
+ca `022`: două coloane și nimic altceva — `orders.lab_seq` (ordinea de lucru a
+laboratorului) și `users.poate_confirma_livrarea` (dreptul de a spune că marfa
+a ajuns la client). Deci numărul rămâne **24** și după ea, iar dovada se cere
+anume: `SHOW COLUMNS FROM users LIKE 'poate_confirma_livrarea'`.
+
+Fără `lab_seq`, ordinea comenzilor din „Panou Laborator" rămâne unde era până
+acum: în `localStorage`, adică în browserul fiecărei tablete. Nu dă eroare —
+fiecare vede altă zi, iar împărțirea cantităților produse, care merge de sus în
+jos pe lista aceea, umple alte comenzi după tableta de pe care s-a apăsat.
+Fără `poate_confirma_livrarea` e pe dos, și mai tăcut: paza **cade deschisă**,
+dinadins (o poartă care se închide singură într-o fereastră de actualizare e
+mai rea decât paguba de care fuge), deci serverul primește „Predată" de la
+oricine din personal, exact ca înainte. Bifa se pune pe urmă din „Conturi", pe
+contul șoferului; **nimeni nu se naște cu ea**, nici conturile de operații care
+există azi — contul de laborator e o tejghea comună, și tocmai el n-are voie
+s-o aibă. Administratorul și fondatorul o au din cod, deci biroul nu se poate
+încuia pe dinafară.
+
 ---
 
 ## 5b. Urcarea cu WinSCP

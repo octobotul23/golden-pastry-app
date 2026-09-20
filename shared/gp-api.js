@@ -337,11 +337,51 @@
     client: 'Client.dc.html',
   };
 
+  /* --------------------------------------------------------- versiunea -- */
+
+  /**
+   * Numărul rundei, scris de mână, într-un singur loc din tot proiectul.
+   *
+   * DE CE CHIAR AICI. Fișierul ăsta e singurul pe care îl încarcă toate cele
+   * 15 pagini publicate, deci e singurul loc din care numărul ajunge peste tot
+   * fără nicio listă scrisă de mână. Dar mai e o pricină, și e cea grea:
+   * amprenta `?v=` pe care `build-deploy` o lipește pe fiecare trimitere către
+   * un `.js` e `sha256(shared/gp-api.js)` ȘI NIMIC ALTCEVA. Până acum, o rundă
+   * care nu atingea fișierul ăsta pleca pe server cu toate trei amprentele
+   * neclintite, iar martorul din `CITESTE-MA.md` nu putea deosebi pachetul nou
+   * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
+   * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
+   */
+  const VERSIUNE = '2.3.0';
+
+  /**
+   * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo
+   * paginile se servesc crude, nu s-a construit niciun pachet, deci n-are ce
+   * ștampilă să poarte — iar „local" spune asta pe față, în loc să mintă o oră.
+   *
+   * La construire, `build-deploy.mjs` o înlocuiește în COPIA fiecărui
+   * subdomeniu, niciodată în fișierul ăsta.
+   *
+   * ȘI N-O IA DIN CEAS, CI DIN CONȚINUTUL SURSELOR. Dacă ar veni din ceas,
+   * fiecare reconstruire ar schimba fișierul, deci toate amprentele, deci
+   * toate paginile — iar `test-plasa-rsync.mjs:1151` compară pachetul din
+   * proiect cu cel din plasture octet cu octet, cu un singur fișier scutit
+   * (`PACHET.txt`). S-ar fi înroșit la fiecare suită, iar o regulă care se
+   * înroșește mereu se învață să fie sărită. Așa, același cod construit de
+   * două ori iese cu aceeași ștampilă, iar ea se mută numai când se mută codul.
+   */
+  const STAMPILA = 'local';
+
   /* --------------------------------------------------------------- API -- */
 
   const gp = {
     base: BASE,
     GpError,
+
+    VERSIUNE,
+    STAMPILA,
+    /** `ver. 2.3.0 · 19 sep 16:48` — ce scrie în colțul fiecărei pagini. */
+    versiune: () => 'ver. ' + VERSIUNE + ' · ' + STAMPILA,
 
     get: (path) => request('GET', path),
     post: (path, body) => request('POST', path, body === undefined ? {} : body),
@@ -650,6 +690,36 @@
       // verifică asta înainte să scrie un mesaj despre o regulă care pe
       // instalarea aceea nici nu se aplică.
       if (user && out && out.origine) user.origine = out.origine;
+      // Semnul „poate confirma livrarea" (migrarea 023), mutat de la rădăcină
+      // pe utilizator. Serverul îl pune deoparte din aceeași pricină ca
+      // `referral`: rândul vine din `current_user()`, o interogare cu listă
+      // fixă de coloane, iar dreptul nici nu se citește numai din tabelă —
+      // `poate_confirma_livrarea()` îl dă din ROL administratorului, cu
+      // coloana goală. Deci se socotește în răspuns, nu pe rând.
+      //
+      // NICIUNUL din cele două tipare de mai sus nu merge aici:
+      //
+      //   · paza pe adevărat (`if (out.x) user.x = out.x`), ca la `origine`,
+      //     ar înghiți tocmai `false` — adică EXACT contul fără semn, singurul
+      //     despre care e vorba. Semnul ar fi ajuns nedefinit, iar `gp.auth()`
+      //     l-ar fi citit „poate";
+      //   · `=== true` necondiționat, ca la `founderReady`, ar face un server
+      //     de dinaintea rundei — care nu trimite câmpul — să spună „nu poate"
+      //     pentru TOȚI: butonul șoferului s-ar fi stins pe toate telefoanele
+      //     în fereastra de urcare, adică chiar paguba de care fuge lucrarea.
+      //
+      // Deci se copiază NUMAI dacă serverul a trimis câmpul; lipsa lui rămâne
+      // nedefinită, iar `gp.auth()` o citește cu `!== false`, adică „poate".
+      //
+      // PĂȚANIA, ca să nu se repete a treia oară: lipirea asta a lipsit la
+      // prima scriere a rundei 2.3.0. Serverul refuza etapa finală corect
+      // (403), pagina avea butonul stins scris cum trebuie — dar semnul nu
+      // ajungea la ea, deci butonul rămânea aprins pe orice cont, iar omul
+      // afla abia din refuz. A doua oară pe ACEEAȘI țeavă: întâia dată s-a
+      // pierdut `referralCode` (v. `.claude/test-roluri.mjs`, grupul B2).
+      if (user && out && 'poateConfirmaLivrarea' in out) {
+        user.poateConfirmaLivrarea = out.poateConfirmaLivrarea === true;
+      }
       return user;
     },
 
@@ -1048,6 +1118,13 @@
         // nu cu ce iese din funcția asta.
         referralCode: user.referralCode || (user.referral && user.referral.code) || null,
         isSystem: user.isSystem === true,
+        // Poate contul ăsta să spună că marfa a ajuns la client? (runda 2.3.0)
+        //
+        // `!== false`, nu `=== true`: un server de dinaintea rundei n-are
+        // câmpul, iar `undefined` trebuie să însemne „poate" — aceeași cădere
+        // deschisă ca pe server. Cu `=== true`, actualizarea paginilor înaintea
+        // celei a API-ului ar fi stins butonul șoferului pe toate telefoanele.
+        poateConfirmaLivrarea: user.poateConfirmaLivrarea !== false,
       };
     },
 
@@ -1320,6 +1397,7 @@
         urgent: !!o.urgent,
         timed: !!o.timed,
         routeSeq: o.routeSeq === undefined ? null : o.routeSeq,
+        labSeq: o.labSeq === undefined ? null : o.labSeq,
         stockSynced: !!o.stockSynced,
         variant: o.variant || 'copt',
         phone: o.phone || '',
@@ -1464,6 +1542,11 @@
       statuses: ['În așteptare', 'La dospit', 'În cuptor', 'La ambalare', 'Predată', 'Anulată'],
       done: 'Predată',
       cancelled: 'Anulată',
+      // Se umple din `/lists` (v. `labCeiling()`). Gol la început DINADINS: pe
+      // un server vechi, care n-are câmpul, se socotește din etape — iar o
+      // valoare scrisă aici de-a gata ar fi mințit tocmai atunci, când Setările
+      // au alte etape decât cele de mai sus.
+      labCeiling: '',
     },
 
     async lists() {
@@ -1473,6 +1556,7 @@
           if (gp.__lists.statuses && gp.__lists.statuses.length) gp.__L.statuses = gp.__lists.statuses;
           if (gp.__lists.done) gp.__L.done = gp.__lists.done;
           if (gp.__lists.cancelled) gp.__L.cancelled = gp.__lists.cancelled;
+          if (gp.__lists.labCeiling) gp.__L.labCeiling = gp.__lists.labCeiling;
         }
       }
       return gp.__lists;
@@ -1884,6 +1968,56 @@
      */
     flow: () => gp.__L.statuses.filter((x) => x !== gp.__L.cancelled),
 
+    /**
+     * Până unde poate duce LABORATORUL o comandă: etapa dinaintea celei finale.
+     *
+     * Spusă de server (`status_lab_ceiling()`, api/lib/settings.php), fiindcă
+     * acolo e și paza adevărată — `poarta_etapei_finale()`. Socotită aici din
+     * nou, ar fi fost a doua copie a aceleiași reguli, iar cele două s-ar fi
+     * despărțit la prima corectură.
+     *
+     * Socoteala de rezervă e pentru UN SINGUR caz: un server de dinaintea
+     * rundei 2.3.0, care n-are câmpul. Atunci iese aceeași etapă ca pe server,
+     * iar paginile merg mai departe. Fluxul cu o singură etapă — care se poate
+     * scrie din Setări — dă chiar etapa aceea: nu există un „dinainte" al ei.
+     */
+    labCeiling: () => {
+      if (gp.__L.labCeiling) return gp.__L.labCeiling;
+      const f = gp.flow();
+      if (!f.length) return '';
+      const i = f.indexOf(gp.__L.done);
+      return i < 0 ? f[f.length - 1] : f[Math.max(i - 1, 0)];
+    },
+
+    /**
+     * Ordinea în care laboratorul lucrează ziua. Lista goală o șterge.
+     *
+     * Soră cu `setRouteOrder()` de mai jos, și trimisă la fel — lista ÎNTREAGĂ
+     * a zilei, nu o mutare. Deosebirea e cine are voie: ruta șoferului o pune
+     * biroul, ordinea din laborator o pune tura. Pricina, pe larg, lângă
+     * `route_lab_ordine()`.
+     */
+    setLabOrder: (day, ids) => request('PUT', '/lab/ordine', { day, ids }),
+
+    /**
+     * „Tocmai am mai făcut N bucăți din produsul ăsta." Se împart pe comenzile
+     * zilei, de sus în jos, pe ordinea de lucru; ce trece peste rămâne al casei.
+     *
+     * Întoarce, între altele, `lot` — lista exactă a pozițiilor atinse. Pe EA o
+     * dă îndărăt `undoProduction()`, nu o scădere ghicită: între cele două
+     * apăsări poate intra munca unui coleg.
+     */
+    splitProduction: (day, produs, qty) => request('POST', '/lab/productie/imparte', Object.assign(
+      { day, qty },
+      typeof produs === 'number' ? { productId: produs } : { name: String(produs) }
+    )),
+
+    /** Desface exact lotul întors de `splitProduction()`. */
+    undoProduction: (day, produs, lot) => request('POST', '/lab/productie/desfa', Object.assign(
+      { day, lot },
+      typeof produs === 'number' ? { productId: produs } : { name: String(produs) }
+    )),
+
     /** Ordinea opririlor pe ruta unei zile. Lista goală revine la implicit. */
     setRouteOrder: (day, ids) => request('PUT', '/routes', { day, ids }),
 
@@ -2092,6 +2226,36 @@
       };
     },
   };
+
+  /* ------------------------------------- pastila cu versiunea, în pagini -- */
+
+  /**
+   * `<gp-versiune></gp-versiune>` — scrie `ver. 2.3.0 · 19 sep 16:48`.
+   *
+   * DE CE UN ELEMENT, și nu o cheie în obiectul de desenare al fiecărei pagini.
+   * Cheia ar fi însemnat 21 de rânduri scrise de mână în 21 de fișiere, și
+   * fiecare putea lipsi în TĂCERE: pagina care o uita n-ar fi arătat nimic, iar
+   * paginile uitate sunt tocmai cele pe care patronul ar vrea să le întrebe ce
+   * cod poartă. Așa, marcajul din pagini e un rând fără niciun cuvânt în el,
+   * același peste tot, iar scrisul vine din fișierul ăsta.
+   *
+   * React nu i se bagă înăuntru: gazda ține NODUL, nu măruntaiele lui — la fel
+   * cum ține `<image-slot>` din magazin.
+   *
+   * PAZA DE LA ÎNCEPUT NU-I DE FALĂ. Probele casei rulează logica paginilor
+   * într-o lume de mucava, cu o `location` făcută din trei câmpuri
+   * (`.claude/meniu-real.mjs`, `.claude/check-panouri.mjs`); acolo nu există
+   * nici `customElements`, nici `HTMLElement`, iar o chemare neîngrădită ar fi
+   * aruncat la ÎNCĂRCAREA fișierului, adică în toate suitele deodată.
+   */
+  if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined'
+    && !customElements.get('gp-versiune')) {
+    customElements.define('gp-versiune', class extends HTMLElement {
+      connectedCallback() {
+        this.textContent = gp.versiune();
+      }
+    });
+  }
 
   global.gp = gp;
 })(window);

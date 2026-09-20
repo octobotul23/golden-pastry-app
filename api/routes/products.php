@@ -113,6 +113,13 @@ function route_lists_get(): void
         'statuses'    => order_statuses(),
         'done'        => status_done(),
         'cancelled'   => status_cancelled(),
+        // Până unde poate duce LABORATORUL o comandă: etapa dinaintea celei
+        // finale. Se socotește pe server (`status_lab_ceiling()`), nu în
+        // browser din `statuses` și `done`: socotită în pagină, ar fi a doua
+        // copie a aceleiași reguli, iar cele două pagini care o citesc s-ar fi
+        // despărțit la prima corectură. Tot din Setări, deci o etapă
+        // redenumită nu lasă laboratorul nici blocat, nici cu una în plus.
+        'labCeiling'  => status_lab_ceiling(),
         'slots'       => delivery_slots(),
         'zones'       => delivery_zones(),
         'fulfillment' => fulfillment_types(),

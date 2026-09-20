@@ -264,3 +264,65 @@
    Foaia rămasă deschisă nu e o încurcătură: se închide și cu „×", și apăsând
    pe fundal. În celelalte șase panouri nici nu se poate deschide pe monitor,
    fiindcă acolo butonul ☰ e ascuns de la 761px în sus. */
+
+/* Pastila cu versiunea, în colțul de jos — și în sertarul de telefon, și în
+   subsolul barei laterale.
+
+   O SINGURĂ REGULĂ PENTRU AMÂNDOUĂ LOCURILE, fiindcă e același lucru. Cele opt
+   subsoluri de bară laterală s-au depărtat unul de altul de-a lungul rundelor
+   (opt forme deosebite, măsurate) — un stil scris pe element ar fi făcut a
+   noua formă, iar peste încă două runde nimeni n-ar mai fi știut care e cea
+   bună. Aici e un singur loc, deci nu se pot depărta.
+
+   Se poate lua cu mouse-ul (`user-select`), fiindcă rostul ei e să poată fi
+   CITITĂ CU GLAS TARE la telefon ori copiată într-un mesaj: „ce scrie în
+   colț?" e prima întrebare de pus când o actualizare pare să nu fi intrat.
+
+   Elementul e `<gp-versiune>`, scris în `shared/gp-api.js`. Până se
+   înregistrează el, browserul îl ține drept element necunoscut, adică `inline`
+   și gol — de-asta `display:block` stă scris aici și nu se moștenește de
+   nicăieri. Iar dacă fișierul acela n-a ajuns deloc, pastila rămâne goală și
+   nu lasă nicio gaură în colț.
+
+   SE ÎMBRACĂ DUPĂ NUMELE ETICHETEI, NU DUPĂ O CLASĂ — și nu din cochetărie.
+   O cratimă în numele etichetei o face element străin pentru React, iar
+   atunci `className` nu se mai potrivește cu `class`: se scrie ca atribut,
+   sub numele lui, coborât la litere mici de `setAttribute`. Un
+   `class="gp-navver"` din marcaj ajungea în pagină `classname="gp-navver"`,
+   care nu se potrivește cu nimic: pastila rămânea cu litera de 16px și
+   aproape albă, fără nicio eroare nicăieri — măsurat pe ecran, la 1440px,
+   fiindcă n-avea cum să se vadă altfel. Felul ăsta e și felul casei: celălalt
+   element al nostru, `<image-slot>`, n-a purtat vreodată `class`. Păzit în
+   `.claude/check-pages.mjs`. */
+gp-versiune {
+  display: block;
+  padding: 2px 2px 0;
+  color: rgba(255, 255, 255, .44);
+  font-family: var(--h-font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  line-height: 1.5;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* ÎN SERTAR, PASTILA SE LIPEȘTE DE FUNDUL LUI — nu de coada listei.
+   Măsurat pe pachet, la 390x844: sertarul fondatorului are 14 rânduri și
+   depășește cardul cu 140 px, al administratorului cu 82. Pastila e ULTIMA
+   din listă, deci tocmai ea cădea sub fald, iar cele două ranguri de birou
+   sunt chiar cei care întreabă „ce cod poartă ecranul ăsta?". La angajat
+   (7 rânduri) și la client (4) sertarul nu depășea deloc.
+   Depășirea nu e vina pastilei: fără ea, la administrator erau deja 58 px
+   ascunși. Pastila doar a fost ultima la rând, deci prima pierdută.
+   `sticky` NU SCHIMBĂ NIMIC unde nu e depășire — fără derulare se poartă
+   întocmai ca `static`. Deci leacul atinge numai cazul stricat, și cele
+   patru măsurate curate rămân neatinse.
+   Fundalul e al cardului: fără el, rândurile s-ar vedea prin scris când
+   trec pe dedesubt. */
+.gp-navsheet gp-versiune {
+  position: sticky;
+  bottom: 0;
+  padding: 6px 2px 6px;
+  background: var(--h-cocoa-800);
+}

@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.2.4/deploy
+  Pachet: /root/plasture-vps 2.3.0/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -248,7 +248,7 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
   de cât de veche e instalarea: pe una lăsată în urmă cu trei versiuni se aprind
   trei, pe una actualizată ieri niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
-  `sql/022_cerere_de_la_personal.sql`;
+  `sql/023_laboratorul_si_livrarea.sql`;
 - **24 de tabele** în capul raportului, la „Baza de date" (ultimele două sunt
   `telegram_links` și `lab_production`, aduse de `021_raspundere.sql`). Numărul
   nu se mișcă nici la `016`, nici la `020`: prima aduce o coloană (`users.zone`)
@@ -257,7 +257,8 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
   **două**, deși aduce patru lucruri: celelalte două sunt tot o coloană
   (`users.telegram_user_id`) și tot un index (`ix_orders_autor`). `022` nu-l
   mișcă deloc: ea pune patru coloane pe `order_requests`, un index și o cheie
-  străină, deci raportul arată tot **24** și după ea;
+  străină, deci raportul arată tot **24** și după ea; nici `023`, care
+  pune două coloane și atât (`orders.lab_seq`, `users.poate_confirma_livrarea`);
 - linia **`api.DOMENIU răspunde (401)`**. Un **500** înseamnă că o migrare n-a
   intrat: `tail -20 /var/log/apache2/gp-api-error.log`;
 - căile celor două copii — a bazei și a codului.
@@ -352,6 +353,20 @@ administratorului care a acceptat-o, iar agentul dispare din propria lui muncă;
 vizitatorului (n-are), fără ea comenzile personalului ies însemnate „site" pe
 nedrept. Niciuna din cele patru nu dă eroare: se pierd tăcut, ca
 `lab_production`.
+
+`023_laboratorul_si_livrarea.sql` **nu se vede nici ea în raport**: nici tabel,
+nici setare, nici index — două coloane, `orders.lab_seq` și
+`users.poate_confirma_livrarea`. O ceri singur:
+`SHOW COLUMNS FROM users LIKE 'poate_confirma_livrarea'`.
+Fără prima, ordinea de lucru a laboratorului rămâne în browserul fiecărei
+tablete, ca până acum: nimeni nu vede aceeași zi, iar împărțirea cantităților
+produse — care merge de sus în jos pe lista aceea — umple alte comenzi, după
+tableta de pe care s-a apăsat. Fără a doua, paza **cade deschisă dinadins**,
+deci etapa finală („Predată" = ajunsă la client) o pune iar oricine din
+personal, tăcut, ca înainte de actualizare. Semnul se bifează pe urmă din
+„Conturi", pe contul șoferului; **nimeni nu-l primește la migrare**, nici
+conturile de operații de azi — contul de laborator e o tejghea comună, și
+tocmai el n-are voie să-l aibă. Administratorul și fondatorul îl au din cod.
 
 Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
 adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:442`,

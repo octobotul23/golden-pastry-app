@@ -1776,3 +1776,81 @@ function user_zone(int $id): ?string
     $z = trim((string) (scalar('SELECT zone FROM users WHERE id = ?', [$id]) ?? ''));
     return $z === '' ? null : $z;
 }
+
+/**
+ * A intrat migrarea 023? Același tipar ca `user_zone_supported()` de deasupra.
+ *
+ * Răspunsul se ține minte pe durata cererii: poarta etapei finale îl întreabă
+ * o dată, dar `/auth/me` și lista de conturi îl întreabă pentru fiecare rând.
+ */
+function livrare_semn_suportat(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        return $ok = ((int) scalar(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users'
+                AND COLUMN_NAME = 'poate_confirma_livrarea'"
+        ) === 1);
+    } catch (Throwable $e) {
+        error_log('[gp] nu pot verifica semnul de livrare: ' . $e->getMessage());
+        return $ok = false;
+    }
+}
+
+/**
+ * Poate contul ăsta să spună că o comandă a ajuns la client?
+ *
+ * Etapa finală („Predată") înseamnă „ajunsă la client", nu „gata de plecare":
+ * lista de etape n-are una separată pentru predarea către curier. O punea
+ * oricine din personal, iar laboratorul o apăsa când termina de ambalat —
+ * comanda apărea livrată înainte să fi urcat în mașină.
+ *
+ * TREI RĂSPUNSURI, ȘI FIECARE ARE PRICINA LUI.
+ *
+ * 1 · ADMINISTRATORUL ȘI FONDATORUL POT ÎNTOTDEAUNA, din cod, fără bifă.
+ *     Semnul se naște ÎNCHIS pentru toți (migrarea 023 nu umple nimic înapoi),
+ *     iar patronul îl pune pe șofer din Conturi. Între cele două clipe cineva
+ *     trebuie să poată drege o comandă marcată din greșeală — altfel biroul se
+ *     încuie pe dinafară cu propria regulă, exact în ziua în care a pornit-o.
+ *     `GP_ADMIN_ROLES`, nu un `in_array` scris aici: o listă a doua s-ar fi
+ *     despărțit de prima la primul rol nou.
+ *
+ * 2 · FĂRĂ MIGRAREA 023 POATE ORICINE. Paza cade DESCHIS, dinadins. Între
+ *     urcarea codului și rularea migrării — minute sau zile, migrarea se dă de
+ *     mână — coloana nu există. O poartă care se închide singură în fereastra
+ *     aia ar opri livrările întregii case pentru o regulă care abia se naște;
+ *     deschisă, se poartă exact ca ieri. Același tipar ca
+ *     `lab_production_suportata()` și `user_zone_supported()`: paguba de care
+ *     fugim e mai mică decât paguba de a fugi de ea.
+ *
+ * 3 · RESTUL: ce scrie pe cont. Citire după cheia primară, nu o coloană în
+ *     plus în `current_user()` — interogarea aceea are listă fixă și e pe
+ *     drumul FIECĂREI cereri, deci o coloană adăugată acolo ar cădea cu 1054
+ *     pe o instalare nemigrată, adică ar opri toată aplicația. Aceeași alegere
+ *     ca la `user_zone()`, `referral_public()` și `user_origin_public()`.
+ *
+ * Primește ori rândul contului, ori id-ul lui. ATENȚIE, NU E ACEEAȘI FORMĂ CA
+ * `e_admin()`: acela primește rândul ori NUMELE ROLULUI, fiindcă atât îi
+ * trebuie. Aici trebuie un id, ca să se poată citi coloana — un rol dat ca text
+ * ar cădea pe `(int) 'angajat'`, adică 0, adică „nu poate", și ar refuza tăcut
+ * un om care are dreptul. Deci se cheamă cu RÂNDUL contului peste tot unde el
+ * există, și cu id-ul numai acolo unde nu există.
+ */
+function poate_confirma_livrarea($cine): bool
+{
+    if (e_admin($cine)) {
+        return true;
+    }
+    if (!livrare_semn_suportat()) {
+        return true;
+    }
+    $id = is_array($cine) ? (int) ($cine['id'] ?? 0) : (int) $cine;
+    if ($id <= 0) {
+        return false;
+    }
+    return (int) (scalar('SELECT poate_confirma_livrarea FROM users WHERE id = ?', [$id]) ?? 0) === 1;
+}

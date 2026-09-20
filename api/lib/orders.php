@@ -1311,6 +1311,12 @@ function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor 
             'timed'        => (bool) $o['timed'],
             'total'        => (float) $o['total'],
             'routeSeq'     => isset($o['route_seq']) && $o['route_seq'] !== null ? (int) $o['route_seq'] : null,
+            // Ordinea de lucru a laboratorului (migrarea 023). Soră cu
+            // `routeSeq` de deasupra, și scrisă la fel: `isset` pentru rândurile
+            // venite din interogări cu listă fixă de coloane, `null` pentru
+            // comenzile nearanjate ȘI pentru bazele fără migrare. În amândouă
+            // cazurile panoul cade pe ordinea numerelor, adică purtarea de azi.
+            'labSeq'       => isset($o['lab_seq']) && $o['lab_seq'] !== null ? (int) $o['lab_seq'] : null,
             'stockSynced'  => !empty($o['stock_synced']),
             'variant'      => $o['variant'] ?? 'copt',
             'requestId'    => $o['request_id'] === null ? null : (int) $o['request_id'],

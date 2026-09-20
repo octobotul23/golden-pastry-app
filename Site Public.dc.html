@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <meta name="ext-resource-dependency" content=".image-slots.state.json" data-resource-id="slots" />
 <meta name="ext-resource-dependency" content="assets/img/trial-pack.jpg" data-resource-id="trialpack" />
+<meta name="ext-resource-dependency" content="assets/img/harta-depozit.webp" data-resource-id="hartadepozit" />
 <meta name="ext-resource-dependency" content="products/prod-1.jpg" data-resource-id="prod1" />
 <meta name="ext-resource-dependency" content="products/prod-2.jpg" data-resource-id="prod2" />
 <meta name="ext-resource-dependency" content="products/prod-3.jpg" data-resource-id="prod3" />
@@ -54,7 +55,46 @@
     a { color: var(--h-accent-fg); text-decoration-color: color-mix(in srgb, var(--h-accent) 40%, transparent); text-underline-offset: 3px; }
     a:hover { color: var(--h-accent-hover); text-decoration-color: currentColor; }
     @keyframes pf-pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
-    @keyframes gp-tier-spus { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+    /* Vorba urcă de JOS, nu de sus. Cu `translateY(-4px)` pornea cu 4 pixeli
+       mai sus decât locul ei, adică peste spațiul de 6,4px dintre ea și
+       semne: în primele cadre stătea la 2-3 pixeli sub iconuri și părea că
+       trece peste ele. Măsurat la 390: cartonaș de 82x29, sus la 139, pastila
+       se termina la 136. De aici „dreptunghiul care trece peste semne". */
+    @keyframes gp-tier-spus { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+    /* BARA DE FINALIZARE, MĂSURATĂ ÎNTR-UN SINGUR LOC.
+
+       Până azi înălțimea ei era scrisă de două ori: o dată din marginile și
+       rândurile barei înseși, și încă o dată, cu mâna, într-un distanțier de
+       sub listă — `height:5.5rem`, la 280 de rânduri depărtare. Bara măsura
+       94 de pixeli, distanțierul 88: ultimul rând al catalogului stătea de-a
+       pururi cu șase pixeli sub bară, iar nicio regulă nu simțea nimic,
+       fiindcă nimic nu măsura bara. E familia „liste scrise cu mâna" din
+       runda 2.1.1, numai că aici lista avea două rânduri.
+
+       Acum e un singur set de numere, iar suma o face browserul. Cine
+       strânge bara mută distanțierul odată cu ea, fără să știe că există.
+
+       `--gp-bara-rand` e ținta de deget a casei și trebuie să rămână cât
+       `min-height`-ul butoanelor din bară; o regulă le citește pe amândouă
+       și se înroșește dacă se despart. */
+    :root {
+      --gp-bara-margine: 0.45rem;
+      --gp-bara-rand: 2.75rem;
+      --gp-bara-golul: 0.1rem;
+      --gp-bara-litera: 0.6875rem;
+      --gp-bara-linie: 1.25;
+      /* Dunga de sus intră și ea în sumă. Fără ea, măsurat: bara 74,72 px,
+         distanțierul 73,75 — adică exact un pixel de deosebire, întors pe ușa
+         din dos tocmai când cele două tocmai fuseseră unite. Nicio regulă
+         statică n-a simțit-o: ele cer ca suma să pomenească bucățile barei,
+         iar dunga nu era încă una din ele. A prins-o măsurătoarea pe ecran. */
+      --gp-bara-dunga: 1px;
+      --gp-bara-inalt: calc(var(--gp-bara-rand) + var(--gp-bara-golul)
+        + var(--gp-bara-litera) * var(--gp-bara-linie)
+        + var(--gp-bara-margine) * 2 + var(--gp-bara-dunga)
+        + env(safe-area-inset-bottom));
+    }
   </style>
 </helmet>
 
@@ -584,7 +624,12 @@
           </sc-for>
 
           <sc-if value="{{ mobBar }}">
-            <div style="height:5.5rem"></div>
+            <!-- Locul de sub listă, cât să nu stea bara peste ultimul rând.
+                 Înălțimea vine din ACELEAȘI numere ca bara (`--gp-bara-*`,
+                 scrise în `<style>`), nu dintr-o cifră scrisă aici: până azi
+                 scria `5.5rem` = 88 px sub o bară de 94, deci ultimul produs
+                 din catalog stătea de-a pururi cu șase pixeli sub ea. -->
+            <div style="height:var(--gp-bara-inalt)"></div>
           </sc-if>
           <div class="h-alert h-alert--accent">
             <span class="h-alert__icon">
@@ -848,7 +893,15 @@
        de telefon se termină la 78, iar pastila începe la 84. -->
   <sc-if value="{{ tierPlutitor }}">
     <div style="{{ pastilaPoz }}">
-      <div role="group" aria-label="{{ catSwitchLabel }}" style="display:flex;gap:0.2rem;padding:0.2rem;background:var(--h-bg-sunk);border:1px solid var(--h-line);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,0.28);pointer-events:auto">
+      <div role="group" aria-label="{{ catSwitchLabel }}" style="position:relative;display:flex;gap:0.2rem;padding:0.2rem;background:var(--h-bg-sunk);border:1px solid var(--h-line);border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,0.28);pointer-events:auto">
+        <!-- JETONUL CARE ALUNECĂ. Fundalul stării apăsate nu mai stă pe buton,
+             ci pe peticul ăsta, care se mută dintr-o parte în alta cu
+             `transform`. Așa comutarea se VEDE că e o mutare, nu o clipire a
+             două fundaluri deosebite — asta a cerut patronul.
+             `aria-hidden`: e o podoabă. Starea o spune `aria-pressed` de pe
+             butoane, iar mișcarea o taie `prefers-reduced-motion` din sistemul
+             de desen (hearth.css:636), fără să scriem nimic aici. -->
+        <span aria-hidden="true" style="{{ tierJeton }}"></span>
         <button type="button" aria-pressed="{{ isFrozen }}" aria-label="{{ tabFrozen }}" title="{{ tabFrozen }}" onClick="{{ setFrozen }}" style="{{ frozenPastila }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><g data-semn="brate" stroke="#5FC2EC" stroke-width="3.2"><path d="M12 3v18M19.36 7.75L4.64 16.25M19.36 16.25L4.64 7.75"></path><path d="M12 6.3L14.2 4.6M12 6.3L9.8 4.6M16.68 9.15L19.4 10.1M16.68 9.15L17 6.4M16.68 14.85L17 17.6M16.68 14.85L19.4 13.9M12 17.7L9.8 19.4M12 17.7L14.2 19.4M7.32 14.85L4.6 13.9M7.32 14.85L7 17.6M7.32 9.15L7 6.4M7.32 9.15L4.6 10.1"></path></g><g data-semn="sclipire" stroke="#DCF2FD" stroke-width="1.6"><path d="M12 3v18M19.36 7.75L4.64 16.25M19.36 16.25L4.64 7.75"></path><path d="M12 6.3L14.2 4.6M12 6.3L9.8 4.6M16.68 9.15L19.4 10.1M16.68 9.15L17 6.4M16.68 14.85L17 17.6M16.68 14.85L19.4 13.9M12 17.7L9.8 19.4M12 17.7L14.2 19.4M7.32 14.85L4.6 13.9M7.32 14.85L7 17.6M7.32 9.15L7 6.4M7.32 9.15L4.6 10.1"></path></g><path data-semn="miez" d="M12 9.4L14.25 10.7L14.25 13.3L12 14.6L9.75 13.3L9.75 10.7Z" fill="#EAF8FE" stroke="#5FC2EC" stroke-width="1.1"></path></svg></button>
         <button type="button" aria-pressed="{{ isBaked }}" aria-label="{{ tabBaked }}" title="{{ tabBaked }}" onClick="{{ setBaked }}" style="{{ bakedPastila }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><g transform="rotate(-12 12 7.4)"><path data-semn="cupola" d="M5.2 9.5a6.8 6.8 0 0 1 13.6 0Z" fill="#F0A93F"></path><path data-semn="buza" d="M3.6 11.2h16.8" stroke="#F0A93F" stroke-width="2.1"></path><circle data-semn="manerul" cx="12" cy="1.9" r="1.4" fill="#F0A93F"></circle><path data-semn="gatul" d="M12 3.5V2.4" stroke="#F0A93F" stroke-width="1.9"></path></g><g data-semn="abur" stroke="#FFDD9B" stroke-width="1.7"><path d="M8.6 18c1-1.15-1-2.3 0-3.45M12 18c1-1.15-1-2.3 0-3.45M15.4 18c1-1.15-1-2.3 0-3.45"></path></g><path data-semn="tava" d="M3.1 19.5h17.8c0 1.55-1.25 2.8-2.8 2.8H5.9c-1.55 0-2.8-1.25-2.8-2.8Z" fill="#F0A93F"></path></svg></button>
       </div>
@@ -862,7 +915,24 @@
   </sc-if>
 
   <sc-if value="{{ mobBar }}">
-    <div style="position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;flex-wrap:wrap;align-items:center;column-gap:0.75rem;row-gap:0;padding:0.7rem clamp(1rem,4vw,1.5rem) calc(0.7rem + env(safe-area-inset-bottom));background:var(--h-bg-raised);border-top:1px solid var(--h-line);box-shadow:0 -8px 24px rgba(0,0,0,0.18)">
+    <div style="position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;flex-wrap:wrap;align-items:center;column-gap:0.75rem;row-gap:0;padding:var(--gp-bara-margine) clamp(1rem,4vw,1.5rem) calc(var(--gp-bara-margine) + env(safe-area-inset-bottom));background:var(--h-bg-raised);border-top:var(--gp-bara-dunga) solid var(--h-line);box-shadow:0 -8px 24px rgba(0,0,0,0.18)">
+      <!-- FIRUL PRAGULUI, lipit de muchia de sus a barei.
+
+           Dunga stătea până azi pe rândul de jos, cu `margin:0.3rem 0 0` și
+           `height:4px` — nouă pixeli dintr-un rând al ei, ca să arate un
+           lucru care se citește la fel de bine dintr-un fir. Mutată pe muchie
+           nu mai mănâncă niciunul ȘI se vede mai bine: ține toată lățimea
+           ecranului, nu lățimea dintre marginile barei.
+
+           Umplutura e ACEEAȘI socoteală ca în coșul de pe calculator
+           (`minBar`), ca să nu ajungă două adevăruri despre același prag.
+
+           `position:absolute` se agață de bară fiindcă bara e `fixed`, iar o
+           poziționare fixată e și ea bloc de sprijin pentru ce e absolut
+           înăuntru. -->
+      <div style="position:absolute;left:0;right:0;top:0;height:3px;background:var(--h-line);overflow:hidden">
+        <div style="{{ minBar }}"></div>
+      </div>
       <!-- Suma E butonul coșului, dar arăta ca un text oarecare: nimeni
            n-avea de unde ști că se apasă. Un coș înaintea ei o arată drept
            buton, iar săgeata de la capăt spune și încotro se desface — în
@@ -890,19 +960,21 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
       </a>
       <button type="button" class="h-btn h-btn--primary" style="flex:none;min-height:2.75rem;padding-inline:1rem" onClick="{{ deschideFinal }}">{{ ctaBarGo }}</button>
-      <!-- Dunga și cuvintele ei stau pe un rând al lor, întins cât toată bara
-           (`flex:1 0 100%`), nu în coloana sumei. În coloana sumei încăpeau
-           vreo 150 px, iar propoziția cerută — „Comandă minimă 700 RON · încă
-           529,00 RON" — se tăia la „înc…", adică tocmai cifra pentru care s-a
-           cerut rândul. Bara se împachetează (`flex-wrap:wrap`), iar golul
-           dintre rânduri e zero (`row-gap:0`), fiindcă distanța de deasupra
-           dungii o dă chiar marginea ei de 0.3rem. -->
-      <div style="flex:1 0 100%;min-width:0">
-        <div style="margin:0.3rem 0 0;height:4px;border-radius:999px;background:var(--h-line);overflow:hidden">
-          <div style="{{ minBar }}"></div>
-        </div>
-        <p style="margin:0.26rem 0 0;font-size:0.6875rem;line-height:1.25;color:var(--h-fg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ barMin }}</p>
-      </div>
+      <!-- Cuvintele pragului stau pe un rând al lor, întins cât toată bara
+           (`flex:1 0 100%`), nu în coloana sumei. NU se mută înapoi lângă
+           sumă ca să se strângă bara: s-a încercat, și e o poză, nu o
+           socoteală. În coloana sumei — care împarte bara cu iconul de
+           WhatsApp și cu „Finalizare" — încăpeau vreo 150 px pe 375, iar
+           propoziția ieșea „Comandă minimă 700 RON · înc…", tăiată exact la
+           cifra pentru care s-a cerut rândul.
+
+           Ce s-a strâns e altceva: dunga a plecat de deasupra lui, pe muchia
+           barei, unde nu costă niciun pixel. Rândul a rămas întreg.
+
+           Bara se împachetează (`flex-wrap:wrap`), iar golul dintre rânduri e
+           zero (`row-gap:0`): distanța o dă chiar marginea de sus a rândului,
+           care e și ea unul din numerele barei. -->
+      <p style="flex:1 0 100%;min-width:0;margin:var(--gp-bara-golul) 0 0;font-size:var(--gp-bara-litera);line-height:var(--gp-bara-linie);color:var(--h-fg-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ barMin }}</p>
     </div>
   </sc-if>
 
@@ -1125,6 +1197,44 @@
                 </sc-for>
               </div>
             </sc-if>
+            <!-- HARTA DEPOZITULUI, CA POZĂ, NU CA HARTĂ VIE.
+                 Distribuția are un `<iframe>` către openstreetmap.org (`:1025`),
+                 și acolo e drept: omul se plimbă pe hartă, deci merită cererea
+                 către alt site. Aici nu se plimbă nimeni — vrea să vadă unde
+                 suntem și să apese. Deci o poză din pachet: deschizând
+                 Contactul nu pleacă nicio cerere nicăieri, nu e nimic de cerut
+                 voie, și nu se încarcă un `<iframe>` întreg pentru o privire.
+
+                 SEMNĂTURA E ARSĂ ÎN POZĂ, nu scrisă dedesubt. Licența
+                 OpenStreetMap o cere, iar poza pleacă singură prin lume — în
+                 pachet, în cache, salvată de cineva de pe telefon. Un rând de
+                 dedesubt se pierde la primul drum; unul din pixeli, nu.
+
+                 POZA E O COPIE ÎNGHEȚATĂ a unui număr care trăiește în Setări
+                 (`hq_lat`/`hq_lng`, `sql/002_seed.sql:97-98`). Mutându-se
+                 depozitul, poza ar minti fără să scoată un sunet — familia
+                 „liste scrise cu mâna", numai că aici cifra e desenată, deci
+                 nici nu se poate căuta. De-aia punctul desenat stă scris în
+                 `data-harta-punct`, iar o regulă îl pune față în față cu
+                 Setările: mutat acolo, se înroșește aici. Refăcută cu
+                 `node .claude/face-harta-depozit.mjs`. -->
+            <a href="{{ mapUrl }}" target="_blank" rel="noopener" aria-label="{{ hartaAlt }}"
+               style="display:block;margin-top:1.25rem;border-radius:var(--h-radius-lg);overflow:hidden;border:1px solid var(--h-line);box-shadow:var(--h-shadow-1);transition:box-shadow var(--h-dur-base) var(--h-ease-out)"
+               style-hover="box-shadow:var(--h-shadow-2)">
+              <!-- `width`/`height` nu-s de fală: fără ele rândul de sub hartă
+                   sare în jos când poza sosește, chiar pe cartonașul unde stă
+                   legătura pe care omul tocmai voia s-o apese. -->
+              <img src="{{ hartaPoza }}" alt="{{ hartaAlt }}" width="800" height="400"
+                   loading="lazy" decoding="async" data-harta-punct="44.39235,26.12385"
+                   style="display:block;width:100%;height:auto">
+            </a>
+            <!-- SEMNĂTURA, A DOUA OARĂ, ȘI NU DE PRISOS. Cea arsă în poză e
+                 scrisă la 11px pe o poză de 800; în cartonaș poza intră pe
+                 291px, deci scrisul ei ajunge pe la 4px — adică o dâră, nu o
+                 semnătură. Licența cere să se poată CITI. Deci cea din pixeli
+                 rămâne pentru când fișierul pleacă singur prin lume, iar asta
+                 de aici e cea pe care o citește omul. -->
+            <p class="h-caption" style="margin:0.6rem 0 0">© <a class="h-link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</p>
             <a class="h-btn h-btn--ghost h-btn--sm" style="margin-top:1.25rem;padding-inline:0" href="{{ mapUrl }}" target="_blank" rel="noopener">{{ ctaOpenMaps }} →</a>
           </div>
           </sc-if>
@@ -2853,10 +2963,10 @@ class Component extends DCLogic {
         : 'background:transparent;color:var(--h-fg-muted)');
 
     // Butonul rotund al comutatorului plutitor. Desenul e mic (20px), dar
-    // ținta rămâne cât degetul: 2.75rem pe amândouă laturile. Aprinsă și
-    // stinsă vorbesc aceleași două culori ca butoanele cu cuvinte de mai sus;
-    // pastila stă pe `--h-bg-sunk`, deci cea aprinsă, pe `--h-bg-raised`, se
-    // vede ridicată din ea.
+    // ținta rămâne cât degetul: 2.75rem pe amândouă laturile. Fundalul stării
+    // apăsate NU mai stă aici: pastila stă pe `--h-bg-sunk`, iar ce se vede
+    // ridicat din ea e jetonul (`tierJeton`), care alunecă de sub un buton sub
+    // celălalt. Butonul însuși e o fereastră: transparent în amândouă stările.
     // Numele celor două variante, scris o singură dată: îl poartă butoanele
     // cu cuvinte de pe calculator, numele spuse ale celor două desene din
     // pastilă și vorba de sub ea. Trei copii ale acelorași două perechi de
@@ -2878,12 +2988,21 @@ class Component extends DCLogic {
     // amândouă semnele ar arde la fel de tare și butonul apăsat n-ar mai avea
     // decât fundalul lui ca să se deosebească — măsurat pe 390: fundalul
     // singur e #2E2119 peste #130E0B, adică prea puțin ca să se vadă.
+    // FUNDALUL A PLECAT DE PE BUTON pe jetonul care alunecă (`tierJeton`).
+    // Butonul rămâne cu `background:transparent` SCRIS PE EL, în amândouă
+    // stările: `hearth.css:494` reface pentru `<button>` numai `font` și
+    // `color`, nu și `background`/`border`/`appearance`, deci un buton fără
+    // fundal scris ar arăta fundalul cenușiu al browserului — un dreptunghi
+    // deschis, cu colțuri drepte, exact peste semne.
+    //
+    // `position:relative;z-index:1`: altfel jetonul, care e `absolute`, ar
+    // trece peste desene în loc să stea sub ele.
     const tierPastila = (on) =>
-      'display:inline-flex;align-items:center;justify-content:center;min-width:2.75rem;min-height:2.75rem;padding:0;border:0;border-radius:999px;cursor:pointer;'
-      + 'transition:background-color var(--h-dur-base) var(--h-ease-out),color var(--h-dur-base) var(--h-ease-out),opacity var(--h-dur-base) var(--h-ease-out);'
+      'position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;min-width:2.75rem;min-height:2.75rem;padding:0;border:0;border-radius:999px;cursor:pointer;background:transparent;'
+      + 'transition:color var(--h-dur-base) var(--h-ease-out),opacity var(--h-dur-base) var(--h-ease-out);'
       + (on
-        ? 'background:var(--h-bg-raised);color:var(--h-fg);box-shadow:var(--h-shadow-1);opacity:1'
-        : 'background:transparent;color:var(--h-fg-muted);opacity:0.55');
+        ? 'color:var(--h-fg);opacity:1'
+        : 'color:var(--h-fg-muted);opacity:0.55');
 
     // [grupa, id, numeRO, numeEN, gramaj, prețHoReCa, prețRaft, descRO, descEN, noutate, poză]
     // Vine din baza de date, prin pullCatalog(). Era scris aici, ca listă
@@ -4199,17 +4318,35 @@ class Component extends DCLogic {
       // pastila începe la 84 și rămâne dedesubt, nu peste el.
       // `align-items:center` în loc de `flex-end`: lămurirea de după apăsare
       // stătea lipită de marginea din dreapta fiindcă acolo stătea și pastila.
-      pastilaPoz: 'position:fixed;top:calc(5.25rem + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:101;display:flex;flex-direction:column;align-items:center;gap:0.4rem;pointer-events:none',
+      // `gap` a crescut de la 0.4rem: vorba stătea la 3 pixeli sub semne
+      // (măsurat la 390 — pastila se termina la 136, cartonașul începea la
+      // 139) și se citea ca o suprafață lipită de ele.
+      pastilaPoz: 'position:fixed;top:calc(5.25rem + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:101;display:flex;flex-direction:column;align-items:center;gap:0.55rem;pointer-events:none',
+      // Jetonul se mută cu lățimea unui buton plus spațiul dintre ele. Cele
+      // două butoane au amândouă `min-width:2.75rem`, iar desenul dinăuntru
+      // are 20px, deci lățimea lor E 2.75rem — măsurat: pastila iese 100px,
+      // adică 2x44 + 3.2 spațiu + 6.4 margini + 2 dungi.
+      tierJeton: 'position:absolute;top:0.2rem;left:0.2rem;width:2.75rem;height:2.75rem;border-radius:999px;'
+        + 'background:var(--h-bg-raised);box-shadow:var(--h-shadow-1);pointer-events:none;'
+        + 'transition:transform var(--h-dur-slow) var(--h-ease-spring);'
+        + 'transform:translateX(' + (tier === 'baked' ? 'calc(2.75rem + 0.2rem)' : '0px') + ')',
       setFrozen: () => this.treciLa('frozen'),
       setBaked: () => this.treciLa('baked'),
       areTierSpus: !!this.state.tierSpus,
       tierSpusText: this.state.tierSpus ? numeTier(this.state.tierSpus) : '',
-      // Culorile pe dos față de pagină: așa se citește dintr-o ochire că e o
-      // vorbă de o clipă, nu o parte din ecran. Merge și pe alb, și pe negru,
-      // fiindcă amândouă semnele se întorc odată cu tema.
+      // ÎMBRĂCATĂ PE DOS FAȚĂ DE CUM ERA. Avea `background:var(--h-fg)`, iar
+      // pagina forțează tema întunecată, unde `--h-fg` e #F6EDE1 — adică
+      // aproape alb. Măsurat la 390: un dreptunghi alb de 82x29 care apărea la
+      // 3 pixeli sub semne, stătea 1500 ms și pleca. Era singurul fundal alb
+      // din toată pagina, și exact ce a reclamat patronul.
+      //
+      // Acum poartă hainele casei: fundal ridicat, dungă subțire, scrisul în
+      // culoarea paginii. Se citește tot ca o vorbă de o clipă — din umbră și
+      // din dungă —, dar nu mai e o pată albă peste catalog.
       tierSpusStil: 'display:inline-block;padding:0.3rem 0.8rem;border-radius:999px;'
-        + 'background:var(--h-fg);color:var(--h-bg-page);font-size:0.75rem;font-weight:700;'
-        + 'white-space:nowrap;box-shadow:var(--h-shadow-1);animation:gp-tier-spus 0.16s var(--h-ease-out)',
+        + 'background:var(--h-bg-raised);color:var(--h-fg);border:1px solid var(--h-line);'
+        + 'font-size:0.75rem;font-weight:700;'
+        + 'white-space:nowrap;box-shadow:var(--h-shadow-2);animation:gp-tier-spus var(--h-dur-base) var(--h-ease-out)',
       tierNote: tier === 'frozen'
         ? t('Congelate imediat după producție și livrate în lanț frigorific. Le coci tu, în locație, pe măsură ce vinzi.', 'Frozen right after production and delivered in an unbroken cold chain. You bake them on site, as you sell.')
         : t('Coapte în laboratorul nostru și livrate zilnic, gata de vitrină. Fără cuptor și fără pregătire la tine.', 'Baked in our own kitchen and delivered daily, ready for the counter. No oven, no prep on your side.'),
@@ -4275,6 +4412,14 @@ class Component extends DCLogic {
       addrCity: t(orasSiSector, orasSiSectorEn),
       addrFull: ro ? contact.addressFull : contact.addressFullEn,
       mapUrl: contact.mapUrl,
+      // Poza hărții din cartonașul „Depozit". Trece prin `res()` ca orice
+      // altă resursă a paginii, deci constructorul o poate înlocui; întoarcerea
+      // de siguranță e chiar drumul din pachet.
+      hartaPoza: res('hartadepozit', 'assets/img/harta-depozit.webp'),
+      // Scrisul pentru cine n-o vede. Nu „hartă" — asta se vede din poză. Ce
+      // nu se vede e CE arată harta și CE se întâmplă dacă o apeși.
+      hartaAlt: t('Harta depozitului, în incinta ICTCM de lângă Piața Sudului. Se deschide în Google Maps.',
+                  'Map of the warehouse, in the ICTCM compound by Piața Sudului. Opens in Google Maps.'),
       addrHint: t('Incinta ICTCM · vis-à-vis de metrou Piața Sudului', 'ICTCM compound · opposite Piața Sudului metro station'),
       emailMeta: t('Răspundem în aceeași zi lucrătoare', 'We reply the same working day'),
       phoneMeta: t('În program', 'During working hours'),
