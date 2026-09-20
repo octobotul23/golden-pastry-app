@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**407 de defecte confirmate** — 10 critice, 117 grave, 185 medii, 95 mici.
-**397 reparate**, 10 rămase.
+**411 de defecte confirmate** — 10 critice, 118 grave, 187 medii, 96 mici.
+**401 reparate**, 10 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-199 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+203 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -29,13 +29,13 @@ Aceeași listă, cu filtre și căutare:
 | Gravitate | Reparate | Rămase | Total |
 |---|---|---|---|
 | Critice | 10 | 0 | 10 |
-| Grave | 115 | 2 | 117 |
-| Medii | 183 | 2 | 185 |
-| Mici | 89 | 6 | 95 |
+| Grave | 116 | 2 | 118 |
+| Medii | 185 | 2 | 187 |
+| Mici | 90 | 6 | 96 |
 
 ---
 
-## Ce e reparat — 397
+## Ce e reparat — 401
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -459,6 +459,10 @@ reparația la loc și văzând-o picând.
 - [x] **Laboratorul poate trece comanda la „Predată", adică poate spune în locul șoferului că marfa a ajuns la client — iar serverul nu-l oprește, fiindcă n-are nicio regulă de trecere și niciun drept pe etapă**
   `Panou Laborator.dc.html:1760` · *grav*
   Reparat în două straturi, fiindcă unul singur n-ar fi ținut: contul `angajat` are ȘI panoul Laborator, ȘI panoul Rută. **Pe server**, `poarta_etapei_finale()` (api/lib/auth.php) refuză etapa finală cu `403` și un cod al ei, `delivery_denied` — NU cu `409 status_changed`, ale cărui două mesaje sunt cerute literă cu literă de `.claude/check-php.mjs`: un refuz de drept îmbrăcat în el ar fi mințit. Semnul stă pe CONT (migrarea 023, `poate_confirma_livrarea()`), se naște închis pentru toți, iar administratorul și fondatorul îl au din ROL, deci biroul nu se poate încuia pe dinafară. Pe o bază fără migrarea 023 paza cade DESCHIS. **În pagini**: „Panou Laborator" își socotește plafonul din `gp.labCeiling()` (adus prin `/lists`, `status_lab_ceiling()`), deci ultima etapă pe care o poate pune e cea dinaintea celei finale, luată din Setări și niciodată scrisă în cod. Butonul citește „Predată curierului" și se stinge cu lămurirea „Lotul e gata și așteaptă șoferul. «Predată» o pune el, de pe telefonul lui, când marfa ajunge la client." — scrisă VIZIBIL în foaia de detaliu, nu numai în `title`, fiindcă pe tabletă nu există „mausul deasupra". În „Ruta Șofer", „Marchează livrat" se stinge pentru contul fără semn, cu leacul scris sub el; „Anulează livrarea" rămâne aprinsă dinadins, fiindcă e singura cale de întors dintr-o apăsare greșită. În „Conturi", o bifă pe cont, cu trei lămuriri după caz. **Capcana tăcută a leacului, închisă:** ieșirea din ciclu se socotește O SINGURĂ dată, iar `canBack` se sprijină pe ea — măsurat pe ecran, cardul ajuns la plafon păstrează „Înapoi la: În cuptor". **Și un al treilea defect, găsit abia măsurând pe ecran:** semnul nu ajungea deloc în pagini. Serverul îl pune la RĂDĂCINA lui `/auth/me` (fiindcă `current_user()` nu citește coloana, iar rolul îl poate da cu coloana goală), iar `gp.auth()` îl citește de pe UTILIZATOR; `gp.me()`, care mută câmpurile de la rădăcină pe utilizator, nu-l muta. Deci butonul rămânea aprins pe orice cont și plafonul laboratorului nu se aplica niciodată, cu toate cele 1070 de probe statice verzi — `check-panouri.mjs` îi dă lui `markDone` un semn fabricat de el. A doua oară pe aceeași țeavă (întâia: `referralCode`). Lipirea e scrisă acum în `shared/gp-api.js`, iar proba nouă din `.claude/test-roluri.mjs` (grupul B2-bis) cheamă `gp.me()` ADEVĂRAT, pe HTTP adevărat, în loc să reproducă lipirea cu mâna — singurul fel în care o lipire care LIPSEȘTE se poate vedea.
+
+- [x] **„Total de făcut" din Laborator cerea bucăți și pentru comenzile anulate: două socoteli pentru aceeași zi, iar caseta de raportat nu putea mișca NICIODATĂ cifra de lângă ea**
+  `Panou Laborator.dc.html:2319` · *grav*
+  Regula s-a mutat într-un singur loc, `gp.intraLaProductie(st)` din `shared/gp-api.js`, scrisă după purtarea serverului (inclusiv „Setare goală înseamnă că etapa asta nu există", adică `$anulata !== ''`). Pagina o cheamă la socotit totaluri; CARDURILE RĂMÂN TOATE, ziua se vede întreagă — se schimbă numai socoteala. Două probe deosebite o țin: `test-productie-imparte` pune față în față cifra cerută de panou cu cea pe care serverul CHIAR a putut-o pune, pe aceeași zi (10 față de 30), iar `check-panouri` scoate socoteala din pagină și o rulează. A doua are și pază de vacuitate: cu predicatul întors la `() => true`, aceeași zi de probă dă 30 — deci se vede că proba chiar deosebește cele două socoteli. Dovedită punând defectul la loc în patru feluri; toate patru s-au înroșit.
 
 - [x] **Redenumirea unei grupe trimite un PATCH la fiecare tastă, iar răspunsurile care se întorc în altă ordine lasă în baza de date un nume trunchiat**
   `Produse.dc.html:490` · *grav*
@@ -1032,6 +1036,14 @@ reparația la loc și văzând-o picând.
   `Depozit.dc.html:972` · *mediu*
   Serverul numără el comenzile de scăzut: `GET /stock/items` trimite `pending` cu `orders` și `pieces` (`api/routes/stock.php:85`), socotit de `stock_de_scazut()` (`api/routes/stock.php:650`) pe toată baza, cu aceeași condiție ca scăderea și cu comenzile fără poziții lăsate deoparte, ca înainte. Depozitul păstrează cifra în `deScazut` (`Depozit.dc.html:742`), iar bannerul și garda din `sync()` (`Depozit.dc.html:978`) se uită numai la ea; lista paginii nu mai aprinde nimic. Intrare citește `total` (`Intrare.dc.html:597`, cardul de la :1038). Administrare mută semnul deasupra filelor (`Administrare Comenzi.dc.html:313`), cu un text adevărat care spune ce cifre sunt tăiate și cere să nu se reordoneze și să nu se optimizeze ruta cât se vede; pe „Cereri de pe site” tace (:2749). Clientul citește `truncated` și scrie „Vezi cele mai noi N comenzi” când lista e tăiată (`Client.dc.html:626`, :1118). „Optimizează ruta” doar avertizează, nu se blochează; nicio migrare. Păzit de regulile noi din cele cinci probe de mai sus; docs/04 și docs/07 spun purtarea nouă.
 
+- [x] **Cele patru cifre din capul Depozitului arătau pe telefon exact ca o bară de filtre, dar nu erau butoane: patru ținte care nu făceau nimic, fără nicio eroare**
+  `Depozit.dc.html:205` · *mediu*
+  Toate patru au devenit `<button type="button">` cu `aria-pressed`, `title` care spune ce face apăsarea, `cursor:pointer` și 44px de apucat pe telefon (ținta hotărâtă în runda 2.1.1). Apasă o dată — vezi numai acelea; apasă din nou — vezi tot. Cele două care numără POZIȚII strâng lista de stoc; cele două care numără MIȘCĂRI deschid „Registru" și-l taie la ziua de azi, pe direcția lor — altfel o pastilă ar fi arătat spre altceva decât numără. Apăsată, pastila stinge și categoria, fiindcă cifra ei se numără pe tot depozitul. Fundalul și marginea sunt scrise chiar pe buton: `hearth.css` reface numai `font` și `color` pentru `<button>`, iar unul fără ele arată dreptunghiul de sistem (cicatricea rundei 2.3.0). Zece stricăciuni dinadins, toate roșii.
+
+- [x] **Capul listei din Depozit își număra singur pozițiile: 128 de rânduri desenate sub un titlu care scria „Tot stocul · 164 poziții"**
+  `Depozit.dc.html:1385` · *mediu*
+  Capul nu mai numără nimic: ia lungimea CHIAR a listei care se desenează (`rows.length` pentru stoc, suma mișcărilor rămase din `logDays` pentru registru). Un filtru nou de mâine intră în ea de la sine. Și numele din stânga spune ce se vede — cu o pastilă apăsată, „Tot stocul · 14 poziții" ar fi fost o propoziție care se contrazice. Proba scoate socoteala din pagină și o rulează ÎNTR-O LUME FĂRĂ `items`: întoarsă la numărătoarea veche, ea crapă — iar o crăpătură e tot un roșu.
+
 - [x] **7.7 spunea „Confirmi.” la anularea din fișă, unde nu se deschide nicio casetă — iar 7.1, în același document, spunea pe bună dreptate altceva**
   `docs/10-trecerea-cu-ochii.md:801` · *mediu*
   „Confirmi.” e scos din amândouă locurile unde 7.7 anula din fișă. În locul lui, pasul spune că merge direct, fără casetă, și trimite la 7.1 pentru regula întreagă: caseta se deschide numai la ieșirea din „Anulată”. [16 septembrie 2026]
@@ -1591,6 +1603,10 @@ reparația la loc și văzând-o picând.
 - [x] **Geamănul englezesc al motivului întorcea literal „Eroare 429.” sub un titlu englezesc**
   `shared/gp-api.js:986` · *mic*
   Fraza fabricată e deosebită de vorbele serverului printr-o singură comparație, iar pe ea geamănul cade pe propoziția englezească de dedesubt. Compromisul rămâne declarat și e acum fixat în amândouă direcțiile: o probă cere ca vorbele serverului să treacă, alta cere ca fraza fabricată să nu treacă. Dovezi roșu/verde: 118 · 1 și 115 · 4 pe codul stricat, 119 · 0 pe cel reparat.
+
+- [x] **Pastila cu versiunea, lipită de fundul sertarului ca să nu cadă sub fald, plutea peste rândurile de meniu: leacul unei runde a ajuns defectul următoarei**
+  `shared/gp-nav.css:310` · *mic*
+  Pastila s-a mutat în CAPUL sertarului, sub „Golden Pastry" și numele paginii, în toate cele 13 șabloane deodată. De acolo se vede la deschidere, la orice rang, fără nicio derulare și fără să acopere nimic — nu fiindcă o ține ceva sus, ci fiindcă de acolo se începe citirea. `sticky`, `bottom` și fundalul au picat. Paza s-a rescris pe FAPT, nu pe forma leacului: nu mai întreabă „are `sticky`?", ci „vine pastila înaintea primului rând de meniu?" — întrebare pusă în toate cele 13, cu pază de la ieșire dacă felia citită n-are niciun rând. Și cere în răspăr ca lipirea să NU se întoarcă. Cinci stricăciuni dinadins, toate roșii, inclusiv mutarea înapoi la coadă în toate 13 deodată — cazul pe care regula care cere sertarele identice nu-l poate vedea.
 
 - [x] **Telefonul e obligatoriu pe server, dar formularul nu-l cere**
   `Site Public.dc.html:796` · *mic*

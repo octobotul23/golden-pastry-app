@@ -307,22 +307,26 @@ gp-versiune {
   -webkit-user-select: text;
 }
 
-/* ÎN SERTAR, PASTILA SE LIPEȘTE DE FUNDUL LUI — nu de coada listei.
-   Măsurat pe pachet, la 390x844: sertarul fondatorului are 14 rânduri și
-   depășește cardul cu 140 px, al administratorului cu 82. Pastila e ULTIMA
-   din listă, deci tocmai ea cădea sub fald, iar cele două ranguri de birou
-   sunt chiar cei care întreabă „ce cod poartă ecranul ăsta?". La angajat
-   (7 rânduri) și la client (4) sertarul nu depășea deloc.
-   Depășirea nu e vina pastilei: fără ea, la administrator erau deja 58 px
-   ascunși. Pastila doar a fost ultima la rând, deci prima pierdută.
-   `sticky` NU SCHIMBĂ NIMIC unde nu e depășire — fără derulare se poartă
-   întocmai ca `static`. Deci leacul atinge numai cazul stricat, și cele
-   patru măsurate curate rămân neatinse.
-   Fundalul e al cardului: fără el, rândurile s-ar vedea prin scris când
-   trec pe dedesubt. */
+/* ÎN SERTAR, PASTILA STĂ ÎN CAP — sub numele casei, nu la coada listei.
+   Aici a fost, o rundă, lipită de FUNDUL foii (`position:sticky; bottom:0`),
+   ca să nu cadă sub fald la rangurile cu multe rânduri. Leacul acela ținea,
+   dar plătea cu ce se vede: lipită de fund, pastila PLUTEȘTE peste rândurile
+   care trec pe dedesubt la derulare, iar patronul a citit-o exact așa — „se
+   suprapune peste meniu". Și avea dreptate: un fundal opac pus peste o listă
+   care se mișcă ARATĂ ca o stricăciune, chiar când e o pază.
+
+   Deci pastila se mută acolo unde nu trebuie păzită de nimic: în capul
+   foii, în aceeași coloană cu „Golden Pastry" și cu numele paginii. Capul e
+   primul lucru din card, deci se vede la deschidere, la ORICE rang, fără
+   nicio derulare — nu fiindcă o ține ceva sus, ci fiindcă de acolo se începe.
+   Depășirea de la fondator (140 px, măsurată la 390x844) rămâne ce era: o
+   listă mai lungă decât ecranul, care se derulează. Numai că acum ce cade
+   sub fald e coada meniului, nu ștampila codului.
+
+   Nu mai trebuie nici `background`: nimic nu trece pe sub ea. Rămâne o
+   singură haină de potrivit — marginea din stânga. Subsolul barei laterale
+   are 2px de împins, capul foii n-are: aici pastila se aliniază cu titlul
+   și cu numele paginii, altfel cele trei rânduri ies în trepte. */
 .gp-navsheet gp-versiune {
-  position: sticky;
-  bottom: 0;
-  padding: 6px 2px 6px;
-  background: var(--h-cocoa-800);
+  padding: 2px 0 0;
 }

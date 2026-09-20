@@ -257,6 +257,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <div class="gp-navid">
 <span class="gp-navtitle">Golden Pastry</span>
 <span class="gp-navsub">{{ navHere }}</span>
+<gp-versiune></gp-versiune>
 </div>
 <button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
 </div>
@@ -279,7 +280,6 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
 </sc-if>
 <a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
-<gp-versiune></gp-versiune>
 </div>
 </div>
 </sc-if>
@@ -2316,8 +2316,16 @@ class Component extends DCLogic {
     // întâmplă când produsul se redenumește la mijlocul zilei — ar fi apărut
     // aici ca două rânduri, fiecare cu caseta lui, iar serverul le-ar fi
     // împărțit ca unul singur: a doua apăsare ar fi umplut aceleași comenzi.
+    // ȘI NUMAI COMENZILE CARE MAI AU DE LUCRU (runda 2.3.1).
+    //
+    // CARDURILE RĂMÂN TOATE — ziua se vede întreagă, cu anulate cu tot. Se
+    // schimbă numai SOCOTEALA: totalurile merg pe aceeași regulă ca împărțirea
+    // de pe server (`gp.intraLaProductie`), fiindcă până azi erau două
+    // socoteli pentru aceeași zi și nu se potriveau. Povestea întreagă, cu
+    // măsurătoarea, stă lângă regulă în `shared/gp-api.js`.
+    const deFacut = flat.filter(o => gp.intraLaProductie(o.status));
     const tot = {};
-    flat.forEach(ord => (ord.items || []).forEach(i => {
+    deFacut.forEach(ord => (ord.items || []).forEach(i => {
       const pid = Number(i.productId) || 0;
       const k = pid ? "p" + pid : "n" + i.n;
       if (!tot[k]) tot[k] = { k: k, n: i.n, pid: pid, q: 0, f: 0 };

@@ -352,7 +352,7 @@
    * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
    * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
    */
-  const VERSIUNE = '2.3.0';
+  const VERSIUNE = '2.3.1';
 
   /**
    * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo
@@ -1967,6 +1967,39 @@
      * departe în „Anulată” — adică apăsarea butonului ar fi anulat comanda.
      */
     flow: () => gp.__L.statuses.filter((x) => x !== gp.__L.cancelled),
+    /**
+     * Mai are comanda asta de lucru? — regula după care se numără ziua.
+     *
+     * DE CE STĂ AICI, ȘI NU ÎN PAGINĂ. Serverul o avea deja scrisă, în
+     * `route_lab_productie_imparte()` (`api/routes/lab.php`): împărțirea sare
+     * peste comenzile anulate și peste cele ajunse la etapa finală, fiindcă o
+     * comandă plecată la client n-are ce primi. Panoul „Total de făcut” le
+     * număra însă pe TOATE comenzile zilei, fără nicio privire la stare. Două
+     * socoteli pentru aceeași zi, și nu se potriveau:
+     *
+     *   · panoul cerea laboratorului să facă marfă pentru comenzi ANULATE.
+     *     Măsurat pe 18 septembrie 2026, în baza de lucru: trei comenzi
+     *     anulate, iar panoul cerea șase ștrudele pe care nu-i mai aștepta
+     *     nimeni. Paguba nu e o cifră urâtă, e făină arsă degeaba;
+     *   · iar caseta „+ câte” de lângă cifră n-o putea mișca NICIODATĂ. Ce
+     *     tastai intra întreg în prisos, scris cu `order_id = NULL`, deci
+     *     niciun `done_qty` nu se schimba și dunga rămânea la `0 / 15`. Omul
+     *     care apasă de trei ori și nu se întâmplă nimic nu raportează un
+     *     defect: se lasă de raportat producția, și atunci nu mai știe nimeni
+     *     ce s-a făcut în tură.
+     *
+     * Gol în Setări înseamnă „nu există etapa asta”, la fel ca pe server
+     * (`$anulata !== ''`): atunci nu se sare peste nimic.
+     *
+     * Păzită de `.claude/test-productie-imparte.mjs`, care o pune față în față
+     * cu purtarea adevărată a serverului — stare cu stare, nu pe numele
+     * fișierului.
+     */
+    intraLaProductie: (st) => {
+      const anulata = gp.__L.cancelled;
+      const finala  = gp.__L.done;
+      return !((anulata && st === anulata) || (finala && st === finala));
+    },
 
     /**
      * Până unde poate duce LABORATORUL o comandă: etapa dinaintea celei finale.

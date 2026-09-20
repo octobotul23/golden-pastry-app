@@ -5,12 +5,12 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **șaizeci și șase de minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele nouă plimbări stă singură și își spune la început cât
+Durează **șaizeci și nouă de minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele zece plimbări stă singură și își spune la început cât
 ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale bucăților care au
 minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o plimbare, se adună și aici.
 
-Cele nouă, în ordinea în care se fac cel mai ușor:
+Cele zece, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -27,9 +27,12 @@ Cele nouă, în ordinea în care se fac cel mai ușor:
    harta din Contact (8.3), versiunea la vedere (8.4), și laboratorul pe
    telefon: produsele (8.5), tragerea (8.6) și oprirea la „Predată
    curierului" (8.7).
-9. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+9. **Runda 2.3.1** — caseta de raportat care mișcă cifra (9.1), cele patru
+   pastile din Depozit (9.2), capul listei care numără ce se vede (9.3) și
+   pastila cu versiunea, mutată în capul sertarului (9.4).
+10. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A noua se face la capăt dinadins: prinde într-o singură trecere tot ce ai
+A zecea se face la capăt dinadins: prinde într-o singură trecere tot ce ai
 deschis mai devreme.
 
 ---
@@ -1029,7 +1032,12 @@ harta e o poză din pachet, nu o hartă vie. Dacă vezi cereri spre un server de
 dale, poza a fost înlocuită cu o hartă încărcată din lume, și atunci pagina
 are nevoie și de o casetă de consimțământ, care nu există.
 
-### 8.4 `ver. 2.3.0` în colț
+### 8.4 `ver. X.Y.Z` la vedere
+
+> **Pastila s-a mutat între timp.** Runda 2.3.1 a scos-o din subsolul
+> sertarului de telefon și a pus-o în capul lui — v. 9.4, unde scrie și de
+> ce. Ce se probează aici rămâne totuși al rundei ăsteia: versiunea **se
+> vede**, și se vede în două locuri deosebite.
 
 Versiunea se vede în **două locuri**, fiindcă panourile de tabletă n-au bară
 laterală deloc — adică tocmai ecranele care pot rămâne cu cod vechi n-ar fi
@@ -1037,16 +1045,16 @@ avut-o nicăieri.
 
 | Unde | Cum ajungi |
 |---|---|
-| **subsolul sertarului de telefon** | pe 390, butonul cu trei linii, derulezi sertarul până jos — toate paginile de panou, laborator și rută între ele |
+| **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.3.0 · ` și o ștampilă — ziua și ora pachetului, de
-pildă `19 sep 16:48`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
+**Trebuie să scrie** `ver. 2.3.1 · ` și o ștampilă — ziua și ora pachetului, de
+pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.3.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.3.1` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1127,7 +1135,107 @@ laborator, **și** foaia de drum, deci același om ar fi apăsat pe cealaltă u�
 
 ---
 
-## 9 · Telefon, tabletă, calculator
+## 9 · Runda 2.3.1: caseta din laborator, pastilele din Depozit, pastila mutată
+
+*Trei minute. Cele patru bucăți de mai jos sunt lucrările rundei ăsteia, deci
+singurele care n-au mai fost plimbate niciodată.*
+
+Trei din patru se fac pe **telefon** (390). Trei din patru sunt defecte pe care
+le-a găsit patronul singur, umblând prin aplicație — și niciunul din ele nu
+dădea vreo eroare, ceea ce e chiar pricina pentru care sunt scrise aici: se
+văd numai cu ochiul, pe ecranul potrivit.
+
+### 9.1 Caseta de raportat mișcă cifra de lângă ea
+
+`demo-manager`, pe 390, `/lab/laborator.html`. **Îți trebuie o zi cu o comandă
+anulată** — ai una de la plimbarea a șaptea; dacă ai dus-o înapoi, anulează la
+loc una de probă și lasă în zi și una vie, cu același produs.
+
+Apeși clapa de pe muchia din dreapta și deschizi foaia cu toate produsele
+zilei.
+
+**Trebuie să vezi:** la produsul acela, `făcut / cerut` cere numai ce e de
+făcut pentru comanda **vie**. Comanda anulată nu mai cere nimic. Până azi
+aduna tot ce era în zi, fără nicio privire la stare.
+
+Scrie `2` în caseta produsului și apasă **„Adaugă"**.
+
+**Trebuie să vezi:** cifra din stânga **crește** cu doi, și dunga odată cu ea.
+Ăsta e tot defectul, în două apăsări: până azi, pe o zi în care comenzile erau
+anulate, cererea pleca, serverul răspundea, marfa intra pe raft — și cifra de
+pe ecran nu se clintea, oricât ai fi tastat. Patronul a citit-o exact așa: „am
+avut 15 produse de făcut, am introdus 10 și nu se schimbă nimic".
+
+**Apasă și „Înapoi"**, ca să lași ziua cum ai găsit-o.
+
+### 9.2 Cele patru pastile din Depozit filtrează, și se vede că sunt apăsate
+
+Tot pe 390, `/lab/depozit.html`. Sus, sub titlu, stă o bandă care se trage
+lateral: **„Sub prag minim", „Lipsă la comenzi", „Intrări azi", „Ieșiri azi"**,
+fiecare cu cifra ei colorată. Le apeși pe rând.
+
+**Trebuie să vezi, la fiecare, trei lucruri deodată:** lista de dedesubt se
+**taie** la ce spune pastila; rândul „VEZI ACUM" de deasupra listei își schimbă
+vorba și cifra (`Sub prag minim · 14 poziții`); iar pastila apăsată capătă un
+**inel subțire în culoarea ei** — auriu la prag, roșu la lipsă, verde la
+intrări, vișiniu la ieșiri.
+
+Inelul e partea de privit anume, fiindcă el e jumătatea ascunsă a lucrării.
+Până azi apăsatul se arăta numai printr-un fundal cu o idee mai închis —
+măsurat, o deosebire de unu virgulă cincisprezece la unu, adică mult sub
+pragul de la care ochiul deosebește două suprafețe. Lista chiar se schimba,
+dar pastila arăta identic, și asta face un buton să pară stricat mai sigur
+decât dacă n-ar face nimic.
+
+**Apasă din nou aceeași pastilă:** se stinge, inelul piere, lista se face la
+loc întreagă.
+
+**Și încă una, care prinde nepotrivirea dinăuntru:** alege o categorie din
+lista de categorii, apoi apasă o pastilă. Vederea trebuie să sară înapoi la
+**„Toate"**. Cifra de pe pastilă e numărată pe tot depozitul, deci lăsată peste
+o categorie deschisă ar fi arătat mai puține rânduri decât scrie pe ea.
+
+### 9.3 Capul listei numără chiar lista de sub el
+
+Tot în Depozit, cu pastilele stinse. Scrie **„făină"** în caseta de căutare.
+
+**Trebuie să vezi:** cifra din rândul de deasupra listei e **cifra rândurilor
+desenate**, nu numărul întregului depozit. Numără câteva rânduri dacă ai
+răbdare, ori golește caseta și uită-te cum sare cifra înapoi.
+
+Până azi scria `Tot stocul · 164 poziții` peste o listă de 128 de rânduri:
+capul se socotea din tot depozitul, lista se filtra **și** după căutare. Cele
+două socoteli stăteau la trei sute de rânduri depărtare **în fișier** — una la
+desenarea listei, alta la scrierea capului —, destul cât nimeni să nu le vadă
+pe amândouă odată.
+
+Apasă apoi fila **„Registru"** și fă la fel cu pastila de intrări ori de
+ieșiri: și acolo cifra trebuie să fie a mișcărilor rămase după filtru.
+
+### 9.4 Pastila cu versiunea, în capul sertarului
+
+Pe 390, în orice panou, cu **`demo-fondator`** — nu cu un cont de operații, și
+merită spus de ce: sertarul crește cu rangul, iar fondatorul are cele mai multe
+rânduri, deci e singurul cont care poate da defectul de gol. Măsurat cu contul
+de operații, pagina ieșea curată de fiecare dată.
+
+Apeși butonul cu trei linii.
+
+**Trebuie să vezi:** pastila `ver. 2.3.1 · ` și ștampila stă **în capul foii**,
+sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
+sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
+
+**Derulează sertarul în sus și în jos.** Pastila trebuie să plece odată cu
+lista, ca orice alt rând. Dacă rămâne pe loc, cu un dreptunghi închis peste
+rândurile care trec pe dedesubt, s-a întors lipirea de runda trecută — ăsta e
+chiar defectul reclamat: „se suprapune peste meniu".
+
+Pe calculator, la 1440, pastila stă unde stătea: în colțul din stânga-jos al
+barei laterale, sub „← Alege panoul".
+
+---
+
+## 10 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -1225,11 +1333,11 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele nouă ies, proba automată se mai trece o dată pe deasupra:
+Când toate cele zece ies, proba automată se mai trece o dată pe deasupra:
 
 ```bash
 node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.3.0`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.3.1`.

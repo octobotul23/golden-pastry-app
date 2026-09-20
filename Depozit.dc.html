@@ -141,6 +141,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="gp-navid">
 <span class="gp-navtitle">Golden Pastry</span>
 <span class="gp-navsub">{{ navHere }}</span>
+<gp-versiune></gp-versiune>
 </div>
 <button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
 </div>
@@ -163,7 +164,6 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
 </sc-if>
 <a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
-<gp-versiune></gp-versiune>
 </div>
 </div>
 </sc-if>
@@ -202,20 +202,20 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div data-dep="stats" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
 <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
-<div class="h-card" style="padding:16px 18px;border-radius:16px;display:flex;flex-direction:column;gap:6px;border-color:{{ s.bd }}">
+<button type="button" class="h-card" onClick="{{ s.onClick }}" aria-pressed="{{ s.on }}" title="{{ s.titlu }}" style="appearance:none;-webkit-appearance:none;cursor:pointer;text-align:left;font-family:var(--h-font-body);color:var(--h-fg);padding:16px 18px;border-radius:16px;display:flex;flex-direction:column;gap:6px;border:1px solid {{ s.bd }};background:{{ s.bg }};box-shadow:{{ s.inel }}">
 <span class="h-eyebrow" style="font-size:12px">{{ s.label }}</span>
 <span class="h-numeric" style="font-family:var(--h-font-display);font-size:32px;font-weight:700;line-height:1;color:{{ s.fg }}">{{ s.value }}</span>
 <span style="font-size:13px;color:var(--h-fg-subtle)">{{ s.hint }}</span>
-</div>
+</button>
 </sc-for>
 </div>
 
 <div data-dep="phonesummary" style="display:none;gap:8px;overflow-x:auto;padding-bottom:2px;flex:none">
 <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
-<div style="flex:none;display:flex;align-items:baseline;gap:7px;padding:10px 13px;border-radius:13px;border:1px solid {{ s.bd }};background:var(--h-bg-surface)">
+<button type="button" onClick="{{ s.onClick }}" aria-pressed="{{ s.on }}" title="{{ s.titlu }}" style="appearance:none;-webkit-appearance:none;cursor:pointer;flex:none;display:flex;align-items:baseline;gap:7px;min-height:44px;padding:10px 13px;border-radius:13px;border:1px solid {{ s.bd }};background:{{ s.bg }};box-shadow:{{ s.inel }};color:var(--h-fg);font-family:var(--h-font-body)">
 <span class="h-numeric" style="font-family:var(--h-font-display);font-size:19px;font-weight:700;line-height:1;color:{{ s.fg }}">{{ s.value }}</span>
 <span style="font-size:12px;color:var(--h-fg-muted);white-space:nowrap">{{ s.label }}</span>
-</div>
+</button>
 </sc-for>
 </div>
 
@@ -645,7 +645,7 @@ class Component extends DCLogic {
   // n-au voie să intre în socotelile de zi cu zi — „Sub prag", „Lipsă", numărul
   // de poziții, lista din formularul de mișcare — fiindcă marfa lor nu mai e de
   // vândut. Au nevoie de exact un lucru: o cale înapoi.
-  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], deScazut: null, auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", sterg: null };
+  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], deScazut: null, auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", pastila: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", sterg: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -1058,9 +1058,56 @@ class Component extends DCLogic {
     const shorts = items.filter(x => x.short);
     const inToday = S.moves.filter(x => x.d === TODAY && x.k === "in");
     const outToday = S.moves.filter(x => x.d === TODAY && x.k === "out");
+    // Culoarea de înțeles a primelor două pastile, socotită AICI, lângă
+    // cifrele ei: zero atenționări nu se scrie cu culoarea de alarmă.
+    const cPrag  = alerts ? "var(--h-warning)" : "var(--h-fg)";
+    const cLipsa = shorts.length ? "var(--h-danger)" : "var(--h-fg)";
 
     const q = S.search.trim().toLowerCase();
-    let rows = items.filter(x => (S.cat === "Toate" || x.c.c === S.cat) && (!q || x.c.n.toLowerCase().indexOf(q) >= 0));
+    // PASTILELE DE SUS SUNT FILTRE (runda 2.3.1, cerut de patron).
+    //
+    // Erau patru cifre într-un rând de pastile cu margine și colțuri rotunjite,
+    // adică forma unei bare de filtre — și nimic legat de ele. Omul le apasă,
+    // nu se întâmplă nimic, și învață că pagina asta nu răspunde.
+    //
+    // FIECARE DUCE UNDE ARATĂ, fiindcă cele patru nu numără același lucru:
+    // „sub prag minim" și „lipsă la comenzi" numără POZIȚII, deci strâng chiar
+    // lista de dedesubt; „intrări/ieșiri azi" numără MIȘCĂRI, deci deschid
+    // registrul pe ziua de azi. O pastilă care spune „2" și scoate un rând ar
+    // fi fost a doua minciună, nu o reparație.
+    const prinPastila = (x) => S.pastila === "prag" ? (x.under && !x.short)
+      : S.pastila === "lipsa" ? x.short
+      : true;
+    // Purtarea unei pastile, scrisă O SINGURĂ DATĂ pentru toate patru: a doua
+    // apăsare o stinge. Fără asta, omul rămâne cu lista strânsă și n-are de
+    // unde s-o desfacă — a fost destul că pastilele nu făceau nimic.
+    // JETONUL DE APĂSAT TREBUIE SĂ SE VADĂ (runda 2.3.1).
+    //
+    // Întâi starea apăsată era numai fundalul: `--h-bg-sunk` (#F1E6D4) în loc
+    // de `--h-bg-surface` (#FCF6EA). Măsurat la 390x844: raport de contrast
+    // 1,15:1 între cele două — adică nimic. Lista de dedesubt se schimba, capul
+    // se schimba, dar PASTILA ARĂTA LA FEL. Iar tăcerea asta e chiar pricina
+    // pentru care s-a cerut lucrarea: patronul a scris „am găsit niște butoane
+    // care nu merg". Un filtru care lucrează fără să spună că lucrează se
+    // citește exact ca unul stricat.
+    //
+    // Deci apăsată, pastila capătă un inel de 2px ÎN CULOAREA EI — aurul
+    // pragului, roșul lipsei, verdele intrărilor, dulceața ieșirilor. Nu un
+    // gri comun: culoarea aceea e deja înțelesul cifrei de deasupra, iar
+    // inelul spune „pe asta o vezi acum" în limba pastilei.
+    const pastilaFiltru = (cheie, vedere, culoare) => ({
+      on: S.pastila === cheie,
+      titlu: S.pastila === cheie ? "Apasă din nou ca să vezi tot" : "Apasă ca să vezi numai acestea",
+      bg: S.pastila === cheie ? "var(--h-bg-sunk)" : "var(--h-bg-surface)",
+      inel: S.pastila === cheie ? "inset 0 0 0 2px " + culoare : "none",
+      // APĂSATĂ, PASTILA STINGE ȘI CATEGORIA — pe dos, categoria stinge deja
+      // pastila. Cifra de pe pastilă (14, 43, 13, 42) se numără pe TOT
+      // depozitul, nu pe categoria deschisă: lăsată pe „Materii prime", o
+      // pastilă de 14 ar fi scos 9 rânduri. Adică fix ce a păzit toată runda
+      // asta — o cifră care arată spre altceva decât ce numără.
+      onClick: () => set({ view: vedere, cat: "Toate", pastila: S.pastila === cheie ? "" : cheie })
+    });
+    let rows = items.filter(x => (S.cat === "Toate" || x.c.c === S.cat) && (!q || x.c.n.toLowerCase().indexOf(q) >= 0) && prinPastila(x));
     if (S.sort === "low") rows = rows.slice().sort((a, b) => {
       const sa = (a.short ? 0 : a.under ? 1 : 2), sb = (b.short ? 0 : b.under ? 1 : 2);
       if (sa !== sb) return sa - sb;
@@ -1137,7 +1184,9 @@ class Component extends DCLogic {
     S.moves.forEach(mv => (days[mv.d] || (days[mv.d] = [])).push(mv));
     const logDays = Object.keys(days).sort().reverse().map(d => {
       const list = days[d].slice().sort((a, b) => (b.t < a.t ? -1 : b.t > a.t ? 1 : 0));
-      const filtered = list.filter(mv => (S.cat === "Toate" || (byName[mv.p] && byName[mv.p].c === S.cat)) && (!q || mv.p.toLowerCase().indexOf(q) >= 0));
+      const directia = S.pastila === "in" ? "in" : S.pastila === "out" ? "out" : "";
+      const filtered = list.filter(mv => (S.cat === "Toate" || (byName[mv.p] && byName[mv.p].c === S.cat)) && (!q || mv.p.toLowerCase().indexOf(q) >= 0)
+        && (!directia || (mv.k === directia && mv.d === TODAY)));
       const ins = filtered.filter(x => x.k === "in").length;
       return {
         label: dLabel(d), meta: filtered.length + " mișcări · " + ins + " intrări · " + (filtered.length - ins) + " ieșiri",
@@ -1290,23 +1339,30 @@ class Component extends DCLogic {
       },
       onMsgClose: () => set({ msg: "", msgBad: false }),
 
+      // Culoarea fiecărei pastile se socotește O DATĂ: o dată pentru cifra de
+      // deasupra, aceeași pentru inelul de apăsat. Scrisă de două ori, s-ar fi
+      // despărțit într-o zi, iar inelul ar fi arătat altă culoare decât cifra.
       stats: [
         {
           label: "Sub prag minim", value: String(alerts), hint: alerts ? "trebuie completat azi" : "toate pozițiile peste prag",
-          fg: alerts ? "var(--h-warning)" : "var(--h-fg)", bd: alerts ? "var(--h-warning)" : "var(--h-line)"
+          fg: cPrag, bd: alerts ? "var(--h-warning)" : "var(--h-line)",
+          ...pastilaFiltru("prag", "Stoc", cPrag)
         },
         {
           label: "Lipsă la comenzi", value: String(shorts.length),
           hint: shorts.length ? shorts.slice(0, 2).map(x => x.c.n).join(", ") : "stocul acoperă comenzile deschise",
-          fg: shorts.length ? "var(--h-danger)" : "var(--h-fg)", bd: shorts.length ? "var(--h-danger)" : "var(--h-line)"
+          fg: cLipsa, bd: shorts.length ? "var(--h-danger)" : "var(--h-line)",
+          ...pastilaFiltru("lipsa", "Stoc", cLipsa)
         },
         {
           label: "Intrări azi", value: String(inToday.length), hint: "producție, furnizori, retururi",
-          fg: "var(--h-success)", bd: "var(--h-line)"
+          fg: "var(--h-success)", bd: "var(--h-line)",
+          ...pastilaFiltru("in", "Registru", "var(--h-success)")
         },
         {
           label: "Ieșiri azi", value: String(outToday.length), hint: "comenzi, consum, pierderi",
-          fg: "var(--h-jam)", bd: "var(--h-line)"
+          fg: "var(--h-jam)", bd: "var(--h-line)",
+          ...pastilaFiltru("out", "Registru", "var(--h-jam)")
         }
       ],
 
@@ -1328,7 +1384,7 @@ class Component extends DCLogic {
         return {
           label: t, count: String(count),
           cls: active ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
-          onClick: () => set(isLogTab ? { view: "Registru" } : { view: "Stoc", cat: t })
+          onClick: () => set(isLogTab ? { view: "Registru", pastila: "" } : { view: "Stoc", cat: t, pastila: "" })
         };
       }),
       sorts: [{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
@@ -1336,9 +1392,32 @@ class Component extends DCLogic {
         onClick: () => set({ sort: s.v })
       })),
 
-      currentLabel: S.view === "Registru"
-        ? "Registru · " + S.moves.length + " mișcări"
-        : (S.cat === "Toate" ? "Tot stocul" : S.cat) + " · " + (S.cat === "Toate" ? items.length : items.filter(x => x.c.c === S.cat).length) + " poziții",
+      // CIFRA DIN CAP E A LISTEI DE DEDESUBT, nu a doua socoteală (runda 2.3.1).
+      //
+      // Aici scria până azi o numărătoare a ei: `items.length`, ori `items`
+      // filtrate pe categorie. Lista de sub cap se filtrează însă și după
+      // CĂUTARE, și de acum și după pastilă — iar capul nu știa de niciuna.
+      // Măsurat pe 20 septembrie 2026, la 390x844, cu contul de fondator:
+      // scris „făină" în casetă, lista arăta 128 de poziții, iar capul de
+      // deasupra ei scria mai departe „Tot stocul · 164 poziții". Nu e o
+      // scăpare adusă de pastile: era acolo de când există caseta.
+      //
+      // Două socoteli pentru același lucru se despart într-o zi — a treia
+      // oară în runda asta, după totalurile din Laborator. Deci capul nu mai
+      // numără nimic: ia lungimea CHIAR a listei care se desenează (`rows`,
+      // `logDays`). Un filtru nou de mâine intră în ea de la sine, fără să
+      // aibă cineva grijă să-l adauge și aici.
+      //
+      // Și numele din stânga spune ce se vede: cu o pastilă apăsată, „Tot
+      // stocul · 14 poziții" ar fi fost o propoziție care se contrazice pe ea.
+      currentLabel: (() => {
+        const numePastila = { prag: "Sub prag minim", lipsa: "Lipsă la comenzi", in: "Intrări azi", out: "Ieșiri azi" };
+        if (S.view === "Registru") {
+          const cate = logDays.reduce((n, z) => n + z.moves.length, 0);
+          return (numePastila[S.pastila] || "Registru") + " · " + cate + " mișcări";
+        }
+        return (numePastila[S.pastila] || (S.cat === "Toate" ? "Tot stocul" : S.cat)) + " · " + rows.length + " poziții";
+      })(),
       menuOpen: S.menu,
       onMenuOpen: () => set({ menu: true }),
       onMenuClose: () => set({ menu: false }),
@@ -1351,7 +1430,7 @@ class Component extends DCLogic {
           mark: active ? "✓" : "",
           bg: active ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
           bd: active ? "var(--h-accent)" : "var(--h-line)",
-          onClick: () => set(isLogTab ? { view: "Registru", menu: false } : { view: "Stoc", cat: t, menu: false })
+          onClick: () => set(isLogTab ? { view: "Registru", menu: false, pastila: "" } : { view: "Stoc", cat: t, menu: false, pastila: "" })
         };
       }),
       menuSorts: [{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
