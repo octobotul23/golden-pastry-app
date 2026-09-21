@@ -3203,11 +3203,15 @@ class Component extends DCLogic {
     // poziții și nota din cerere, toate merg pe ea. O socoteală lăsată pe
     // `PROD` ar fi numărat produsele FILEI la prețurile PACHETULUI.
     const gamaPt = (tr) => VANDABIL.filter((r) => vinde(r, tr));
-    // Poza laturii, cu căderea pe cealaltă: hotărârea patronului e că o latură
-    // fără poză a ei o arată pe a celeilalte, ca produsul să nu apară gol pe
-    // site în ziua dintre cele două urcări. Aceeași socoteală ca
-    // `latura_poza()` din api/lib/laturi.php.
-    const pozaLat = (r, ti) => (ti === 'baked' ? (r[12] || r[10]) : (r[10] || r[12]));
+    // Poza laturii — NUMAI a ei. Hotărârea patronului din 21 septembrie 2026:
+    // fiecare latură arată poza ei, iar o latură fără poză arată substituentul
+    // „fără poză", nu poza celeilalte. Până atunci era o cădere aici,
+    // `r[12] || r[10]`, care făcea imposibil de deosebit „n-are încă poza ei"
+    // de „s-a scris în amândouă coloanele". Aceeași socoteală ca
+    // `latura_poza()` din api/lib/laturi.php — cele două trebuie să rămână
+    // mereu una și aceeași, fiindcă magazinul se desenează și din tuplu (aici)
+    // și din răspunsul serverului (`photoFor`).
+    const pozaLat = (r, ti) => (ti === 'baked' ? r[12] : r[10]);
 
     // [cheie, numeRO, numeEN, subtitluRO, subtitluEN] — tot din baza de date.
     const GROUPS = this.state.groups || [];
@@ -3249,9 +3253,11 @@ class Component extends DCLogic {
           // niciodată pe server. Rezultatul era un 404 pentru fiecare produs
           // fără poză. Gol înseamnă gol: se arată substituentul, fără cerere.
           //
-          // Poza laturii, cu căderea pe cealaltă (`pozaLat`): un produs căruia
-          // patronul i-a urcat deocamdată o singură fotografie se vede pe
-          // amândouă laturile, nu gol pe una.
+          // Poza laturii, numai a ei (`pozaLat`): un produs căruia patronul i-a
+          // urcat deocamdată o singură fotografie se vede cu ea pe latura aceea
+          // și cu substituentul pe cealaltă. Până în 2.4.1 cădea pe poza
+          // celeilalte laturi — ceea ce, din afară, nu se putea deosebi de o
+          // poză scrisă în amândouă coloanele, și chiar așa s-a citit.
           photo: pozaLat(r, tier) ? res('prod' + r[1] + coadaLat, pozaLat(r, tier)) : '',
           name: t(r[2], r[3]),
           desc: t(r[7], r[8]),

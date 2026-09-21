@@ -260,6 +260,7 @@ după nu.
 | `024_doua_cataloage.sql` | Da — trei coloane pe `products`, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie străină. Are însă și un pas care **scrie date** — umplerea celor două bife —, iar acela e zăvorât cu `@coloane_noi`, numărat ÎNAINTE de `ALTER`-e: la a doua rulare `UPDATE`-ul nici nu se pregătește. Fără zăvor, fiecare actualizare ar fi pus la loc, lună după lună, fiecare latură pe care patronul o stinsese cu mâna — exact pățania lui `016`, și de-aia `.claude/test-migrari-repetate.mjs` o are și pe asta sub ochi. Umplerea e **prudentă dinadins**: `in_frozen = in_baked = (amândouă prețurile scrise)`, deci migrarea **nu mișcă nimic pe vitrină** — cine se vedea ieri se vede și azi, cine era ascuns rămâne ascuns. Ce se schimbă e numai vorba cu care panoul îl arată: „nu e în niciun catalog" în loc de „îi lipsește un preț". Forma îndrăzneață (`in_frozen = price_frozen IS NOT NULL`) ar fi ghicit apartenența din preț — tocmai ce a hotărât patronul să nu se facă — și ar fi publicat produse pe jumătate completate în secunda importului, fără niciun ecran între el și site. Nu atinge `photo`, nu atinge `active`, nu adaugă nicio grupă. Cere `001` și se rulează după `023`. |
 | `025_registru_migrari.sql` | Da — face tabelul `schema_migrations` cu `CREATE TABLE IF NOT EXISTS` și scrie un singur rând, cu `INSERT IGNORE`: a doua rulare nu face nimic. Nu atinge nicio altă tabelă și niciun rând de date. E fișierul care **se rulează înaintea celorlalte**, nu la rândul lui: se cheamă `025`, deci în ordinea numelui ar veni după `003`–`024`, iar atunci primele douăzeci și două ar trece pe lângă un tabel care încă nu există și și-ar scrie numele abia la actualizarea următoare. Cele trei drumuri de urcare îl rulează o dată la început, apoi bucla — se poate, fiindcă e idempotent. **Ce NU face: nu se umple cu mâna.** S-ar putea scrie în el, dintr-o suflare, numele tuturor migrărilor până la `024` („dacă ai ajuns la 025, au rulat și alea") — adevărat când rulează bucla, minciună când cineva îl importă singur, din phpMyAdmin, pe o bază veche. Un registru care minte e mai rău decât niciun registru. Nu cere nimic și se rulează oriunde, pe orice bază. |
 | `026_cheie_cerere.sql` | Da — o coloană `idempotency_key` pe `order_requests` și un index unic `uq_req_cheie` peste ea, fiecare cu paza lui în `information_schema`: a doua rulare le găsește și nu face nimic. Nu scrie și nu schimbă niciun rând de date. Coloana se naște `NULL` și stă `AFTER created_at` fiindcă acela e ultimul câmp din `001_schema.sql`, deci e singurul loc care există pe **orice** bază, oricât de veche. Indexul unic trece peste cererile de până acum fără să se plângă, oricâte ar fi: în SQL `NULL` nu se ciocnește cu `NULL`, deci vechile cereri — toate fără cheie — rămân neatinse, și la fel cele care vin mai târziu de la un telefon cu pagina veche în memorie. **Ce NU face: nu curăță cererile duble adunate înainte.** Ea oprește perechea următoare, nu o desface pe cea de ieri — două cereri vechi, identice, rămân două rânduri, fiindcă n-avem de unde ști dacă omul a apăsat de două ori sau chiar a vrut două comenzi. Și **nu ea alege ce se întâmplă la ciocnire**: indexul doar spune „cheia asta a mai fost"; răspunsul — cererea dintâi, întoarsă ca și cum ar fi acum — e scris în `api/routes/requests.php`. O bază care ia migrarea fără fișierele noi nu pățește nimic: coloana rămâne goală și nimeni n-o citește. Nu cere nimic și se rulează oriunde. |
+| `027_poza_fiecarei_laturi.sql` | Da — și e singura de până acum care **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Ea copiază o dată `products.photo` în `products.photo_baked` acolo unde a doua e goală, adică face a fiecărei laturi poza pe care până în 2.4.1 o ÎMPRUMUTA de la cealaltă. Zăvorul nu e în `information_schema` — n-ar avea ce căuta acolo, fiindcă nu se schimbă nimic în schemă —, ci în `settings`: `migration_027_poza_pe_latura`, scris la coada ei. A doua rulare îl găsește și nu mai copiază nimic, deci o poză pe care ai schimbat-o între timp la gata de servire rămâne a ta. **Ce NU face: nu pune la loc pozele de după ea.** Un produs născut după migrare are `photo_baked` gol până îi urci una — și așa și trebuie, de vreme ce împrumutul s-a tăiat. O bază care ia migrarea fără fișierele noi nu pățește nimic: cele două coloane ajung să poarte același nume de fișier, iar codul vechi arăta oricum poza aceea pe amândouă laturile. Nu cere nimic și se rulează oriunde. |
 
 Dacă o versiune viitoare are nevoie de o **setare** nouă, primești un fișier
 separat care conține doar acel `INSERT IGNORE INTO settings`. Nu reimportul
@@ -268,7 +269,7 @@ seed-ului.
 ### Cum verifici că migrarea a intrat
 
 `api/verifica.php` **nu te ajută**: pe o instalare vie răspunde 404
-(`api/verifica.php:908`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
+(`api/verifica.php:926`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
 
 **Întâi întreabă registrul.** Din `025_registru_migrari.sql` încoace, fiecare
 migrare își scrie numele într-un tabel când rulează, deci răspunsul se citește
@@ -706,7 +707,7 @@ Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
 (`Site Public.dc.html:2567`), deci o schimbare de preț se vede corect. **Dar
 dispariția e complet tăcută**: `:3179` ține în vitrină numai produsele bifate în
-catalogul deschis și cu prețul de acolo scris, iar `:3517-3523` scoate din coș
+catalogul deschis și cu prețul de acolo scris, iar `:3522-3528` scoate din coș
 rândurile rămase fără latura lor, fără niciun mesaj.
 
 Singura excepție e coșul refăcut din **„Comandă din nou”** (butonul de pe
@@ -722,7 +723,7 @@ mai puțini lei, fără nicio explicație.
 **Prețul gol nu mai poate face asta.** Până la cele două cataloage, ștergerea
 unui singur preț ascundea produsul din **amândouă** variantele, deși atinseseși
 un singur câmp. Acum serverul refuză golirea unui preț cât catalogul lui e bifat
-(422, mesajul numește catalogul și caseta — `api/routes/catalog.php:754`), iar
+(422, mesajul numește catalogul și caseta — `api/routes/catalog.php:766`), iar
 stingerea bifei **lasă prețul scris**. Deci scoaterea dintr-un catalog e o
 singură apăsare, și atunci pier din coșuri numai rândurile laturii aceleia;
 cealaltă nu se clintește.
@@ -745,13 +746,49 @@ a treia a căzut odată cu publicarea din panoul de găzduire.
    fost scos cu totul (la instalare `INSERT IGNORE` pune oricum aceleași
    date), iar `002_seed.sql` e ce pretinde că e: numai `INSERT IGNORE`, sigur
    la reimport. Capcana 1 e închisă.
-3. ~~**Un tabel `schema_migrations`**~~ — **nu se mai face**, hotărât în 2.0.3.
-   Avea rost cât se publica dintr-un panou de găzduire: acolo importai
-   migrările una câte una, cu mâna, și chiar nu aveai de unde afla ce ai
-   importat deja — iar unealta care ar fi trebuit să-ți spună
-   (`api/verifica.php`) e zăvorâtă după instalare. Acum publicarea se face
-   numai cu `actualizeaza-vps.sh`, care le rulează pe toate în ordine și scrie
-   în raport câte a aplicat atunci („Bilanț: N aplicate acum") și care erau
-   deja acolo. Evidența există, deci — numai că în raportul scriptului, nu
-   într-un tabel care ar trebui ținut la zi cu mâna, adică încă un loc care
-   poate minți.
+3. ~~**Un tabel `schema_migrations`**~~ — hotărât „**nu se mai face**" în 2.0.3,
+   **făcut totuși în 2.4.0**, și cu o coadă lungă. Rândul ăsta se citește tot,
+   fiindcă lecția lui nu e despre registre.
+
+   **Ce s-a hotărât în 2.0.3.** Un registru avea rost cât se publica dintr-un
+   panou de găzduire: acolo importai migrările una câte una, cu mâna, și chiar
+   nu aveai de unde afla ce ai importat deja — iar unealta care ar fi trebuit
+   să-ți spună (`api/verifica.php`) e zăvorâtă după instalare. Odată trecută
+   publicarea pe `actualizeaza-vps.sh`, care le rulează pe toate în ordine și
+   scrie în raport câte a aplicat atunci („Bilanț: N aplicate acum"), evidența
+   părea că există deja — și încă într-un loc care nu trebuie ținut la zi cu
+   mâna, adică fără încă un loc care poate minți.
+
+   **De ce s-a răzgândit casa în 2.4.0.** Raportul acela se ținea după
+   **amprenta** schemei — tabele, coloane, lungimea totală a tipurilor —, iar
+   amprenta e o ghicitoare. `017` nu atinge DELOC schema: scrie un rând în
+   `settings` și atât. Măsurat, nu bănuit: 21·229·2546 înainte, 21·229·2546
+   după. Deci raportul spunea „era deja aplicată" **chiar și la prima ei**
+   **rulare** — tocmai despre migrarea care repară comisioanele de 0,00 RON.
+   De-aceea `sql/025_registru_migrari.sql` face tabelul, iar fiecare migrare de
+   la `003` încolo își scrie numele în el, la coadă. Registrul **înseamnă**, nu
+   **oprește**: migrările rulează toate, la fiecare actualizare, ca și până
+   acum.
+
+   **Și lecția, care nu e despre registre.** Pe 21 septembrie 2026, urcarea
+   rundei 2.4.0 pe serverul adevărat a murit cu `Unknown column 'fisier' in`
+   `'where clause'`. În baza de producție era un `schema_migrations` făcut cu
+   mâna pe 1 septembrie, cu alte coloane (`filename`, `applied_at`, `note`) și
+   șapte rânduri — rămășița chiar a ideii părăsite aici, în 2.0.3. **„Nu se**
+   **mai face" nu desface ce s-a făcut deja.** Hotărârea s-a scris în rândul
+   ăsta; tabelul a rămas pe server, și a așteptat acolo trei săptămâni un cod
+   care să-i ceară o coloană pe care n-o avea. Două lucruri de ținut minte,
+   amândouă plătite:
+
+   - **Un nume nu e o identitate.** Paza întreba `TABLE_NAME =`
+     `'schema_migrations'` — un nume —, și i se răspundea „da".
+     `CREATE TABLE IF NOT EXISTS` se potrivește tot pe nume, deci nici el n-a
+     îndreptat nimic: a tăcut și a plecat mai departe. Din 2.4.1 întrebarea se
+     pune pe **coloana** de care e nevoie (`registruExista`), iar un tabel cu
+     numele nostru și coloanele altcuiva oprește urcarea cu vorbele casei, cu
+     coloanele lui sub ochi și cu comanda de scăpare (`registruStrain`) —
+     `RENAME`, nu `DROP`: nu se șterge un tabel despre care scriptul nu știe
+     ce ține. Probele stau în secțiunea 13 din `.claude/test-plasa-rsync.mjs`.
+   - **Când se hotărăște că ceva „nu se mai face", se scrie și ce se face cu**
+     **ce s-a făcut deja.** Rândul de față n-a spus-o, și de-aia a rămas
+     tabelul.

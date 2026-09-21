@@ -892,9 +892,10 @@ $produsLd = static function (array $p) use ($base, $nume, $ro, $lang, $company, 
         $item['weight'] = ['@type' => 'QuantitativeValue', 'value' => (int) $p['grams'], 'unitCode' => 'GRM'];
     }
     // Aceeași latură ca prețul, întotdeauna — v. pricina de mai sus. Și tot
-    // `latura_poza_vitrina()` ține hotărârea patronului: o latură fără poză a
-    // ei o arată pe a celeilalte, ca produsul să nu ajungă în Google fără
-    // fotografie în ziua dintre cele două urcări.
+    // `latura_poza_vitrina()` ține hotărârea patronului din 21 septembrie
+    // 2026: fiecare latură arată numai poza ei. Un produs a cărui latură de
+    // vitrină n-are poză ajunge în Google fără `image` — mai bine niciun câmp
+    // decât fotografia celeilalte laturi, care e altă marfă la vedere.
     $poza = $pozaVitrina($p);
     if ($poza !== null && $poza !== '') {
         $item['image'] = $base . '/' . ltrim($poza, '/');

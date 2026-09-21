@@ -149,6 +149,6 @@ de conectare.
 - [docs/09-actualizare-vps.md](docs/09-actualizare-vps.md) — actualizarea VPS-ului cu un singur script
 - [docs/04-catalogul-de-produse.md](docs/04-catalogul-de-produse.md) — produse, grupe, prețuri, ce vede Google
 - [docs/05-conturile-de-client.md](docs/05-conturile-de-client.md) — comanda de pe cont, istoricul, comanda luată la telefon
-- [docs/06-defecte-de-reparat.md](docs/06-defecte-de-reparat.md) — **422 defecte găsite**, 422 reparate — niciunul rămas, fiecare cu proba ei
+- [docs/06-defecte-de-reparat.md](docs/06-defecte-de-reparat.md) — **430 defecte găsite**, 430 reparate — niciunul rămas, fiecare cu proba ei
 - [docs/07-actualizari.md](docs/07-actualizari.md) — cum publici o modificare **după** ce site-ul merge deja, fără să pierzi date
-- [docs/10-trecerea-cu-ochii.md](docs/10-trecerea-cu-ochii.md) — **proba de dinaintea publicării**: ce apeși și ce trebuie să vezi, în șaptezeci și cinci de minute
+- [docs/10-trecerea-cu-ochii.md](docs/10-trecerea-cu-ochii.md) — **proba de dinaintea publicării**: ce apeși și ce trebuie să vezi, în șaptezeci și opt de minute

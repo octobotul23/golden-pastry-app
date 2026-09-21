@@ -5,12 +5,12 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **șaptezeci și cinci de minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele zece plimbări stă singură și își spune la început cât
+Durează **șaptezeci și opt de minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele douăsprezece plimbări stă singură și își spune la început cât
 ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale bucăților care au
 minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o plimbare, se adună și aici.
 
-Cele zece, în ordinea în care se fac cel mai ușor:
+Cele douăsprezece, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -30,10 +30,17 @@ Cele zece, în ordinea în care se fac cel mai ușor:
 9. **Runda 2.3.1** — caseta de raportat care mișcă cifra (9.1), cele patru
    pastile din Depozit (9.2), capul listei care numără ce se vede (9.3) și
    pastila cu versiunea, mutată în capul sertarului (9.4).
-10. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+10. **Runda 2.4.0** — comutatorul cu trei poziții (10.1), latura stinsă cu
+    prețul rămas în casetă (10.2), cele două poze (10.3), coșul peste hotarul
+    laturilor (10.4), curățenia care nu mai mănâncă poza coaptă (10.5) și
+    pagina produsului cu ce pleacă spre Google (10.6).
+11. **Runda 2.4.1** — fiecare latură numai cu poza ei (11.1), poza schimbată
+    la o latură care n-o mai clintește pe cealaltă (11.2) și vitrina neatinsă
+    de migrarea care a tăiat împrumutul (11.3).
+12. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A zecea se face la capăt dinadins: prinde într-o singură trecere tot ce ai
-deschis mai devreme.
+A douăsprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
+ai deschis mai devreme.
 
 ---
 
@@ -1054,7 +1061,7 @@ paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.4.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.4.1` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1313,10 +1320,12 @@ adică exact ce vede cumpărătorul pe latura aleasă, nu calea scrisă în baz�
 
 Treci pe site (`/`), pe magazin. Comuți **congelate ↔ gata de servire**.
 
-**Trebuie să vezi:** poza de pe cartonaș **se schimbă odată cu fila**. Iar un
-produs căruia i-ai urcat o singură poză o arată pe aceea **pe amândouă
-laturile** — nu un pătrat gol. Așa s-a cerut: pozele se urcă una câte una, și
-niciun produs n-are voie să apară gol în ziua dintre cele două urcări.
+**Trebuie să vezi:** poza de pe cartonaș **se schimbă odată cu fila**.
+
+Aici era, în runda 2.4.0, o a doua așteptare: un produs cu o singură poză o
+arăta pe aceea pe amândouă laturile, ca să nu apară gol în ziua dintre cele
+două urcări. **S-a răsturnat în 2.4.1** — se plimbă la 11.1 — fiindcă purtarea
+aceea nu se poate deosebi, din afară, de o poză scrisă în amândouă coloanele.
 
 **Folosește o poză adevărată de telefon, nu una micșorată dinainte.** Aici e
 lucrarea de la urmă a rundei, și e chiar pricina pentru care s-a făcut: până
@@ -1426,7 +1435,82 @@ vândut undeva are o adresă publică, oricare ar fi latura lui.
 
 ---
 
-## 11 · Telefon, tabletă, calculator
+## 11 · Runda 2.4.1: fiecare latură cu poza ei
+
+*Trei minute. Cele trei bucăți de mai jos sunt lucrarea rundei ăsteia, deci
+singurele care n-au mai fost plimbate niciodată.*
+
+Runda asta n-a adăugat niciun ecran: a **tăiat** o purtare. Până acum o latură
+fără poză a ei o arăta pe a celeilalte, ca produsul să nu apară gol pe site în
+ziua dintre cele două urcări. Ideea era bună și scrisă în plan — dar din afară
+nu se poate deosebi de o poză scrisă în amândouă coloanele, și chiar așa s-a
+citit, în prima zi de folosință: *„Când schimb poza la congelate se schimbă și
+la gata de servire."*
+
+Se plimbă **pe pachetul construit** (8101), ca toată runda 2.4.0.
+
+Îți trebuie un produs **nou**, făcut acum, ca să nu fi trecut prin migrarea
+`027` — aceea a umplut casetele produselor vechi, și tocmai de-aia ele nu pot
+arăta ce se plimbă la 11.1.
+
+### 11.1 O latură fără poza ei arată substituentul, nu poza celeilalte
+
+`demo-fondator`, Catalog → **Adaugă produs**. Îi scrii nume, gramaj și
+**amândouă prețurile**, ca să fie în amândouă cataloagele. Urci poză **numai în
+caseta „Fotografie — congelat"** și salvezi.
+
+**Trebuie să vezi, în formular:** miniatura de lângă caseta de congelat arată
+poza urcată, iar cea de lângă „gata de servire" **rămâne goală**. Lămurirea de
+sub casetă o spune pe față: „Fără ea, produsul apare acolo fără poză."
+
+Treci pe site, pe magazin, și comuți **congelate ↔ gata de servire**.
+
+**Trebuie să vezi:** pe congelate, poza urcată; pe gata de servire,
+**substituentul casei** — rozeta, nu fotografia congelată. Asta e hotărârea, și
+e singura formă în care omul poate deosebi „n-are încă poză aici" de „i-am pus
+poză și aici".
+
+Bucata asta **nu se poate plimba pe un produs vechi**: acolo migrarea `027` a
+pus deja o poză în amândouă casetele, deci n-ai unde vedea golul. De-aia se
+face pe unul nou-nouț.
+
+### 11.2 Schimbi poza la o latură, și cealaltă nu se clintește
+
+Tot pe produsul de la 11.1. Îi urci acum o poză **și** în caseta „gata de
+servire", una care se deosebește la prima vedere. Salvezi. Apoi îl deschizi din
+nou și schimbi **numai** poza de la congelat, cu o a treia, și salvezi iar.
+
+**Trebuie să vezi, pe site:** latura congelată arată a treia poză, iar gata de
+servire o arată **pe a doua, neatinsă**. Exact ce a semnalat patronul, pe dos.
+
+Și pe disc, în `products/`: **toate trei fișierele** nu trebuie să fie acolo —
+poza congelată dinainte de ultima schimbare se dezleagă și se șterge, fiindcă
+n-o mai ține nimeni. Dar poza laturii coapte trebuie să fie **întreagă**. Dacă
+a dispărut și ea, dezlegarea a rămas oarbă la coloana celeilalte laturi.
+
+### 11.3 Migrarea nu golește nicio vitrină
+
+Acum un produs **vechi**, din cele care erau în catalog înainte de runda asta —
+unul căruia nu i-ai urcat niciodată o poză anume pentru gata de servire.
+
+**Trebuie să vezi, în formular:** **amândouă** miniaturile arată o poză, și e
+**aceeași**. Nu e căderea de ieri — căderea s-a tăiat. E `027`, care a copiat o
+dată poza congelată în caseta laturii coapte, acolo unde aceea era goală, ca
+tăierea să nu golească nicio vitrină în ziua schimbării.
+
+Pe site, comuți între laturi:
+
+**Trebuie să vezi** aceeași fotografie pe amândouă — adică exact ce se vedea și
+înainte de actualizare. Un produs vechi nu are voie să-și fi pierdut poza pe
+nicio latură; dacă una arată rozeta, migrarea n-a rulat pe baza asta.
+
+Și o dată, ca să se vadă că `027` **nu** e căderea sub alt nume: pe produsul
+ăsta vechi, schimbă poza de la congelat și uită-te iar. Cealaltă latură
+**rămâne cu cea de dinainte** — copierea a fost o singură dată, la actualizare,
+nu la fiecare urcare.
+---
+
+## 12 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -1531,4 +1615,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.4.0`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.4.1`.

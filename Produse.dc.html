@@ -345,12 +345,16 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
-<!-- Două fotografii, una de fiecare catalog. Miniaturile arată poza
-     REZOLVATĂ, adică chiar ce vede cumpărătorul: o latură fără poză a ei o
-     ia pe a celeilalte (hotărârea patronului, v. api/lib/laturi.php).
-     De-aia amândouă pot arăta același fișier — nu e o scăpare, e căderea
-     care ține produsul să nu apară gol pe site în ziua dintre cele două
-     urcări. Lămurirea de sub fiecare casetă o spune pe față. -->
+<!-- Două fotografii, una de fiecare catalog. Fiecare miniatură arată poza
+     casetei ei, nimic altceva — adică exact ce vede cumpărătorul pe latura
+     aceea (hotărârea patronului, 21 septembrie 2026; v. api/lib/laturi.php).
+     Până în 2.4.1 era aici o cădere pe poza celeilalte laturi, ca produsul să
+     nu apară gol în ziua dintre cele două urcări; ea nu se putea deosebi, din
+     afară, de o poză scrisă în amândouă coloanele, și chiar așa s-a citit în
+     prima zi de folosință. Produsele de dinainte poartă totuși același fișier
+     în amândouă casetele — nu e căderea, e migrarea 027, care a copiat o
+     singură dată. Lămurirea de sub fiecare casetă spune pe față ce se
+     întâmplă dacă lipsește. -->
 <div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
 <!-- Leneșă din același motiv ca miniatura din listă: altfel parserul cere
@@ -1222,8 +1226,8 @@ class Component extends DCLogic {
     const ajutorPoza = (l) => ((S.pendingPhoto || {})[l]
       ? "Se încarcă la salvare: " + S.pendingPhoto[l].name
       : (l === "copt"
-        ? "Fără o poză aici, la gata de servire se arată poza congelată. JPEG, PNG sau WebP, maximum 5 MB."
-        : "Se arată la congelate și, cât timp gata-de-servire n-are poza ei, și acolo. JPEG, PNG sau WebP, maximum 5 MB — se verifică după conținut, nu după extensie."));
+        ? "Se arată numai la gata de servire. Fără ea, produsul apare acolo fără poză. JPEG, PNG sau WebP, maximum 5 MB."
+        : "Se arată numai la congelate. JPEG, PNG sau WebP, maximum 5 MB — se verifică după conținut, nu după extensie."));
 
     /* --- rețeta produsului deschis în formular --- */
     const rec = (S.form && S.form.recipe) || [];
@@ -1448,11 +1452,17 @@ class Component extends DCLogic {
         // nu pierde prețul de acolo — iar omul l-ar scrie a doua oară degeaba.
         horecaCls: "h-input h-numeric" + (f.inFrozen ? "" : " pr-stins"),
         retailCls: "h-input h-numeric" + (f.inBaked ? "" : " pr-stins"),
-        // Miniaturile arată poza REZOLVATĂ a fiecărei laturi, adică chiar ce
-        // vede cumpărătorul: latura fără poză a ei o ia pe a celeilalte. Poza
-        // aleasă acum, dar încă neurcată, trece înaintea amândurora.
-        photo: pozaLocala("congelat") || f.photo || f.photoBaked || FOTO_LIPSA,
-        photoBaked: pozaLocala("copt") || f.photoBaked || f.photo || FOTO_LIPSA
+        // Miniaturile arată chiar ce vede cumpărătorul, adică poza laturii ei
+        // și atât: o latură fără poză arată substituentul, nu poza celeilalte.
+        // Căderea a fost scoasă la 21 septembrie 2026 — vezi `latura_poza()`
+        // din api/lib/laturi.php. Aici era scrisă a doua oară, de mână
+        // (`f.photo || f.photoBaked`), deci trebuia scoasă și aici: o
+        // previzualizare care mai cade ar arăta patronului o poză pe care
+        // site-ul n-o mai pune, adică exact minciuna pe care o repară runda.
+        //
+        // Poza aleasă acum, dar încă neurcată, trece înaintea celei din bază.
+        photo: pozaLocala("congelat") || f.photo || FOTO_LIPSA,
+        photoBaked: pozaLocala("copt") || f.photoBaked || FOTO_LIPSA
       },
       catOpts: S.cats.map((c) => ({ v: c.slug, l: c.name })),
       onName: ff("name"), onNameEn: ff("nameEn"),

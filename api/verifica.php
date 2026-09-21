@@ -232,7 +232,7 @@ if ($hasConfig) {
         // peste trei luni, în pagina asta.
         //
         // DE CE RĂMÂNE SCRISĂ ÎN COD, ȘI NU SE CITEȘTE DIN `sql/`. Pe VPS
-        // folderul acela nu ajunge lângă `api/`: `actualizeaza-vps.sh:684-687`
+        // folderul acela nu ajunge lângă `api/`: `actualizeaza-vps.sh:776-779`
         // copiază în `/var/www/gp/` numai `api`, `public_html`, `clienti` și
         // `lab`, iar `sql/` rămâne unde a fost urcat, în `/root/deploy/`, de
         // unde îl citesc scripturile de server. O citire de pe disc n-ar găsi
@@ -340,6 +340,7 @@ if ($hasConfig) {
             '024_doua_cataloage.sql',
             '025_registru_migrari.sql',
             '026_cheie_cerere.sql',
+            '027_poza_fiecarei_laturi.sql',
         ];
         $areRegistru = in_array('schema_migrations', $tables, true);
         check(
@@ -741,6 +742,23 @@ if ($hasConfig) {
                     . 'dublată, rezervări dublate. Purtarea fără ele nu e stricată, e cea de '
                     . 'dinainte — pagina spune atunci, ca până acum, că nu se știe dacă cererea '
                     . 'a ajuns și îl trimite pe om să se uite întâi.',
+            ],
+            // 027 nu aduce nici tabel, nici coloană: mută o dată datele dintr-o
+            // coloană în cealaltă. E deci de soiul lui 017 și 010 — nu se vede în
+            // schemă —, iar singurul lucru care spune sigur „a rulat" e urma pe
+            // care și-o scrie ea la coadă, în `settings`. Fără ea, pagina asta n-ar
+            // avea ce măsura și ar tăcea verde peste o vitrină golită pe jumătate.
+            '027_poza_fiecarei_laturi.sql' => [
+                'nume'    => 'Poza fiecărei laturi, a ei (migrarea 027)',
+                'coloane' => [],
+                'setari'  => ['migration_027_poza_pe_latura'],
+                'ce'      => 'Face a fiecărei laturi poza pe care până acum o ÎMPRUMUTA de la '
+                    . 'cealaltă: până în 2.4.1, o latură fără poză a ei o arăta pe a celeilalte, '
+                    . 'și de-aia schimbarea pozei la congelate se vedea și la gata de servire. '
+                    . 'Împrumutul s-a tăiat, iar migrarea asta e cea care copiază o dată pentru '
+                    . 'totdeauna, ca în ziua schimbării amândouă laturile să arate exact ce '
+                    . 'arătau. Fără ea, codul nou pe baza veche lasă „gata de servire" fără '
+                    . 'nicio poză — fiecare produs cu substituentul „fără poză" pe el.',
             ],
         ];
 

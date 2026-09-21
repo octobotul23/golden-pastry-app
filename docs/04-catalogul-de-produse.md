@@ -81,10 +81,28 @@ intra cu 0 lei și nimeni nu vedea de unde vine.
 „Fotografie — gata de servire". JPEG, PNG sau WebP, maximum 5 MB. Alegi
 fișierul, se încarcă la salvare.
 
-Nu ești obligat să le pui pe amândouă: **latura fără poză a ei o arată pe a
-celeilalte.** Așa produsul nu apare gol pe site în ziua dintre cele două
-urcări. Miniatura de lângă fiecare casetă arată ce vede cumpărătorul, nu ce
-scrie în casetă — deci amândouă pot arăta același fișier, și e în regulă.
+**Fiecare latură arată numai poza ei.** O latură fără fotografie apare pe site
+cu substituentul casei, nu cu poza celeilalte. Miniatura de lângă fiecare
+casetă arată exact ce e în caseta aceea, deci ce vezi acolo e ce vede
+cumpărătorul pe latura aceea.
+
+Până în 2.4.1 nu era așa: latura fără poză o împrumuta pe a celeilalte, ca
+produsul să nu apară gol în ziua dintre cele două urcări. Ideea era bună, dar
+din afară **nu se putea deosebi de o poză scrisă în amândouă locurile**: urcai
+o fotografie nouă la congelate și o vedeai apărând și la gata de servire, fără
+s-o fi pus acolo. Împrumutul s-a tăiat, iar la actualizare fiecare produs care
+avea poză numai la congelate a primit-o, o dată, și în caseta de gata de
+servire — deci în ziua schimbării nimic nu s-a golit pe site.
+
+Două urmări ale acelei copieri, ca să nu te mire:
+
+- **Produsele vechi au acum același fișier în amândouă casetele.** Schimbi poza
+  la o latură și cealaltă rămâne cu cea veche — ceea ce e tocmai ce ai cerut,
+  dar e pe dos față de cum se purta înainte. Când vrei aceeași fotografie pe
+  amândouă, o urci de două ori.
+- **Un produs adăugat de acum înainte** pornește cu amândouă casetele goale.
+  Îi pui poză numai la congelate, iar la gata de servire va apărea
+  substituentul până îi urci una și acolo.
 
 Pozele făcute cu telefonul intră ca atare; nu-i nevoie să le micșorezi
 dinainte. Dacă totuși îți spune că fotografia e prea mare, mesajul îți spune

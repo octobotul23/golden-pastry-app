@@ -375,14 +375,52 @@ else
                 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE())"
   }
 
-  # Registrul migrărilor: 1 dacă tabelul e acolo, 0 dacă nu.
+  # Registrul migrărilor: 1 dacă e AL CASEI, 0 dacă nu e niciun tabel cu numele
+  # ăsta. Întrebarea e pusă pe COLOANĂ, nu pe nume de tabel — pricina e scrisă
+  # la `registruStrain`, mai jos, și e una măsurată pe serverul adevărat.
   registruExista() {
-    my -N -B "$DB_NAME" -e "SELECT COUNT(*) FROM information_schema.TABLES
+    my -N -B "$DB_NAME" -e "SELECT COUNT(*) FROM information_schema.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schema_migrations'
+        AND COLUMN_NAME = 'fisier'"
+  }
+
+  # Un tabel cu numele nostru, dar fără coloana noastră: 1 = e acolo și e străin.
+  #
+  # UN NUME NU E O IDENTITATE. Pe 21 septembrie 2026, urcarea rundei 2.4.0 pe
+  # serverul de producție a murit cu
+  #
+  #     ERROR 1054 (42S22) at line 1: Unknown column 'fisier' in 'where clause'
+  #
+  # fiindcă în bază era un `schema_migrations` făcut cu mâna pe 1 septembrie, cu
+  # alte coloane — `filename`, `applied_at`, `note` —, rămășița unei idei
+  # părăsite în 2.0.3, scoasă din documente și niciodată scoasă din bază.
+  # „Nu se mai face" nu desface ce s-a făcut deja. Paza de atunci întreba
+  # `TABLE_NAME = 'schema_migrations'`, i se răspundea „da", și `inRegistru`
+  # pica pe un tabel care avea numele bun și coloanele altcuiva.
+  #
+  # `CREATE TABLE IF NOT EXISTS` din 025 se potrivește tot pe NUME, deci nici el
+  # nu îndreaptă nimic: tace și pleacă mai departe, iar coada de registru a
+  # fiecărei migrări ar pica apoi pe rând, una câte una, pe aceeași eroare.
+  registruStrain() {
+    my -N -B "$DB_NAME" -e "SELECT COUNT(*) FROM information_schema.TABLES t
+      WHERE t.TABLE_SCHEMA = DATABASE() AND t.TABLE_NAME = 'schema_migrations'
+        AND NOT EXISTS (SELECT 1 FROM information_schema.COLUMNS c
+          WHERE c.TABLE_SCHEMA = DATABASE() AND c.TABLE_NAME = 'schema_migrations'
+            AND c.COLUMN_NAME = 'fisier')"
+  }
+
+  # Coloanele tabelului cu numele ăsta, ca să le vadă omul în mesaj — altfel
+  # „nu e al nostru" e o vorbă pe care n-are cum s-o verifice.
+  coloaneleRegistrului() {
+    my -N -B "$DB_NAME" -e "SELECT GROUP_CONCAT(COLUMN_NAME
+        ORDER BY ORDINAL_POSITION SEPARATOR ', ')
+      FROM information_schema.COLUMNS
       WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schema_migrations'"
   }
+
   # Câte rânduri poartă numele ăsta în registru: 0 ori 1.
   #
-  # Se cheamă NUMAI cu registrul făcut. N-are cum să se apere singură cu un
+  # Se cheamă NUMAI cu registrul casei făcut. N-are cum să se apere singură cu un
   # `IF(tabelul există, ..., 0)`: MySQL dezleagă numele tabelelor la citirea
   # cererii, nu la rularea ei, deci un `SELECT ... FROM schema_migrations` pică
   # pe „table doesn't exist" chiar și pe ramura pe care `IF()` n-o alege. De-aia
@@ -392,6 +430,27 @@ else
   inRegistru() {
     my -N -B "$DB_NAME" -e "SELECT COUNT(*) FROM schema_migrations WHERE fisier = '$1'"
   }
+
+  # STRĂINUL SE VEDE ÎNAINTEA ORICĂREI MIGRĂRI. Dacă în bază e un
+  # `schema_migrations` care nu e al casei, actualizarea s-ar opri oricum —
+  # coada de registru a primei migrări ar pica —, dar s-ar opri pe o eroare de
+  # MySQL pe care patronul n-are cum s-o citească. Aici se oprește cu vorbele
+  # casei, cu numele coloanelor sub ochi și cu comanda de scăpare; și se
+  # oprește ÎNAINTE de pasul „Fișiere", deci site-ul rămâne întreg pe versiunea
+  # care merge.
+  if [[ "$(registruStrain || echo 0)" != 0 ]]; then
+    rosu "  În baza de date e un tabel „schema_migrations” care nu e al aplicației."
+    info "  Are coloanele: $(coloaneleRegistrului || echo '?')"
+    info "  Al casei are „fisier” și „aplicata_la”. Ăsta e de altundeva — cel mai"
+    info "  probabil o încercare veche, dinainte de hotărârea din 2.0.3."
+    echo
+    info "  Nu se șterge nimic: i se schimbă numele, și rămâne acolo de citit."
+    info "      mysql -u $DB_USER -p $DB_NAME -e 'RENAME TABLE schema_migrations TO schema_migrations_vechi'"
+    info "  Apoi dai iar comanda asta de actualizare."
+    echo
+    rosu "  Fișierele NU au fost copiate — serverul merge mai departe cu versiunea veche."
+    exit 1
+  fi
 
   APLICATE=0
   SARITE=0
@@ -410,10 +469,23 @@ else
   # acum.
   REGISTRU="$SQL_DIR/025_registru_migrari.sql"
   REG_VIU=0
+  REG_NOU=0
   if [[ -e "$REGISTRU" ]]; then
     REG_ERA=0
-    if [[ "$(registruExista)" != 0 ]]; then
-      REG_ERA="$(inRegistru 025_registru_migrari.sql)"
+    # NU ÎN ATRIBUIRE. Sub `set -euo pipefail`, `X="$(f)"` moare fără niciun
+    # cuvânt al casei când `f` pică: statutul atribuirii e chiar statutul
+    # substituției. Aici era singura chemare de mysql din tot scriptul nelegată
+    # de un `if`, și chiar ea a picat pe 21 septembrie 2026 — patronul a văzut
+    # un rând brut de MySQL în loc de „Fișierele NU au fost copiate", adică
+    # tocmai propoziția care-i spune că site-ul e neatins.
+    if [[ "$(registruExista || echo 0)" != 0 ]]; then
+      if ! REG_ERA="$(inRegistru 025_registru_migrari.sql 2>/tmp/gp-mig.err)"; then
+        rosu "  Registrul migrărilor n-a putut fi citit:"
+        sed -n '1,8p' /tmp/gp-mig.err | sed 's/^/    /'
+        echo
+        rosu "  Fișierele NU au fost copiate — serverul merge mai departe cu versiunea veche."
+        exit 1
+      fi
     fi
     if ! my "$DB_NAME" < "$REGISTRU" >/dev/null 2>/tmp/gp-mig.err; then
       rosu "  Registrul migrărilor n-a putut fi făcut:"
@@ -427,6 +499,12 @@ else
       info "025_registru_migrari.sql — era deja aplicată"
       SARITE=$((SARITE + 1))
     else
+      # Registrul s-a NĂSCUT la rularea asta, deci e gol. Din clipa asta,
+      # pentru fiecare migrare de mai jos „nu era în registru înainte, e
+      # după" e adevărat — și despre cele intrate acum, și despre cele
+      # intrate acum o lună. Semnul se ține ca să nu se citească 0 → 1 drept
+      # dovadă la prima rulare; v. hotărârea de mai jos.
+      REG_NOU=1
       verde "  025_registru_migrari.sql — aplicată acum (registrul migrărilor)"
       APLICATE=$((APLICATE + 1))
     fi
@@ -493,7 +571,16 @@ else
     # „Registrul nu știe de ea" are două pricini cinstite — un `sql/` mai vechi
     # decât `025`, ori o migrare scrisă fără coada de registru — și amândouă
     # merită socoteala veche, nu o ghicitoare nouă.
-    if [[ "$REG_INAINTE" == 0 && "$REG_DUPA" == 1 ]]; then
+    #
+    # A treia pricină e chiar NAȘTEREA registrului, și e cea care înșală cel mai
+    # frumos: la rularea în care intră 025, tabelul e gol, deci FIECARE migrare
+    # de sub el trece de la 0 la 1 și s-ar raporta „aplicată acum" — inclusiv
+    # cele intrate acum o lună. Nu e o pagubă (migrările se păzesc singure prin
+    # `information_schema`), e un raport prea sigur pe el. La nașterea unui
+    # registru, „a intrat acum" și „era deja aici" chiar NU se pot deosebi: n-are
+    # cine să-și amintească. De-aia `REG_NOU` taie ramura registrului la prima
+    # rulare și lasă amprenta să hotărască, ca înainte de 025.
+    if [[ "$REG_INAINTE" == 0 && "$REG_DUPA" == 1 && "$REG_NOU" == 0 ]]; then
       ERA_DEJA=0
     elif [[ "$REG_INAINTE" == 1 ]]; then
       ERA_DEJA=1
@@ -518,6 +605,11 @@ else
     fi
   done
   info "Bilanț: $APLICATE aplicate acum · $SARITE erau deja acolo"
+  if (( REG_NOU )); then
+    info "  Registrul migrărilor s-a făcut chiar acum, deci nu poate spune ce era"
+    info "  aplicat înaintea lui: bilanțul de mai sus e ținut după amprenta schemei,"
+    info "  ca până acum. De la actualizarea următoare, numărătoarea e a registrului."
+  fi
 
   # 017 e singura migrare din tot lanțul care nu atinge DELOC schema: scrie un
   # rând în `settings` și atât. Până în runda 2.4.0, bilanțul de mai sus o dădea

@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**422 de defecte confirmate** — 10 critice, 122 grave, 193 medii, 97 mici.
-**422 reparate**, 0 rămase.
+**430 de defecte confirmate** — 10 critice, 123 grave, 198 medii, 99 mici.
+**430 reparate**, 0 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-214 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+222 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -29,13 +29,13 @@ Aceeași listă, cu filtre și căutare:
 | Gravitate | Reparate | Rămase | Total |
 |---|---|---|---|
 | Critice | 10 | 0 | 10 |
-| Grave | 122 | 0 | 122 |
-| Medii | 193 | 0 | 193 |
-| Mici | 97 | 0 | 97 |
+| Grave | 123 | 0 | 123 |
+| Medii | 198 | 0 | 198 |
+| Mici | 99 | 0 | 99 |
 
 ---
 
-## Ce e reparat — 422
+## Ce e reparat — 430
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -147,6 +147,10 @@ reparația la loc și văzând-o picând.
 - [x] **Scriptul de actualizare făcea arhiva codului și o ștergea singur zece rânduri mai jos, la `--pastreaza 0` — iar pe urmă amândouă mesajele care arată calea înapoi mințeau despre ea**
   `actualizeaza-vps.sh:331` · *grav*
   Hotărârea patronului: „Aceeași pază, cuvânt cu cuvânt". Bucla arhivelor de cod a căpătat exact garda buclei de deasupra, literă cu literă, ca să se vadă dintr-o privire că sunt pereche. Ordinea din ea nu e întâmplătoare: întâi se cere să fie un NUMĂR, abia pe urmă să fie mai mare ca zero — altfel o valoare goală ar trece pe lângă cifre. `--pastreaza 0` înseamnă acum „nu face curățenie deloc", exact ce înseamnă deja pentru copiile bazei. Cele două mesaje care mințeau NU s-au atins, dinadins: ele se uitau la adevăr, iar adevărul era cel stricat. Cu paza pusă, `ARHIVA_COD` e goală în pasul „Fișiere" numai când chiar s-a dat `--fara-copie` (pasul acela e sărit cu totul la `--doar-baza`), deci mesajul lui `rupt()` redevine adevărat de la sine, iar raportul de la sfârșit arată calea unui fișier care chiar e acolo. Aceeași purtare ca la mesajul de la `:422-423` după reparația dinainte. Scris în AMÂNDOUĂ copiile scriptului — cea din proiect și cea din plasturele de VPS — fiindcă `.claude/test-plasa-rsync.mjs` le cere identice, și pe drept: o reparație pusă într-una și uitată în cealaltă e mai rea decât niciuna, fiindcă nimeni n-o mai caută. Nouă reguli noi în aceeași probă (partea a șaptea), din care șase sunt VII: blocul de arhivare se rulează cu `tar` adevărat pe un site de carton, iar ce a rămas pe disc se numără din Node, nu cu un `ls` tipărit din shell. Dovedită cu trei stricăciuni, scrise de fiecare dată în amândouă copiile: bucla fără pază (codul de dinainte), paza scrisă altfel decât la sora ei (purtarea rămâne bună, dar se pierde tocmai perechea din care s-a născut defectul), și paza bună cu `sort -r` scos — ultima șterge iar arhiva de azi, pe alt drum, și arată de ce nu e de ajuns să păzești numai valoarea.
+
+- [x] **Paza registrului de migrări întreba pe NUME, nu pe coloană: un `schema_migrations` străin, rămas pe serverul de producție de la o idee părăsită în 2.0.3, a oprit urcarea cu `Unknown column 'fisier'`**
+  `actualizeaza-vps.sh:381` · *grav*
+  Întrebarea se pune pe COLOANA de care e nevoie: `information_schema.COLUMNS ... AND COLUMN_NAME = 'fisier'`. Alături, `registruStrain()` caută tocmai cazul celălalt — tabel cu numele nostru, fără coloana noastră — și oprește urcarea ÎNAINTEA oricărei migrări, cu vorbele casei: ce coloane are tabelul găsit, că al casei are `fisier` și `aplicata_la`, comanda de scăpare (`RENAME TABLE schema_migrations TO schema_migrations_vechi` — `RENAME`, nu `DROP`: nu se șterge un tabel despre care scriptul nu știe ce ține) și, la urmă, „Fișierele NU au fost copiate". Patronul a mutat tabelul de pe server cu un script de o singură treabă, care REFUZĂ să mute dacă tabelul are `fisier`.
 
 - [x] **Ziua cerută de client își pierde luna la acceptare și devine, în tăcere, o zi din săptămâna curentă**
   `Administrare Comenzi.dc.html:1121` · *grav*
@@ -588,6 +592,10 @@ reparația la loc și văzând-o picând.
   `.claude/check-comanda-autor.mjs:132` · *mediu*
   Reparat în runda 2.2.1. Cele două reguli care numără și măsoară poziții lucrează pe `funelCod` / `cFunelCod` — pâlniile trecute prin `faraComentarii`, ca `lotCod` și `purCod` de deasupra lor. Regulile care caută prezența unui câmp rămân pe textul întreg: acolo comentariul nu strică. [19 septembrie 2026]
 
+- [x] **Scutirea spunea „comentariile nu sunt defectul", dar ținea numai de cele scrise cu `//`: aceeași frază trecea în JavaScript și era acuzată în `<!-- -->`, într-un fișier care e pagină HTML**
+  `.claude/check-dates.mjs:100` · *mediu*
+  Un ajutor nou, `randuriDeComentariuHtml(text)`, întoarce mulțimea rândurilor dinăuntrul unui `<!-- … -->`, iar bucla sare peste ele imediat după scutirea veche. Se caută pe textul întreg, nu pe rânduri, fiindcă un comentariu HTML se întinde aproape întotdeauna pe mai multe, iar tocmai rândurile lui dinăuntru sunt cele fără semn la început. Un `<!--` fără pereche înghite dinadins restul fișierului: așa îl vede și browserul, deci tot ce urmează chiar E comentariu — singurul fel în care paza ar putea orbi o pagină întreagă, așa că s-a și numărat: 0 din cele 19 fișiere scanate are unul, iar paza ascunde cu totul 848 de rânduri din 33 357, adică 2,54%.
+
 - [x] **Proba pachetului cerea ca pagina să aibă sloturi goale, deci striga „defect” exact când pozele erau puse la loc**
   `.claude/check-deploy.mjs:51` · *mediu*
   Premisa se citește acum din cod, nu din pagină: verificarea cere ca `Site Public.dc.html` să ducă `image-slot.js`, iar scriptul să aibă și `fetch(STATE_FILE)`, și `const url = this._userUrl || srcAttr`. Astea trei sunt chiar ce ține pericolul viu, și nu se schimbă când umpli sloturile. Comentariul de deasupra scrie amândouă variantele greșite dinainte, ca a treia să nu le repete. Măsurată prin două reveniri de sens diferit: scos `<script src="./image-slot.js">` din pagină → pică; schimbat `const url = this._userUrl || srcAttr` în `const url = srcAttr` → pică. Verificarea pe `.htaccess` a rămas neatinsă: ea era corectă, doar paznicul ei mințea.
@@ -656,6 +664,10 @@ reparația la loc și văzând-o picând.
   `.claude/check-site-public.mjs:759` · *mediu*
   Tăietura stă acum într-un singur loc, `.claude/felii.mjs`: `capatTagului()` sare peste ghilimele, iar `etichete()` / `eticheta()` întorc felii întregi, pe care locul care le cere le cercetează cu `.includes(…)` — se citește mai limpede decât un tipar cu două `[^>]*` în el. Pe marcaj stricat (o ghilimea neînchisă) se dă înapoi DINADINS la tăietura naivă: o felie prea scurtă înroșește proba, adică se aude, pe când una întinsă până la capătul fișierului ar găsi atributul căutat la altă etichetă — un verde mincinos. Mutate cele cinci locuri din `check-site-public.mjs` și `check-setari.mjs`, plus copia locală din `check-pages.mjs`. Dovedit în TREI direcții, fiindcă o reparație care oprește un fals roșu nu se dovedește ca una obișnuită: (A) cu reparația, un `>` scris în ghilimea la fiecare din cele cinci locuri nu mai înroșește nimic; (B) cu tăietura veche pusă înapoi, aceleași cinci capcane chiar înroșesc — altfel n-aș fi dovedit că paguba era reală; (C) stricat lucrul adevărat la fiecare din ele, regula tot se înroșește — altfel aș fi „reparat" o regulă în una care nu mai pică niciodată. 14 așteptări, 14 împlinite, fișierele puse la loc octet cu octet.
 
+- [x] **O regulă care nu putea pica: numele ei afirma căderea pozei pe cealaltă latură, dar cele două mostre din ea erau tocmai laturile care AU poza lor — trecea verde și cu căderea, și fără ea**
+  `.claude/check-site-public.mjs:919` · *mediu*
+  Regula s-a despărțit în două, și merg în pereche fiindcă niciuna singură nu ține: „latura care ARE poza ei chiar o arată" (mostrele vechi, cu numele adevărat de acum) și „latura fără poza ei nu o ia pe a celeilalte", legată de rândul 4. Prima e cea care împiedică a doua să treacă verde peste un ajutor care ar întoarce mereu gol. Comentariul de deasupra spune de ce s-a răsturnat hotărârea și de ce rândurile 2 și 3 nu o pot dovedi, oricât ar părea. Tot atunci s-au rescris și cele două comentarii din cod care mai descriau căderea ca pe un temei — `Site Public.dc.html` la cardul din vitrină și `Produse.dc.html` deasupra casetelor de poză.
+
 - [x] **Verificarea check-sql nu se uită niciodată la datele inițiale: regula caută „INSERT INTO”, iar seed-ul folosește „INSERT IGNORE INTO”**
   `.claude/check-sql.mjs:36` · *mediu*
   Verificatorul rescris: prinde și „INSERT IGNORE INTO”, numără valorile mergând pe adâncimea parantezelor (un rând poate ocupa mai multe linii), taie blocul la primul „ON DUPLICATE KEY” sau „;”, citește și coloanele adăugate prin ALTER TABLE din migrări, iar dacă nu mai găsește nicio inserare se plânge el însuși. Verifică acum 11 inserări, față de 0. Probe (dovada3): cu tiparul stricat apare „nicio inserare găsită”; cu o valoare ștearsă dintr-un rând real apare „rândul 6: 5 valori pentru 6 coloane”.
@@ -704,6 +716,10 @@ reparația la loc și văzând-o picând.
   `.claude/test-defect-unelte.mjs:1191` · *mediu*
   Ramură nouă (b), înaintea celei cu declarația (acum (c)): se pârăște `await fetch(…)` care are în fața lui capătul unei fraze (`;`, `{`, `}`) și, după paranteza de închidere, de-a dreptul `;`. Amândouă semnele sunt cerute dinadins — primul lasă afară `x = await fetch(…)` (răspunsul pus într-o variabilă deja făcută, scutire veche și scrisă), al doilea lasă afară `await fetch(u).then((r) => r.text())`, care își citește corpul. Trei santinele noi: una pentru cazul prins, două pentru marginile astea. Rămâne în afara ei un `await fetch(…)` aruncat FĂRĂ punct și virgulă la capăt (pe ASI); în casă nu există niciun astfel de rând. [16 septembrie 2026]
 
+- [x] **Tiparul trimiterilor dintre bucățile ghidului cerea o singură cifră înaintea punctului: din ziua în care ghidul a ajuns la a zecea plimbare, toate trimiterile la „10.x" au încetat tăcut să mai fie cântărite**
+  `.claude/test-doc-ghiduri.mjs:398` · *mediu*
+  Tiparul cere acum cel mult două cifre înaintea punctului (`\d{1,2}\.\d`), cu aceeași pază din spate — deci „2.1.1" și „8.3.33" rămân afară, iar „10.3" intră. Și pragul s-a înlocuit cu un fapt: lista din capul ghidului numește fiecare bucată cu numărul ei, deci fiecare bucată care există E atinsă de cel puțin o trimitere. Regula cere tocmai asta, și tipărește alături „46/46 bucăți atinse" — cifra care deosebește o regulă care s-a uitat de una care n-a mai avut la ce.
+
 - [x] **Probele care ating baza de date citesc `api/config.php`, deci se uită în „gp_dev” orice ar spune GP_BASE**
   `.claude/test-parola.mjs:46` · *mediu*
   Ajutorul comun .claude/baza-probei.mjs: `configulLuiBase()` află, după portul din `GP_BASE`, configurarea instanței care ascultă acolo (`instanta.mjs` își ține starea în %TEMP%/gp-instante/<nume>.json) și o pune în mediu ca `GP_CONFIG` — chiar la încărcarea modulului, fiindcă PHP-ul chemat de probă moștenește mediul procesului. `api/index.php` citea deja variabila asta, deci regula e aceeași peste tot: mediul are întâietate. Fragmentele `php -r` din probe s-au scris cu `CERE_CONFIG` (`(getenv("GP_CONFIG") ?: "api/config.php")`) în locul căii bătute în cuie, iar plasa de siguranță `/^(gp_dev|gp_test|gp_fresh)$/` s-a mutat în `BAZA_DE_PROBA`, care primește și bazele instanțelor (`gp_i_<nume>`) — altfel probele s-ar fi oprit singure cu „baza nu e una de dezvoltare”. Unsprezece fișiere trecute pe ajutorul comun (opt probe, curata-probe.mjs, aplica-sql.mjs), inclusiv trei care purtau fiecare câte o copie a aceleiași funcții. O valoare pusă de om din afară nu se atinge. Fără nicio instanță pornită nu se schimbă nimic: `GP_CONFIG` rămâne nepus și PHP cade tot pe `api/config.php`. Dovadă: suita întreagă, rulată cu `GP_BASE=http://127.0.0.1:8203/api`, dă tot 1509 trecute · 0 picate, iar curățenia raportează „Șters, din «gp_i_verifg»: 120 urme” — o bază pe care nu o atinsese niciodată înainte.
@@ -747,6 +763,10 @@ reparația la loc și văzând-o picând.
 - [x] **Raportul de actualizare lăuda cu verde zeroul semănat de 008, „Procentul de recomandare: 0% — pus acum”, tocmai când 017 lipsea și comisioanele se nășteau 0,00 RON**
   `actualizeaza-vps.sh:471` · *mediu*
   O ramură nouă, înaintea celei a casei: `elif [[ "$CINE" == "casa" && "$VAL" =~ ^0+([.,]0+)?$ ]]` scrie galben „Procentul de recomandare e 0%, semănat de casă — migrarea 017 n-a intrat.”, cu urmarea (fiecare comision nou se naște 0,00 RON și rămâne așa) și cu locul unde se caută: rândul „017_procent_recomandare.sql” din bilanț. Zeroul hotărât de om rămâne pe ramura lui, „hotărât de tine, deci l-am lăsat”, neschimbat. Scris în amândouă copiile scriptului. Probă: `.claude/test-plasa-rsync.mjs`, secțiunea 10. Pe urmă: `node .claude/defecte.mjs doc`.
+
+- [x] **Citirea registrului era scrisă ca ATRIBUIRE, nu ca `if`: sub `set -e` scriptul murea acolo, fără să treacă prin nicio ramură a casei, și patronul vedea un rând de MySQL în loc de „Fișierele NU au fost copiate"**
+  `actualizeaza-vps.sh:482` · *mediu*
+  Chemarea a fost legată de o condiție: `if ! REG_ERA="$(inRegistru ... 2>/tmp/gp-mig.err)"; then` — cu mesajul roșu al casei, primele opt rânduri de eroare și propoziția despre fișiere. Iar `registruExista` se cheamă acum cu `|| echo 0`, ca o citire căzută să nu se dea drept „nu e niciun registru".
 
 - [x] **Filtrul „Refuzate” din panoul de cereri nu găsește niciodată nimic**
   `Administrare Comenzi.dc.html:1426` · *mediu*
@@ -1096,6 +1116,10 @@ reparația la loc și văzând-o picând.
   `docs/10-trecerea-cu-ochii.md:847` · *mediu*
   Verificarea din Setări → „Notificări” e scoasă. În locul ei, 7.7 trimite în Jurnal, cu filtrul de zonă „Comenzi” și referința comenzii: trebuie să se vadă rândul anulării de adineauri și NICIUN rând de modificare la ora apăsării de pe card. Un `order_update · Comandă #…: Anulată → …` scris la ora aceea ar înroși rândul pe loc — adică verificarea poate pica. [16 septembrie 2026]
 
+- [x] **Cuprinsul plimbării rămăsese cu o rundă în urmă: scria „cele zece plimbări" peste un ghid cu unsprezece, n-avea deloc runda 2.4.0, iar plimbarea de la urmă era trecută a zecea**
+  `docs/10-trecerea-cu-ochii.md:15` · *mediu*
+  Lista e la zi — are runda 2.4.0 a zecea, runda 2.4.1 a unsprezecea, „Telefon, tabletă, calculator" a douăsprezecea. Dar îndreptarea cifrelor, singură, n-ar fi o reparație: peste o rundă ar fi iar veche. Deci lista a căpătat paznicul ei în `.claude/test-doc-ghiduri.mjs`, lângă cel al minutelor: numerele și numele din listă se cântăresc pe titlurile `## N ·` ale documentului (tăiate la două puncte, fiindcă titlurile de rundă poartă și un rezumat pe care lista nu-l repetă), iar cele două cifre scrise în litere și rangul de sub listă se cântăresc pe câte capitole sunt. Lista de ranguri e scrisă cu mâna și se va opri o dată — atunci se aude, are regula ei.
+
 - [x] **După deschiderea panourilor cu codul tabletei, toate cardurile arată „—" și scrie „cere autentificare"**
   `Intrare.dc.html:383` · *mediu*
   După deschiderea panourilor cu codul tabletei, pagina cere din nou cifrele: cardurile arată numerele zilei în loc de „—” și de „cere autentificare”. Probe în .claude/check-panouri.mjs.
@@ -1412,6 +1436,10 @@ reparația la loc și văzând-o picând.
   `actualizeaza-vps.sh:582` · *mic*
   Aceeași pază ca la procent și la adresă: `2>/tmp/gp-martor.err)" && CONTURI_CITITE=1 || CONTURI_CITITE=0`. Citirea picată scrie galben „N-am putut citi câte conturi făcute pe site așteaptă să le recunoști:”, cu primele patru rânduri ale erorii și trimiterea la Conturi, „Recunosc clientul”, fără `mor`. Zero conturi tace mai departe, dinadins: omul n-are ce face. Acordul se face pe număr, ca la `numar()`: „1 cont … singur”, „Îl recunoști”; „3 conturi … singure”, „Le recunoști”. Scris în amândouă copiile scriptului. Probă: `.claude/test-plasa-rsync.mjs`, secțiunea 10. Pe urmă: `node .claude/defecte.mjs doc`.
 
+- [x] **La rularea în care se NAȘTE registrul, bilanțul raporta „aplicată acum" despre fiecare migrare din lanț — și despre cele intrate acum o lună: un tabel gol spune 0 → 1 pentru toate**
+  `actualizeaza-vps.sh:583` · *mic*
+  Un semn, `REG_NOU`, se aprinde în ramura în care `025` chiar se naște. Cât e aprins, ramura registrului din hotărâre se sare și socoteala cade înapoi pe amprentă — exact ca înainte de `025`, adică pe singurul martor care a văzut și trecutul. Iar bilanțul spune singur, o dată, că registrul s-a făcut chiar atunci și că de-aceea nu poate spune ce era înaintea lui; de la actualizarea următoare numărătoarea e a lui, și rândul nu mai apare.
+
 - [x] **Pe ecranul de refuz din patru panouri, „← Alege panoul” era o legătură de scris de 26px, la 8px sub „Ieși din cont”**
   `Administrare Comenzi.dc.html:148` · *mic*
   Pe același rând, în toate cele patru pagini: legătura primește tiparul casei, `display:flex;align-items:center;justify-content:center;min-height:44px`, fără `padding-top:4px`, care n-ar mai fi avut rost. Se întinde pe lățimea coloanei, ca butoanele de deasupra. Niciun rând nou, deci nicio trimitere cu număr de linie nu s-a mutat. Proba caută ecranul întreg, poarta cu porțile din ea, și cere în el o singură legătură „← Alege panoul” spre Intrare, de cel puțin 44px.
@@ -1447,6 +1475,10 @@ reparația la loc și văzând-o picând.
 - [x] **must_change_password nu e impus pe server, iar pagina care îl cere are pe ea butonul de ocolire**
   `api/lib/auth.php:33` · *mic*
   api/lib/auth.php — trei schimbări, toate în fișierul meu: 1. Linia 33, în SELECT-ul din current_user(): am adăugat `u.is_system` lângă `u.must_change_password`, ca regula de mai jos să poată scuti conturile de sistem. 2.
+
+- [x] **O latură fără poză a ei o arăta pe a celeilalte, iar asta nu se putea deosebi de un defect: prima poză urcată la congelate „apărea" și la gata de servire, deși nimeni nu scrisese în două coloane**
+  `api/lib/laturi.php:150` · *mic*
+  Căderea s-a tăiat: `latura_poza()` întoarce numai coloana laturii cerute. Ca tăierea să nu golească nicio vitrină în ziua schimbării, `sql/027_poza_fiecarei_laturi.sql` face o dată pentru totdeauna al fiecărei laturi ce se împrumuta până acum — copiază `photo` în `photo_baked` acolo unde a doua e goală —, zăvorâtă pe un rând din `settings`, nu pe schemă, fiindcă nu atinge schema deloc. Și, fiindcă după copiere cele două coloane ajung să poarte ACELAȘI nume de fișier, dezlegarea pozei vechi de la urcare a căpătat o pază: fișierul se șterge de pe disc numai dacă nu-l mai ține și cealaltă latură. Fără ea, prima poză urcată după migrare ar fi șters tăcut fișierul folosit de amândouă.
 
 - [x] **Anunțul comenzii noi poartă alt număr decât cel scris pe comandă în toată aplicația**
   `api/lib/notify.php:87` · *mic*

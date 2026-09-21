@@ -61,10 +61,12 @@ function product_public(array $r): array
 
         // APARTENENȚA ȘI POZELE, în două feluri deodată, și amândouă sunt
         // folosite: cele CRUDE sunt ce editează panoul (două bife și două
-        // casete de fișier), iar `photoFor` e ce ARATĂ magazinul, cu căderea
-        // pe poza celeilalte laturi deja făcută. Panoul n-are ce face cu poza
-        // rezolvată — ar edita o valoare care nu există în bază — iar
-        // magazinul n-are ce face cu cea crudă: ar desena găuri.
+        // casete de fișier), iar `photoFor` e ce ARATĂ magazinul — poza
+        // fiecărei laturi, și atât. De la 21 septembrie 2026 cele două nu mai
+        // sunt deosebite de nicio cădere (`latura_poza()` nu mai împrumută
+        // poza celeilalte laturi), dar rămân două câmpuri deosebite: „crud"
+        // poate fi null acolo unde „de arătat" e tot null, iar magazinul n-are
+        // ce face cu apartenența, nici panoul cu forma rezolvată.
         //
         // Pe o bază de dinainte de 024 coloanele lipsesc din rând, iar
         // `latura_in()` răspunde purtarea de până azi. Vezi api/lib/laturi.php.

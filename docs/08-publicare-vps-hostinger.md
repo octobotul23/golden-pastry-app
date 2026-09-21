@@ -395,6 +395,24 @@ O bază care are coloana dar n-are indexul primește chei și nu bagă de seamă
 niciodată că a primit aceeași cheie de două ori: arată reparată și nu e. Tot de
 index întreabă și codul, din aceeași pricină (`request_key_supported()`).
 
+`027_poza_fiecarei_laturi.sql` **nu se vede nici ea**, și nici n-ar avea cum:
+e singura migrare care nu atinge schema deloc — nici tabel, nici coloană, nici
+index. Numărul rămâne tot **25**. Ea mută date: copiază poza congelată în
+coloana laturii coapte acolo unde aceea e goală. Dovada se cere din `settings`:
+
+```sql
+SELECT value FROM settings WHERE setting_key = 'migration_027_poza_pe_latura';
+```
+
+Rândul acela e și zăvorul ei: a doua rulare îl găsește și nu mai copiază nimic.
+Pe o instalare nouă migrarea nu are ce copia — n-are încă niciun produs —, deci
+rândul apare și atât, ceea ce e tocmai răspunsul bun.
+
+Ce repară: până în 2.4.1, o latură fără poză a ei o arăta pe a celeilalte, și
+de-aia o poză schimbată la congelate se vedea și la gata de servire. Împrumutul
+s-a tăiat, iar migrarea asta e cea care face ca tăierea să nu golească nicio
+vitrină: în ziua schimbării, amândouă laturile arată exact ce arătau.
+
 Cheia e ce recunoaște cererea trimisă **a doua oară**: degetul apăsat încă o
 dată, sau legătura căzută tocmai când răspunsul venea încoace. Pe o instalare
 nouă nu se vede nimic din asta — e o pază, nu o pagubă reparată. Fără ea,

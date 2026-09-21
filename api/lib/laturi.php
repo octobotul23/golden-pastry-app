@@ -130,19 +130,26 @@ function latura_in(array $r, string $latura): bool
 }
 
 /**
- * Poza de arătat pe latura asta.
+ * Poza de arătat pe latura asta — numai a EI.
  *
- * Hotărârea patronului: o latură fără poză a ei arată poza celeilalte. Un
- * produs n-are voie să apară gol pe site în ziua dintre cele două urcări.
+ * Hotărârea patronului, 21 septembrie 2026. Până atunci o latură fără poză o
+ * împrumuta pe a celeilalte, ca produsul să nu apară gol pe site în ziua
+ * dintre cele două urcări. Purtarea aia nu se poate însă deosebi de un defect,
+ * și chiar așa s-a și citit în prima zi de folosință: schimbi poza la
+ * congelate și se schimbă și la gata de servire — fiindcă latura cealaltă
+ * n-avea încă una a ei, nu fiindcă ar fi scris cineva în două coloane.
+ *
+ * Ce se împrumuta până acum s-a făcut al fiecărei laturi o dată pentru
+ * totdeauna, cu `sql/027_poza_fiecarei_laturi.sql`, deci tăierea căderii nu
+ * golește nicio vitrină: în ziua schimbării, amândouă laturile arată exact ce
+ * arătau.
+ *
+ * De-acum gol înseamnă gol: magazinul pune substituentul „fără poză", nu poza
+ * celeilalte laturi.
  */
 function latura_poza(array $r, string $latura): ?string
 {
-    $aLui = latura_text($r[latura_coloana_poza($latura)] ?? null);
-    if ($aLui !== null) {
-        return $aLui;
-    }
-    $cealalta = $latura === 'copt' ? 'congelat' : 'copt';
-    return latura_text($r[latura_coloana_poza($cealalta)] ?? null);
+    return latura_text($r[latura_coloana_poza($latura)] ?? null);
 }
 
 /**

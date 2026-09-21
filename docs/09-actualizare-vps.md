@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.4.0/deploy
+  Pachet: /root/plasture-vps 2.4.1/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -124,11 +124,11 @@ grep -c session_days_panou /var/www/gp/api/lib/auth.php
    datele inițiale. A doua pare inofensivă, fiindcă are numai `INSERT IGNORE` —
    dar `IGNORE` sare peste chei duplicate, iar un produs pe care l-ai **șters**
    din Catalog n-are cu ce se ciocni și s-ar întoarce de la morți la fiecare
-   actualizare (`actualizeaza-vps.sh:448`).
+   actualizare (`actualizeaza-vps.sh:526`).
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
-   și din curățenie (`actualizeaza-vps.sh:786`), iar folderul pozelor e citit din
-   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:716`,
-   `api/routes/catalog.php:615`).
+   și din curățenie (`actualizeaza-vps.sh:878`), iar folderul pozelor e citit din
+   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:808`,
+   `api/routes/catalog.php:627`).
 6. **Drepturile**: totul pe `www-data`, `755` la foldere, `644` la fișiere,
    `640` la `config.php`.
 7. **Apache**: întâi `configtest`, și abia dacă trece, `reload`. O configurație
@@ -158,7 +158,7 @@ exact în minutele dintre cele două jumătăți ale actualizării.
 Fișierele `api/setup.php` și `api/verifica.php` sunt un caz aparte: ghidul de
 instalare cere ștergerea lor, dar amândouă sunt în pachet, deci copierea le-ar
 pune la loc de fiecare dată. Scriptul ține minte care lipseau și le scoate din
-nou (`actualizeaza-vps.sh:735`). Se închid și singure, cu `404`, din clipa în
+nou (`actualizeaza-vps.sh:827`). Se închid și singure, cu `404`, din clipa în
 care instalarea are un administrator activ — dar hotărârea rămâne a ta.
 
 ---
@@ -262,7 +262,7 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
   de cât de veche e instalarea: pe una lăsată în urmă cu trei versiuni se aprind
   trei, pe una actualizată ieri niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
-  `sql/026_cheie_cerere.sql`;
+  `sql/027_poza_fiecarei_laturi.sql`;
 - **25 de tabele** în capul raportului, la „Baza de date" (cel din urmă venit e
   `schema_migrations`, registrul adus de `025_registru_migrari.sql`; înaintea
   lui, `telegram_links` și `lab_production`, aduse de `021_raspundere.sql`).
@@ -415,19 +415,40 @@ Fără ea, cererea trimisă a doua oară — degetul apăsat încă o dată, leg
 care a căzut tocmai când răspunsul venea încoace — intră a doua oară, iar
 laboratorul vede două comenzi acolo unde omul a făcut una. Purtarea e cea de
 până acum, nu o stricăciune nouă: pagina știe să se poarte și pe o bază fără
+`027_poza_fiecarei_laturi.sql` **nu se vede nici ea în raport**, și tot dintr-o
+pricină aparte: e singura migrare care nu atinge schema DELOC — nici tabel, nici
+coloană, nici index —, deci nici amprenta nu se mișcă pentru ea. Numai registrul
+o vede. O ceri și singur:
+
+```sql
+SELECT value FROM settings WHERE setting_key = 'migration_027_poza_pe_latura';
+```
+
+Rândul acela e și zăvorul ei: a doua actualizare îl găsește și nu mai copiază
+nimic, deci o poză pe care ai schimbat-o între timp la gata de servire rămâne a
+ta. E aceeași lecție ca la `016` și `024`.
+
+Ce face: copiază o dată poza congelată în coloana laturii coapte acolo unde
+aceea e goală. Până în 2.4.1 o latură fără poză a ei o arăta pe a celeilalte —
+de-aia o poză schimbată la congelate se vedea și la gata de servire. Împrumutul
+s-a tăiat în runda asta, iar migrarea e cea care face ca tăierea să nu golească
+nicio vitrină: în ziua urcării, amândouă laturile arată exact ce arătau. De-acum
+gol înseamnă gol — un produs căruia nu i-ai urcat poză la gata de servire apare
+acolo cu substituentul „fără poză", nu cu poza congelată.
+
 cheie. Ce se schimbă la import e că serverul începe să recunoască perechea și
 răspunde cu cererea dintâi, ca și cum ar fi fost acum.
 
 Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
-adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:544`,
-`:623`). Un rând galben care spune că `017` sau `018` **n-a intrat** e o migrare
+adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:636`,
+`:715`). Un rând galben care spune că `017` sau `018` **n-a intrat** e o migrare
 lipsă — aproape mereu un folder `sql/` urcat mai vechi decât pachetul; la
 procent îl dă și un `0` rămas de la casă, pe care `017` l-ar fi urcat la 5. Un
 rând galben care începe cu **„N-am putut citi…"**, cu eroarea lui mysql
 dedesubt, e altceva: migrările au trecut, a picat numai întrebarea de după ele,
 deci raportul nu știe ce e acolo și nu ghicește. Nu rulezi din nou pentru atât;
 te uiți tu, în Setări. La fel vorbește și rândul conturilor făcute pe site pe
-care nu le-a recunoscut nimeni (`:684`): acolo o citire picată tăcea înainte,
+care nu le-a recunoscut nimeni (`:776`): acolo o citire picată tăcea înainte,
 exact ca „niciun cont", iar acum se aude.
 
 ---

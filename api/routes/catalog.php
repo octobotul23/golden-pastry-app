@@ -603,7 +603,19 @@ function route_products_photo(string $id): void
     // „Dinainte" înseamnă cea a LATURII ĂSTEIA. Cu `$p['photo']` scris aici,
     // fiecare urcare de gata-de-servire ar fi șters poza congelată de pe disc
     // — iar rândul din bază ar fi rămas, deci poza s-ar fi rupt tăcut.
-    if (is_uploaded_photo($old)) {
+    //
+    // ȘI NICI DACĂ CEALALTĂ LATURĂ O MAI FOLOSEȘTE. Două coloane pot arăta
+    // spre același fișier: așa le-a lăsat `sql/027_poza_fiecarei_laturi.sql`,
+    // care a copiat poza congelată în latura goală ca tăierea căderii să nu
+    // golească vitrina. Numele fișierului e acolo de două ori, dar fișierul e
+    // unul singur — iar codul de mai jos presupunea tăcut că fiecare fișier
+    // are un singur stăpân. Fără rândul ăsta, prima poză nouă de congelate ar
+    // fi șters de pe disc tocmai fișierul spre care `photo_baked` încă arată,
+    // și poza de la gata de servire s-ar fi rupt în tăcere, la fiecare produs,
+    // în ziua următoare migrării.
+    $cealaltaCol = latura_coloana_poza($latura === 'copt' ? 'congelat' : 'copt');
+    $tinutDeCealalta = (string) ($p[$cealaltaCol] ?? '') === $old;
+    if (is_uploaded_photo($old) && !$tinutDeCealalta) {
         @unlink($dir . '/' . basename($old));
     }
 
