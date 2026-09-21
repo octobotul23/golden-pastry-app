@@ -11,6 +11,36 @@
 
 declare(strict_types=1);
 
+/**
+ * Știe baza de laturi, adică a intrat migrarea 024?
+ *
+ * Aceeași formă ca `promo_supported()` (api/lib/promo.php), dar cu o deosebire
+ * care contează: la promo, „nu” înseamnă 503 — o reducere pe care serverul n-o
+ * poate socoti ar încasa un preț pe care clientul nu l-a văzut. Aici „nu”
+ * înseamnă doar „poartă-te ca înainte de 024”, iar purtarea aceea e corectă:
+ * produsele cu amândouă prețurile se văd pe amândouă laturile. Un 503 ar opri
+ * magazinul pentru o fereastră de câteva minute în care el chiar poate lucra.
+ *
+ * Răspunsul se ține minte pe cererea asta: se întreabă din mai multe locuri,
+ * iar information_schema nu se schimbă în mijlocul unei cereri.
+ */
+function catalog_laturi_supported(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        $coloane = (int) scalar(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'
+                AND COLUMN_NAME IN ('in_frozen', 'in_baked', 'photo_baked')"
+        );
+        return $ok = ($coloane === 3);
+    } catch (Throwable $e) {
+        return $ok = false;
+    }
+}
 function product_public(array $r): array
 {
     return [
@@ -28,6 +58,23 @@ function product_public(array $r): array
         'isNew'         => (bool) $r['is_new'],
         'active'        => !isset($r['active']) || (bool) $r['active'],
         'sort'          => (int) ($r['sort'] ?? 0),
+
+        // APARTENENȚA ȘI POZELE, în două feluri deodată, și amândouă sunt
+        // folosite: cele CRUDE sunt ce editează panoul (două bife și două
+        // casete de fișier), iar `photoFor` e ce ARATĂ magazinul, cu căderea
+        // pe poza celeilalte laturi deja făcută. Panoul n-are ce face cu poza
+        // rezolvată — ar edita o valoare care nu există în bază — iar
+        // magazinul n-are ce face cu cea crudă: ar desena găuri.
+        //
+        // Pe o bază de dinainte de 024 coloanele lipsesc din rând, iar
+        // `latura_in()` răspunde purtarea de până azi. Vezi api/lib/laturi.php.
+        'photoBaked'  => $r['photo_baked'] ?? null,
+        'inFrozen'    => latura_in($r, 'congelat'),
+        'inBaked'     => latura_in($r, 'copt'),
+        'photoFor'    => [
+            'frozen' => latura_poza($r, 'congelat'),
+            'baked'  => latura_poza($r, 'copt'),
+        ],
     ];
 }
 

@@ -157,6 +157,74 @@ function route_requests_list(): void
 /* --------------------------------------------------------------- creare -- */
 
 /**
+ * A DOUA TRIMITERE A ACELEIAȘI CERERI — răspunsul cererii dintâi (migrarea 026).
+ *
+ * Se cheamă dintr-un singur loc: din `catch`-ul lui `route_requests_create()`,
+ * când `INSERT`-ul a căzut pe `uq_req_cheie`. Ciocnirea aia nu e o eroare — e
+ * chiar dovada că cererea asta a intrat deja, o dată.
+ *
+ * HOTĂRÂREA PATRONULUI: „ÎI ARĂTĂM CĂ A REUȘIT." Nu se refuză și nu se numără a
+ * doua oară. Iese același 201 cu același rând, ca și cum atunci ar fi sosit —
+ * fiindcă, din partea omului, atunci a și sosit: a apăsat o dată, legătura a
+ * căzut, a apăsat din nou. Laboratorul primește UNA.
+ *
+ * NU TRIMITE ANUNȚURILE ÎNCĂ O DATĂ. Cererea dintâi și le-a trimis pe ale ei
+ * când a intrat. Repetate, ar fi umplut e-mailul și Telegramul patiseriei cu
+ * aceeași comandă de două ori — adică taman dublura de oprit, mutată de pe
+ * ecranul administratorului pe telefonul lui.
+ *
+ * NU SCADE DIN PLAFONUL PE CONEXIUNE. O legătură proastă ar fi costat clientul
+ * două cereri din douăzeci pentru o singură comandă — o nedreptate făcută
+ * tocmai omului pe care lucrarea asta s-a pus să-l ajute. Cererile lui
+ * adevărate se numără mai departe, la poartă, fiecare o dată.
+ *
+ * JETONUL SE FACE DIN NOU, dacă omul ceruse cont. Cel dintâi a plecat o
+ * singură dată, în răspunsul care S-A PIERDUT — de-aia e omul aici a doua oară
+ * —, deci nu-l are nimeni, iar `request_id` e UNIQUE și n-ar primi un al
+ * doilea. Fără asta, vizitatorul care a apăsat „Trimite comanda ȘI fă-ți cont"
+ * ar fi ajuns la „Mulțumim" fără drumul spre cont — adică nu chiar „ca prima
+ * oară".
+ *
+ * Întoarce fără să scrie nimic dacă rândul nu mai e acolo (o tranzacție dată
+ * înapoi exact între timp). Atunci `route_requests_create()` aruncă mai departe
+ * eroarea dintâi, cum ar fi făcut oricum.
+ */
+function request_reply_again(string $cheie, ?array $user, array $b): void
+{
+    $vechi = one('SELECT * FROM order_requests WHERE idempotency_key = ?', [$cheie]);
+    if (!$vechi) {
+        return;
+    }
+
+    $id  = (int) $vechi['id'];
+    $req = attach_request_items([$vechi])[0];
+
+    audit(
+        'request_repeat',
+        'request',
+        (string) $id,
+        'Aceeași cerere, trimisă din nou — i-am răspuns cu cea dintâi'
+    );
+
+    $minuteJeton = (int) config('claim_minutes', 30);
+    $jeton = ($user === null && $vechi['customer_id'] === null && !empty($b['vreauCont']))
+        ? request_claim_new($id, $minuteJeton, true)
+        : null;
+
+    // `dejaPrimita` e pentru pagină, nu pentru om: pe ecran scrie „Mulțumim",
+    // la fel ca prima oară. Steagul îi spune paginii să nu numere încă o dată
+    // ce a numărat deja, și e și singurul lucru pe care o probă îl poate cere
+    // ca să deosebească răspunsul ăsta de celălalt — amândouă sunt 201 cu
+    // același rând, și asta e chiar ce s-a cerut.
+    $raspuns = ['request' => $req, 'dejaPrimita' => true];
+    if ($jeton !== null) {
+        $raspuns['jeton']       = $jeton;
+        $raspuns['jetonMinute'] = $minuteJeton;
+    }
+    json_out($raspuns, 201);
+}
+
+/**
  * POST /requests
  *
  * Accesibilă fără cont: site-ul public trebuie să poată primi cereri.
@@ -445,19 +513,43 @@ function route_requests_create(): void
         $timed  = !empty($b['timed']);
     }
 
+    // CHEIA CARE RECUNOAȘTE A DOUA TRIMITERE A ACELEIAȘI CERERI (migrarea 026).
+    //
+    // Treizeci și două de cifre hexazecimale scrise de pagină o dată pe apăsare
+    // și ținute la retrimitere. `request_key_normalize()` le cere pe toate
+    // treizeci și două; orice altceva se citește ca „fără cheie", iar cererea
+    // intră exact ca ieri.
+    //
+    // SPRE DEOSEBIRE DE CELELALTE COLOANE NOI, ASTA MERGE ÎN `INSERT`, NU ÎNTR-UN
+    // `UPDATE` DE DUPĂ. Coloanele lui 022 și codul de recomandare se scriu cu
+    // UPDATE tocmai ca o bază nemigrată să nu cadă cu „Unknown column" pe ruta
+    // publică — dar aici toată reparația E scrierea dintâi: două cereri plecate
+    // în aceeași secundă ar trece amândouă de INSERT și abia pe urmă și-ar
+    // scrie cheia, adică exact dublura de oprit. Deci se alege INTEROGAREA,
+    // după poartă, ca la `list_price` în pozițiile de mai jos.
+    $cheie   = request_key_normalize((string) ($b['cheie'] ?? ''));
+    $cuCheie = $cheie !== '' && request_key_supported();
+
     $pdo = db();
     $pdo->beginTransaction();
     try {
         q(
-            'INSERT INTO order_requests
-               (customer_id, customer_name, phone, email, day, slot, zone, address, notes, total, status, variant)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [
-                $customerId, $customerName, $phone ?: null, $email ?: null,
-                $day, $slot ?: null, $zone ?: null, $address ?: null,
-                $notes ?: null,
-                round($total, 2), 'nou', $variant,
-            ]
+            $cuCheie
+                ? 'INSERT INTO order_requests
+                     (customer_id, customer_name, phone, email, day, slot, zone, address, notes, total, status, variant, idempotency_key)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                : 'INSERT INTO order_requests
+                     (customer_id, customer_name, phone, email, day, slot, zone, address, notes, total, status, variant)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            array_merge(
+                [
+                    $customerId, $customerName, $phone ?: null, $email ?: null,
+                    $day, $slot ?: null, $zone ?: null, $address ?: null,
+                    $notes ?: null,
+                    round($total, 2), 'nou', $variant,
+                ],
+                $cuCheie ? [$cheie] : []
+            )
         );
         $id = (int) $pdo->lastInsertId();
 
@@ -554,6 +646,23 @@ function route_requests_create(): void
         $pdo->commit();
     } catch (Throwable $e) {
         $pdo->rollBack();
+        // CIOCNIREA DE CHEI NU E O EROARE, E RĂSPUNSUL (migrarea 026).
+        //
+        // `uq_req_cheie` a oprit a doua scriere a aceleiași cereri, adică exact
+        // ce i s-a cerut. De aici încolo nu mai e nimic de salvat — cererea e
+        // deja în bază, întreagă, cu pozițiile ei — deci se răspunde cu ea.
+        //
+        // DUPĂ `rollBack()`, nu înainte: tranzacția căzută trebuie închisă până
+        // să se mai citească ceva pe aceeași legătură, iar rândul căutat e al
+        // ALTEI tranzacții, demult încheiată.
+        //
+        // Se cere numele indexului, nu doar codul 1062: în tranzacția asta mai
+        // sunt pozițiile și trei UPDATE-uri, iar un rând dublat venit de
+        // altundeva e un defect adevărat — înghițit cu un 201 vesel, ar fi
+        // dispărut din ochii tuturor.
+        if ($cuCheie && request_key_duplicate($e)) {
+            request_reply_again($cheie, $user, $b);
+        }
         throw $e;
     }
 
@@ -870,11 +979,16 @@ function route_requests_accept(string $id): void
     $nota     = '';
     if (array_key_exists('items', $b)) {
         $pozitii = cos_de_tarifat($b['items']);
+        // Perechile deja pe comandă trec de poarta laturii; un rând NOU pe o
+        // latură stinsă între timp, nu. Amândouă listele ies din aceeași hartă, deci
+        // nu pot ieși din pas.
+        $onorate = honored_prices($items);
         [$priced, $sum] = price_items(
             $pozitii,
             require_variant($b['variant'] ?? null, $implicit),
-            honored_prices($items),
-            array_filter(array_column($items, 'product_id'), static fn($x) => $x !== null)
+            $onorate,
+            array_filter(array_column($items, 'product_id'), static fn($x) => $x !== null),
+            array_keys($onorate)
         );
         $variant = order_variant_of($priced);
         $total   = round($sum, 2);

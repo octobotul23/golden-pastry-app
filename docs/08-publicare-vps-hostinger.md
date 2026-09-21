@@ -226,11 +226,21 @@ Migrările `003`–`006` n-au ce face la o instalare nouă: schema le conține
 deja. `007` **nu** — măsurat în `001_schema.sql`: `referral_code`,
 `referred_by` și `referred_at` nu apar nicăieri în el, iar `users.role` e tot
 `ENUM('admin','angajat','client')`, fără `manager` și `agent_vanzari`. Așa că
-cele care contează sunt **`007`–`020`** — schema nu le are (cea mai nouă e
-`020_rang_client.sql`). Bucla de mai jos le rulează pe toate, de la `003` în sus, și e bine așa:
+cele care contează sunt **de la `007` în sus** — schema nu le are. Bucla de mai
+jos le rulează pe toate, de la `003` încolo, și e bine așa:
 fiecare se uită întâi în `information_schema` și, dacă are deja ce caută, nu
 face nimic. Nu le alege pe sprânceană — o listă scrisă cu mâna e exact felul în
 care se uită o migrare.
+
+Prima comandă e **registrul migrărilor**, și se dă înaintea buclei, nu la rândul
+ei în ea: fișierul se cheamă `025`, deci în ordinea numelui ar rula după
+`003`–`024`, iar cele dinaintea lui ar trece pe lângă un tabel care încă nu
+există și n-ar avea unde-și scrie numele. E idempotent, deci bucla îl poate lua
+încă o dată la rând, fără pagubă.
+
+```bash
+mysql --default-character-set=utf8mb4 -u root -p gp < /root/deploy/sql/025_registru_migrari.sql
+```
 
 ```bash
 for f in /root/deploy/sql/[0-9][0-9][0-9]_*.sql; do
@@ -239,14 +249,24 @@ for f in /root/deploy/sql/[0-9][0-9][0-9]_*.sql; do
 done
 ```
 
-Verifici: **24 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
+După buclă, registrul îți spune singur ce a intrat — nu mai trebuie numărate
+tabele ca să ghicești:
+
+```bash
+mysql -u root -p gp -e "SELECT fisier, aplicata_la FROM schema_migrations ORDER BY fisier"
+```
+
+Verifici: **25 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
 puține, numele care lipsește îți spune care migrare n-a intrat:
-`referral_commissions` e din `008`, `lab_shifts` din `014`, `lab_messages`
-din `015`, `request_claims` din `019`, iar `telegram_links` și `lab_production`
-din `021`. Fără primul, pagina „Recomandări" răspunde „Eroare internă"; fără
-celelalte două, „Pontaj" și tabla de anunțuri din Panoul Laborator răspund
-lămurit că lipsește migrarea — vezi `lab_supported()` și
-`lab_board_supported()`. (`instaleaza-vps.sh` face bucla asta singur.)
+`referral_commissions` e din `008`, `founder_invites` din `009`, `lab_shifts`
+din `014`, `lab_messages` din `015`, `request_claims` din `019`,
+`telegram_links` și `lab_production` din `021`, iar `schema_migrations` din
+`025`. Fără `referral_commissions`, pagina „Recomandări" răspunde „Eroare
+internă"; fără `lab_shifts` și `lab_messages`, „Pontaj" și tabla de anunțuri
+din Panoul Laborator răspund lămurit că lipsește migrarea — vezi
+`lab_supported()` și `lab_board_supported()`. Iar dacă lipsește chiar
+`schema_migrations`, întrebarea de mai sus n-are cui să răspundă: atunci numeri
+tabelele, e singura cale rămasă. (`instaleaza-vps.sh` face bucla asta singur.)
 
 `017_procent_recomandare.sql` nu se vede nici în tabele, nici în coloane: ea
 scrie o setare, atât. O verifici în **Setări → General**, la „Procent de
@@ -348,6 +368,42 @@ contul șoferului; **nimeni nu se naște cu ea**, nici conturile de operații ca
 există azi — contul de laborator e o tejghea comună, și tocmai el n-are voie
 s-o aibă. Administratorul și fondatorul o au din cod, deci biroul nu se poate
 încuia pe dinafară.
+
+`024_doua_cataloage.sql` **nu se vede nici ea** în numărul de tabele: trei
+coloane pe `products` și nimic altceva — `in_frozen` și `in_baked` (în care
+catalog e produsul) și `photo_baked` (poza laturii gata de servire). Deci
+numărul rămâne **24** și după ea, iar dovada se cere anume:
+`SHOW COLUMNS FROM products LIKE 'in_frozen'`.
+
+Fără cele două bife, magazinul se întoarce la regula de dinainte — „se vede
+numai cine are **amândouă** prețurile" —, și asta nu e o stricăciune, ci chiar
+purtarea pe care codul nou o ține dinadins: fișierele ajung pe server înaintea
+importului SQL, iar în fereastra dintre ele nimic nu are voie să se golească.
+Ce nu merge până la import: cele două bife din panou n-au unde se scrie, iar
+o poză urcată anume pentru gata de servire ar cădea peste cea congelată. Bifele
+se nasc **aprinse** (`DEFAULT 1`), nu stinse: un produs născut de codul vechi
+între cele două momente trebuie să apară în amândouă cataloagele, nu în
+niciunul — nevăzut nicăieri, fără nicio eroare, e tocmai felul de pagubă pe
+care n-o observi.
+
+`026_cheie_cerere.sql` **nu se vede nici ea** în numărul de tabele: o coloană
+pe `order_requests`, `idempotency_key`, și indexul unic de peste ea,
+`uq_req_cheie`. Deci numărul rămâne **25** și după ea, iar dovada se cere
+anume — și se cere pe **index**, nu pe coloană:
+`SHOW INDEX FROM order_requests WHERE Key_name = 'uq_req_cheie'`.
+O bază care are coloana dar n-are indexul primește chei și nu bagă de seamă
+niciodată că a primit aceeași cheie de două ori: arată reparată și nu e. Tot de
+index întreabă și codul, din aceeași pricină (`request_key_supported()`).
+
+Cheia e ce recunoaște cererea trimisă **a doua oară**: degetul apăsat încă o
+dată, sau legătura căzută tocmai când răspunsul venea încoace. Pe o instalare
+nouă nu se vede nimic din asta — e o pază, nu o pagubă reparată. Fără ea,
+purtarea e cea dinainte: a doua trimitere face a doua cerere, iar laboratorul
+primește două comenzi acolo unde omul a făcut una. Indexul e unic, dar trece
+peste cererile de până acum oricâte ar fi: în SQL `NULL` nu se ciocnește cu
+`NULL`, iar ele toate au cheia goală. Ce **nu** face: nu desface cererile duble
+adunate înainte — n-avem de unde ști dacă omul a apăsat de două ori sau chiar a
+vrut două comenzi.
 
 ---
 
@@ -599,7 +655,7 @@ cele patru foldere și repornește Apache. Ce **nu** se atinge niciodată:
 
 `instaleaza-vps.sh` se poate rula și el a doua oară, dar nu aplică migrările —
 pe o bază care are deja tabele nu importă nimic dinadins
-(`instaleaza-vps.sh:205`). Prima oară instalarea, de atunci încolo actualizarea.
+(`instaleaza-vps.sh:215`). Prima oară instalarea, de atunci încolo actualizarea.
 
 ---
 

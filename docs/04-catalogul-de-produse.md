@@ -30,14 +30,35 @@ Acum există un singur catalog: baza de date.
   iar un câmp gol acolo arată ca o scăpare;
 - **descrierea în ambele limbi**;
 - **grupa**;
-- **ambele prețuri**.
+- **cel puțin un catalog, cu prețul lui**.
 
-### Cele două prețuri
+### Cele două cataloage
 
 | Pe site | În formular | Ce înseamnă |
 |---|---|---|
 | Congelate | Preț congelat | livrat în lanț frigorific |
-| Gata de servire | Preț copt | livrat gata de vânzare |
+| Gata de servire | Preț gata de servire | livrat gata de vânzare |
+
+Fiecare preț stă lângă **bifa catalogului** lui. Un produs poate fi numai
+într-unul din cele două — asta e chiar rostul bifelor: la gata de servire sunt
+mai multe produse decât la congelate, și sunt grupe care se văd numai acolo.
+
+Două lucruri de ținut minte, fiindcă altfel par scăpări:
+
+- **scoaterea dintr-un catalog nu șterge prețul.** Caseta rămâne scrisă, doar
+  ștearsă la vedere; bifa îl pune la loc fără să-l cauți;
+- **o bifă aprinsă cere prețul ei.** Dacă îl aprinzi fără preț, salvarea e
+  refuzată și mesajul spune care catalog. Poți aprinde bifa și scrie prețul în
+  aceeași salvare;
+- **un produs trebuie să fie în cel puțin un catalog.** Dacă nu se mai vinde
+  deloc, nu stinge amândouă bifele — apasă „Scoate din catalog" pe rândul lui.
+  Aia e fapta care se numește așa, și se poate întoarce oricând.
+
+Pe rândurile din listă, cele două bife sunt **pastile**: arată dintr-o privire
+unde e fiecare produs și se apasă ca să-l muți. Deasupra listei,
+**„Congelate | Gata de servire | Amândouă"** taie lista pe un catalog sau
+le arată pe amândouă — pe „Amândouă" se vede oglinda, adică ce lipsește dintr-o
+parte. O grupă fără produse în catalogul deschis se ascunde singură.
 
 **Prețul depinde de variantă, nu de client.** Asta a fost o corecție: coloanele
 se numeau `price_horeca` și `price_retail`, iar serverul alegea prețul după cum
@@ -54,9 +75,21 @@ loc, cu un mesaj care cere cifre. Înainte, orice text însemna tăcut 0,00 lei,
 iar produsul se publica pe gratis; prima dată când cineva îl comanda, comanda
 intra cu 0 lei și nimeni nu vedea de unde vine.
 
-### Fotografia
+### Fotografiile
 
-JPEG, PNG sau WebP, maximum 5 MB. Alegi fișierul, se încarcă la salvare.
+**Două casete, una de fiecare catalog:** „Fotografie — congelat" și
+„Fotografie — gata de servire". JPEG, PNG sau WebP, maximum 5 MB. Alegi
+fișierul, se încarcă la salvare.
+
+Nu ești obligat să le pui pe amândouă: **latura fără poză a ei o arată pe a
+celeilalte.** Așa produsul nu apare gol pe site în ziua dintre cele două
+urcări. Miniatura de lângă fiecare casetă arată ce vede cumpărătorul, nu ce
+scrie în casetă — deci amândouă pot arăta același fișier, și e în regulă.
+
+Pozele făcute cu telefonul intră ca atare; nu-i nevoie să le micșorezi
+dinainte. Dacă totuși îți spune că fotografia e prea mare, mesajul îți spune
+și **cât primește serverul**: când cifra aceea e mai mică decât cea de mai
+sus, nu poza e de vină, ci folderul `api/`, care n-a ajuns întreg pe server.
 
 Tipul se verifică **după conținut**, nu după extensie sau după ce spune
 browserul: un fișier PHP redenumit `poza.jpg` ar fi cod executabil în folderul

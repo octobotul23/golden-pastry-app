@@ -15,6 +15,12 @@ earlier import into `D:\Golden Pastry Lab App`. Six files here exceed that cap �
 including `products/trial-pack.png` (2.9 MB) and `assets/logo-auriu.png`
 (1.0 MB) — and all arrived intact.
 
+> **Note (2026-09-21, round 2.4.0).** The two rosettes have since swapped
+> filenames: what this section calls `logo-auriu.png` — the thick-petalled,
+> white-inked, larger file — is now `assets/logo-alb.png`. Their names used to
+> say the opposite of their ink; they no longer do. Nothing above is wrong for
+> the date it carries, but don't measure today's files against it.
+
 ## Verification performed
 
 | Check | Result |

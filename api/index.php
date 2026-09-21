@@ -54,6 +54,8 @@ require __DIR__ . '/lib/db.php';
 require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/settings.php';
 require __DIR__ . '/lib/orders.php';
+require __DIR__ . '/lib/laturi.php';
+require __DIR__ . '/lib/poze.php';
 require __DIR__ . '/lib/catalog.php';
 require __DIR__ . '/lib/notify.php';
 require __DIR__ . '/lib/referral.php';

@@ -62,3 +62,17 @@
 INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
   ('company_address', 'Șos. Olteniței 103', 0),
   ('company_hours', 'Lu-Vi 07:00-21:00, Sâ 07:00-17:00', 0);
+
+-- ------------------------------------------- urma că a rulat ------------
+--
+-- Registrul migrărilor: `sql/025_registru_migrari.sql`, unde e scris pe larg
+-- de ce există și de ce se face înaintea buclei. Rândul de mai jos se scrie
+-- numai dacă registrul e acolo — importată singură, de mână, pe o bază fără
+-- `025`, migrarea asta trebuie să treacă, nu să pice pe un tabel lipsă.
+
+SET @gp_reg := (SELECT COUNT(*) FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schema_migrations');
+SET @gp_reg_sql := IF(@gp_reg > 0,
+  "INSERT IGNORE INTO schema_migrations (fisier) VALUES ('018_adresa_si_program.sql')",
+  'DO 0');
+PREPARE gp_reg_stmt FROM @gp_reg_sql; EXECUTE gp_reg_stmt; DEALLOCATE PREPARE gp_reg_stmt;

@@ -5,7 +5,7 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **șaizeci și nouă de minute** cu totul. Nu trebuie făcută dintr-o
+Durează **șaptezeci și cinci de minute** cu totul. Nu trebuie făcută dintr-o
 bucată: fiecare din cele zece plimbări stă singură și își spune la început cât
 ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale bucăților care au
 minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o plimbare, se adună și aici.
@@ -1048,13 +1048,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.3.1 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.4.0 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.3.1` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.4.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1221,7 +1221,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.3.1 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.4.0 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -1235,7 +1235,198 @@ barei laterale, sub „← Alege panoul".
 
 ---
 
-## 10 · Telefon, tabletă, calculator
+## 10 · Runda 2.4.0: două cataloage, o vitrină
+
+*Șase minute. Cele șase bucăți de mai jos sunt lucrarea rundei ăsteia, deci
+singurele care n-au mai fost plimbate niciodată.*
+
+Plimbarea asta se face **pe pachetul construit** (8101), nu pe surse: patru din
+șase bucăți ating pagina produsului sau ce pleacă spre Google, iar acelea nu
+există pe 8100 — adresa `/produs/<nume>` e o rută a pachetului, nu a serverului
+de surse.
+
+Înainte de orice, ai nevoie de un produs **cu amândouă prețurile scrise**. Nu
+de unul fără preț: tot ce se plimbă mai jos se vede numai pe forma în care
+prețul există și bifa e stinsă — cealaltă formă e cea de ieri și n-are nimic
+nou de arătat.
+
+### 10.1 Comutatorul cu trei poziții, și de ce se deschide pe „Amândouă"
+
+`demo-fondator`, pe 1440, panoul **Catalog**. Deasupra listei stă o bandă cu
+trei poziții: **„Congelate | Gata de servire | Amândouă"**.
+
+**Trebuie să vezi:** la deschiderea paginii e aprins **„Amândouă"**, iar lista
+arată exact ce arăta înainte de runda asta — toate produsele, în ordinea lor.
+Asta e și pricina pentru care lucrarea n-a ieșit o a treia filă: două cataloage
+care se oglindesc se citesc comparând treizeci de rânduri, nu editând un
+produs, iar o filă a treia le-ar fi făcut imposibil de văzut deodată.
+
+Apeși **„Congelate"**. Lista se taie la ce se vinde congelat. Apeși **„Gata de
+servire"**: se taie la cealaltă parte, și acolo trebuie să fie **mai multe**
+rânduri, fiindcă acolo se pun produsele care n-au corespondent congelat.
+
+**Uită-te și la grupe:** o grupă rămasă fără niciun produs pe latura aleasă
+**nu piere** din panou — o vezi goală, cu titlul ei. În panou trebuie s-o vezi
+ca să ai unde pune ceva în ea. **Pe site e pe dos**, și asta se plimbă la 10.4.
+
+### 10.2 Stingi o latură, și prețul rămâne în casetă
+
+Tot în Catalog, pe „Amândouă". Alegi un produs cu amândouă prețurile și
+deschizi formularul.
+
+**Trebuie să vezi:** patru casete în grilă — fiecare preț lângă comutatorul
+laturii lui —, și deasupra lor scrie **„Preț congelat"** și **„Preț gata de
+servire"**. Vorbele „HoReCa" și „raft" nu mai există nicăieri în casă; dacă
+le mai vezi undeva, pachetul e mai vechi decât crezi.
+
+Stingi comutatorul **„e în congelate"** și salvezi.
+
+**Trebuie să vezi trei lucruri:**
+
+1. Salvarea trece — **nu** te refuză nimic.
+2. **Prețul congelat e tot acolo**, scris, nu șters. Caseta rămâne văzută, nu
+   ascunsă: ascunsă, ar fi ascuns tocmai ce ți s-a promis că se păstrează.
+3. Pe rândul din listă apare o **pastilă cenușie „numai gata de servire"**, nu
+   eticheta roșie de până acum. Roșu înseamnă de-acum „nu e în niciun catalog"
+   ori „e în catalog, fără prețul lui" — stări stricate. Un produs dintr-o
+   singură parte e **legiuit**, deci n-are ce căuta în roșu.
+
+**Încearcă și ce trebuie să fie refuzat**, ca să vezi că paza există:
+
+- aprinzi o latură și lași caseta ei goală → **te refuză**, iar mesajul spune
+  care catalog și care casetă;
+- stingi **amândouă** comutatoarele → **te refuză**, și te trimite la butonul
+  de scos din catalog. „În niciun catalog" și „scos din catalog" ar fi fost
+  două nume pentru aceeași stare, iar două nume pentru o stare sunt chiar
+  felul în care se nasc încurcăturile.
+
+### 10.3 Două poze pentru același produs
+
+Tot pe produsul de la 10.2. În formular sunt acum **două casete de fișier**:
+cea de până acum și **„Fotografie — gata de servire"**.
+
+Urci o poză anume pentru gata de servire — una care se deosebește la prima
+vedere de cea congelată — și salvezi.
+
+**Trebuie să vezi:** previzualizarea din formular arată poza **rezolvată**,
+adică exact ce vede cumpărătorul pe latura aleasă, nu calea scrisă în bază.
+
+Treci pe site (`/`), pe magazin. Comuți **congelate ↔ gata de servire**.
+
+**Trebuie să vezi:** poza de pe cartonaș **se schimbă odată cu fila**. Iar un
+produs căruia i-ai urcat o singură poză o arată pe aceea **pe amândouă
+laturile** — nu un pătrat gol. Așa s-a cerut: pozele se urcă una câte una, și
+niciun produs n-are voie să apară gol în ziua dintre cele două urcări.
+
+**Folosește o poză adevărată de telefon, nu una micșorată dinainte.** Aici e
+lucrarea de la urmă a rundei, și e chiar pricina pentru care s-a făcut: până
+azi serverul primea `2 MB`, deși sub caseta de fișier scrie „maximum 5 MB".
+Cum un telefon de azi face poze de 3-6 MB, cădeau aproape toate, cu „Fișierul
+e mai mare decât acceptă serverul" și fără nicio cifră. Acum serverul
+primește 6 MB.
+
+**Trebuie să vezi:** poza de 3-4 MB **intră**, fără niciun mesaj. Dacă totuși
+îți spune că e prea mare, citește mesajul: de acum îți spune și **cât**
+primește serverul, și **unde** se ridică. Dacă cifra aceea e sub 5 MB,
+folderul `api/` n-a ajuns pe server — de reparat e urcarea, nu poza. Rândul
+„Limita de mărime pentru fotografii" din `api/verifica.php` spune același
+lucru, fără să mai încerci o urcare.
+
+Și o dată în sens invers, dacă ai la îndemână o poză mare de tot:
+
+- **peste 6 MB** — „Fotografia depășește 5 MB. Micșoreaz-o și încearcă din
+  nou." Regula casei, cu vorba ei.
+- **peste 8 MB** — „Poza n-a ajuns deloc la server: cererea avea …". Acolo
+  PHP aruncă tot corpul cererii înainte să ruleze un rând de-al nostru, deci
+  mesajul e altul dinadins.
+
+Ce **nu** are voie să scrie, în niciunul din cele două cazuri, e „Nu ai ales
+niciun fișier". Ăla era defectul-pereche găsit runda asta: omul tocmai
+alesese un fișier, și era trimis să caute unde nu era nimic.
+
+### 10.4 Coșul: rândul care rămâne, și rândul care trebuie să plece
+
+Pe magazin, fără cont. Pui în coș produsul de la 10.2 **pe partea de gata de
+servire**, apoi comuți fila pe congelate și înapoi.
+
+**Trebuie să vezi:** rândul din coș **nu piere**, și nici banii de pe el.
+Coșul poate ține legiuit același produs în amândouă variantele, iar fila de sus
+se comută peste el.
+
+**Și partea cealaltă, care e defectul rundei** — merită făcută anume, fiindcă
+nu se vede din nimic altceva:
+
+1. Cu fila pe **congelate**, pui în coș un produs care se vinde în amândouă.
+2. Te duci în panou și **stingi latura congelată** a acelui produs (prețul
+   rămâne scris, ca la 10.2).
+3. Te întorci pe site și **reîmprospătezi pagina**.
+
+**Trebuie să vezi:** rândul acela **a ieșit din coș**, iar totalul a scăzut cu
+el. Dacă e încă acolo, cu un preț care arată cum trebuie, ăsta e chiar defectul
+reparat: prețul congelat rămâne scris, deci rândul nu se face gol și nu se
+colorează — arată exact ca unul sănătos, iar serverul l-ar fi refuzat abia
+după ce clientul completa tot formularul.
+
+**Uită-te și la grupe, pe site:** o grupă rămasă fără produse pe latura
+deschisă **se ascunde singură** — pe dos față de panou (10.1). Un raft gol pus
+la vedere e o promisiune pe care magazinul n-o ține. Dar dacă intri **de-a
+dreptul** pe adresa grupei aceleia (`/catalog/<grupa>`), trebuie să vezi grupa,
+o vorbă care spune de ce e goală **pe latura asta**, și comutatorul — nu o
+pagină albă.
+
+### 10.5 Curățenia nu mai mănâncă poza laturii coapte
+
+În terminal, în dosarul proiectului:
+
+```bash
+node .claude/curata-probe.mjs
+```
+
+**Trebuie să vezi, după ce se termină:** **amândouă** pozele produsului de la
+10.3 sunt încă pe disc, în `products/`, **și** în `deploy/public_html/products/`.
+
+Bucata asta e scurtă și e cea mai importantă din toată plimbarea. Curățenia
+șterge de pe disc — și din fiecare copie din `deploy/` — orice fotografie
+urcată pe care n-o mai pomenește nicio coloană de poză, tăcut, cu un rând de
+izbândă tipărit. Până la runda asta întreba **o singură coloană**, scrisă cu
+mâna. O poză legată numai de latura coaptă ar fi fost socotită fără stăpân și
+ștearsă la prima curățenie — peste pozele adevărate ale patronului, nu peste
+fișiere de probă.
+
+### 10.6 Pagina produsului, și ce pleacă spre Google
+
+Pe 8101, deschizi `/produs/<numele-produsului>` al produsului de la 10.2 — cel
+care se vinde acum **numai gata de servire**.
+
+**Trebuie să vezi, pe ecran:**
+
+- butonul își **numește latura**: „Adaugă — gata de servire", nu doar „Adaugă";
+- caseta laturii pe care nu se vinde **nu mai există**: pe un produs de pe o
+  singură latură vezi **două** căsuțe, nu trei, iar cele două rămase se lățesc
+  ca să umple rândul — fără gol la dreapta. Așa a cerut-o patronul, și din
+  amândouă ecranele: și din fereastra de vedere rapidă, și de aici. Până în
+  2.4.0 scria „Nu se vinde", o propoziție cât o căsuță de preț; iar „preț la
+  cerere" — ce-ar fi ieșit dacă se lăsa cifra goală — s-ar fi citit ca o
+  ofertă, și omul ar fi cerut un preț care nu există;
+- pagina **n-are comutator**, dinadins: ea arată marfa unde se vinde, nu te
+  pune să alegi.
+
+**Și ce nu se vede pe ecran** — apeși `Ctrl+U` (codul paginii) și cauți
+`"price"`:
+
+**Trebuie să vezi prețul laturii pe care marfa chiar se vinde** — cel de gata
+de servire —, nu prețul congelat rămas scris în casetă. Asta e defectul cel mai
+scump al rundei și singurul care nu se vede din niciun ecran: panoul arată
+prețul bun, magazinul arată prețul bun, și numai ce pleacă spre Google era
+altceva. Tot acolo, în cap, titlul trebuie să spună **„gata de servire"**, nu
+„livrare congelată".
+
+Deschizi și `/sitemap.xml`: produsul trebuie să fie **înăuntru**. Un produs
+vândut undeva are o adresă publică, oricare ar fi latura lui.
+
+---
+
+## 11 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -1340,4 +1531,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.3.1`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.4.0`.

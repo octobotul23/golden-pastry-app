@@ -136,6 +136,34 @@ if ($hasPhotos) {
         'Fără el nu poți urca fotografii din pagina Catalog. Pune drepturi 755 pe folder.', false);
 }
 
+// Cât de mare poate fi o poză urcată din Catalog. PHP are DOUĂ praguri, iar
+// panoul promite 5 MB: dacă serverul e mai strâmt, poza patronului pică, și
+// până acum panoul nu avea de unde ști de ce. Aici se citesc amândouă, cu
+// cifră cu tot, lângă promisiunea pe care ar trebui s-o acopere.
+$pozeLib  = __DIR__ . '/lib/poze.php';
+$hasPoze  = is_file($pozeLib);
+if ($hasPoze) {
+    require_once $pozeLib;
+}
+$pozeLim   = $hasPoze ? poza_limite_server() : [];
+$pozeGasit = $hasPoze
+    ? poza_marime_text($pozeLim['upload']) . ' pe fișier, ' . poza_marime_text($pozeLim['post'])
+        . ' pe cerere — panoul promite ' . poza_marime_text(POZA_MAX_OCTETI)
+    : 'nu s-a putut verifica — api/lib/poze.php lipsește';
+check(
+    'Limita de mărime pentru fotografii',
+    $hasPoze && poza_server_incape(),
+    $pozeGasit,
+    $hasPoze
+        ? 'Serverul primește mai puțin decât promite pagina Catalog, deci pozele făcute cu'
+            . ' telefonul pică fără ca panoul să poată spune de ce. Blocul care ridică limita e'
+            . ' deja scris în api/.htaccess; dacă nu se aplică, serverul nu rulează PHP ca modul'
+            . ' de Apache — atunci lucrează api/.user.ini, sau ridică-le din php.ini.'
+        : 'Fișierul face parte din API și e cerut de api/index.php: fără el nu pornește nimic.'
+            . ' Urcă folderul api/ din pachet încă o dată, întreg.',
+    false
+);
+
 check('Funcția mail()', function_exists('mail'), function_exists('mail') ? 'disponibilă' : 'dezactivată',
     'Notificările pe e-mail nu vor pleca. WhatsApp și Telegram nu sunt afectate.', false);
 
@@ -237,6 +265,7 @@ if ($hasConfig) {
             'request_claims'       => '019_jeton_cerere.sql',
             'telegram_links'       => '021_raspundere.sql',
             'lab_production'       => '021_raspundere.sql',
+            'schema_migrations'    => '025_registru_migrari.sql',
         ];
         $missing = array_values(array_diff(array_keys($need), $tables));
         // Numele lipsă spune singur care fișier n-a intrat, ca în docs/01 și în
@@ -264,19 +293,123 @@ if ($hasConfig) {
             $lipsaSchema !== []
         );
 
-        // Coloanele adăugate ulterior, prin migrarea 003.
-        if (in_array('orders', $tables, true)) {
-            $cols = $pdo->query('SHOW COLUMNS FROM orders')->fetchAll(PDO::FETCH_COLUMN);
-            foreach (['route_seq' => 'ordinea opririlor pe ruta șoferului',
-                      'stock_synced' => 'marcajul de scădere din depozit'] as $col => $what) {
-                check(
-                    'Coloana orders.' . $col,
-                    in_array($col, $cols, true),
-                    in_array($col, $cols, true) ? 'prezentă' : 'lipsește',
-                    'Ține ' . $what . '. Importă sql/003_route_order.sql din phpMyAdmin.',
-                    false
-                );
+        // ---------------------------------------------- registrul migrărilor
+        //
+        // Până în runda 2.4.0, pagina asta ghicea din schemă: fiecare bloc de
+        // mai jos caută un tabel sau o coloană și deduce din prezența lor că
+        // migrarea a intrat. Merge cât timp migrarea ADUCE ceva. `017` nu aduce:
+        // scrie un singur rând în `settings`, `referral_rate_default`, pe care
+        // `008` îl pusese deja acolo cu valoarea 0. Prezența rândului nu
+        // deosebește o bază cu 017 de una fără, iar valoarea nu se poate judeca
+        // — 017 o îndreaptă la 5 numai acolo unde n-a atins-o omul, deci un zero
+        // pus de patron rămâne zero, pe bună dreptate.
+        //
+        // Așa că pagina arăta tot verde, iar recomandările aduceau 0 lei.
+        //
+        // De-aceea fiecare migrare de la `003` încolo își scrie acum numele în
+        // `schema_migrations`, la coada ei. Registrul ÎNSEAMNĂ, nu OPREȘTE:
+        // migrările rulează toate, la fiecare actualizare, ca și până acum.
+        //
+        // Lista de mai jos e ținută de aceeași regulă ca `$need`: nu se scrie de
+        // mână, `.claude/test-doc-actualizari.mjs` cere să fie EXACT fișierele
+        // `003`+ de pe disc, iar pricina pentru care stă în cod și nu se citește
+        // din `sql/` e cea scrisă la lista aceea — pe VPS folderul `sql/` nu
+        // ajunge niciodată lângă `api/`.
+        $migrari = [
+            '003_route_order.sql',
+            '004_variante_pe_pozitie.sql',
+            '005_parola_schimbata.sql',
+            '006_retete_rezervari.sql',
+            '007_update_roles_referral.sql',
+            '008_comisioane_recomandari.sql',
+            '009_pontaj_si_roluri.sql',
+            '010_origine_cont.sql',
+            '011_reducere_pachet_test.sql',
+            '012_comision_scos.sql',
+            '013_anunturi_pe_canal.sql',
+            '014_pontaj_laborator.sql',
+            '015_mesaje_laborator.sql',
+            '016_zona_cont.sql',
+            '017_procent_recomandare.sql',
+            '018_adresa_si_program.sql',
+            '019_jeton_cerere.sql',
+            '020_rang_client.sql',
+            '021_raspundere.sql',
+            '022_cerere_de_la_personal.sql',
+            '023_laboratorul_si_livrarea.sql',
+            '024_doua_cataloage.sql',
+            '025_registru_migrari.sql',
+            '026_cheie_cerere.sql',
+        ];
+        $areRegistru = in_array('schema_migrations', $tables, true);
+        check(
+            'Registrul migrărilor',
+            $areRegistru,
+            $areRegistru ? 'prezent' : 'lipsește',
+            'Tabelul în care fiecare migrare își scrie numele când rulează. Fără el, pagina '
+                . 'asta nu poate ști decât ce se vede în schemă — iar o migrare care schimbă '
+                . 'numai o setare nu se vede deloc acolo. Importă sql/025_registru_migrari.sql '
+                . 'din phpMyAdmin, apoi rulează din nou TOATE fișierele din sql/, în ordinea '
+                . 'numelui, ca fiecare să apuce să-și scrie numele.',
+            false
+        );
+        if ($areRegistru) {
+            $scrise    = $pdo->query('SELECT fisier FROM schema_migrations')->fetchAll(PDO::FETCH_COLUMN);
+            $nescrise  = array_values(array_diff($migrari, $scrise));
+            check(
+                'Migrările aplicate',
+                $nescrise === [],
+                (count($migrari) - count($nescrise)) . ' din ' . count($migrari)
+                    . ($nescrise === [] ? '' : ' — fără urmă: ' . implode(', ', $nescrise)),
+                'O migrare fără urmă în registru ori n-a intrat, ori a intrat ÎNAINTE ca '
+                    . 'registrul să existe — adică la o actualizare mai veche decât registrul '
+                    . 'însuși, când n-avea unde-și scrie numele. Dacă ai actualizat cu '
+                    . 'actualizeaza-vps.sh, rămâne numai prima pricină: scriptul face registrul '
+                    . 'înaintea buclei, deci toate își scriu numele la aceeași urcare. Rulează '
+                    . 'TOATE fișierele din sql/, în ordinea numelui — sunt scrise dinadins ca să '
+                    . 'se poată rula de câte ori vrei. Fișierele numite aici sunt chiar cele de '
+                    . 'importat.',
+                false
+            );
+        }
+
+        // Coloanele adăugate ulterior, prin migrarea 003. TOATE cinci, pe trei
+        // tabele. Până în runda 2.4.0 blocul se uita numai la cele două de pe
+        // `orders`, sub un comentariu care spunea „coloanele" — adică toate.
+        //
+        // Trei dintre ele (`orders.variant`, `order_requests.variant`,
+        // `users.address`) sunt de mult ȘI în `sql/001_schema.sql`, deci nu pot
+        // lipsi de pe o bază importată vreodată. Se măsoară totuși, fiindcă
+        // paguba unei liste scrise pe jumătate nu e ce nu vede azi, ci ce crede
+        // mâine cel care o citește: „migrarea 003 e acoperită aici" — și nu mai
+        // pune măsurătoarea altundeva.
+        //
+        // Lista nu se scrie de mână de două ori: `SHOW COLUMNS` se cere o
+        // singură dată pe tabel, iar tabelul lipsă se sare, nu pică.
+        $col003 = [
+            ['orders',         'route_seq',    'ordinea opririlor pe ruta șoferului'],
+            ['orders',         'stock_synced', 'marcajul de scădere din depozit'],
+            ['orders',         'variant',      'cum pleacă marfa comenzii: congelat ori gata de servire'],
+            ['order_requests', 'variant',      'aceeași alegere, pe cererea venită de pe site'],
+            ['users',          'address',      'adresa clientului, pentru livrare'],
+        ];
+        $coloaneVazute = [];
+        foreach ($col003 as [$tabel, $col, $laCeTine]) {
+            if (!in_array($tabel, $tables, true)) {
+                continue;
             }
+            if (!isset($coloaneVazute[$tabel])) {
+                $coloaneVazute[$tabel] = $pdo->query('SHOW COLUMNS FROM ' . $tabel)
+                    ->fetchAll(PDO::FETCH_COLUMN);
+            }
+            $are = in_array($col, $coloaneVazute[$tabel], true);
+            check(
+                'Coloana ' . $tabel . '.' . $col,
+                $are,
+                $are ? 'prezentă' : 'lipsește',
+                'Ține ' . $laCeTine . '. Importă sql/003_route_order.sql din phpMyAdmin.',
+                false
+            );
         }
 
         // Coloana adăugată de migrarea 005. Fără ea, pagina Conturi nu poate
@@ -568,6 +701,47 @@ if ($hasConfig) {
                     . 'dinainte. O poartă care se închide singură într-o fereastră de actualizare '
                     . 'ar fi mai rea decât paguba de care fuge.',
             ],
+            // 024 nu aduce niciun tabel — trei coloane pe `products`, toate cu
+            // implicit, deci rândurile vechi rămân întregi. Cele două bife se
+            // nasc APRINSE (`DEFAULT 1`): un produs născut de codul vechi, în
+            // fereastra dintre fișiere și SQL, trebuie să se nască în amândouă
+            // cataloagele, nu în niciunul.
+            '024_doua_cataloage.sql' => [
+                'nume'    => 'Două cataloage, o vitrină (migrarea 024)',
+                'coloane' => ['products' => ['in_frozen', 'in_baked', 'photo_baked']],
+                'setari'  => [],
+                'ce'      => 'Cele două bife spun în CARE catalog e produsul — congelate, gata de '
+                    . 'servire, sau amândouă —, iar a treia coloană ține poza laturii coapte. '
+                    . 'Fără ele magazinul se întoarce la regula veche, „se vede numai cine are '
+                    . 'AMÂNDOUĂ prețurile", și atunci un produs care se vinde numai gata de '
+                    . 'servire nu poate exista: ori îi inventezi un preț congelat pe care nu-l '
+                    . 'vinzi nimănui, ori nu se vede nicăieri. Purtarea fără ele nu e stricată, e '
+                    . 'cea de dinainte — codul nou o ține dinadins, fiindcă fișierele ajung pe '
+                    . 'server înaintea importului. Ce se pierde până la import: cele două bife din '
+                    . 'panou n-au unde se scrie, iar o poză urcată pentru gata de servire ar cădea '
+                    . 'peste cea congelată.',
+            ],
+            // 026 nu aduce niciun tabel — o coloană pe `order_requests` ȘI
+            // INDEXUL EI, care e chiar reparația. De-aia se cer amândouă: o
+            // bază cu coloana pusă și indexul nepus ar primi cheile și n-ar
+            // observa niciodată o dublură, iar rândul ăsta ar fi verde peste o
+            // pază care nu păzește. `request_key_supported()` întreabă tot de
+            // index, din aceeași pricină.
+            '026_cheie_cerere.sql' => [
+                'nume'     => 'Cheia care recunoaște cererea trimisă a doua oară (migrarea 026)',
+                'coloane'  => ['order_requests' => ['idempotency_key']],
+                'indexuri' => ['order_requests' => ['uq_req_cheie']],
+                'setari'   => [],
+                'ce'       => 'Ține cele 32 de cifre pe care pagina le scrie o dată pe apăsare și '
+                    . 'le păstrează la retrimitere, iar indexul oprește a doua scriere a '
+                    . 'aceleiași cereri — serverul răspunde atunci cu cererea dintâi, ca și cum '
+                    . 'atunci ar fi sosit. Fără ele, o legătură care cade tocmai după ce cererea '
+                    . 'a intrat îl lasă pe om să apese din nou, iar laboratorul primește DOUĂ '
+                    . 'comenzi identice, pe care administratorul le acceptă pe amândouă: marfă '
+                    . 'dublată, rezervări dublate. Purtarea fără ele nu e stricată, e cea de '
+                    . 'dinainte — pagina spune atunci, ca până acum, că nu se știe dacă cererea '
+                    . 'a ajuns și îl trimite pe om să se uite întâi.',
+            ],
         ];
 
         // Coloanele fiecărui tabel se cer o singură dată, nu o dată pe migrare:
@@ -584,6 +758,19 @@ if ($hasConfig) {
         $cheiSetari = in_array('settings', $tables, true)
             ? $pdo->query('SELECT setting_key FROM settings')->fetchAll(PDO::FETCH_COLUMN)
             : [];
+        // Indexurile, la fel: o dată pe tabel, nu o dată pe migrare. `SHOW
+        // INDEX` dă câte un rând pe COLOANĂ, deci un index pe două coloane vine
+        // de două ori cu același `Key_name` — de-aia se trec prin `unique`.
+        $indexiiLui = [];
+        $vazIdx = static function (string $t) use (&$indexiiLui, $pdo, $tables): array {
+            if (!in_array($t, $tables, true)) return [];
+            if (!isset($indexiiLui[$t])) {
+                $indexiiLui[$t] = array_values(array_unique(
+                    $pdo->query('SHOW INDEX FROM ' . $t)->fetchAll(PDO::FETCH_COLUMN, 2)
+                ));
+            }
+            return $indexiiLui[$t];
+        };
 
         foreach ($altele as $fisier => $m) {
             $lipsa = [];
@@ -602,6 +789,20 @@ if ($hasConfig) {
                 $are = $vaz($tabel);
                 foreach ($coloane as $c) {
                     if (!in_array($c, $are, true)) $lipsa[] = $tabel . '.' . $c;
+                }
+            }
+            // `?? []` — numai 026 cere un index până azi, iar celelalte douăzeci
+            // și una de intrări n-au de ce să poarte o cheie goală. 020 aduce și
+            // el un index, dar acela doar grăbește: pierdut, nu se pierde nimic,
+            // deci rămâne numit, nu cerut.
+            foreach ($m['indexuri'] ?? [] as $tabel => $indexuri) {
+                if (!in_array($tabel, $tables, true)) {
+                    $nestiut[] = $tabel;
+                    continue;
+                }
+                $are = $vazIdx($tabel);
+                foreach ($indexuri as $ix) {
+                    if (!in_array($ix, $are, true)) $lipsa[] = $tabel . ', indexul ' . $ix;
                 }
             }
             if ($m['setari'] !== [] && !in_array('settings', $tables, true)) {

@@ -49,9 +49,11 @@
  * partea cu bani în ea ar fi rămas în urmă.
  *
  * Filtrul e IDENTIC cu al paginii: `active = 1` (ca `route_products_list()`)
- * plus amândouă prețurile scrise (ca `PROD` din Site Public.dc.html). Scris
- * altfel, serverul ar cere un produs pe care pagina nu-l pune în coș, iar
- * pachetul n-ar fi niciodată întreg.
+ * plus „se vinde pe latura cerută" (ca `PROD` din Site Public.dc.html, care de
+ * la migrarea 024 cerne tot pe latură). Scris altfel, serverul ar cere un
+ * produs pe care pagina nu-l pune în coș, pachetul n-ar fi niciodată întreg —
+ * iar cum reducerea se dă numai pachetului întreg, asta ar fi însemnat −20%
+ * dispărut tăcut de pe fiecare comandă, nu un mesaj de eroare.
  */
 
 /** Codul singurei reduceri de azi. Scris o dată, ca să nu se scrie greșit. */
@@ -154,21 +156,48 @@ function promo_cere_baza(): void
 /**
  * Gama din care se face pachetul: exact ce vede clientul în catalogul public.
  *
+ * CU O LATURĂ, gama e a laturii aceleia. De la migrarea 024 un produs poate fi
+ * în catalogul de gata de servire și nu în cel de congelate, iar pachetul se
+ * cumpără pe o latură: „toate cele N produse, câte 3 bucăți, în ACEEAȘI
+ * variantă". Un singur produs nesimetric lăsat în gama congelată ar face
+ * pachetul congelat să nu fie NICIODATĂ întreg — și cum reducerea se dă numai
+ * pachetului întreg, −20% ar fi dispărut tăcut de pe fiecare comandă
+ * congelată. O pagubă în bani, fără nicio eroare nicăieri.
+ *
+ * FĂRĂ LATURĂ, gama e reuniunea: tot ce se vinde măcar undeva. Aceea e lista
+ * pentru ECRAN (`promo_units()`), unde fiecare produs își arată prețul redus pe
+ * laturile pe care chiar se vinde, și `null` pe cealaltă.
+ *
+ * Prețul unei laturi pe care produsul NU se vinde iese `null`, nu numărul rămas
+ * în casetă: patronul a cerut anume ca stingerea unui catalog să nu șteargă
+ * prețul, deci coloana are numere pe care nimeni nu le vinde.
+ *
  * @return array<int, array{id: int, price_frozen: ?float, price_baked: ?float}>
  */
-function promo_gama(): array
+function promo_gama(?string $latura = null): array
 {
+    // Coloanele laturilor numai dacă baza le are; `latura_se_vinde()` răspunde
+    // purtarea de dinainte de 024 peste un rând fără ele — adică exact filtrul
+    // de ieri, „amândouă prețurile scrise".
     $rows = all(
-        'SELECT id, price_frozen, price_baked
-           FROM products
-          WHERE active = 1 AND price_frozen IS NOT NULL AND price_baked IS NOT NULL
-          ORDER BY sort, id'
+        'SELECT id, price_frozen, price_baked'
+        . (catalog_laturi_supported() ? ', in_frozen, in_baked' : '')
+        . ' FROM products WHERE active = 1 ORDER BY sort, id'
     );
-    return array_map(static fn($r) => [
-        'id'           => (int) $r['id'],
-        'price_frozen' => (float) $r['price_frozen'],
-        'price_baked'  => (float) $r['price_baked'],
-    ], $rows);
+
+    $out = [];
+    foreach ($rows as $r) {
+        $intra = $latura === null ? latura_vandabil($r) : latura_se_vinde($r, $latura);
+        if (!$intra) {
+            continue;
+        }
+        $out[] = [
+            'id'           => (int) $r['id'],
+            'price_frozen' => latura_se_vinde($r, 'congelat') ? (float) $r['price_frozen'] : null,
+            'price_baked'  => latura_se_vinde($r, 'copt') ? (float) $r['price_baked'] : null,
+        ];
+    }
+    return $out;
 }
 
 /**
@@ -190,10 +219,6 @@ function promo_gama(): array
 function promo_variant_din_cos(array $items, array $def, string $implicit): ?string
 {
     $each = (float) $def['each'];
-    $gama = promo_gama();
-    if (!$gama) {
-        return null;
-    }
 
     $adunat = ['congelat' => [], 'copt' => []];
     foreach ($items as $it) {
@@ -217,6 +242,14 @@ function promo_variant_din_cos(array $items, array $def, string $implicit): ?str
     // pe cea aleasă, nu pe amândouă — pachetul e unul.
     $ordine = valid_variant($implicit) === 'congelat' ? ['congelat', 'copt'] : ['copt', 'congelat'];
     foreach ($ordine as $vi) {
+        // Gama LATURII, nu a catalogului întreg — v. `promo_gama()`.
+        $gama = promo_gama($vi);
+        // O latură fără niciun produs n-are pachet. Pe o gamă goală bucla de
+        // mai jos nu intră niciodată, `$intreg` rămâne adevărat, și reducerea
+        // s-ar da pe un coș oarecare.
+        if (!$gama) {
+            continue;
+        }
         $intreg = true;
         foreach ($gama as $p) {
             if (($adunat[$vi][$p['id']] ?? 0.0) + 0.0001 < $each) {
@@ -288,8 +321,8 @@ function promo_units(array $def): array
     foreach (promo_gama() as $p) {
         $out[] = [
             'id'     => $p['id'],
-            'frozen' => promo_unit_price($p['price_frozen'], $off),
-            'baked'  => promo_unit_price($p['price_baked'], $off),
+            'frozen' => $p['price_frozen'] === null ? null : promo_unit_price($p['price_frozen'], $off),
+            'baked'  => $p['price_baked'] === null ? null : promo_unit_price($p['price_baked'], $off),
         ];
     }
     return $out;
@@ -302,7 +335,10 @@ function promo_slices(array $def, string $variant): array
     $off  = (float) $def['off'];
 
     $out = [];
-    foreach (promo_gama() as $p) {
+    // Gama laturii: aici `$catalog` nu mai poate fi null, iar
+    // `promo_unit_price()` cere un float. Cu gama întreagă, un produs care nu
+    // se vinde pe latura asta ar fi oprit cererea cu o eroare internă.
+    foreach (promo_gama($vi) as $p) {
         $catalog = $vi === 'congelat' ? $p['price_frozen'] : $p['price_baked'];
         $out[$p['id'] . '|' . $vi][] = [
             'qty'  => $each,

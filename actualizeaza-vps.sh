@@ -375,8 +375,66 @@ else
                 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE())"
   }
 
+  # Registrul migrărilor: 1 dacă tabelul e acolo, 0 dacă nu.
+  registruExista() {
+    my -N -B "$DB_NAME" -e "SELECT COUNT(*) FROM information_schema.TABLES
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schema_migrations'"
+  }
+  # Câte rânduri poartă numele ăsta în registru: 0 ori 1.
+  #
+  # Se cheamă NUMAI cu registrul făcut. N-are cum să se apere singură cu un
+  # `IF(tabelul există, ..., 0)`: MySQL dezleagă numele tabelelor la citirea
+  # cererii, nu la rularea ei, deci un `SELECT ... FROM schema_migrations` pică
+  # pe „table doesn't exist" chiar și pe ramura pe care `IF()` n-o alege. De-aia
+  # paza stă afară, în bash, nu înăuntru, în SQL. (Cozile migrărilor ocolesc
+  # asta altfel: `PREPARE` dintr-un șir clădit cu `IF()` — acolo cererea nici
+  # nu se citește dacă nu s-a ales ramura ei.)
+  inRegistru() {
+    my -N -B "$DB_NAME" -e "SELECT COUNT(*) FROM schema_migrations WHERE fisier = '$1'"
+  }
+
   APLICATE=0
   SARITE=0
+
+  # Registrul se face ÎNAINTEA buclei, nu la rândul lui în ea. Fișierul se
+  # cheamă `025`, deci în ordinea numelui ar rula DUPĂ `003`-`024`: primele
+  # douăzeci și două de migrări ar trece pe lângă un tabel care încă nu există,
+  # n-ar avea unde-și scrie numele, și registrul s-ar umple abia la
+  # actualizarea următoare — o rundă întreagă în care pagina de verificare
+  # n-ar ști nimic. Aici rulează o dată, la început, și se sare peste el în
+  # buclă; e idempotent, deci rularea asta nu strică nimic la a doua urcare.
+  #
+  # Lipsa lui din `sql/` — pachet mai vechi decât runda 2.4.0 — nu oprește
+  # nimic: migrările își văd de treabă, coada lor nu scrie pe o bază fără
+  # registru, iar bilanțul de mai jos se ține atunci după amprentă, ca până
+  # acum.
+  REGISTRU="$SQL_DIR/025_registru_migrari.sql"
+  REG_VIU=0
+  if [[ -e "$REGISTRU" ]]; then
+    REG_ERA=0
+    if [[ "$(registruExista)" != 0 ]]; then
+      REG_ERA="$(inRegistru 025_registru_migrari.sql)"
+    fi
+    if ! my "$DB_NAME" < "$REGISTRU" >/dev/null 2>/tmp/gp-mig.err; then
+      rosu "  Registrul migrărilor n-a putut fi făcut:"
+      sed -n '1,8p' /tmp/gp-mig.err | sed 's/^/    /'
+      echo
+      rosu "  Fișierele NU au fost copiate — serverul merge mai departe cu versiunea veche."
+      exit 1
+    fi
+    REG_VIU=1
+    if [[ "$REG_ERA" != 0 ]]; then
+      info "025_registru_migrari.sql — era deja aplicată"
+      SARITE=$((SARITE + 1))
+    else
+      verde "  025_registru_migrari.sql — aplicată acum (registrul migrărilor)"
+      APLICATE=$((APLICATE + 1))
+    fi
+  else
+    galben "  sql/025_registru_migrari.sql lipsește din pachet."
+    info "  Migrările nu lasă urmă scrisă; bilanțul de mai jos se ține după amprenta schemei."
+  fi
+
   for f in "$SQL_DIR"/[0-9][0-9][0-9]_*.sql; do
     [[ -e "$f" ]] || continue
     NUME="$(basename "$f")"
@@ -390,7 +448,20 @@ else
       001_*|002_*) continue ;;
     esac
 
+    # Registrul a rulat deja, mai sus. Săritura se face pe CALEA ținută în
+    # `$REGISTRU`, nu pe un nume scris a doua oară aici: numele fișierului stă
+    # într-un singur loc, deci cele două nu pot ieși din pas.
+    if [[ "$f" == "$REGISTRU" ]]; then
+      continue
+    fi
+
     INAINTE="$(amprenta)"
+    # `?` înseamnă „registrul n-a putut răspunde". Nu e o oprire: hotărârea
+    # cade atunci pe amprentă, ca până acum.
+    REG_INAINTE='?'
+    if (( REG_VIU )); then
+      REG_INAINTE="$(inRegistru "$NUME" 2>/dev/null || echo '?')"
+    fi
     if ! my "$DB_NAME" < "$f" >/dev/null 2>/tmp/gp-mig.err; then
       rosu "  $NUME a picat:"
       sed -n '1,8p' /tmp/gp-mig.err | sed 's/^/    /'
@@ -403,8 +474,36 @@ else
       exit 1
     fi
     DUPA="$(amprenta)"
+    REG_DUPA='?'
+    if (( REG_VIU )); then
+      REG_DUPA="$(inRegistru "$NUME" 2>/dev/null || echo '?')"
+    fi
 
-    if [[ "$INAINTE" == "$DUPA" ]]; then
+    # Cine hotărăște dacă migrarea a intrat ACUM: registrul, când știe de ea;
+    # amprenta, când nu.
+    #
+    # Amprenta e o ghicitoare, și se înșală tocmai unde doare. `017` nu atinge
+    # DELOC schema — scrie un rând în `settings` și atât —, deci cele trei cifre
+    # nu se mișcă niciodată pentru ea. Măsurat, nu bănuit: 21·229·2546 înainte,
+    # 21·229·2546 după. Munca se făcea, dar raportul spunea „era deja aplicată"
+    # CHIAR ȘI la prima rulare, exact despre migrarea care repară comisioanele
+    # de 0,00 RON. Registrul nu ghicește: rândul apare atunci când migrarea
+    # trece, fiindcă și-l scrie ea însăși, la coadă.
+    #
+    # „Registrul nu știe de ea" are două pricini cinstite — un `sql/` mai vechi
+    # decât `025`, ori o migrare scrisă fără coada de registru — și amândouă
+    # merită socoteala veche, nu o ghicitoare nouă.
+    if [[ "$REG_INAINTE" == 0 && "$REG_DUPA" == 1 ]]; then
+      ERA_DEJA=0
+    elif [[ "$REG_INAINTE" == 1 ]]; then
+      ERA_DEJA=1
+    elif [[ "$INAINTE" == "$DUPA" ]]; then
+      ERA_DEJA=1
+    else
+      ERA_DEJA=0
+    fi
+
+    if (( ERA_DEJA )); then
       info "$NUME — era deja aplicată"
       SARITE=$((SARITE + 1))
     else
@@ -421,15 +520,18 @@ else
   info "Bilanț: $APLICATE aplicate acum · $SARITE erau deja acolo"
 
   # 017 e singura migrare din tot lanțul care nu atinge DELOC schema: scrie un
-  # rând în `settings` și atât. Bilanțul de mai sus măsoară tabele, coloane și
-  # lungimea tipurilor — pentru ea cele trei cifre nu se mișcă niciodată, deci
-  # rândul ei iese „era deja aplicată" CHIAR ȘI la prima rulare. Măsurat, nu
-  # bănuit: 21·229·2546 înainte, 21·229·2546 după.
+  # rând în `settings` și atât. Până în runda 2.4.0, bilanțul de mai sus o dădea
+  # „era deja aplicată" CHIAR ȘI la prima rulare, fiindcă se ținea numai după
+  # amprentă, iar pentru ea cele trei cifre nu se mișcă niciodată — măsurat, nu
+  # bănuit: 21·229·2546 înainte, 21·229·2546 după. Registrul a îndreptat
+  # RAPORTUL: acum se vede când intră.
   #
-  # Munca se face — procentul chiar se scrie — dar raportul spune pe dos exact
-  # despre migrarea care repară comisioanele de 0,00 RON. De-aceea procentul se
-  # citește aici din bază și se spune CU VALOAREA LUI: e martorul însuși, nu o
-  # urmă a lui într-o cifră de schemă.
+  # Martorul de mai jos rămâne, și nu de prisos: registrul spune că migrarea a
+  # trecut, dar nu spune CU CE a rămas setarea. 017 îndreaptă procentul la 5
+  # numai acolo unde nu l-a atins omul, deci un zero pus de patron rămâne zero,
+  # pe bună dreptate — iar un zero pus de patron și un zero rămas de la 008
+  # arată la fel din registru. De-aceea procentul se citește aici din bază și se
+  # spune CU VALOAREA LUI și cu cine a scris-o.
   #
   # Golul are însă două pricini, și nu se spun la fel. Dacă mysql răspunde fără
   # niciun rând, rândul lipsește: 017 n-a intrat. Dacă mysql pică, nu știm

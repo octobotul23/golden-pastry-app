@@ -61,7 +61,7 @@
        trece peste ele. Măsurat la 390: cartonaș de 82x29, sus la 139, pastila
        se termina la 136. De aici „dreptunghiul care trece peste semne". */
     @keyframes gp-tier-spus { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: none; } }
-
+    [data-fapt="nu"] { display: none; } /* căsuța unei laturi pe care produsul nu se vinde piere cu totul din grila faptelor — hotărârea patronului. Scrisă aici, în foaie, nu în stilul căsuței: stilul ăla e unul singur pentru toate trei, iar `pvFapte` numără coloanele rămase. */
     /* BARA DE FINALIZARE, MĂSURATĂ ÎNTR-UN SINGUR LOC.
 
        Până azi înălțimea ei era scrisă de două ori: o dată din marginile și
@@ -623,6 +623,22 @@
             </section>
           </sc-for>
 
+          <!-- NIMIC PE LATURA ASTA.
+               Până azi, o listă goală însemna un catalog gol, și atunci nu era
+               nimic de spus în afară de „mai încearcă". De când cele două
+               cataloage sunt deosebite, gol pe o latură e o stare obișnuită —
+               și are un răspuns: treci dincolo. Fără rândurile astea, omul ar
+               fi văzut titlul grupei și, sub el, o pagină albă. -->
+          <sc-if value="{{ catGol }}" hint-placeholder-val="{{ false }}">
+            <div class="h-card" style="padding:clamp(1.5rem,4vw,2rem);text-align:center;display:flex;flex-direction:column;align-items:center;gap:0.75rem">
+              <p class="h-h4" style="margin:0;font-family:var(--h-font-display)">{{ catGolTitlu }}</p>
+              <p class="h-small" style="margin:0;color:var(--h-fg-muted);line-height:1.6;max-width:44ch">{{ catGolText }}</p>
+              <sc-if value="{{ catGolAre }}" hint-placeholder-val="{{ true }}">
+                <button type="button" class="h-btn h-btn--primary" onClick="{{ catGolTreci }}" style="min-height:2.75rem;padding-inline:1.4rem">{{ catGolCta }}</button>
+              </sc-if>
+            </div>
+          </sc-if>
+
           <sc-if value="{{ mobBar }}">
             <!-- Locul de sub listă, cât să nu stea bara peste ultimul rând.
                  Înălțimea vine din ACELEAȘI numere ca bara (`--gp-bara-*`,
@@ -807,11 +823,11 @@
                 <dt style="{{ pvFaptEt }}">{{ pvEtGramaj }}</dt>
                 <dd style="{{ pvFaptVal }}">{{ pvGramaj }}</dd>
               </div>
-              <div style="{{ pvFapt }}">
+              <div data-fapt="{{ pvAreFrozen }}" style="{{ pvFapt }}">
                 <dt style="{{ pvFaptEt }}">{{ pvEtCongelat }}</dt>
                 <dd style="{{ pvFaptVal }}">{{ pvPretFrozen }}</dd>
               </div>
-              <div style="{{ pvFapt }}">
+              <div data-fapt="{{ pvAreBaked }}" style="{{ pvFapt }}">
                 <dt style="{{ pvFaptEt }}">{{ pvEtCopt }}</dt>
                 <dd style="{{ pvFaptVal }}">{{ pvPretBaked }}</dd>
               </div>
@@ -821,7 +837,7 @@
 
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;margin-bottom:clamp(1.5rem,3vw,2rem)">
               <sc-if value="{{ pvNone }}" hint-placeholder-val="{{ true }}">
-                <button type="button" class="h-btn h-btn--primary" onClick="{{ pvAdd }}" style="min-height:2.9rem;padding-inline:1.4rem">{{ addLabel }}</button>
+                <button type="button" class="h-btn h-btn--primary" onClick="{{ pvAdd }}" style="min-height:2.9rem;padding-inline:1.4rem">{{ pvAddLabel }}</button>
               </sc-if>
               <sc-if value="{{ pvSome }}">
                 <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
@@ -1022,7 +1038,18 @@
           </div>
         </div>
         <div style="border-radius:24px;overflow:hidden;border:1px solid var(--h-line);box-shadow:var(--h-shadow-2);background:var(--h-bg-surface)">
-          <iframe title="{{ mapTitle }}" src="https://www.openstreetmap.org/export/embed.html?bbox=26.1155%2C44.3880%2C26.1315%2C44.3975&amp;layer=mapnik&amp;marker=44.39235%2C26.12385" style="width:100%;height:20rem;border:0;display:block"></iframe>
+          <!-- HARTA NU-ȘI MAI ȚINE PUNCTUL AICI. Fereastra și acul vin din
+               Setări, prin `gp.hq()`, socotite de `adresaHartii()`: mutat
+               depozitul din panou, se mută amândouă, odată cu adresa scrisă
+               deasupra hărții. `loading="lazy"` cruță serverele OpenStreetMap,
+               ținute de voluntari, pentru cine n-a derulat până jos, și lasă
+               răspunsul Setărilor să sosească înaintea hărții — deci în ziua
+               mutării nu se vede nici o clipă strada veche. Are însă o scădere,
+               măsurată: la o poză, „lazy" amână și cererea adresei-șablon de
+               dinainte de hidratare; la un `<iframe>`, nu. Browserul cere o
+               dată adresa cu acolade cu tot, ia 404 și o leapădă — o cerere
+               zadarnică pe vizită, și un rând în jurnalul serverului. -->
+          <iframe title="{{ mapTitle }}" src="{{ mapEmbed }}" loading="lazy" style="width:100%;height:20rem;border:0;display:block"></iframe>
           <div style="padding:0.75rem 1rem;display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;justify-content:space-between">
             <p class="h-caption" style="margin:0">{{ mapCaption }}</p>
             <a class="h-link h-caption" href="{{ mapUrl }}" target="_blank" rel="noopener">Google Maps</a>
@@ -1198,7 +1225,7 @@
               </div>
             </sc-if>
             <!-- HARTA DEPOZITULUI, CA POZĂ, NU CA HARTĂ VIE.
-                 Distribuția are un `<iframe>` către openstreetmap.org (`:1025`),
+                 Distribuția are un `<iframe>` către openstreetmap.org (`:1052`),
                  și acolo e drept: omul se plimbă pe hartă, deci merită cererea
                  către alt site. Aici nu se plimbă nimeni — vrea să vadă unde
                  suntem și să apese. Deci o poză din pachet: deschizând
@@ -1629,6 +1656,68 @@ const GP_RUTA_INITIALA = (function () {
   return rutaDinAdresa();
 })();
 
+/**
+ * Adresa hărții de pe pagina de Distribuție, socotită din punctul din Setări.
+ *
+ * Fereastra hărții și acul erau scrise de mână în `src`-ul `<iframe>`-ului, ca
+ * două șiruri de cifre lipite de „bbox=" și de „marker=". Mutându-se
+ * patiseria, patronul schimbă latitudinea și longitudinea în Setări — și se
+ * mută pe loc adresa de deasupra hărții, kilometrii de pe ruta șoferului și
+ * eticheta trimisă motoarelor de căutare. Numai harta la care se uită omul
+ * rămânea pe strada veche, fără ca nimic s-o contrazică: cifrele nu stăteau
+ * într-o listă pe care cineva ar fi putut-o citi, ci topite într-o adresă de
+ * internet, între semnul întrebării și „%2C". Nici măcar nu arătau a
+ * coordonate.
+ *
+ * `gp.hq()` era scris de mult în `shared/gp-api.js`, pentru ruta șoferului, și
+ * nu-l chema niciun magazin. De-aici încolo îl cheamă.
+ *
+ * CÂND SETĂRILE ÎNCĂ N-AU RĂSPUNS, `gp.hq()` întoarce chiar cifrele care erau
+ * scrise aici — ca toți ceilalți șapte cititori ai punctului. Deci harta NU se
+ * ține pe loc până vine răspunsul: pe o patiserie care nu s-a mutat cele două
+ * puncte sunt identice, adresa iese aceeași, iar `<iframe>`-ul nu se
+ * reîncarcă. Un dreptunghi gol până răspunde serverul ar fi costat pe toată
+ * lumea, în fiecare zi, ca să scutească pe cineva de o clipă de stradă veche
+ * în ziua mutării — iar pe o rețea bolnavă ar fi rămas gol minute în șir.
+ */
+function adresaHartii(hq) {
+  // Nu de-a dreptul, și nici cu `Number` singur. Un server care ar întoarce
+  // `hq` strâmb — fără `lat`, ori cu el scris ca text — ar da peste
+  // `undefined.toFixed`, adică peste o aruncare în mijlocul lui
+  // `renderVals()`: pagina ÎNTREAGĂ albă, pentru o hartă.
+  //
+  // Iar `Number(null)` și `Number('')` nu sunt NaN, ci ZERO — iar 0,0 e un
+  // punct adevărat, în Golful Guineei, la o mie de kilometri de orice țărm.
+  // Aceeași capcană a mutat acolo o oprire de zonă (`api/lib/settings.php`).
+  // Aici gol înseamnă „nu știu", și se vede ca atare: harta iese greșită,
+  // restul paginii trăiește, și nimeni nu e trimis în ocean.
+  const numar = (x) => (x === null || x === undefined || x === '' ? NaN : Number(x));
+  const lat = numar(hq && hq.lat);
+  const lng = numar(hq && hq.lng);
+  // RAZA e cât se vede în jurul depozitului, în metri: UN număr cu înțeles, în
+  // locul a patru cifre de care nu se mai atinge nimeni. Un grad de latitudine
+  // are aceeași lungime peste tot pe glob; unul de longitudine se strânge spre
+  // poli, de-aia se împarte la cosinus — altfel fereastra s-ar turti la o
+  // mutare spre nord, tocmai când nimeni n-ar mai ști de ce. Cosinusul e ținut
+  // deoparte de zero: chiar la pol ar fi o împărțire la 0.
+  const RAZA = 550;
+  const dLat = RAZA / 111320;
+  const dLng = dLat / Math.max(0.05, Math.cos(lat * Math.PI / 180));
+  // Fereastra e SOCOTITĂ, deci se rotunjește (șase zecimale înseamnă vreo 11
+  // cm). Acul, în schimb, e chiar cifra din Setări și pleacă așa cum e scrisă
+  // acolo: e singurul număr din adresă pe care cineva l-ar putea pune față în
+  // față cu caseta din panou.
+  const z = (x) => x.toFixed(6);
+  // `&` o singură dată, nu `&amp;`. În marcaj era nevoie de entitate fiindcă
+  // adresa trecea prin analizorul de HTML; de-acum valoarea e pusă de-a dreptul
+  // pe atribut, iar un `&amp;` scris aici ar cere un strat de hartă numit
+  // „amp;layer" și ar întoarce un dreptunghi gol.
+  return 'https://www.openstreetmap.org/export/embed.html'
+    + '?bbox=' + [z(lng - dLng), z(lat - dLat), z(lng + dLng), z(lat + dLat)].join(',')
+    + '&layer=mapnik'
+    + '&marker=' + lat + ',' + lng;
+}
+
 // CELE ȘAPTE CÂMPURI PE CARE FEREASTRA LE UITĂ.
 //
 // Formularul de ofertă e „necontrolat": React nu-i ține valorile nicăieri, ele
@@ -1870,7 +1959,17 @@ class Component extends DCLogic {
           // aruncată aici. De când fiecare produs are adresa lui, ea e
           // singurul lucru care leagă „/produs/strudel-cu-mere" de rândul din
           // catalog: fără ea, pagina n-ar ști ce produs să deschidă.
-          x.isNew ? 1 : 0, x.photo || '', x.slug || ''
+          x.isNew ? 1 : 0, x.photo || '', x.slug || '',
+          // Cele trei câmpuri ale laturilor, adăugate LA COADĂ și niciodată în
+          // mijloc: tuplul se citește după număr în vreo treizeci de locuri,
+          // iar `check-site-public.mjs` construiește de mână un rând scurt. O
+          // inserare la mijloc le-ar muta pe toate deodată, tăcut.
+          //
+          // Apartenența vine gata socotită de server (`latura_in()`): pe o bază
+          // de dinainte de migrarea 024 el răspunde purtarea de până atunci,
+          // deci pagina n-o mai ghicește din prețuri. 1/0, nu true/false, ca
+          // restul tuplului — v. `x.isNew` de mai sus.
+          x.photoBaked || '', x.inFrozen === false ? 0 : 1, x.inBaked === false ? 0 : 1
         ]);
         const groups = (r.categories || []).map((c) => [
           c.slug, c.name, c.nameEn || c.name, c.note || '', c.noteEn || c.note || ''
@@ -2735,8 +2834,8 @@ class Component extends DCLogic {
   /**
    * Reluarea, cernută prin catalogul abia sosit.
    *
-   * Un produs scos din catalog, sau rămas fără unul din prețuri, nu se vede
-   * în magazin (`PROD`, în renderVals), iar coșul îl ascunde tăcut. Lăsat
+   * Un produs scos din catalog, sau care nu se mai vinde pe latura aceea, nu
+   * se vede în magazin (`PROD`, în renderVals), iar coșul îl ascunde tăcut. Lăsat
    * acolo, ar fi fost o cheie-fantomă: nevăzută, dar scrisă în browser. Aici
    * cheile acelea ies din coș și se numără, ca omul să afle câte au rămas pe
    * dinafară. Dacă n-a intrat nimic, coșul de dinainte se pune singur la loc:
@@ -2749,13 +2848,25 @@ class Component extends DCLogic {
   cerneReluarea(s, produse) {
     const R = s.reia;
     if (!R || R.cernut) return null;
+    // PE CHEIA ÎNTREAGĂ, NU PE ID. De când cele două cataloage sunt deosebite,
+    // „se mai vinde?" e o întrebare despre PERECHEA produs-latură: un croasant
+    // poate să se vândă gata de servire și să fi ieșit din congelate. Cheiat pe
+    // id, un asemenea produs ar fi trecut prin sită pe amândouă laturile, și
+    // comanda refăcută ar fi cerut o variantă pe care serverul o refuză —
+    // ecranul ar fi arătat un coș bun pentru o comandă care nu pleacă.
+    //
+    // Cheile reluării vin din `reiaCitire()` (shared/gp-api.js) și sunt
+    // întotdeauna „frozen:<nr>" sau „baked:<nr>" — aceleași cu cheile coșului,
+    // deci se caută direct, fără despicare.
     const deVanzare = {};
     (produse || []).forEach((x) => {
-      if (x && x.priceFrozen !== null && x.priceBaked !== null) deVanzare[String(x.id)] = true;
+      if (!x) return;
+      if (x.inFrozen !== false && x.priceFrozen !== null) deVanzare['frozen:' + x.id] = true;
+      if (x.inBaked !== false && x.priceBaked !== null) deVanzare['baked:' + x.id] = true;
     });
-    const intra = R.chei.filter((k) => deVanzare[k.split(':')[1]]);
+    const intra = R.chei.filter((k) => deVanzare[k]);
     const q = Object.assign({}, s.qty);
-    R.chei.forEach((k) => { if (!deVanzare[k.split(':')[1]]) delete q[k]; });
+    R.chei.forEach((k) => { if (!deVanzare[k]) delete q[k]; });
     const reia = Object.assign({}, R, { chei: intra, lipsa: R.chei.length - intra.length, cernut: true });
     if (!intra.length && R.vechi) {
       return { qty: Object.assign({}, R.vechi), tier: R.vechiTier === 'baked' ? 'baked' : 'frozen', reia: Object.assign(reia, { vechi: null }) };
@@ -2907,6 +3018,48 @@ class Component extends DCLogic {
       if (v === null || v === undefined || !isFinite(n)) return t('preț la cerere', 'price on request');
       return (ro ? n.toFixed(2).replace('.', ',') : n.toFixed(2)) + ' RON';
     };
+    // CHEIA CARE FACE A DOUA TRIMITERE NEVĂTĂMĂTOARE (migrarea 026).
+    //
+    // 32 de cifre hexazecimale — 128 de biți luați din `crypto`, nu din
+    // `Math.random`. Forma nu e un moft: serverul ține un index UNIC peste
+    // `order_requests.idempotency_key`, iar la ciocnire răspunde cu cererea
+    // dintâi. Deci cine nimerește cheia altuia primește înapoi CEREREA
+    // altuia — nume, telefon, adresă. Două chei slabe care se lovesc n-ar fi
+    // o greșeală de socoteală, ar fi o scurgere de date.
+    //
+    // De-asta un browser fără `crypto` nu primește o cheie mai slabă, ci
+    // NICIUNA: fără cheie, pagina se poartă întocmai ca înainte de migrare —
+    // o purtare cunoscută și cinstită. `Math.random` ar fi dat tot 32 de
+    // cifre, ar fi arătat la fel de bine, și ar fi fost altceva. Serverul
+    // judecă la rândul lui forma (`request_key_normalize()`) și trece cu
+    // vederea orice nu e exact așa, tot fără să refuze comanda.
+    const cheieCerere = () => {
+      // Prin `window`, ca tot ce atinge browserul în pagina asta (v. `window.localStorage`):
+      // așa se poate și proba, cu o fereastră care are `crypto` și una care n-are.
+      const c = (typeof window !== 'undefined' && window.crypto) || null;
+      if (!c || typeof c.getRandomValues !== 'function') return '';
+      const o = new Uint8Array(16);
+      c.getRandomValues(o);
+      let s = '';
+      for (let i = 0; i < o.length; i++) s += o[i].toString(16).padStart(2, '0');
+      return s;
+    };
+    // NUMĂRATUL ÎN ROMÂNEȘTE.
+    //
+    // Regula: 1 produs · 2-19 produse · 20 DE produse. „de" se pune când
+    // numărul se termină în 00 sau în 20-99 (deci 100 de produse, dar 101
+    // produse). Zero iese pe ușa lui, altfel ar ieși „0 de produse".
+    //
+    // Stă sus, lângă `money`, fiindcă îl cer două locuri depărtate: insigna
+    // fiecărei grupe din catalog (mai jos) și textul coșului reluat (mult mai
+    // jos). Până în runda asta insigna scria „produse" oricât ar fi fost,
+    // fiindcă o grupă rareori avea exact un produs; despărțirea catalogului pe
+    // laturi face cazul acela obișnuit — o grupă cu un singur produs congelat
+    // scria „1 produse" sub titlu.
+    const deNumar = (n) => (n !== 0 && (n % 100 === 0 || n % 100 > 19) ? ' de' : '');
+    const numarProduse = (n) => (n === 1
+      ? t('1 produs', '1 product')
+      : n + t(deNumar(n) + ' produse', ' products'));
     const QTY = this.state.qty || {};
     // Numărul afișat, cel de pe butonul „Sună" și cel de pe WhatsApp vin din
     // aceeași setare: altfel omul citește un număr pe ecran și scrie pe
@@ -3004,11 +3157,57 @@ class Component extends DCLogic {
         ? 'color:var(--h-fg);opacity:1'
         : 'color:var(--h-fg-muted);opacity:0.55');
 
-    // [grupa, id, numeRO, numeEN, gramaj, prețHoReCa, prețRaft, descRO, descEN, noutate, poză]
+    // Tuplul produsului, citit după număr:
+    //
+    //   0 grupa        4 gramaj            8 descEN        12 pozăCoaptă
+    //   1 id           5 prețCongelat      9 noutate       13 eCongelat
+    //   2 numeRO       6 prețCopt         10 poză          14 eCopt
+    //   3 numeEN       7 descRO           11 cheie
+    //
     // Vine din baza de date, prin pullCatalog(). Era scris aici, ca listă
     // paralelă cu baza — două adevăruri despre același catalog.
-    // Produsele fără preț nu se pot comanda, deci nu se afișează.
-    const PROD = (this.state.prod || []).filter((r) => r[5] !== null && r[6] !== null);
+
+    // Se vinde rândul ăsta pe latura asta? Amândouă jumătățile se cer:
+    // apartenența e bifată de patron, dar invariantul „bifat ⇒ are preț" e
+    // păzit de server, nu de bază. Un import făcut cu mâna poate scrie orice,
+    // iar un produs „în catalog, fără preț" n-are voie să ajungă pe ecran ca
+    // preț zero sau ca „preț la cerere".
+    //
+    // „!== 0", nu „=== 1": un rând scurt, construit de mână într-o probă sau
+    // venit dintr-un răspuns fără câmpurile noi, se poartă ca până azi.
+    const vinde = (r, ti) => (ti === 'frozen'
+      ? (r[13] !== 0 && r[5] !== null)
+      : (r[14] !== 0 && r[6] !== null));
+
+    // DOUĂ LISTE, ȘI ASTA E TOATĂ SUBTILITATEA.
+    //
+    // `VANDABIL` = tot ce se vinde UNDEVA. Din el se face `byNo`, fiindcă
+    // coșul poate ține legiuit același produs în amândouă variantele: o cheie
+    // „baked:7" trebuie să-și găsească rândul și când fila deschisă e
+    // „congelate". Cu `byNo` făcut din lista filei, rândul celeilalte laturi
+    // ar pieri în clipa comutării — și odată cu el fereastra de vedere și fișa
+    // produsului.
+    //
+    // `PROD` = ce se vinde pe latura DESCHISĂ. Din el se fac cardurile și
+    // grupele — tot ce se uită la fila de sus.
+    //
+    // Pachetul de test nu se face din niciuna din ele: el are latura LUI, care
+    // poate fi alta decât fila, și merge pe `gamaPt()` de mai jos.
+    //
+    // Până la runda asta erau una singură, fiindcă lista nu atârna de filă —
+    // de-asta nimic din ce urmează nu se putea vedea până azi.
+    const VANDABIL = (this.state.prod || []).filter((r) => vinde(r, 'frozen') || vinde(r, 'baked'));
+    const PROD = VANDABIL.filter((r) => vinde(r, tier));
+    // Gama unei laturi ANUME, nu a filei deschise. Pachetul de test își ține
+    // latura lui în coș — prețul de pe card, rândul din coș, desfacerea în
+    // poziții și nota din cerere, toate merg pe ea. O socoteală lăsată pe
+    // `PROD` ar fi numărat produsele FILEI la prețurile PACHETULUI.
+    const gamaPt = (tr) => VANDABIL.filter((r) => vinde(r, tr));
+    // Poza laturii, cu căderea pe cealaltă: hotărârea patronului e că o latură
+    // fără poză a ei o arată pe a celeilalte, ca produsul să nu apară gol pe
+    // site în ziua dintre cele două urcări. Aceeași socoteală ca
+    // `latura_poza()` din api/lib/laturi.php.
+    const pozaLat = (r, ti) => (ti === 'baked' ? (r[12] || r[10]) : (r[10] || r[12]));
 
     // [cheie, numeRO, numeEN, subtitluRO, subtitluEN] — tot din baza de date.
     const GROUPS = this.state.groups || [];
@@ -3018,10 +3217,18 @@ class Component extends DCLogic {
       + (mob ? 'flex-direction:row;align-items:stretch' : 'flex-direction:column');
     const cardOn = ';border-color:var(--h-accent);box-shadow:0 0 0 2px var(--h-accent-soft),var(--h-shadow-2)';
 
+    // Din VANDABIL, nu din PROD: v. lămurirea de sus. `picks` dezleagă chei
+    // din amândouă laturile, iar un coș cu „frozen:7" și „baked:7" ar pierde
+    // rândul celeilalte laturi în clipa comutării.
     const byNo = {};
-    PROD.forEach((r) => { byNo[r[1]] = r; });
+    VANDABIL.forEach((r) => { byNo[r[1]] = r; });
 
-    const groups = GROUPS.map((g) => {
+    // Coada care deosebește cele două laturi în numele sloturilor și al
+    // resurselor. Congelatele păstrează numele de până azi, ca sloturile puse
+    // deja cu mâna în „.image-slots.state.json" să nu se dezlege.
+    const coadaLat = tier === 'baked' ? '-copt' : '';
+
+    const groupsToate = GROUPS.map((g) => {
       const items = PROD.filter((r) => r[0] === g[0]).map((r) => {
         const key = tier + ':' + r[1];
         const n = QTY[key] || 0;
@@ -3029,19 +3236,35 @@ class Component extends DCLogic {
         const other = tier === 'frozen' ? 'baked' : 'frozen';
         return {
           no: r[1] < 10 ? '0' + r[1] : String(r[1]),
-          slot: 'pf-prod-' + r[1],
+          // ID DEOSEBIT PE FIECARE LATURĂ. Cele două laturi arată, de regulă,
+          // două fotografii deosebite ale aceluiași produs — deci au nevoie de
+          // două sloturi. Cu un singur id, o poză pusă cu mâna peste slot (prin
+          // „.image-slots.state.json") s-ar lipi peste amândouă laturile, și
+          // patronul n-ar mai avea de unde s-o desfacă: panoul scrie coloane,
+          // nu sloturi.
+          slot: 'pf-prod-' + r[1] + coadaLat,
           // Un produs adăugat din Catalog fără poză are `photo` gol. Numele
           // „products/prod-<nr>.jpg" era doar ghicit după numărul de ordine:
           // fotografiile încărcate nu se cheamă așa, deci calea asta nu există
           // niciodată pe server. Rezultatul era un 404 pentru fiecare produs
           // fără poză. Gol înseamnă gol: se arată substituentul, fără cerere.
-          photo: r[10] ? res('prod' + r[1], r[10]) : '',
+          //
+          // Poza laturii, cu căderea pe cealaltă (`pozaLat`): un produs căruia
+          // patronul i-a urcat deocamdată o singură fotografie se vede pe
+          // amândouă laturile, nu gol pe una.
+          photo: pozaLat(r, tier) ? res('prod' + r[1] + coadaLat, pozaLat(r, tier)) : '',
           name: t(r[2], r[3]),
           desc: t(r[7], r[8]),
           weight: r[4] + ' g',
           price: money(unitPrice),
           unit: t('pe bucată', 'per piece'),
-          alt: tierName(other) + ': ' + money(other === 'frozen' ? r[5] : r[6]),
+          // Rândul celeilalte laturi. `money(null)` întoarce „preț la cerere",
+          // ceea ce pe un produs care NU se vinde acolo s-ar citi ca o ofertă:
+          // omul ar cere un preț care nu există. Când cealaltă latură lipsește,
+          // rândul spune ce e de fapt — că produsul ăsta e numai de-o parte.
+          alt: vinde(r, other)
+            ? tierName(other) + ': ' + money(other === 'frozen' ? r[5] : r[6])
+            : t('Doar ', 'Only ') + tierName(tier).toLowerCase(),
           special: !!r[9],
           // Cât timp se scrie în căsuță se arată textul brut, nu numărul din
           // coș — vezi `scrieCant()`. Aceeași expresie ca pe rândul din coș,
@@ -3084,10 +3307,18 @@ class Component extends DCLogic {
         // neimportantă chiar dacă o găsește.
         href: caleaCatre('catalog', this.state.lang, 'group', g[0]),
         go: this.nav('catalog', 'group', g[0]),
-        count: items.length + ' ' + t('produse', 'products'),
+        count: numarProduse(items.length),
         items: items
       };
     });
+
+    // O grupă fără produse pe latura deschisă nu se arată: ar fi un titlu cu
+    // „0 produse" sub el. Hotărârea patronului — grupele se ascund singure,
+    // fără nicio bifă pe ele.
+    //
+    // `groupsToate` rămâne totuși la îndemână, fiindcă adresa unei grupe
+    // trebuie să-și găsească grupa chiar și goală (v. `grupaAsta` mai jos).
+    const groups = groupsToate.filter((g) => g.items.length > 0);
 
     /*
      * Adresa unei grupe arată NUMAI grupa aceea.
@@ -3099,7 +3330,12 @@ class Component extends DCLogic {
      */
     const grupaCeruta = this.state.fel === 'group' ? this.state.cheie : '';
     const groupsAratate = grupaCeruta ? groups.filter((g) => g.key === grupaCeruta) : groups;
-    const grupaAsta = grupaCeruta ? groups.filter((g) => g.key === grupaCeruta)[0] : null;
+    // Din `groupsToate`, nu din `groups`: „/catalog/strudel" pe o latură fără
+    // ștrudele trebuie să arate grupa, cu titlul ei și cu comutatorul, ca omul
+    // să treacă de partea cealaltă — nu o pagină albă fără nicio explicație.
+    // Lista de carduri de dedesubt rămâne goală, și asta o spune starea de mai
+    // jos.
+    const grupaAsta = grupaCeruta ? groupsToate.filter((g) => g.key === grupaCeruta)[0] : null;
 
     /* ------------------------------------------------- pagina unui produs -- */
 
@@ -3107,6 +3343,20 @@ class Component extends DCLogic {
     // sosește, `PROD` e gol — deci „negăsit" nu se poate spune încă, altfel
     // fiecare produs ar clipi o dată prin ecranul „nu există".
     const catalogSosit = (this.state.prod || []).length > 0;
+
+    // NIMIC DE ARĂTAT PE LATURA ASTA. Stau aici, nu sus lângă grupe, fiindcă
+    // atârnă de `catalogSosit`: fără el, fiecare deschidere ar clipi o dată
+    // prin „nu e nimic aici", între desenare și răspunsul serverului.
+    //
+    // Latura cealaltă e întrebată pe GRUPĂ când se cere o grupă: „vezi-le la
+    // gata de servire" pe o grupă goală și acolo ar fi o trimitere într-o altă
+    // pagină albă.
+    const laturaCealalta = tier === 'frozen' ? 'baked' : 'frozen';
+    const celalaltAre = grupaCeruta
+      ? gamaPt(laturaCealalta).some((r) => r[0] === grupaCeruta)
+      : gamaPt(laturaCealalta).length > 0;
+    const golAici = catalogSosit && !this.state.eroare && groupsAratate.length === 0;
+
     const prodCerut = this.state.fel === 'product' ? this.state.cheie : '';
     // Fereastra de previzualizare E fișa produsului, în alte haine: un singur
     // marcaj, două așezări. Tot ce se vede în fișă — poza, numele, descrierea,
@@ -3120,10 +3370,34 @@ class Component extends DCLogic {
     // de reparat la fiecare schimbare — și, cum arată toată istoria fișierului
     // ăstuia, unul dintre ele uitat.
     const randVedere = this.state.vedere === null ? null : (byNo[this.state.vedere] || null);
+    // Din `VANDABIL`: o sosire rece de pe Google cade mereu pe „congelate"
+    // (v. starea de pornire), iar un produs care se vinde numai gata de servire
+    // ar fi arătat atunci „nu există" pe propria lui adresă — tocmai adresa pe
+    // care harta trimisă la Google o pomenește.
     const randProd = randVedere
-      || (prodCerut ? PROD.filter((r) => r[11] === prodCerut)[0] : null);
+      || (prodCerut ? VANDABIL.filter((r) => r[11] === prodCerut)[0] : null);
     const grupaProd = randProd ? GROUPS.filter((g) => g[0] === randProd[0])[0] : null;
-    const cheiaProd = randProd ? tier + ':' + randProd[1] : '';
+
+    // LATURA FIȘEI SE STRÂNGE, NU SE COMUTĂ.
+    //
+    // Fișa n-are comutator, dinadins (v. mai jos, la `pvTier`). Latura ei e
+    // cea deschisă — numai că o sosire rece de pe Google e mereu „congelate",
+    // iar un produs care se vinde numai gata de servire ar fi arătat atunci un
+    // buton care scrie în coș o cheie pe care serverul o refuză: omul ar fi
+    // aflat abia la trimitere, după ce completa tot formularul.
+    //
+    // Deci: latura deschisă dacă produsul e acolo, cealaltă altfel. `randProd`
+    // vine din `VANDABIL`, deci una din două există întotdeauna.
+    //
+    // Când produsul e pe amândouă, nu se schimbă nimic — și asta contează
+    // pentru fereastra de vedere, care se deschide numai de pe un card al
+    // laturii deschise: acolo `tierProd` E `tier`, deci steperul din fereastră
+    // și cel de pe cardul de dedesubt rămân pe ACEEAȘI cheie de coș.
+    const tierProd = !randProd || vinde(randProd, tier)
+      ? tier
+      : (tier === 'frozen' ? 'baked' : 'frozen');
+    const coadaFisa = tierProd === 'baked' ? '-copt' : '';
+    const cheiaProd = randProd ? tierProd + ':' + randProd[1] : '';
     const nProd = randProd ? (QTY[cheiaProd] || 0) : 0;
 
     // Reducerea vine de la server (`promo_public()`, api/lib/promo.php); nu mai
@@ -3138,7 +3412,26 @@ class Component extends DCLogic {
     const PROMO = (this.state.promos && this.state.promos['pachet-test']) || null;
     const TRIAL_EACH = PROMO ? Number(PROMO.each) : 3;
     const TRIAL_PCT = PROMO ? Math.round(Number(PROMO.off)) : 20;
-    const TRIAL_PIECES = PROD.length * TRIAL_EACH;
+
+    // TOATE SOCOTELILE PACHETULUI MERG PE GAMA LUI, NU PE A FILEI.
+    //
+    // Cele cinci de mai jos — bucăți, listă, preț de bucată, net, nume — cer
+    // toate o LATURĂ și nu se uită niciodată la fila deschisă. Latura le-o dă
+    // chemătorul: rândul din coș pe a lui, cardul pe `trialTier`. De-asta stau
+    // înainte de el, într-o bucată neîntreruptă: sunt aritmetică pură, iar
+    // proba din `check-site-public.mjs` le scoate din pagină ca atare și le
+    // rulează pe o gamă de mucava. Orice stare strecurată printre ele ar face
+    // felia aceea neruabilă — s-a și întâmplat o dată.
+    //
+    // `trialTier` (mai jos) e latura pachetului din coș, care poate fi ALTA
+    // decât fila deschisă — chiar ăsta e rostul lui. Până la cele două
+    // cataloage nu se vedea: cele două game erau aceeași listă. De-acum nu
+    // mai sunt, iar o socoteală făcută pe `PROD` ar fi numărat produsele
+    // filei la prețurile pachetului: cardul și rândul din coș ar fi arătat un
+    // preț pentru un număr de produse, iar cererea ar fi plecat cu altul.
+    // Adică exact felul de nepotrivire pe care fișierul ăsta îl repară de trei
+    // runde — ecranul spune o sumă, cererea înregistrează alta.
+    const trialPieces = (tr) => gamaPt(tr).length * TRIAL_EACH;
     // Prețurile reduse, bucată cu bucată, așa cum le-a socotit serverul
     // (`promo_units()`). Pagina nu mai scade niciun procent: adună.
     //
@@ -3149,12 +3442,7 @@ class Component extends DCLogic {
     // în ziua în care cineva schimbă procentul.
     const promoUnit = {};
     ((PROMO && Array.isArray(PROMO.units)) ? PROMO.units : []).forEach((u) => { promoUnit[u.id] = u; });
-    // Pachetul se arată numai dacă serverul a dat un preț pentru fiecare
-    // produs de pe ecran. Cele două liste vin din același răspuns, deci
-    // condiția nu poate pica azi — dar ea e ce face imposibil ca vreodată să
-    // apară pe ecran un pachet socotit altfel decât îl va socoti serverul.
-    const promoGata = !!PROMO && PROD.length > 0 && PROD.every((r) => promoUnit[r[1]]);
-    const trialList = (tr) => PROD.reduce((s, r) => s + TRIAL_EACH * (tr === 'frozen' ? r[5] : r[6]), 0);
+    const trialList = (tr) => gamaPt(tr).reduce((s, r) => s + TRIAL_EACH * (tr === 'frozen' ? r[5] : r[6]), 0);
     // Rezerva e prețul ÎNTREG, nu unul socotit aici: dacă vreodată lipsește un
     // preț redus, ecranul cere mai mult, niciodată mai puțin. `promoGata` a
     // ascuns oricum pachetul până atunci.
@@ -3163,7 +3451,7 @@ class Component extends DCLogic {
       const catalog = tr === 'frozen' ? r[5] : r[6];
       return u && u[tr] != null ? Number(u[tr]) : catalog;
     };
-    const trialNet = (tr) => PROD.reduce((s, r) => s + TRIAL_EACH * trialUnit(r, tr), 0);
+    const trialNet = (tr) => gamaPt(tr).reduce((s, r) => s + TRIAL_EACH * trialUnit(r, tr), 0);
     // Româna cere „de" de la 20 în sus: 1 pachet, 2 pachete, 20 de pachete.
     const pachete = (k) => k === 1
       ? t('1 pachet', '1 pack')
@@ -3185,9 +3473,16 @@ class Component extends DCLogic {
     // Cardul arată pachetul din coș cât timp e unul; altfel pe cel al filei
     // deschise, fiindcă atunci e o reclamă, nu o chitanță.
     const trialTier = trialInCos || tier;
+    // Pachetul se arată numai dacă serverul a dat un preț pentru fiecare
+    // produs din gama LUI — a lui `trialTier`, nu a filei. Lista de produse și
+    // lista de prețuri reduse vin din același răspuns, deci condiția nu poate
+    // pica azi; ea e însă ce face imposibil ca vreodată să apară pe ecran un
+    // pachet socotit altfel decât îl va socoti serverul.
+    const promoGata = !!PROMO && gamaPt(trialTier).length > 0
+      && gamaPt(trialTier).every((r) => promoUnit[r[1]]);
     const trialName = (tr) => t(
-      'Pachet de test — ' + PROD.length + ' produse × ' + TRIAL_EACH + ' buc',
-      'Trial pack — ' + PROD.length + ' products × ' + TRIAL_EACH + ' pcs'
+      'Pachet de test — ' + gamaPt(tr).length + ' produse × ' + TRIAL_EACH + ' buc',
+      'Trial pack — ' + gamaPt(tr).length + ' products × ' + TRIAL_EACH + ' pcs'
     ) + ' (' + tierName(tr) + ')';
 
     let totPieces = 0;
@@ -3202,8 +3497,30 @@ class Component extends DCLogic {
     // listă deși net rămânea sub el: cardul se făcea verde „Comandă minimă
     // atinsă" pentru o comandă care nu era minimă.
     let totNet = 0;
+    // Cernerea coșului pune DOUĂ întrebări, nu una.
+    //
+    //   „mai există produsul?"     — se pune pe id, și de-asta `byNo` se face
+    //                                din `VANDABIL`: o cheie „baked:7" trebuie
+    //                                să-și găsească rândul și cu fila pe
+    //                                congelate, altfel comutarea ar goli coșul.
+    //   „se mai vinde bucata asta?" — se pune pe PERECHE. Un produs poate fi
+    //                                scos din congelate și să rămână la gata
+    //                                de servire; cheia „frozen:7" a rămas însă
+    //                                în browserul clientului de aseară.
+    //
+    // Cu o singură căutare pe id, a doua întrebare primea răspunsul primei. Iar
+    // paguba nu se vedea: prețul rece RĂMÂNE scris când patronul stinge latura
+    // (hotărârea 1), deci rândul se socotea frumos, la un preț adevărat, pentru
+    // o variantă pe care serverul o refuză (`bad_variant_side`) abia după ce
+    // omul completa tot formularul.
     const picks = Object.keys(QTY)
-      .filter((k) => QTY[k] > 0 && (k.indexOf('trial:') === 0 || byNo[k.split(':')[1]]))
+      .filter((k) => {
+        if (!(QTY[k] > 0)) return false;
+        if (k.indexOf('trial:') === 0) return true;
+        const parts = k.split(':');
+        const r = byNo[parts[1]];
+        return !!r && vinde(r, parts[0] === 'frozen' ? 'frozen' : 'baked');
+      })
       .map((k) => {
         const parts = k.split(':');
         const n = QTY[k];
@@ -3218,13 +3535,13 @@ class Component extends DCLogic {
           // bucățile, banii și rândul de pe ecran o ignorau. Azi `trialAdd` pune
           // mereu 1, deci nu se vedea — dar nimic din cod nu impune asta, iar al
           // doilea pachet ar fi plecat gratis.
-          totPieces += n * TRIAL_PIECES;
+          totPieces += n * trialPieces(tr);
           totMoney += n * unitPrice;
           totNet += n * trialNet(tr);
           return {
             trial: tr,
             name: trialName(tr),
-            meta: (n * TRIAL_PIECES) + ' ' + t('buc', 'pcs') + ' · '
+            meta: (n * trialPieces(tr)) + ' ' + t('buc', 'pcs') + ' · '
               + t('−' + TRIAL_PCT + '% deja scăzut din preț',
                   '−' + TRIAL_PCT + '% already deducted'),
             qty: String(n),
@@ -3323,7 +3640,6 @@ class Component extends DCLogic {
       ? R.chei.filter((k) => QTY[k] > 0 && byNo[k.split(':')[1]]).length : 0;
     const reiaNimic = reiaGata && !R.stricata && R.chei.length === 0;
     const reiaVechi = reiaInCos > 0 && !!R.vechi && Object.keys(R.vechi).some((k) => R.vechi[k] > 0);
-    const reiaDe = (n) => (n % 100 === 0 || n % 100 > 19 ? ' de' : '');
 
     const piecesText = totPieces + ' ' + t('buc', 'pcs');
     const orderText = (extra) => {
@@ -3372,6 +3688,11 @@ class Component extends DCLogic {
         'Incinta ICTCM · ' + contact.addressFull + ' · vis-à-vis de metrou Piața Sudului',
         'ICTCM site · ' + contact.addressFullEn + ' · opposite Piața Sudului metro station'
       ),
+      // Fereastra hărții și acul, socotite din punctul din Setări de
+      // `adresaHartii()`. Singurul dintre cele trei „map…" care nu e text:
+      // celelalte două spun unde suntem în cuvinte, ăsta o arată pe hartă — și
+      // până acum o arăta pe cea dinainte de mutare.
+      mapEmbed: adresaHartii(gp.hq()),
 
       onHome: p === 'home', onCat: p === 'catalog', onDist: p === 'distribution',
       onAbout: p === 'about', onContact: p === 'contact', onProd: p === 'product',
@@ -3998,8 +4319,11 @@ class Component extends DCLogic {
       pvLipsa: !randProd && catalogSosit && !this.state.eroare,
       pvName: randProd ? t(randProd[2], randProd[3]) : (grupaProd ? '' : t('Produs', 'Product')),
       pvDesc: randProd ? t(randProd[7], randProd[8]) : '',
-      pvSlot: randProd ? 'pf-fisa-' + randProd[1] : 'pf-fisa-0',
-      pvPhoto: randProd && randProd[10] ? res('fisa' + randProd[1], randProd[10]) : '',
+      // Ca pe card: slot deosebit pe fiecare latură, ca o poză pusă cu mâna
+      // peste una să nu se lipească peste amândouă.
+      pvSlot: randProd ? 'pf-fisa-' + randProd[1] + coadaFisa : 'pf-fisa-0',
+      pvPhoto: randProd && pozaLat(randProd, tierProd)
+        ? res('fisa' + randProd[1] + coadaFisa, pozaLat(randProd, tierProd)) : '',
       pvSpecial: !!(randProd && randProd[9]),
       pvGrupaNume: grupaProd ? t(grupaProd[1], grupaProd[2]) : '',
       // Treapta de grupă din firimituri se arată doar când produsul chiar are
@@ -4022,12 +4346,12 @@ class Component extends DCLogic {
         + (randVedere
           ? 'aspect-ratio:16/9;border-radius:16px;cursor:pointer'
           : 'aspect-ratio:4/3;border-radius:20px'),
-      // Cele trei cifre stau una lângă alta și în fereastra de pe telefon, nu
-      // una sub alta ca pe pagină. Măsurat pe 390 px: una sub alta, cele trei
-      // căsuțe mâncau 255 de pixeli din fereastră, iar steperul — lucrul
-      // pentru care omul a deschis-o — cădea la 888, adică sub marginea de jos
-      // a ecranului (844). Pe trei coloane cad la 90, și steperul urcă în
-      // ecran.
+      // Cifrele stau una lângă alta și în fereastra de pe telefon, nu una sub
+      // alta ca pe pagină. Măsurat pe 390 px: una sub alta, cele trei căsuțe
+      // mâncau 255 de pixeli, iar steperul cădea la 888, sub marginea de jos a
+      // ecranului (844); pe un rând cad la 90. Iar coloanele se NUMĂRĂ, nu se
+      // scriu „3": un produs de pe o singură latură are două căsuțe, și a
+      // treia pistă i-ar lăsa un gol cât o căsuță la dreapta.
       //
       // `minmax(0,1fr)`, nu `1fr`: o coloană de `1fr` nu coboară sub lățimea
       // ei minimă de conținut, deci un preț de patru cifre („1240,00 RON") ar
@@ -4035,8 +4359,8 @@ class Component extends DCLogic {
       // gramajului care fugea la dreapta, mutat în altă parte a aceleiași
       // pagini. Cu `minmax(0,…)` prețul lung se rupe în două rânduri
       // înăuntrul căsuței lui și nu mișcă nimic.
-      pvFapte: 'display:grid;gap:0.6rem;margin:0 0 1.1rem;'
-        + (mob && !randVedere ? 'grid-template-columns:1fr' : 'grid-template-columns:repeat(3,minmax(0,1fr))'),
+      pvFapte: 'display:grid;gap:0.6rem;margin:0 0 1.1rem;' + (mob && !randVedere ? 'grid-template-columns:1fr'
+        : 'grid-template-columns:repeat(' + (randProd ? 1 + (vinde(randProd, 'frozen') ? 1 : 0) + (vinde(randProd, 'baked') ? 1 : 0) : 3) + ',minmax(0,1fr))'),
       pvFapt: 'margin:0;min-width:0;background:var(--h-bg-raised);border:1px solid var(--h-line);border-radius:14px;'
         + (randVedere ? 'padding:0.6rem 0.7rem' : 'padding:0.85rem 1rem'),
       pvFaptEt: 'margin:0 0 0.2rem;font-size:0.6875rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--h-fg-muted)',
@@ -4051,8 +4375,17 @@ class Component extends DCLogic {
       pvEtCongelat: t('Congelat', 'Frozen'),
       pvEtCopt: t('Gata de servire', 'Ready to serve'),
       pvGramaj: randProd ? randProd[4] + ' g' : '—',
-      pvPretFrozen: randProd && randProd[5] !== null ? money(randProd[5]) : '—',
-      pvPretBaked: randProd && randProd[6] !== null ? money(randProd[6]) : '—',
+      // Latura pe care produsul nu se vinde nu se mai scrie DELOC: căsuța ei
+      // piere din grilă, iar `pvFapte` numără coloanele rămase. Până azi scria
+      // „Nu se vinde", o propoziție cât o căsuță de preț, pe un ecran al cărui
+      // rost e să se citească dintr-o privire CE costă. Hotărârea patronului,
+      // cerută din amândouă ecranele pe care le desenează grila asta: fereastra
+      // de vedere rapidă ȘI pagina produsului. `money()` se cheamă numai pe
+      // latura care se vinde — pe cealaltă ar da „preț la cerere", adică ofertă.
+      pvAreFrozen: !randProd || vinde(randProd, 'frozen') ? 'da' : 'nu',
+      pvAreBaked: !randProd || vinde(randProd, 'baked') ? 'da' : 'nu',
+      pvPretFrozen: randProd && vinde(randProd, 'frozen') ? money(randProd[5]) : '—',
+      pvPretBaked: randProd && vinde(randProd, 'baked') ? money(randProd[6]) : '—',
       pvLivrare: t(
         'Preț en-gros pe bucată · livrare în lanț frigorific în București și Ilfov · comandă minimă ' + MIN_ORDER + ' RON',
         'Wholesale price per piece · unbroken cold chain in Bucharest and Ilfov · ' + MIN_ORDER + ' RON minimum order'
@@ -4068,6 +4401,13 @@ class Component extends DCLogic {
       pvSet: (e) => { if (cheiaProd) this.scrieCant(cheiaProd, e); },
       pvBlur: () => this.terminaCant(),
       pvPick: (e) => this.alegeCant(e),
+      // Butonul fișei își numește latura, fiindcă acolo NU e comutator: pe
+      // catalog omul vede pastila plutitoare și știe ce cumpără, pe fișă n-are
+      // de unde. Cardurile din catalog păstrează `addLabel` scurt.
+      pvAddLabel: (mob
+        ? t('Adaugă', 'Add')
+        : (mine ? t('Adaugă în comandă', 'Add to order') : t('Adaugă la ofertă', 'Add to quote')))
+        + ' — ' + tierName(tierProd).toLowerCase(),
       pvLipsaTitlu: t('Produsul acesta nu mai e în catalog', 'This product is no longer in the catalogue'),
       pvLipsaText: t(
         'Poate a fost scos sau redenumit. Catalogul întreg e mai jos — sau scrie-ne și îți spunem cu ce se înlocuiește.',
@@ -4130,7 +4470,7 @@ class Component extends DCLogic {
         : reiaNimic
           ? t('Niciun produs de pe ea nu mai e în catalog, așa că coșul a rămas cum era. Alege din produsele de azi.',
             'None of its products are in the catalogue anymore, so your cart was left as it was. Choose from today\'s products.')
-          : t((reiaInCos === 1 ? 'Un produs a intrat' : reiaInCos + reiaDe(reiaInCos) + ' produse au intrat')
+          : t((reiaInCos === 1 ? 'Un produs a intrat' : reiaInCos + deNumar(reiaInCos) + ' produse au intrat')
               + ' în coș, la prețurile de azi. Verifică cantitățile, alege ziua și trimite comanda când ești gata.',
             (reiaInCos === 1 ? 'One product was' : reiaInCos + ' products were')
               + ' added to the cart at today\'s prices. Check the quantities, pick the day and send the order when you are ready.'),
@@ -4138,7 +4478,7 @@ class Component extends DCLogic {
       reiaLipsaText: reiaInCos > 0 && R.lipsa > 0
         ? (R.lipsa === 1
           ? t('Un produs nu mai e în catalog și a rămas pe dinafară.', 'One product is no longer in the catalogue and was left out.')
-          : t(R.lipsa + reiaDe(R.lipsa) + ' produse nu mai sunt în catalog și au rămas pe dinafară.',
+          : t(R.lipsa + deNumar(R.lipsa) + ' produse nu mai sunt în catalog și au rămas pe dinafară.',
             R.lipsa + ' products are no longer in the catalogue and were left out.'))
         : '',
       reiaAreVechi: reiaVechi,
@@ -4233,6 +4573,33 @@ class Component extends DCLogic {
       // ce omul a completat tot formularul.
       hasCat: PROD.length > 0 && promoGata,
 
+      // STAREA GOALĂ ÎȘI NUMEȘTE LATURA.
+      //
+      // `groupsAratate` e goală în două împrejurări deosebite, și amândouă cad
+      // aici: latura deschisă n-are niciun produs, sau grupa cerută n-are
+      // produse pe latura deschisă (`grupaAsta` vine din lista nefiltrată, deci
+      // titlul ei se vede oricum deasupra).
+      //
+      // `catalogSosit` ține clipa dinaintea răspunsului — altfel fiecare
+      // deschidere ar clipi o dată prin „nu e nimic aici". `eroare` îl tace
+      // când catalogul n-a putut fi cerut: acolo vorbește caseta de sus, și
+      // două explicații deodată pentru același ecran gol se contrazic.
+      catGol: golAici,
+      catGolAre: golAici && celalaltAre,
+      catGolTitlu: grupaCeruta
+        ? t('Grupa asta n-are produse ' + tierName(tier).toLowerCase(),
+            'Nothing ' + TIER_EN[tier].toLowerCase() + ' in this group')
+        : t('Catalogul de ' + tierName(tier).toLowerCase() + ' e gol acum',
+            'The ' + TIER_EN[tier].toLowerCase() + ' catalogue is empty right now'),
+      catGolText: celalaltAre
+        ? t('Le găsești la „' + tierName(laturaCealalta) + '". Comutatorul schimbă numai prețurile și fotografiile — produsele sunt aceleași.',
+            'You will find them under “' + TIER_EN[laturaCealalta] + '”. The switch only changes prices and photos — the products are the same.')
+        : t('Scrie-ne și îți spunem ce putem livra. Catalogul se schimbă des.',
+            'Write to us and we will tell you what we can deliver. The catalogue changes often.'),
+      catGolCta: t('Vezi ' + tierName(laturaCealalta).toLowerCase(),
+                   'See ' + TIER_EN[laturaCealalta].toLowerCase()),
+      catGolTreci: () => this.treciLa(laturaCealalta),
+
       trialCard: 'display:flex;flex-wrap:wrap;gap:clamp(1rem,3vw,2rem);align-items:center;justify-content:space-between;background:var(--h-bg-raised);border-color:var(--h-accent);box-shadow:0 0 0 2px var(--h-accent-soft),var(--h-shadow-2)',
       trialBuy: 'flex:0 1 15rem;min-width:min(13rem,100%);display:flex;flex-direction:column;gap:0.2rem',
       trialPhoto: res('trialpack', 'assets/img/trial-pack.jpg'),
@@ -4244,12 +4611,12 @@ class Component extends DCLogic {
       trialTitle: t('Comandă de test: ' + TRIAL_EACH + ' bucăți din fiecare produs',
                     'Trial order: ' + TRIAL_EACH + ' pieces of every product'),
       trialBody: t(
-        'Toate cele ' + PROD.length + ' produse din gamă, câte ' + TRIAL_EACH + ' bucăți, cu ' + TRIAL_PCT + '% reducere. Îl pui în vitrină o săptămână și vezi ce se vinde, fără să te blochezi pe stoc.',
-        'All ' + PROD.length + ' products in the range, ' + TRIAL_EACH + ' pieces each, at ' + TRIAL_PCT + '% off. Put it on the counter for a week and see what sells, without locking up stock.'
+        'Toate cele ' + gamaPt(trialTier).length + ' produse din gamă, câte ' + TRIAL_EACH + ' bucăți, cu ' + TRIAL_PCT + '% reducere. Îl pui în vitrină o săptămână și vezi ce se vinde, fără să te blochezi pe stoc.',
+        'All ' + gamaPt(trialTier).length + ' products in the range, ' + TRIAL_EACH + ' pieces each, at ' + TRIAL_PCT + '% off. Put it on the counter for a week and see what sells, without locking up stock.'
       ),
       trialPrice: money(trialNet(trialTier)),
       trialWas: money(trialList(trialTier)),
-      trialMeta: TRIAL_PIECES + ' ' + t('buc', 'pcs') + ' · '
+      trialMeta: trialPieces(trialTier) + ' ' + t('buc', 'pcs') + ' · '
         + t('o singură dată per client · reducerea e deja scăzută din preț',
             'one per customer · the discount is already deducted'),
       trialNone: trialN === 0,
@@ -4622,6 +4989,7 @@ class Component extends DCLogic {
         // toate produsele câte 3 bucăți, în varianta la care a fost adăugat.
         const linii = [];
         let cuTest = null;
+        let cuTestN = 0;
         picks.forEach((row) => {
           if (row.productId) {
             linii.push({ productId: row.productId, qty: Number(row.qty) || 1, variant: row.variant });
@@ -4629,7 +4997,18 @@ class Component extends DCLogic {
           }
           if (row.trial) {
             cuTest = row.trial === 'frozen' ? 'congelat' : 'copt';
-            PROD.forEach((r) => {
+            // GAMA PACHETULUI, NU A FILEI DESCHISE. `row.trial` e latura la
+            // care pachetul a fost pus în coș, și el rămâne pe ea (v.
+            // `trialInCos`); fila însă se comută liber. Cu `PROD` aici, un om
+            // care pune pachetul de congelate și apoi trece fila pe „gata de
+            // servire" ar fi trimis pozițiile ALTEI game, marcate totuși
+            // „congelat" — adică produse care nici nu se vând așa.
+            //
+            // Până la cele două cataloage nu se putea vedea: `PROD` nu atârna
+            // de filă, deci cele două game erau aceeași listă.
+            const gama = gamaPt(row.trial);
+            cuTestN = gama.length;
+            gama.forEach((r) => {
               linii.push({ productId: r[1], qty: TRIAL_EACH, variant: cuTest });
             });
           }
@@ -4673,7 +5052,7 @@ class Component extends DCLogic {
 
         this.__trimit = true;
         this.setState({ sending: true, sendErr: '' });
-        gp.post('/requests', {
+        const trup = {
           // Cu cont, numele îl pune serverul, de pe cont: o comandă nu poate
           // intra pe numele altui client fiindcă a fost scris în formular.
           // Telefonul și e-mailul lipsesc din formular și se completează tot
@@ -4716,11 +5095,14 @@ class Component extends DCLogic {
             // `promo`: fără rândul ăsta, laboratorul citește un total sub
             // catalog fără nimic care să-i spună de ce. Amândouă cifrele stau
             // scrise, ca nimeni să n-aibă de socotit.
-            cuTest ? t('PACHET DE TEST −' + TRIAL_PCT + '%: ' + PROD.length + ' produse × ' + TRIAL_EACH
+            // `cuTestN`, nu `PROD.length`: nota trebuie să numere exact
+            // pozițiile trimise mai sus, altfel laboratorul citește un număr de
+            // produse care nu se potrivește cu rândurile comenzii.
+            cuTest ? t('PACHET DE TEST −' + TRIAL_PCT + '%: ' + cuTestN + ' produse × ' + TRIAL_EACH
                        + ' buc (' + tierName(cuTest === 'congelat' ? 'frozen' : 'baked')
                        + ') — reducerea e deja scăzută: ' + money(totNet) + ' în loc de '
                        + money(totMoney) + ' la catalog',
-                       'TRIAL PACK −' + TRIAL_PCT + '%: ' + PROD.length + ' products × ' + TRIAL_EACH
+                       'TRIAL PACK −' + TRIAL_PCT + '%: ' + cuTestN + ' products × ' + TRIAL_EACH
                        + ' pcs (' + tierName(cuTest === 'congelat' ? 'frozen' : 'baked')
                        + ') — the discount is already deducted: ' + money(totNet) + ' instead of '
                        + money(totMoney) + ' at catalogue price') : '',
@@ -4770,8 +5152,52 @@ class Component extends DCLogic {
           // lipsa lui, iar un server rămas în urmă îl trece cu vederea.
           vreauCont: this.__vreauCont,
           items: linii
-        })
+        };
+        // CHEIA SE BATE PE CE TRIMITEM, NU PE APĂSARE.
+        //
+        // O cheie ținută prea mult minte: omul cade din rețea, se răzgândește,
+        // schimbă coșul și apasă iar — iar serverul, văzând aceeași cheie, i-ar
+        // răspunde cu comanda DINTÂI și cu un „Mulțumim" pentru un coș pe care
+        // tocmai l-a schimbat. O cheie aruncată prea devreme minte pe dos: a
+        // doua apăsare ar fi o comandă nouă, adevărată, adică exact dublura pe
+        // care cheia vine s-o oprească.
+        //
+        // Așa că nu se leagă de apăsare, ci de trup: cât timp plecăm cu
+        // ACELAȘI lucru, e aceeași trimitere și poartă aceeași cheie; de cum
+        // se schimbă ceva în el, e altă comandă și primește cheie nouă. Nu e
+        // nevoie de niciun cârlig pe câmpurile formularului — se vede din
+        // trupul gata făcut, deci un câmp nou de mâine intră singur în
+        // socoteală, fără să-și aducă aminte cineva de locul ăsta.
+        //
+        // `vreauCont` e pus deoparte dinadins, și e singurul. El nu spune CARE
+        // e comanda, ci ce vrea omul după ea. Cele două butoane de sub coș
+        // trimit exact aceeași comandă și se deosebesc numai prin el: cine
+        // cade din rețea la „Trimite" și apasă apoi „Trimite și fă-mi cont" a
+        // făcut o singură comandă, și trebuie să plece cu aceeași cheie.
+        const fataCererii = JSON.stringify(Object.assign({}, trup, { vreauCont: null }));
+        if (this.__cheieFata !== fataCererii) {
+          this.__cheie = cheieCerere();
+          this.__cheieFata = fataCererii;
+        }
+        // Goală pe un browser fără `crypto`, și atunci nici nu pleacă: serverul
+        // citește `$b['cheie'] ?? ''` și se poartă ca înainte de migrare.
+        if (this.__cheie) trup.cheie = this.__cheie;
+        // Un singur semn de „am mai încercat o dată", ținut în închidere, nu pe
+        // instanță: e al trimiterii ăsteia și moare odată cu ea. Pe instanță ar
+        // fi rămas aprins peste apăsarea următoare din aceeași filă, iar aceea
+        // n-ar mai fi reîncercat niciodată.
+        let amReincercat = false;
+        const porneste = () => gp.post('/requests', trup)
           .then((r) => {
+            // CHEIA SE ARUNCĂ AICI, ȘI E OBLIGATORIU, NU DE CUVIINȚĂ.
+            //
+            // Cererea a intrat, deci trimiterea asta s-a terminat. Dacă ar
+            // rămâne, omul care pune la loc în coș EXACT aceleași produse ar
+            // ajunge cu același trup și aceeași cheie — iar serverul i-ar
+            // întoarce comanda dinainte cu „Mulțumim", fără să ia a doua. Cine
+            // comandă de două ori același lucru în aceeași zi o face dinadins.
+            this.__cheie = '';
+            this.__cheieFata = '';
             this.__trimit = false;
             // DRUMUL SPRE CONTUL NOU, HOTĂRÂT AICI ȘI FĂCUT MAI TÂRZIU.
             //
@@ -4866,6 +5292,35 @@ class Component extends DCLogic {
             ));
           })
           .catch((e) => {
+            // REÎNCEARCĂ O DATĂ, SINGURĂ, ÎNAINTE SĂ SPERIE PE NIMENI.
+            //
+            // Căderea de rețea e singura care merită o a doua încercare: acolo
+            // n-am primit niciun răspuns, deci nu știm nimic. Un refuz al
+            // serverului e un răspuns, și se duce mai jos, neatins.
+            //
+            // De ce se poate abia acum: cheia de pe rând (migrarea `026`) face
+            // a doua trimitere nevătămătoare. Dacă prima chiar ajunsese,
+            // serverul o recunoaște și ne întoarce tot pe ea — cu `dejaPrimita`
+            // —, iar omul vede „Mulțumim", nu o casetă roșie despre o comandă
+            // care de fapt intrase. Fără cheie n-am avea voie: acolo a doua
+            // trimitere chiar ar fi a doua comandă, așa că `this.__cheie` nu e
+            // un amănunt, e chiar îngăduința.
+            //
+            // O DATĂ, nu într-una. Când legătura chiar e picată, o buclă ar
+            // ține rotița învârtindu-se la nesfârșit, iar omul n-ar afla
+            // niciodată nimic — adică exact paguba pe care încercăm s-o
+            // ocolim, în altă haină.
+            //
+            // Și NU stingem nimic înainte: `__trimit` ține butonul oprit, ca
+            // omul să nu apese peste încercarea noastră, iar `__vreauCont` e
+            // citit abia de `.then`, la izbândă. Stinse aici, cererea reușită
+            // din a doua încercare n-ar mai duce pe nimeni spre contul nou, și
+            // nimeni n-ar ști de ce. `sending: true` rămâne tot din pricina
+            // asta: pentru om e aceeași apăsare, nu două.
+            if (e && e.code === 'network' && this.__cheie && !amReincercat) {
+              amReincercat = true;
+              return porneste();
+            }
             // Refuzul aprinde butonul la loc: cererea completată trebuie să
             // poată fi trimisă din nou după ce omul corectează ce lipsea.
             this.__trimit = false;
@@ -4874,36 +5329,39 @@ class Component extends DCLogic {
             // cererea se retrimite adesea cu butonul simplu de deasupra — iar
             // aceea n-are de ce să ducă pe altă pagină.
             this.__vreauCont = false;
-            // CĂZUTĂ DIN REȚEA, CEREREA POATE SĂ FI AJUNS.
+            // CĂZUTĂ DIN REȚEA — ȘI A DOUA OARĂ.
             //
             // `gp-api.js` dă `code: 'network'` numai când `fetch` n-a primit
             // niciun răspuns — ceea ce nu înseamnă că cererea n-a plecat.
             // Legătura cade des tocmai după ce serverul a scris-o, iar
-            // răspunsul se pierde pe drum. Mesajul de până acum („Nu am putut
-            // contacta serverul”) îl îndemna pe om să mai apese o dată, iar
-            // laboratorul primea două cereri identice. Serverul nu are încă o
-            // cheie care să recunoască a doua trimitere, deci pagina spune ce
-            // știe: nu știm dacă a ajuns — uită-te întâi acolo unde s-ar vedea.
-            // Clientul se uită în „Comanda mea”, personalul în lista de cereri;
-            // vizitatorul fără cont n-are unde să se uite — pentru el adevărul
-            // stă la capătul firului, la patiserie.
+            // răspunsul se pierde pe drum. Aici ajungem abia după ce pagina a
+            // reîncercat o dată singură și a căzut și atunci; deci nu știm nici
+            // acum dacă a ajuns vreuna — dar, spre deosebire de înainte, nu mai
+            // are nicio importanță.
             //
-            // ȘI TOCMAI PE EL ÎL TRIMITEA MESAJUL SPRE BUTON. „Scrie-ne pe
-            // WhatsApp, cu butonul de mai jos” suna a ieșire sigură, dar sub
-            // caseta roșie stau două butoane, și amândouă trimit comanda a
-            // doua oară: întâi cel de trimitere, care reface exact cererea
-            // căzută, apoi cel verde, „Trimite pe WhatsApp” (`sendWa`), care
-            // strânge tot formularul și tot coșul într-un mesaj gata scris —
-            // adică a doua comandă, pe alt canal, la aceeași patiserie. Vorba
-            // pusă să oprească dublura arăta cu degetul chiar spre ea.
+            // CE SPUNEAM ÎNAINTE, ȘI DE CE NU MAI E ADEVĂRAT. Mesajul dintâi
+            // („Nu am putut contacta serverul”) îl îndemna pe om să mai apese o
+            // dată, iar laboratorul primea două cereri identice. Pe urmă l-am
+            // întors pe dos: „nu știm dacă a ajuns — uită-te întâi acolo unde
+            // s-ar vedea”. Clientul se uita în „Comanda mea”, personalul în
+            // lista de cereri; vizitatorul fără cont n-avea unde să se uite, iar
+            // sub caseta roșie stăteau tocmai două butoane care amândouă
+            // trimiteau comanda a doua oară — al doilea, „Trimite pe WhatsApp”,
+            // pe alt canal, la aceeași patiserie. Vorba pusă să oprească dublura
+            // arăta cu degetul chiar spre ea.
             //
-            // Cât timp serverul n-are cheie de idempotență (fișă nereparată —
-            // numărul migrării se alege când se scrie, nu acum), singurul lucru
-            // cinstit e să spunem pe față ce se poate întâmpla la a doua
-            // apăsare și să dăm numărul la care se află răspunsul. Numărul vine
-            // din Setări, ca peste tot în pagină:
-            // scris aici, ar fi fost încă un loc din care patiseria uită să-l
-            // schimbe când și-l schimbă.
+            // Acum serverul ține o cheie pe rând (migrarea `026`) și recunoaște
+            // a doua trimitere: îi răspunde cu cererea dintâi, ca și cum ar fi
+            // acum. Deci îndemnul care era o capcană a devenit adevărul cel mai
+            // scurt: apasă liniștit. Nu mai trimitem pe nimeni să se uite
+            // undeva, și nu mai dăm numărul de telefon ca ieșire de avarie —
+            // rămâne în pagină, la locul lui, pentru cine vrea să sune oricum.
+            //
+            // FĂRĂ CHEIE, VORBELE VECHI RĂMÂN. Un browser fără `crypto` n-a
+            // primit cheie, deci pagina n-a reîncercat nimic și a doua apăsare
+            // chiar ar fi a doua comandă. Pentru el se păstrează întocmai ce
+            // spuneam înainte, pe fiecare fel de om în parte: e singurul lucru
+            // cinstit care se mai poate spune acolo.
             //
             // Un refuz al serverului — orice răspuns, oricât de rău — nu e
             // aici: acolo cererea sigur n-a intrat, și rămâne mai jos, cu
@@ -4911,14 +5369,17 @@ class Component extends DCLogic {
             if (e && e.code === 'network') {
               return this.setState({
                 sending: false,
-                sendErr: mine
-                  ? t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam comanda, așa că nu știm dacă a ajuns la noi. Înainte s-o trimiți din nou, uită-te în „Comanda mea”, din meniul contului: dacă e acolo, a ajuns, iar a doua ar fi în plus.',
-                      'The connection dropped while we were sending your order, so we cannot tell whether it reached us. Before sending it again, look under “My order”, in the account menu: if it is there, it arrived, and a second one would be one too many.')
-                  : staff
-                    ? t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam cererea, așa că nu știm dacă a ajuns la noi. Înainte s-o trimiți din nou, uită-te în Comenzi, la „Cereri de pe site”: dacă e acolo, a ajuns, iar a doua ar fi în plus.',
-                        'The connection dropped while we were sending the request, so we cannot tell whether it reached us. Before sending it again, look in the Comenzi panel, under “Cereri de pe site”: if it is there, it arrived, and a second one would be one too many.')
-                    : t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam cererea, așa că nu știm dacă a ajuns la noi. Dacă o trimiți din nou, s-ar putea să plece a doua oară — sună-ne întâi la ' + phoneText + ' și îți spunem pe loc dacă am primit-o. Dacă ai cont, o vezi și singur în „Comanda mea”, după ce intri în cont.',
-                        'The connection dropped while we were sending your request, so we cannot tell whether it reached us. If you send it again, it may go out a second time — call us first on ' + phoneText + ' and we will tell you straight away whether we got it. If you have an account, you can also see it yourself under “My order”, once you log in.')
+                sendErr: this.__cheie
+                  ? t('Legătura la internet s-a întrerupt în timp ce trimiteam comanda, și nici a doua încercare n-a ajuns. Apasă liniștit încă o dată, când ai semnal: dacă prima a ajuns totuși la noi, o recunoaștem și nu se face a doua comandă.',
+                      'The connection dropped while we were sending your order, and the second attempt did not get through either. Press send again once you have signal: if the first one did reach us after all, we will recognise it and it will not become a second order.')
+                  : mine
+                    ? t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam comanda, așa că nu știm dacă a ajuns la noi. Înainte s-o trimiți din nou, uită-te în „Comanda mea”, din meniul contului: dacă e acolo, a ajuns, iar a doua ar fi în plus.',
+                        'The connection dropped while we were sending your order, so we cannot tell whether it reached us. Before sending it again, look under “My order”, in the account menu: if it is there, it arrived, and a second one would be one too many.')
+                    : staff
+                      ? t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam cererea, așa că nu știm dacă a ajuns la noi. Înainte s-o trimiți din nou, uită-te în Comenzi, la „Cereri de pe site”: dacă e acolo, a ajuns, iar a doua ar fi în plus.',
+                          'The connection dropped while we were sending the request, so we cannot tell whether it reached us. Before sending it again, look in the Comenzi panel, under “Cereri de pe site”: if it is there, it arrived, and a second one would be one too many.')
+                      : t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam cererea, așa că nu știm dacă a ajuns la noi. Dacă o trimiți din nou, s-ar putea să plece a doua oară — sună-ne întâi la ' + phoneText + ' și îți spunem pe loc dacă am primit-o. Dacă ai cont, o vezi și singur în „Comanda mea”, după ce intri în cont.',
+                          'The connection dropped while we were sending your request, so we cannot tell whether it reached us. If you send it again, it may go out a second time — call us first on ' + phoneText + ' and we will tell you straight away whether we got it. If you have an account, you can also see it yourself under “My order”, once you log in.')
               });
             }
             return this.setState({
@@ -4929,6 +5390,10 @@ class Component extends DCLogic {
                 'We could not send the request. Please try again.')
             });
           });
+        // Prima plecare. A doua, dacă e nevoie de ea, o cere chiar `catch`-ul
+        // de mai sus — de-asta lanțul poartă un nume în loc să se scurgă de-a
+        // dreptul în vânt.
+        porneste();
       },
 
       footTag: t('Patiserie românească congelată, produsă în București și livrată în lanț frigorific.', 'Frozen Romanian pastry, produced in Bucharest and delivered in an unbroken cold chain.'),

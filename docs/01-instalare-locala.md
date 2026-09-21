@@ -86,18 +86,21 @@ Se rulează de câte ori vrei: fiecare migrare se uită întâi în
 **Cum verifici.** Ultimele rânduri ale uneltei sunt chiar verificarea:
 
 ```
-Tabele în gp_dev: 24
+Tabele în gp_dev: 25
 audit_log, founder_invites, lab_messages, lab_production, lab_shifts, ...
 Produse în catalog: 22
 
 GATA — baza e pregătită.
 ```
 
-**24 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
+**25 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
 numele care lipsește îți spune care migrare n-a intrat: `referral_commissions`
 e din `008`, `founder_invites` din `009`, `lab_shifts` din `014`,
 `lab_messages` din `015`, `request_claims` din `019`, iar `telegram_links` și
-`lab_production` din `021`. Fără primul, „Recomandări" nu-ți arată banii; fără
+`lab_production` din `021`, iar `schema_migrations` din `025`. Ultimul e
+registrul migrărilor: dacă el lipsește, uită-te dacă nu cumva lipsesc și altele
+— e singurul care poate răspunde singur la întrebarea asta, cu
+`SELECT fisier FROM schema_migrations`. Fără primul, „Recomandări" nu-ți arată banii; fără
 `lab_shifts` și `lab_messages`, „Pontaj" și tabla de anunțuri din Panoul
 Laborator răspund lămurit că lipsește migrarea. Ultimele două tac în schimb:
 fără `telegram_links` butonul de legare a Telegramului nu pornește, iar fără
@@ -113,12 +116,23 @@ rulat a doua oară se oprește cu „Duplicate foreign key constraint name
 
 ```powershell
 $mysql = "C:\laragon\bin\mysql\mysql-8.4.3-winx64\bin\mysql.exe"
+cmd /c "`"$mysql`" --default-character-set=utf8mb4 -u root gp_dev < `"sql\025_registru_migrari.sql`"" > $null
 Get-ChildItem sql\*.sql | Sort-Object Name | ForEach-Object {
-  if ($_.Name -match '^00[12]_') { return }
+  if ($_.Name -match '^00[12]_|^025_') { return }
   cmd /c "`"$mysql`" --default-character-set=utf8mb4 -u root gp_dev < `"$($_.FullName)`"" > $null
   if ($LASTEXITCODE) { Write-Host "EROARE la $($_.Name)" }
 }
 ```
+
+**De ce `025` are rândul lui, deasupra buclei.** `025_registru_migrari.sql` face
+tabelul în care fiecare migrare își scrie numele, la coada ei. În ordinea
+numelui, `025` ar veni după `003`–`024` — iar atunci acelea ar trece pe lângă un
+tabel care încă nu există, n-ar avea unde-și scrie numele, și o bază instalată
+**întreagă** ar ieși cu un registru de **un rând**. Pagina de verificare citește
+registrul și ar spune atunci „1 din 23", adică ar da alarma tocmai pe instalarea
+bună. Așa că se rulează întâi, iar bucla îl sare ca pe `001` și `002` — a intrat
+deja. Unealta din pasul de mai sus, `.claude/instalare-local.php`, face aceeași
+mutare singură; aici o scrii cu mâna fiindcă `mysql` gol nu știe de ea.
 
 ## 4. Pune proiectul unde îl vede Laragon
 

@@ -191,3 +191,17 @@ SET @sql := (
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+-- ------------------------------------------- urma că a rulat ------------
+--
+-- Registrul migrărilor: `sql/025_registru_migrari.sql`, unde e scris pe larg
+-- de ce există și de ce se face înaintea buclei. Rândul de mai jos se scrie
+-- numai dacă registrul e acolo — importată singură, de mână, pe o bază fără
+-- `025`, migrarea asta trebuie să treacă, nu să pice pe un tabel lipsă.
+
+SET @gp_reg := (SELECT COUNT(*) FROM information_schema.TABLES
+                WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'schema_migrations');
+SET @gp_reg_sql := IF(@gp_reg > 0,
+  "INSERT IGNORE INTO schema_migrations (fisier) VALUES ('006_retete_rezervari.sql')",
+  'DO 0');
+PREPARE gp_reg_stmt FROM @gp_reg_sql; EXECUTE gp_reg_stmt; DEALLOCATE PREPARE gp_reg_stmt;

@@ -110,26 +110,50 @@ function seo_data(): array
         // ei („/en/…"), titlul și descrierea ei se scriu pe server, deci
         // coloanele trebuie să ajungă până aici.
         // Fără preț nu se vinde, deci nici nu se arată. Condiția e aceeași cu
-        // cea din magazin ("Site Public.dc.html", filtrul lui PROD) și cu cea a
-        // pachetului de test ("api/lib/promo.php"), fiindcă e aceeași hotărâre:
-        // un produs căruia îi lipsește un preț e refuzat la salvarea comenzii
-        // ("api/lib/orders.php", missing_price), deci o pagină care i-ar face
-        // reclamă ar trimite omul într-un refuz.
+        // cea din magazin ("Site Public.dc.html", filtrul lui VANDABIL) și cu
+        // cea a pachetului de test ("api/lib/promo.php"), fiindcă e aceeași
+        // hotărâre: un produs căruia îi lipsește prețul laturii e refuzat la
+        // salvarea comenzii ("api/lib/orders.php", missing_price), deci o
+        // pagină care i-ar face reclamă ar trimite omul într-un refuz.
         //
         // Rândul ăsta atinge trei lucruri deodată, fiindcă toate trei se fac
         // din $products: prima pagină, fișa produsului (care devine un 404
         // curat, nu o pagină cu "—" în locul prețului) și textele care numără
         // catalogul. Până acum produsul clipea: serverul îl scria, iar React-ul
         // îl ștergea o clipă mai târziu.
-        $products = $pdo->query(
-            'SELECT slug, name, name_en, description, description_en, photo, grams,
-                    price_frozen, price_baked, category, is_new
-               FROM products
-              WHERE active = 1
-                AND price_frozen IS NOT NULL
-                AND price_baked IS NOT NULL
-              ORDER BY sort, id'
-        )->fetchAll(PDO::FETCH_ASSOC);
+        //
+        // DE LA MIGRAREA 024 condiția e o REUNIUNE, nu o alăturare. Un produs
+        // poate fi numai în catalogul congelat sau numai la gata de servire, și
+        // atunci are exact o adresă pe site — a lui — pe care trebuie s-o aibă.
+        // Lăsat „și", filtrul ar fi ascuns tocmai produsele dintr-o singură
+        // parte, adică tot ce aduce nou runda asta: ele ar fi fost singurele
+        // fără pagină, fără rând în hartă și fără preț în rezultatele Google.
+        //
+        // ÎNTREBAREA SE PUNE ÎN DOUĂ FELURI, și a doua nu e o politețe.
+        // Fișierele ajung pe server ÎNAINTE de importul SQL: până la import,
+        // coloanele nu există, iar prima interogare crapă. A doua e chiar
+        // purtarea de până azi, deci fereastra aceea trece nevăzută. Fără ea,
+        // `catch`-ul de mai jos ar fi întors $empty și site-ul public ar fi
+        // rămas gol cu totul — pe dos față de regula casei scrisă la
+        // `seo_data()`: mai bine un site fără date structurate decât unul căzut.
+        $intreaba = static function (string $camp, string $unde) use ($pdo): array {
+            return $pdo->query(
+                'SELECT slug, name, name_en, description, description_en, photo, grams,
+                        price_frozen, price_baked, category, is_new' . $camp . '
+                   FROM products
+                  WHERE active = 1 AND (' . $unde . ')
+                  ORDER BY sort, id'
+            )->fetchAll(PDO::FETCH_ASSOC);
+        };
+        try {
+            $products = $intreaba(
+                ', photo_baked, in_frozen, in_baked',
+                '(in_frozen = 1 AND price_frozen IS NOT NULL)
+                  OR (in_baked = 1 AND price_baked IS NOT NULL)'
+            );
+        } catch (Throwable $eFaraLaturi) {
+            $products = $intreaba('', 'price_frozen IS NOT NULL AND price_baked IS NOT NULL');
+        }
 
         $categories = $pdo->query(
             'SELECT slug, name, name_en, note, note_en FROM product_categories WHERE active = 1 ORDER BY sort, id'
@@ -293,6 +317,56 @@ foreach ([
     }
 }
 
+/**
+ * Cele două laturi ale catalogului, aduse pe aceeași ușă îngăduitoare.
+ *
+ * `api/lib/laturi.php` e scris anume fără nicio legătură — nu atinge baza și
+ * nu cheamă pe nimeni — tocmai ca să poată fi împrumutat aici. Vezi capul lui.
+ */
+foreach ([
+    __DIR__ . '/api/lib/laturi.php',
+    __DIR__ . '/../api/lib/laturi.php',
+    dirname(__DIR__) . '/api/lib/laturi.php',
+] as $gpCaleLaturi) {
+    if (is_file($gpCaleLaturi)) {
+        require_once $gpCaleLaturi;
+        break;
+    }
+}
+
+/**
+ * Prețul, poza și apartenența — prin ajutor dacă e, ca ieri dacă nu.
+ *
+ * DE CE E NEVOIE DE REZERVĂ. Fișierele urcă pe server unul câte unul: câteva
+ * secunde, `public_html/index.php` e cel nou și `api/lib/laturi.php` e încă
+ * cel vechi sau lipsește de tot. Fără ocolul ăsta, în secundele acelea pagina
+ * publică ar cădea cu „Call to undefined function" — adică un site alb, tocmai
+ * în timpul urcării, când nimeni nu se uită.
+ *
+ * E aceeași fereastră ca la interogarea de mai sus, și are același leac: ce
+ * spun rezervele NU e o a doua scriere a regulii noi, ci regula VECHE, scrisă
+ * o singură dată. Un produs se vedea pe amândouă laturile dacă avea amândouă
+ * prețurile, prețul arătat era cel congelat, poza era `photo`. Atât.
+ */
+$pretVitrina = static function (array $p) {
+    return function_exists('latura_pret_vitrina')
+        ? latura_pret_vitrina($p)
+        : ($p['price_frozen'] ?? $p['price_baked']);
+};
+$pozaVitrina = static function (array $p): ?string {
+    if (function_exists('latura_poza_vitrina')) {
+        return latura_poza_vitrina($p);
+    }
+    $v = trim((string) ($p['photo'] ?? ''));
+    return $v === '' ? null : $v;
+};
+$seVinde = static function (array $p, string $latura): bool {
+    if (function_exists('latura_se_vinde')) {
+        return latura_se_vinde($p, $latura);
+    }
+    return ($p['price_frozen'] ?? null) !== null && ($p['price_baked'] ?? null) !== null;
+};
+
 
 /** Numele unui produs sau al unei grupe, în limba paginii, cu rezervă. */
 $nume = static function (array $r, string $camp) use ($ro): string {
@@ -399,8 +473,14 @@ $prodNume = $produs ? $nume($produs, 'name') : '';
 $pretMin = null;
 /** Și cel mai mare, pentru intervalul din fișa firmei. */
 $pretMax = null;
+// Fiecare produs intră cu prețul laturii pe care îl vede omul întâi — v.
+// `latura_vitrina()`. Cu `price_frozen ?? price_baked`, un produs scos din
+// catalogul congelat dar cu prețul lui congelat păstrat (chiar hotărârea
+// patronului: stingerea unei laturi NU șterge prețul) ar fi intrat aici cu un
+// preț pe care nicio pagină nu-l arată. Rândul „de la X lei" e locul unde o
+// abatere se vede cel mai greu: nu se compară cu nimic, e doar un număr.
 foreach ($prods as $p) {
-    $v = $p['price_frozen'] ?? $p['price_baked'];
+    $v = $pretVitrina($p);
     if ($v === null) {
         continue;
     }
@@ -484,9 +564,18 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
     case 'group':
         $nota = trim((string) $nume($grupa, 'note'));
         $inGrupa = 0;
+        // Și câte dintre ele se vând chiar congelate: titlul de mai jos le
+        // numește „sortimente congelate", iar de la migrarea 024 o grupă poate
+        // ține și marfă numai gata de servire. Numărul rămâne al grupei
+        // întregi — omul numără rândurile de pe pagină și trebuie să-i iasă —,
+        // dar cuvântul cade când n-ar mai fi adevărat despre toate.
+        $receGrupa = 0;
         foreach ($prods as $p) {
             if (($p['category'] ?? '') === $grupa['slug']) {
                 $inGrupa++;
+                if ($seVinde($p, 'congelat')) {
+                    $receGrupa++;
+                }
             }
         }
         /*
@@ -502,10 +591,17 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
          * cum l-a scris el, și titlul e corect pentru orice grupă adăugată de
          * acum înainte, fără să mai trebuiască atins codul.
          */
-        $sortim = $t(
-            $inGrupa === 1 ? '1 sortiment congelat' : $inGrupa . ' sortimente congelate',
-            $inGrupa === 1 ? '1 frozen line' : $inGrupa . ' frozen lines'
-        );
+        // Cu toată grupa congelată — cazul de până azi și cel obișnuit —
+        // vorbele ies literă cu literă cele dinainte.
+        $sortim = $receGrupa === $inGrupa
+            ? $t(
+                $inGrupa === 1 ? '1 sortiment congelat' : $inGrupa . ' sortimente congelate',
+                $inGrupa === 1 ? '1 frozen line' : $inGrupa . ' frozen lines'
+            )
+            : $t(
+                $inGrupa === 1 ? '1 sortiment' : $inGrupa . ' sortimente',
+                $inGrupa === 1 ? '1 line' : $inGrupa . ' lines'
+            );
         $titlu = $t(
             $catNume . ' en-gros — ' . $sortim . ' | ' . $company,
             $catNume . ' wholesale — ' . $sortim . ' | ' . $company
@@ -519,22 +615,35 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
         break;
 
     case 'product':
-        $pret = $produs['price_frozen'] ?? $produs['price_baked'];
+        $pret = $pretVitrina($produs);
         $g    = (int) ($produs['grams'] ?? 0);
         // Aceeași capcană ca la grupe, dar mai vizibilă: „Merdenea" e feminin,
         // „Poale-n brâu" e plural, iar „Merdenea congelat" e o greșeală pe
         // care o vede oricine. „Livrare congelată" nu depinde de numele
         // produsului, deci se poate scrie o dată pentru toate.
-        $titlu = $t(
-            $prodNume . ' en-gros, livrare congelată | ' . $company,
-            $prodNume . ' frozen, wholesale | ' . $company
-        );
+        //
+        // DAR DEPINDE DE LATURĂ, de la migrarea 024. Un produs care se vinde
+        // numai gata de servire nu se livrează congelat deloc, iar titlul și
+        // descrierea de aici sunt chiar cele două rânduri pe care omul le
+        // citește în rezultatele Google, înainte să deschidă ceva. Un titlu
+        // care promite altă marfă decât cea din pagină nu e o scăpare de
+        // cuvinte: e omul care vine după congelate și pleacă.
+        $rece = $seVinde($produs, 'congelat');
+        $titlu = $rece
+            ? $t(
+                $prodNume . ' en-gros, livrare congelată | ' . $company,
+                $prodNume . ' frozen, wholesale | ' . $company
+            )
+            : $t(
+                $prodNume . ' en-gros, gata de servire | ' . $company,
+                $prodNume . ' ready to serve, wholesale | ' . $company
+            );
         $desc = trim($t((string) $produs['description'], (string) ($produs['description_en'] ?: $produs['description'])));
         $coada = $t(
             ($g ? $g . ' g. ' : '') . ($pret !== null ? 'Preț en-gros ' . $lei((float) $pret) . ' bucata. ' : '')
-                . 'Livrare congelată în București și Ilfov.',
+                . ($rece ? 'Livrare congelată în București și Ilfov.' : 'Livrare în București și Ilfov, gata de servire.'),
             ($g ? $g . ' g. ' : '') . ($pret !== null ? 'Wholesale ' . $lei((float) $pret) . ' each. ' : '')
-                . 'Frozen delivery in Bucharest and Ilfov.'
+                . ($rece ? 'Frozen delivery in Bucharest and Ilfov.' : 'Delivered ready to serve in Bucharest and Ilfov.')
         );
         $desc = $desc === '' ? $coada : $desc . ' ' . $coada;
         break;
@@ -574,10 +683,19 @@ $canonic  = $base . $caleAsta;
 $caleRo   = gp_cale($ruta['pagina'], 'ro', $ruta['fel'], $ruta['cheie']);
 $caleEn   = gp_cale($ruta['pagina'], 'en', $ruta['fel'], $ruta['cheie']);
 
-/** Poza de partajare: a produsului, când e vorba de un produs. */
+/**
+ * Poza de partajare: a produsului, când e vorba de un produs.
+ *
+ * Tot latura vitrinei, ca peste tot. Pe `photo` gol, un produs numai
+ * gata-de-servire ar fi ieșit în WhatsApp cu sigla firmei în locul mărfii —
+ * iar poza lui era pe disc tot timpul, doar în cealaltă coloană.
+ */
 $poza = $base . '/logo-full-gold.png';
-if ($produs && !empty($produs['photo'])) {
-    $poza = $base . '/' . ltrim((string) $produs['photo'], '/');
+if ($produs) {
+    $pozaProd = $pozaVitrina($produs);
+    if ($pozaProd !== null && $pozaProd !== '') {
+        $poza = $base . '/' . ltrim($pozaProd, '/');
+    }
 }
 
 /* ------------------------------------------------- datele structurate -- */
@@ -718,11 +836,22 @@ if (count($firimituri) > 1) {
  * Un produs, în forma pe care o citește Google.
  *
  * Prețul trimis motoarelor de căutare trebuie să fie cel pe care omul îl vede
- * când deschide pagina: magazinul pornește pe varianta congelată, deci numărul
- * mare de pe card este price_frozen, iar cel copt stă dedesubt, pe rândul
- * „Gata de servire". Cu prețul copt în marcaj, în rezultatele căutării apărea
- * o sumă mai mare decât cea de pe pagină, iar omul ajungea aici crezând că
- * prețul s-a schimbat. Rezerva rămâne pentru produsele vândute doar coapte.
+ * când deschide pagina. Magazinul pornește pe varianta congelată, deci numărul
+ * mare de pe card e cel congelat, iar cel gata de servire stă dedesubt. Cu
+ * prețul celălalt în marcaj, în rezultatele căutării apărea o sumă mai mare
+ * decât cea de pe pagină, iar omul ajungea aici crezând că prețul s-a schimbat.
+ *
+ * PRICINA A RĂMAS ADEVĂRATĂ, DAR S-A FĂCUT CONDIȚIONATĂ. „Magazinul pornește
+ * pe congelate" e adevărat despre FILĂ, nu despre produs: un produs din afara
+ * catalogului de congelate nu e văzut întâi acolo, fiindcă acolo nu e deloc.
+ * Pentru el, latura vitrinei e cealaltă — și atunci prețul, poza și rândul din
+ * `<noscript>` trebuie să fie toate trei ale aceleiași laturi. Altfel
+ * rezultatul din căutare arată poza unei laturi cu prețul celeilalte.
+ *
+ * Socoteala nu se scrie aici: stă o singură dată în `latura_vitrina()`
+ * (api/lib/laturi.php) și se cheamă din toate patru locurile prin
+ * `$pretVitrina` / `$pozaVitrina`. Lăsată pe „`??`", ea ar fi trebuit ținută
+ * în pas cu mâna în patru locuri care nu se văd între ele.
  */
 /**
  * Numele grupelor, după cheia lor. `category` primea cheia din adresă
@@ -734,8 +863,8 @@ foreach ($cats as $c) {
     $numeGrupe[(string) $c['slug']] = $nume($c, 'name');
 }
 
-$produsLd = static function (array $p) use ($base, $nume, $ro, $lang, $company, $numeGrupe): ?array {
-    $price = $p['price_frozen'] ?? $p['price_baked'];
+$produsLd = static function (array $p) use ($base, $nume, $ro, $lang, $company, $numeGrupe, $pretVitrina, $pozaVitrina): ?array {
+    $price = $pretVitrina($p);
     if ($price === null) {
         return null;
     }
@@ -762,8 +891,13 @@ $produsLd = static function (array $p) use ($base, $nume, $ro, $lang, $company, 
     if ($p['grams']) {
         $item['weight'] = ['@type' => 'QuantitativeValue', 'value' => (int) $p['grams'], 'unitCode' => 'GRM'];
     }
-    if ($p['photo']) {
-        $item['image'] = $base . '/' . ltrim((string) $p['photo'], '/');
+    // Aceeași latură ca prețul, întotdeauna — v. pricina de mai sus. Și tot
+    // `latura_poza_vitrina()` ține hotărârea patronului: o latură fără poză a
+    // ei o arată pe a celeilalte, ca produsul să nu ajungă în Google fără
+    // fotografie în ziua dintre cele două urcări.
+    $poza = $pozaVitrina($p);
+    if ($poza !== null && $poza !== '') {
+        $item['image'] = $base . '/' . ltrim($poza, '/');
     }
     return array_filter($item);
 };
@@ -890,10 +1024,16 @@ if ($ruta['fel'] === 'product' && $produs) {
     if ($produs['grams']) {
         $bits[] = (int) $produs['grams'] . ' g';
     }
-    if ($produs['price_frozen'] !== null) {
+    // Fiecare rând de preț sare când produsul nu e în catalogul lui. Prețul
+    // poate foarte bine să stea în bază cu latura stinsă — chiar așa a cerut-o
+    // patronul —, dar un preț scris aici e o ofertă, iar o ofertă pe o latură
+    // pe care marfa nu se vinde e o promisiune pe care serverul o refuză.
+    // `<noscript>` e ce citește un motor de căutare și ce vede omul cu
+    // JavaScript oprit: sunt chiar ochii pentru care se scrie pagina asta.
+    if ($seVinde($produs, 'congelat')) {
         $bits[] = $t('congelat ', 'frozen ') . $bani((float) $produs['price_frozen']);
     }
-    if ($produs['price_baked'] !== null) {
+    if ($seVinde($produs, 'copt')) {
         $bits[] = $t('gata de servire ', 'ready to serve ') . $bani((float) $produs['price_baked']);
     }
     $noscript .= '<p>' . $e(implode(' · ', $bits)) . "</p>\n"
@@ -928,10 +1068,11 @@ if ($ruta['fel'] === 'product' && $produs) {
             if ($p['grams']) {
                 $bits[] = (int) $p['grams'] . ' g';
             }
-            if ($p['price_frozen'] !== null) {
+            // Ca la fișă, mai sus: numai laturile pe care marfa chiar se vinde.
+            if ($seVinde($p, 'congelat')) {
                 $bits[] = $t('congelat ', 'frozen ') . $bani((float) $p['price_frozen']);
             }
-            if ($p['price_baked'] !== null) {
+            if ($seVinde($p, 'copt')) {
                 $bits[] = $t('gata de servire ', 'ready to serve ') . $bani((float) $p['price_baked']);
             }
             $descrP = $ro ? (string) $p['description'] : (string) ($p['description_en'] ?: $p['description']);
@@ -949,9 +1090,16 @@ if ($ruta['fel'] === 'product' && $produs) {
              * înseamnă o pagină care se vede înainte să se descarce 22 de poze.
              */
             $pozaP = '';
-            if (!empty($p['photo'])) {
-                $altP = $nume($p, 'name') . $t(' — patiserie congelată en-gros', ' — wholesale frozen pastry');
-                $pozaP = '<img src="' . $e($base . '/' . ltrim((string) $p['photo'], '/')) . '"'
+            $pozaLat = $pozaVitrina($p);
+            if ($pozaLat !== null && $pozaLat !== '') {
+                // Și coada textului alternativ urmează latura: „patiserie
+                // congelată" scris sub poza unei mărfi care nu se vinde
+                // congelată ar fi chiar cuvântul greșit în singurul loc în care
+                // Google Imagini are ce citi.
+                $altP = $nume($p, 'name') . ($seVinde($p, 'congelat')
+                    ? $t(' — patiserie congelată en-gros', ' — wholesale frozen pastry')
+                    : $t(' — patiserie en-gros, gata de servire', ' — wholesale pastry, ready to serve'));
+                $pozaP = '<img src="' . $e($base . '/' . ltrim($pozaLat, '/')) . '"'
                     . ' alt="' . $e($altP) . '" loading="lazy"'
                     . ' style="max-width:180px;height:auto;display:block;margin:.4rem 0"><br>';
             }

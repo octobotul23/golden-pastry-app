@@ -21,7 +21,7 @@
 <script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
 <style>
 body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg)}
-a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{display:inline-block;vertical-align:middle;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}/* Insigna de autor poartă `title`, deci trebuie să se și TAIE: un `title` pus fără tăietura care merge cu el e jumătate de tipar, scrisă fără cealaltă jumătate. Cele cinci declarații lucrează numai împreună, iar `overflow:hidden` nu e doar foarfeca — el e și cel care face `max-width` să muște: un element de grilă sau de flex are `min-width:auto`, adică minimul cât conținutul, iar minimul BATE maximul; scris `overflow`, minimul acela devine zero. Și `inline-block`, nu `inline-flex`: într-un container flex textul gol e un element anonim, pe care `text-overflow` nu-l prinde — măsurat pe pânză, insigna iese la fel, pixel cu pixel, cu declarația și fără ea. Pricina pe larg la `shared/gp-recomandari.css:38`; paza, în `.claude/check-panouri.mjs`. Regula se leagă de MARCAJ, nu de clasă: a cincea insignă de autor o capătă fiindcă poartă `data-adm="autor"`, nu fiindcă și-a adus aminte cineva de ea. Și nu se rupe în trei rânduri, oricât ar cere ochiul: 315 trimiteri din patru fișiere arată spre rânduri de mai jos din pagina asta. */
 @keyframes pf-pop{from{transform:translateY(10px) scale(.985);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
 @keyframes pf-fade{from{opacity:0}to{opacity:1}}
 @keyframes pf-shake{10%,90%{transform:translateX(-2px)}30%,70%{transform:translateX(4px)}50%{transform:translateX(-6px)}100%{transform:translateX(0)}}
@@ -69,8 +69,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 @media (max-width:760px){
 [data-adm=shell]{flex-direction:column!important}
 [data-adm=side]{width:auto!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important;gap:12px!important;padding:12px 16px!important}
-[data-adm=sidefoot]{margin-top:0!important;width:100%!important}
-[data-adm=sidenote]{display:none!important}
+/* Subsolul barei e ascuns pe telefon, mai jos în aceeași bandă. Aici stăteau
+   două rânduri care-l îmbrăcau pe el și ascundeau lămurirea dinăuntrul lui. */
 [data-adm=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important;position:sticky!important;top:0!important;z-index:20!important}
 [data-adm=topbar]>div:last-child{width:100%!important;margin-left:0!important;flex-wrap:wrap!important}
 [data-adm=pager]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
@@ -78,11 +78,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-adm=search]{width:100%!important;flex:1 1 100%!important}
 [data-adm=newbtn]{width:100%!important}
 [data-adm=stats]{grid-template-columns:1fr 1fr!important;gap:10px!important}
-[data-adm=filters]{gap:8px!important}
-[data-adm=filters]>select{width:100%!important}
-[data-adm=filters]>div{margin-left:0!important;width:100%!important;flex-wrap:nowrap!important;overflow-x:auto!important;padding-bottom:2px;scrollbar-width:none}
-[data-adm=filters]>div::-webkit-scrollbar{display:none}
-[data-adm=filters]>div>button{flex:none!important}
+/* Rândul de filtre e și el ascuns pe telefon, mai jos în aceeași bandă; locul
+   lui îl ia meniul de telefon. Aici stăteau cinci rânduri care-l îmbrăcau pe
+   el, caseta lui de ales, rândul de butoane și bara lui de derulare — rămase
+   de pe vremea când filtrele se vedeau și pe telefon. Un rând care îmbracă un
+   element ascuns nu dă nicio eroare: se vede numai citind, sau cu proba. */
 [data-adm=body]{padding:14px!important;gap:14px!important}
 [data-adm=modalwrap]{padding:0!important;align-items:flex-end!important}
 [data-adm=modalcard]{width:100%!important;max-width:none!important;max-height:94vh!important;border-radius:22px 22px 0 0!important;padding:18px 16px!important}
@@ -111,7 +111,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.18), transparent 70%)">
 <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
-<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:62px;height:62px;object-fit:contain">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:62px;height:62px;object-fit:contain">
 <div style="display:flex;flex-direction:column;gap:6px">
 <span style="font-family:var(--h-font-display);font-size:27px;font-weight:600;color:var(--h-cream-100);letter-spacing:.01em">Golden Pastry</span>
 <span style="font-size:15px;color:rgba(255,255,255,.62)">{{ lockedLine }}</span>
@@ -129,7 +129,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ denied }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.14), transparent 70%)">
 <div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
-<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
 <div style="display:flex;flex-direction:column;gap:6px">
 <span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Administrare comenzi</span>
 <span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ deniedLine }}</span>
@@ -157,7 +157,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div data-adm="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
 <div data-adm="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
-<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7">Administrare</span>
@@ -1193,7 +1193,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 // din Catalog fără fotografie are `photo` gol, iar `src=""` nu e „nicio poză":
 // browserul cere ÎNCĂ O DATĂ pagina însăși, o primește ca imagine stricată, și
 // scrie o eroare roșie în consolă la fiecare rând din fereastra catalogului.
-const FOTO_LIPSA = "assets/logo-alb.png";
+const FOTO_LIPSA = "assets/logo-auriu.png";
 
 // Catalogul, ca să putem trimite serverului productId când personalul
 // introduce o comandă direct din panou.

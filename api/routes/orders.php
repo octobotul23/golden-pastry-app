@@ -511,11 +511,16 @@ function route_orders_quote_edit(string $id): void
         [(int) $id]
     );
 
+    // Perechile deja pe comandă trec de poarta laturii; un rând NOU pe o
+    // latură stinsă între timp, nu. Amândouă listele ies din aceeași hartă, deci
+    // nu pot ieși din pas.
+    $onorate = honored_prices($vechile);
     [$priced, $total] = price_items(
         $items,
         $implicit,
-        honored_prices($vechile),
-        array_filter(array_column($vechile, 'product_id'), static fn($x) => $x !== null)
+        $onorate,
+        array_filter(array_column($vechile, 'product_id'), static fn($x) => $x !== null),
+        array_keys($onorate)
     );
 
     json_out(tarifare_raspuns($priced, $total));
@@ -1345,11 +1350,16 @@ function route_orders_update(string $id): void
             'SELECT product_id, variant, qty, done_qty, unit_price FROM order_items WHERE order_id = ? ORDER BY id',
             [(int) $id]
         );
+        // Perechile deja pe comandă trec de poarta laturii; un rând NOU pe o
+        // latură stinsă între timp, nu. Amândouă listele ies din aceeași hartă, deci
+        // nu pot ieși din pas.
+        $onorate = honored_prices($vechile);
         [$priced, $total] = price_items(
             $items,
             $implicit,
-            honored_prices($vechile),
-            array_filter(array_column($vechile, 'product_id'), static fn($x) => $x !== null)
+            $onorate,
+            array_filter(array_column($vechile, 'product_id'), static fn($x) => $x !== null),
+            array_keys($onorate)
         );
         $nota   = price_honored_note($priced);
         $facut  = produced_qty($vechile);

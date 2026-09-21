@@ -590,15 +590,39 @@ function cos_de_tarifat($items): array
  * `price_honored_note()` să poată spune în jurnal unde s-a onorat altceva
  * decât scrie acum.
  *
- * @param array<int, int> $ingaduite  id-uri de produse primite deși scoase din catalog
+ * `$ingaduiteVariante` e sora lui `$ingaduite`, pentru cealaltă poartă: de la
+ * migrarea 024 un produs poate fi în catalogul de gata de servire și nu în cel
+ * de congelate, iar o comandă nouă n-are voie să treacă hotarul ăsta. Numai că
+ * îngăduința nu se poate cheia pe id, ca cealaltă: o comandă poate ține legiuit
+ * același produs în AMÂNDOUĂ variantele, iar o listă de id-uri ar lăsa să
+ * treacă un rând NOU pe latura care s-a stins între timp. Deci cheia e perechea
+ * `id|variantă`, aceeași pe care o socotește și felierea de mai jos, iar cei
+ * trei chemători o scot pe gratis din `array_keys(honored_prices($vechile))`:
+ * mulțimea perechilor cu preț onorat ESTE mulțimea perechilor de pe comandă, un
+ * singur izvor, deci nu pot ieși din pas.
+ *
+ * @param array<int, int>    $ingaduite         id-uri de produse primite deși scoase din catalog
+ * @param array<int, string> $ingaduiteVariante perechi „id|variantă" primite deși latura s-a stins
  * @return array{0: array<int, array>, 1: float}  [poziții cu preț, total]
  */
-function price_items(array $items, string $variant, array $onorate = [], array $ingaduite = []): array
-{
+function price_items(
+    array $items,
+    string $variant,
+    array $onorate = [],
+    array $ingaduite = [],
+    array $ingaduiteVariante = []
+): array {
     $implicit  = valid_variant($variant);
     $ingaduite = array_map('intval', array_values($ingaduite));
     $priced    = [];
     $total     = 0.0;
+
+    // Coloanele laturilor se cer numai dacă baza le are, și o singură dată
+    // pentru tot coșul. Aceeași pricină ca la lista de produse: o coloană
+    // cerută și negăsită nu dă un câmp gol, dă eroare de SQL — adică nicio
+    // comandă salvată în fereastra dintre urcarea fișierelor și importul SQL.
+    $coloane = 'id, name, price_frozen, price_baked, active'
+        . (catalog_laturi_supported() ? ', in_frozen, in_baked' : '');
 
     foreach ($items as $it) {
         // Numerele se cer numere, nu se storc din ce-a venit.
@@ -637,7 +661,7 @@ function price_items(array $items, string $variant, array $onorate = [], array $
         // scoaterea din catalog — DELETE /products îl șterge de tot doar când
         // nu apare în nicio comandă și în nicio cerere —, deci prețul lui se
         // poate recalcula. Dreptul de a-l pune pe hârtie se hotărăște dedesubt.
-        $p = one('SELECT id, name, price_frozen, price_baked, active FROM products WHERE id = ?', [$pid]);
+        $p = one('SELECT ' . $coloane . ' FROM products WHERE id = ?', [$pid]);
         if (!$p) {
             // Aici nu avem un nume de arătat — rândul nu mai e în tabel —, deci
             // măcar spunem ce e de făcut. Altfel operatorul rămâne cu un număr
@@ -655,6 +679,51 @@ function price_items(array $items, string $variant, array $onorate = [], array $
                     . ' Repune-l din pagina Produse sau alege altul.',
                 422,
                 'bad_product'
+            );
+        }
+
+        // PESTE HOTARUL UNEI LATURI, poarta a doua.
+        //
+        // Poarta de deasupra întreabă dacă produsul mai e în catalog; asta
+        // întreabă dacă mai e în catalogul LATURII cerute. Sunt două întrebări
+        // deosebite de la migrarea 024 încoace, și amândouă au nevoie de
+        // îngăduința lor: un rând vechi de pe comanda care se corectează trece,
+        // unul nou nu.
+        //
+        // Refuzul NU e `missing_price`: prețul poate foarte bine să existe —
+        // patronul a stins latura și i-a lăsat prețul în casetă, cum a cerut
+        // anume. Un cod care spune „lipsește prețul" ar trimite operatorul să
+        // caute o casetă goală care nu există.
+        //
+        // DE-ASTA POARTA CERE ȘI CA PREȚUL SĂ EXISTE, nu doar ca latura să fie
+        // stinsă. Cele două stări rele sunt deosebite și au leacuri deosebite:
+        //
+        //   latură stinsă, preț scris   →  bad_variant_side, „nu se mai vinde
+        //                                  congelat" — se aprinde latura
+        //   latură aprinsă, preț gol    →  missing_price, „nu are preț pentru
+        //                                  varianta congelat" — se scrie prețul
+        //
+        // A doua e invariantul rupt (v. `latura_se_vinde()`), adică un import
+        // făcut cu mâna, și e chiar cea mai deasă dintre ele. Cu
+        // `latura_se_vinde()` aici, amândouă ieșeau „nu se mai vinde", iar
+        // operatorul căuta un comutator stins care era de fapt aprins.
+        //
+        // Pe deasupra, așa fereastra dinaintea migrării 024 rămâne LITERĂ CU
+        // LITERĂ cea de azi: pe o bază fără coloane `latura_in()` e falsă doar
+        // când lipsește un preț, iar atunci a doua condiție oprește poarta și
+        // mesajul rămâne `missing_price`, cum era.
+        $pereche = $pid . '|' . $vi;
+        if (!in_array($pereche, $ingaduiteVariante, true)
+            && !latura_in($p, $vi)
+            && latura_pret($p, $vi) !== null) {
+            $alta = $vi === 'congelat' ? 'copt' : 'congelat';
+            $sfat = latura_se_vinde($p, $alta)
+                ? ' Alege varianta „' . latura_nume($alta) . '” sau alt produs.'
+                : ' Alege alt produs.';
+            fail(
+                'Produsul „' . $p['name'] . '” nu se mai vinde ' . latura_cuvant($vi) . '.' . $sfat,
+                422,
+                'bad_variant_side'
             );
         }
 
@@ -700,7 +769,10 @@ function price_items(array $items, string $variant, array $onorate = [], array $
         // deja convenită prețul e cel de atunci, nu unul care lipsește azi.
         if ($ramas > 0) {
             if ($catalog === null) {
-                fail('Produsul „' . $p['name'] . '” nu are preț pentru varianta „' . $vi . '”.', 422, 'missing_price');
+                // `latura_cuvant()`, nu `$vi`: „copt" e vorbă de laborator, iar
+                // mesajul ăsta îl citește clientul.
+                fail('Produsul „' . $p['name'] . '” nu are preț pentru varianta „'
+                    . latura_cuvant($vi) . '”.', 422, 'missing_price');
             }
             $felii[] = ['qty' => $ramas, 'unit' => $catalog];
         }
@@ -1042,6 +1114,83 @@ function request_staff_supported(): bool
 }
 
 /**
+ * A fost importată migrarea 026, cea a cheii de cerere?
+ *
+ * Aceeași poartă ca `request_staff_supported()` de deasupra, cu o deosebire de
+ * ținut minte: ÎNTREABĂ DE INDEX, NU DE COLOANĂ.
+ *
+ * O bază cu coloana pusă și indexul nepus ar primi cheile și n-ar observa
+ * niciodată o dublură — iar pagina, văzând că serverul „știe de chei", i-ar
+ * spune omului că poate trimite liniștit din nou. Adică ar face rău chiar în
+ * locul în care s-a pus să facă bine. Indexul E reparația; coloana e doar
+ * locul în care stă.
+ *
+ * Cade ÎNCHIS, ca surorile ei: fără index, cererea pleacă întocmai ca ieri —
+ * fără cheie, fără recunoașterea celei de-a doua trimiteri —, iar pagina spune
+ * ce spunea până acum. Ce se pierde se pierde ZGOMOTOS: pagina „Verificare"
+ * numește migrarea pe nume (api/verifica.php).
+ */
+function request_key_supported(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        return $ok = ((int) scalar(
+            "SELECT COUNT(*) FROM information_schema.STATISTICS
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'order_requests'
+                AND INDEX_NAME = 'uq_req_cheie'"
+        ) > 0);
+    } catch (Throwable $e) {
+        error_log('[gp] nu pot verifica cheia cererilor: ' . $e->getMessage());
+        return $ok = false;
+    }
+}
+
+/**
+ * Cheia, curățată — sau șirul gol, dacă nu e o cheie bună.
+ *
+ * TREIZECI ȘI DOUĂ DE CIFRE HEXAZECIMALE, adică cele 128 de biți pe care îi
+ * scrie `crypto.getRandomValues` în pagină. Nimic altceva nu trece.
+ *
+ * Pragul nu e mofturi, e chiar paza. Răspunsul la a doua trimitere ESTE rândul
+ * cererii dintâi, cu numele, telefonul și adresa pe el. Cine ar putea alege
+ * cheia ar putea alege una scurtă — „1" —, iar al doilea om care ar nimeri-o ar
+ * primi cererea celui dintâi. Cu pragul pus aici, o cheie slabă nu intră
+ * niciodată în tabel, deci nu rămâne nimic de nimerit; una adevărată e la fel
+ * de departe de ghicit ca jetonul din 019, și trece și prin pragul de cereri pe
+ * conexiune.
+ *
+ * O CHEIE STRÂMBĂ NU OPREȘTE COMANDA. Se citește ca „fără cheie", iar cererea
+ * intră exact ca ieri. Un refuz ar fi schimbat o dublură rară pe o comandă
+ * pierdută sigur — și ar fi pedepsit tocmai paginile vechi, care n-au de unde
+ * ști de cheie.
+ */
+function request_key_normalize(string $brut): string
+{
+    $k = strtolower(trim($brut));
+    return preg_match('/^[0-9a-f]{32}$/', $k) === 1 ? $k : '';
+}
+
+/**
+ * E căderea asta chiar ciocnirea de chei, și nu altceva?
+ *
+ * 1062 înseamnă „rând dublat", dar în tranzacția cererii mai sunt și pozițiile,
+ * și cele trei UPDATE-uri. Un 1062 venit de altundeva e un defect adevărat, și
+ * trebuie să iasă la suprafață ca atare, nu să fie luat drept „a mai trimis-o o
+ * dată" și înghițit cu un 201 vesel. Deci se cere numele indexului, pe care
+ * MySQL îl scrie în mesaj: „Duplicate entry '…' for key
+ * 'order_requests.uq_req_cheie'".
+ */
+function request_key_duplicate(Throwable $e): bool
+{
+    return $e instanceof PDOException
+        && (int) ($e->errorInfo[1] ?? 0) === 1062
+        && str_contains($e->getMessage(), 'uq_req_cheie');
+}
+
+/**
  * Naște jetonul unei cereri și îl întoarce ÎN CLAR, o singură dată.
  *
  * În bază rămâne numai sha256-ul lui (`token_hash()`), ca la resetarea de
@@ -1053,12 +1202,25 @@ function request_staff_supported(): bool
  * omul a apăsat ca să comande, nu ca să-și facă cont, iar o piedică la jeton
  * n-are voie să-i oprească comanda.
  */
-function request_claim_new(int $requestId, int $minute): ?string
+function request_claim_new(int $requestId, int $minute, bool $inlocuieste = false): ?string
 {
     if (!request_claim_supported()) {
         return null;
     }
     try {
+        // `$inlocuieste` e numai pentru A DOUA TRIMITERE a aceleiași cereri
+        // (migrarea 026). Cererea are deja un jeton, iar `request_id` e UNIQUE,
+        // deci o a doua scriere ar cădea și omul ar rămâne fără drumul spre
+        // contul pe care tocmai a cerut să și-l facă.
+        //
+        // Jetonul vechi se stinge, și se cuvine să se stingă: el a plecat o
+        // singură dată, în răspunsul care S-A PIERDUT PE DRUM — de-aia e omul
+        // aici a doua oară. Nu-l are nimeni. Iar dacă, prin cine știe ce, l-ar
+        // avea cineva, cu atât mai bine că moare: același tipar ca la „am uitat
+        // parola", unde a doua cerere stinge legătura dintâi.
+        if ($inlocuieste) {
+            q('DELETE FROM request_claims WHERE request_id = ?', [$requestId]);
+        }
         $jeton = random_token();
         q(
             'INSERT INTO request_claims (request_id, token_hash, expires_at)

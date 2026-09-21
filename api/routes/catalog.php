@@ -235,21 +235,40 @@ function route_products_create(): void
 
     [$grams, $horeca, $retail] = product_numbers($b);
 
-    // Amândouă prețurile sunt obligatorii: catalogul de pe site le afișează pe
-    // rând, după cum alege clientul, iar unul lipsă nu doar că lasă un gol —
-    // oprea randarea întregii pagini. Un produs fără preț oricum nu poate fi
-    // vândut.
-    if ($horeca === null || $retail === null) {
-        fail('Completează ambele prețuri: cel pentru HoReCa și cel de raft.', 422, 'missing_price');
+    // ÎN CE CATALOAGE INTRĂ. Implicit în amândouă, ca `DEFAULT 1` din migrarea
+    // 024: un panou vechi, care nu trimite bifele, naște produsul exact cum îl
+    // năștea ieri.
+    $inFrozen = !array_key_exists('inFrozen', $b) || !empty($b['inFrozen']);
+    $inBaked  = !array_key_exists('inBaked', $b)  || !empty($b['inBaked']);
+    $laturi   = catalog_laturi_supported();
+
+    if ($laturi) {
+        product_laturi_verifica([
+            'price_frozen' => $horeca,
+            'price_baked'  => $retail,
+            'in_frozen'    => $inFrozen ? 1 : 0,
+            'in_baked'     => $inBaked ? 1 : 0,
+        ]);
+    } elseif ($horeca === null || $retail === null) {
+        // Fereastra dintre urcarea fișierelor și importul SQL. Fără coloanele
+        // laturilor, magazinul ascunde orice produs care n-are amândouă
+        // prețurile: unul cu un singur preț chiar n-ar avea cum să se vadă.
+        fail('Completează amândouă prețurile: cel pentru congelate și cel pentru gata de servire.',
+            422, 'missing_price');
     }
 
     $sort = (int) scalar('SELECT COALESCE(MAX(sort), 0) + 10 FROM products');
+    $args = [$slug, $name, $nameEn, $desc, $descEn, $grams, $horeca, $retail,
+             $category, !empty($b['isNew']) ? 1 : 0, $sort];
+    if ($laturi) {
+        array_push($args, $inFrozen ? 1 : 0, $inBaked ? 1 : 0);
+    }
     q(
         'INSERT INTO products (slug, name, name_en, description, description_en, grams,
-                               price_frozen, price_baked, category, is_new, sort)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [$slug, $name, $nameEn, $desc, $descEn, $grams, $horeca, $retail,
-         $category, !empty($b['isNew']) ? 1 : 0, $sort]
+                               price_frozen, price_baked, category, is_new, sort'
+        . ($laturi ? ', in_frozen, in_baked' : '') . ')
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . ($laturi ? ', ?, ?' : '') . ')',
+        $args
     );
     $id = (int) db()->lastInsertId();
 
@@ -298,19 +317,40 @@ function route_products_update(string $id): void
     if (array_key_exists('grams', $b) || array_key_exists('priceFrozen', $b) || array_key_exists('priceBaked', $b)) {
         [$grams, $horeca, $retail] = product_numbers($b);
         if (array_key_exists('grams', $b))       { $sets[] = 'grams = ?';        $vals[] = $grams; }
+        // UN PREȚ GOLIT nu se mai refuză din capul locului: cu catalogul lui
+        // stins, ăsta e chiar drumul spre un produs care se vinde numai într-o
+        // parte. Cine rămâne într-un catalog fără preț e prins mai jos, pe
+        // rândul rezultat, cu un mesaj care spune CARE catalog și CARE casetă.
+        //
+        // Fără coloanele laturilor (fereastra dintre fișiere și importul SQL)
+        // refuzul de ieri rămâne singurul lucru corect: acolo un preț gol chiar
+        // înseamnă un produs pe care magazinul nu-l mai arată nicăieri.
         if (array_key_exists('priceFrozen', $b)) {
-            if ($horeca === null) {
-                fail('Prețul pentru HoReCa nu poate rămâne gol.', 422, 'missing_price');
+            if ($horeca === null && !catalog_laturi_supported()) {
+                fail('Prețul pentru congelate nu poate rămâne gol.', 422, 'missing_price');
             }
             $sets[] = 'price_frozen = ?';
             $vals[] = $horeca;
         }
         if (array_key_exists('priceBaked', $b)) {
-            if ($retail === null) {
-                fail('Prețul de raft nu poate rămâne gol.', 422, 'missing_price');
+            if ($retail === null && !catalog_laturi_supported()) {
+                fail('Prețul pentru gata de servire nu poate rămâne gol.', 422, 'missing_price');
             }
             $sets[] = 'price_baked = ?';
             $vals[] = $retail;
+        }
+    }
+
+    // BIFELE DE CATALOG. Se primesc numai dacă baza le are: altfel ar ajunge în
+    // UPDATE o coloană necunoscută, adică o eroare de SQL în locul unei
+    // salvări. Un panou nou peste o bază veche trimite bifele degeaba, dar
+    // salvează restul — nu se oprește.
+    if (catalog_laturi_supported()) {
+        foreach (['inFrozen' => 'in_frozen', 'inBaked' => 'in_baked'] as $in => $col) {
+            if (array_key_exists($in, $b)) {
+                $sets[] = $col . ' = ?';
+                $vals[] = !empty($b[$in]) ? 1 : 0;
+            }
         }
     }
     if (array_key_exists('isNew', $b))  { $sets[] = 'is_new = ?'; $vals[] = !empty($b['isNew']) ? 1 : 0; }
@@ -319,6 +359,17 @@ function route_products_update(string $id): void
 
     if (!$sets) {
         fail('Nu ai trimis nimic de schimbat.', 422, 'nothing_to_update');
+    }
+
+    // RÂNDUL REZULTAT: cel din bază, peste care s-a pus ce trimite formularul.
+    // Perechile se desfac la fel ca în `audit_diff()`, care citește chiar
+    // aceleași două șiruri câteva rânduri mai jos.
+    if (catalog_laturi_supported()) {
+        $rezultat = $p;
+        foreach ($sets as $i => $set) {
+            $rezultat[trim(explode('=', (string) $set, 2)[0])] = $vals[$i];
+        }
+        product_laturi_verifica($rezultat);
     }
 
     // Prețul e motivul pentru care rândul ăsta există. Până acum jurnalul
@@ -333,8 +384,10 @@ function route_products_update(string $id): void
         'description_en' => 'descriere EN',
         'category'       => 'grupă',
         'grams'          => 'grame',
-        'price_frozen'   => 'preț HoReCa',
-        'price_baked'    => 'preț raft',
+        'price_frozen'   => 'preț congelat',
+        'price_baked'    => 'preț gata de servire',
+        'in_frozen'      => ['în congelate', ['1' => 'da', '0' => 'nu']],
+        'in_baked'       => ['la gata de servire', ['1' => 'da', '0' => 'nu']],
         'is_new'         => ['nou', ['1' => 'da', '0' => 'nu']],
         'active'         => ['în catalog', ['1' => 'da', '0' => 'nu']],
         'sort'           => 'ordine',
@@ -407,9 +460,14 @@ function route_products_delete(string $id): void
     }
 
     if ($inOrders === 0 && $inStock === 0) {
-        // Fotografia urcată din panou nu mai folosește nimănui.
-        if (is_uploaded_photo((string) $p['photo'])) {
-            @unlink(photo_dir() . '/' . basename((string) $p['photo']));
+        // Fotografiile urcate din panou nu mai folosesc nimănui — AMÂNDOUĂ.
+        // Bucla merge pe laturi, nu pe un nume de coloană scris aici: o a
+        // treia latură n-ar mai cere o a treia scăpare de ținut minte.
+        foreach (laturi() as $lat) {
+            $poza = (string) ($p[latura_coloana_poza($lat)] ?? '');
+            if ($poza !== '' && is_uploaded_photo($poza)) {
+                @unlink(photo_dir() . '/' . basename($poza));
+            }
         }
         q('DELETE FROM products WHERE id = ?', [$id]);
         audit('product_delete', 'product', (string) $id, $p['name']);
@@ -450,21 +508,60 @@ function route_products_photo(string $id): void
         fail('Produsul nu există.', 404, 'not_found');
     }
 
+    // PE CE LATURĂ. Ruta rămâne una singură, cu un câmp în plus în formular:
+    // un panou vechi, care nu-l trimite, scrie unde scria — în `photo`.
+    $latura = latura_normalizeaza($_POST['latura'] ?? null);
+    $col    = latura_coloana_poza($latura);
+    if ($col !== 'photo' && !catalog_laturi_supported()) {
+        fail(
+            'Pozele pe laturi cer migrarea 024: baza de date nu are încă coloana.'
+              . ' Importă sql/024_doua_cataloage.sql și încearcă din nou.',
+            503,
+            'laturi_unavailable'
+        );
+    }
+
     $f = $_FILES['photo'] ?? null;
+
+    // CORPUL ARUNCAT, adică pragul care minte cel mai urât. Peste
+    // `post_max_size`, PHP leapădă TOATĂ cererea înainte să ruleze un rând
+    // de-al nostru: nu doar `$_FILES` iese gol, ci și `$_POST`, iar
+    // `$_FILES['photo']['error']` nu există deloc — deci `match`-ul de mai jos
+    // cădea pe UPLOAD_ERR_NO_FILE și îi spunea „Nu ai ales niciun fișier"
+    // tocmai omului care alesese unul, trimițându-l să caute unde nu era nimic
+    // de găsit.
+    //
+    // Martorul care supraviețuiește e lungimea anunțată de browser. Cerem
+    // amândouă faptele deodată — nimic parsat ȘI un corp mai mare decât
+    // pragul —, ca o cerere mică și strâmbă (un JSON trimis din greșeală
+    // aici) să nu fie luată drept poză pierdută.
+    $lungime = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+    if (poza_corp_aruncat($f, $_POST, $lungime)) {
+        fail(poza_mesaj_corp_aruncat($lungime), 422, 'too_large');
+    }
+
     if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-        $why = match ((int) ($f['error'] ?? UPLOAD_ERR_NO_FILE)) {
-            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Fișierul e mai mare decât acceptă serverul.',
+        $eroare = (int) ($f['error'] ?? UPLOAD_ERR_NO_FILE);
+        $why    = match ($eroare) {
+            // Aceeași vorbă ca la pragul panoului, de mai jos: pentru om e
+            // același lucru — poza n-a intrat —, iar CINE a spus „nu" se
+            // socotește o singură dată, în `poza_mesaj_prea_mare()`.
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => poza_mesaj_prea_mare(),
             UPLOAD_ERR_PARTIAL   => 'Încărcarea s-a întrerupt. Încearcă din nou.',
             UPLOAD_ERR_NO_FILE   => 'Nu ai ales niciun fișier.',
             UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_CANT_WRITE => 'Serverul nu poate scrie fișiere temporare.',
             default              => 'Încărcarea a eșuat.',
         };
-        fail($why, 422, 'upload_failed');
+        // Prea mare rămâne prea mare, oricare din cele două praguri a spus-o:
+        // panoul deosebește `too_large` de restul.
+        $cod = in_array($eroare, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
+            ? 'too_large'
+            : 'upload_failed';
+        fail($why, 422, $cod);
     }
 
-    $maxBytes = 5 * 1024 * 1024;
-    if ((int) $f['size'] > $maxBytes) {
-        fail('Fotografia depășește 5 MB. Micșoreaz-o și încearcă din nou.', 422, 'too_large');
+    if ((int) $f['size'] > POZA_MAX_OCTETI) {
+        fail(poza_mesaj_prea_mare(), 422, 'too_large');
     }
 
     // getimagesize citește antetul real al fișierului.
@@ -494,18 +591,24 @@ function route_products_photo(string $id): void
         fail('Nu am putut salva fișierul pe server.', 500, 'move_failed');
     }
 
-    $old = (string) $p['photo'];
+    $old = (string) ($p[$col] ?? '');
     $web = photo_web_prefix() . $file;
-    q('UPDATE products SET photo = ? WHERE id = ?', [$web, $id]);
+    // `$col` nu vine de la client: `latura_coloana_poza()` întoarce una din
+    // două vorbe scrise în cod, oricare ar fi textul primit.
+    q('UPDATE products SET ' . $col . ' = ? WHERE id = ?', [$web, $id]);
 
     // Poza dinainte se șterge doar dacă a fost încărcată tot de aici: cele
     // venite odată cu proiectul pot fi folosite și în altă parte.
+    //
+    // „Dinainte" înseamnă cea a LATURII ĂSTEIA. Cu `$p['photo']` scris aici,
+    // fiecare urcare de gata-de-servire ar fi șters poza congelată de pe disc
+    // — iar rândul din bază ar fi rămas, deci poza s-ar fi rupt tăcut.
     if (is_uploaded_photo($old)) {
         @unlink($dir . '/' . basename($old));
     }
 
-    audit('product_photo', 'product', (string) $id, $p['name']);
-    json_out(['ok' => true, 'photo' => $web]);
+    audit('product_photo', 'product', (string) $id, $p['name'] . ' — ' . latura_cuvant($latura));
+    json_out(['ok' => true, 'photo' => $web, 'latura' => $latura]);
 }
 
 /** Folderul public cu fotografiile produselor. */
@@ -614,9 +717,56 @@ function product_numbers(array $b): array
 
     return [
         $grams,
-        $price($b['priceFrozen'] ?? null, 'pentru HoReCa'),
-        $price($b['priceBaked'] ?? null, 'de raft'),
+        $price($b['priceFrozen'] ?? null, 'pentru congelate'),
+        $price($b['priceBaked'] ?? null, 'pentru gata de servire'),
     ];
+}
+
+/**
+ * INVARIANTUL celor două cataloage, judecat pe RÂNDUL REZULTAT.
+ *
+ * Regula, una singură: dacă produsul e într-un catalog, are prețul acelui
+ * catalog. Niciodată pe dos — un preț poate sta în casetă și cu latura stinsă,
+ * fiindcă patronul a cerut anume ca scoaterea dintr-un catalog să NU-i șteargă
+ * prețul. Aici se închide singurul drum prin care apartenența s-ar putea
+ * despărți de preț: panoul.
+ *
+ * SE PRIMEȘTE RÂNDUL REZULTAT, nu corpul cererii. Altfel „aprind catalogul ȘI
+ * îi scriu prețul în aceeași salvare" ar fi refuzat, fiindcă în bază prețul
+ * încă lipsește; iar „golesc prețul" ar fi judecat după bifa din formularul
+ * deschis acum zece minute, nu după cea de acum.
+ *
+ * CE NU FACE. Nu se atinge de `active`. „În niciun catalog" și „scos din
+ * catalog" ar fi două nume pentru aceeași stare, iar două nume pentru o stare e
+ * chiar felul în care s-a născut încurcătura dintre comutatorul de pe rând și
+ * butonul ×. Deci: al doilea nume se refuză, și omul e trimis la buton.
+ */
+function product_laturi_verifica(array $r): void
+{
+    $aprinse = 0;
+    foreach (laturi() as $lat) {
+        if (!latura_in($r, $lat)) {
+            continue;
+        }
+        $aprinse++;
+        if (latura_pret($r, $lat) === null) {
+            fail(
+                'Produsul e în catalogul „' . latura_nume($lat) . '”, dar n-are prețul de acolo.'
+                  . ' Scrie prețul din caseta „Preț ' . latura_cuvant($lat) . '”,'
+                  . ' sau scoate-l din catalogul ăsta.',
+                422,
+                'missing_price'
+            );
+        }
+    }
+    if ($aprinse === 0) {
+        fail(
+            'Un produs trebuie să fie în cel puțin un catalog. Dacă nu se mai vinde deloc,'
+              . ' scoate-l din catalog cu butonul de pe rând.',
+            422,
+            'no_catalog'
+        );
+    }
 }
 
 /** Transformă un nume în cheie de adresă: „Ștrudel cu mere" → „strudel-cu-mere". */

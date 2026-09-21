@@ -1409,7 +1409,7 @@ function audit_value($v): string
     // Numerele cu zecimale se aduc la aceeași formă pe amândouă capetele: din
     // MySQL un DECIMAL vine „12.50", iar din cerere același preț vine ca 12.5.
     // Comparate ca text ar părea schimbate la fiecare salvare, iar jurnalul ar
-    // scrie „preț raft: 12.50 → 12.5" pe o casetă pe care n-a atins-o nimeni.
+    // scrie „preț gata de servire: 12.50 → 12.5" pe o casetă pe care n-a atins-o nimeni.
     //
     // Numai cele cu punct. Un telefon ca „0740123456" e și el „numeric" pentru
     // PHP, iar trecut prin pâlnia asta ar ieși „740123456" — și, fiindcă trec

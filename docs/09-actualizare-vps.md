@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.3.1/deploy
+  Pachet: /root/plasture-vps 2.4.0/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -102,19 +102,33 @@ grep -c session_days_panou /var/www/gp/api/lib/auth.php
 4. **Migrările.** Le rulează pe toate, de la 003 în sus, în ordine. Nu e risipă:
    fiecare migrare se uită întâi în `information_schema` și, dacă are deja ce
    caută, nu face nimic — de-aia scrie în capul fiecăreia „poate fi rulată de
-   câte ori vrei fără pagubă” (`sql/007_update_roles_referral.sql:3-4`). Scriptul
-   măsoară schema înainte și după fiecare, ca să-ți poată spune care a avut ceva
-   de făcut și care nu (`actualizeaza-vps.sh:368`).
+   câte ori vrei fără pagubă” (`sql/007_update_roles_referral.sql:3-4`).
+
+   **Cum îți spune care a intrat acum.** Fiecare migrare își scrie numele într-un
+   registru — tabelul `schema_migrations` — la coada ei, iar scriptul îl citește.
+   Registrul e făcut de `sql/025_registru_migrari.sql`, rulat **înaintea buclei**,
+   nu la rândul lui: se cheamă `025`, deci în ordinea numelui ar veni după
+   `003`–`024`, iar atunci primele douăzeci și două de migrări ar trece pe lângă
+   un tabel care încă nu există și și-ar scrie numele abia la actualizarea
+   următoare.
+
+   Registrul **însemnează, nu oprește**: migrările se rulează toate, la fiecare
+   actualizare, exact ca înainte. Pe un `sql/` mai vechi decât `025` scriptul se
+   întoarce singur la socoteala dinainte — măsoară schema înainte și după fiecare
+   (`actualizeaza-vps.sh:368`). Aceea e însă o ghicitoare, și se înșela tocmai
+   unde doare: `017` nu atinge DELOC schema, deci ieșea „era deja aplicată" chiar
+   și la prima rulare — despre singura migrare care face recomandările să aducă
+   bani.
 
    `001` și `002` se sar, dinadins: prima face schema de la zero, a doua pune
    datele inițiale. A doua pare inofensivă, fiindcă are numai `INSERT IGNORE` —
    dar `IGNORE` sare peste chei duplicate, iar un produs pe care l-ai **șters**
    din Catalog n-are cu ce se ciocni și s-ar întoarce de la morți la fiecare
-   actualizare (`actualizeaza-vps.sh:390`).
+   actualizare (`actualizeaza-vps.sh:448`).
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
-   și din curățenie (`actualizeaza-vps.sh:684`), iar folderul pozelor e citit din
-   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:614`,
-   `api/routes/catalog.php:512`).
+   și din curățenie (`actualizeaza-vps.sh:786`), iar folderul pozelor e citit din
+   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:716`,
+   `api/routes/catalog.php:615`).
 6. **Drepturile**: totul pe `www-data`, `755` la foldere, `644` la fișiere,
    `640` la `config.php`.
 7. **Apache**: întâi `configtest`, și abia dacă trece, `reload`. O configurație
@@ -144,7 +158,7 @@ exact în minutele dintre cele două jumătăți ale actualizării.
 Fișierele `api/setup.php` și `api/verifica.php` sunt un caz aparte: ghidul de
 instalare cere ștergerea lor, dar amândouă sunt în pachet, deci copierea le-ar
 pune la loc de fiecare dată. Scriptul ține minte care lipseau și le scoate din
-nou (`actualizeaza-vps.sh:633`). Se închid și singure, cu `404`, din clipa în
+nou (`actualizeaza-vps.sh:735`). Se închid și singure, cu `404`, din clipa în
 care instalarea are un administrator activ — dar hotărârea rămâne a ta.
 
 ---
@@ -248,17 +262,21 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
   de cât de veche e instalarea: pe una lăsată în urmă cu trei versiuni se aprind
   trei, pe una actualizată ieri niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
-  `sql/023_laboratorul_si_livrarea.sql`;
-- **24 de tabele** în capul raportului, la „Baza de date" (ultimele două sunt
-  `telegram_links` și `lab_production`, aduse de `021_raspundere.sql`). Numărul
-  nu se mișcă nici la `016`, nici la `020`: prima aduce o coloană (`users.zone`)
-  și o zonă în plus în lista de livrare, a doua numai un index
+  `sql/026_cheie_cerere.sql`;
+- **25 de tabele** în capul raportului, la „Baza de date" (cel din urmă venit e
+  `schema_migrations`, registrul adus de `025_registru_migrari.sql`; înaintea
+  lui, `telegram_links` și `lab_production`, aduse de `021_raspundere.sql`).
+  Numărul nu se mișcă nici la `016`, nici la `020`: prima aduce o coloană
+  (`users.zone`) și o zonă în plus în lista de livrare, a doua numai un index
   (`ix_orders_client_rang` pe `orders`) — niciuna un tabel. `021` îl mișcă cu
   **două**, deși aduce patru lucruri: celelalte două sunt tot o coloană
   (`users.telegram_user_id`) și tot un index (`ix_orders_autor`). `022` nu-l
   mișcă deloc: ea pune patru coloane pe `order_requests`, un index și o cheie
-  străină, deci raportul arată tot **24** și după ea; nici `023`, care
-  pune două coloane și atât (`orders.lab_seq`, `users.poate_confirma_livrarea`);
+  străină; nici `023`, care pune două coloane și atât (`orders.lab_seq`,
+  `users.poate_confirma_livrarea`); nici `024`, cu trei coloane pe `products`;
+  nici `026`, cu o coloană și un index, tot pe `order_requests`. Așa că de la
+  `021` încoace raportul a arătat **24**, iar `025` l-a dus la **25**: e singura
+  migrare de după `021` care mai naște un tabel;
 - linia **`api.DOMENIU răspunde (401)`**. Un **500** înseamnă că o migrare n-a
   intrat: `tail -20 /var/log/apache2/gp-api-error.log`;
 - căile celor două copii — a bazei și a codului.
@@ -368,16 +386,48 @@ personal, tăcut, ca înainte de actualizare. Semnul se bifează pe urmă din
 conturile de operații de azi — contul de laborator e o tejghea comună, și
 tocmai el n-are voie să-l aibă. Administratorul și fondatorul îl au din cod.
 
+`024_doua_cataloage.sql` **nu se vede nici ea în raport**: nici tabel, nici
+setare, nici index — trei coloane pe `products`, `in_frozen`, `in_baked` și
+`photo_baked`. O ceri singur:
+`SHOW COLUMNS FROM products LIKE 'in_frozen'`.
+Fără primele două, magazinul se poartă ca înainte de runda asta: arată numai
+produsele cu **amândouă** prețurile. Nu e o stricăciune — e purtarea pe care
+codul nou o ține dinadins, fiindcă fișierele ajung înaintea importului și nimic
+n-are voie să se golească în fereastra dintre ele. Ce nu merge până la import:
+cele două bife din panou n-au unde se scrie, iar o poză urcată anume pentru
+gata de servire cade peste cea congelată. Bifele se nasc **aprinse**, nu
+stinse: un produs născut de codul vechi între cele două momente trebuie să
+apară în amândouă cataloagele, nu în niciunul.
+
+Migrarea scrie o singură dată, la rularea care aduce coloanele, și e zăvorâtă
+anume (`@coloane_noi`): a doua actualizare nu pune la loc laturile pe care
+le-ai stins din panou. E lecția lui `016`, scrisă acolo pe larg.
+
+`026_cheie_cerere.sql` **nu se vede nici ea în raport**: nici tabel, nici
+setare — o coloană pe `order_requests`, `idempotency_key`, și indexul unic de
+peste ea, `uq_req_cheie`. O ceri singur:
+`SHOW INDEX FROM order_requests WHERE Key_name = 'uq_req_cheie'`.
+Întreab-o pe **ea**, nu coloana: o bază care are coloana dar nu indexul
+primește chei și nu bagă de seamă niciodată că a primit-o de două ori, adică
+exact starea pe care migrarea vine s-o închidă. De-asta și codul întreabă tot
+de index (`request_key_supported()`), nu de coloană.
+Fără ea, cererea trimisă a doua oară — degetul apăsat încă o dată, legătura
+care a căzut tocmai când răspunsul venea încoace — intră a doua oară, iar
+laboratorul vede două comenzi acolo unde omul a făcut una. Purtarea e cea de
+până acum, nu o stricăciune nouă: pagina știe să se poarte și pe o bază fără
+cheie. Ce se schimbă la import e că serverul începe să recunoască perechea și
+răspunde cu cererea dintâi, ca și cum ar fi fost acum.
+
 Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
-adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:442`,
-`:521`). Un rând galben care spune că `017` sau `018` **n-a intrat** e o migrare
+adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:544`,
+`:623`). Un rând galben care spune că `017` sau `018` **n-a intrat** e o migrare
 lipsă — aproape mereu un folder `sql/` urcat mai vechi decât pachetul; la
 procent îl dă și un `0` rămas de la casă, pe care `017` l-ar fi urcat la 5. Un
 rând galben care începe cu **„N-am putut citi…"**, cu eroarea lui mysql
 dedesubt, e altceva: migrările au trecut, a picat numai întrebarea de după ele,
 deci raportul nu știe ce e acolo și nu ghicește. Nu rulezi din nou pentru atât;
 te uiți tu, în Setări. La fel vorbește și rândul conturilor făcute pe site pe
-care nu le-a recunoscut nimeni (`:582`): acolo o citire picată tăcea înainte,
+care nu le-a recunoscut nimeni (`:684`): acolo o citire picată tăcea înainte,
 exact ca „niciun cont", iar acum se aude.
 
 ---
@@ -430,7 +480,7 @@ Două lucruri de știut dacă le tastezi singur:
 
 `instaleaza-vps.sh` se poate rula de câte ori vrei și a doua oară se poartă ca o
 actualizare — dar una parțială. Nu aplică migrările, dinadins: pe o bază care are
-deja tabele nu importă nimic (`instaleaza-vps.sh:205`). Și nu face copie de
+deja tabele nu importă nimic (`instaleaza-vps.sh:215`). Și nu face copie de
 siguranță înainte, fiindcă la instalare n-are ce copia.
 
 Pe lângă asta, trece de fiecare dată prin `apt`, prin gazdele virtuale și prin

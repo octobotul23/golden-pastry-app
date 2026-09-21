@@ -27,10 +27,27 @@ function route_products_list(): void
     $u   = current_user();
     $all = isset($_GET['all']) && $u && e_admin($u);
 
+    // CELE TREI COLOANE ALE LATURILOR se cer numai dacă baza le are.
+    //
+    // Pe server fișierele ajung ÎNAINTEA importului SQL, deci există o
+    // fereastră în care codul ăsta rulează peste baza veche. O coloană cerută
+    // și negăsită nu dă un câmp gol — dă eroare de SQL, adică magazinul stins
+    // pentru toată lumea. `api/lib/laturi.php` știe să răspundă corect și
+    // peste un rând fără ele.
+    //
+    // ȘI DE CE S-AU ADĂUGAT AICI, DEȘI RUTA PĂREA ÎNTREAGĂ. Lista de coloane e
+    // scrisă cu mâna, iar calea de scriere citește rândul cu `SELECT *`: poza
+    // de gata de servire se salva cum trebuie, dar nu se mai întorcea
+    // niciodată. Mai rău: nu se vedea că lipsește. Fără `in_frozen` în rând,
+    // `latura_in()` cade pe purtarea de dinainte de 024 („are amândouă
+    // prețurile") și răspunde ceva CREDIBIL — deci o latură stinsă de patron
+    // s-ar fi întors aprinsă în panou, fără nicio eroare nicăieri.
+    $laturi = catalog_laturi_supported() ? ', photo_baked, in_frozen, in_baked' : '';
+
     $rows = all(
         'SELECT id, slug, name, name_en, description, description_en, photo, grams,
-                price_frozen, price_baked, category, is_new, active, sort
-           FROM products'
+                price_frozen, price_baked, category, is_new, active, sort' . $laturi
+        . ' FROM products'
         . ($all ? '' : ' WHERE active = 1')
         . ' ORDER BY sort, id'
     );

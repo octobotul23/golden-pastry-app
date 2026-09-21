@@ -24,6 +24,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 @keyframes pr-fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 [data-pr=mini]{display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;padding:0;font-size:14px;border-radius:9px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);cursor:pointer}
 [data-pr=mini]:hover{border-color:var(--h-accent);color:var(--h-fg)}
+[data-pr=lat]{font-family:inherit;font-size:10px;line-height:1;flex:none;padding:5px 9px;border-radius:999px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-faint);cursor:pointer;opacity:.62}
+[data-pr=lat]:hover{border-color:var(--h-accent);color:var(--h-fg);opacity:1}
+[data-pr=lat].pr-on{border-color:var(--h-accent);color:var(--h-fg);font-weight:700;opacity:1}
+.pr-stins{opacity:.55}
 [data-pr=thumb]{width:64px;height:64px;flex:none;border-radius:12px;object-fit:cover;background:var(--h-bg-sunk);border:1px solid var(--h-line)}
 [data-pr=scrim]{position:fixed;inset:0;background:rgba(20,12,6,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;z-index:50}
 @media (max-width:760px){
@@ -43,6 +47,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-pr=tabs]{width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
 [data-pr=tabs]::-webkit-scrollbar{display:none}
 [data-pr=tabs]>button{flex:none!important}
+[data-pr=laturi]{width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
+[data-pr=laturi]::-webkit-scrollbar{display:none}
+[data-pr=laturi]>button{flex:none!important}
 }
 </style>
 </helmet>
@@ -50,7 +57,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
 <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
 <div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center">
-<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
 <div style="display:flex;flex-direction:column;gap:6px">
 <span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Catalog de produse</span>
 <span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
@@ -68,7 +75,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <div data-pr="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
 <div data-pr="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
-<img src="assets/logo-alb.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
 <span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
 <span style="font-size:13px;opacity:.7">Catalog</span>
@@ -197,6 +204,24 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <!-- ─────────────────────────────────────────────── produse ── -->
 <sc-if value="{{ isProducts }}" hint-placeholder-val="{{ true }}">
+
+<!-- Cele două cataloage, dintr-o singură listă. NU e a treia filă, dinadins:
+     ce se face aici e o OGLINDĂ — „ce am la congelate și n-am la gata de
+     servire" —, iar oglinda se citește comparând treizeci de rânduri, nu
+     deschizând treizeci de formulare. O filă a treia le-ar face imposibil de
+     văzut deodată și ar cere încă o copie a marcajului rândului.
+     Implicit „Amândouă", deci pagina se deschide arătând exact ce arăta
+     înainte de runda asta. -->
+<div data-pr="laturi" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+<span style="font-size:13px;color:var(--h-fg-subtle);margin-right:2px">Arată</span>
+<sc-for list="{{ laturiTabs }}" as="l" hint-placeholder-count="3">
+<button type="button" class="{{ l.cls }}" onClick="{{ l.onClick }}" title="{{ l.titlu }}" style="height:38px;font-size:13px;border-radius:11px;display:flex;align-items:center;gap:7px">
+<span>{{ l.label }}</span>
+<span class="h-numeric" style="font-weight:700;opacity:.8">{{ l.count }}</span>
+</button>
+</sc-for>
+</div>
+
 <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
 <div style="display:flex;flex-direction:column;gap:10px">
 <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
@@ -223,6 +248,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ p.hidden }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge" style="font-size:10px">scos din catalog</span>
 </sc-if>
+<!-- Cele două cataloage, chiar pe rând. Pastilele sunt deodată semn și
+     comutator: arată unde e produsul ȘI îl mută, cu un PATCH de un singur
+     câmp — același contract ca butonul „Scoate din catalog" de la capătul
+     rândului. Stau aici, nu numai în formular, fiindcă oglinda se citește
+     prin derulare: ca să vezi ce lipsește dintr-o parte trebuie să vezi
+     multe rânduri deodată.
+     Stinsă nu înseamnă stricată — prețul laturii rămâne scris, așa a cerut
+     patronul anume. De-aia pastila stinsă e ștearsă, nu roșie: roșul e păstrat
+     pentru cele două stări care chiar sunt greșite, v. „faraPret". -->
+<button type="button" data-pr="lat" class="{{ p.latFCls }}" onClick="{{ p.onLatF }}" title="{{ p.latFTitlu }}">congelate</button>
+<button type="button" data-pr="lat" class="{{ p.latBCls }}" onClick="{{ p.onLatB }}" title="{{ p.latBTitlu }}">gata de servire</button>
 <!-- Semnul roșu al produsului fără preț. Stă lângă nume, nu în coloana de
      prețuri, fiindcă acolo scrie de mult „—" — un semn pe care ochiul care
      derulează treizeci de rânduri nu-l deosebește de o cifră. Vezi
@@ -234,7 +270,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <span style="font-size:13px;color:var(--h-fg-subtle)">{{ p.sub }}</span>
 </div>
-<div style="display:flex;flex-direction:column;align-items:flex-end;min-width:110px">
+<div style="display:flex;flex-direction:column;align-items:flex-end;min-width:128px;text-align:right">
 <span class="h-numeric" style="font-size:15px;font-weight:700">{{ p.priceMain }}</span>
 <span style="font-size:12px;color:var(--h-fg-faint)">{{ p.priceAlt }}</span>
 </div>
@@ -309,14 +345,30 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!-- Două fotografii, una de fiecare catalog. Miniaturile arată poza
+     REZOLVATĂ, adică chiar ce vede cumpărătorul: o latură fără poză a ei o
+     ia pe a celeilalte (hotărârea patronului, v. api/lib/laturi.php).
+     De-aia amândouă pot arăta același fișier — nu e o scăpare, e căderea
+     care ține produsul să nu apară gol pe site în ziua dintre cele două
+     urcări. Lămurirea de sub fiecare casetă o spune pe față. -->
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
 <!-- Leneșă din același motiv ca miniatura din listă: altfel parserul cere
      de la server textul cu acolade al legăturii, la fiecare deschidere. -->
 <img data-pr="thumb" loading="lazy" src="{{ f.photo }}" alt="" style="width:88px;height:88px">
-<div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px">
-<span class="h-label">Fotografie</span>
+<div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px">
+<span class="h-label">Fotografie — congelat</span>
 <input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ onPhoto }}" style="font-size:13px">
 <span class="h-help">{{ photoHelp }}</span>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+<img data-pr="thumb" loading="lazy" src="{{ f.photoBaked }}" alt="" style="width:88px;height:88px">
+<div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px">
+<span class="h-label">Fotografie — gata de servire</span>
+<input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ onPhotoBaked }}" style="font-size:13px">
+<span class="h-help">{{ photoBakedHelp }}</span>
+</div>
 </div>
 </div>
 
@@ -342,7 +394,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </label>
 </div>
 
-<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px">
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 <label class="h-field">
 <span class="h-label">Grupa</span>
 <select class="h-select" value="{{ f.category }}" onChange="{{ onCategory }}" style="height:46px;font-size:15px">
@@ -355,14 +407,31 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-label">Gramaj</span>
 <input class="h-input h-numeric" value="{{ f.grams }}" onChange="{{ onGrams }}" placeholder="140" style="height:46px;font-size:15px">
 </label>
+</div>
+
+<!-- Fiecare preț lângă bifa lui, într-o casetă a laturii. Nu două rânduri
+     deosebite — bifa și prețul sunt o singură hotărâre, iar invariantul
+     serverului le leagă: o latură aprinsă CERE prețul ei.
+     Prețul rămâne VĂZUT, doar șters, când latura e stinsă. Ascuns ar ascunde
+     tocmai ce s-a promis că se păstrează: scoaterea dintr-un catalog nu
+     șterge prețul de acolo, ca să se poată pune la loc fără să-l cauți. -->
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<label class="h-switch"><input type="checkbox" checked="{{ f.inFrozen }}" onChange="{{ onInFrozen }}"><span>În catalogul de congelate</span></label>
 <label class="h-field">
-<span class="h-label">Preț HoReCa</span>
-<input class="h-input h-numeric" value="{{ f.horeca }}" onChange="{{ onHoreca }}" placeholder="2.85" style="height:46px;font-size:15px">
+<span class="h-label">Preț congelat</span>
+<input class="{{ f.horecaCls }}" value="{{ f.horeca }}" onChange="{{ onHoreca }}" placeholder="2.85" style="height:46px;font-size:15px">
 </label>
+<span class="h-help">{{ horecaHelp }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<label class="h-switch"><input type="checkbox" checked="{{ f.inBaked }}" onChange="{{ onInBaked }}"><span>În catalogul de gata de servire</span></label>
 <label class="h-field">
-<span class="h-label">Preț raft</span>
-<input class="h-input h-numeric" value="{{ f.retail }}" onChange="{{ onRetail }}" placeholder="3.49" style="height:46px;font-size:15px">
+<span class="h-label">Preț gata de servire</span>
+<input class="{{ f.retailCls }}" value="{{ f.retail }}" onChange="{{ onRetail }}" placeholder="3.49" style="height:46px;font-size:15px">
 </label>
+<span class="h-help">{{ retailHelp }}</span>
+</div>
 </div>
 
 <label class="h-switch"><input type="checkbox" checked="{{ f.isNew }}" onChange="{{ onIsNew }}"><span>Marchează ca noutate</span></label>
@@ -473,15 +542,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 /* Rozeta pusă în locul fotografiei care lipsește.
  *
- * Fișierul se cheamă „alb" și are cerneala AURIE. Numele celor două sigle sunt
- * pe dos — e o fișă deschisă în `docs/06`: `assets/logo-alb.png` e aurie
- * (`#BD9749`), `assets/logo-auriu.png` e albă (`#FEFEFE`).
- *
- * Aici scria până acum „auriu" — firesc pentru cineva care voia aur pe
- * cartonașul deschis la culoare — și ieșea alb pe crem. Pătratul din spatele
- * fotografiei are fundalul `--h-bg-sunk`, iar tema casei îl schimbă după
- * ochelarii calculatorului: crem `#F1E6D4` ziua, ciocolatiu `#130E0B` noaptea
- * (`hearth.css`, `@media (prefers-color-scheme: dark)`). Măsurat pe amândouă:
+ * Se cere anume cea AURIE. Pătratul din spatele fotografiei are fundalul
+ * `--h-bg-sunk`, iar tema casei îl schimbă după ochelarii calculatorului: crem
+ * `#F1E6D4` ziua, ciocolatiu `#130E0B` noaptea (`hearth.css`,
+ * `@media (prefers-color-scheme: dark)`). Măsurat pe amândouă:
  *
  *     cerneală     pe crem     pe ciocolatiu
  *     aurie        2,21:1      7,02:1
@@ -492,13 +556,28 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
  * o filigranare, nu un desen apăsat — și e bine așa: ține locul unei
  * fotografii, nu se dă drept una.
  *
- * Nu redenumim fișierele de aici: cele 33 de trimiteri din pagini cer toate
- * „alb" ca să capete aur, iar redenumirea e o hotărâre a patronului.
- * `.claude/check-sigle.mjs` măsoară cerneala chiar din fișierele PNG și nu mai
- * lasă pe nimeni să pună albul pe un fundal deschis fără să afle.
+ * Aici a scris o vreme „auriu" și ieșea alb pe crem: până în runda 2.4.0 numele
+ * celor două sigle erau pe dos, fișierul „alb" avea cerneala aurie, cel „auriu"
+ * o avea albă. Nu mai sunt pe dos — și-au schimbat numele între ele, iar
+ * trimiterile din pagini cer de acum „auriu" fiindcă aur vor.
+ *
+ * Câte trimiteri sunt nu se scrie aici: cifra a fost pusă o dată, de mână
+ * („cele 33"), a rămas în urmă când au crescut paginile, și a ajuns să sprijine
+ * o socoteală greșită. O numără `.claude/check-sigle.mjs`, care desface
+ * PNG-urile și cere ca fiecare nume să-și aibă cerneala lui.
  */
-const FOTO_LIPSA = "assets/logo-alb.png";
+const FOTO_LIPSA = "assets/logo-auriu.png";
 const lei = (v) => (v === null || v === undefined || v === "" ? "—" : Number(v).toFixed(2).replace(".", ",") + " lei");
+/**
+ * Vorbele laturilor, pentru ochii omului.
+ *
+ * Cheile sunt chiar cele de pe sârmă (api/lib/laturi.php, order_variants()):
+ * „congelat" și „copt" stau scrise în fiecare rând de comandă din trecut și
+ * nu se pot redenumi. Redenumirea cerută de patron e numai de AFIȘAT, iar
+ * aici e locul unde „copt" moare pentru ecran.
+ */
+const LATURA = { congelat: "congelate", copt: "gata de servire" };
+
 /** „1 comandă" / „3 comenzi" — româna cere forma, nu doar cifra. */
 const bucati = (n, unu, multe) => n + " " + (n === 1 ? unu : multe);
 
@@ -506,6 +585,10 @@ class Component extends DCLogic {
   state = {
     navOpen: false,
     auth: null, loaded: false, tab: "produse",
+    // Care catalog se arată: „congelat", „copt", sau amândouă deodată.
+    // Implicit amândouă — pagina se deschide arătând tot, ca înainte de
+    // runda celor două cataloage.
+    latura: "amandoua",
     products: [], cats: [], search: "",
     form: null, formErr: "", saving: false, pendingPhoto: null,
     // Produsul pentru care s-a apăsat ×, cu tot ce trebuie ca fereastra să
@@ -615,7 +698,12 @@ class Component extends DCLogic {
             category: p.category, grams: p.grams === null ? "" : String(p.grams),
             horeca: p.priceFrozen === null ? "" : String(p.priceFrozen),
             retail: p.priceBaked === null ? "" : String(p.priceBaked),
-            isNew: !!p.isNew, photo: p.photo || "",
+            isNew: !!p.isNew, photo: p.photo || "", photoBaked: p.photoBaked || "",
+            // Bifele vin din server ca adevăruri gata socotite: pe o bază de
+            // dinainte de migrarea 024 coloanele lipsesc, iar API-ul răspunde
+            // purtarea de până atunci (v. latura_in()). Panoul nu le mai
+            // ghicește din prețuri — tocmai asta s-a cerut să nu se facă.
+            inFrozen: p.inFrozen !== false, inBaked: p.inBaked !== false,
             // Rețeta vine cu o a doua cerere. Până se întoarce, `recipeReady`
             // e fals și salvarea NU o trimite: o listă goală, trimisă în locul
             // uneia necitite, ar șterge rețeta produsului fără ca cineva să fi
@@ -625,7 +713,10 @@ class Component extends DCLogic {
         : {
             id: null, name: "", nameEn: "", desc: "", descEn: "",
             category: (this.state.cats[0] || {}).slug || "",
-            grams: "", horeca: "", retail: "", isNew: false, photo: "",
+            grams: "", horeca: "", retail: "", isNew: false, photo: "", photoBaked: "",
+            // Un produs nou se naște în amândouă cataloagele, ca pe server
+            // (DEFAULT 1 în migrarea 024): altfel s-ar naște nevăzut nicăieri.
+            inFrozen: true, inBaked: true,
             // Produsul nou n-are ce să citească: rețeta lui e goală și e gata.
             recipe: [], finished: null, recipeReady: true, recipeErr: ""
           }
@@ -741,7 +832,14 @@ class Component extends DCLogic {
       grams: f.grams === "" ? null : f.grams,
       priceFrozen: f.horeca === "" ? null : f.horeca,
       priceBaked: f.retail === "" ? null : f.retail,
-      isNew: f.isNew
+      isNew: f.isNew,
+      // Apartenența pleacă ÎNTOTDEAUNA, și la creare și la modificare:
+      // formularul e stăpânul celor două bife, iar serverul judecă rândul
+      // rezultat, nu corpul singur — deci „aprind latura și-i scriu prețul"
+      // încape într-o singură salvare. Pe o bază de dinainte de 024 serverul
+      // le trece cu vederea, fără eroare.
+      inFrozen: !!f.inFrozen,
+      inBaked: !!f.inBaked
     };
 
     this.setState({ saving: true, formErr: "" });
@@ -759,14 +857,21 @@ class Component extends DCLogic {
         // salva poza, nici scăpa de produsul pe jumătate făcut.
         const id = f.id || r.id;
         if (eNou) this.setState({ form: Object.assign({}, this.state.form, { id }) });
+        // Pozele merg una după alta, nu deodată: sunt două cereri pe același
+        // produs, iar o urcare pusă peste alta ar face două UPDATE-uri care
+        // se calcă. Cea congelată prima, fiindcă ea e și poza de bază a
+        // amândurora — dacă a doua cade, produsul are măcar ce arăta pe site.
+        //
         // Rețeta merge ultima: e singura care are nevoie de numărul produsului
-        // și, dacă pică, celelalte două sunt deja salvate — omul poate repara
-        // doar cantitatea, fără să reia tot.
-        return this.uploadPhoto(id).then(() => this.salveazaReteta(id));
+        // și, dacă pică, celelalte sunt deja salvate — omul poate repara doar
+        // cantitatea, fără să reia tot.
+        return this.uploadPhoto(id, "congelat")
+          .then(() => this.uploadPhoto(id, "copt"))
+          .then(() => this.salveazaReteta(id));
       })
       .then(() => this.pull())
       .then(() => this.setState({
-        saving: false, form: null, pendingPhoto: null,
+        saving: false, form: null, pendingPhoto: null, pendingPhotoUrl: null,
         msg: eNou ? "Produsul a fost adăugat în catalog." : "Produsul a fost salvat."
       }))
       .catch((e) => {
@@ -782,10 +887,15 @@ class Component extends DCLogic {
         // reîmprospătăm lista din spate: altfel omul citește doar plângerea
         // despre fotografie și pleacă convins că n-a salvat nimic.
         const creat = eNou && this.state.form && this.state.form.id;
+        // CARE poză a căzut, nu doar „o poză". Cu două casete în formular,
+        // „fără fotografie" l-ar pune pe om s-o încerce pe cea care trecuse.
+        const careaPoza = e && e.latura
+          ? "fotografia pentru " + LATURA[e.latura]
+          : "fotografie";
         this.setState({
           saving: false,
           formErr: creat
-            ? "Produsul a fost adăugat în catalog, dar fără fotografie: " + e.message
+            ? "Produsul a fost adăugat în catalog, dar fără " + careaPoza + ": " + e.message
               + " Alege altă fotografie și apasă „Salvează”, ori renunță — produsul rămâne, cu poza lipsă."
             : e.message
         });
@@ -794,19 +904,36 @@ class Component extends DCLogic {
       .finally(() => { this.__saving = false; });
   }
 
-  /** Fotografia pleacă separat: e fișier, nu JSON. */
-  uploadPhoto(id) {
-    const file = this.state.pendingPhoto;
+  /**
+   * Fotografia pleacă separat: e fișier, nu JSON.
+   *
+   * Se cheamă o dată pentru fiecare latură, și tace când caseta ei e goală —
+   * o salvare în care omul a schimbat numai numele nu urcă nimic.
+   *
+   * „latura" hotărăște COLOANA în care ajunge numele fișierului, nu numele
+   * lui: ruta scrie același „prod-<id>-<hex8>.<ext>" în amândouă cazurile.
+   * Câmpul lipsă înseamnă „congelat", deci un panou mai vechi scrie unde
+   * scria dintotdeauna.
+   */
+  uploadPhoto(id, latura) {
+    const file = (this.state.pendingPhoto || {})[latura];
     if (!file || !id) return Promise.resolve();
 
     const fd = new FormData();
     fd.append("photo", file);
+    fd.append("latura", latura);
     // Prin clientul comun, nu printr-un fetch de mână: așa primește tokenul
     // CSRF (și din memorie, când sessionStorage e blocat), reîncercarea la
     // token vechi și aceleași mesaje de eroare ca restul paginii.
     return gp.upload("/products/" + id + "/photo", fd)
       .then(() => undefined)
-      .catch((e) => { throw new Error((e && e.message) || "Fotografia nu a putut fi încărcată."); });
+      .catch((e) => {
+        // Latura călătorește cu eroarea, nu în textul ei: mesajul serverului
+        // rămâne întreg, iar save() îl îmbracă în propoziția lui.
+        const gresit = new Error((e && e.message) || "Fotografia nu a putut fi încărcată.");
+        gresit.latura = latura;
+        throw gresit;
+      });
   }
 
   /**
@@ -881,8 +1008,54 @@ class Component extends DCLogic {
     const st = S.sterge;
 
     const q = S.search.trim().toLowerCase();
+
+    // ── cele două cataloage ──────────────────────────────────────────────
+    //
+    // Toate socotelile de mai jos privesc BIFELE venite de la server, nu
+    // prețurile: patronul a cerut anume ca apartenența să se bifeze, nu să se
+    // ghicească. Un produs poate sta legiuit cu prețul scris și latura stinsă
+    // — de-aia „!== false" și nu „=== true": pe o bază de dinainte de
+    // migrarea 024 API-ul răspunde purtarea de până atunci, iar un câmp lipsă
+    // n-are voie să stingă un catalog.
+    const lat = S.latura || "amandoua";
+    const eIn = (p, l) => (l === "congelat" ? p.inFrozen !== false : p.inBaked !== false);
+    const inNiciunCatalog = (p) => !eIn(p, "congelat") && !eIn(p, "copt");
+    // Laturile bifate cărora le lipsește prețul. Prin panou starea asta nu se
+    // poate naște — serverul o refuză (product_laturi_verifica) —, deci dacă
+    // apare, cineva a scris de-a dreptul în baza de date.
+    const bifatFaraPret = (p) => [
+      eIn(p, "congelat") && p.priceFrozen === null ? "congelat" : "",
+      eIn(p, "copt") && p.priceBaked === null ? "gata de servire" : ""
+    ].filter(Boolean);
+    // Poza rezolvată a laturii deschise — pe „Amândouă", cea congelată, care e
+    // și poza de bază. Rezolvarea vine de la server („photoFor"): făcută aici
+    // ar fi a doua copie a unei reguli pe care magazinul, panoul și fișierele
+    // de SEO trebuie s-o vadă la fel.
+    const pozaRand = (p) => (p.photoFor || {})[lat === "copt" ? "baked" : "frozen"]
+      || p.photo || FOTO_LIPSA;
+
+    // Pastila de pe rând: semn și comutator deodată, pe contractul lui
+    // „onPauza" de mai jos — un PATCH de un singur câmp, o lămurire la
+    // trecerea cu mouse-ul, ștearsă când latura e stinsă.
+    const latCls = (p, l) => (eIn(p, l) ? "pr-on" : "");
+    const latTitlu = (p, l) => {
+      const pret = l === "congelat" ? p.priceFrozen : p.priceBaked;
+      return eIn(p, l)
+        ? "E în catalogul „" + LATURA[l] + "”. Apasă ca să-l scoți de acolo — prețul rămâne scris."
+        : "Nu e în catalogul „" + LATURA[l] + "”. Apasă ca să-l pui la loc"
+          + (pret === null ? " — dar întâi scrie-i prețul, din „Editează”." : ".");
+    };
+    const onLat = (p, l) => () => self.patchProduct(
+      p,
+      l === "congelat" ? { inFrozen: !eIn(p, l) } : { inBaked: !eIn(p, l) },
+      eIn(p, l)
+        ? "„" + p.name + "” a ieșit din catalogul „" + LATURA[l] + "”. Prețul rămâne scris."
+        : "„" + p.name + "” a intrat în catalogul „" + LATURA[l] + "”."
+    );
+
     const visible = S.products.filter((p) =>
-      !q || (p.name + " " + (p.nameEn || "")).toLowerCase().indexOf(q) >= 0);
+      (!q || (p.name + " " + (p.nameEn || "")).toLowerCase().indexOf(q) >= 0)
+      && (lat === "amandoua" || eIn(p, lat)));
 
     const groups = S.cats.map((c) => {
       const rows = visible.filter((p) => p.category === c.slug);
@@ -893,32 +1066,48 @@ class Component extends DCLogic {
         rows: rows.map((p) => ({
           name: p.name,
           sub: [p.nameEn, p.grams ? p.grams + " g" : ""].filter(Boolean).join(" · "),
-          photo: p.photo || FOTO_LIPSA,
+          photo: pozaRand(p),
           isNew: !!p.isNew,
           hidden: !p.active,
           priceMain: lei(p.priceFrozen),
-          priceAlt: p.priceBaked === null ? "" : "raft " + lei(p.priceBaked),
-          // Semnul roșu. Lipsa unui preț nu e o părere a paginii: serverul
-          // refuză poziția la salvarea comenzii („api/lib/orders.php",
-          // missing_price), iar magazinul nu mai arată deloc produsul — nici
-          // în browser, nici pe pagina scrisă de server, nici pe harta
-          // sitului. Rândul din Catalog e singurul loc din toată aplicația
-          // unde produsul se mai vede, deci e singurul loc unde greșeala se
-          // mai poate afla.
+          priceAlt: p.priceBaked === null ? "" : "gata de servire " + lei(p.priceBaked),
+
+          latFCls: latCls(p, "congelat"),
+          latFTitlu: latTitlu(p, "congelat"),
+          onLatF: onLat(p, "congelat"),
+          latBCls: latCls(p, "copt"),
+          latBTitlu: latTitlu(p, "copt"),
+          onLatB: onLat(p, "copt"),
+
+          // Semnul roșu — și ce NU mai e roșu de la două cataloage încoace.
           //
-          // Textul spune CARE preț lipsește, fiindcă asta e reparația. Și nu
-          // spune același lucru în cele două cazuri: fără amândouă prețurile
-          // produsul nu se vinde nicicum, iar cu unul singur lipsă se ascunde
-          // din magazin, dar personalul îl mai poate pune pe o comandă luată
-          // la telefon, în varianta care are preț.
-          faraPret: p.priceFrozen === null || p.priceBaked === null,
-          faraPretText: p.priceFrozen === null && p.priceBaked === null
-            ? "fără preț — nu se vinde"
-            : (p.priceFrozen === null ? "fără preț HoReCa" : "fără preț de raft")
-              + " — ascuns din magazin",
-          faraPretTitlu: p.priceFrozen === null && p.priceBaked === null
-            ? "Produsul n-are niciun preț: nu apare în magazin și nu se poate pune pe o comandă. Apasă „Editează” și completează amândouă prețurile."
-            : "Magazinul arată numai produsele cu amândouă prețurile, fiindcă cumpărătorul alege singur varianta. Apasă „Editează” și completează prețul care lipsește.",
+          // „Numai congelate" sau „numai gata de servire" e de-acum o stare
+          // LEGIUITĂ, chiar lucrul care s-a cerut: un produs poate trăi într-un
+          // singur catalog, cu prețul celuilalt rămas scris în casetă. Ea nu e
+          // însemnată aici deloc — o spun deja pastilele de pe rând, iar un
+          // semn roșu peste o hotărâre a patronului ar fi panoul contrazicând
+          // zgomotos tocmai ce i s-a cerut.
+          //
+          // Rămân roșii DOUĂ stări, și amândouă sunt adevărate greșeli:
+          //
+          //   1. în NICIUN catalog. E chiar produsul ascuns de azi: nu apare
+          //      în magazin, nici în pagina scrisă de server, nici pe harta
+          //      sitului, iar la salvarea comenzii serverul refuză poziția
+          //      („api/lib/orders.php", missing_price). Rândul din Catalog e
+          //      singurul loc din toată aplicația unde se mai vede, deci
+          //      singurul loc unde greșeala se mai poate afla;
+          //   2. bifat într-un catalog în care n-are preț. Prin panou nu se
+          //      poate ajunge aici — serverul păzește invariantul —, deci
+          //      starea asta înseamnă că cineva a scris de-a dreptul în baza
+          //      de date. Se spune pe față, fiindcă altfel produsul lipsește
+          //      din partea aceea fără ca nimeni să afle de ce.
+          faraPret: inNiciunCatalog(p) || bifatFaraPret(p).length > 0,
+          faraPretText: inNiciunCatalog(p)
+            ? "în niciun catalog — nu se vinde"
+            : "fără preț " + bifatFaraPret(p).join(" și ") + " — ascuns acolo",
+          faraPretTitlu: inNiciunCatalog(p)
+            ? "Produsul nu e în niciun catalog: nu apare în magazin și nu se poate pune pe o comandă. Aprinde o pastilă de pe rând. Dacă nu se mai vinde deloc, scoate-l din catalog cu butonul de alături — aia e fapta care se numește așa."
+            : "Produsul e bifat într-un catalog în care n-are preț, deci acolo nu se vede. Prin panou starea asta nu se poate naște: uită-te ce s-a importat în baza de date. Apasă „Editează” și scrie prețul, ori stinge pastila laturii.",
           onEdit: () => self.openForm(p),
 
           // Comutatorul. Nu șterge niciodată nimic: mută „active" într-o parte
@@ -952,7 +1141,11 @@ class Component extends DCLogic {
           } })
         }))
       };
-    }).filter((g) => g.rows.length > 0 || !q);
+    // O grupă fără produse pe latura deschisă se ascunde singură — hotărârea
+    // patronului, și de-acolo ies „grupele care se văd numai la gata de
+    // servire", fără nicio bifă pe grupă. Dar pe „Amândouă" o grupă goală se
+    // vede totuși: ca s-o umpli trebuie să știi că există.
+    }).filter((g) => g.rows.length > 0 || (!q && lat === "amandoua"));
 
     const cats = S.cats.map((c, i) => {
       const move = (d) => () => {
@@ -999,9 +1192,38 @@ class Component extends DCLogic {
 
     const f = S.form || {
       name: "", nameEn: "", desc: "", descEn: "", category: "",
-      grams: "", horeca: "", retail: "", isNew: false, photo: ""
+      grams: "", horeca: "", retail: "", isNew: false, photo: "", photoBaked: "",
+      inFrozen: true, inBaked: true
     };
     const ff = (key) => (e) => set({ form: Object.assign({}, S.form, { [key]: e.target.value }) });
+
+    /* --- cele două fotografii, fiecare pe latura ei --- */
+    //
+    // „pendingPhoto" e de-acum o pereche cheiată pe latură, nu un singur
+    // fișier: formularul are două casete, iar alegerea uneia n-are voie s-o
+    // uite pe cealaltă. Rămâne „null" cât nu s-a ales nimic — așa se și
+    // golește la închiderea formularului, dintr-o singură atingere.
+    const alegePoza = (l) => (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      // Previzualizare locală: fișierul pleacă spre server abia la salvare,
+      // ca o poză aleasă din greșeală să nu rămână urcată degeaba.
+      let url = "";
+      try { url = URL.createObjectURL(file); } catch (err) {}
+      set({
+        pendingPhoto: Object.assign({}, S.pendingPhoto, { [l]: file }),
+        pendingPhotoUrl: Object.assign({}, S.pendingPhotoUrl, { [l]: url })
+      });
+    };
+    // Adresa locală se ia în seamă NUMAI cât fișierul ei mai e de urcat.
+    // Altfel o previzualizare rămasă din formularul de dinainte ar acoperi
+    // poza adevărată a produsului deschis acum.
+    const pozaLocala = (l) => ((S.pendingPhoto || {})[l] ? (S.pendingPhotoUrl || {})[l] : "");
+    const ajutorPoza = (l) => ((S.pendingPhoto || {})[l]
+      ? "Se încarcă la salvare: " + S.pendingPhoto[l].name
+      : (l === "copt"
+        ? "Fără o poză aici, la gata de servire se arată poza congelată. JPEG, PNG sau WebP, maximum 5 MB."
+        : "Se arată la congelate și, cât timp gata-de-servire n-are poza ei, și acolo. JPEG, PNG sau WebP, maximum 5 MB — se verifică după conținut, nu după extensie."));
 
     /* --- rețeta produsului deschis în formular --- */
     const rec = (S.form && S.form.recipe) || [];
@@ -1166,11 +1388,37 @@ class Component extends DCLogic {
       isProducts: S.tab === "produse",
       isCategories: S.tab === "grupe",
 
+      // Cele trei poziții ale comutatorului. Ordinea e a catalogului, nu a
+      // ecranului: întâi congelatele — latura cu care pornește magazinul —,
+      // apoi gata de servire, apoi lipsa cernerii.
+      //
+      // Cifrele se retrag cât ține caseta roșie, din aceeași pricină ca
+      // insignele filelor de mai sus: o cifră e o afirmație, iar pagina
+      // n-apucase să numere nimic.
+      laturiTabs: [
+        { k: "congelat", l: "Congelate", t: "Numai produsele din catalogul de congelate." },
+        { k: "copt", l: "Gata de servire", t: "Numai produsele din catalogul de gata de servire." },
+        { k: "amandoua", l: "Amândouă", t: "Tot catalogul, ca să se vadă dintr-o privire ce lipsește dintr-o parte." }
+      ].map((o) => ({
+        label: o.l,
+        titlu: o.t,
+        count: S.loaded && !S.eroare
+          ? String(o.k === "amandoua" ? S.products.length : S.products.filter((p) => eIn(p, o.k)).length)
+          : "",
+        cls: lat === o.k ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        onClick: () => set({ latura: o.k })
+      })),
+
       groups,
       empty: S.loaded && visible.length === 0 && !S.eroare,
+      // Trei pricini de listă goală, trei propoziții. A treia e nouă și se
+      // cuvine spusă anume: catalogul NU e gol, doar latura deschisă e — iar
+      // ieșirea e chiar comutatorul de deasupra.
       emptyLine: S.products.length === 0
         ? "Catalogul e gol. Apasă „+ Produs nou”."
-        : "Niciun produs nu se potrivește căutării.",
+        : q
+          ? "Niciun produs nu se potrivește căutării."
+          : "Niciun produs nu e în catalogul „" + (LATURA[lat] || "") + "”. Treci pe „Amândouă” și aprinde pastila laturii pe rândurile care trebuie.",
 
       cats,
       catDraft: S.catDraft || "",
@@ -1193,7 +1441,18 @@ class Component extends DCLogic {
       f: {
         name: f.name, nameEn: f.nameEn, desc: f.desc, descEn: f.descEn,
         category: f.category, grams: f.grams, horeca: f.horeca, retail: f.retail,
-        isNew: f.isNew, photo: (S.pendingPhoto && S.pendingPhotoUrl) || f.photo || FOTO_LIPSA
+        isNew: f.isNew,
+        inFrozen: !!f.inFrozen, inBaked: !!f.inBaked,
+        // Prețul laturii stinse rămâne VĂZUT, doar șters. Ascuns ar ascunde
+        // tocmai ce s-a promis că se păstrează — că scoaterea dintr-un catalog
+        // nu pierde prețul de acolo — iar omul l-ar scrie a doua oară degeaba.
+        horecaCls: "h-input h-numeric" + (f.inFrozen ? "" : " pr-stins"),
+        retailCls: "h-input h-numeric" + (f.inBaked ? "" : " pr-stins"),
+        // Miniaturile arată poza REZOLVATĂ a fiecărei laturi, adică chiar ce
+        // vede cumpărătorul: latura fără poză a ei o ia pe a celeilalte. Poza
+        // aleasă acum, dar încă neurcată, trece înaintea amândurora.
+        photo: pozaLocala("congelat") || f.photo || f.photoBaked || FOTO_LIPSA,
+        photoBaked: pozaLocala("copt") || f.photoBaked || f.photo || FOTO_LIPSA
       },
       catOpts: S.cats.map((c) => ({ v: c.slug, l: c.name })),
       onName: ff("name"), onNameEn: ff("nameEn"),
@@ -1201,24 +1460,27 @@ class Component extends DCLogic {
       onCategory: ff("category"), onGrams: ff("grams"),
       onHoreca: ff("horeca"), onRetail: ff("retail"),
       onIsNew: () => set({ form: Object.assign({}, S.form, { isNew: !S.form.isNew }) }),
-      onPhoto: (e) => {
-        const file = e.target.files && e.target.files[0];
-        if (!file) return;
-        // Previzualizare locală: fișierul pleacă spre server abia la salvare,
-        // ca o poză aleasă din greșeală să nu rămână urcată degeaba.
-        let url = "";
-        try { url = URL.createObjectURL(file); } catch (err) {}
-        set({ pendingPhoto: file, pendingPhotoUrl: url });
-      },
-      photoHelp: S.pendingPhoto
-        ? "Se încarcă la salvare: " + S.pendingPhoto.name
-        : "JPEG, PNG sau WebP, maximum 5 MB. Se verifică după conținut, nu după extensie.",
+      // Bifele nu ating prețul, nici la aprindere, nici la stingere. Serverul
+      // judecă rândul REZULTAT, nu corpul singur, deci „aprind latura și-i
+      // scriu prețul" încape într-o singură salvare.
+      onInFrozen: () => set({ form: Object.assign({}, S.form, { inFrozen: !S.form.inFrozen }) }),
+      onInBaked: () => set({ form: Object.assign({}, S.form, { inBaked: !S.form.inBaked }) }),
+      onPhoto: alegePoza("congelat"),
+      onPhotoBaked: alegePoza("copt"),
+      photoHelp: ajutorPoza("congelat"),
+      photoBakedHelp: ajutorPoza("copt"),
+      horecaHelp: f.inFrozen
+        ? ""
+        : "Produsul nu e în catalogul ăsta. Prețul rămâne scris — se întoarce cu bifa de sus, fără să-l cauți.",
+      retailHelp: f.inBaked
+        ? ""
+        : "Produsul nu e în catalogul ăsta. Prețul rămâne scris — se întoarce cu bifa de sus, fără să-l cauți.",
 
       saveCls: S.saving ? "h-btn h-btn--primary h-btn--loading" : "h-btn h-btn--primary",
       saveLabel: S.saving ? "Se salvează…" : (S.form && S.form.id ? "Salvează" : "Adaugă în catalog"),
       onSave: () => self.save(),
-      onCancel: () => set({ form: null, formErr: "", pendingPhoto: null }),
-      onBackdrop: () => set({ form: null, formErr: "", pendingPhoto: null }),
+      onCancel: () => set({ form: null, formErr: "", pendingPhoto: null, pendingPhotoUrl: null }),
+      onBackdrop: () => set({ form: null, formErr: "", pendingPhoto: null, pendingPhotoUrl: null }),
       stop: (e) => { e.stopPropagation(); },
 
       /* --- fereastra de ștergere --- */

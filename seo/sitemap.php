@@ -87,12 +87,29 @@ function sitemap_chei(): array
             [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_TIMEOUT => 3]
         );
 
+        // Harta trimisă motoarelor pomenește fiecare produs care se vinde
+        // UNDEVA — reuniune, nu alăturare. Un produs numai gata-de-servire are
+        // o pagină bună (v. `seo/index.php`), deci lipsa lui de aici ar fi o
+        // pagină pe care nimic n-o arată către Google.
+        //
+        // Aceeași cădere ca la pagina publică, și din aceeași pricină: până la
+        // importul SQL coloanele nu există. Aici căderea contează chiar mai
+        // mult, fiindcă `catch`-ul de dedesubt întoarce o hartă GOALĂ, iar o
+        // hartă goală trimisă la Google e mai rea decât una veche.
+        $intreaba = static function (string $unde) use ($pdo): array {
+            return $pdo->query('SELECT slug, category FROM products
+                  WHERE active = 1 AND (' . $unde . ')
+                  ORDER BY sort, id')->fetchAll(PDO::FETCH_ASSOC);
+        };
+        try {
+            $produse = $intreaba('(in_frozen = 1 AND price_frozen IS NOT NULL)
+                    OR (in_baked = 1 AND price_baked IS NOT NULL)');
+        } catch (Throwable $eFaraLaturi) {
+            $produse = $intreaba('price_frozen IS NOT NULL AND price_baked IS NOT NULL');
+        }
+
         return [
-            'products'   => $pdo->query('SELECT slug, category FROM products
-                  WHERE active = 1
-                    AND price_frozen IS NOT NULL
-                    AND price_baked IS NOT NULL
-                  ORDER BY sort, id')->fetchAll(PDO::FETCH_ASSOC),
+            'products'   => $produse,
             'categories' => $pdo->query('SELECT slug FROM product_categories WHERE active = 1 ORDER BY sort, id')->fetchAll(PDO::FETCH_ASSOC),
         ];
     } catch (Throwable $e) {

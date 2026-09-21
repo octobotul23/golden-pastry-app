@@ -194,6 +194,16 @@ if [[ "$TABELE" -eq 0 ]]; then
   # Toate sunt idempotente și se uită întâi în information_schema, deci se pot
   # rula și peste ce a pus deja 001. Aceeași buclă, cu aceeași săritură peste
   # 001/002, ca în actualizeaza-vps.sh.
+  # Registrul migrărilor se face ÎNAINTEA buclei. `025` se cheamă 025, deci în
+  # ordinea numelui ar rula după `003`-`024`, iar cele dinaintea lui ar trece pe
+  # lângă un tabel care încă nu există și n-ar avea unde-și scrie numele. E
+  # idempotent, deci bucla îl poate lua încă o dată la rând, fără pagubă.
+  # Lipsa lui dintr-un pachet mai vechi nu oprește instalarea.
+  if [[ -e "$SQL_DIR/025_registru_migrari.sql" ]]; then
+    my --default-character-set=utf8mb4 "$DB_NAME" < "$SQL_DIR/025_registru_migrari.sql" \
+      || mor "registrul migrărilor n-a putut fi făcut — baza a rămas pe jumătate"
+  fi
+
   for f in "$SQL_DIR"/[0-9][0-9][0-9]_*.sql; do
     [[ -e "$f" ]] || continue
     case "$(basename "$f")" in 001_*|002_*) continue ;; esac
