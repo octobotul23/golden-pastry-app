@@ -7,7 +7,7 @@ reale, clienți reali și poze urcate de tine. Instalarea de la zero e în
 Ideea de bază, în două rânduri: **sursa e pe calculatorul tău, `deploy/` e doar
 rezultatul.** Modifici sursa, rulezi un script, urci ce a ieșit. Folderul
 `deploy/` se șterge și se reface complet la fiecare construire
-(`.claude/build-deploy.mjs:661`), deci orice ai scrie direct acolo dispare.
+(`.claude/build-deploy.mjs:673`), deci orice ai scrie direct acolo dispare.
 
 ---
 
@@ -17,8 +17,8 @@ Cinci lucruri. Niciunul nu are excepții.
 
 **1. `public_html/api/config.php` nu se suprascrie niciodată.**
 Acolo stau parola bazei de date și cheia de criptare. Nu e în pachet deloc —
-scriptul îl scoate (`.claude/build-deploy.mjs:868-870`) și mai verifică o dată
-la final (`:888-895`), deci nicio urcare nu-l poate atinge din greșeală.
+scriptul îl scoate (`.claude/build-deploy.mjs:879-881`) și mai verifică o dată
+la final (`:899-906`), deci nicio urcare nu-l poate atinge din greșeală.
 **Cheia de criptare nu se schimbă niciodată după instalare.** Dacă se schimbă,
 `api/lib/crypto.php:85` întoarce `null`, iar `api/lib/settings.php:36` doar
 scrie o linie în jurnal și merge mai departe — *tăcut*. Efectul vizibil:
@@ -269,7 +269,7 @@ seed-ului.
 ### Cum verifici că migrarea a intrat
 
 `api/verifica.php` **nu te ajută**: pe o instalare vie răspunde 404
-(`api/verifica.php:926`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
+(`api/verifica.php:998-1004`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
 
 **Întâi întreabă registrul.** Din `025_registru_migrari.sql` încoace, fiecare
 migrare își scrie numele într-un tabel când rulează, deci răspunsul se citește
@@ -723,7 +723,7 @@ mai puțini lei, fără nicio explicație.
 **Prețul gol nu mai poate face asta.** Până la cele două cataloage, ștergerea
 unui singur preț ascundea produsul din **amândouă** variantele, deși atinseseși
 un singur câmp. Acum serverul refuză golirea unui preț cât catalogul lui e bifat
-(422, mesajul numește catalogul și caseta — `api/routes/catalog.php:766`), iar
+(422, mesajul numește catalogul și caseta — `api/routes/catalog.php:794`), iar
 stingerea bifei **lasă prețul scris**. Deci scoaterea dintr-un catalog e o
 singură apăsare, și atunci pier din coșuri numai rândurile laturii aceleia;
 cealaltă nu se clintește.

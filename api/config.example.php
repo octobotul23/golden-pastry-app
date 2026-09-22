@@ -51,9 +51,9 @@ return [
 
     // --- codul de instalare ---------------------------------------------
     // Cu el se deschide api/setup.php, pagina care creează primul cont de
-    // administrator. Pune aici un cod de cel puțin 12 caractere (Password
-    // Generator din cPanel îți dă unul) și scrie-l în formular la pasul 6 al
-    // publicării. Fără el, pagina nu creează niciun cont.
+    // administrator. Pune aici un cod de cel puțin 12 caractere (o comandă
+    // `openssl rand -base64 24` pe server îți dă unul) și scrie-l în formular
+    // la pasul 6 al publicării. Fără el, pagina nu creează niciun cont.
     //
     // De ce: setup.php ajunge pe api.goldenpastry.ro odată cu restul
     // fișierelor și stă acolo până când îți aduci aminte să-l ștergi. Între

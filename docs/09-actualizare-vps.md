@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.4.1/deploy
+  Pachet: /root/plasture-vps 2.4.2/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -128,7 +128,7 @@ grep -c session_days_panou /var/www/gp/api/lib/auth.php
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
    și din curățenie (`actualizeaza-vps.sh:878`), iar folderul pozelor e citit din
    `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:808`,
-   `api/routes/catalog.php:627`).
+   `api/routes/catalog.php:655`).
 6. **Drepturile**: totul pe `www-data`, `755` la foldere, `644` la fișiere,
    `640` la `config.php`.
 7. **Apache**: întâi `configtest`, și abia dacă trece, `reload`. O configurație
@@ -235,6 +235,81 @@ apache2ctl -M | grep expires
 
 ---
 
+## Pozele mari și cele trei plafoane
+
+Din 2.4.2 Catalogul primește fotografii de până la **10 MB**, iar serverul le
+micșorează singur la 1600 de puncte pe latura lungă. Asta înseamnă că poți urca
+direct de pe telefon, fără să mai treci poza prin vreun program.
+
+Dar o poză care urcă trece prin **trei plafoane**, nu unul, iar ele cad în
+grija a două unelte deosebite. Două le pune plasturele; al treilea, când
+există, e numai al tău.
+
+| # | Plafonul | Cine îl pune | Ce vezi când lovești în el |
+|---|---|---|---|
+| 1 | `upload_max_filesize` | plasturele | „Serverul primește acum fotografii de cel mult…" |
+| 2 | `post_max_size` | plasturele | același mesaj — corpul cererii cară și plicul, nu doar fișierul |
+| 3 | `client_max_body_size` | **tu, dacă ai nginx** | „Serverul web a oprit fișierul înainte să ajungă la aplicație" |
+
+**Primele două sunt ale lui PHP** și vin gata scrise în pachet, în două locuri,
+fiindcă PHP le citește pe căi deosebite după cum e pornit:
+
+- `api/.htaccess` — blocul `php_value`, citit de **Apache cu PHP ca modul**.
+  Stă sub `<IfModule php_module>` dinadins: pe un server unde modulul lipsește,
+  rândurile acelea nepăzite ar face Apache să răspundă **500 la tot**, nu doar
+  la poze. Măsurat pe Apache 2.4.68.
+- `api/.user.ini` — perechea pentru **PHP-FPM**, adică felul în care rulează
+  PHP pe mai toate instalările de azi. Acolo `php_value` din `.htaccess` nu se
+  aplică deloc, iar fișierul ăsta rămâne singurul care vorbește.
+
+Nu trebuie să alegi între ele: se urcă amândouă, iar fiecare server îl citește
+pe al lui și îl trece cu vederea pe celălalt.
+
+**Al treilea nu e al lui PHP, și de-aia e cel care surprinde.**
+`client_max_body_size` e al lui nginx, iar nginx **taie cererea înainte să
+pornească PHP**. Nu e vorba de un mesaj mai puțin limpede: e vorba de niciun
+mesaj. Codul nostru care spune „poza e prea mare" e scris în PHP, iar PHP nu
+apucă să ruleze. Browserul primește o pagină „413" a lui nginx, goală.
+Implicitul lui nginx e **1 MB** — adică sub aproape orice fotografie făcută cu
+telefonul.
+
+**De unde știi dacă te privește.** Deschide `https://api.DOMENIU/verifica.php`
+și caută rândul **„Plafonul serverului web (PHP nu-l poate vedea)"**. El scrie
+ce server ai, cu numele lui, și — când e nginx — cifra pe care trebuie s-o pui.
+Pe Apache rândul e verde și n-ai nimic de făcut: `.htaccess` chiar se citește
+acolo, iar al treilea plafon nici nu există.
+
+**Leacul, pe nginx.** Se dă o singură dată în viața serverului. În blocul
+`server` al site-ului — de obicei `/etc/nginx/sites-available/` —, lângă
+`server_name`:
+
+```
+client_max_body_size 13M;
+```
+
+apoi:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+`nginx -t` cântărește configurarea **înainte** de repornire: dacă ai greșit o
+acoladă, îți spune pe ce rând, iar site-ul rămâne în picioare cu cea veche.
+Fără el, un `reload` peste o configurare stricată poate lăsa serverul oprit.
+
+**De ce 13, dacă panoul promite 10.** Fiindcă `post_max_size` cântărește
+**corpul întreg al cererii**, nu fișierul: peste poză mai vin numele câmpurilor,
+hotarele dintre ele și latura pe care se urcă. Cele trei cifre din pachet sunt
+deci în scară — 10 promis, 11 îngăduit pe fișier, 13 pe cerere —, iar plafonul
+lui nginx trebuie să fie **cel puțin cât cel mai mare dintre ele**. Mai mult nu
+strică: el nu rezervă nimic, doar taie peste o cifră.
+
+**Dacă ai Apache, nu ai ce face aici.** Ghidul de instalare
+(`08-publicare-vps-hostinger.md`) cere Apache anume, fiindcă rescrierile de
+adrese ale aplicației sunt scrise în `.htaccess`, iar nginx nu-l citește. Pe o
+instalare făcută după el, rândul din `verifica.php` va fi verde de la sine.
+
+---
 ## Opțiuni
 
 | Opțiune | La ce e bună |

@@ -54,7 +54,8 @@ check(
     $phpOk,
     PHP_VERSION,
     'Aplicația folosește match() și str_starts_with(), apărute în PHP 8.0. '
-        . 'Schimb-o din cPanel → Select PHP Version.'
+        . 'Pe VPS se instalează o versiune nouă și se trece site-ul pe ea; pașii '
+        . 'întregi sunt în ghidul de instalare, docs/08-publicare-vps-hostinger.md.'
 );
 
 // Versiunea din phpMyAdmin NU este neapărat aceasta: phpMyAdmin rulează pe
@@ -73,9 +74,9 @@ if (isset($eol[$branch])) {
         'Actualizări de securitate pentru PHP ' . $branch,
         $supported,
         $supported ? 'până la ' . $eol[$branch] : 'oprite din ' . $eol[$branch],
-        'PHP ' . $branch . ' nu mai primește corecții de securitate. Găzduirea are '
-            . 'versiuni mai noi instalate — treci pe cea mai nouă din cPanel → '
-            . 'Select PHP Version. Aplicația funcționează pe oricare de la 8.0 în sus.',
+        'PHP ' . $branch . ' nu mai primește corecții de securitate. Pe VPS se pune '
+            . 'cea mai nouă (`sudo apt install php8.4-fpm php8.4-mysql php8.4-mbstring`) '
+            . 'și se trece site-ul pe ea. Aplicația funcționează pe oricare de la 8.0 în sus.',
         false
     );
 }
@@ -85,15 +86,36 @@ check('Arhitectură pe 64 de biți', PHP_INT_SIZE >= 8, PHP_INT_SIZE * 8 . ' bi�
 
 /* ----------------------------------------------------------- extensii -- */
 
+// Al treilea câmp e NUMELE PACHETULUI de pe Ubuntu, iar el nu e numele
+// extensiei: `pdo_mysql` se pune cu `php8.3-mysql`. `null` înseamnă „e parte
+// din PHP" — pentru astea nu există ce instala, iar o îndrumare care ar fi
+// spus „apt install php8.3-json" l-ar fi trimis pe om după un pachet care nu
+// există.
 $ext = [
-    'pdo_mysql' => ['Legătura cu baza de date. Fără ea aplicația nu pornește deloc.', true],
-    'openssl'   => ['Criptează tokenurile din Setări (WhatsApp, Telegram) și codul tabletelor.', true],
-    'mbstring'  => ['Taie corect textele cu diacritice în mesajele de WhatsApp.', true],
-    'curl'      => ['Trimite mesajele către WhatsApp și Telegram.', false],
-    'json'      => ['Formatul în care vorbesc paginile cu serverul.', true],
-    'filter'    => ['Validează adresele de e-mail.', true],
+    'pdo_mysql' => ['Legătura cu baza de date. Fără ea aplicația nu pornește deloc.', true, 'mysql'],
+    'openssl'   => ['Criptează tokenurile din Setări (WhatsApp, Telegram) și codul tabletelor.', true, null],
+    'mbstring'  => ['Taie corect textele cu diacritice în mesajele de WhatsApp.', true, 'mbstring'],
+    'curl'      => ['Trimite mesajele către WhatsApp și Telegram.', false, 'curl'],
+    'json'      => ['Formatul în care vorbesc paginile cu serverul.', true, null],
+    'filter'    => ['Validează adresele de e-mail.', true, null],
+    // Fără ea pozele urcate NU se micșorează: ajung pe site la mărimea de pe
+    // telefon, iar clientul de pe date mobile le descarcă întregi. Nimic nu se
+    // strică, deci nu e blocantă — dar se vede la factura de trafic.
+    'gd'        => ['Micșorează pozele urcate la 1600 de puncte pe latura lungă.', false, 'gd'],
 ];
-foreach ($ext as $name => [$why, $blocking]) {
+// Versiunea se citește din PHP-ul care chiar rulează, nu se scrie cu mâna:
+// pe un server trecut la 8.4 o îndrumare cu „8.3" scris în cod ar fi trimis
+// spre un pachet greșit tocmai în clipa în care omul are nevoie de ea.
+$phpV = PHP_MAJOR_VERSION . '.' . PHP_MINOR_VERSION;
+$cumSePune = static function (?string $pachet) use ($phpV): string {
+    if ($pachet === null) {
+        return ' E parte din PHP: dacă lipsește, instalarea de PHP e ciuntită — pune-o la loc cu „sudo apt install --reinstall php' . $phpV . '-common".';
+    }
+    return ' Se pune cu „sudo apt install php' . $phpV . '-' . $pachet
+        . '", apoi „sudo systemctl reload php' . $phpV . '-fpm" (ori apache2, după cum e serverul).';
+};
+
+foreach ($ext as $name => [$why, $blocking, $pachet]) {
     $has = extension_loaded($name);
     check(
         'Extensia ' . $name,
@@ -101,7 +123,7 @@ foreach ($ext as $name => [$why, $blocking]) {
         $has ? 'prezentă' : 'LIPSEȘTE',
         $why . ($name === 'curl'
             ? ' Fără ea se folosesc stream-urile PHP, dar numai dacă allow_url_fopen este pornit.'
-            : ' Activeaz-o din cPanel → Select PHP Version → Extensions.'),
+            : $cumSePune($pachet)),
         $blocking
     );
 }
@@ -164,15 +186,57 @@ check(
     false
 );
 
+/*
+ * Al treilea prag, și singurul despre care PHP nu poate spune nimic.
+ *
+ * Cele două de mai sus — `upload_max_filesize` și `post_max_size` — se citesc
+ * cu `ini_get()`, fiindcă sunt ale lui PHP. `client_max_body_size` e al lui
+ * nginx, iar nginx taie cererea ÎNAINTE să pornească PHP: la o poză prea mare
+ * browserul primește o pagină „413" a lui nginx, fără niciun rând de-al
+ * nostru în ea. Adică tocmai felul de cădere despre care panoul n-are cum să
+ * spună de ce — de-aia se scrie aici, unde omul se uită anume.
+ *
+ * Implicitul lui nginx e 1 MB, adică sub orice poză făcută cu telefonul.
+ */
+$soft   = trim((string) ($_SERVER['SERVER_SOFTWARE'] ?? ''));
+$eNginx = $soft !== '' && stripos($soft, 'nginx') !== false;
+$cere   = $hasPoze ? poza_marime_text($pozeLim['post']) : '13 MB';
+check(
+    'Plafonul serverului web (PHP nu-l poate vedea)',
+    !$eNginx,
+    $soft !== '' ? $soft : 'serverul nu-și spune numele',
+    'Pe nginx mai e un plafon peste cele două de sus: „client_max_body_size", implicit 1 MB. El taie cererea înainte să pornească PHP, deci o poză prea mare cade cu o pagină „413" goală, fără niciun mesaj de-al aplicației. Pune-l cel puțin ' . $cere . ' în blocul „server" al site-ului (/etc/nginx/sites-available/…), apoi „sudo nginx -t && sudo systemctl reload nginx".',
+    false
+);
+
 check('Funcția mail()', function_exists('mail'), function_exists('mail') ? 'disponibilă' : 'dezactivată',
     'Notificările pe e-mail nu vor pleca. WhatsApp și Telegram nu sunt afectate.', false);
 
 /* ------------------------------------------------------------ fișiere -- */
 
-$configPath = __DIR__ . '/config.php';
+// Calea se află ca la `api/index.php` și `api/setup.php`: mediul are
+// întâietate. `GP_CONFIG` ține datele de conectare în afara folderului
+// publicat — așa pornește și pachetul de probă (.claude/deploy-server.php).
+// Căutat numai lângă el, fișierul părea lipsă pe un server care mergea
+// perfect. Iar rândul roșu fals era paguba mică: tot ce urmează atârnă de
+// `$hasConfig`, deci pagina se oprea din verificat exact acolo unde avea mai
+// mult de spus — și se oprea în verde, fiindcă cine se uită la ea numără
+// rânduri bune, nu rânduri lipsă.
+$dinMediu   = (string) (getenv('GP_CONFIG') ?: '');
+$configPath = $dinMediu !== '' ? $dinMediu : (__DIR__ . '/config.php');
 $hasConfig  = is_file($configPath);
-check('Fișierul api/config.php', $hasConfig, $hasConfig ? 'există' : 'lipsește',
-    'Copiază config.example.php ca config.php și completează datele bazei de date.');
+// Calea din mediu se SPUNE, dar nu se scrie întreagă: pe o găzduire încă fără
+// configurare pagina n-are niciun cod care s-o apere, iar o cale de pe disc
+// spusă unui trecător e mai mult decât îi trebuie.
+check(
+    'Fișierul api/config.php',
+    $hasConfig,
+    $hasConfig ? ($dinMediu !== '' ? 'există, pe calea din GP_CONFIG' : 'există') : 'lipsește',
+    $dinMediu !== ''
+        ? 'Variabila de mediu GP_CONFIG arată spre un fișier care nu există. Îndreapt-o, '
+            . 'ori scoate-o cu totul, ca să fie căutat api/config.php.'
+        : 'Copiază config.example.php ca config.php și completează datele bazei de date.'
+);
 
 /* ------------------------------------------------- baza de date, dacă se poate -- */
 
@@ -901,8 +965,16 @@ if ($hasConfig) {
 
 $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
     || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+// Certificatul e gratuit și se ia cu o comandă, dar comanda are două forme, iar
+// cea greșită nu strică nimic — doar nu găsește configurarea site-ului și iese
+// cu mâna goală. De vreme ce știm deja ce server web e (`$eNginx`, de mai sus),
+// se scrie numai forma lui.
+$certPachet = $eNginx ? 'python3-certbot-nginx' : 'python3-certbot-apache';
+$certCum    = $eNginx ? 'certbot --nginx' : 'certbot --apache';
 check('Conexiune HTTPS', $https, $https ? 'da' : 'nu',
-    'Activează SSL din cPanel (Let\'s Encrypt e gratuit). Fără HTTPS, parolele circulă necriptat.', false);
+    'Fără HTTPS, parolele circulă necriptat. Pe VPS certificatul e gratuit: '
+        . 'sudo apt install -y certbot ' . $certPachet . ', apoi sudo ' . $certCum
+        . '. Reînnoirea se face singură.', false);
 
 /* --------------------------------------------- zăvorul de după instalare -- */
 

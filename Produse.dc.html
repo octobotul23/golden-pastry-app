@@ -582,6 +582,20 @@ const lei = (v) => (v === null || v === undefined || v === "" ? "—" : Number(v
  */
 const LATURA = { congelat: "congelate", copt: "gata de servire" };
 
+// De ce n-a fost micșorată o poză, pe înțelesul cuiva care nu ține servere.
+// Vorbele vin de la `poza_micsoreaza()` (api/lib/poze.php); cele care nu
+// sunt aici se arată așa cum au venit, ca să nu tacă o pricină nouă.
+const POZA_PRICINA = {
+  gd_lipseste: "serverul n-are extensia gd",
+  nu_pot_citi_marimea: "serverul n-a putut citi mărimea ei",
+  nu_incape_in_memorie: "e prea mare pentru memoria serverului",
+  gd_nu_a_putut_deschide: "serverul n-a putut-o deschide",
+  gd_fara_memorie: "n-a încăput în memoria serverului",
+  nu_s_a_putut_scrie: "serverul n-a putut scrie poza mică",
+  nu_a_ajutat: "micșorată ar fi ieșit mai mare",
+  nu_s_a_putut_muta: "serverul n-a putut pune poza mică la loc",
+};
+
 /** „1 comandă" / „3 comenzi" — româna cere forma, nu doar cifra. */
 const bucati = (n, unu, multe) => n + " " + (n === 1 ? unu : multe);
 
@@ -814,6 +828,10 @@ class Component extends DCLogic {
     // tocmai creat de prima.
     if (this.__saving) return;
     this.__saving = true;
+    // Ce a pățit fiecare poză, strâns pe drum și spus la capăt. Se golește
+    // aici, nu la sfârșit: o salvare picată n-are voie să lase vorbe vechi
+    // care s-ar lipi de următoarea.
+    this.__pozeZis = [];
 
     // Verificăm aici ce poate fi verificat aici, ca să nu plece o cerere doar
     // ca să se întoarcă cu aceeași eroare. Serverul verifică oricum din nou.
@@ -876,7 +894,8 @@ class Component extends DCLogic {
       .then(() => this.pull())
       .then(() => this.setState({
         saving: false, form: null, pendingPhoto: null, pendingPhotoUrl: null,
-        msg: eNou ? "Produsul a fost adăugat în catalog." : "Produsul a fost salvat."
+        msg: (eNou ? "Produsul a fost adăugat în catalog." : "Produsul a fost salvat.")
+          + (this.__pozeZis.length ? " Poze: " + this.__pozeZis.join(", ") + "." : "")
       }))
       .catch((e) => {
         // Rețeta pleacă ultima, deci produsul și fotografia sunt deja salvate.
@@ -930,7 +949,20 @@ class Component extends DCLogic {
     // CSRF (și din memorie, când sessionStorage e blocat), reîncercarea la
     // token vechi și aceleași mesaje de eroare ca restul paginii.
     return gp.upload("/products/" + id + "/photo", fd)
-      .then(() => undefined)
+      .then((r) => {
+        // Serverul spune ce a făcut cu poza. „Era deja mică" e purtarea
+        // obișnuită și nu merită niciun cuvânt; celelalte pricini da —
+        // mai ales `gd_lipseste`, care altfel ar lăsa pozele întregi pe
+        // site fără ca nimeni să afle.
+        const p = (r && r.poza) || null;
+        if (p && p.micsorata) {
+          this.__pozeZis.push(LATURA[latura] + " " + p.scrisDe + " → " + p.scrisLa);
+        } else if (p && p.pricina && p.pricina !== "era_deja_mica") {
+          this.__pozeZis.push(LATURA[latura] + " a rămas la " + p.scrisDe
+            + " (" + (POZA_PRICINA[p.pricina] || p.pricina) + ")");
+        }
+        return undefined;
+      })
       .catch((e) => {
         // Latura călătorește cu eroarea, nu în textul ei: mesajul serverului
         // rămâne întreg, iar save() îl îmbracă în propoziția lui.
@@ -1226,8 +1258,8 @@ class Component extends DCLogic {
     const ajutorPoza = (l) => ((S.pendingPhoto || {})[l]
       ? "Se încarcă la salvare: " + S.pendingPhoto[l].name
       : (l === "copt"
-        ? "Se arată numai la gata de servire. Fără ea, produsul apare acolo fără poză. JPEG, PNG sau WebP, maximum 5 MB."
-        : "Se arată numai la congelate. JPEG, PNG sau WebP, maximum 5 MB — se verifică după conținut, nu după extensie."));
+        ? "Se arată numai la gata de servire. Fără ea, produsul apare acolo fără poză. JPEG, PNG sau WebP, maximum 10 MB."
+        : "Se arată numai la congelate. JPEG, PNG sau WebP, maximum 10 MB — se verifică după conținut, nu după extensie."));
 
     /* --- rețeta produsului deschis în formular --- */
     const rec = (S.form && S.form.recipe) || [];

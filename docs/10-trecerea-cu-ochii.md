@@ -5,12 +5,12 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **șaptezeci și opt de minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele douăsprezece plimbări stă singură și își spune la început cât
+Durează **optzeci și două de minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele treisprezece plimbări stă singură și își spune la început cât
 ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale bucăților care au
 minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o plimbare, se adună și aici.
 
-Cele douăsprezece, în ordinea în care se fac cel mai ușor:
+Cele treisprezece, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -37,9 +37,12 @@ Cele douăsprezece, în ordinea în care se fac cel mai ușor:
 11. **Runda 2.4.1** — fiecare latură numai cu poza ei (11.1), poza schimbată
     la o latură care n-o mai clintește pe cealaltă (11.2) și vitrina neatinsă
     de migrarea care a tăiat împrumutul (11.3).
-12. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+12. **Runda 2.4.2** — poza mare de pe telefon, micșorată pe server (12.1),
+    poza deja mică lăsată neatinsă, ca să rămână dreaptă (12.2), și pagina de
+    verificare, care spune ce server web ai (12.3).
+13. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A douăsprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
+A treisprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
 ai deschis mai devreme.
 
 ---
@@ -1055,13 +1058,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.4.0 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.4.2 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.4.1` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.4.2` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1228,7 +1231,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.4.0 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.4.2 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -1510,7 +1513,91 @@ nicio latură; dacă una arată rozeta, migrarea n-a rulat pe baza asta.
 nu la fiecare urcare.
 ---
 
-## 12 · Telefon, tabletă, calculator
+## 12 · Runda 2.4.2: poza direct de pe telefon
+
+*Patru minute. Cele trei bucăți de mai jos sunt lucrarea rundei ăsteia, deci
+singurele care n-au mai fost plimbate niciodată.*
+
+Până acum panoul primea fotografii de cel mult 5 MB, iar telefoanele de azi fac
+poze de opt și de nouă. Ai dat peste asta în prima zi de folosință: *„Tot nu mă*
+*lasă să încarc decât 5 MB la poze."* Runda ridică plafonul la **10 MB** și pune
+serverul să le **micșoreze singur**, la 1600 de puncte pe latura lungă — deci
+urci de pe telefon, fără să mai treci poza prin vreun program, iar magazinul
+rămâne la fel de ușor ca azi.
+
+Se plimbă **pe pachetul construit** (8101). Pagina de la 12.3 nu există pe 8100:
+acolo răspunde 404, fiindcă serverul de lucru nu duce cererile spre ea.
+
+Îți trebuie o fotografie **mare și adevărată**, făcută cu telefonul — nu una
+mică redenumită. Orice poză de peste 4 MB e bună.
+
+### 12.1 Poza mare urcă, iar panoul spune cât s-a micșorat
+
+`demo-fondator`, Catalog → un produs oarecare → **Modifică**. În caseta
+**„Fotografie — congelat"** alegi fotografia mare și salvezi.
+
+**Trebuie să vezi**, întâi, lămurirea de sub casetă scriind **„maximum 10 MB"**
+— până acum scria 5. Iar la capăt, în rândul verde de izbândă, o coadă nouă:
+
+```
+Produsul a fost salvat. Poze: congelate 9,4 MB → 310 KB.
+```
+
+Cifrele vor fi altele, dar forma e asta: **de unde** și **unde**. Coada aia e
+tot rostul rundei făcut vizibil. Fără ea, o poză de 9 MB s-ar face 300 KB în
+tăcere — iar dacă serverului i-ar lipsi `gd`, ar rămâne întreagă **tot** în
+tăcere, și n-ai afla până la factura de trafic.
+
+**Dacă scrie altceva** — de pildă „congelate a rămas la 9,4 MB (serverul n-are
+extensia gd)" — nu e un eșec al salvării: poza e pusă, dar nemicșorată, iar
+fraza din paranteză spune de ce. 12.3 îți arată unde se rezolvă.
+
+### 12.2 Poza care e deja mică nu se atinge deloc
+
+Același produs, aceeași casetă, dar acum urci o poză **mică** — sub 1600 de
+puncte pe latura lungă. Dacă ai una făcută cu telefonul **pe verticală**, cu
+atât mai bine.
+
+**Trebuie să vezi:** rândul verde scrie doar „Produsul a fost salvat.", **fără**
+coada „Poze:". Asta e dinadins — „era deja mică" e purtarea obișnuită și n-are
+ce spune; se aud numai pozele care chiar au pățit ceva.
+
+Și, pe site, poza apare **dreaptă**, nu culcată. Și asta e dinadins: o poză
+micșorată e re-scrisă de la zero, iar la re-scriere se pierde antetul în care
+telefonul notează pe ce parte a fost ținut. De-aia poza mică nu e atinsă
+**deloc** — nici măcar „re-scrisă la fel" —, iar cea mare capătă întoarcerea
+coaptă în puncte înainte să i se piardă antetul.
+
+### 12.3 Pagina de verificare îți spune ce server web ai
+
+Deschizi, în browser:
+
+```
+http://127.0.0.1:8101/api/verifica.php
+```
+
+Pe 8101 pachetul n-are `api/config.php` — el se scrie pe server, nu se
+construiește —, deci câteva rânduri ies roșii. E în regulă: aici te uiți la
+rândurile despre **server**, nu la cele despre bază.
+
+**Trebuie să vezi** două rânduri noi și unul schimbat:
+
+- **„Extensia gd"** — „Micșorează pozele urcate la 1600 de puncte pe latura
+  lungă." Pe calculatorul tău e verde.
+- **„Plafonul serverului web (PHP nu-l poate vedea)"** — cu numele serverului
+  scris în coloana din mijloc, așa cum se prezintă el.
+- **„Limita de mărime pentru fotografii"** spune acum „panoul promite 10 MB".
+  Până în runda asta scria 5.
+
+**Pe serverul adevărat**, rândul al doilea e singurul care îți spune dacă mai ai
+ceva de făcut. Dacă scrie **nginx**, mai există un plafon pe care PHP nu-l poate
+vedea, iar rândul îți dă comanda întreagă. Dacă scrie **Apache**, n-ai nimic de
+făcut. Nu e o întrebare la care pot răspunde eu din proiect — de-aia răspunde
+pagina, de pe serverul tău.
+
+---
+
+## 13 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -1608,11 +1695,11 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele zece ies, proba automată se mai trece o dată pe deasupra:
+Când toate cele treisprezece ies, proba automată se mai trece o dată pe deasupra:
 
 ```bash
 node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.4.1`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.4.2`.

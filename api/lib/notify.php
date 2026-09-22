@@ -611,7 +611,9 @@ function send_email(string $to, string $subject, string $text): void
     $encoded = '=?UTF-8?B?' . base64_encode($subject) . '?=';
 
     if (!@mail($to, $encoded, $text, $headers)) {
-        throw new RuntimeException('Funcția mail() a eșuat. Verifică setările de e-mail din cPanel.');
+        throw new RuntimeException('Funcția mail() a eșuat. Cel mai des, adresa '
+            . 'expeditoare nu e pe domeniul tău și serverul o refuză — schimb-o din '
+            . 'Setări → General și încearcă din nou butonul de test.');
     }
 }
 

@@ -78,8 +78,17 @@ intra cu 0 lei și nimeni nu vedea de unde vine.
 ### Fotografiile
 
 **Două casete, una de fiecare catalog:** „Fotografie — congelat" și
-„Fotografie — gata de servire". JPEG, PNG sau WebP, maximum 5 MB. Alegi
+„Fotografie — gata de servire". JPEG, PNG sau WebP, maximum 10 MB. Alegi
 fișierul, se încarcă la salvare.
+
+**Poza se micșorează pe server, și de-aia poți urca direct de pe telefon.**
+O fotografie de telefon are 4000 de puncte pe latură și câțiva megaocteți;
+serverul o aduce la 1600 de puncte pe latura lungă și o rescrie, deci ajunge
+pe la 200-400 KB. Cardul din magazin o arată oricum pe vreo 500 de puncte, iar
+clientul de pe date mobile n-o descarcă întreagă degeaba. Ce urci tu rămâne
+limpede și pe ecranele cu puncte dese. O poză deja mică nu se atinge deloc —
+iar una făcută cu telefonul ținut pe verticală se întoarce cum trebuie, fiindcă
+la rescriere se coace în puncte întoarcerea scrisă în antetul ei.
 
 **Fiecare latură arată numai poza ei.** O latură fără fotografie apare pe site
 cu substituentul casei, nu cu poza celeilalte. Miniatura de lângă fiecare

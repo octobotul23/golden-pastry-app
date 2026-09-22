@@ -240,6 +240,28 @@
         );
       }
 
+      // Un 413 nu vine NICIODATĂ de la noi: API-ul nostru nu-l trimite din
+      // niciun loc. E serverul web care a tăiat corpul cererii înainte ca PHP
+      // să pornească — pe nginx `client_max_body_size`, implicit 1 MB, sub
+      // orice poză făcută cu telefonul. E singura cădere de mărime despre
+      // care aplicația n-are cum să spună de ce: mesajul nostru („serverul
+      // primește acum cel mult…") se scrie în PHP, iar PHP n-a rulat.
+      //
+      // Pagina publică n-are ce urca, deci fraza asta românească nu poate
+      // ajunge sub un titlu englezesc — vezi `motivEn` mai jos, unde „Eroare
+      // NNN." e semnul că mesajul e al nostru, nu al serverului.
+      if (res.status === 413) {
+        throw new GpError(
+          'Serverul web a oprit fișierul înainte să ajungă la aplicație: e prea mare pentru el. '
+          + 'Limita asta nu e a aplicației și nu se poate ridica din panou — se pune în '
+          + 'configurarea serverului web (pe nginx se cheamă „client_max_body_size"). '
+          + 'Pagina verifica.php a API-ului, rândul „Plafonul serverului web", spune ce '
+          + 'server ai și exact ce ai de scris acolo.',
+          res.status,
+          'server_prea_mare'
+        );
+      }
+
       throw new GpError(
         err.message || `Eroare ${res.status}.`,
         res.status,
@@ -352,7 +374,7 @@
    * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
    * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
    */
-  const VERSIUNE = '2.4.1';
+  const VERSIUNE = '2.4.2';
 
   /**
    * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo

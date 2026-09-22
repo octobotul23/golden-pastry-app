@@ -689,7 +689,23 @@ function route_users_update(string $id): void
             }
             $nou[$col] = $val;
             $sets[] = "$col = ?";
-            $vals[] = $val ?: null;
+            // `!== ''`, nu `?:`. În PHP șirul „0" e FALS, iar `$val ?: null`
+            // îl preschimba în NULL — deci un cont numit „0" (o firmă „0 Grade",
+            // un client trecut în grabă) cădea cu „Eroare internă": `users.name`
+            // e NOT NULL, iar MySQL răspundea cu 1048.
+            //
+            // Poarta de deasupra oprea numele GOL, și tot ea ar fi trebuit să
+            // oprească și ăsta — dar n-avea cum: „0" NU E gol, e un nume. Ce s-a
+            // reparat atunci a fost SIMPTOMUL (`$val === ''`), nu mecanismul (ce
+            // socotește PHP drept fals), iar defectul a rămas în a doua lui
+            // formă. De-aia întrebarea de aici e scrisă pe mecanism: „s-a șters
+            // câmpul?", nu „e valoarea falsă?".
+            //
+            // Pe celelalte patru coloane, care sunt NULL-abile, „0" nu crăpa —
+            // se pierdea TĂCUT: telefonul „0", adresa „0", numele de firmă „0"
+            // se scriau ca NULL, iar pagina le arăta goale la reîncărcare.
+            // Omul le scria din nou, și din nou dispăreau.
+            $vals[] = $val !== '' ? $val : null;
         }
     }
     // Zona nu intră în bucla de sus: are de trecut printr-o listă, nu printr-o

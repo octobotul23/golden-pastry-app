@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**430 de defecte confirmate** — 10 critice, 123 grave, 198 medii, 99 mici.
-**430 reparate**, 0 rămase.
+**446 de defecte confirmate** — 10 critice, 125 grave, 208 medii, 103 mici.
+**446 reparate**, 0 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-222 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+238 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -29,13 +29,13 @@ Aceeași listă, cu filtre și căutare:
 | Gravitate | Reparate | Rămase | Total |
 |---|---|---|---|
 | Critice | 10 | 0 | 10 |
-| Grave | 123 | 0 | 123 |
-| Medii | 198 | 0 | 198 |
-| Mici | 99 | 0 | 99 |
+| Grave | 125 | 0 | 125 |
+| Medii | 208 | 0 | 208 |
+| Mici | 103 | 0 | 103 |
 
 ---
 
-## Ce e reparat — 430
+## Ce e reparat — 446
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -260,6 +260,10 @@ reparația la loc și văzând-o picând.
   `api/lib/referral.php:1718` · *grav*
   Hotărârea patronului: „Aceeași pază ca la editare". Legea NU s-a scris a doua oară — `referral_commission_resolve()` cheamă aceeași `referral_guard_paid_code_change()` pe care o cheamă și `PATCH /orders`. Două uși, o singură lege, scrisă o dată. Dacă judecata ar fi fost rescrisă de mână în hotărâre, cele două uși ar fi început să se depărteze la prima reparație făcută numai într-una — și asta nu se vede din purtare, deci se întreabă din text: două reguli statice cer ca definiția să fie una singură și amândouă ușile s-o cheme pe ea. (Numărătoarea sare peste rândurile de comentariu: un doc-comentariu care NUMEȘTE paza e o trimitere, nu o a doua lege, iar o regulă care le-ar socoti la fel ar cere, ca preț al verdelui, să nu mai scrie nimeni despre ea.) Chemarea stă ÎNAINTE de prima scriere și DUPĂ cele două refuzuri de sus (`bad_code`, `not_in_conflict`), deci codul străin cade unde cădea și până acum. Refuzul e îngust, ca la cealaltă ușă: hotărârea în favoarea chiar a celui deja plătit trece, fiindcă nu schimbă nimic — numai mutarea pe alt om se oprește. Mesajul s-a făcut parametru (`$urmatorulPas`), fiindcă cele două uși se apasă din ecrane diferite: la editare „…apoi pune codul", la hotărâre „…apoi hotărăște conflictul". Legea rămâne scrisă o singură dată; se schimbă numai încotro e trimis omul. Și e trimis undeva pe bune: refuzul nu e o fundătură, e o ORDINE, iar proba face chiar ce spune mesajul — scoate bifa, și hotărârea trece. Ordinea „paza înaintea scrierii" nu e o pedanterie, și se vede din stricăciunea a treia: cu paza chemată după scrieri, 409-ul iese la fel, dar codul comenzii și recomandantul contului arată deja amândouă spre Barbu. Iar `referral_commission_pay()` RECITEȘTE rândul când bifa se scoate — deci în clipa în care patronul face exact ce-i spune mesajul, conflictul se stinge singur pe „activ", hotărârea la care fusese trimis răspunde `not_pending`, și comisionul a ajuns la Barbu fără ca nimeni să fi ales asta.
 
+- [x] **Un cod de recomandare mai lung decât coloana îi pierdea clientului comanda cu „Eroare internă" — marginea de lungime era scrisă într-unul singur din cele cinci locuri care SCRIU codul**
+  `api/lib/referral.php:742` · *grav*
+  Marginea s-a mutat ÎN UȘĂ: `referral_normalize_code()` întoarce gol pentru orice trece de `GP_REFERRAL_COD_MAX`, iar toți cei cinci care scriu trec prin ea — deci și al șaselea, când o fi. Cifra, scrisă până acum cu mâna în `referral_code_set()`, e acum o constantă lângă `GP_REFERRAL_MAX_TRIES`, cu lămurirea de ce stă sub 64 (`referral_assign()` lipește la coadă până la două cifre). Se întoarce GOL, nu se refuză și nu se scurtează, din două pricini: (1) hotărârea casei e scrisă chiar lângă caseta de pe site — „Unul greșit nu oprește cererea — rămâne fără recomandant, exact ca la un cont nou" — iar un cod mai lung decât poate fi ales e tocmai unul greșit; (2) SCURTAT ar fi mai rău decât greșit, fiindcă „anamariaionescu…" tăiat la 58 poate nimeri codul ALTUI om, și comisionul ar pleca la el. Cine are de spus pe față „e prea lung" — administratorul care alege un cod — cheamă `referral_cod_curat()`, curățarea fără margine, și își zice singur vorbele: `code_too_long` a rămas neatins, cu aceeași cifră, luată acum din aceeași constantă.
+
 - [x] **Schimbarea codului tabletelor nu închide tabletele deja deschise, deși pagina spune să-l schimbi „când pleacă cineva din echipă”**
   `api/lib/settings.php:251` · *grav*
   settings_save() șterge sesiunile contului „panou" când se schimbă panel_code sau când panel_enabled trece pe 0. Starea se citește din ce tocmai s-a scris, nu cu setting_bool(): settings_all() ține un cache pe cerere, dinaintea salvării. Probe: test-api.mjs „schimbarea codului scoate tabletele deja deschise → 401" și „oprirea accesului cu cod scoate tabletele deschise → 401".
@@ -419,6 +423,10 @@ reparația la loc și văzând-o picând.
 - [x] **Pagina care spune dacă instalarea e întreagă avea 17 nume de tabele dintr-o bază de 21: pe o bază căreia îi lipseau patru tabele, ea scria „17 din 17 prezente” și punea bifa verde**
   `api/verifica.php:236` · *grav*
   `$need` a devenit o hartă `tabel → migrarea care-l naște întâi`, cu toate cele 21 de tabele, iar mesajul de lipsă numește fișierul de importat, nu doar tabelul. Dar reparația care contează nu e adăugarea celor patru nume — peste trei luni ar fi fost cinci. Lista e acum ținută de trei reguli noi în `.claude/test-doc-actualizari.mjs` (prima la `:907`), care compară cheile lui `$need` cu fiecare `CREATE TABLE` din tot `sql/` și se înroșesc în ziua în care o migrare aduce un tabel nou — nu peste trei luni, în pagină. Alături s-a scris și de ce lista rămâne totuși în cod, nu se citește de pe disc: `actualizeaza-vps.sh:684-687` copiază pe server numai `api`, `public_html`, `clienti` și `lab`, iar `sql/` rămâne în `/root/deploy/`, deci o citire de pe disc n-ar găsi nimic tocmai pe serverul pentru care există pagina. Adevărul stă în cod, iar proba îl ține în acord cu discul. [16 septembrie 2026]
+
+- [x] **Pagina care spune cum stă serverul rămânea deschisă oricui — tocmai pe instalările care-și țin parolele în afara folderului public: căuta config.php numai lângă ea, iar amândouă zăvoarele atârnau de găsirea lui**
+  `api/verifica.php:225` · *grav*
+  Calea se află acum ca în celelalte două fișiere: `$dinMediu = (string) (getenv('GP_CONFIG') ?: '')`, apoi `$configPath = $dinMediu !== '' ? $dinMediu : (__DIR__ . '/config.php')`. Coloana «Găsit» spune «există, pe calea din GP_CONFIG» când calea vine din mediu — dar NU scrie calea întreagă: pe o găzduire încă fără configurare pagina n-are niciun cod care s-o apere, iar o cale de pe disc spusă unui trecător e mai mult decât îi trebuie. Când fișierul lipsește ȘI variabila e pusă, sfatul s-a schimbat și el: nu «copiază config.example.php», ci «GP_CONFIG arată spre un fișier care nu există». Paza e regula nouă din `check-php.mjs`, legată de o numărătoare pe tot dosarul, nu de o listă de nume.
 
 - [x] **Pagina clientului îi spune mereu că e următoarea oprire a șoferului, oricâte opriri ar fi înaintea lui**
   `Client.dc.html:399` · *grav*
@@ -700,6 +708,10 @@ reparația la loc și văzând-o picând.
   `.claude/test-api.mjs:965` · *mediu*
   Reparat pe 16 septembrie 2026, în două jumătăți. (1) Corpurile se citesc: `await res.arrayBuffer();` în cele șaisprezece locuri din `.claude/`, împrăștiate în douăsprezece fișiere — le adună `grep -n "arrayBuffer()" .claude/*.mjs`, fără santinela scrisă ca text din `test-defect-unelte.mjs` și fără măsurătoarea de poze din `test-seo.mjs`, care își citea corpul dinainte —, fiecare cu un rând de comentariu care spune de ce se citește un corp de care n-avem nevoie. (2) O regulă statică nouă îl păzește de acum înainte: grupa «fetch: niciun răspuns lăsat necitit» din `.claude/test-defect-unelte.mjs:1113`. Citește toate fișierele `.mjs` din `.claude/`, împerechează parantezele lui `fetch` sărind peste ce e în ghilimele, lasă în pace `OPTIONS` și `HEAD` (n-au corp), sare peste șiruri și comentarii, și caută două feluri de scăpare: `(await fetch(...)).ceva` fără citire, și `const v = await fetch(...)` fără nicio citire a lui `v` în bucata de cod care urmează. Pârăște `fișier:rând` cu pricina în paranteză. Șase santinele scrise în probă o țin cinstită în amândouă felurile. `test-defect-unelte`: 93 · 0 → **100 · 0**; `test-api`: **158 · 0**. [16 septembrie 2026]
 
+- [x] **Paza de dinaintea urcării pe server nu mai știa de patru uși: lista ei de rute era scrisă cu mâna, sub vorba „Toate rutele de citire din `api/index.php`" — și nu mai erau toate**
+  `.claude/test-baza-veche.mjs:261` · *mediu*
+  Lista nu mai e a UȘILOR, ci a NUMELOR lor. Ce se bate se scoate din tabelul de rute al lui `api/index.php` la fiecare rulare, iar `NUME_USI` ține doar vorbele românești pe care le citește omul când pică o regulă. Peste ele stau două paze. Prima: fiecare rută GET din tabel trebuie să aibă un nume scris aici — dacă mâine se mai deschide una și nimeni nu-i scrie numele, regula cade și SPUNE CARE, în loc să tacă. A doua e mai puțin la vedere și la fel de necesară: se cere ca tabelul citit să aibă cel puțin 20 de rute GET. Fără ea, ziua în care `$routes = [` s-ar rescrie altfel, citirea ar întoarce o listă GOALĂ, bucla n-ar mai bate la nicio ușă, și proba ar raporta verde senin fără să fi atins nimic — o listă scoasă din cod pică deschis dacă n-are un prag sub ea. S-a mai scos o listă scrisă cu mâna pe drum: coada de întrebări din adresă, care era scrisă numai la `/clients?q=ab`, e acum una singură pentru toate ușile (`?q=ab&from=…&to=…&day=…&all=1`) — ce nu-i trebuie, ruta lasă neatins.
+
 - [x] **Poarta de ogradă de pe `POST /orders` nu mai putea fi înroșită de nicio scenă vie: o regulă care nu poate pica nu e o regulă**
   `.claude/test-defect-cont-uzurpat.mjs:612` · *mediu*
   Unsprezece reguli noi în secțiunea „J. sursa” a probei, împărțite în trei: ușile de naștere cheamă ocolul de ogradă și nu chemarea goală; ograda se citește din lista casei; și niciun rol de pe acea listă nu are ograda strâmtă. [19 septembrie 2026]
@@ -720,6 +732,10 @@ reparația la loc și văzând-o picând.
   `.claude/test-doc-ghiduri.mjs:398` · *mediu*
   Tiparul cere acum cel mult două cifre înaintea punctului (`\d{1,2}\.\d`), cu aceeași pază din spate — deci „2.1.1" și „8.3.33" rămân afară, iar „10.3" intră. Și pragul s-a înlocuit cu un fapt: lista din capul ghidului numește fiecare bucată cu numărul ei, deci fiecare bucată care există E atinsă de cel puțin o trimitere. Regula cere tocmai asta, și tipărește alături „46/46 bucăți atinse" — cifra care deosebește o regulă care s-a uitat de una care n-a mai avut la ce.
 
+- [x] **Numărul rundei avea un singur izvor în cod și cinci copii scrise cu mâna în ghiduri — iar copiile rămăseseră în urmă cu două runde: la 2.4.2 ghidul plimbării încă îi cerea omului să vadă pe ecran „ver. 2.4.0"**
+  `.claude/test-doc-ghiduri.mjs:804` · *mediu*
+  Două reguli surori, câte una în proba care ține deja ghidurile acelea cinstite: `test-doc-ghiduri.mjs` pentru docs/02, 04, 05, 10, și `test-doc-actualizari.mjs` pentru docs/07, 08, 09. Amândouă citesc `const VERSIUNE` din `shared/gp-api.js` și cer ca orice „ver. N.N.N" și orice „plasture-vps N…" din ghidurile lor să fie cifra de azi. Cele cinci locuri s-au adus la 2.4.2 în aceeași trecere.
+
 - [x] **Probele care ating baza de date citesc `api/config.php`, deci se uită în „gp_dev” orice ar spune GP_BASE**
   `.claude/test-parola.mjs:46` · *mediu*
   Ajutorul comun .claude/baza-probei.mjs: `configulLuiBase()` află, după portul din `GP_BASE`, configurarea instanței care ascultă acolo (`instanta.mjs` își ține starea în %TEMP%/gp-instante/<nume>.json) și o pune în mediu ca `GP_CONFIG` — chiar la încărcarea modulului, fiindcă PHP-ul chemat de probă moștenește mediul procesului. `api/index.php` citea deja variabila asta, deci regula e aceeași peste tot: mediul are întâietate. Fragmentele `php -r` din probe s-au scris cu `CERE_CONFIG` (`(getenv("GP_CONFIG") ?: "api/config.php")`) în locul căii bătute în cuie, iar plasa de siguranță `/^(gp_dev|gp_test|gp_fresh)$/` s-a mutat în `BAZA_DE_PROBA`, care primește și bazele instanțelor (`gp_i_<nume>`) — altfel probele s-ar fi oprit singure cu „baza nu e una de dezvoltare”. Unsprezece fișiere trecute pe ajutorul comun (opt probe, curata-probe.mjs, aplica-sql.mjs), inclusiv trei care purtau fiecare câte o copie a aceleiași funcții. O valoare pusă de om din afară nu se atinge. Fără nicio instanță pornită nu se schimbă nimic: `GP_CONFIG` rămâne nepus și PHP cade tot pe `api/config.php`. Dovadă: suita întreagă, rulată cu `GP_BASE=http://127.0.0.1:8203/api`, dă tot 1509 trecute · 0 picate, iar curățenia raportează „Șters, din «gp_i_verifg»: 120 urme” — o bază pe care nu o atinsese niciodată înainte.
@@ -731,6 +747,10 @@ reparația la loc și văzând-o picând.
 - [x] **Paznicul plasturelui cântărește fiecare martor pe marfă și citește ștampila din document — dar capitolul de cifre de la coada aceluiași document nu-l citește nimeni, și tocmai el rămăsese al pachetului dinainte: 27 de martori în loc de 43, 363 de defecte în loc de 365**
   `.claude/test-plasa-rsync.mjs:1194` · *mediu*
   Reparat în runda 2.2.1. Capitolul de cifre capătă paznicul lui, scris pe aceeași cumpătare ca martorii: numerele se CITESC din proză și se cântăresc pe lucrul pe care-l numără — câți martori are documentul se numără chiar în document, câte migrări are pachetul se numără în `deploy/sql/`, iar cele trei cifre ale defectelor se numără în `.claude/defecte.json`, unde se schimbă la fiecare rundă. Nicio cifră ținută pe lângă. Are și paza de la urmă, ca martorii: dacă tiparele n-ar mai prinde proza, regula strigă în loc să treacă verde pe zero cântăriri. Iar lămurirea amprentei e acum scrisă pe adevăr — urmărește `shared/gp-api.js` — și trimite la martorii 42 și 43 pentru paginile schimbate azi. [18 septembrie 2026]
+
+- [x] **Proba care păzea „cifra trăiește într-un singur loc" avea ea însăși cifra scrisă cu mâna, de șapte ori — ridicarea promisiunii de la 5 MB la 10 MB a înroșit șapte reguli sănătoase, fără să fi găsit vreun defect**
+  `.claude/test-poze-limita.mjs:113` · *mediu*
+  Promisiunea se citește o singură dată, sus: `MAX_OCTETI` din `POZA_MAX_OCTETI` și `SCRIS` din `poza_marime_text()`. Pragurile de probă se socotesc din ea — `PROMIS` (fix cât promisiunea), `PESTE` (un megaoctet peste), `LARG` —, iar `iniDin()` le dă forma în care le-ar scrie un om în `php.ini`, fiindcă acolo se duc, prin `-d`. Cuvintele cerute în mesaje sunt `SCRIS`, nu un șir scris de mână. În secțiunea 7 cele două reguli nu mai numesc nicio cifră: opresc ORICE mărime scrisă cu mâna, în octeți (`\b\d+\s*\*\s*1024\s*\*\s*1024\b`) și în cuvinte, după ce comentariile au fost ascunse. Proba nu mai scrie nicăieri cifra pe care o păzește, deci ridicarea următoare n-o mai atinge.
 
 - [x] **Regula „panoul cere cât a putut pune serverul" cântărea TOATĂ ziua de 30 septembrie, nu scena ei: alte suite puneau comenzi pe aceeași dată, și atunci pica pentru marfa lor**
   `.claude/test-productie-imparte.mjs:570` · *mediu*
@@ -840,6 +860,10 @@ reparația la loc și văzând-o picând.
   `Administrare Comenzi.dc.html:167` · *mediu*
   Grupa a intrat ÎNĂUNTRUL listei, ca ultim copil al ei, cu `margin-top:20px` = golul dintre grupele barei (26) minus golul dintre panouri (6) — înăuntru cele două se adună, deci ochiul vede aceeași despărțire. Lista și grupa se derulează acum împreună. Păzită de secțiunea C-quater din `.claude/check-meniu.mjs`, cu patru cerințe: grupa stă în listă, marginea se SOCOTEȘTE din celelalte două goluri (nu se scrie „20"), grupa are `flex:none`, iar pe telefon se ascunde grupa întreagă. Dovedit prin nouă pagube puse înapoi pe marcaj, toate roșii, fiecare singură.
 
+- [x] **Pachetul spunea, în două locuri deodată și amândouă scrise în ziua aceea, că VPS-ul casei merge pe nginx — pe un server instalat anume cu Apache, unde scriptul de instalare se oprește cu totul dacă portul 80 e al altcuiva**
+  `api/.user.ini:10` · *mediu*
+  Cele două comentarii s-au întors pe față: `.user.ini` spune acum că pe VPS-ul casei lucrează `.htaccess`-ul și că el însuși e pentru ziua în care PHP s-ar muta pe FPM, iar `build-deploy.mjs` spune că blocul pe care-l scrie e cel care lucrează, cu partea despre nginx ținută condiționat. Mesajul de 413 din `shared/gp-api.js` nu mai numește nginx ca pe serverul casei — trimite la rândul „Plafonul serverului web" din `verifica.php`, care citește `SERVER_SOFTWARE` și tace când n-are ce spune. Peste ele, șase reguli în `test-doc-actualizari.mjs`: scriptul de instalare pune **un singur** server web (el e izvorul), iar titlul ghidului, paza portului 80 și pachetul de certbot trebuie să-l numească pe acela; plus plimbarea prin tot dosarul care cere ca nimic din casă să nu spună că serverul casei e celălalt, cu un prag pe câte fișiere a cântărit — regula trece verde găsind NIMIC, deci trebuie să poată dovedi că a și căutat undeva.
+
 - [x] **Eticheta grupei arată „0 produse”, dar ștergerea grupei e refuzată fiindcă serverul numără și produsele scoase din catalog**
   `api/lib/catalog.php:47` · *mediu*
   Serverul trimite acum două cifre pentru fiecare grupă — „products” (în catalog) și „productsAll” (toate, ca la refuzul ștergerii) — iar insigna din fila „Grupe” le arată pe amândouă: „2 în catalog · 1 scos”. Nota de sub listă spune și ea că produsele doar scoase din catalog opresc ștergerea. Probe în .claude/test-catalog.mjs (cifra din refuz e chiar cea din insignă) și în .claude/check-panouri.mjs (textul insignei, rulat din sursă).
@@ -891,6 +915,10 @@ reparația la loc și văzând-o picând.
 - [x] **Codul de recomandare se scotea numai din PRENUME: la al cincizeci și unulea „Maria" nu se mai putea face niciun cod, iar refuzul îi cerea omului să-și schimbe numele contului — lucru pe care nu-l poate face nimeni, fiindcă nu există ruta**
   `api/lib/referral.php:190` · *mediu*
   Trei fântâni în loc de una, încercate în ordine: prenumele, apoi numele întreg, apoi numele de utilizator (`referral_code_bases()`). Fiecare se taie la 58 de litere, fiindcă la coadă se mai adaugă până la două cifre într-o coloană de 64; o fântână care dă același lucru ca alta nu se încearcă de două ori, și una care nu dă nimic nu intră deloc. Prima rămâne exact ce întorcea `referral_code_candidate()` înainte, deci pentru oricine se înscrie azi nu se schimbă nimic: „Maria" ia tot „maria". Abia când o fântână e secată se trece la următoarea, cu un rând în jurnal care spune de ce. Apoi `referral_assign()` capătă un al patrulea parametru, `$pricina`, prin care spune CARE din patru lucruri s-a întâmplat — `fara_tabel`, `nume_gol`, `fara_cont`, `toate_luate` — iar `referral_self_assign()` îl duce mai departe, ca butonul „fă-mi un cod" să nu rămână cu refuzul general. Cele două refuzuri se despart: pe `toate_luate` textul spune adevărul („numele e prea des întâlnit"), iar pe restul spune celălalt adevăr („nu iese nimic din nume"). Și amândouă trimit acum spre o ușă care CHIAR există: administratorul e dus la „Alege codul", de lângă cont; clientul e dus la administrator, fiindcă el poate. Sfatul „schimbă-ți numele contului" a dispărut din amândouă.
+
+- [x] **Casa năștea coduri de recomandare pe care tot ea le refuza: fântâna tăia baza la 58 ca să încapă în coloană, ușa prin care se tastează taie tot la 58 — dar între ele se lipeau până la două cifre**
+  `api/lib/referral.php:180` · *mediu*
+  Marginea de la naștere nu mai e o a treia cifră scrisă pe lângă celelalte două, ci o socoteală din ele: `substr($b, 0, GP_REFERRAL_COD_MAX - strlen((string) (GP_REFERRAL_MAX_TRIES - 1)))` — 58 fără cele două cifre, adică 56. Ziua în care cineva mută marginea ușii sau numărul de încercări, baza se mută singură după ele. Peste asta, două reguli noi în proba fântânilor, și niciuna nu întreabă „e 58?": una cere ca baza plus cel mai lung sufix să încapă sub marginea ușii, cealaltă — cea care hotărăște — ia codul CEL MAI LUNG pe care-l poate naște casa și îl trece chiar prin `referral_normalize_code()`, cerând să iasă întreg. E o regulă care nu poate rămâne verde dintr-o greșeală de numărare, fiindcă nu numără: face drumul. Regula veche cu cifra scrisă cu mâna a rămas, mutată la 56 și cu pricina scrisă în numele ei — dinadins, ca o derivare stricată să n-o poată strica și pe ea; cine mută marginea ușii o vede roșie și hotărăște el.
 
 - [x] **O coordonată de zonă lăsată goală este acceptată ca 0, nu respinsă — oprirea ajunge în Golful Guineei**
   `api/lib/settings.php:154` · *mediu*
@@ -1012,9 +1040,17 @@ reparația la loc și văzând-o picând.
   `api/routes/users.php:100` · *mediu*
   Reprodus întâi: POST /users cu „ion.popescu@yahoocom" dădea 422 bad_email, iar PATCH /users/729 cu ACEEAȘI valoare dădea 200 și salva adresa strâmbă. Reparație: am adăugat în api/routes/users.php funcția `check_user_email(string $email, ?int $exceptId = null)` (imediat după `const ROLES`), care întoarce fără nimic pentru adresa goală (cont fără e-mail e o stare normală), refuză formatul greșit cu 422 `bad_email` — ex
 
+- [x] **Un cont numit „0" cădea cu „Eroare internă", iar telefonul, adresa și numele de firmă scrise „0" se pierdeau tăcut: `?:` nu întreabă „e gol?", ci „e fals?"**
+  `api/routes/users.php:708` · *mediu*
+  Întrebarea s-a scris pe mecanism: `$vals[] = $val !== '' ? $val : null`. Adică „s-a șters câmpul?", nu „e valoarea falsă?". Același rând repară și cele patru pierderi tăcute. Restul familiei `?: null` din `api/` — încă 38 de locuri — a fost MĂSURAT, nu presupus, pe două căi deosebite. Întâi bombardamentul însuși: bateria lui trimite „0" ca șir ȘI 0 ca număr în fiecare câmp al fiecăreia din cele 93 de rute, 8.295 de cereri, și a scos la iveală exact o cădere — asta. Apoi o probă anume, pornită de la schemă și nu de la o listă scrisă cu mâna: interogarea scoate din `information_schema` toate coloanele de text NOT NULL fără implicit, iar proba bate cu „0" pe fiecare din cele unsprezece uși prin care un om poate trimite o valoare spre una din ele — cererea publică, comanda din panou, grupa, produsul, articolul de depozit, tabla din laborator, contul făcut din panou, înscrierea de pe site, numele de utilizator, cheia de setare. Niciuna n-a crăpat. Pierderea tăcută rămâne cu putință pe coloanele NULL-abile (mențiuni, motive, adrese), dar acolo e o valoare pierdută, nu o cădere — și tot ce trece prin bucla asta e acum apărat.
+
 - [x] **setup.php ajunge în pachetul de publicare și creează primul administrator fără nicio autentificare**
   `api/setup.php:34` · *mediu*
   Două găuri, amândouă închise. DUPĂ instalare: pagina răspunde 404 și nu mai tipărește nimic, în loc să confirme oricui că a găsit o instalare Golden Pastry cu instalatorul încă pe server. ÎNAINTE de primul administrator — fereastra de ore dintre pasul 4 și pasul 6 din manual, pe un domeniu deja anunțat public de certificat: formularul cere un cod de instalare de cel puțin 12 caractere, scris de om în api/config.php, comparat cu hash_equals, trimis prin POST (nu în adresă, ca să nu rămână în jurnalele Apache). Probe: test-instalare „fără codul de instalare nu se creează niciun cont”, „cu alt cod decât cel din config.php instalarea e refuzată”, „nicio încercare respinsă nu lasă un administrator în bază”, „a doua rulare nu mai tipărește nimic”.
+
+- [x] **Încă cinci mesaje citite de om trimiteau la cPanel, într-un panou ieșit din joc — printre ele chiar pagina care face primul administrator, adică prima pe care o citește cineva care instalează**
+  `api/setup.php:80` · *mediu*
+  Cele cinci mesaje s-au rescris pe VPS: versiunea de PHP trimite la ghidul de instalare, cea fără actualizări dă comanda `apt`, HTTPS-ul dă `certbot` cu pachetul potrivit serverului (se știe deja care e, din `SERVER_SOFTWARE`, socotit pentru rândul plafonului), `mail()` trimite la Setări → General ca ghidul, iar `setup.php` la `openssl rand -base64 24`, o comandă pe chiar serverul pe care omul stă deja cu mâna pe tastatură. Peste toate, o regulă în `check-php.mjs`: niciun ȘIR din `api/**.php` nu mai are voie să pomenească cPanel. Se sprijină pe `curata()`, care exista deja acolo — citirea caracter cu caracter care știe că `//` din `https://` nu deschide un comentariu.
 
 - [x] **verifica.php intră în pachetul de publicare și rămâne accesibil oricui pe api.goldenpastry.ro**
   `api/verifica.php:16` · *mediu*
@@ -1023,6 +1059,10 @@ reparația la loc și văzând-o picând.
 - [x] **Verificarea de dinaintea publicării dă verde unei chei de criptare pe care aplicația o refuză**
   `api/verifica.php:213` · *mediu*
   Regula cheii de criptare stă acum într-un singur loc: crypto_key_valid() din api/lib/crypto.php, chemată și de crypto_key(), și de verifica.php. Pragul scris a doua oară în verificare — „cel puțin 32 de caractere” — dădea verde tocmai cheii alfanumerice de 64 de caractere pe care o cerea manualul, iar criptarea se oprea abia la setup.php: administrator deja creat, cod de tablete gol, instalare la jumătate. Manualul cere acum bin2hex(random_bytes(32)). Probe: test-php, cele opt cazuri de cheie + „crypto_key() întreabă crypto_key_valid(), nu o a doua copie a regulii” + „verifica.php judecă cheia cu crypto_key_valid(), nu cu un prag propriu”.
+
+- [x] **Pagina de verificare trimitea omul la cPanel ca să aprindă o extensie lipsă — un panou ieșit din joc —, iar numele pachetului pe care l-ar fi încercat pe VPS nu există: `pdo_mysql` se pune cu `php8.3-mysql`**
+  `api/verifica.php:109` · *mediu*
+  Lista extensiilor a căpătat al treilea câmp, numele pachetului de pe Ubuntu (`mysql`, `mbstring`, `curl`, `gd`; `null` pentru cele parte din PHP), iar coada de îndrumare se scrie acum dintr-un ajutor, `$cumSePune()`, cu versiunea citită din PHP-ul care rulează. În aceeași trecere s-a adăugat și `gd`, neblocantă: fără ea pozele urcate nu se micșorează și ajung pe site la mărimea de pe telefon — nimic nu se strică, dar se vede la factura de trafic, deci trebuie spus.
 
 - [x] **Comanda trimisă din magazin nu apare în „Comanda mea”, deși ecranul de succes trimite clientul acolo**
   `Client.dc.html:340` · *mediu*
@@ -1176,6 +1216,10 @@ reparația la loc și văzând-o picând.
   `Panou Laborator.dc.html:48` · *mediu*
   Amândouă panourile au căpătat același ecran de refuz ca „Administrare Comenzi", cu același marcaj, și un ajutor `vedePanoul()` care citește matricea meniului (`gp.PANOURI_ROL`), nu o listă scrisă a doua oară: dacă mâine „Laborator" iese din meniul unui rol, poarta se închide singură. Trei amănunte care fac diferența: (1) poarta se aprinde pe „ȘTIU și nu are" (`!!S.auth && !vedePanoul(S.auth)`), niciodată pe „nu știu" — altfel tableta din tură, care intră pe contul comun `panou`, s-ar închide singură cât timp `gp.me()` e pe drum; (2) `pull()` se oprește la poartă, ca panoul să nu mai ceară la fiecare patru secunde ce n-are cum să afle; (3) cartonul „ziua e goală" a căpătat lacătul `!faraAcces`, fiindcă o afirmație acoperită de o perdea e tot o afirmație. Ecranul trimite omul unde are ce face, cu `gp.primaPagina()` — aceeași socoteală care-l duce acolo după autentificare.
 
+- [x] **Numerele de martor scrise în FRAZE nu se mutau cu renumerotarea: două trimiteri din foaia plasturelui arătau, de două runde încoace, spre cu totul alt martor decât cel care are răspunsul**
+  `plasture-vps 2.4.2/CITESTE-MA.md:480` · *mediu*
+  Cele trei trimiteri îndreptate în `plasture-vps 2.4.2/CITESTE-MA.md` („al douăzecilea", „la martorul 42", „martorii 16, 42, 56 și 70"), plus trei reguli noi în `.claude/test-plasa-rsync.mjs` care le leagă de chiar martorii documentului. Fraza despre martorul care cere zero a fost și rescrisă: spunea „defectul pe care runda asta îl repară" despre o reparație veche de două runde.
+
 - [x] **Cinci comenzi din documentul plasturelui trimiteau la folderul rundei trecute: un pachet bun, osândit de propriul lui document cu „No such file or directory”**
   `plasture-vps/CITESTE-MA.md:755` · *mediu*
   Cele cinci căi poartă acum numele folderului de azi. Iar paza s-a mutat de pe fișierul comod pe fapta apărată: regula citește `CITESTE-MA.md`, ia fiecare rând din fiecare bloc de cod și cere ca orice `plasture-vps …` scris acolo să fie folderul de acum. Numele vechi au un singur loc legiuit — mătura care le șterge —, și el se recunoaște după ce FACE rândul, nu după unde stă: un `rm -rf` cu mai multe căi pe el e mătura și e scutit; unul cu o singură cale șterge tocmai folderul care urcă, deci trebuie să fie de azi ca oricare altul. Proza rămâne neatinsă: ea pomenește dinadins nume vechi („dacă ai luat comanda din istorie…”), și acolo tocmai vechimea e vorba.
@@ -1271,6 +1315,10 @@ reparația la loc și văzând-o picând.
 - [x] **Bani câștigați și nevăzuți: managerul sau angajatul cu cod de recomandare chiar încasa comision, dar meniul nu-i dădea niciodată „Recomandări"**
   `shared/gp-api.js:799` · *mediu*
   „Recomandări" se hotărăște acum după cod, nu după rol, iar regula stă ÎNAINTEA matricei în filtrul lui `gp.meniu(activ, cine)`: clientul FĂRĂ cod n-o vede (ar deschide o pagină goală, și nu-și poate face singur un cod), iar oricine ALTCINEVA o vede dacă e în matricea rolului lui SAU dacă are un cod pe cont. Agentul de vânzări o păstrează și fără cod, fiindcă își poate face unul chiar de acolo. Păzit din două părți: `.claude/check-meniu.mjs` (matricea rol → panouri) și grupul B3 din `.claude/test-roluri.mjs`, care plimbă codul pe drumul lui adevărat, de la `GET /auth/me` prin `gp.auth()` până în sertar.
+
+- [x] **Un „413" venit de la serverul web cădea mut, cu „Eroare 413." în chenarul roșu — tocmai la singura cădere de mărime despre care aplicația nu poate spune de ce, fiindcă mesajul ei se scrie în PHP, iar PHP n-a rulat**
+  `shared/gp-api.js:253` · *mediu*
+  O ramură nouă în `request()`, geamăna celei pentru 404 fără corp, care spune trei lucruri deodată: că fișierul a fost oprit de serverul web înainte să ajungă la aplicație, că limita nu e a aplicației și nu se poate ridica din panou, și unde scrie exact ce e de făcut — rândul „Plafonul serverului web" din `verifica.php`, adăugat în aceeași rundă, care numește serverul și dă cifra. Codul erorii e `server_prea_mare`, ca o pagină să se poată lega de el fără să citească textul.
 
 - [x] **`class=` scris pe o etichetă cu cratimă nu ajunge niciodată `class` în pagină, ci `classname`: pastila cu versiunea a stat în 21 de locuri îmbrăcată cu o clasă care nu se potrivea cu nimic, fără nicio eroare nicăieri**
   `shared/gp-nav.css:297` · *mediu*
@@ -1392,6 +1440,10 @@ reparația la loc și văzând-o picând.
   `.claude/check-php.mjs:1` · *mic*
   Proba nu mai presupune cine pe cine vede, ci CITEȘTE cererile din codul însuși: adună `require_once __DIR__ . "/fișier.php"` din fiecare fișier și le închide tranzitiv, ca în PHP (cine cere pe A vede și ce cere A). Poarta s-a mutat de la „e fișier de rute?" la „chiar îl cere?", deci lărgirea ține exact cât ține cererea scrisă în cod: dacă `require_once` dispare, proba strigă din nou.
 
+- [x] **Serverul pachetului dădea configurarea numai rutelor, nu și celor două unelte ale instalatorului — deci proba pe pachet se purta altfel decât serverul adevărat, tocmai acolo unde trebuia să semene**
+  `.claude/deploy-server.php:43` · *mic*
+  Rândul `putenv('GP_CONFIG=…')` s-a mutat ÎNAINTEA ramurii care servește fișiere reale, cu un comentariu care spune de ce ordinea contează și care sunt cele două pagini în joc. Nimic altceva nu s-a schimbat: ramura, oprirea la `config.php` și restul dispecerului au rămas cum erau.
+
 - [x] **Instalarea locală din `.claude/instalare-local.php` nu mai poate aplica nicio migrare de la 004 încolo: `PDO::exec` pe un `EXECUTE stmt` care întoarce rânduri lasă conexiunea ocupată, iar fiecare instrucțiune de după cade cu eroarea 2014**
   `.claude/instalare-local.php:87` · *mic*
   Reparat pe 16 septembrie 2026, în runda 2.1.1. `$pdo->exec($s)` a fost înlocuit cu o funcție nouă, `ruleaza()` (`.claude/instalare-local.php:117`), care trece prin `$pdo->query()` — nu prin `prepare()`, fiindcă MySQL nu îngăduie un `PREPARE` înăuntrul altui `PREPARE` — și golește TOATE seturile de rânduri întoarse, până la ultimul: `while ($q->nextRowset()) {}` într-un `try`, fiindcă driverul aruncă în loc să întoarcă `false` când nu mai are seturi, apoi `$q->closeCursor()`. Așa `EXECUTE stmt` care a ales ramura `SELECT 1` nu mai lasă conexiunea ocupată, iar `DEALLOCATE PREPARE stmt` de după el nu mai cade cu 2014. Unealta poate fi acum rulată de două ori la rând pe aceeași bază — ceea ce a scos la iveală un al doilea defect, mai vechi, care până atunci nu putuse fi observat niciodată (v. fișa de la `:154`).
@@ -1423,6 +1475,10 @@ reparația la loc și văzând-o picând.
 - [x] **Raportul suitei tăia tocmai motivul: o unealtă care nu vorbea în cuvintele casei pica fără să spună de ce**
   `.claude/verifica-tot.mjs:225` · *mic*
   Hotărârea patronului: „Când filtrul nu prinde nimic, arată tot". Filtrul rămâne acolo unde e bun; când din el nu iese niciun rând, se arată ieșirea întreagă a uneltei, tăiată la aceleași douăzeci și cinci de rânduri. Regula nu e scrisă pentru curățenie, ci pentru orice unealtă de aici înainte care nu nimerește cuvintele așteptate — și tocmai de-aia una din reguli păzește cealaltă jumătate: unde filtrul PRINDE, el trebuie să rămână filtru, altfel cele trei rânduri roșii s-ar îneca în trei sute verzi. Iar ultimul rând al curățeniei se tipărește numai când ea a MERS, fiindcă atunci el e socoteala („Șters, din «gp_dev»: 19 urme de la teste"); când pică, tot ce s-a găsit se vede mai jos, întreg.
+
+- [x] **Cele două cifre despre SUITĂ scrise în proză n-aveau nicio pază — și niciun modul nu putea s-o pună: totalul nu se știe decât în alergător, iar o probă care s-ar număra pe sine și-ar muta cifra chiar verificând-o**
+  `.claude/verifica-tot.mjs:455` · *mic*
+  Paza stă în `.claude/verifica-tot.mjs`, chiar înaintea rândului care tipărește totalul: citește foaia plasturelui, scoate cele două cifre din proza turtită și le cere să fie chiar `total` și chiar trecerile lui `test-plasa-rsync` (ținute acum într-un sertar `peModul`, umplut de `numara()`). Dacă fraza nu se mai găsește, se înroșește — o cifră mutată sub alt cuvânt nu e păzită, e pierdută. Tace, fără să se înroșească, în trei împrejurări în care cifra ar fi pe drept alta: a picat un modul (totalul e ciuntit), vreo probă și-a sărit o secțiune (marcajul «— sărit:» al casei, cules din ieșirea întreagă; modulele sărite se spun pe nume), ori foaia lipsește sau mai are semne ⟦…⟧ neumplute. TOTUL E SINCRON, ȘI E DINADINS: prima scriere întreba cutia de e-mail cu `fetch`, deci avea un `await` la rădăcina modulului — iar asta mută coada modulului într-o clipă de mai târziu, unde `process.exit()` prinde mânere pe jumătate închise. Măsurat: «Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)» și ieșire 127 în loc de 1. Răspunsul se ia acum din ce au scris probele, nu dintr-o cerere.
 
 - [x] **Cele patru rsync-uri n-au nicio prindere de eroare: dacă unul pică la mijloc, site-ul rămâne pe jumătate nou și comanda de întoarcere a codului nu se mai scrie pe ecran**
   `actualizeaza-vps.sh:663` · *mic*
@@ -1616,6 +1672,10 @@ reparația la loc și văzând-o picând.
   `docs/10-trecerea-cu-ochii.md:8` · *mic*
   Reparat pe 16 septembrie 2026. Introducerea din `docs/10` spune acum **cincizeci și două de minute**, și spune și de unde vine cifra: „suma minutelor scrise acolo, plus cele ale bucăților care au minutele lor: 4.4 și 7.7 — dacă se mai adaugă o plimbare, se adună și aici". Sub ea, o listă a celor opt plimbări, fiecare cu un rând despre ce prinde, ca omul să-și aleagă bucata; minutele NU sunt scrise a doua oară în listă, tocmai ca să nu alunece iar. Rândul din `README.md` spune aceeași cifră, cu aceleași cuvinte, și e singurul rând schimbat acolo. Trimiterile încrucișate au fost strânse: „vezi mai sus" a devenit „vezi 2.5", plimbarea 6 spune că sub-butonul a fost numărat deja la 1, iar 8 trimite la cele trei vederi de la 6.1. Cifra a fost mutată de două ori până la predare, pe măsură ce plimbarea 7 a crescut: 47 → 50 (a treia ușă și cele două file din „Comenzi") → 52 (7.7, tableta rămasă în urmă). `test-doc-actualizari`: **169 · 0**. [16 septembrie 2026]
 
+- [x] **Ghidul plimbării spunea de patru ori câte plimbări are; trei fraze aveau paznic, a patra — ultima, cea de la capăt — nu, și rămăsese cu trei runde în urmă: „când toate cele ZECE ies", într-un ghid cu douăsprezece**
+  `docs/10-trecerea-cu-ochii.md:1698` · *mic*
+  O regulă, lângă cele două surori ale ei din §5 a lui `test-doc-ghiduri.mjs`, cu aceeași formă: caută „Când toate cele … ies", citește cifra scrisă în litere cu `laCifra()` și o cere egală cu numărul de capitole numerotate găsite în document.
+
 - [x] **Cardul „Rută” de pe ecranul de start numără doar modul „Livrare”, deci arată „0 opriri” pentru orice alt mod de livrare**
   `Intrare.dc.html:541` · *mic*
   Filtrul suplimentar din pagină a fost scos: serverul scosese deja modurile de ridicare, pe lista din Setări, iar a doua sită cerea numele scris exact „Livrare". Cardul „Rută" numără acum toate opririle, oricum și-ar boteza patiseria modul. Probă: `.claude/check-panouri.mjs`.
@@ -1647,6 +1707,10 @@ reparația la loc și văzând-o picând.
 - [x] **O regulă de CSS îmbrăca un cârlig care nu s-a scris niciodată: `[data-lb=railclose]` din „Panou Laborator" stingea pe monitor un buton de închidere care nu există în marcaj**
   `Panou Laborator.dc.html:105` · *mic*
   Rândul s-a scos, iar lămurirea de sub el („cele două rânduri de aici") a redevenit adevărată. Reparația care ține e însă regula nouă din `.claude/check-pages.mjs`: pentru fiecare pagină se albesc comentariile foii (ele citează selectoare în proză), se strâng toate selectoarele `[data-xx=valoare]`, și fiecare se cere purtat de marcaj — ori scris pe față (`data-xx="valoare"`), ori interpolat (`data-xx="{{ … }}"`) cu valoarea născută în logică. A doua cale e miezul: o regulă care ar fi cerut numai valoarea literală striga 7 cârlige vii din 8 găsite, adică era zgomot, iar un zgomot se învață să fie sărit. Dovedită punând cadavrul la loc și văzând suita roșie — fișa stă în `scratchpad/dovada-pagini.mjs`.
+
+- [x] **Cele două cifre despre PACHET scrise în proză s-au despărțit amândouă de el: una plecase cu `2.4.1` spunând „204" într-un pachet de 205, cealaltă a fost mutată de la 94 la 97 fără s-o numere nimeni**
+  `plasture-vps 2.4.2/CITESTE-MA.md:5251` · *mic*
+  Cifra trimiterilor pusă pe 94 în `plasture-vps 2.4.2/CITESTE-MA.md` (cea a fișierelor fusese deja îndreptată pe 205 la scrierea rundei), plus cele două reguli noi care le leagă de chiar pachetul din plasture. Măsurătoarea istorică a fost lăsată anume în afara lor, și scris în cod de ce.
 
 - [x] **Cifra migrărilor din documentul plasturelui a rămas la 18 vreme de cinci runde: ținută la zi cu mâna de trei ori, apoi niciodată**
   `plasture-vps/CITESTE-MA.md:1357` · *mic*

@@ -77,7 +77,7 @@ $panelCode  = '';
 $installCode = (string) config('install_code', '');
 if (strlen($installCode) < 12) {
     $error = 'Nu este pus niciun cod de instalare în api/config.php. Deschide fișierul, scrie la '
-        . '„install_code" un cod de cel puțin 12 caractere (Password Generator din cPanel îți dă unul), '
+        . '„install_code" un cod de cel puțin 12 caractere (pe server, comanda `openssl rand -base64 24` îți dă unul), '
         . 'salvează, apoi reîncarcă pagina.';
 }
 

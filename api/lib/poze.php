@@ -22,10 +22,32 @@
 /**
  * Cât îngăduie PANOUL.
  *
- * Promisiunea scrisă sub casetele de fișier din Catalog („maximum 5 MB") se
- * socotește de aici. E singurul loc în care cifra asta se schimbă.
+ * Promisiunea scrisă sub casetele de fișier din Catalog se socotește de aici.
+ * E singurul loc în care cifra asta se schimbă.
+ *
+ * 10 MB de la 21 septembrie 2026 (hotărârea patronului), în sus de la 5 MB —
+ * dar cifra singură ar fi fost o pagubă, nu o înlesnire: poza se punea pe disc
+ * așa cum venea, deci cât urcă patronul, atât descarcă fiecare client. Măsurat
+ * în ziua hotărârii: cele 22 de poze de atunci aveau 84 KB una (mijlocia),
+ * tot catalogul 2,2 MB. O poză de telefon are 4-12 MB — de o sută de ori mai
+ * mult. De-aia cifra urcă ÎMPREUNĂ cu micșorarea de mai jos, nu înaintea ei.
  */
-const POZA_MAX_OCTETI = 5 * 1024 * 1024;
+const POZA_MAX_OCTETI = 10 * 1024 * 1024;
+
+/**
+ * Latura lungă peste care poza se micșorează, în puncte.
+ *
+ * Magazinul arată poza în carduri — 16/10, 4/3 ori 1/1 —, late de cel mult
+ * vreo 500 de puncte pe un ecran mare. 1600 e dublu față de ce cere un ecran
+ * cu puncte dese, deci poza rămâne limpede oriunde, iar fișierul cade de la
+ * megaocteți la sute de kiloocteți.
+ */
+const POZA_LATURA_MAX = 1600;
+
+/**
+ * Calitatea la re-scriere, pentru JPEG și WebP.
+ */
+const POZA_CALITATE = 82;
 
 /**
  * Plicul în care călătorește fișierul: hotarele multipart, antetele lui și
@@ -163,4 +185,204 @@ function poza_mesaj_corp_aruncat(int $octetiCerere): string
         . ', iar serverul taie orice cerere peste ' . poza_marime_text($limite['post'])
         . ' înainte să apuce să citească ceva din ea. Micșorează poza, sau ridică limita'
         . ' serverului — ' . poza_unde_se_ridica();
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+ * MICȘORAREA
+ *
+ * Până pe 21 septembrie 2026 poza se punea pe disc așa cum venea:
+ * `move_uploaded_file` și atât. Cât timp panoul îngăduia 5 MB, paguba era
+ * mărginită. Cu 10 MB nu mai e: o poză de telefon are 4000 de puncte pe latură
+ * și 4-12 MB, iar magazinul o trimite ÎNTREAGĂ fiecărui client care deschide
+ * catalogul de pe date mobile. Cardul în care o arată e lat de vreo 500 de
+ * puncte. Măsurat în ziua hotărârii: cele 22 de poze de atunci aveau 84 KB una
+ * (mijlocia), tot catalogul 2,2 MB.
+ *
+ * Deci cifra urcă ÎMPREUNĂ cu micșorarea, niciodată înaintea ei.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/** Poate casa micșora poze? GD e singura unealtă folosită aici. */
+function poza_poate_micsora(): bool
+{
+    return extension_loaded('gd');
+}
+
+/**
+ * Întoarcerea scrisă în EXIF de telefon: 1 = dreaptă, 3 = cu susul în jos,
+ * 6 și 8 = culcată pe o parte.
+ *
+ * Telefoanele nu rotesc punctele, scriu doar un număr în antet, iar browserul
+ * îl ascultă. GD nu-l ascultă și nici nu-l păstrează — deci o poză re-scrisă
+ * fără rotirea asta ar ajunge pe site culcată, deși în panou arăta dreaptă.
+ * Numărul se citește ÎNAINTE de re-scriere, fiindcă după ea nu mai există.
+ */
+function poza_orientare(string $cale): int
+{
+    if (!function_exists('exif_read_data')) {
+        return 1;
+    }
+    $date = @exif_read_data($cale);
+    $o    = (int) ($date['Orientation'] ?? 1);
+
+    return ($o >= 1 && $o <= 8) ? $o : 1;
+}
+
+/**
+ * Încape desfacerea pozei în memoria îngăduită?
+ *
+ * GD ține fiecare punct pe 4 octeți, oricât de bine ar fi împachetat fișierul:
+ * o poză de 8000x6000 cere 192 MB numai ca original, iar `memory_limit`
+ * implicit pe Ubuntu e 128M. Peste el, PHP moare cu eroare fatală ÎNAINTE să
+ * apuce să scrie vreun răspuns — omul vede o pagină albă, nu un mesaj, și n-are
+ * de unde ști de ce. De-aia socoteala se face înainte, iar când nu încape, poza
+ * rămâne așa cum a venit: mai grea, dar întreagă și cu o pricină de spus.
+ */
+function poza_incape_in_memorie(int $lat, int $inalt): bool
+{
+    $limita = poza_octeti_din_ini((string) ini_get('memory_limit'));
+    if ($limita >= PHP_INT_MAX) {
+        return true;
+    }
+    // Originalul, plus copia micșorată, plus o margine pentru bibliotecă.
+    $cerut = ($lat * $inalt * 4) + (POZA_LATURA_MAX * POZA_LATURA_MAX * 4);
+
+    return $cerut < ($limita - memory_get_usage(true)) * 0.8;
+}
+
+/**
+ * Micșorează poza DE PE DISC, la locul ei, și spune ce a făcut.
+ *
+ * Nu aruncă și nu oprește nimic: o poză care nu poate fi micșorată rămâne așa
+ * cum a venit. Urcarea a reușit oricum — fișierul e pe disc, rândul din bază e
+ * scris —, iar `pricina` spune de ce n-a mers, pentru raport.
+ *
+ * Fișierul nou se scrie ALĂTURI și abia apoi ia locul celui vechi: o cădere la
+ * mijlocul scrierii n-are voie să lase în urmă o poză jumătate.
+ *
+ * @return array{facut:bool, pricina:string, de:array{0:int,1:int}, la:array{0:int,1:int}, octetiDe:int, octetiLa:int}
+ */
+function poza_micsoreaza(string $cale, string $ext): array
+{
+    $r = [
+        'facut'    => false,
+        'pricina'  => '',
+        'de'       => [0, 0],
+        'la'       => [0, 0],
+        'octetiDe' => (int) @filesize($cale),
+        'octetiLa' => 0,
+    ];
+
+    if (!poza_poate_micsora()) {
+        $r['pricina'] = 'gd_lipseste';
+        return $r;
+    }
+
+    $info = @getimagesize($cale);
+    if (!is_array($info)) {
+        $r['pricina'] = 'nu_pot_citi_marimea';
+        return $r;
+    }
+    $lat     = (int) $info[0];
+    $inalt   = (int) $info[1];
+    $r['de'] = [$lat, $inalt];
+    $r['la'] = [$lat, $inalt];
+
+    // POZA MICĂ SE LASĂ ÎN PACE, și întoarcerea din EXIF e chiar pricina: cât
+    // timp n-o atingem, antetul rămâne pe fișier și browserul o întoarce
+    // singur, cum face azi. Abia re-scrierea pierde antetul, deci abia atunci
+    // trebuie coaptă rotirea în puncte.
+    if (max($lat, $inalt) <= POZA_LATURA_MAX) {
+        $r['pricina'] = 'era_deja_mica';
+        return $r;
+    }
+
+    if (!poza_incape_in_memorie($lat, $inalt)) {
+        $r['pricina'] = 'nu_incape_in_memorie';
+        return $r;
+    }
+
+    $src = match ($ext) {
+        'jpg'   => @imagecreatefromjpeg($cale),
+        'png'   => @imagecreatefrompng($cale),
+        'webp'  => @imagecreatefromwebp($cale),
+        default => false,
+    };
+    if (!$src) {
+        $r['pricina'] = 'gd_nu_a_putut_deschide';
+        return $r;
+    }
+
+    // Rotirea, numai la JPEG: EXIF trăiește numai acolo. Cele patru întoarceri
+    // oglindite (2, 4, 5, 7) se lasă neatinse — sunt rare, iar o oglindire pusă
+    // greșit strică poza mai rău decât o lasă o rotire nefăcută.
+    $orient = $ext === 'jpg' ? poza_orientare($cale) : 1;
+    if (in_array($orient, [3, 6, 8], true)) {
+        $unghi = match ($orient) { 3 => 180, 6 => -90, default => 90 };
+        $rotit = @imagerotate($src, $unghi, 0);
+        if ($rotit !== false) {
+            imagedestroy($src);
+            $src   = $rotit;
+            $lat   = imagesx($src);
+            $inalt = imagesy($src);
+        }
+    }
+
+    $scara = POZA_LATURA_MAX / max($lat, $inalt);
+    $nlat  = max(1, (int) round($lat * $scara));
+    $ninal = max(1, (int) round($inalt * $scara));
+
+    $dst = @imagecreatetruecolor($nlat, $ninal);
+    if (!$dst) {
+        imagedestroy($src);
+        $r['pricina'] = 'gd_fara_memorie';
+        return $r;
+    }
+
+    // Străveziul se păstrează la PNG și WebP; fără rândurile astea, fundalul
+    // străveziu iese negru.
+    if ($ext === 'png' || $ext === 'webp') {
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        imagefill($dst, 0, 0, imagecolorallocatealpha($dst, 0, 0, 0, 127));
+    }
+
+    imagecopyresampled($dst, $src, 0, 0, 0, 0, $nlat, $ninal, $lat, $inalt);
+
+    $langa = $cale . '.nou';
+    $scris = match ($ext) {
+        'jpg'   => @imagejpeg($dst, $langa, POZA_CALITATE),
+        'png'   => @imagepng($dst, $langa, 6),
+        'webp'  => @imagewebp($dst, $langa, POZA_CALITATE),
+        default => false,
+    };
+    imagedestroy($src);
+    imagedestroy($dst);
+
+    if (!$scris || !is_file($langa)) {
+        @unlink($langa);
+        $r['pricina'] = 'nu_s_a_putut_scrie';
+        return $r;
+    }
+
+    // Dacă munca n-a ajutat, nu se face. Se poate întâmpla la un PNG desenat,
+    // unde împachetarea celui vechi era mai bună decât a noastră — iar atunci
+    // originalul e și mai mic, și mai limpede.
+    $noi = (int) filesize($langa);
+    if ($noi >= $r['octetiDe'] && $r['octetiDe'] > 0) {
+        @unlink($langa);
+        $r['pricina'] = 'nu_a_ajutat';
+        return $r;
+    }
+
+    if (!@rename($langa, $cale)) {
+        @unlink($langa);
+        $r['pricina'] = 'nu_s_a_putut_muta';
+        return $r;
+    }
+
+    $r['facut']    = true;
+    $r['la']       = [$nlat, $ninal];
+    $r['octetiLa'] = $noi;
+
+    return $r;
 }

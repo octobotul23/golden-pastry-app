@@ -591,6 +591,15 @@ function route_products_photo(string $id): void
         fail('Nu am putut salva fișierul pe server.', 500, 'move_failed');
     }
 
+    // MICȘORAREA, îndată ce fișierul e pe disc.
+    //
+    // Nu poate strica urcarea: dacă nu se poate face, poza rămâne așa cum a
+    // venit și raportul spune de ce. De-aia stă ÎNAINTEA rândului din bază —
+    // nu fiindcă ar avea nevoie de el, ci ca numele scris în bază să arate
+    // spre fișierul în forma lui de pe urmă, nu spre unul care tocmai se
+    // rescrie.
+    $mic = poza_micsoreaza($dir . '/' . $file, $ext);
+
     $old = (string) ($p[$col] ?? '');
     $web = photo_web_prefix() . $file;
     // `$col` nu vine de la client: `latura_coloana_poza()` întoarce una din
@@ -620,7 +629,26 @@ function route_products_photo(string $id): void
     }
 
     audit('product_photo', 'product', (string) $id, $p['name'] . ' — ' . latura_cuvant($latura));
-    json_out(['ok' => true, 'photo' => $web, 'latura' => $latura]);
+    // Panoul spune omului ce s-a întâmplat cu poza lui. Fără rândurile astea,
+    // o poză de 9 MB s-ar face 300 KB în tăcere, iar patronul n-ar avea de
+    // unde ști nici că s-a micșorat, nici că nu s-a micșorat.
+    json_out([
+        'ok'     => true,
+        'photo'  => $web,
+        'latura' => $latura,
+        'poza'   => [
+            'micsorata' => $mic['facut'],
+            'pricina'   => $mic['pricina'],
+            'puncte'    => $mic['la'][0] . '×' . $mic['la'][1],
+            'octetiDe'  => $mic['octetiDe'],
+            'octetiLa'  => $mic['facut'] ? $mic['octetiLa'] : $mic['octetiDe'],
+            // Și mărimile SCRISE, fiindcă cine le arată nu trebuie să le și
+            // socotească: „9,4 MB" iese din aceeași funcție care scrie
+            // promisiunea de sub caseta de fișier, deci nu pot ieși din pas.
+            'scrisDe'   => poza_marime_text($mic['octetiDe']),
+            'scrisLa'   => poza_marime_text($mic['facut'] ? $mic['octetiLa'] : $mic['octetiDe']),
+        ],
+    ]);
 }
 
 /** Folderul public cu fotografiile produselor. */

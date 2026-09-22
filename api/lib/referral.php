@@ -31,6 +31,19 @@ declare(strict_types=1);
 const GP_REFERRAL_MAX_TRIES = 50;
 
 /**
+ * Cel mai lung cod care poate exista.
+ *
+ * Coloanele care îl țin — `users.referral_code`, `order_requests.referral_code`,
+ * `orders.referral_code`, `referral_commissions.code_used` și `code_typed` —
+ * sunt toate VARCHAR(64). Cifra de aici stă mai jos dinadins: `referral_assign()`
+ * lipește la coadă până la două cifre („ana", „ana1", … „ana49"), deci baza
+ * trebuie să lase loc pentru ele. Ce trece peste cifra asta nu e un cod de
+ * scurtat, ci un șir care NU POATE FI un cod: nu se potrivește cu niciun cont,
+ * fiindcă niciun cont nu poate avea unul atât de lung.
+ */
+const GP_REFERRAL_COD_MAX = 58;
+
+/**
  * Există coloanele de referral în baza de date?
  *
  * Răspunsul se ține minte pe durata cererii: e o singură interogare, dar ar fi
@@ -153,8 +166,18 @@ function referral_code_bases(string $name, string $username = ''): array
 {
     $baze = [];
     foreach ([referral_slug($name), referral_slug_intreg($name), referral_slug_intreg($username)] as $b) {
-        // Coloana e VARCHAR(64); lăsăm loc pentru cifrele de dezambiguizare.
-        $b = substr($b, 0, 58);
+        // DOUĂ margini, nu una. Coloana e VARCHAR(64) — dar codul trebuie să
+        // poată fi și TASTAT înapoi, iar ușa prin care se tastează
+        // (`referral_normalize_code`) taie la GP_REFERRAL_COD_MAX. Lăsăm loc
+        // cifrelor de dezambiguizare sub marginea cea mai strânsă dintre cele
+        // două, fiindcă altfel casa naște coduri pe care tot ea le refuză: un
+        // cod de 60 de litere lega contul la înscriere (`referral_owner()`
+        // n-are margine), dar tastat în magazin se pierdea fără o vorbă, și
+        // comisionul nu pleca nicăieri.
+        //
+        // Scris din cele două numere, nu ca o a treia cifră pe lângă ele: ziua
+        // în care una se mută, cealaltă o urmează singură.
+        $b = substr($b, 0, GP_REFERRAL_COD_MAX - strlen((string) (GP_REFERRAL_MAX_TRIES - 1)));
         if ($b !== '' && !in_array($b, $baze, true)) {
             $baze[] = $b;
         }
@@ -728,6 +751,48 @@ function referral_rate_for(?int $userId): float
  */
 function referral_normalize_code(string $cod): string
 {
+    $curat = referral_cod_curat($cod);
+
+    // MARGINEA STĂ AICI, ÎN UȘĂ, NU LA FIECARE FEREASTRĂ.
+    //
+    // Codul curățat ajunge scris în cinci coloane VARCHAR(64) deosebite, din
+    // patru locuri deosebite: cererea de pe site (api/routes/requests.php),
+    // comanda scrisă în panou și corectarea ei (api/routes/orders.php), și
+    // rândul de comision (mai jos, în același fișier). Marginea era scrisă
+    // într-un SINGUR apelant — `referral_code_set()` — iar celelalte patru se
+    // izbeau de MySQL cu 1406 și scoteau „Eroare internă" în fața omului.
+    //
+    // Ușa publică era cea mai rea: caseta „Cod de recomandare" de pe site
+    // (`id="q-ref"`, Site Public.dc.html) n-are `maxLength`, deci un șir lipit
+    // din alt document pleca întreg spre server, iar clientul își pierdea
+    // comanda pe o casetă care n-avea nicio legătură cu ea.
+    //
+    // Se ÎNTOARCE GOL — nu se refuză și nu se scurtează — fiindcă asta cere
+    // hotărârea scrisă lângă caseta aceea: „Unul greșit nu oprește cererea —
+    // rămâne fără recomandant, exact ca la un cont nou." Un cod mai lung decât
+    // poate fi ales e tocmai unul greșit: nu duce nicăieri. Iar SCURTAT ar fi
+    // mai rău decât greșit — „anamariaionescu…" tăiat la 58 ar putea nimeri
+    // codul ALTUI om, și comisionul ar pleca la el.
+    //
+    // Cine are de spus pe față „e prea lung" — administratorul care ALEGE un
+    // cod pentru un cont — cheamă `referral_cod_curat()` și își zice singur
+    // vorbele; vezi `referral_code_set()`.
+    if (strlen($curat) > GP_REFERRAL_COD_MAX) {
+        return '';
+    }
+    return $curat;
+}
+
+/**
+ * Numai curățarea, fără marginea de lungime.
+ *
+ * Pentru apelantul care trebuie să se plângă pe față, în loc să se poarte cu un
+ * cod prea lung ca și cum n-ar fi fost scris. Singurul de azi e
+ * `referral_code_set()`. Orice loc care SCRIE codul în bază cheamă
+ * `referral_normalize_code()`, ca marginea să vină de la sine.
+ */
+function referral_cod_curat(string $cod): string
+{
     $cod = preg_replace('/\s+/u', '', trim($cod));
     return referral_slug((string) ($cod ?? ''));
 }
@@ -752,7 +817,11 @@ function referral_code_set(int $userId, string $cod): string
     if (!referral_supported()) {
         fail('Recomandările nu sunt pornite pe serverul acesta.', 409, 'referral_off');
     }
-    $curat = referral_normalize_code($cod);
+    // `referral_cod_curat()`, nu `referral_normalize_code()`: aceea întoarce gol
+    // pentru un cod prea lung, iar aici tăcerea ar fi rea. Administratorul care
+    // ALEGE un cod trebuie să afle că e prea lung — nu să primească „poate avea
+    // numai litere și cifre" pentru un șir numai din litere.
+    $curat = referral_cod_curat($cod);
     if ($curat === '') {
         fail('Codul poate avea numai litere și cifre.', 422, 'bad_code');
     }
@@ -761,8 +830,8 @@ function referral_code_set(int $userId, string $cod): string
     if (strlen($curat) < 2) {
         fail('Codul e prea scurt — cel puțin două caractere.', 422, 'code_too_short');
     }
-    if (strlen($curat) > 58) {
-        fail('Codul e prea lung — cel mult 58 de caractere.', 422, 'code_too_long');
+    if (strlen($curat) > GP_REFERRAL_COD_MAX) {
+        fail('Codul e prea lung — cel mult ' . GP_REFERRAL_COD_MAX . ' de caractere.', 422, 'code_too_long');
     }
 
     // `q_unique` întoarce 409 cu o vorbă omenească în loc de „Eroare internă":
