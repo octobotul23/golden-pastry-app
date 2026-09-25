@@ -629,19 +629,18 @@ function route_requests_create(): void
 
         // Prețul tăiat merge alături de cel plătit. Nu se poate recalcula mai
         // târziu din catalog: catalogul se schimbă, iar peste trei luni comanda
-        // veche ar arăta o reducere de altă mărime — sau niciuna. Interogarea se
-        // alege o singură dată, în afara buclei, ca o bază nemigrată să nu cadă
-        // pe fiecare poziție.
-        $cuLista = promo_supported();
-        $sqlPozitie = $cuLista
-            ? 'INSERT INTO order_request_items (request_id, product_id, name, variant, qty, unit_price, list_price) VALUES (?, ?, ?, ?, ?, ?, ?)'
-            : 'INSERT INTO order_request_items (request_id, product_id, name, variant, qty, unit_price) VALUES (?, ?, ?, ?, ?, ?)';
+        // veche ar arăta o reducere de altă mărime — sau niciuna. Treapta care a
+        // dat prețul merge și ea (migrarea 028), ca acceptarea să știe ce prag a
+        // câștigat-o. Interogarea se alege o singură dată, în afara buclei, ca o
+        // bază nemigrată să nu cadă pe fiecare poziție — v. `pozitie_insert()`.
+        [$sqlPozitie, $cuLista, $cuTrepte] = pozitie_insert(
+            'order_request_items', 'request_id, product_id, name, variant, qty, unit_price'
+        );
         foreach ($priced as $p) {
-            $val = [$id, $p['id'], $p['name'], $p['variant'], $p['qty'], $p['unit']];
-            if ($cuLista) {
-                $val[] = $p['catalog'] ?? null;
-            }
-            q($sqlPozitie, $val);
+            q($sqlPozitie, pozitie_valori(
+                [$id, $p['id'], $p['name'], $p['variant'], $p['qty'], $p['unit']],
+                $cuLista, $cuTrepte, $p['catalog'] ?? null, $p['treapta'] ?? 1, $p['prag'] ?? null
+            ));
         }
         $pdo->commit();
     } catch (Throwable $e) {
@@ -1000,6 +999,11 @@ function route_requests_accept(string $id): void
             // din catalogul de acum. Lăsat cel din cerere, ar fi arătat o
             // reducere pe care poziția retarifată n-o mai are.
             'list_price' => $p['catalog'] ?? null,
+            // Treapta, din aceeași socoteală — aceleași nume ca pe rândul
+            // cererii, fiindcă scrierea de mai jos le citește de acolo când
+            // administratorul nu corectează nimic.
+            'treapta'      => $p['treapta'] ?? 1,
+            'prag_treapta' => $p['prag'] ?? null,
         ], $priced);
     }
 
@@ -1102,16 +1106,19 @@ function route_requests_accept(string $id): void
             // retarifat mai sus și `$it['list_price']` vine deja din
             // `$priced[...]['catalog']` — catalogul de acum, potrivit cu prețul
             // de acum.
-            $cuLista = promo_supported();
-            $sqlPozitie = $cuLista
-                ? 'INSERT INTO order_items (order_id, product_id, name, variant, qty, unit_price, list_price) VALUES (?, ?, ?, ?, ?, ?, ?)'
-                : 'INSERT INTO order_items (order_id, product_id, name, variant, qty, unit_price) VALUES (?, ?, ?, ?, ?, ?)';
+            //
+            // Treapta trece la fel, pe același drum: din rândul cererii când nu
+            // se corectează nimic, din tarifarea de acum când se corectează. Un
+            // rând de cerere de dinainte de 028 n-are treaptă, și nici n-avea ce
+            // treaptă să aibă — rămâne NULL, adică A.
+            [$sqlPozitie, $cuLista, $cuTrepte] = pozitie_insert(
+                'order_items', 'order_id, product_id, name, variant, qty, unit_price'
+            );
             foreach ($items as $it) {
-                $val = [$orderId, $it['product_id'], $it['name'], $it['variant'] ?? 'copt', $it['qty'], $it['unit_price']];
-                if ($cuLista) {
-                    $val[] = $it['list_price'] ?? null;
-                }
-                q($sqlPozitie, $val);
+                q($sqlPozitie, pozitie_valori(
+                    [$orderId, $it['product_id'], $it['name'], $it['variant'] ?? 'copt', $it['qty'], $it['unit_price']],
+                    $cuLista, $cuTrepte, $it['list_price'] ?? null, $it['treapta'] ?? null, $it['prag_treapta'] ?? null
+                ));
             }
 
             // Reducerea trece și ea. Panoul de comenzi nu deschide cererea din
@@ -1478,6 +1485,9 @@ function attach_request_items(array $rows, bool $cuAutor = false): array
             'qty'       => (float) $it['qty'],
             'unitPrice' => (float) $it['unit_price'],
             'variant'   => $it['variant'] ?? 'copt',
+            // Treapta și pragul ei (migrarea 028), ca la pozițiile de comandă.
+            'treapta'     => isset($it['treapta']) ? (int) $it['treapta'] : 1,
+            'pragTreapta' => isset($it['prag_treapta']) ? (int) $it['prag_treapta'] : null,
         ];
     }
 

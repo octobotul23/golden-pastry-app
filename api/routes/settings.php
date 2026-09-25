@@ -230,6 +230,8 @@ function route_settings_save(): void
         }
     }
 
+    $incoming = guard_catalog($incoming);
+
     guard_whatsapp_provider($incoming);
 
     validate_lists($incoming);
@@ -246,6 +248,61 @@ function route_settings_save(): void
 }
 
 /* ------------------------------------------------------------- validări -- */
+
+/**
+ * Cardul „Catalog" (migrarea 028): vederile cu care se deschide magazinul și
+ * pragurile cu care se precompletează un produs nou.
+ *
+ * Vederea e unul din trei cuvinte; orice altceva s-ar citi la deschidere ca
+ * vederea de pornire (`catalog_implicite()`), deci patronul ar alege una și ar
+ * vedea alta, fără să afle de ce. Se refuză pe loc.
+ *
+ * Pragurile sunt bucăți întregi, de la 2 la 10000 — aceleași margini ca pe
+ * produs (`product_trepte_din()`), ca un prag precompletat din Setări să nu fie
+ * refuzat abia la salvarea produsului. Golul e îngăduit: înseamnă „nu
+ * precompleta". C cere un B sub el. Perechea se judecă ÎNTREAGĂ — cea trimisă
+ * peste cea din bază —, ca o salvare numai a lui B să nu treacă pe sub un C pe
+ * care l-ar lăsa dedesubt.
+ */
+function guard_catalog(array $incoming): array
+{
+    foreach (['catalog_vedere_telefon' => 'pe telefon', 'catalog_vedere_calculator' => 'pe calculator'] as $k => $unde) {
+        if (!array_key_exists($k, $incoming)) {
+            continue;
+        }
+        $v = is_scalar($incoming[$k]) ? trim((string) $incoming[$k]) : '';
+        if (!in_array($v, catalog_vederi(), true)) {
+            fail('Vederea catalogului ' . $unde . ' trebuie să fie una din: '
+                . implode(', ', catalog_vederi()) . '.', 422, 'bad_catalog_view');
+        }
+        $incoming[$k] = $v;
+    }
+
+    $chei = ['pret_prag_b_implicit' => 'B', 'pret_prag_c_implicit' => 'C'];
+    if (!array_key_exists('pret_prag_b_implicit', $incoming)
+        && !array_key_exists('pret_prag_c_implicit', $incoming)) {
+        return $incoming;
+    }
+    $praguri = [];
+    foreach ($chei as $k => $lit) {
+        $v = array_key_exists($k, $incoming)
+            ? (is_scalar($incoming[$k]) ? trim((string) $incoming[$k]) : 'x')
+            : trim(setting($k));
+        if ($v !== '' && (!preg_match('/^\d+$/', $v) || (int) $v < 2 || (int) $v > 10000)) {
+            fail('Pragul implicit pentru prețul ' . $lit . ' trebuie să fie un număr întreg de '
+                . 'bucăți, între 2 și 10000 — sau gol, dacă nu vrei precompletare.', 422, 'bad_threshold');
+        }
+        $praguri[$lit] = $v === '' ? null : (int) $v;
+        if (array_key_exists($k, $incoming)) {
+            $incoming[$k] = $v === '' ? '' : (string) (int) $v;
+        }
+    }
+    if ($praguri['C'] !== null && ($praguri['B'] === null || $praguri['C'] <= $praguri['B'])) {
+        fail('Pragul implicit pentru prețul C trebuie să fie mai mare decât cel pentru prețul B.',
+            422, 'threshold_order');
+    }
+    return $incoming;
+}
 
 /**
  * Schimbarea furnizorului de WhatsApp cere datele noului furnizor.

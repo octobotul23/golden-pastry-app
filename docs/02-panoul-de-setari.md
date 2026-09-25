@@ -73,6 +73,10 @@ rândul acelei setări: setările se scriu peste rânduri care există, iar rân
 numește: `018_adresa_si_program.sql` pentru **Adresa publică** și **Program de
 lucru**, `017_procent_recomandare.sql` pentru **Procent de recomandare**.
 
+La fel pot sta închise cele patru casete din cardul **„Catalogul"**, tot din
+fila General, cât lipsește `028_preturi_pe_trepte.sql` — v. capitolul
+„Catalogul", mai jos.
+
 Leacul e actualizarea — `sudo bash actualizeaza-vps.sh`, vezi
 `docs/09-actualizare-vps.md` — apoi reîncarci pagina. Până atunci, pentru adresă
 și program, site-ul arată valorile scrise în cod.
@@ -98,6 +102,52 @@ alt cartier.
 
 Dacă te muți, le iei din Google Maps: clic dreapta pe locul depozitului →
 primul număr e latitudinea, al doilea longitudinea.
+
+---
+
+## Catalogul: cum se deschide magazinul, și de unde pornesc pragurile
+
+Ultimul card din fila **General**, **„Catalogul"**, venit în 2.5.0 cu migrarea
+028. Are patru casete:
+
+| Caseta | La pornire | Ce hotărăște |
+|---|---|---|
+| Cum se deschide magazinul pe telefon și tabletă | Unul pe rând, cu toate detaliile | vederea cu care intră un client pe un ecran sub 1080 de puncte |
+| Cum se deschide magazinul pe calculator | Patru pe ecran | la fel, de la 1080 de puncte în sus |
+| Prețul B începe de la (buc.) | 100 | pragul cu care pornește un produs în Catalog |
+| Prețul C începe de la (buc.) | 300 | la fel, pentru C |
+
+**Vederile** sunt trei: *Unul pe rând, cu toate detaliile · Patru pe ecran ·
+Șase pe ecran* — ce înseamnă fiecare, pe ce ecran, scrie în
+`docs/04-catalogul-de-produse.md`, la „Cum se vede catalogul". Hotarul dintre
+„telefon și tabletă" și „calculator" e același pe care îl folosește magazinul
+pentru tot restul, 1080 de puncte, deci o tabletă ținută pe lat poate intra pe
+vederea de calculator.
+
+Clientul își poate schimba vederea din magazin, iar alegerea lui se ține minte
+în browserul lui. **Până schimbi tu vederea de aici**: atunci schimbarea ajunge
+la toată lumea, și la cine își alesese alta înainte. Altfel un client care a
+apăsat o dată „Șase" n-ar mai vedea niciodată vederea aleasă de tine.
+
+Setările nu ating vederile din panou: Catalogul și Conturile își țin fiecare
+vederea lui, în browserul celui care lucrează.
+
+**Pragurile** de aici nu schimbă niciun produs. Sunt doar valorile cu care se
+precompletează rândul de praguri în formularul unui produs care n-are încă
+praguri; fiecare produs își are apoi pragurile lui, iar ele se salvează numai
+împreună cu un preț B ori C. Cum se aplică prețurile, în
+`docs/04-catalogul-de-produse.md`, la „Trei prețuri, după cantitate".
+
+Casetele își spun singure greșeala, înainte de „Salvează": un prag e un număr
+întreg de bucăți, între 2 și 10000, iar al lui C trebuie să fie mai mare decât
+al lui B (*„Trebuie să fie mai mare decât pragul lui B (100 buc.)."*). O casetă
+goală e îngăduită și înseamnă „nu precompleta nimic". Serverul judecă la fel, și
+refuză întreagă o salvare care ar lăsa pragul C sub B.
+
+Pe o bază fără migrarea 028, cele patru casete stau închise, cu rândul care
+numește migrarea (v. „Casetele care stau închise", mai sus). Până atunci
+magazinul se deschide pe „Unul pe rând" pe telefon și pe „Patru pe ecran" pe
+calculator.
 
 ---
 

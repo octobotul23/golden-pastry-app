@@ -796,8 +796,17 @@ function route_users_update(string $id): void
         // Un cont de conducere dezactivat e retrogradat de fapt: nu mai poate
         // intra, deci nu mai poate face nimic din ce numai el avea voie. Deci
         // aceleași două reguli ca la schimbarea rolului.
+        //
+        // Poarta rolului stă și pe PORNIRE, nu doar pe oprire: pornit la loc,
+        // contul își capătă înapoi toate drepturile, deci e aceeași putere,
+        // întoarsă — ca „fă-l administrator" față de „scoate-l". Păzită numai
+        // la oprire, un administrator desfăcea hotărârea unui fondator de a
+        // scoate din firmă alt administrator (ori un fondator), iar omul intra
+        // iar cu toate drepturile. Din 2.5.0 pagina Conturi are comutatorul
+        // „Cont pornit", deci ușa ar fi fost o apăsare (v. „a cincea ușă" în
+        // .claude/test-fondator.mjs).
+        guard_leader_role('', (string) $target['role']);
         if (!$b['active']) {
-            guard_leader_role('', (string) $target['role']);
             guard_last_founder($id, (string) $target['role']);
         }
         $sets[] = 'active = ?';

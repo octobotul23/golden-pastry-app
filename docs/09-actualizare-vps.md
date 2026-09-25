@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.4.2/deploy
+  Pachet: /root/plasture-vps 2.5.0/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -126,9 +126,9 @@ grep -c session_days_panou /var/www/gp/api/lib/auth.php
    din Catalog n-are cu ce se ciocni și s-ar întoarce de la morți la fiecare
    actualizare (`actualizeaza-vps.sh:526`).
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
-   și din curățenie (`actualizeaza-vps.sh:878`), iar folderul pozelor e citit din
-   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:808`,
-   `api/routes/catalog.php:655`).
+   și din curățenie (`actualizeaza-vps.sh:886`), iar folderul pozelor e citit din
+   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:816`,
+   `api/routes/catalog.php:688`).
 6. **Drepturile**: totul pe `www-data`, `755` la foldere, `644` la fișiere,
    `640` la `config.php`.
 7. **Apache**: întâi `configtest`, și abia dacă trece, `reload`. O configurație
@@ -158,7 +158,7 @@ exact în minutele dintre cele două jumătăți ale actualizării.
 Fișierele `api/setup.php` și `api/verifica.php` sunt un caz aparte: ghidul de
 instalare cere ștergerea lor, dar amândouă sunt în pachet, deci copierea le-ar
 pune la loc de fiecare dată. Scriptul ține minte care lipseau și le scoate din
-nou (`actualizeaza-vps.sh:827`). Se închid și singure, cu `404`, din clipa în
+nou (`actualizeaza-vps.sh:835`). Se închid și singure, cu `404`, din clipa în
 care instalarea are un administrator activ — dar hotărârea rămâne a ta.
 
 ---
@@ -337,7 +337,7 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
   de cât de veche e instalarea: pe una lăsată în urmă cu trei versiuni se aprind
   trei, pe una actualizată ieri niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
-  `sql/027_poza_fiecarei_laturi.sql`;
+  `sql/028_preturi_pe_trepte.sql`;
 - **25 de tabele** în capul raportului, la „Baza de date" (cel din urmă venit e
   `schema_migrations`, registrul adus de `025_registru_migrari.sql`; înaintea
   lui, `telegram_links` și `lab_production`, aduse de `021_raspundere.sql`).
@@ -490,6 +490,9 @@ Fără ea, cererea trimisă a doua oară — degetul apăsat încă o dată, leg
 care a căzut tocmai când răspunsul venea încoace — intră a doua oară, iar
 laboratorul vede două comenzi acolo unde omul a făcut una. Purtarea e cea de
 până acum, nu o stricăciune nouă: pagina știe să se poarte și pe o bază fără
+cheie. Ce se schimbă la import e că serverul începe să recunoască perechea și
+răspunde cu cererea dintâi, ca și cum ar fi fost acum.
+
 `027_poza_fiecarei_laturi.sql` **nu se vede nici ea în raport**, și tot dintr-o
 pricină aparte: e singura migrare care nu atinge schema DELOC — nici tabel, nici
 coloană, nici index —, deci nici amprenta nu se mișcă pentru ea. Numai registrul
@@ -511,19 +514,34 @@ nicio vitrină: în ziua urcării, amândouă laturile arată exact ce arătau. 
 gol înseamnă gol — un produs căruia nu i-ai urcat poză la gata de servire apare
 acolo cu substituentul „fără poză", nu cu poza congelată.
 
-cheie. Ce se schimbă la import e că serverul începe să recunoască perechea și
-răspunde cu cererea dintâi, ca și cum ar fi fost acum.
+`028_preturi_pe_trepte.sql` **nu se vede nici ea în raport**: nici tabel, nici
+index — zece coloane (șase pe `products`, câte două pe `order_items` și pe
+`order_request_items`) și patru setări ale catalogului. O ceri singur, pe
+ultima coloană pe care o adaugă:
+`SHOW COLUMNS FROM order_request_items LIKE 'prag_treapta'`.
+Codul le cere pe **toate zece** deodată (`catalog_trepte_supported()`), deci
+în fereastra dintre fișiere și import — ori pe o bază rămasă cu jumătate din
+migrare — casa vinde exact ca înainte: un singur preț pe latură, fără scară în
+magazin, comenzile tarifate la A. Singurul lucru refuzat până la import e
+salvarea unui preț B sau C din fila Produse: serverul spune că lipsește `028`
+și nu scrie nimic, iar restul fișei se salvează. Setările intră cu
+`INSERT IGNORE`, deci a doua actualizare nu-ți calcă vederile și pragurile
+alese în Setări → General, cardul „Catalogul" — aceeași lecție ca la `016`,
+`024` și `027`. Pozițiile comenzilor de dinainte rămân cu treapta goală,
+citită ca A: o comandă veche corectată după actualizare își păstrează prețul
+promis, ca până acum, și coboară la B ori la C numai dacă noua cantitate ajunge
+la pragul lor.
 
 Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
 adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:636`,
-`:715`). Un rând galben care spune că `017` sau `018` **n-a intrat** e o migrare
+`:718`). Un rând galben care spune că `017` sau `018` **n-a intrat** e o migrare
 lipsă — aproape mereu un folder `sql/` urcat mai vechi decât pachetul; la
 procent îl dă și un `0` rămas de la casă, pe care `017` l-ar fi urcat la 5. Un
 rând galben care începe cu **„N-am putut citi…"**, cu eroarea lui mysql
 dedesubt, e altceva: migrările au trecut, a picat numai întrebarea de după ele,
 deci raportul nu știe ce e acolo și nu ghicește. Nu rulezi din nou pentru atât;
 te uiți tu, în Setări. La fel vorbește și rândul conturilor făcute pe site pe
-care nu le-a recunoscut nimeni (`:776`): acolo o citire picată tăcea înainte,
+care nu le-a recunoscut nimeni (`:784`): acolo o citire picată tăcea înainte,
 exact ca „niciun cont", iar acum se aude.
 
 ---

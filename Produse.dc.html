@@ -24,12 +24,122 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 @keyframes pr-fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 [data-pr=mini]{display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;padding:0;font-size:14px;border-radius:9px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);cursor:pointer}
 [data-pr=mini]:hover{border-color:var(--h-accent);color:var(--h-fg)}
-[data-pr=lat]{font-family:inherit;font-size:10px;line-height:1;flex:none;padding:5px 9px;border-radius:999px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-faint);cursor:pointer;opacity:.62}
+[data-pr=lat]{font-family:inherit;font-size:10px;line-height:1;flex:none;display:inline-flex;align-items:center;gap:4px;--gp-semn-marime:1.25em;padding:5px 9px;border-radius:999px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-faint);cursor:pointer;opacity:.62}
 [data-pr=lat]:hover{border-color:var(--h-accent);color:var(--h-fg);opacity:1}
 [data-pr=lat].pr-on{border-color:var(--h-accent);color:var(--h-fg);font-weight:700;opacity:1}
 .pr-stins{opacity:.55}
+.pr-vh{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0!important}
 [data-pr=thumb]{width:64px;height:64px;flex:none;border-radius:12px;object-fit:cover;background:var(--h-bg-sunk);border:1px solid var(--h-line)}
 [data-pr=scrim]{position:fixed;inset:0;background:rgba(20,12,6,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;z-index:50}
+[data-pr=unelte]{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
+[data-pr=vederi]{display:inline-flex;align-items:center;gap:2px;margin-left:auto;padding:3px;border-radius:12px;background:var(--h-bg-surface);border:1px solid var(--h-line)}
+[data-pr=vederi]>button{display:flex;align-items:center;justify-content:center;width:40px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--h-fg-muted);cursor:pointer}
+[data-pr=vederi]>button:hover{color:var(--h-fg);background:var(--h-bg-sunk)}
+[data-pr=vederi]>button[aria-pressed=true]{background:var(--h-accent);color:var(--h-fg-on-accent)}
+[data-pr=filtreBtn]{display:none;align-items:center;gap:7px;height:40px;font-size:14px;border-radius:11px}
+[data-pr=filtreBtn]>b{min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:var(--h-accent);color:var(--h-fg-on-accent);font-size:12px;line-height:20px;text-align:center}
+[data-pr=filtre]{flex:1 1 100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+[data-pr=filtre]>select{height:36px;width:auto;max-width:100%;font-size:13px;padding-top:0;padding-bottom:0}
+[data-pr=cip]{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);font-family:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
+[data-pr=cip]:hover:not(:disabled){border-color:var(--h-accent);color:var(--h-fg)}
+[data-pr=cip][aria-pressed=true]{background:var(--h-accent-soft);border-color:var(--h-accent);color:var(--h-accent-fg);font-weight:700}
+[data-pr=cip]:disabled{opacity:.42;cursor:default}
+[data-pr=cip]>b{font-weight:700;font-variant-numeric:tabular-nums;opacity:.7}
+[data-pr=scara]{display:grid;align-items:center;column-gap:14px;row-gap:4px;font-size:14px;font-variant-numeric:tabular-nums;line-height:1.25;flex:none}
+[data-pr=scara].pr-n1{grid-template-columns:auto minmax(4.5em,auto)}
+[data-pr=scara].pr-n2{grid-template-columns:auto repeat(2,minmax(3.1em,auto))}
+[data-pr=scara].pr-n3{grid-template-columns:auto repeat(3,minmax(3.1em,auto))}
+[data-pr=scara].pr-placa{grid-template-columns:auto 1fr 1fr;column-gap:8px}
+[data-pr=scara-cap]{font-size:11px;font-weight:600;letter-spacing:.03em;color:var(--h-fg-subtle);text-align:right;white-space:nowrap}
+[data-pr=scara-colt]{font-size:11px;color:var(--h-fg-faint);white-space:nowrap}
+[data-pr=scara-et]{display:flex;align-items:center;justify-content:center;--gp-semn-marime:1.2em}
+[data-pr=scara-pret]{text-align:right;font-weight:500;color:var(--h-fg-muted);white-space:nowrap}
+[data-pr=scara-pret].pr-a{font-weight:700;color:var(--h-fg)}
+[data-pr=scara-pret].pr-gol{font-weight:400;color:var(--h-fg-faint)}
+[data-pr=row].pr-scos [data-pr=thumb],[data-pr=placa].pr-scos [data-pr=placa-foto]>img{opacity:.5;filter:grayscale(.6)}
+[data-pr=actiuni]{display:flex;align-items:center;gap:8px;margin-left:auto}
+[data-pr=placa]{display:flex;flex-direction:column;min-width:0;container-type:inline-size;border-radius:18px;overflow:hidden;background:var(--h-bg-surface);border:1px solid var(--h-line);box-shadow:var(--h-shadow-1);transition:box-shadow .2s var(--h-ease-out),border-color .2s var(--h-ease-out)}
+@media (hover:hover){
+[data-pr=placa]:hover{box-shadow:var(--h-shadow-2);border-color:var(--h-line-strong)}
+}
+[data-pr=placa-foto]{position:relative;aspect-ratio:4/3;background:var(--h-bg-sunk);overflow:hidden;cursor:pointer}
+[data-pr=placa-foto]>img{display:block;width:100%;height:100%;object-fit:cover}
+[data-pr=placa-insigne]{position:absolute;left:8px;top:8px;right:8px;display:flex;flex-wrap:wrap;gap:4px}
+/* Pe placa „șase” (114px la 390) „SCOS DIN CATALOG” e mai lat decât poza:
+   se rupe pe două rânduri în loc să fie tăiat la marginea ei („…CATALO”). */
+[data-pr=placa-insigne]>.h-badge{font-size:10px;box-shadow:0 1px 3px rgba(20,12,6,.18);max-width:100%;white-space:normal;line-height:1.2}
+[data-pr=placa-corp]{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;padding:12px 14px 14px}
+[data-pr=placa-nume]{font-family:var(--h-font-display);font-size:17px;font-weight:600;line-height:1.25;min-height:2.5em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+[data-pr=placa-sub]{font-size:12px;color:var(--h-fg-subtle);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1.25em}
+[data-pr=placa-laturi]{display:flex;flex-wrap:wrap;gap:5px}
+[data-pr=placa] [data-pr=scara]{font-size:13px;padding:8px 10px;border-radius:12px;background:var(--h-bg-sunk)}
+[data-pr=placa] [data-pr=scara].pr-n1{grid-template-columns:auto 1fr}
+[data-pr=placa] [data-pr=scara].pr-n1 [data-pr=scara-pret]{text-align:left}
+/* Acțiunile plăcii se așază întâi pentru placa îngustă: trei butoane egale,
+   numai cu semne (numele stă în aria-label). Cuvântul „Editează” apare doar
+   unde încape, după lățimea PLĂCII, nu a ecranului (@container, mai jos):
+   aceeași placă are 272px la 1440 și 161px la 820, iar un prag pus pe ecran
+   n-ar ști asta. Un browser fără @container rămâne la varianta îngustă. */
+[data-pr=placa-actiuni]{margin-top:auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+[data-pr=placa-actiuni]>button{width:auto;min-width:0;height:40px;padding:0;font-size:13px;justify-content:center}
+[data-pr=placa-actiuni]>[data-pr=edit]{gap:6px}
+[data-pr=edit-et]{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+[data-pr=placa-rosu]{align-self:flex-start;max-width:100%;white-space:normal;line-height:1.3}
+/* Aceeași insignă pe rând: pe telefon „FĂRĂ PREȚ GATA DE SERVIRE — ASCUNS
+   ACOLO” are ~380px și ieșea din card, tăiată; acum se rupe pe rânduri. */
+[data-pr=rand-rosu]{max-width:100%;white-space:normal;line-height:1.3}
+.pr-sase [data-pr=placa-corp]{gap:7px;padding:8px 8px 9px}
+.pr-sase [data-pr=placa-nume]{font-size:14px}
+.pr-sase [data-pr=placa-sub]{font-size:11px}
+.pr-sase [data-pr=lat]{padding:5px 7px}
+.pr-sase [data-pr=lat-et]{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.pr-sase [data-pr=scara]{font-size:12px;padding:6px 7px;column-gap:6px}
+.pr-sase [data-pr=placa-actiuni]{gap:4px}
+.pr-sase [data-pr=placa-actiuni]>button{height:36px}
+.pr-sase [data-pr=placa-insigne]>.h-badge{font-size:9px}
+/* 232px: creionul, cuvântul și două butoane de 40px încap fără să se calce.
+   Sub 200px cele două pastile cu cuvinte nu mai încap pe un rând și rămân
+   semnele, ca în „șase”; cuvântul se aude mai departe. */
+@container (min-width:232px){
+[data-pr=placa-actiuni]{grid-template-columns:minmax(0,1fr) 40px 40px}
+[data-pr=placa-actiuni]>[data-pr=edit]{padding:0 14px}
+[data-pr=edit-et]{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;clip-path:none}
+}
+@container (max-width:199px){
+[data-pr=lat-et]{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+[data-pr=lat]{padding:5px 7px}
+}
+[data-pr=preturi]{display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px solid var(--h-line)}
+[data-pr=praguri]{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 22px;padding:12px 14px;border-radius:14px;border:1px dashed var(--h-line-strong);background:var(--h-bg-surface)}
+[data-pr=prag]{display:flex;flex-direction:column;gap:6px}
+[data-pr=cu-unitate]{display:flex;align-items:center;gap:8px}
+[data-pr=cu-unitate]>input{width:96px;height:44px;font-size:15px}
+[data-pr=cu-unitate]>span{font-size:13px;color:var(--h-fg-subtle)}
+[data-pr=praguri]>.h-help,[data-pr=praguri]>.h-error{flex:1 1 100%}
+[data-pr=praguri].pr-liber [data-pr=prag]{opacity:.62}
+[data-pr=latura-panou]{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);min-width:0}
+[data-pr=latura-cap]{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;--gp-semn-marime:1.15em}
+[data-pr=latura-cap]>span{font-family:var(--h-font-display);font-size:17px;font-weight:600}
+[data-pr=latura-cap]>.h-switch{margin-left:auto}
+[data-pr=trepte]{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+[data-pr=treapta]{display:flex;flex-direction:column;gap:5px;min-width:0}
+[data-pr=treapta]>input{width:100%;min-width:0;box-sizing:border-box;height:44px;font-size:15px}
+[data-pr=treapta-et]{display:flex;flex-direction:column;gap:1px;font-size:12px;font-weight:700;color:var(--h-fg-muted)}
+[data-pr=treapta-et]>small{font-size:11px;font-weight:400;color:var(--h-fg-faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Bara de unelte până la 1000px — telefonul și tableta cu meniul lateral.
+   Comutatorul de laturi devine trei celule egale. Pe tabletă (761–1000px)
+   fiecare celulă are cel puțin 149px și semnul, cuvântul și numărul încap pe
+   un rând, ca pe calculator. Pe telefon (mai jos) semnul și numărul urcă sus
+   și cuvântul coboară dedesubt: așa încap toate trei și la 360px. Până în
+   2.5.0 era o bandă care se derula, iar „Amândouă” — fila aleasă la
+   deschidere — stătea în afara ecranului. Filtrele stau strânse sub „Filtre”. */
+@media (max-width:1000px){
+[data-pr=laturi]{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px!important;flex:1 1 100%}
+[data-pr=arata]{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+[data-pr=laturi]>button{min-width:0;flex-wrap:wrap;justify-content:center;align-content:center;gap:1px 5px!important;height:auto!important;min-height:44px;padding:6px!important;font-size:12px!important;line-height:1.25;white-space:normal;text-align:center}
+[data-pr=filtreBtn]{display:inline-flex!important}
+[data-pr=filtre].pr-inchis{display:none!important}
+}
 @media (max-width:760px){
 [data-pr=shell]{flex-direction:column!important}
 [data-pr=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
@@ -42,14 +152,29 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-pr=topbar]>div:last-child>input{flex:1 1 100%!important;width:auto!important}
 [data-pr=topbar]>div:last-child>button{flex:1 1 auto!important}
 [data-pr=body]{padding:14px 14px 26px!important;gap:12px!important}
-[data-pr=grid2]{grid-template-columns:1fr!important}
+[data-pr=grid2]{grid-template-columns:minmax(0,1fr)!important} /* „1fr” înseamnă minmax(auto,1fr): rândul pozei (88 + 14 + fișierul, 164) lățea coloana peste card, sub 342 de puncte; acum coloana e cât cardul, iar scrisul trece sub poză */
 [data-pr=row]{flex-wrap:wrap!important}
+[data-pr=rand-nume]{flex-basis:180px!important}
 [data-pr=tabs]{width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
 [data-pr=tabs]::-webkit-scrollbar{display:none}
 [data-pr=tabs]>button{flex:none!important}
-[data-pr=laturi]{width:100%!important;overflow-x:auto!important;flex-wrap:nowrap!important;scrollbar-width:none}
-[data-pr=laturi]::-webkit-scrollbar{display:none}
-[data-pr=laturi]>button{flex:none!important}
+[data-pr=unelte]{gap:8px!important}
+[data-pr=laturi]>button{min-height:52px}
+[data-pr=laturi-et]{flex:1 1 100%;order:2}
+[data-pr=vederi]>button{width:44px;height:40px}
+[data-pr=filtreBtn]{height:48px}
+[data-pr=actiuni] [data-pr=mini]{width:40px;height:40px}
+[data-pr=filtre]>select{flex:1 1 150px!important;height:40px!important}
+[data-pr=cip]{height:40px!important}
+[data-pr=scara]{flex:1 1 100%!important;justify-content:start}
+[data-pr=actiuni]{flex:1 1 100%!important;justify-content:flex-end;flex-wrap:wrap}
+[data-pr=placa] [data-pr=scara]{flex:none!important}
+}
+/* Sub 380px „Editează”, „Scoate din catalog” și × nu mai încap pe un rând
+   cu marginile obișnuite (316px față de 296px la 360). Se strâng marginile;
+   sub 330px rândul se rupe în două, dar nimic nu mai iese din card. */
+@media (max-width:379px){
+[data-pr=actiuni]>.h-btn{padding-left:12px;padding-right:12px;font-size:13px!important}
 }
 </style>
 </helmet>
@@ -210,16 +335,55 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      servire" —, iar oglinda se citește comparând treizeci de rânduri, nu
      deschizând treizeci de formulare. O filă a treia le-ar face imposibil de
      văzut deodată și ar cere încă o copie a marcajului rândului.
-     Implicit „Amândouă", deci pagina se deschide arătând exact ce arăta
-     înainte de runda asta. -->
+     Implicit „Amândouă”, deci pagina se deschide arătând exact ce arăta
+     înainte de runda asta.
+
+     Bara de unelte (runda 2.5.0) adaugă, lângă comutator, felul în care se
+     arată produsele — rânduri sau plăci, ca în magazin — și filtrele. Pe
+     telefon filtrele stau strânse sub „Filtre”: deschise, ar împinge lista
+     cu trei rânduri de butoane mai jos la fiecare deschidere a paginii. -->
+<div data-pr="unelte">
 <div data-pr="laturi" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-<span style="font-size:13px;color:var(--h-fg-subtle);margin-right:2px">Arată</span>
+<span data-pr="arata" style="font-size:13px;color:var(--h-fg-subtle);margin-right:2px">Arată</span>
 <sc-for list="{{ laturiTabs }}" as="l" hint-placeholder-count="3">
 <button type="button" class="{{ l.cls }}" onClick="{{ l.onClick }}" title="{{ l.titlu }}" style="height:38px;font-size:13px;border-radius:11px;display:flex;align-items:center;gap:7px">
-<span>{{ l.label }}</span>
+<gp-semn latura="{{ l.latura }}" culoare="{{ l.culoare }}" aria-hidden="true"></gp-semn>
+<span data-pr="laturi-et">{{ l.label }}</span>
 <span class="h-numeric" style="font-weight:700;opacity:.8">{{ l.count }}</span>
 </button>
 </sc-for>
+</div>
+<button type="button" data-pr="filtreBtn" class="h-btn h-btn--secondary" aria-expanded="{{ filtreDeschise }}" onClick="{{ onFiltre }}">Filtre<sc-if value="{{ filtreNr }}" hint-placeholder-val="{{ false }}"><b>{{ filtreNr }}</b></sc-if></button>
+<!-- Aceleași trei desene ca în magazin: omul care trece de la o pagină la
+     alta recunoaște butonul fără să citească. Numele stă pe buton
+     (aria-label), fiindcă desenul singur nu se citește cu glas tare. -->
+<div data-pr="vederi" role="group" aria-label="Cum se arată produsele">
+<sc-for list="{{ vederiProduse }}" as="w" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{ w.apasat }}" aria-label="{{ w.eticheta }}" title="{{ w.eticheta }}" onClick="{{ w.alege }}">
+<sc-if value="{{ w.eUnu }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="8" height="14" rx="1.6"></rect><path d="M14 8h7M14 12h7M14 16h4"></path></svg></sc-if>
+<sc-if value="{{ w.ePatru }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4" width="7" height="7" rx="1.4"></rect><rect x="13" y="4" width="7" height="7" rx="1.4"></rect><rect x="4" y="13" width="7" height="7" rx="1.4"></rect><rect x="13" y="13" width="7" height="7" rx="1.4"></rect></svg></sc-if>
+<sc-if value="{{ w.eSase }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="5" height="6" rx="1.1"></rect><rect x="9.5" y="5" width="5" height="6" rx="1.1"></rect><rect x="16.5" y="5" width="5" height="6" rx="1.1"></rect><rect x="2.5" y="13" width="5" height="6" rx="1.1"></rect><rect x="9.5" y="13" width="5" height="6" rx="1.1"></rect><rect x="16.5" y="13" width="5" height="6" rx="1.1"></rect></svg></sc-if>
+</button>
+</sc-for>
+</div>
+<div data-pr="filtre" class="{{ filtreCls }}">
+<select class="h-select" aria-label="Grupa" value="{{ grupa }}" onChange="{{ onGrupa }}">
+<sc-for list="{{ grupaOpts }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<select class="h-select" aria-label="Ordinea produselor în grupă" value="{{ ordine }}" onChange="{{ onOrdine }}">
+<sc-for list="{{ ordineOpts }}" as="o" hint-placeholder-count="4">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<sc-for list="{{ chipuri }}" as="k" hint-placeholder-count="6">
+<button type="button" data-pr="cip" aria-pressed="{{ k.apasat }}" disabled="{{ k.stins }}" onClick="{{ k.alege }}" title="{{ k.titlu }}">{{ k.l }}<b>{{ k.nr }}</b></button>
+</sc-for>
+<sc-if value="{{ poateArataTot }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onArataTot }}" style="height:36px;font-size:13px">Arată tot</button>
+</sc-if>
+</div>
 </div>
 
 <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
@@ -228,9 +392,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:20px;font-weight:600">{{ g.name }}</span>
 <span style="font-size:13px;color:var(--h-fg-subtle)">{{ g.meta }}</span>
 </div>
+<!-- Două vederi ale acelorași rânduri: lista („unul pe rând”, cu toate
+     detaliile) și plăcile („patru” / „șase” pe ecran). Aceleași date, aceleași
+     fapte pe butoane — numai așezarea diferă, deci n-are voie să difere nici
+     ce poate face omul din ele. -->
+<sc-if value="{{ eLista }}" hint-placeholder-val="{{ true }}">
 <div class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
 <sc-for list="{{ g.rows }}" as="p" hint-placeholder-count="3">
-<div data-pr="row" style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid var(--h-line)">
+<!-- `flex-wrap`, nu un rând care se taie: între 761 și ~1100 px rândul cerea
+     vreo 750 px, iar cardul, cu `overflow:hidden`, tăia butoanele de la capăt
+     fără urmă. Acum ce nu încape coboară pe rândul următor. -->
+<div data-pr="row" class="{{ p.placaCls }}" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding:14px 18px;border-bottom:1px solid var(--h-line)">
 <!-- „loading=lazy” nu e aici pentru viteză, ci ca browserul să nu ceară
      adresa înainte ca runtime-ul să înlocuiască legătura. Marcajul stă în
      document, în <x-dc>, până la randare: parserul îl citea înainte și cerea
@@ -239,15 +411,18 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      Imaginile din <x-dc> nu ajung niciodată aproape de ecran (x-dc e ascuns),
      deci o imagine leneșă nu se încarcă deloc până când o randează runtime-ul. -->
 <img data-pr="thumb" loading="lazy" src="{{ p.photo }}" alt="{{ p.name }}">
-<div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:2px">
+<div data-pr="rand-nume" style="flex:1 1 230px;min-width:0;display:flex;flex-direction:column;gap:5px">
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-<span style="font-size:16px;font-weight:600">{{ p.name }}</span>
+<span style="font-size:16px;font-weight:600;overflow-wrap:anywhere">{{ p.name }}</span>
 <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--accent" style="font-size:10px">nou</span>
 </sc-if>
 <sc-if value="{{ p.hidden }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge" style="font-size:10px">scos din catalog</span>
 </sc-if>
+</div>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ p.sub }}</span>
+<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
 <!-- Cele două cataloage, chiar pe rând. Pastilele sunt deodată semn și
      comutator: arată unde e produsul ȘI îl mută, cu un PATCH de un singur
      câmp — același contract ca butonul „Scoate din catalog" de la capătul
@@ -257,35 +432,129 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      Stinsă nu înseamnă stricată — prețul laturii rămâne scris, așa a cerut
      patronul anume. De-aia pastila stinsă e ștearsă, nu roșie: roșul e păstrat
      pentru cele două stări care chiar sunt greșite, v. „faraPret". -->
-<button type="button" data-pr="lat" class="{{ p.latFCls }}" onClick="{{ p.onLatF }}" title="{{ p.latFTitlu }}">congelate</button>
-<button type="button" data-pr="lat" class="{{ p.latBCls }}" onClick="{{ p.onLatB }}" title="{{ p.latBTitlu }}">gata de servire</button>
+<button type="button" data-pr="lat" class="{{ p.latFCls }}" onClick="{{ p.onLatF }}" title="{{ p.latFTitlu }}"><gp-semn latura="congelat" aria-hidden="true"></gp-semn>congelate</button>
+<button type="button" data-pr="lat" class="{{ p.latBCls }}" onClick="{{ p.onLatB }}" title="{{ p.latBTitlu }}"><gp-semn latura="copt" aria-hidden="true"></gp-semn>gata de servire</button>
 <!-- Semnul roșu al produsului fără preț. Stă lângă nume, nu în coloana de
      prețuri, fiindcă acolo scrie de mult „—" — un semn pe care ochiul care
      derulează treizeci de rânduri nu-l deosebește de o cifră. Vezi
      `faraPret` în renderVals(): textul spune care preț lipsește, fiindcă
      asta e chiar reparația de făcut. -->
 <sc-if value="{{ p.faraPret }}" hint-placeholder-val="{{ false }}">
-<span class="h-badge h-badge--danger" style="font-size:10px" title="{{ p.faraPretTitlu }}">{{ p.faraPretText }}</span>
+<span class="h-badge h-badge--danger" data-pr="rand-rosu" style="font-size:10px" title="{{ p.faraPretTitlu }}">{{ p.faraPretText }}</span>
 </sc-if>
 </div>
-<span style="font-size:13px;color:var(--h-fg-subtle)">{{ p.sub }}</span>
 </div>
-<div style="display:flex;flex-direction:column;align-items:flex-end;min-width:128px;text-align:right">
-<span class="h-numeric" style="font-size:15px;font-weight:700">{{ p.priceMain }}</span>
-<span style="font-size:12px;color:var(--h-fg-faint)">{{ p.priceAlt }}</span>
+<!-- Scara prețurilor: câte o linie pe latură, câte o coloană pe treaptă, cu
+     pragurile deasupra. Amândouă laturile, și pe comutatorul unei singure:
+     oglinda dintre cataloage se citește tocmai punând cifrele una sub alta.
+     Latura stinsă rămâne scrisă, doar ștearsă — ca pastila ei. Un produs cu
+     un singur preț pe latură arată ca înainte: „2,85 lei”, fără tabel. -->
+<div data-pr="scara" class="{{ p.pret.cls }}" title="{{ p.pret.titlu }}">
+<sc-if value="{{ p.pret.arePraguri }}" hint-placeholder-val="{{ true }}">
+<span data-pr="scara-colt">buc.</span>
+<sc-for list="{{ p.pret.cap }}" as="h" hint-placeholder-count="3">
+<span data-pr="scara-cap" title="{{ h.titlu }}">{{ h.t }}</span>
+</sc-for>
+</sc-if>
+<sc-for list="{{ p.pret.linii }}" as="ln" hint-placeholder-count="2">
+<span data-pr="scara-et" class="{{ ln.cls }}" title="{{ ln.titlu }}"><gp-semn latura="{{ ln.latura }}" aria-hidden="true"></gp-semn><span class="pr-vh">{{ ln.et }}</span></span>
+<sc-for list="{{ ln.celule }}" as="x" hint-placeholder-count="3">
+<span data-pr="scara-pret" class="{{ x.cls }}">{{ x.t }}</span>
+</sc-for>
+</sc-for>
 </div>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ p.onEdit }}" style="height:40px;font-size:14px;flex:none">Editează</button>
+<div data-pr="actiuni">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ p.onEdit }}" aria-label="{{ p.editeazaEt }}" style="height:40px;font-size:14px;flex:none">Editează</button>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ p.onPauza }}" title="{{ p.pauzaTitlu }}" style="height:40px;font-size:14px;flex:none">{{ p.pauzaText }}</button>
-<button type="button" data-pr="mini" onClick="{{ p.onSterge }}" title="Șterge produsul din catalog">×</button>
+<button type="button" data-pr="mini" onClick="{{ p.onSterge }}" title="Șterge produsul din catalog" aria-label="Șterge produsul din catalog">×</button>
+</div>
 </div>
 </sc-for>
 </div>
+</sc-if>
+
+<!-- Plăcile. Poza deasupra, fiindcă după poză se recunoaște un produs dintr-o
+     privire; o apăsare pe ea deschide formularul, ca butonul „Editează”.
+     Numele ține loc de DOUĂ rânduri și atunci când încape pe unul, ca
+     pastilele și prețurile să înceapă la aceeași înălțime pe tot rândul de
+     plăci. La „șase” vorbele de pe butoane se ascund — rămân numele lor
+     pentru cititorul de ecran și lămurirea la trecerea cu mouse-ul. -->
+<sc-if value="{{ ePlaci }}" hint-placeholder-val="{{ false }}">
+<div data-pr="placi" class="{{ placiCls }}" style="{{ placiStil }}">
+<sc-for list="{{ g.rows }}" as="p" hint-placeholder-count="4">
+<article data-pr="placa" class="{{ p.placaCls }}">
+<div data-pr="placa-foto" onClick="{{ p.onEdit }}">
+<img loading="lazy" src="{{ p.photo }}" alt="">
+<div data-pr="placa-insigne">
+<sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}"><span class="h-badge h-badge--accent">nou</span></sc-if>
+<sc-if value="{{ p.hidden }}" hint-placeholder-val="{{ false }}"><span class="h-badge">scos din catalog</span></sc-if>
+</div>
+</div>
+<div data-pr="placa-corp">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<span data-pr="placa-nume" title="{{ p.name }}">{{ p.name }}</span>
+<span data-pr="placa-sub">{{ p.sub }}</span>
+</div>
+<div data-pr="placa-laturi">
+<button type="button" data-pr="lat" class="{{ p.latFCls }}" onClick="{{ p.onLatF }}" title="{{ p.latFTitlu }}"><gp-semn latura="congelat" aria-hidden="true"></gp-semn><span data-pr="lat-et">congelate</span></button>
+<button type="button" data-pr="lat" class="{{ p.latBCls }}" onClick="{{ p.onLatB }}" title="{{ p.latBTitlu }}"><gp-semn latura="copt" aria-hidden="true"></gp-semn><span data-pr="lat-et">gata de servire</span></button>
+</div>
+<sc-if value="{{ p.faraPret }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger" data-pr="placa-rosu" title="{{ p.faraPretTitlu }}">{{ p.faraPretText }}</span>
+</sc-if>
+<!-- Pe placă scara stă întoarsă: laturile pe coloane, treptele pe rânduri.
+     Trei trepte pe lățimea unei plăci de „șase” pe telefon nu încap; două
+     laturi da. -->
+<sc-if value="{{ p.pret.arePraguri }}" hint-placeholder-val="{{ true }}">
+<div data-pr="scara" class="pr-placa" title="{{ p.pret.titlu }}">
+<span data-pr="scara-colt">buc.</span>
+<sc-for list="{{ p.pret.placaCap }}" as="hc" hint-placeholder-count="2">
+<span data-pr="scara-et" class="{{ hc.cls }}" title="{{ hc.titlu }}"><gp-semn latura="{{ hc.latura }}" aria-hidden="true"></gp-semn><span class="pr-vh">{{ hc.et }}</span></span>
+</sc-for>
+<sc-for list="{{ p.pret.placaRanduri }}" as="tr" hint-placeholder-count="3">
+<span data-pr="scara-cap" title="{{ tr.titlu }}">{{ tr.t }}</span>
+<sc-for list="{{ tr.celule }}" as="x" hint-placeholder-count="2">
+<span data-pr="scara-pret" class="{{ x.cls }}">{{ x.t }}</span>
+</sc-for>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ p.pret.farePraguri }}" hint-placeholder-val="{{ false }}">
+<div data-pr="scara" class="pr-n1" title="{{ p.pret.titlu }}">
+<sc-for list="{{ p.pret.linii }}" as="ln" hint-placeholder-count="2">
+<span data-pr="scara-et" class="{{ ln.cls }}" title="{{ ln.titlu }}"><gp-semn latura="{{ ln.latura }}" aria-hidden="true"></gp-semn><span class="pr-vh">{{ ln.et }}</span></span>
+<sc-for list="{{ ln.celule }}" as="x" hint-placeholder-count="1">
+<span data-pr="scara-pret" class="{{ x.cls }}">{{ x.t }}</span>
+</sc-for>
+</sc-for>
+</div>
+</sc-if>
+<div data-pr="placa-actiuni">
+<button type="button" data-pr="edit" class="h-btn h-btn--secondary" onClick="{{ p.onEdit }}" aria-label="{{ p.editeazaEt }}" title="Editează">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
+<span data-pr="edit-et">Editează</span>
+</button>
+<button type="button" data-pr="pauza" class="h-btn h-btn--ghost" onClick="{{ p.onPauza }}" title="{{ p.pauzaTitlu }}">
+<sc-if value="{{ p.activ }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"></path><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"></path><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"></path><path d="m2 2 20 20"></path></svg></sc-if>
+<sc-if value="{{ p.hidden }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"></path><circle cx="12" cy="12" r="3"></circle></svg></sc-if>
+<span class="pr-vh">{{ p.pauzaText }}</span>
+</button>
+<button type="button" data-pr="mini" onClick="{{ p.onSterge }}" title="Șterge produsul din catalog" aria-label="Șterge produsul din catalog">×</button>
+</div>
+</div>
+</article>
+</sc-for>
+</div>
+</sc-if>
 </div>
 </sc-for>
 
 <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
-<div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center">
+<div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px">
 <p style="margin:0;font-size:16px;color:var(--h-fg-muted)">{{ emptyLine }}</p>
+<sc-if value="{{ poateArataTot }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onArataTot }}" style="height:44px;font-size:14px">Arată tot</button>
+</sc-if>
 </div>
 </sc-if>
 </sc-if>
@@ -361,7 +630,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      de la server textul cu acolade al legăturii, la fiecare deschidere. -->
 <img data-pr="thumb" loading="lazy" src="{{ f.photo }}" alt="" style="width:88px;height:88px">
 <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px">
-<span class="h-label">Fotografie — congelat</span>
+<span class="h-label" style="display:flex;align-items:flex-start;gap:6px" data-semn-sus="1"><gp-semn latura="congelat" aria-hidden="true"></gp-semn>Fotografie — congelat</span>
 <input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ onPhoto }}" style="font-size:13px">
 <span class="h-help">{{ photoHelp }}</span>
 </div>
@@ -369,7 +638,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
 <img data-pr="thumb" loading="lazy" src="{{ f.photoBaked }}" alt="" style="width:88px;height:88px">
 <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px">
-<span class="h-label">Fotografie — gata de servire</span>
+<span class="h-label" style="display:flex;align-items:flex-start;gap:6px" data-semn-sus="1"><gp-semn latura="copt" aria-hidden="true"></gp-semn>Fotografie — gata de servire</span>
 <input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ onPhotoBaked }}" style="font-size:13px">
 <span class="h-help">{{ photoBakedHelp }}</span>
 </div>
@@ -413,28 +682,65 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </label>
 </div>
 
-<!-- Fiecare preț lângă bifa lui, într-o casetă a laturii. Nu două rânduri
-     deosebite — bifa și prețul sunt o singură hotărâre, iar invariantul
-     serverului le leagă: o latură aprinsă CERE prețul ei.
-     Prețul rămâne VĂZUT, doar șters, când latura e stinsă. Ascuns ar ascunde
-     tocmai ce s-a promis că se păstrează: scoaterea dintr-un catalog nu
-     șterge prețul de acolo, ca să se poată pune la loc fără să-l cauți. -->
-<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-<div style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
-<label class="h-switch"><input type="checkbox" checked="{{ f.inFrozen }}" onChange="{{ onInFrozen }}"><span>În catalogul de congelate</span></label>
-<label class="h-field">
-<span class="h-label">Preț congelat</span>
-<input class="{{ f.horecaCls }}" value="{{ f.horeca }}" onChange="{{ onHoreca }}" placeholder="2.85" style="height:46px;font-size:15px">
+<!-- Prețurile, după cantitate (runda 2.5.0). Trei prețuri pe fiecare latură —
+     A pentru puține bucăți, B de la primul prag, C de la al doilea — și UN
+     SINGUR rând de praguri, deasupra amândurora: patronul a hotărât ca
+     pragurile să fie ale produsului, nu ale laturii (24 septembrie 2026).
+     Pus între ele, rândul ar fi părut al uneia; pus deasupra, se citește ca
+     al amândurora.
+     Fiecare preț stă lângă bifa laturii lui, într-o casetă a laturii: bifa și
+     prețul sunt o singură hotărâre, iar invariantul serverului le leagă — o
+     latură aprinsă CERE prețul A de acolo. B și C rămân de voie; casetele lor
+     goale înseamnă un singur preț, ca până acum.
+     Prețurile rămân VĂZUTE, doar șterse, când latura e stinsă. Ascunse ar
+     ascunde tocmai ce s-a promis că se păstrează: scoaterea dintr-un catalog
+     nu șterge prețurile de acolo, ca să se poată pune la loc fără să le cauți.
+     Sub fiecare preț scrie ce cantitate îl primește, socotită din pragurile de
+     deasupra: o cifră fără „de la cât” ar lăsa pe cine scrie să ghicească. -->
+<div data-pr="preturi">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600">Prețuri, după cantitate</span>
+<span class="h-help" style="line-height:1.5;text-wrap:pretty">{{ trepteAjutor }}</span>
+</div>
+<div data-pr="praguri" class="{{ pragCls }}">
+<label data-pr="prag">
+<span class="h-label">Prețul B începe de la</span>
+<span data-pr="cu-unitate"><input class="h-input h-numeric" inputMode="numeric" value="{{ f.pragB }}" onChange="{{ onPragB }}" aria-invalid="{{ f.pragBRau }}" placeholder="100"><span>buc.</span></span>
 </label>
+<label data-pr="prag">
+<span class="h-label">Prețul C începe de la</span>
+<span data-pr="cu-unitate"><input class="h-input h-numeric" inputMode="numeric" value="{{ f.pragC }}" onChange="{{ onPragC }}" aria-invalid="{{ f.pragCRau }}" placeholder="300"><span>buc.</span></span>
+</label>
+<span class="h-help">{{ pragAjutor }}</span>
+<sc-if value="{{ pragGreseli }}" hint-placeholder-val="{{ false }}">
+<span class="h-error" role="alert">{{ pragGreseli }}</span>
+</sc-if>
+</div>
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div data-pr="latura-panou">
+<div data-pr="latura-cap"><gp-semn latura="congelat" aria-hidden="true"></gp-semn><span>Congelate</span><label class="h-switch"><input type="checkbox" checked="{{ f.inFrozen }}" onChange="{{ onInFrozen }}" aria-label="În catalogul de congelate"><span>În catalog</span></label></div>
+<div data-pr="trepte">
+<label data-pr="treapta"><span data-pr="treapta-et">Preț A<small>{{ f.intervalFA }}</small></span><input class="{{ f.horecaCls }}" inputMode="decimal" value="{{ f.horeca }}" onChange="{{ onHoreca }}" aria-invalid="{{ f.horecaRau }}" placeholder="2,85"></label>
+<label data-pr="treapta"><span data-pr="treapta-et">Preț B<small>{{ f.intervalFB }}</small></span><input class="{{ f.horecaBCls }}" inputMode="decimal" value="{{ f.horecaB }}" onChange="{{ onHorecaB }}" aria-invalid="{{ f.horecaBRau }}" placeholder="opțional"></label>
+<label data-pr="treapta"><span data-pr="treapta-et">Preț C<small>{{ f.intervalFC }}</small></span><input class="{{ f.horecaCCls }}" inputMode="decimal" value="{{ f.horecaC }}" onChange="{{ onHorecaC }}" aria-invalid="{{ f.horecaCRau }}" placeholder="opțional"></label>
+</div>
+<sc-if value="{{ frozenGreseli }}" hint-placeholder-val="{{ false }}">
+<span class="h-error" role="alert">{{ frozenGreseli }}</span>
+</sc-if>
 <span class="h-help">{{ horecaHelp }}</span>
 </div>
-<div style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
-<label class="h-switch"><input type="checkbox" checked="{{ f.inBaked }}" onChange="{{ onInBaked }}"><span>În catalogul de gata de servire</span></label>
-<label class="h-field">
-<span class="h-label">Preț gata de servire</span>
-<input class="{{ f.retailCls }}" value="{{ f.retail }}" onChange="{{ onRetail }}" placeholder="3.49" style="height:46px;font-size:15px">
-</label>
+<div data-pr="latura-panou">
+<div data-pr="latura-cap"><gp-semn latura="copt" aria-hidden="true"></gp-semn><span>Gata de servire</span><label class="h-switch"><input type="checkbox" checked="{{ f.inBaked }}" onChange="{{ onInBaked }}" aria-label="În catalogul de gata de servire"><span>În catalog</span></label></div>
+<div data-pr="trepte">
+<label data-pr="treapta"><span data-pr="treapta-et">Preț A<small>{{ f.intervalBA }}</small></span><input class="{{ f.retailCls }}" inputMode="decimal" value="{{ f.retail }}" onChange="{{ onRetail }}" aria-invalid="{{ f.retailRau }}" placeholder="3,49"></label>
+<label data-pr="treapta"><span data-pr="treapta-et">Preț B<small>{{ f.intervalBB }}</small></span><input class="{{ f.retailBCls }}" inputMode="decimal" value="{{ f.retailB }}" onChange="{{ onRetailB }}" aria-invalid="{{ f.retailBRau }}" placeholder="opțional"></label>
+<label data-pr="treapta"><span data-pr="treapta-et">Preț C<small>{{ f.intervalBC }}</small></span><input class="{{ f.retailCCls }}" inputMode="decimal" value="{{ f.retailC }}" onChange="{{ onRetailC }}" aria-invalid="{{ f.retailCRau }}" placeholder="opțional"></label>
+</div>
+<sc-if value="{{ bakedGreseli }}" hint-placeholder-val="{{ false }}">
+<span class="h-error" role="alert">{{ bakedGreseli }}</span>
+</sc-if>
 <span class="h-help">{{ retailHelp }}</span>
+</div>
 </div>
 </div>
 
@@ -571,7 +877,6 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
  * PNG-urile și cere ca fiecare nume să-și aibă cerneala lui.
  */
 const FOTO_LIPSA = "assets/logo-auriu.png";
-const lei = (v) => (v === null || v === undefined || v === "" ? "—" : Number(v).toFixed(2).replace(".", ",") + " lei");
 /**
  * Vorbele laturilor, pentru ochii omului.
  *
@@ -599,6 +904,43 @@ const POZA_PRICINA = {
 /** „1 comandă" / „3 comenzi" — româna cere forma, nu doar cifra. */
 const bucati = (n, unu, multe) => n + " " + (n === 1 ? unu : multe);
 
+/**
+ * Cum se arată produsele: „unu" — lista de până acum, un produs pe rând, cu
+ * toate detaliile —, „patru" ori „sase" — plăci cu poza deasupra, câte încap
+ * pe ecran, dar niciodată mai multe decât spune numele.
+ *
+ * Alegerea se ține minte în browserul ăsta și atât (hotărârea din runda
+ * 2.5.0): Setările hotărăsc vederea MAGAZINULUI, pe care o vede cumpărătorul;
+ * panoul e unealta celui care lucrează, iar doi oameni la două calculatoare pot
+ * vrea două vederi. Cheia are versiune, ca o formă nouă a valorii să nu fie
+ * citită greșit dintr-o memorie veche. Depozitul poate lipsi (fereastră
+ * privată, date blocate), iar atunci pagina pornește din listă, fără eroare.
+ */
+const VEDERI_PRODUSE = ["unu", "patru", "sase"];
+const VEDERE_CHEIE = "gp-produse-vedere-v1";
+const vedereTinuta = () => {
+  try {
+    const v = localStorage.getItem(VEDERE_CHEIE);
+    return VEDERI_PRODUSE.indexOf(v) >= 0 ? v : "unu";
+  } catch (e) {
+    return "unu";
+  }
+};
+const tineVederea = (v) => {
+  try { localStorage.setItem(VEDERE_CHEIE, v); } catch (e) { /* fără depozit: vederea ține cât pagina */ }
+};
+
+/**
+ * Grila plăcilor — aceeași socoteală ca în magazin (`grilaDe` din
+ * Site Public.dc.html): coloanele se înmulțesc cât încap, dar niciodată peste
+ * N și niciodată sub MIN, deci o placă nu se poate strivi sub ce-i trebuie ca
+ * să-și încapă numele și butoanele. Jumătatea de pixel e plasa rotunjirii:
+ * împărțirea exactă cade uneori cu o sutime peste rând, iar atunci browserul
+ * ar fi pus N-1 coloane.
+ */
+const grila = (N, MIN, GOL) => "display:grid;gap:" + GOL
+  + ";grid-template-columns:repeat(auto-fill,minmax(max(" + MIN + ",calc((100% - " + (N - 1) + " * " + GOL + ") / " + N + " - 0.5px)),1fr))";
+
 class Component extends DCLogic {
   state = {
     navOpen: false,
@@ -608,6 +950,14 @@ class Component extends DCLogic {
     // runda celor două cataloage.
     latura: "amandoua",
     products: [], cats: [], search: "",
+    // Vederea (v. VEDERI_PRODUSE) și cernerile de lângă ea. Cernerile NU se
+    // țin minte: o pagină redeschisă cu „numai grupa Cornuri" aprinsă de ieri
+    // ar arăta un catalog pe jumătate, iar omul ar crede că restul a pierit.
+    vedere: vedereTinuta(),
+    grupa: "", arata: "", ordine: "catalog",
+    // Pe telefon cernerile stau strânse sub „Filtre"; pe calculator se văd
+    // mereu, iar steagul ăsta nu schimbă nimic acolo.
+    filtreDeschise: false,
     form: null, formErr: "", saving: false, pendingPhoto: null,
     // Produsul pentru care s-a apăsat ×, cu tot ce trebuie ca fereastra să
     // scrie adevărul: numele, dacă chiar se poate șterge, și de ce nu.
@@ -678,10 +1028,17 @@ class Component extends DCLogic {
       });
   }
 
-  /** Catalogul complet, inclusiv produsele scoase — pe acelea le poți repune. */
+  /**
+   * Catalogul complet, inclusiv produsele scoase — pe acelea le poți repune.
+   *
+   * Odată cu el vin și listele comune (`/lists`), fiindcă din ele iau casetele
+   * de prag ale unui produs nou valoarea de pornire din Setări
+   * (`gp.catalogImplicit()`). Ele n-au voie să oprească pagina: dacă nu vin,
+   * casetele pornesc goale, iar catalogul se arată la fel.
+   */
   pull() {
-    return gp.get("/products?all=1")
-      .then((r) => this.setState({
+    return Promise.all([gp.get("/products?all=1"), gp.lists().catch(() => null)])
+      .then(([r]) => this.setState({
         products: r.products || [],
         cats: r.categories || [],
         loaded: true,
@@ -706,6 +1063,18 @@ class Component extends DCLogic {
 
   /** Formularul, gol sau completat cu un produs existent. */
   openForm(p) {
+    // Prețurile în casetă cu virgulă, ca peste tot în aplicație: serverul
+    // trimite „2.85", omul citește și scrie „2,85" — iar serverul le primește
+    // pe amândouă. Golul (null, ori câmpul care lipsește de pe un server de
+    // dinainte de 028) rămâne casetă goală.
+    const txt = (v) => (v === null || v === undefined || v === "" ? "" : String(v).replace(".", ","));
+    // Pragurile unui produs care n-are încă niciunul pornesc din Setări (100 /
+    // 300, cât a pus patronul acolo). Pleacă spre server numai dacă un preț B
+    // ori C chiar le folosește — v. `gp.trepteDeTrimis()`.
+    const imp = gp.catalogImplicit();
+    const prag = (v, implicit) => (v === null || v === undefined || v === ""
+      ? (implicit === null ? "" : String(implicit))
+      : String(v));
     this.setState({
       pendingPhoto: null,
       formErr: "",
@@ -714,8 +1083,11 @@ class Component extends DCLogic {
             id: p.id, name: p.name, nameEn: p.nameEn || "",
             desc: p.description || "", descEn: p.descriptionEn || "",
             category: p.category, grams: p.grams === null ? "" : String(p.grams),
-            horeca: p.priceFrozen === null ? "" : String(p.priceFrozen),
-            retail: p.priceBaked === null ? "" : String(p.priceBaked),
+            horeca: txt(p.priceFrozen),
+            retail: txt(p.priceBaked),
+            horecaB: txt(p.priceFrozenB), horecaC: txt(p.priceFrozenC),
+            retailB: txt(p.priceBakedB), retailC: txt(p.priceBakedC),
+            pragB: prag(p.pragB, imp.pragB), pragC: prag(p.pragC, imp.pragC),
             isNew: !!p.isNew, photo: p.photo || "", photoBaked: p.photoBaked || "",
             // Bifele vin din server ca adevăruri gata socotite: pe o bază de
             // dinainte de migrarea 024 coloanele lipsesc, iar API-ul răspunde
@@ -732,6 +1104,8 @@ class Component extends DCLogic {
             id: null, name: "", nameEn: "", desc: "", descEn: "",
             category: (this.state.cats[0] || {}).slug || "",
             grams: "", horeca: "", retail: "", isNew: false, photo: "", photoBaked: "",
+            horecaB: "", horecaC: "", retailB: "", retailC: "",
+            pragB: prag(null, imp.pragB), pragC: prag(null, imp.pragC),
             // Un produs nou se naște în amândouă cataloagele, ca pe server
             // (DEFAULT 1 în migrarea 024): altfel s-ar naște nevăzut nicăieri.
             inFrozen: true, inBaked: true,
@@ -847,6 +1221,23 @@ class Component extends DCLogic {
       return;
     }
 
+    // Cele trei prețuri. Aceeași judecată ca pe server (`gp.verificaTrepte`
+    // e oglinda lui `product_trepte_din()` și `product_trepte_verifica()`),
+    // deci o scară strâmbă se oprește aici, cu vorbele serverului, fără să
+    // plece o cerere doar ca să se întoarcă refuzată. Casetele greșite sunt
+    // deja încercuite cu roșu; propoziția de sus o spune pe prima.
+    const trepte = gp.trepteDeTrimis({
+      priceFrozenB: f.horecaB, priceFrozenC: f.horecaC,
+      priceBakedB: f.retailB, priceBakedC: f.retailC,
+      pragB: f.pragB, pragC: f.pragC
+    });
+    const probleme = gp.verificaTrepte(Object.assign({ priceFrozen: f.horeca, priceBaked: f.retail }, trepte));
+    if (probleme.length) {
+      this.__saving = false;
+      this.setState({ formErr: "Prețurile după cantitate: " + probleme[0].mesaj });
+      return;
+    }
+
     const payload = {
       name: f.name.trim(), nameEn: f.nameEn.trim(),
       description: f.desc.trim(), descriptionEn: f.descEn.trim(),
@@ -854,6 +1245,13 @@ class Component extends DCLogic {
       grams: f.grams === "" ? null : f.grams,
       priceFrozen: f.horeca === "" ? null : f.horeca,
       priceBaked: f.retail === "" ? null : f.retail,
+      // B și C, și pragurile lor: toate șase, mereu — un B șters din casetă
+      // trebuie să ajungă la server ca gol, nu să lipsească (lipsa ar lăsa în
+      // bază prețul vechi). Pe o bază fără 028 golurile trec neobservate;
+      // numai o cifră scrisă aduce refuzul, spus pe față (`tiers_unavailable`).
+      priceFrozenB: trepte.priceFrozenB, priceFrozenC: trepte.priceFrozenC,
+      priceBakedB: trepte.priceBakedB, priceBakedC: trepte.priceBakedC,
+      pragB: trepte.pragB, pragC: trepte.pragC,
       isNew: f.isNew,
       // Apartenența pleacă ÎNTOTDEAUNA, și la creare și la modificare:
       // formularul e stăpânul celor două bife, iar serverul judecă rândul
@@ -1089,12 +1487,122 @@ class Component extends DCLogic {
         : "„" + p.name + "” a intrat în catalogul „" + LATURA[l] + "”."
     );
 
-    const visible = S.products.filter((p) =>
+    // ── scara prețurilor ─────────────────────────────────────────────────
+    //
+    // AMÂNDOUĂ laturile, pe fiecare rând și pe fiecare placă, chiar și când
+    // comutatorul arată una singură: oglinda dintre cataloage se citește
+    // tocmai punând cifrele una sub alta. Scara vine din câmpurile produsului
+    // prin `gp.scaraDinCampuri()` — aceeași judecată ca `latura_scara()` din
+    // PHP: o treaptă strâmbă (B peste A, prag care nu urcă) nu se arată, așa
+    // cum nici magazinul n-o aplică.
+    //
+    // Coloanele stau pe TREPTE, nu pe laturi: pragurile sunt ale produsului,
+    // una pentru amândouă (hotărârea patronului), deci a doua coloană e B pe
+    // ambele rânduri, iar capul ei spune de la câte bucăți.
+    const LATURI = ["congelat", "copt"];
+    const bani = (v) => Number(v).toFixed(2).replace(".", ",");
+    const scaraRand = (p) => {
+      const scari = LATURI.map((l) => gp.scaraDinCampuri(p, l));
+      const lung = Math.max(1, scari[0].length, scari[1].length);
+      const arePraguri = lung > 1;
+      const cea = scari[0].length >= scari[1].length ? scari[0] : scari[1];
+      const celula = (s, i, inCat) => {
+        const t = s[i];
+        return {
+          // Cu praguri, cifrele stau sub capul coloanei, care spune de la
+          // câte bucăți; fără, „2,85 lei" ca până acum.
+          t: t ? bani(t.pret) + (arePraguri ? "" : " lei") : "—",
+          cls: [t && i === 0 ? "pr-a" : "", t ? "" : "pr-gol", inCat ? "" : "pr-stins"].filter(Boolean).join(" ")
+        };
+      };
+      const spusa = (l, k) => {
+        const s = scari[k];
+        const vorbe = !s.length
+          ? "fără preț"
+          : s.map((t, i) => bani(t.pret) + " lei" + (arePraguri ? " (" + gp.intervalTreapta(s, i) + " buc.)" : "")).join(" · ");
+        return (l === "congelat" ? "Congelate" : "Gata de servire") + ": " + vorbe
+          + (eIn(p, l) ? "" : " — nu e în catalogul ăsta");
+      };
+      const linii = LATURI.map((l, k) => {
+        const inCat = eIn(p, l);
+        const celule = [];
+        for (let i = 0; i < lung; i++) celule.push(celula(scari[k], i, inCat));
+        return { latura: l, et: LATURA[l], cls: inCat ? "" : "pr-stins", titlu: spusa(l, k), celule };
+      });
+      const cap = cea.map((t) => ({ t: t.prag + "+", titlu: "de la " + t.prag + (t.prag === 1 ? " bucată" : " bucăți") }));
+      return {
+        cls: "pr-n" + lung,
+        arePraguri,
+        farePraguri: !arePraguri,
+        cap,
+        linii,
+        // Placa întoarce tabelul: laturile pe coloane, treptele pe rânduri —
+        // trei trepte nu încap pe lățimea unei plăci mici, două laturi da.
+        placaCap: linii.map((ln) => ({ latura: ln.latura, et: ln.et, cls: ln.cls, titlu: ln.titlu })),
+        placaRanduri: cap.map((h, i) => ({ t: h.t, titlu: h.titlu, celule: linii.map((ln) => ln.celule[i]) })),
+        titlu: LATURI.map(spusa).join(". ") + "."
+      };
+    };
+
+    // ── vederea și cernerile ─────────────────────────────────────────────
+    const vedere = VEDERI_PRODUSE.indexOf(S.vedere) >= 0 ? S.vedere : "unu";
+    const eSase = vedere === "sase";
+    // Laturile la care se uită omul acum: „cu preț de volum" pe comutatorul
+    // „Congelate" înseamnă volum LA congelate, nu oriunde.
+    const laturiDeVazut = lat === "amandoua" ? LATURI : [lat];
+    const areVolum = (p) => laturiDeVazut.some((l) => gp.scaraDinCampuri(p, l).length > 1);
+    const areA = (p) => laturiDeVazut.some((l) => gp.scaraDinCampuri(p, l).length > 0);
+    // Cernerile de sub comutator. UNA singură deodată, ca un comutator: două
+    // aprinse ar cere omului să știe dacă se adună ori se taie între ele.
+    const ARATA = [
+      { k: "", l: "Toate", t: "Fără cernere: tot ce e pe latura aleasă.", f: () => true },
+      { k: "volum", l: "Cu preț de volum", t: "Produsele care au și prețul B (ori și C) pe latura aleasă.", f: areVolum },
+      { k: "doarA", l: "Doar prețul A", t: "Produsele cu un singur preț pe latura aleasă — cele cărora li se pot pune praguri.", f: (p) => areA(p) && !areVolum(p) },
+      { k: "noi", l: "Noutăți", t: "Produsele marcate „nou”.", f: (p) => !!p.isNew },
+      { k: "scoase", l: "Scoase din catalog", t: "Produsele oprite din vânzare. Se pot repune oricând.", f: (p) => !p.active },
+      { k: "reparat", l: "De reparat", t: "Produse în niciun catalog, ori bifate într-un catalog în care n-au preț — semnul roșu de pe rând.", f: (p) => inNiciunCatalog(p) || bifatFaraPret(p).length > 0 }
+    ];
+    const cernere = ARATA.filter((a) => a.k === S.arata)[0] || ARATA[0];
+    // O grupă care nu mai există (ștearsă din fila „Grupe") nu cerne nimic.
+    const grupa = S.cats.some((c) => c.slug === S.grupa) ? S.grupa : "";
+    const ORDINI = [
+      { v: "catalog", l: "Ordinea din magazin" },
+      { v: "nume", l: "După nume" },
+      { v: "pretSus", l: "Prețul A, crescător" },
+      { v: "pretJos", l: "Prețul A, descrescător" }
+    ];
+    const ordine = ORDINI.some((o) => o.v === S.ordine) ? S.ordine : "catalog";
+    // Prețul după care se ordonează: A al laturii deschise; pe „Amândouă",
+    // al celei congelate când produsul e acolo, altfel al celeilalte. Fără
+    // preț, la coadă — un „—" pus în frunte ar ascunde tocmai ce se caută.
+    const pretA = (p) => {
+      const l = lat === "amandoua" ? (eIn(p, "congelat") ? "congelat" : "copt") : lat;
+      const v = l === "congelat" ? p.priceFrozen : p.priceBaked;
+      return v === null || v === undefined || v === "" ? null : Number(v);
+    };
+    const ordoneaza = (rows) => {
+      if (ordine === "catalog") return rows;
+      const r = rows.slice();
+      if (ordine === "nume") return r.sort((a, b) => String(a.name).localeCompare(String(b.name), "ro"));
+      const semn = ordine === "pretSus" ? 1 : -1;
+      return r.sort((a, b) => {
+        const x = pretA(a), y = pretA(b);
+        if (x === null || y === null) return x === y ? 0 : (x === null ? 1 : -1);
+        return semn * (x - y);
+      });
+    };
+
+    // Căutarea și latura întâi, apoi grupa, apoi cernerea. Cifrele de pe
+    // cerneri se socotesc pe ce a rămas după grupă, ca să spună câte produse
+    // ar arăta fiecare dacă ar fi apăsată ACUM.
+    const potrivite = S.products.filter((p) =>
       (!q || (p.name + " " + (p.nameEn || "")).toLowerCase().indexOf(q) >= 0)
       && (lat === "amandoua" || eIn(p, lat)));
+    const inGrupa = potrivite.filter((p) => !grupa || p.category === grupa);
+    const visible = inGrupa.filter(cernere.f);
 
-    const groups = S.cats.map((c) => {
-      const rows = visible.filter((p) => p.category === c.slug);
+    const groups = S.cats.filter((c) => !grupa || c.slug === grupa).map((c) => {
+      const rows = ordoneaza(visible.filter((p) => p.category === c.slug));
       return {
         name: c.name,
         meta: rows.length + (rows.length === 1 ? " produs" : " produse")
@@ -1105,8 +1613,16 @@ class Component extends DCLogic {
           photo: pozaRand(p),
           isNew: !!p.isNew,
           hidden: !p.active,
-          priceMain: lei(p.priceFrozen),
-          priceAlt: p.priceBaked === null ? "" : "gata de servire " + lei(p.priceBaked),
+          // `hidden` și `activ` sunt aceeași stare, pe dos: `sc-if` primește
+          // o valoare, nu o expresie, deci ochiul tăiat și ochiul deschis de
+          // pe placă au nevoie fiecare de steagul lui.
+          activ: !!p.active,
+          placaCls: p.active ? "" : "pr-scos",
+          pret: scaraRand(p),
+          // Pe placa de „șase", „Editează" e numai un creion. Cititorul de
+          // ecran trebuie să audă totuși CE se editează — zece creioane la
+          // rând, toate „Editează", nu spun nimic.
+          editeazaEt: "Editează „" + p.name + "”",
 
           latFCls: latCls(p, "congelat"),
           latFTitlu: latTitlu(p, "congelat"),
@@ -1180,8 +1696,9 @@ class Component extends DCLogic {
     // O grupă fără produse pe latura deschisă se ascunde singură — hotărârea
     // patronului, și de-acolo ies „grupele care se văd numai la gata de
     // servire", fără nicio bifă pe grupă. Dar pe „Amândouă" o grupă goală se
-    // vede totuși: ca s-o umpli trebuie să știi că există.
-    }).filter((g) => g.rows.length > 0 || (!q && lat === "amandoua"));
+    // vede totuși: ca s-o umpli trebuie să știi că există. Numai fără o
+    // cernere aprinsă — sub „Noutăți", o grupă fără noutăți e zgomot.
+    }).filter((g) => g.rows.length > 0 || (!q && lat === "amandoua" && !cernere.k));
 
     const cats = S.cats.map((c, i) => {
       const move = (d) => () => {
@@ -1229,9 +1746,52 @@ class Component extends DCLogic {
     const f = S.form || {
       name: "", nameEn: "", desc: "", descEn: "", category: "",
       grams: "", horeca: "", retail: "", isNew: false, photo: "", photoBaked: "",
+      horecaB: "", horecaC: "", retailB: "", retailC: "", pragB: "", pragC: "",
       inFrozen: true, inBaked: true
     };
     const ff = (key) => (e) => set({ form: Object.assign({}, S.form, { [key]: e.target.value }) });
+
+    /* --- cele trei prețuri, judecate pe măsură ce se scriu --- */
+    //
+    // Aceeași judecată ca la salvare și ca pe server, deci o casetă încercuită
+    // cu roșu aici e exact caseta pe care ar refuza-o serverul. Pragurile se
+    // judecă numai când le folosește un preț (`gp.trepteDeTrimis`): o casetă
+    // de prag precompletată, lângă B și C goale, nu e o greșeală.
+    const trepteF = gp.trepteDeTrimis({
+      priceFrozenB: f.horecaB, priceFrozenC: f.horecaC,
+      priceBakedB: f.retailB, priceBakedC: f.retailC,
+      pragB: f.pragB, pragC: f.pragC
+    });
+    const problemeF = S.form
+      ? gp.verificaTrepte(Object.assign({ priceFrozen: f.horeca, priceBaked: f.retail }, trepteF))
+      : [];
+    const rau = (camp) => problemeF.some((x) => x.camp === camp);
+    // Vorbele, strânse lângă caseta lor: prețurile unei laturi sub panoul ei,
+    // pragurile sub rândul pragurilor. O singură propoziție pe loc, chiar
+    // dacă sunt mai multe greșeli — prima e și cea pe care o spune serverul.
+    const greseliLa = (prefix) => {
+      const m = problemeF.filter((x) => x.camp.indexOf(prefix) === 0).map((x) => x.mesaj);
+      return m.filter((x, i) => m.indexOf(x) === i).join(" ");
+    };
+    // „De la câte bucăți" sub fiecare preț, socotit din pragurile de sus.
+    // Pragurile se citesc aici fără judecată (un prag greșit își are deja
+    // roșul lui); ce nu se poate citi ca întreg lasă textul general.
+    const intreg = (x) => (/^\s*\d+\s*$/.test(String(x === null || x === undefined ? "" : x)) ? parseInt(x, 10) : null);
+    const pB = intreg(f.pragB);
+    const pC = intreg(f.pragC);
+    const scris = (x) => !(x === null || x === undefined || String(x).trim() === "");
+    const interval = (areB, areC) => ({
+      A: areB && pB !== null && pB > 1 ? "1–" + (pB - 1) + " buc." : "orice cantitate",
+      B: pB === null
+        ? "de la pragul B"
+        : (areC && pC !== null && pC > pB ? pB + "–" + (pC - 1) + " buc." : pB + "+ buc."),
+      C: pC === null ? "de la pragul C" : pC + "+ buc."
+    });
+    const intF = interval(scris(f.horecaB), scris(f.horecaC));
+    const intB = interval(scris(f.retailB), scris(f.retailC));
+    // Rândul pragurilor se stinge când nu-l folosește niciun preț: e doar
+    // valoarea de pornire, iar la salvare pleacă gol.
+    const pragLiber = trepteF.pragB === null && trepteF.pragC === null;
 
     /* --- cele două fotografii, fiecare pe latura ei --- */
     //
@@ -1438,6 +1998,12 @@ class Component extends DCLogic {
       ].map((o) => ({
         label: o.l,
         titlu: o.t,
+        // Semnul laturii stă ÎNAINTEA cuvântului, ca în magazin. „Amândouă"
+        // n-are semn: <gp-semn> cu o latură necunoscută nu ține nici loc.
+        // Pe butonul plin (fila aleasă) semnul ia culoarea textului: albastrul
+        // și portocaliul s-ar pierde pe fondul accentului.
+        latura: o.k,
+        culoare: lat === o.k ? "text" : "",
         count: S.loaded && !S.eroare
           ? String(o.k === "amandoua" ? S.products.length : S.products.filter((p) => eIn(p, o.k)).length)
           : "",
@@ -1447,14 +2013,76 @@ class Component extends DCLogic {
 
       groups,
       empty: S.loaded && visible.length === 0 && !S.eroare,
-      // Trei pricini de listă goală, trei propoziții. A treia e nouă și se
-      // cuvine spusă anume: catalogul NU e gol, doar latura deschisă e — iar
-      // ieșirea e chiar comutatorul de deasupra.
+      // Patru pricini de listă goală, patru propoziții. A treia se cuvine
+      // spusă anume: catalogul NU e gol, doar latura deschisă e — iar ieșirea
+      // e chiar comutatorul de deasupra. Cernerile vin înaintea căutării: când
+      // căutarea a găsit ceva și o cernere a tăiat tot, vina e a cernerii, iar
+      // „nu se potrivește căutării" l-ar pune pe om să-și rescrie cuvântul.
       emptyLine: S.products.length === 0
         ? "Catalogul e gol. Apasă „+ Produs nou”."
-        : q
-          ? "Niciun produs nu se potrivește căutării."
-          : "Niciun produs nu e în catalogul „" + (LATURA[lat] || "") + "”. Treci pe „Amândouă” și aprinde pastila laturii pe rândurile care trebuie.",
+        : (cernere.k || grupa) && potrivite.length > 0
+          ? "Niciun produs nu se potrivește filtrelor alese. Apasă „Arată tot”."
+          : q
+            ? "Niciun produs nu se potrivește căutării."
+            : "Niciun produs nu e în catalogul „" + (LATURA[lat] || "") + "”. Treci pe „Amândouă” și aprinde pastila laturii pe rândurile care trebuie.",
+
+      // ── vederea ─────────────────────────────────────────────────────────
+      // Aceleași trei poziții și aceleași desene ca în magazin, ca omul care
+      // lucrează în amândouă să nu învețe două comutatoare.
+      vederiProduse: [
+        { k: "unu", e: "Unul pe rând, cu toate detaliile" },
+        { k: "patru", e: "Patru pe ecran" },
+        { k: "sase", e: "Șase pe ecran" }
+      ].map((w) => ({
+        apasat: vedere === w.k,
+        eticheta: w.e,
+        eUnu: w.k === "unu", ePatru: w.k === "patru", eSase: w.k === "sase",
+        alege: () => { tineVederea(w.k); set({ vedere: w.k }); }
+      })),
+      eLista: vedere === "unu",
+      ePlaci: vedere !== "unu",
+      placiCls: eSase ? "pr-sase" : "pr-patru",
+      // „Patru": cel puțin 10rem pe placă — pe telefon ies două pe rând.
+      // „Șase": cel puțin 7rem — trei pe rând de la vreo 384 px în sus, două
+      // sub. Sub atât, pastilele și cele trei butoane de jos nu mai încap.
+      placiStil: eSase ? grila(6, "7rem", "10px") : grila(4, "10rem", "14px"),
+
+      // ── cernerile ───────────────────────────────────────────────────────
+      // Cifra de pe fiecare spune câte produse ar rămâne dacă ai apăsa-o
+      // acum. Una cu zero se stinge — apăsată, ar goli ecranul —, afară de
+      // cea aprinsă, care trebuie să se poată stinge ca să ieși din ea.
+      chipuri: ARATA.map((a) => {
+        const nr = inGrupa.filter(a.f).length;
+        const apasat = cernere.k === a.k;
+        return {
+          l: a.l,
+          nr: S.loaded && !S.eroare ? String(nr) : "",
+          apasat,
+          stins: nr === 0 && !apasat,
+          titlu: a.t,
+          alege: () => set({ arata: a.k })
+        };
+      }),
+      grupaOpts: [{ v: "", l: "Toate grupele" }].concat(S.cats.map((c) => ({ v: c.slug, l: c.name }))),
+      grupa,
+      onGrupa: (e) => set({ grupa: e.target.value }),
+      ordineOpts: ORDINI,
+      ordine,
+      onOrdine: (e) => set({ ordine: e.target.value }),
+      // „Arată tot" apare numai când e ceva de arătat: o cernere, o grupă, o
+      // căutare, ori o singură latură. Ordinea nu ascunde nimic, deci rămâne.
+      poateArataTot: !!(grupa || cernere.k || q || lat !== "amandoua"),
+      onArataTot: () => set({ grupa: "", arata: "", search: "", latura: "amandoua" }),
+      // Pe telefon cernerile stau strânse sub „Filtre", iar cifra de pe buton
+      // spune câte sunt aprinse — altfel o cernere uitată aprinsă ar ascunde
+      // produse fără nicio urmă pe ecran.
+      filtreNr: (() => {
+        const n = (grupa ? 1 : 0) + (cernere.k ? 1 : 0) + (ordine !== "catalog" ? 1 : 0);
+        return n ? String(n) : "";
+      })(),
+      filtreDeschise: !!S.filtreDeschise,
+      onFiltre: () => set({ filtreDeschise: !S.filtreDeschise }),
+      filtreCls: S.filtreDeschise ? "" : "pr-inchis",
 
       cats,
       catDraft: S.catDraft || "",
@@ -1484,6 +2112,19 @@ class Component extends DCLogic {
         // nu pierde prețul de acolo — iar omul l-ar scrie a doua oară degeaba.
         horecaCls: "h-input h-numeric" + (f.inFrozen ? "" : " pr-stins"),
         retailCls: "h-input h-numeric" + (f.inBaked ? "" : " pr-stins"),
+        // B și C urmează bifa laturii lor, ca A: șterse, nu ascunse.
+        horecaB: f.horecaB || "", horecaC: f.horecaC || "",
+        retailB: f.retailB || "", retailC: f.retailC || "",
+        horecaBCls: "h-input h-numeric" + (f.inFrozen ? "" : " pr-stins"),
+        horecaCCls: "h-input h-numeric" + (f.inFrozen ? "" : " pr-stins"),
+        retailBCls: "h-input h-numeric" + (f.inBaked ? "" : " pr-stins"),
+        retailCCls: "h-input h-numeric" + (f.inBaked ? "" : " pr-stins"),
+        pragB: f.pragB || "", pragC: f.pragC || "",
+        horecaRau: rau("priceFrozen"), horecaBRau: rau("priceFrozenB"), horecaCRau: rau("priceFrozenC"),
+        retailRau: rau("priceBaked"), retailBRau: rau("priceBakedB"), retailCRau: rau("priceBakedC"),
+        pragBRau: rau("pragB"), pragCRau: rau("pragC"),
+        intervalFA: intF.A, intervalFB: intF.B, intervalFC: intF.C,
+        intervalBA: intB.A, intervalBB: intB.B, intervalBC: intB.C,
         // Miniaturile arată chiar ce vede cumpărătorul, adică poza laturii ei
         // și atât: o latură fără poză arată substituentul, nu poza celeilalte.
         // Căderea a fost scoasă la 21 septembrie 2026 — vezi `latura_poza()`
@@ -1501,6 +2142,17 @@ class Component extends DCLogic {
       onDesc: ff("desc"), onDescEn: ff("descEn"),
       onCategory: ff("category"), onGrams: ff("grams"),
       onHoreca: ff("horeca"), onRetail: ff("retail"),
+      onHorecaB: ff("horecaB"), onHorecaC: ff("horecaC"),
+      onRetailB: ff("retailB"), onRetailC: ff("retailC"),
+      onPragB: ff("pragB"), onPragC: ff("pragC"),
+      trepteAjutor: "Cine cumpără mai mult plătește mai puțin pe bucată. Pragurile sunt aceleași la congelate și la gata de servire; casetele B și C goale înseamnă un singur preț, ca până acum.",
+      pragCls: pragLiber ? "pr-liber" : "",
+      pragAjutor: pragLiber
+        ? "Se păstrează numai când scrii un preț B sau C. La un produs nou pornesc din Setări."
+        : "Aceleași pentru amândouă laturile.",
+      pragGreseli: greseliLa("prag"),
+      frozenGreseli: greseliLa("priceFrozen"),
+      bakedGreseli: greseliLa("priceBaked"),
       onIsNew: () => set({ form: Object.assign({}, S.form, { isNew: !S.form.isNew }) }),
       // Bifele nu ating prețul, nici la aprindere, nici la stingere. Serverul
       // judecă rândul REZULTAT, nu corpul singur, deci „aprind latura și-i

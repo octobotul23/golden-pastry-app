@@ -28,7 +28,7 @@ pe dinafară.
 
 **2. `public_html/products/` nu se șterge și nu se mai urcă după prima instalare.**
 Pozele pe care le încarci din pagina Catalog trăiesc **numai** acolo:
-`api/routes/catalog.php:590` le scrie pe disc sub un nume cu cifre aleatoare
+`api/routes/catalog.php:623` le scrie pe disc sub un nume cu cifre aleatoare
 (`prod-14-9c3a71ef.jpg`), și nimic nu le aduce înapoi în proiect. Pachetul conține și el un folder `products/`, construit din copia
 mea locală — cele două se depărtează unul de altul din prima zi. Urcând peste,
 ștergi pozele adăugate live, iar în bază rămân trimiteri către fișiere care
@@ -261,6 +261,7 @@ după nu.
 | `025_registru_migrari.sql` | Da — face tabelul `schema_migrations` cu `CREATE TABLE IF NOT EXISTS` și scrie un singur rând, cu `INSERT IGNORE`: a doua rulare nu face nimic. Nu atinge nicio altă tabelă și niciun rând de date. E fișierul care **se rulează înaintea celorlalte**, nu la rândul lui: se cheamă `025`, deci în ordinea numelui ar veni după `003`–`024`, iar atunci primele douăzeci și două ar trece pe lângă un tabel care încă nu există și și-ar scrie numele abia la actualizarea următoare. Cele trei drumuri de urcare îl rulează o dată la început, apoi bucla — se poate, fiindcă e idempotent. **Ce NU face: nu se umple cu mâna.** S-ar putea scrie în el, dintr-o suflare, numele tuturor migrărilor până la `024` („dacă ai ajuns la 025, au rulat și alea") — adevărat când rulează bucla, minciună când cineva îl importă singur, din phpMyAdmin, pe o bază veche. Un registru care minte e mai rău decât niciun registru. Nu cere nimic și se rulează oriunde, pe orice bază. |
 | `026_cheie_cerere.sql` | Da — o coloană `idempotency_key` pe `order_requests` și un index unic `uq_req_cheie` peste ea, fiecare cu paza lui în `information_schema`: a doua rulare le găsește și nu face nimic. Nu scrie și nu schimbă niciun rând de date. Coloana se naște `NULL` și stă `AFTER created_at` fiindcă acela e ultimul câmp din `001_schema.sql`, deci e singurul loc care există pe **orice** bază, oricât de veche. Indexul unic trece peste cererile de până acum fără să se plângă, oricâte ar fi: în SQL `NULL` nu se ciocnește cu `NULL`, deci vechile cereri — toate fără cheie — rămân neatinse, și la fel cele care vin mai târziu de la un telefon cu pagina veche în memorie. **Ce NU face: nu curăță cererile duble adunate înainte.** Ea oprește perechea următoare, nu o desface pe cea de ieri — două cereri vechi, identice, rămân două rânduri, fiindcă n-avem de unde ști dacă omul a apăsat de două ori sau chiar a vrut două comenzi. Și **nu ea alege ce se întâmplă la ciocnire**: indexul doar spune „cheia asta a mai fost"; răspunsul — cererea dintâi, întoarsă ca și cum ar fi acum — e scris în `api/routes/requests.php`. O bază care ia migrarea fără fișierele noi nu pățește nimic: coloana rămâne goală și nimeni n-o citește. Nu cere nimic și se rulează oriunde. |
 | `027_poza_fiecarei_laturi.sql` | Da — și e singura de până acum care **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Ea copiază o dată `products.photo` în `products.photo_baked` acolo unde a doua e goală, adică face a fiecărei laturi poza pe care până în 2.4.1 o ÎMPRUMUTA de la cealaltă. Zăvorul nu e în `information_schema` — n-ar avea ce căuta acolo, fiindcă nu se schimbă nimic în schemă —, ci în `settings`: `migration_027_poza_pe_latura`, scris la coada ei. A doua rulare îl găsește și nu mai copiază nimic, deci o poză pe care ai schimbat-o între timp la gata de servire rămâne a ta. **Ce NU face: nu pune la loc pozele de după ea.** Un produs născut după migrare are `photo_baked` gol până îi urci una — și așa și trebuie, de vreme ce împrumutul s-a tăiat. O bază care ia migrarea fără fișierele noi nu pățește nimic: cele două coloane ajung să poarte același nume de fișier, iar codul vechi arăta oricum poza aceea pe amândouă laturile. Nu cere nimic și se rulează oriunde. |
+| `028_preturi_pe_trepte.sql` | Da — zece coloane, fiecare cu paza ei în `information_schema`: șase pe `products` (`price_frozen_b`, `price_frozen_c`, `price_baked_b`, `price_baked_c`, `prag_b`, `prag_c`) și câte două pe `order_items` și pe `order_request_items` (`treapta`, `prag_treapta`), plus patru setări ale catalogului, cu `INSERT IGNORE`. A doua rulare nu face nimic și nu calcă ce ai ales între timp în Setări. Nu atinge niciun rând existent: coloanele noi se nasc `NULL`, adică „nicio treaptă" pe produs — fiecare produs rămâne cu prețul lui unic, exact cum îl vindeai — și „treapta A" pe fiecare poziție de comandă de dinainte. Codul le cere **pe toate zece** deodată (`catalog_trepte_supported()`): pe o bază cu jumătate din migrare casa vinde ca ieri, numai cu prețul A, în loc să scrie comenzi tarifate la B fără să țină minte pragul care le-a câștigat. Nu cere nicio migrare anterioară; registrul (`025`) îl folosește numai dacă îl găsește. |
 
 Dacă o versiune viitoare are nevoie de o **setare** nouă, primești un fișier
 separat care conține doar acel `INSERT IGNORE INTO settings`. Nu reimportul
@@ -269,7 +270,7 @@ seed-ului.
 ### Cum verifici că migrarea a intrat
 
 `api/verifica.php` **nu te ajută**: pe o instalare vie răspunde 404
-(`api/verifica.php:998-1004`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
+(`api/verifica.php:1021-1027`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
 
 **Întâi întreabă registrul.** Din `025_registru_migrari.sql` încoace, fiecare
 migrare își scrie numele într-un tabel când rulează, deci răspunsul se citește
@@ -286,8 +287,8 @@ unde-și scrie numele. Dacă tabelul însuși lipsește, baza n-a văzut încă 
 ci schema, deci spune adevărul și despre o bază care a trecut prin actualizări
 de dinaintea lui.
 
-Pentru starea de azi — migrările **003 … 026** — trebuie să întoarcă
-**53 de rânduri**:
+Pentru starea de azi — migrările **003 … 028** — trebuie să întoarcă
+**67 de rânduri**:
 
 ```sql
 SELECT TABLE_NAME, COLUMN_NAME
@@ -313,7 +314,12 @@ SELECT TABLE_NAME, COLUMN_NAME
         ('order_requests','created_by'), ('orders','lab_seq'),
         ('users','poate_confirma_livrarea'), ('products','in_frozen'),
         ('products','in_baked'), ('products','photo_baked'),
-        ('order_requests','idempotency_key'))
+        ('order_requests','idempotency_key'), ('products','price_frozen_b'),
+        ('products','price_frozen_c'), ('products','price_baked_b'),
+        ('products','price_baked_c'), ('products','prag_b'),
+        ('products','prag_c'), ('order_items','treapta'),
+        ('order_items','prag_treapta'), ('order_request_items','treapta'),
+        ('order_request_items','prag_treapta'))
 UNION ALL
 SELECT TABLE_NAME, '(tabel)'
   FROM information_schema.TABLES
@@ -324,7 +330,9 @@ SELECT TABLE_NAME, '(tabel)'
 UNION ALL
 SELECT 'settings', CONCAT(setting_key, ' = ', value)
   FROM settings
- WHERE setting_key IN ('referral_rate_default', 'company_address', 'company_hours')
+ WHERE setting_key IN ('referral_rate_default', 'company_address', 'company_hours',
+                       'catalog_vedere_telefon', 'catalog_vedere_calculator',
+                       'pret_prag_b_implicit', 'pret_prag_c_implicit')
 UNION ALL
 SELECT TABLE_NAME, INDEX_NAME
   FROM information_schema.STATISTICS
@@ -334,7 +342,7 @@ SELECT TABLE_NAME, INDEX_NAME
    AND SEQ_IN_INDEX = 1;
 ```
 
-**Mai puține rânduri decât 53 → citește care lipsesc.** Numele coloanei îți
+**Mai puține rânduri decât 67 → citește care lipsesc.** Numele coloanei îți
 spune singur unde s-a oprit importul: `referral_rate` e din 008, `vouched_at`
 din 010, `promo` din 011, `dismissed_at` din 012, `snoozed_until` din 013,
 `lab_pin` din 014, `zone` din 016, tabelul `request_claims` din 019, indexul
@@ -345,7 +353,10 @@ indexul `ix_req_autor` din 022, iar `lab_seq` (pe `orders`) și
 `poate_confirma_livrarea` (pe `users`) din 023, iar cele trei de pe
 `products` — `in_frozen`, `in_baked`, `photo_baked` — din 024, iar tabelul
 `schema_migrations` din 025, iar coloana `idempotency_key` de pe
-`order_requests` și indexul ei `uq_req_cheie` din 026.
+`order_requests` și indexul ei `uq_req_cheie` din 026, iar cele zece coloane
+ale celor trei prețuri — șase pe `products`, de la `price_frozen_b` la
+`prag_c`, și `treapta` cu `prag_treapta` pe cele două tabele de poziții —
+împreună cu cele patru setări ale catalogului, din 028.
 
 Rândurile care pot lipsi fără pagubă sunt cele trei de index: `020`, plus câte o
 bucată din `021` și din `022`. Fără ele insignele de client, lista de comenzi și
@@ -416,6 +427,22 @@ stau închise și spun sub ele ce migrare lipsește; se deschid după actualizar
 și o reîncărcare a paginii.
 (Dacă scrie altceva, nu e o pagubă: înseamnă că le-ai scris tu, iar migrarea
 trece pe lângă un rând care există.)
+
+`028` urcă numărul cu paisprezece: zece coloane și patru setări. Cele zece merg
+numai **toate deodată** — codul le numără și, dacă lipsește măcar una, se
+poartă ca înainte de migrare: fiecare produs are un singur preț, magazinul nu
+arată nicio scară, iar comenzile se tarifează la A. Nu e o stricăciune, e
+starea de ieri, ținută dinadins cât timp fișierele au ajuns pe server și
+importul încă nu. Singurul lucru refuzat în fereastra aceea e salvarea unui
+preț B sau C din fila Produse: serverul răspunde că lipsește migrarea `028` și
+nu scrie nimic, iar restul fișei produsului se salvează ca de obicei. Cele
+patru setări se văd cu **valoarea** lor, ca la `017` și `018`: pe o instalare
+proaspăt migrată citești `catalog_vedere_telefon = unu`,
+`catalog_vedere_calculator = patru`, `pret_prag_b_implicit = 100` și
+`pret_prag_c_implicit = 300`. Altă valoare înseamnă că ai ales-o tu în Setări,
+iar migrarea a trecut pe lângă un rând care exista. Dacă lipsesc de tot,
+magazinul se deschide oricum — unul pe rând pe telefon, patru pe calculator —,
+iar produsele noi pornesc fără prag precompletat.
 
 Lista nu se mai ține de mână. `.claude/test-doc-actualizari.mjs` chiar rulează
 interogarea asta pe baza de dezvoltare și numără rândurile, iar pe lângă asta o
@@ -535,7 +562,7 @@ Pentru comenzile vechi, singura legătură rămâne însemnarea
 (`„#1042 Restaurant Bistro"`) — dar și referința, și numele clientului se pot
 schimba din formularul comenzii, deci o comandă redenumită de atunci nu se mai
 găsește nici așa. Tocmai de aceea codul reparat nu se mai leagă de însemnare, ci
-citește returul din registru, pe `order_id` (`api/lib/orders.php:1529`).
+citește returul din registru, pe `order_id` (`api/lib/orders.php:1745`).
 
 Ce faci cu ce iese: adaugă în Depozit o mișcare de **intrare** cu diferența
 (`iesit_net - pe_comanda`), pe articolul din registru, cu motivul „Corectură
@@ -705,9 +732,9 @@ comenzi pe jumătate în bază**.
 
 Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
-(`Site Public.dc.html:2567`), deci o schimbare de preț se vede corect. **Dar
-dispariția e complet tăcută**: `:3179` ține în vitrină numai produsele bifate în
-catalogul deschis și cu prețul de acolo scris, iar `:3522-3528` scoate din coș
+(`Site Public.dc.html:2884`), deci o schimbare de preț se vede corect. **Dar
+dispariția e complet tăcută**: `:3515` ține în vitrină numai produsele bifate în
+catalogul deschis și cu prețul de acolo scris, iar `:4110-4116` scoate din coș
 rândurile rămase fără latura lor, fără niciun mesaj.
 
 Singura excepție e coșul refăcut din **„Comandă din nou”** (butonul de pe
@@ -723,7 +750,7 @@ mai puțini lei, fără nicio explicație.
 **Prețul gol nu mai poate face asta.** Până la cele două cataloage, ștergerea
 unui singur preț ascundea produsul din **amândouă** variantele, deși atinseseși
 un singur câmp. Acum serverul refuză golirea unui preț cât catalogul lui e bifat
-(422, mesajul numește catalogul și caseta — `api/routes/catalog.php:794`), iar
+(422, mesajul numește catalogul și caseta — `api/routes/catalog.php:831`), iar
 stingerea bifei **lasă prețul scris**. Deci scoaterea dintr-un catalog e o
 singură apăsare, și atunci pier din coșuri numai rândurile laturii aceleia;
 cealaltă nu se clintește.

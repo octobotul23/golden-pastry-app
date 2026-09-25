@@ -200,3 +200,164 @@ function latura_poza_vitrina(array $r): ?string
 {
     return latura_poza($r, latura_vitrina($r));
 }
+
+/* ------------------------------------------- trei prețuri, după cantitate -- */
+
+/*
+ * CEREREA PATRONULUI, 24 septembrie 2026: până la trei prețuri pe fiecare
+ * latură — A sub primul prag, B de la el, C de la al doilea. Pragurile sunt ale
+ * produsului, o singură pereche pentru amândouă laturile; prețurile sunt ale
+ * fiecărei laturi (migrarea 028).
+ *
+ * Funcțiile de aici sunt SINGURUL loc care hotărăște ce trepte are un produs.
+ * Banii (`price_items()`), catalogul trimis magazinului (`product_public()`) și
+ * pagina scrisă pe server pentru motoarele de căutare le cheamă pe ele, ca să
+ * nu poată spune trei lucruri deosebite despre același produs. De-aia stau în
+ * fișierul ăsta, care nu atinge baza: `seo/index.php` îl încarcă singur.
+ *
+ * O TREAPTĂ SE APLICĂ NUMAI DACĂ E ÎNTREAGĂ ȘI MAI IEFTINĂ. Panoul nu lasă să
+ * se salveze altfel (`product_trepte_verifica()` din api/routes/catalog.php),
+ * dar baza se poate scrie și cu mâna, din phpMyAdmin. Un B mai scump decât A
+ * ar însemna că clientul care cumpără mai mult plătește mai mult pe bucată —
+ * deci o treaptă strâmbă se sare, nu se aplică. Și cu ea se sar cele de
+ * deasupra: C are sens numai peste un B.
+ *
+ * Pe un rând fără coloanele lui 028 (baza nemigrată) scara are o singură
+ * treaptă, A — adică exact prețul unic de ieri.
+ */
+
+/** Coloana prețului unei trepte: A e coloana de azi, B și C cele din 028. */
+function latura_coloana_treapta(string $latura, int $treapta): string
+{
+    $baza = latura_coloana_pret($latura);
+    if ($treapta === 2) {
+        return $baza . '_b';
+    }
+    return $treapta === 3 ? $baza . '_c' : $baza;
+}
+
+/**
+ * Scara de prețuri a laturii: treptele care CHIAR se aplică, de jos în sus.
+ *
+ * A are pragul 1 — „de la o bucată" —, ca pagina să poată scrie „1–99" fără
+ * să mai socotească nimic. La alegerea treptei A nu se compară cu nimic: orice
+ * cantitate primește măcar A (v. `latura_treapta()`).
+ *
+ * @return array<int, array{treapta: int, prag: int, pret: float}>  [] = latura n-are preț
+ */
+function latura_scara(array $r, string $latura): array
+{
+    $a = latura_pret($r, $latura);
+    if ($a === null) {
+        return [];
+    }
+    $scara = [['treapta' => 1, 'prag' => 1, 'pret' => $a]];
+    $prag  = 1;
+    $pret  = $a;
+    foreach ([2 => 'prag_b', 3 => 'prag_c'] as $t => $colPrag) {
+        $p = $r[$colPrag] ?? null;
+        $v = $r[latura_coloana_treapta($latura, $t)] ?? null;
+        if ($p === null || $p === '' || $v === null || $v === ''
+            || !is_numeric($p) || !is_numeric($v)) {
+            break;
+        }
+        $p = (int) $p;
+        $v = round((float) $v, 2);
+        // Pragul trebuie să urce, prețul să coboare. A stă pe pragul 1, deci
+        // „să urce" refuză și pragul 1 — care ar face din B prețul oricui,
+        // adică un A ascuns.
+        if ($p <= $prag || $v <= 0 || $v >= $pret) {
+            break;
+        }
+        $scara[] = ['treapta' => $t, 'prag' => $p, 'pret' => $v];
+        $prag = $p;
+        $pret = $v;
+    }
+    return $scara;
+}
+
+/**
+ * Treapta în care cade o cantitate: cea mai înaltă al cărei prag e atins.
+ *
+ * `prag` e null la A — treapta A nu e „câștigată" de nicio cantitate, deci n-are
+ * ce pierde la o corectură. Așa se scrie și pe rândul de comandă
+ * (`order_items.prag_treapta`).
+ *
+ * Cantitatea e cea din tot coșul, pe perechea produs+latură, nu a unui singur
+ * rând: v. `cantitati_pe_pereche()` în api/lib/orders.php.
+ *
+ * @return array{treapta: int, prag: ?int, pret: float}|null  null = latura n-are preț
+ */
+function latura_treapta(array $r, string $latura, float $q): ?array
+{
+    $scara = latura_scara($r, $latura);
+    if (!$scara) {
+        return null;
+    }
+    $ales = $scara[0];
+    foreach (array_slice($scara, 1) as $t) {
+        if ($q >= $t['prag']) {
+            $ales = $t;
+        }
+    }
+    return [
+        'treapta' => $ales['treapta'],
+        'prag'    => $ales['treapta'] === 1 ? null : $ales['prag'],
+        'pret'    => $ales['pret'],
+    ];
+}
+
+/**
+ * Scara, în forma în care o citesc paginile: `[{prag, pret}, …]`.
+ *
+ * Lista e goală pe o latură fără preț. O latură cu un singur preț are o singură
+ * treaptă — magazinul arată atunci prețul ca până azi, fără scară.
+ *
+ * @return array<int, array{prag: int, pret: float}>
+ */
+function latura_scara_publica(array $r, string $latura): array
+{
+    return array_map(
+        static fn(array $t): array => ['prag' => $t['prag'], 'pret' => $t['pret']],
+        latura_scara($r, $latura)
+    );
+}
+
+/**
+ * Scara laturii în forma în care o citește Google: câte un
+ * `UnitPriceSpecification` pe treaptă, cu cantitatea care o primește
+ * (`eligibleQuantity`, numărată în bucăți — codul UN/CEFACT „C62").
+ *
+ * Null pe o latură cu un singur preț. Acolo `offers.price` spune tot, iar
+ * marcajul rămâne literă cu literă cel de dinainte de trepte. Oricum,
+ * `offers.price` rămâne prețul A: cifra pe care o vede omul când deschide
+ * pagina, cu coșul gol (v. `$produsLd` în seo/index.php).
+ *
+ * Intervalele sunt cele de pe card: A „1–99", B „100–299", C „300+". Treapta
+ * de sus n-are `maxValue`, fiindcă n-are capăt. Scara vine din `latura_scara()`,
+ * deci o treaptă strâmbă (B peste A, prag care nu urcă) nu ajunge nici aici.
+ *
+ * @return array<int, array<string, mixed>>|null
+ */
+function latura_scara_ld(array $r, string $latura): ?array
+{
+    $scara = latura_scara($r, $latura);
+    if (count($scara) < 2) {
+        return null;
+    }
+    $ld = [];
+    foreach ($scara as $i => $t) {
+        $cate = ['@type' => 'QuantitativeValue', 'minValue' => $t['prag']];
+        if (isset($scara[$i + 1])) {
+            $cate['maxValue'] = $scara[$i + 1]['prag'] - 1;
+        }
+        $cate['unitCode'] = 'C62';
+        $ld[] = [
+            '@type'            => 'UnitPriceSpecification',
+            'price'            => number_format($t['pret'], 2, '.', ''),
+            'priceCurrency'    => 'RON',
+            'eligibleQuantity' => $cate,
+        ];
+    }
+    return $ld;
+}

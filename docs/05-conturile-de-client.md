@@ -228,10 +228,11 @@ aceea mesajul îi spune omului să sune dacă nu primește nimic în câteva min
 ## Parola pe care i-o dai tu, și parola lui
 
 Când faci un cont nou, sau când apeși „Parolă nouă" pe un cont existent, parola
-pe care i-o dictezi este **provizorie**. Contul e marcat ca atare: în lista de
-conturi rândul lui arată insigna **PAROLĂ PROVIZORIE**, iar dedesubt scrie
-„parolă provizorie, pusă de administrator". Antetul paginii numără câte conturi
-sunt în starea asta, ca să nu le cauți rând cu rând.
+pe care i-o dictezi este **provizorie**. Contul e marcat ca atare: în Conturi
+placa lui poartă insigna **PAROLĂ PROVIZORIE** (pe o placă îngustă, numai
+**PROVIZORIE**), iar în fișa lui, sub nume, scrie „parolă provizorie, pusă de
+administrator". Antetul paginii numără câte conturi sunt în starea asta, ca să
+nu le cauți unul câte unul.
 
 La prima intrare cu o parolă provizorie, omul e dus direct la pagina
 **Parola mea** și nu ajunge nicăieri altundeva până nu alege. Pagina nu-i mai
@@ -310,6 +311,153 @@ schimbi codul din Setări. Se schimbă din `api/config.php`, cheile
 
 Adresa nu se editează din `Conturi`: o scrie clientul, la prima comandă. Tu o
 poți corecta la acceptarea cererii, în formularul de comandă.
+
+---
+
+## Pagina Conturi: pastile, plăci și fișe
+
+Până în 2.5.0, `lab.goldenpastry.ro/conturi` arăta un singur cont pe rând, cu
+fișa lui întreagă: toate casetele și toate butoanele, unul sub altul. Cu
+treizeci de clienți și zece oameni în casă, contul căutat era la câteva ecrane
+distanță. Patronul a cerut să vadă mai multe deodată și să le poată alege după
+rol.
+
+**Pastilele de rol.** Sub căutare stă un rând de pastile, fiecare cu numărul ei
+de conturi: *Toate · Fondatori · Administratori · Manageri · Agenți de vânzări ·
+Angajați · Oameni de laborator · Clienți*, în ordinea casei, de la cine
+hotărăște la cine cumpără. Un rol fără niciun cont nu are pastilă. Când toată
+lista are un singur rol, rândul nu se mai desenează, fiindcă n-ar avea ce
+alege.
+
+Numărul de pe pastilă e al listei întregi, nu al căutării. E dinadins: un număr
+care s-ar schimba cu fiecare literă tastată ar muta pastilele sub degetul care
+tocmai vrea să apese una.
+
+**Căutarea caută în rolul ales.** Cu „Clienți" apăsat, „maria" găsește
+clientele, nu și pe colega Maria de la laborator, iar sub casetă scrie câte au
+ieșit și din câte („2 din 6 conturi · clienți"). Când în rolul ales nu iese
+nimic, dar în altul da, pagina nu se oprește la „niciun cont": pune dedesubt
+butonul **„Caută în toate rolurile · 1 potrivire"**, care te duce acolo dintr-o
+apăsare. Altfel „niciun cont" ar fi părut un răspuns despre toată casa.
+
+În rest, căutarea e cea de dinainte: nume, utilizator, e-mail, firmă, zonă sau
+rol, fără diacritice — „gheorghita" îl găsește pe Gheorghiță. În casetă scrie
+acum numai „Caută un cont", iar lista câmpurilor stă în eticheta ei, care se
+arată ținând mausul deasupra. Fraza întreagă de dinainte se tăia la jumătate pe
+telefon.
+
+**Trei vederi**, din butoanele cu desen de lângă căutare:
+
+| Vedere | Ce arată | Pe telefon | Pe tabletă | Pe calculator |
+|---|---|:-:|:-:|:-:|
+| **Listă** | fiecare cont cu fișa lui întreagă, ca înainte | 1 | 1 | 1 |
+| **Patru pe rând** | plăci | 2 | 3 | 4 |
+| **Șase pe rând** | plăci mai mici | 3 | 4 | 6 |
+
+Numărul din nume e cât pune pagina **cel mult** pe un rând. Pune mai puține
+numai acolo unde placa n-ar mai avea loc de nume: pe tabletă, meniul din stânga
+îi ia din lățime. Coloanele din tabel sunt cele măsurate la 390, 820 și 1440 de
+pixeli.
+
+Vederea aleasă se ține minte **în browserul acela**, ca în Catalog. Unde nu s-a
+ales încă nimic, pagina pornește din „Patru pe rând". Nu vine din Setări: e
+unealta celui care lucrează, nu o hotărâre a casei.
+
+**Placa** arată monograma (primele litere din nume, pe culoarea rolului),
+numele, utilizatorul, rolul, semnele contului și ultima intrare, sau „n-a intrat
+încă niciodată". În „Șase pe rând" ultima intrare nu mai încape, iar rolurile
+lungi se scurtează: „Admin", „Agent", „Laborator".
+
+Semnele sunt trei:
+
+| Semn | Înseamnă |
+|---|---|
+| **contul tău** (în „Șase pe rând": **al tău**) | contul cu care ești intrat acum |
+| **parolă provizorie** (pe o placă îngustă: **provizorie**) | parola e încă cea dictată de tine, v. mai jos |
+| **cont oprit** (în „Șase pe rând": **oprit**) | contul nu mai poate intra în aplicație |
+
+„Parolă provizorie" se scurtează după lățimea plăcii, nu după vedere. Aceeași
+placă din „Patru pe rând" are loc de insigna întreagă pe telefon, dar nu și pe
+tabletă, unde meniul îi ia din lățime. Cititorul de ecran aude mai departe
+ambele cuvinte, iar insigna întreagă stă și în eticheta ei.
+
+**Numele lungi se micșorează, nu se rup.** Pe placă, numele are cel mult două
+rânduri. Lăsat în voia lui, un cuvânt mai lung decât placa s-ar rupe la
+margine, în mijlocul lui („Restaurant" pe un rând, „ul" pe următorul), iar unul
+prea lung pentru al doilea rând s-ar termina în „…", ca „Ștefan / Hohenzol…".
+De aceea pagina măsoară cel mai lung cuvânt din fiecare nume și, unde n-ar
+încăpea, micșorează numele cât îi trebuie. Coboară cel mult până la mărimea
+rândurilor de sub el, 13 pixeli în „Patru pe rând" și 12 în „Șase pe rând":
+mai mărunt decât utilizatorul lui, numele n-ar mai arăta a nume. Un cuvânt
+care nu încape nici așa tot se rupe. La 390 de pixeli, în „Șase pe rând",
+„Constantinescu" ar avea nevoie de 11,5.
+
+Mărimea se ia din lățimea plăcii, deci se potrivește singură pe tabletă și
+când tableta se rotește. Două nume de pe același rând pot ieși astfel de mărimi
+puțin diferite: e prețul cuvintelor întregi.
+
+**Placa se deschide pe loc.** O apăsare pe ea desface fișa întreagă a contului
+— aceeași din „Listă", cu toate casetele și butoanele ei — chiar sub rândul
+plăcii, pe toată lățimea. Se strânge din butonul **„Strânge"** din colțul ei,
+cu încă o apăsare pe placă sau, pe telefon, cu butonul Înapoi, iar focusul se
+întoarce pe placă. O singură fișă stă deschisă odată. Deschiderea alteia o
+strânge pe prima, și tot ce rămăsese început în ea — o parolă, un PIN, un cod de
+recomandare, o ștergere armată — se închide odată cu ea. Altfel te-ar fi
+așteptat la întoarcere, pe un cont pe care nu-l mai vedeai.
+
+**Ordinea**: după rol, în ordinea pastilelor, iar în același rol după nume.
+Serverul trimite conturile ca înainte, iar ordinea se face în pagină. Până în
+2.5.0 lista venea în ordinea în care baza de date își ține rolurile, și
+clienții ieșeau la mijloc, între angajați și fondatori.
+
+**Fondatorul are insigna lui, aurie**, și monograma la fel. Până în 2.5.0
+purta insigna cenușie a angajaților, deci contul care dă și ia rolurile
+celorlalți arăta ca oricare altul.
+
+**Contul oprit se vede.** Serverul știe de mult să oprească un cont, iar contul
+oprit nu mai intră în aplicație, cu nicio parolă. Pagina însă nu-l arăta: un
+cont oprit arăta ca unul bun. Acum poartă insigna roșie „cont oprit", pe placă
+și în capul fișei.
+
+### Comutatorul „Cont pornit"
+
+Tot din 2.5.0, contul se oprește și se pornește chiar din pagină. În fișa
+fiecărui cont, deasupra butoanelor de jos, stă comutatorul **„Cont pornit"**,
+iar sub el un rând care spune ce înseamnă starea de acum.
+
+**Oprirea cere două apăsări.** Prima nu trimite nimic: comutatorul se stinge,
+rama rândului se face roșie, iar dedesubt apare întrebarea „Oprești
+contul…?", care spune pe scurt ce urmează — omul nu mai poate intra, iese pe
+loc dacă e conectat, iar comenzile și istoria lui rămân —, cu butoanele
+**„Renunț"** și **„Oprește contul"**. Abia al doilea pleacă spre server.
+Deschiderea altei fișe renunță singură, ca la o ștergere armată: o oprire
+lăsată în așteptare te-ar fi pândit la întoarcere, pe un cont pe care nu-l mai
+vedeai.
+
+**Pornirea e dintr-o apăsare**, fiindcă nu strică nimic: contul pornit la loc
+intră cu parola lui de dinainte.
+
+**Oprit nu înseamnă șters.** Comenzile, cererile și istoria contului rămân pe
+loc. Dacă omul e conectat când îl oprești, serverul îi închide sesiunile pe
+loc, iar parola nu-l mai lasă să intre până nu-l pornești la loc. Cât pleacă
+cererea, comutatorul stă stins și scrie „Opresc contul…" ori „Pornesc
+contul…"; răspunsul apare sus, în mesajul paginii.
+
+**Cine pe cine.** Regulile sunt ale serverului; pagina doar le arată dinainte,
+cu comutatorul stins și motivul scris dedesubt:
+
+- nimeni nu-și poate opri propriul cont;
+- contul unui administrator ori al unui fondator îl oprește **și** îl pornește
+  numai un fondator, cât timp există vreunul pornit;
+- contul de sistem „panou", al tabletelor din laborator, n-are comutator:
+  accesul lui cu cod se oprește din Setări.
+
+Al doilea rând e mai nou decât pare. Până în 2.5.0 serverul cerea un fondator
+numai la **oprire**, așa că un administrator putea porni la loc contul unui
+administrator oprit de fondator, iar omul scos din firmă intra iar, cu toate
+drepturile. Pagina n-avea buton, deci ușa cerea o cerere scrisă de mână; cu
+comutatorul, ar fi fost o apăsare. S-a închis înaintea lui, iar povestea e în
+docs/06, printre defectele de conturi.
 
 ---
 

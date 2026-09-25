@@ -69,12 +69,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 @media (max-width:760px){
 [data-adm=shell]{flex-direction:column!important}
 [data-adm=side]{width:auto!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;flex-wrap:wrap!important;gap:12px!important;padding:12px 16px!important}
-/* Subsolul barei e ascuns pe telefon, mai jos în aceeași bandă. Aici stăteau
-   două rânduri care-l îmbrăcau pe el și ascundeau lămurirea dinăuntrul lui. */
+/* Subsolul barei e ascuns pe telefon, mai jos în aceeași bandă; aici stăteau două rânduri care-l îmbrăcau pe el și lămurirea dinăuntrul lui. */
 [data-adm=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important;position:sticky!important;top:0!important;z-index:20!important}
 [data-adm=topbar]>div:last-child{width:100%!important;margin-left:0!important;flex-wrap:wrap!important}
 [data-adm=pager]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
-[data-adm=pager]>div{justify-content:center!important}
+[data-adm=pager]>div{justify-content:center!important;flex-wrap:wrap!important}
+[data-adm=pager]>div>span{order:-1!important;flex:1 1 100%!important}
 [data-adm=search]{width:100%!important;flex:1 1 100%!important}
 [data-adm=newbtn]{width:100%!important}
 [data-adm=stats]{grid-template-columns:1fr 1fr!important;gap:10px!important}
@@ -571,7 +571,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <span class="h-badge h-badge--danger" style="font-size:11px">Urgent</span>
 </sc-if>
 <sc-if value="{{ r.segment }}" hint-placeholder-val="{{ false }}">
-<span class="h-badge" style="font-size:11px">{{ r.segment }}</span>
+<span class="h-badge" style="font-size:11px"><gp-semn latura="{{ r.variantKey }}" aria-hidden="true"></gp-semn>{{ r.segment }}</span>
 </sc-if>
 <sc-if value="{{ r.catalog }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--honey" style="font-size:11px">{{ r.catalog }}</span>
@@ -734,11 +734,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <div class="h-card" style="padding:16px 18px;border-radius:18px;display:flex;flex-direction:column;gap:10px">
 <span class="h-eyebrow" style="font-size:12px">Poziții relative</span>
 <div style="position:relative;width:100%;aspect-ratio:1/1;border-radius:14px;background:var(--h-bg-sunk);overflow:hidden">
-<svg viewBox="0 0 100 100" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%">
 <sc-for list="{{ plotLines }}" as="l" hint-placeholder-count="4">
-<line x1="{{ l.x1 }}" y1="{{ l.y1 }}" x2="{{ l.x2 }}" y2="{{ l.y2 }}" stroke="var(--h-accent)" stroke-width="1.4" stroke-linecap="round" vector-effect="non-scaling-stroke" opacity="0.75"></line>
+<span data-adm="hartalinie" aria-hidden="true" style="position:absolute;left:{{ l.x }};top:{{ l.y }};width:{{ l.w }};height:1.4px;margin-top:-0.7px;border-radius:1px;background:var(--h-accent);opacity:.75;transform-origin:0 50%;transform:rotate({{ l.deg }});pointer-events:none"></span>
 </sc-for>
-</svg>
 <sc-for list="{{ plot }}" as="p" hint-placeholder-count="5">
 <span class="h-numeric" title="{{ p.title }}" style="position:absolute;left:{{ p.x }};top:{{ p.y }};transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:{{ p.bg }};color:{{ p.fg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;box-shadow:var(--h-shadow-2)">{{ p.label }}</span>
 </sc-for>
@@ -902,18 +900,27 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </div>
 
 <div style="display:flex;flex-direction:column;gap:10px">
-<div style="display:flex;align-items:center;gap:10px">
+<!-- Capul pozițiilor se înfășoară. Cu totalul aprins, „Poziții", bucățile,
+     suma și cele două butoane cereau 423 px într-o fereastră de 388: pe
+     telefon „+ Adaugă poziție" ieșea din ecran, iar fereastra, care are
+     `overflow-y:auto` (deci și `overflow-x` auto), se putea trage în lături —
+     cu toate casetele de dedesubt tăiate pe stânga. Butoanele stau împreună,
+     într-o cutie a lor, ca să treacă amândouă pe rândul al doilea, nu unul
+     singur rămas în urmă. Pe ecran lat totul rămâne pe un rând, ca până acum. -->
+<div data-adm="pozcap" style="display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap">
 <span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Poziții</span>
-<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle)">{{ frm.qtyTotal }} bucăți</span>
+<span class="h-numeric" style="font-size:13px;color:var(--h-fg-subtle);white-space:nowrap">{{ frm.qtyTotal }} bucăți</span>
 <!-- Totalul comenzii, de la server. Se stinge cât răspunsul e pe drum: o
      sumă rămasă aprinsă lângă o cantitate tocmai schimbată arată adevărată
      și nu mai e. Lipsește cu totul când serverul n-are ruta de tarifare —
      formularul merge atunci exact ca până acum, fără bani, dar salvând. -->
 <sc-if value="{{ frm.total }}" hint-placeholder-val="{{ false }}">
-<span data-adm="formtotal" class="h-numeric" title="{{ frm.totalTitlu }}" style="font-size:14px;font-weight:700;color:{{ frm.totalCol }}">{{ frm.total }}</span>
+<span data-adm="formtotal" class="h-numeric" title="{{ frm.totalTitlu }}" style="font-size:14px;font-weight:700;color:{{ frm.totalCol }};white-space:nowrap">{{ frm.total }}</span>
 </sc-if>
-<button data-adm="dincatalog" type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onDeschideCatalog }}" style="margin-left:auto;min-height:44px">Din catalog</button>
+<div data-adm="pozbtns" style="margin-left:auto;display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+<button data-adm="dincatalog" type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onDeschideCatalog }}" style="min-height:44px">Din catalog</button>
 <button data-adm="additem" type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ onAddItem }}" style="min-height:44px">+ Adaugă poziție</button>
+</div>
 </div>
 <!-- Refuzul venit de la tarifare: produs fără preț, cantitate strâmbă, total
      peste ce încape în coloană. Se arată CÂT SE SCRIE comanda, nu după ce
@@ -925,7 +932,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <div style="display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ frm.items }}" as="it" hint-placeholder-count="2">
 <!-- Rândul se înfășoară, altfel pe telefon numele produsului dispare. Cantitatea
-     are 84px scriși, lista de variantă 170, butonul 46 — singurul care putea
+     are 84px scriși, lista de variantă 170 (azi cât cere ea, v. mai jos),
+     butonul 46 — singurul care putea
      ceda era chiar numele (`flex:1`), și ceda până la 33px: pe un ecran de
      390 nu se mai citea ce produs e pe rând, iar „×" se strângea la 12px,
      sub orice deget. Cu `flex-wrap` și un prag de 150px pe nume, lista și
@@ -937,11 +945,23 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
 <input class="h-input h-numeric" value="{{ it.q }}" onChange="{{ it.onQ }}" inputMode="decimal" style="width:84px;height:46px;font-size:16px;text-align:right">
 <input class="h-input" value="{{ it.n }}" onChange="{{ it.onN }}" placeholder="Nume produs" autoComplete="off" style="flex:1 1 180px;min-width:150px;height:46px;font-size:16px">
-<select class="h-input" value="{{ it.variant }}" onChange="{{ it.onV }}" style="width:170px;flex:none;height:46px;font-size:14px">
+<!-- O listă nativă nu poate purta un desen în opțiuni, așa că semnul laturii
+     alese stă ÎN FAȚA listei, pe marginea ei, și se schimbă odată cu ea.
+     `pointer-events:none`: o apăsare pe semn e o apăsare pe listă.
+     Lățimea e a listei (`width:auto`), nu una scrisă: o listă nativă nu pune
+     puncte de suspensie, taie pur și simplu. La 170 px scria „Copt (gata de
+     serv", iar la 196, cu semnul în față, „Copt (gata de servit" — pe orice
+     ecran, nu numai pe telefon. Acum ia lățimea celei mai lungi opțiuni, deci
+     cele două laturi au aceeași lățime, iar pe telefon trece oricum pe rândul
+     al doilea, lângă „×". -->
+<span data-adm="latura" style="position:relative;flex:none;display:inline-flex;align-items:center">
+<gp-semn latura="{{ it.variant }}" aria-hidden="true" style="position:absolute;left:12px;pointer-events:none"></gp-semn>
+<select class="h-input" value="{{ it.variant }}" onChange="{{ it.onV }}" style="width:auto;flex:none;height:46px;font-size:14px;padding-left:36px">
 <sc-for list="{{ variantOpts }}" as="v" hint-placeholder-count="2">
 <option value="{{ v.v }}">{{ v.l }}</option>
 </sc-for>
 </select>
+</span>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ it.onDel }}" title="Scoate produsul din comandă" aria-label="Scoate produsul din comandă" style="flex:none;height:46px;width:46px;padding:0;font-size:18px;color:var(--h-danger)">×</button>
 </div>
 <!-- Lista scurtă de sub caseta de nume: „cr" scoate croissantele, cu gramaj
@@ -1258,6 +1278,39 @@ const bani = (n) => (Math.round((Number(n) || 0) * 100) / 100).toFixed(2).replac
 const cifra = (n) => (Math.round((Number(n) || 0) * 100) / 100).toFixed(2).replace(".", ",");
 
 /**
+ * Prețul bucății cu treptele produsului, la cantitatea `q` de pe comandă:
+ * întâi prețul treptei în care cade, apoi treptele de deasupra ei — „4,20 RON ·
+ * 3,90 de la 100 · 3,60 de la 300", iar de la 100 de bucăți „3,90 RON (preț
+ * B) · 3,60 de la 300". Un produs cu un singur preț rămâne „4,20 RON", ca până
+ * acum; o variantă fără preț, „fără preț".
+ *
+ * Scara vine din `gp.scaraDinCampuri()`, oglinda lui `latura_scara()` de pe
+ * server, iar `q` e suma produsului pe variantă, cum o numără și serverul
+ * (`cantitati_pe_pereche()`). E totuși numai o arătare: banii rândului îi dă
+ * tarifarea, care știe și de prețurile promise.
+ */
+const pretCuTrepte = (p, variant, q) => {
+  const scara = gp.scaraDinCampuri(p, variant === "congelat" ? "congelat" : "copt");
+  const t = gp.treaptaPentru(scara, q);
+  if (!t) return "fără preț";
+  return [bani(t.pret) + (t.treapta > 1 ? " (preț " + gp.literaTreptei(t.treapta) + ")" : "")]
+    .concat(scara.slice(t.treapta).map((x) => cifra(x.pret) + " de la " + x.prag))
+    .join(" · ");
+};
+
+/**
+ * Același preț, pe scurt, pentru lista de sugestii, unde numele are nevoie de
+ * loc: „4,20 RON", iar la un produs cu trepte „4,20 → 3,60 RON", de la prețul
+ * A până la cel mai mic.
+ */
+const pretScurt = (p, variant) => {
+  const scara = gp.scaraDinCampuri(p, variant === "congelat" ? "congelat" : "copt");
+  if (!scara.length) return "fără preț";
+  const ultima = scara[scara.length - 1];
+  return scara.length > 1 ? cifra(scara[0].pret) + " → " + bani(ultima.pret) : bani(scara[0].pret);
+};
+
+/**
  * Produsele din catalog care se potrivesc cu ce s-a tastat.
  *
  * Potrivirea la SALVARE rămâne exactă (`productIdByName`) — acolo o greșeală
@@ -1299,10 +1352,9 @@ const sugestiiDinCatalog = (text, variant) => {
     grams: p.grams ? String(p.grams) + " g" : "",
     // Prețul variantei alese pe rândul acela: același număr pe care îl va
     // folosi serverul. Lipsa lui se spune pe față — un produs fără preț pentru
-    // varianta aia oprește salvarea, deci e bine să se vadă de aici.
-    pret: (v === "congelat" ? p.priceFrozen : p.priceBaked) == null
-      ? "fără preț"
-      : bani(v === "congelat" ? p.priceFrozen : p.priceBaked)
+    // varianta aia oprește salvarea, deci e bine să se vadă de aici. La un
+    // produs cu trepte, de la prețul A până la cel mai mic (v. `pretScurt`).
+    pret: pretScurt(p, v)
   }));
 };
 
@@ -1377,7 +1429,12 @@ const liniiDeTarifat = (items) => (items || [])
 const impartePeRanduri = (items, tarif) => {
   const gol = (items || []).map(() => null);
   if (!tarif || !tarif.items || !tarif.items.length) return gol;
-  const coada = tarif.items.map((p) => ({ qty: Number(p.qty) || 0, unit: Number(p.unitPrice) || 0 }));
+  // Treapta și pragul călătoresc cu felia, ca rândul de bani să poată spune
+  // „preț B, de la 100 buc.". Un răspuns fără ele (server mai vechi) e A.
+  const coada = tarif.items.map((p) => ({
+    qty: Number(p.qty) || 0, unit: Number(p.unitPrice) || 0,
+    treapta: Number(p.treapta) || 1, prag: p.prag == null ? null : Number(p.prag)
+  }));
   const iesire = gol.slice();
   // Se merge pe CHIAR liniile care au plecat la server, în ordinea lor, nu
   // pe rândurile brute ale formularului. Citite a doua oară, cu altă regulă,
@@ -1392,7 +1449,7 @@ const impartePeRanduri = (items, tarif) => {
     // (o jumătate de tavă), iar scăderile repetate lasă firimituri.
     while (cer > 0.005 && k < coada.length) {
       const ia = Math.min(cer, coada[k].qty);
-      if (ia > 0.005) felii.push({ qty: ia, unit: coada[k].unit });
+      if (ia > 0.005) felii.push({ qty: ia, unit: coada[k].unit, treapta: coada[k].treapta, prag: coada[k].prag });
       coada[k].qty -= ia;
       cer -= ia;
       if (coada[k].qty <= 0.005) k++;
@@ -1403,11 +1460,20 @@ const impartePeRanduri = (items, tarif) => {
   return iesire;
 };
 
-/** Rândul de bani de sub o poziție: „10 × 3,49 = 34,90 RON". */
+/**
+ * Rândul de bani de sub o poziție: „10 × 3,49 = 34,90 RON". O felie pusă pe o
+ * treaptă de volum își spune treapta și pragul care a câștigat-o: „150 × 3,90
+ * (preț B, de la 100 buc.)". Pragul e cel al promisiunii, adus de server, nu
+ * cel de azi din fișa produsului: comanda veche își păstrează treapta chiar
+ * dacă pragul s-a mutat între timp.
+ */
 const baniiRandului = (felie) => {
   if (!felie || !felie.felii.length) return "";
   const bucati = felie.felii
-    .map((x) => gp.qtyLabel(x.qty) + " × " + cifra(x.unit))
+    .map((x) => gp.qtyLabel(x.qty) + " × " + cifra(x.unit)
+      + (x.treapta > 1
+        ? " (preț " + gp.literaTreptei(x.treapta) + (x.prag ? ", de la " + x.prag + " buc." : "") + ")"
+        : ""))
     .join(" + ");
   return bucati + " = " + bani(felie.suma);
 };
@@ -3544,10 +3610,25 @@ class Component extends DCLogic {
       fg: i === 0 ? "var(--h-cream-100)" : "var(--h-cocoa-800)",
       title: i === 0 ? HQ_OF().label : stopList[i - 1].cust
     }));
-    const plotLines = pts.slice(1).map((p, i) => ({
-      x1: px(pts[i]).toFixed(2), y1: py(pts[i]).toFixed(2),
-      x2: px(p).toFixed(2), y2: py(p).toFixed(2)
-    }));
+    // Liniile dintre puncte, ca bare subțiri rotite, nu ca `<line>` de SVG:
+    // atributele de geometrie ale unui SVG (x1, y1…) se citesc cât pagina e
+    // încă șablon, deci „{{ l.x1 }}" ajungea în consolă ca „Expected
+    // length", de patru ori la fiecare deschidere. Prin `style`, șablonul
+    // trece nevăzut.
+    //
+    // Lungimea și unghiul se socotesc în procente din latura cutiei, care e
+    // pătrată (`aspect-ratio:1/1`): un procent e același pe orizontală și pe
+    // verticală, deci bara ajunge exact în punctul următor. O cutie care n-ar
+    // mai fi pătrată ar strâmba liniile, nu punctele.
+    const plotLines = pts.slice(1).map((p, i) => {
+      const x1 = px(pts[i]), y1 = py(pts[i]);
+      const dx = px(p) - x1, dy = py(p) - y1;
+      return {
+        x: x1.toFixed(2) + "%", y: y1.toFixed(2) + "%",
+        w: Math.hypot(dx, dy).toFixed(2) + "%",
+        deg: (Math.atan2(dy, dx) * 180 / Math.PI).toFixed(2) + "deg"
+      };
+    });
 
     const pk = S.peek ? this.comandaDupaId(S.peek) : null;
 
@@ -3719,10 +3800,9 @@ class Component extends DCLogic {
     // care o primește rândul nou —, deci cifra de pe listă e cea care se va
     // socoti, nu una de altă coloană.
     const vForm = f.variant === "congelat" ? "congelat" : "copt";
-    const pretulLui = (p) => {
-      const v = vForm === "congelat" ? p.priceFrozen : p.priceBaked;
-      return v == null ? "fără preț" : bani(v);
-    };
+    // Cu treptele produsului, la cantitatea pusă deja pe comandă: omul vede
+    // de la câte bucăți scade prețul cât încă vorbește cu clientul.
+    const pretulLui = (p) => pretCuTrepte(p, vForm, cateAre(f.items, p));
     // Aceeași cernere ca la sugestii: ce nu se mai poate pune pe o comandă
     // nu se arată în nicio listă din care se alege.
     const deAles = CATALOG.filter(inCatalog);
@@ -4110,6 +4190,9 @@ class Component extends DCLogic {
           // hotărăște dacă adresa înseamnă ceva (o ridicare de la patiserie
           // n-are drum). Pe cererea de pe site lipsește, și atunci banda arată
           // exact ca până acum — `filter` scoate golurile.
+          // Semnul stă înaintea benzii, fiindcă latura e chiar primul ei cuvânt;
+          // cheia urmează eticheta: tot ce nu e „congelat" e gata de servire.
+          variantKey: r.variant === "congelat" ? "congelat" : "copt",
           segment: [gp.variantLabel(r.variant), r.fulfillment, r.zone, r.addr]
             .filter(x => String(x || "").trim()).join(" · "),
           // Graba cerută de cel care a luat telefonul. Se vede pe card, nu doar
@@ -4490,7 +4573,7 @@ class Component extends DCLogic {
       catalogDeschis: !!S.catalogDeschis,
       catalogNota: vForm === "congelat"
         ? "Prețurile de mai jos sunt cele pentru marfă congelată. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată."
-        : "Prețurile de mai jos sunt cele pentru marfă gata de servit. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată.",
+        : "Prețurile de mai jos sunt cele pentru marfă gata de servire. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată.",
       catalogGrupe: catalogGrupe,
       // Catalogul care n-a venit nu se arată ca un catalog gol: omul trebuie
       // să afle că lipsa e a cererii, nu a produselor.
@@ -4547,11 +4630,11 @@ class Component extends DCLogic {
           }
         }))
       },
-      // Fiecare poziție își alege varianta: aceeași comandă poate cuprinde și
-      // marfă congelată, și marfă gata de servire, la prețurile lor.
+      // Fiecare poziție își alege varianta (o comandă poate avea din amândouă),
+      // cu numele din magazin: „Congelate", nu „Congelat (crud)" (runda 2.5.0).
       variantOpts: [
-        { v: "copt", l: "Copt (gata de servit)" },
-        { v: "congelat", l: "Congelat (crud)" }
+        { v: "copt", l: "Gata de servire" },
+        { v: "congelat", l: "Congelate" }
       ],
       frmTimedLabel: f.timed ? "Ora se afișează pe panouri" : "Doar ordinea (ora ascunsă)",
       frmTimedCls: f.timed ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",

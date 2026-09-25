@@ -515,7 +515,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <span class="h-badge h-badge--warning" style="font-size:11px">{{ o.timeLabel }}</span>
 </sc-if>
 <span class="{{ o.chanCls }}" style="font-size:11px">{{ o.chan }}</span>
-<span class="{{ o.variantCls }}" style="font-size:11px">{{ o.variant }}</span>
+<span class="{{ o.variantCls }}" style="font-size:11px"><gp-semn latura="{{ o.variantKey }}" aria-hidden="true"></gp-semn>{{ o.variant }}</span>
 </div>
 </div>
 <button data-lb="cardmove" type="button" class="{{ o.upCls }}" onClick="{{ o.onUp }}" title="Mută mai sus" style="height:44px;width:38px;padding:0;font-size:15px;border-radius:11px;flex:none">↑</button>
@@ -538,7 +538,12 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 </sc-for>
 </div>
-<div style="display:flex;align-items:center;gap:8px">
+<!-- Rândul de jos se rupe pe două când nu încape: butoanele trec dedesubt,
+     tot la dreapta (`margin-left:auto`). Fără `flex-wrap`, pe telefon —
+     unde cartonul are 318 px, lângă fila „Produse" din dreapta — etapa,
+     „0/40 buc." și cele două butoane nu încăpeau, iar butonul etapei
+     următoare ieșea cu 16 px din carton, sub filă. -->
+<div data-lb="cardfoot" style="display:flex;align-items:center;flex-wrap:wrap;gap:8px">
 <span class="{{ o.statusCls }}" style="font-size:11px">{{ o.status }}</span>
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-faint);white-space:nowrap">{{ o.progress }}</span>
 <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex:none">
@@ -584,7 +589,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <span class="{{ detail.chanCls }}" style="font-size:12px">{{ detail.chan }}</span>
-<span class="{{ detail.variantCls }}" style="font-size:12px">{{ detail.variant }}</span>
+<span class="{{ detail.variantCls }}" style="font-size:12px"><gp-semn latura="{{ detail.variantKey }}" aria-hidden="true"></gp-semn>{{ detail.variant }}</span>
 <!-- Cine a scris comanda. Lipsește cu totul pe un server rămas în urmă, pe
      comenzile venite de pe site și pe cele scrise de un cont șters între
      timp — toate trei tăcerile sunt lămurite la `gp.creatDe`. -->
@@ -2138,6 +2143,7 @@ class Component extends DCLogic {
         // Congelat sau gata de servire: fără asta laboratorul nu are de unde
         // ști ce pregătește, deși de varianta aleasă depinde și prețul plătit.
         variant: gp.variantLabel(ord.variant),
+        variantKey: ord.variant,
         variantCls: ord.variant === "congelat" ? "h-badge h-badge--accent" : "h-badge h-badge--honey",
         nou,
         // Inelul de pe card cere ochiul; pastila doar spune. De-aia inelul se
@@ -2230,7 +2236,7 @@ class Component extends DCLogic {
       });
     });
 
-    let detail = { rang: "", rangSemn: "", rangEt: "", rangCls: "h-badge", rangTitlu: "", creatDe: "", creatDeTitlu: "", canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, nextStop: false, nextNote: "", onAllDone: () => {}, onClose: () => {} };
+    let detail = { rang: "", rangSemn: "", rangEt: "", rangCls: "h-badge", rangTitlu: "", creatDe: "", creatDeTitlu: "", canBack: false, backLabel: "", onBack: () => {}, ref: "", cust: "", chan: "", chanCls: "h-badge", variant: "", variantKey: "", variantCls: "h-badge", slot: "", status: "", statusCls: "h-badge", note: "", pct: "0%", progress: "", items: [], nextLabel: "", nextCls: "h-btn h-btn--primary", onAdvance: () => {}, advanceOff: true, nextStop: false, nextNote: "", onAllDone: () => {}, onClose: () => {} };
     let hasDetail = false;
     flat.forEach(ord => {
       const t = ord.slot || "";
@@ -2258,6 +2264,7 @@ class Component extends DCLogic {
         rangCls: rgD.cls, rangTitlu: rgD.titlu,
         creatDe: cdD.et, creatDeTitlu: cdD.titlu,
         variant: gp.variantLabel(ord.variant),
+        variantKey: ord.variant,
         variantCls: ord.variant === "congelat" ? "h-badge h-badge--accent" : "h-badge h-badge--honey",
         slot: ord.timed ? "ora " + t + " fix" : "poziția " + (ids.indexOf(ord.id) >= 0 ? ids.indexOf(ord.id) + 1 : "—"),
         status: st, statusCls: ST[st] || "h-badge", note: ord.note || "",

@@ -238,6 +238,41 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 </div>
 </div>
+
+<!-- Catalogul (migrarea 028): cum se deschide magazinul și cu ce praguri
+     pornește un produs nou. Vederile se aleg separat pentru telefon și
+     calculator: pe un ecran îngust un card pe rând se citește mai ușor, pe
+     unul lat patru se văd dintr-o privire.
+
+     Grila are cel mult două coloane, și trece pe una când o coloană ar
+     ieși sub 17rem. Pe tabletă (820), cu bara din stânga pe ecran, două
+     coloane dădeau fiecărei liste 228 px, iar „Unul pe rând, cu toate
+     detaliile" cere 264: lista își tăia alegerea în „…cu toate de▾".
+     Regula de sub 760 (`[data-st=grid2]`, o coloană) rămâne deasupra. -->
+<div data-st="catalogcard" class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Catalogul</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Cum se deschide magazinul pentru un client nou, și de la câte bucăți încep prețurile B și C la un produs nou.</span>
+</div>
+<div data-st="grid2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(max(17rem,calc((100% - 14px) / 2 - 0.5px)),1fr));gap:14px">
+<sc-for list="{{ catalogFields }}" as="f" hint-placeholder-count="4">
+<label data-st="{{ f.st }}" class="h-field">
+<span class="h-label">{{ f.label }}</span>
+<sc-if value="{{ f.eVedere }}" hint-placeholder-val="{{ true }}">
+<select class="h-select" value="{{ f.value }}" onChange="{{ f.onChange }}" disabled="{{ f.inchisa }}" style="height:46px;font-size:15px">
+<sc-for list="{{ f.optiuni }}" as="o" hint-placeholder-count="3">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+</sc-if>
+<sc-if value="{{ f.ePrag }}" hint-placeholder-val="{{ false }}">
+<input class="h-input" inputMode="numeric" value="{{ f.value }}" onChange="{{ f.onChange }}" readOnly="{{ f.inchisa }}" placeholder="{{ f.hint }}" style="height:46px;font-size:15px">
+</sc-if>
+<span class="h-help" style="color:{{ f.helpFg }}">{{ f.help }}</span>
+</label>
+</sc-for>
+</div>
+</div>
 </sc-if>
 
 <!-- ──────────────────────────────────────────── notificări ── -->
@@ -712,7 +747,27 @@ const GENERAL = [
   // ordonarea opririlor, deci greșite mută toată ruta în alt cartier.
   { k: "hq_label", l: "Punctul de plecare al livrărilor", hint: "Depozit · Șos. Olteniței 103", help: "Numele afișat ca prima oprire pe ruta șoferului." },
   { k: "hq_lat", l: "Latitudine depozit", hint: "44.39235", help: "Din Google Maps: clic dreapta pe depozit, primul număr." },
-  { k: "hq_lng", l: "Longitudine depozit", hint: "26.12385", help: "Al doilea număr. De el depind kilometrii de pe rută." }
+  { k: "hq_lng", l: "Longitudine depozit", hint: "26.12385", help: "Al doilea număr. De el depind kilometrii de pe rută." },
+  // Cardul „Catalogul" (migrarea 028). Stau în lista asta, nu într-una a lor,
+  // ca paza din `test-defect-salvari-mute` — „fiecare casetă nesemănată de
+  // 002 își știe migrarea" — să le vadă și pe ele, iar refuzul din `save()`
+  // să le poată numi. `card` le scoate din „Date despre firmă" și le așază în
+  // cardul lor; `tip` spune ce fel de casetă sunt.
+  //
+  // „Telefon și tabletă" nu e o vorbă aleasă la întâmplare: magazinul are un
+  // singur hotar, 1080 de puncte (`mob` din Site Public.dc.html), și tot el
+  // hotărăște care din cele două vederi se aplică.
+  { k: "catalog_vedere_telefon", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "vedere", implicit: "unu", l: "Cum se deschide magazinul pe telefon și tabletă", help: "Ce vede un client care intră prima dată. Fiecare își poate schimba vederea din magazin, iar alegerea lui se ține minte — până când schimbi tu vederea de aici." },
+  { k: "catalog_vedere_calculator", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "vedere", implicit: "patru", l: "Cum se deschide magazinul pe calculator", help: "La fel, pentru ecranele late, de la 1080 de puncte în sus." },
+  { k: "pret_prag_b_implicit", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "prag", l: "Prețul B începe de la (buc.)", hint: "100", help: "Pragul cu care pornește un produs nou în Produse. Fiecare produs își poate schimba pragul lui; golul înseamnă că nu se precompletează nimic." },
+  { k: "pret_prag_c_implicit", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "prag", l: "Prețul C începe de la (buc.)", hint: "300", help: "Mai mare decât pragul lui B. Bucățile se socotesc pe tot coșul, pe fiecare latură: 60 de congelate plus încă 60 din același produs fac 120." }
+];
+
+/** Vederile magazinului, cu numele din Setări (`catalog_vederi()` pe server). */
+const VEDERI = [
+  { v: "unu", l: "Unul pe rând, cu toate detaliile" },
+  { v: "patru", l: "Patru pe ecran" },
+  { v: "sase", l: "Șase pe ecran" }
 ];
 
 const isMasked = (v) => typeof v === "string" && v.indexOf("•") === 0;
@@ -1607,7 +1662,7 @@ class Component extends DCLogic {
       isAccess: S.tab === "access",
 
       /* --- general --- */
-      generalFields: GENERAL.map((f) => {
+      generalFields: GENERAL.filter((f) => !f.card).map((f) => {
         // O casetă fără rând în tabel stă închisă și spune de ce, în locul
         // ajutorului obișnuit. Deschisă, omul scria în ea, iar la „Salvează"
         // serverul refuza tot formularul (vezi `faraRand()` și paza din
@@ -1624,6 +1679,45 @@ class Component extends DCLogic {
           helpFg: inchisa ? "var(--h-warning)" : "var(--h-fg-subtle)"
         };
       }),
+
+      /* --- catalogul (migrarea 028) --- */
+      catalogFields: (() => {
+        // Aceleași margini ca pe server (`guard_catalog()`), spuse lângă
+        // casetă în loc să aștepte refuzul de la „Salvează". Serverul rămâne
+        // cel care hotărăște; aici doar se vede dinainte.
+        const pragGresit = (x) => x !== "" && (!/^\d+$/.test(x) || +x < 2 || +x > 10000);
+        const pb = String(v("pret_prag_b_implicit")).trim();
+        const pc = String(v("pret_prag_c_implicit")).trim();
+        const problema = (k) => {
+          const x = k === "pret_prag_b_implicit" ? pb : pc;
+          if (pragGresit(x)) return "Scrie un număr întreg de bucăți, între 2 și 10000 — ori lasă caseta goală, ca să nu se precompleteze nimic.";
+          if (k === "pret_prag_c_implicit" && x !== "" && !pragGresit(pb)) {
+            if (pb === "") return "Pragul C are nevoie de pragul B: scrie-l întâi pe acela.";
+            if (+x <= +pb) return "Trebuie să fie mai mare decât pragul lui B (" + pb + " buc.).";
+          }
+          return "";
+        };
+        return GENERAL.filter((f) => f.card === "catalog").map((f) => {
+          const inchisa = this.faraRand([f.k]).length > 0;
+          const val = String(v(f.k)).trim();
+          const rau = inchisa || f.tip !== "prag" ? "" : problema(f.k);
+          return {
+            label: f.l, onChange: field(f.k), inchisa,
+            eVedere: f.tip === "vedere", ePrag: f.tip === "prag",
+            // O vedere necunoscută se deschide ca cea de pornire — și pe
+            // server (`catalog_implicite()`), deci și aici se arată aceea.
+            value: f.tip === "vedere" ? (VEDERI.some((o) => o.v === val) ? val : f.implicit) : v(f.k),
+            optiuni: VEDERI,
+            hint: inchisa ? "" : (f.hint || ""),
+            help: inchisa
+              ? "Nu se poate alege încă: pe server lipsește rândul acestei setări, fiindcă migrarea " + f.m +
+                " n-a intrat. Rulează actualizarea (sudo bash actualizeaza-vps.sh), apoi reîncarcă pagina."
+              : (rau || f.help),
+            helpFg: inchisa || rau ? "var(--h-warning)" : "var(--h-fg-subtle)",
+            st: rau ? "prag-gresit" : "catalog-camp"
+          };
+        });
+      })(),
 
       /* --- WhatsApp --- */
       waOn: on("notify_whatsapp_enabled"),

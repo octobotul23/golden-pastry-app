@@ -397,6 +397,11 @@ function tarifare_raspuns(array $priced, float $total): array
             // cifră; când diferă, tocmai diferența e ce trebuie să se vadă —
             // s-a onorat un preț promis mai demult.
             'listPrice' => $p['catalog'] === null ? null : (float) $p['catalog'],
+            // Treapta la care s-a pus prețul (1 = A, 2 = B, 3 = C) și pragul
+            // care a câștigat-o, ca formularul să poată scrie „preț B, de la
+            // 100 buc." lângă rând. Un produs fără trepte e mereu 1, fără prag.
+            'treapta'   => (int) ($p['treapta'] ?? 1),
+            'prag'      => $p['prag'] ?? null,
         ];
     }
 
@@ -507,7 +512,7 @@ function route_orders_quote_edit(string $id): void
     $items    = cos_de_tarifat($b['items'] ?? null);
     $implicit = require_variant($b['variant'] ?? null, valid_variant($o['variant']));
     $vechile  = all(
-        'SELECT product_id, variant, qty, done_qty, unit_price FROM order_items WHERE order_id = ? ORDER BY id',
+        'SELECT ' . honored_columns() . ' FROM order_items WHERE order_id = ? ORDER BY id',
         [(int) $id]
     );
 
@@ -699,19 +704,18 @@ function route_orders_create(): void
             // Prețul de catalog rămâne scris lângă cel pus pe hârtie. Pe o
             // comandă luată la telefon cele două sunt de obicei aceeași cifră;
             // diferă când s-a onorat un preț promis mai demult, iar atunci
-            // tocmai diferența e ce trebuie să se vadă. Interogarea se alege o
-            // dată, în afara buclei, ca o bază fără migrarea 011 să nu cadă pe
-            // fiecare poziție.
-            $cuLista = promo_supported();
-            $sqlPozitie = $cuLista
-                ? 'INSERT INTO order_items (order_id, product_id, name, variant, qty, unit_price, list_price) VALUES (?, ?, ?, ?, ?, ?, ?)'
-                : 'INSERT INTO order_items (order_id, product_id, name, variant, qty, unit_price) VALUES (?, ?, ?, ?, ?, ?)';
+            // tocmai diferența e ce trebuie să se vadă. Tot aici treapta care a
+            // dat prețul (migrarea 028). Interogarea se alege o dată, în afara
+            // buclei, ca o bază fără migrările 011 ori 028 să nu cadă pe
+            // fiecare poziție — v. `pozitie_insert()`.
+            [$sqlPozitie, $cuLista, $cuTrepte] = pozitie_insert(
+                'order_items', 'order_id, product_id, name, variant, qty, unit_price'
+            );
             foreach ($priced as $p) {
-                $val = [$orderId, $p['id'], $p['name'], $p['variant'], $p['qty'], $p['unit']];
-                if ($cuLista) {
-                    $val[] = $p['catalog'] ?? null;
-                }
-                q($sqlPozitie, $val);
+                q($sqlPozitie, pozitie_valori(
+                    [$orderId, $p['id'], $p['name'], $p['variant'], $p['qty'], $p['unit']],
+                    $cuLista, $cuTrepte, $p['catalog'] ?? null, $p['treapta'] ?? 1, $p['prag'] ?? null
+                ));
             }
             // Promisiunea se naște odată cu poziția, în aceeași tranzacție:
             // dacă e scrisă mai târziu, între cele două clipe depozitul spune
@@ -1347,7 +1351,7 @@ function route_orders_update(string $id): void
         $items = cos_de_tarifat($b['items']);
         $implicit = require_variant($b['variant'] ?? null, valid_variant($o['variant']));
         $vechile  = all(
-            'SELECT product_id, variant, qty, done_qty, unit_price FROM order_items WHERE order_id = ? ORDER BY id',
+            'SELECT ' . honored_columns() . ' FROM order_items WHERE order_id = ? ORDER BY id',
             [(int) $id]
         );
         // Perechile deja pe comandă trec de poarta laturii; un rând NOU pe o
@@ -1582,11 +1586,11 @@ function route_orders_update(string $id): void
                 // acum — perechea lui, prețul plătit, tocmai s-a socotit din
                 // același catalog. Fără el aici, reducerea de pe o comandă ar
                 // rămâne fără explicație de la prima atingere a comenzii, adică
-                // de la prima mutare de etapă din laborator.
-                $cuLista = promo_supported();
-                $sqlPozitie = $cuLista
-                    ? 'INSERT INTO order_items (order_id, product_id, name, variant, qty, done_qty, unit_price, list_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-                    : 'INSERT INTO order_items (order_id, product_id, name, variant, qty, done_qty, unit_price) VALUES (?, ?, ?, ?, ?, ?, ?)';
+                // de la prima mutare de etapă din laborator. Treapta, la fel: fără
+                // ea, o corectură de mâine n-ar mai ști ce prag a câștigat prețul.
+                [$sqlPozitie, $cuLista, $cuTrepte] = pozitie_insert(
+                    'order_items', 'order_id, product_id, name, variant, qty, done_qty, unit_price'
+                );
                 foreach ($priced as $p) {
                     $cheie = ((int) $p['id']) . '|' . $p['variant'];
                     // Plafonat la cantitatea nouă: cine taie comanda de la 8 la 5
@@ -1595,11 +1599,10 @@ function route_orders_update(string $id): void
                     // și rămâne acolo, exact ca la o comandă anulată.
                     $done  = min((float) $p['qty'], (float) ($ramas[$cheie] ?? 0));
                     $ramas[$cheie] = ($ramas[$cheie] ?? 0) - $done;
-                    $val = [(int) $id, $p['id'], $p['name'], $p['variant'], $p['qty'], round($done, 2), $p['unit']];
-                    if ($cuLista) {
-                        $val[] = $p['catalog'] ?? null;
-                    }
-                    q($sqlPozitie, $val);
+                    q($sqlPozitie, pozitie_valori(
+                        [(int) $id, $p['id'], $p['name'], $p['variant'], $p['qty'], round($done, 2), $p['unit']],
+                        $cuLista, $cuTrepte, $p['catalog'] ?? null, $p['treapta'] ?? 1, $p['prag'] ?? null
+                    ));
                 }
                 // Rezervările vechi au plecat odată cu pozițiile vechi
                 // (`ON DELETE CASCADE` pe `order_item_id`); aici se scriu cele

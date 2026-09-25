@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**446 de defecte confirmate** — 10 critice, 125 grave, 208 medii, 103 mici.
-**446 reparate**, 0 rămase.
+**475 de defecte confirmate** — 10 critice, 126 grave, 214 medii, 125 mici.
+**475 reparate**, 0 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-238 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+267 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -29,13 +29,13 @@ Aceeași listă, cu filtre și căutare:
 | Gravitate | Reparate | Rămase | Total |
 |---|---|---|---|
 | Critice | 10 | 0 | 10 |
-| Grave | 125 | 0 | 125 |
-| Medii | 208 | 0 | 208 |
-| Mici | 103 | 0 | 103 |
+| Grave | 126 | 0 | 126 |
+| Medii | 214 | 0 | 214 |
+| Mici | 125 | 0 | 125 |
 
 ---
 
-## Ce e reparat — 446
+## Ce e reparat — 475
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -415,6 +415,10 @@ reparația la loc și văzând-o picând.
 - [x] **Un administrator poate schimba adresa de e-mail a fondatorului și îi ia contul prin „Am uitat parola”**
   `api/routes/users.php:327` · *grav*
   Schimbarea adresei de e-mail pe contul ALTCUIVA trece prin `guard_leader_role()`, deci un administrator nu mai poate muta adresa fondatorului ca să-i ia contul prin „Am uitat parola". Propria adresă rămâne editabilă. Probă: `.claude/test-defect-usa-fondator.mjs`.
+
+- [x] **Un administrator poate porni la loc contul unui administrator ori al unui fondator pe care un fondator l-a oprit: omul scos din firmă intră iar, cu toate drepturile**
+  `api/routes/users.php:808` · *grav*
+  `guard_leader_role()` se cheamă acum pe orice schimbare a lui `active`, nu doar pe oprire: pornirea la loc a unui cont de conducere cere un fondator (cât timp există unul pornit), la fel ca oprirea. `guard_last_founder()` rămâne numai pe oprire, unde are rost. Comutatorul „Cont pornit" din Conturi urmează aceeași regulă: la un administrator, rândul contului de conducere e stins și spune de ce.
 
 - [x] **Instalarea nu taie spațiile din parola primului administrator, dar autentificarea le taie**
   `api/setup.php:76` · *grav*
@@ -860,6 +864,10 @@ reparația la loc și văzând-o picând.
   `Administrare Comenzi.dc.html:167` · *mediu*
   Grupa a intrat ÎNĂUNTRUL listei, ca ultim copil al ei, cu `margin-top:20px` = golul dintre grupele barei (26) minus golul dintre panouri (6) — înăuntru cele două se adună, deci ochiul vede aceeași despărțire. Lista și grupa se derulează acum împreună. Păzită de secțiunea C-quater din `.claude/check-meniu.mjs`, cu patru cerințe: grupa stă în listă, marginea se SOCOTEȘTE din celelalte două goluri (nu se scrie „20"), grupa are `flex:none`, iar pe telefon se ascunde grupa întreagă. Dovedit prin nouă pagube puse înapoi pe marcaj, toate roșii, fiecare singură.
 
+- [x] **Pe telefon, formularul de comandă se trăgea în lături: capul pozițiilor, cu totalul aprins, cerea 423 px într-o fereastră de 388, iar „+ Adaugă poziție” ieșea din ecran**
+  `Administrare Comenzi.dc.html:912` · *mediu*
+  Capul pozițiilor se înfășoară (`flex-wrap:wrap`). Cele două butoane stau într-o cutie a lor, împinsă la dreapta, deci trec amândouă pe rândul al doilea, nu unul singur. Bucățile și totalul nu se mai rup pe două rânduri (`white-space:nowrap`). Pe calculator totul rămâne pe un rând, ca înainte.
+
 - [x] **Pachetul spunea, în două locuri deodată și amândouă scrise în ziua aceea, că VPS-ul casei merge pe nginx — pe un server instalat anume cu Apache, unde scriptul de instalare se oprește cu totul dacă portul 80 e al altcuiva**
   `api/.user.ini:10` · *mediu*
   Cele două comentarii s-au întors pe față: `.user.ini` spune acum că pe VPS-ul casei lucrează `.htaccess`-ul și că el însuși e pentru ziua în care PHP s-ar muta pe FPM, iar `build-deploy.mjs` spune că blocul pe care-l scrie e cel care lucrează, cu partea despre nginx ținută condiționat. Mesajul de 413 din `shared/gp-api.js` nu mai numește nginx ca pe serverul casei — trimite la rândul „Plafonul serverului web" din `verifica.php`, care citește `SERVER_SOFTWARE` și tace când n-are ce spune. Peste ele, șase reguli în `test-doc-actualizari.mjs`: scriptul de instalare pune **un singur** server web (el e izvorul), iar titlul ghidului, paza portului 80 și pachetul de certbot trebuie să-l numească pe acela; plus plimbarea prin tot dosarul care cere ca nimic din casă să nu spună că serverul casei e celălalt, cu un prag pe câte fișiere a cântărit — regula trece verde găsind NIMIC, deci trebuie să poată dovedi că a și căutat undeva.
@@ -1216,6 +1224,10 @@ reparația la loc și văzând-o picând.
   `Panou Laborator.dc.html:48` · *mediu*
   Amândouă panourile au căpătat același ecran de refuz ca „Administrare Comenzi", cu același marcaj, și un ajutor `vedePanoul()` care citește matricea meniului (`gp.PANOURI_ROL`), nu o listă scrisă a doua oară: dacă mâine „Laborator" iese din meniul unui rol, poarta se închide singură. Trei amănunte care fac diferența: (1) poarta se aprinde pe „ȘTIU și nu are" (`!!S.auth && !vedePanoul(S.auth)`), niciodată pe „nu știu" — altfel tableta din tură, care intră pe contul comun `panou`, s-ar închide singură cât timp `gp.me()` e pe drum; (2) `pull()` se oprește la poartă, ca panoul să nu mai ceară la fiecare patru secunde ce n-are cum să afle; (3) cartonul „ziua e goală" a căpătat lacătul `!faraAcces`, fiindcă o afirmație acoperită de o perdea e tot o afirmație. Ecranul trimite omul unde are ce face, cu `gp.primaPagina()` — aceeași socoteală care-l duce acolo după autentificare.
 
+- [x] **Pe telefon, butonul etapei următoare ieșea din cartonul comenzii, în Panou Laborator, și intra sub fila „Produse”**
+  `Panou Laborator.dc.html:546` · *mediu*
+  Rândul de jos se înfășoară (`flex-wrap:wrap`). Cele două butoane stau într-o cutie a lor, împinsă la dreapta, deci când nu încap trec amândouă pe rândul al doilea, tot la dreapta. Pe tabletă și pe calculator rândul rămâne unul singur, ca înainte.
+
 - [x] **Numerele de martor scrise în FRAZE nu se mutau cu renumerotarea: două trimiteri din foaia plasturelui arătau, de două runde încoace, spre cu totul alt martor decât cel care are răspunsul**
   `plasture-vps 2.4.2/CITESTE-MA.md:480` · *mediu*
   Cele trei trimiteri îndreptate în `plasture-vps 2.4.2/CITESTE-MA.md` („al douăzecilea", „la martorul 42", „martorii 16, 42, 56 și 70"), plus trei reguli noi în `.claude/test-plasa-rsync.mjs` care le leagă de chiar martorii documentului. Fraza despre martorul care cere zero a fost și rescrisă: spunea „defectul pe care runda asta îl repară" despre o reparație veche de două runde.
@@ -1235,6 +1247,14 @@ reparația la loc și văzând-o picând.
 - [x] **Lângă titlul rețetei scrie „fără materii prime” și atunci când rețeta n-a putut fi citită**
   `Produse.dc.html:1225` · *mediu*
   Numărătoarea tace până când `recipeReady` e adevărat: cât nu se știe, nu se scrie nimic. Probă: `.claude/check-panouri.mjs`.
+
+- [x] **Pe tabletă, rândurile din Catalogul panoului își pierdeau butoanele de la capăt: între 761 și ~1070 px cardul tăia „Scoate din catalog” și ×, fără nicio urmă**
+  `Produse.dc.html:395` · *mediu*
+  Rândul se rupe la orice lățime: `flex-wrap:wrap` stă în stilul lui, nu numai în banda de telefon. Numele, scara prețurilor și butoanele coboară pe rândul următor când nu încap, iar butoanele rămân la dreapta (`margin-left:auto`). Blocul numelui se poate strânge (`flex:1 1 230px`, `min-width:0`). Pe telefon, scara și butoanele primesc fiecare câte un rând întreg. Regula din `check-panouri.mjs` nu leagă reparația de lățimi, care se mută la fiecare buton nou. O leagă de faptul care face orice lățime sigură: rândul se poate rupe, iar nicio regulă din foaie, din nicio bandă și cu niciun selector, nu-l întoarce la `nowrap`.
+
+- [x] **Pe telefon, comutatorul de laturi din Catalogul panoului ascundea tocmai poziția aleasă la deschidere: „Amândouă” stătea în afara ecranului, într-o bandă derulată fără bară**
+  `Produse.dc.html:128` · *mediu*
+  Sub 1000 px comutatorul e o grilă cu câte o celulă pentru fiecare poziție (`grid-template-columns:repeat(3,minmax(0,1fr))`). Cele trei butoane stau întregi, unul lângă altul, iar când cuvântul nu încape lângă semn și cifră, cifra și semnul urcă deasupra lui. Nimic nu se mai derulează, deci nimic nu mai poate ieși din ecran. Pe calculator rămâne rândul de butoane de dinainte.
 
 - [x] **Contul de cumpărător făcut din „Recomandări" de un admin sau fondator nu se leagă niciodată de codul lui, deși pagina anunță că s-a legat**
   `Recomandari.dc.html:843` · *mediu*
@@ -1396,6 +1416,14 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:1025` · *mediu*
   Adresa hărții se socotește acum din Setări — `mapEmbed: adresaHartii(gp.hq())` —, iar `<iframe>`-ul nu mai poartă nicio cifră. Se mută și acul, și FEREASTRA, centrată pe el: numai cuprinderea ar trece și pentru o fereastră cât județul. `adresaHartii(hq)` stă la nivelul fișierului, nu ca metodă a clasei, tocmai ca proba s-o poată scoate din pagină și rula fără fereastră, fără DOM și fără catalog — redenumită, extragerea dă `null` și regulile PICĂ, nu trec pe tăcute. Gol înseamnă „nu știu”, nu 0,0: `Number(null)` și `Number('')` nu sunt NaN, ci ZERO, iar 0,0 e un punct adevărat, în Golful Guineei, la o mie de kilometri de orice țărm — aceeași capcană mutase acolo o oprire de zonă. Și o coordonată lipsă citită de-a dreptul ar fi dat `undefined.toFixed` din mijlocul lui `renderVals()`: pagina ÎNTREAGĂ albă, pentru o hartă. Acum un „hq” strâmb strică harta, nu pagina, iar proba încearcă cinci forme strâmbe pe rând și spune care anume s-a purtat urât. `loading="lazy"` are două treburi deodată: nu mai cere dale de la serverele ținute de voluntari pentru cine n-a derulat până jos, și, fiindcă harta se încarcă abia când omul ajunge lângă ea, răspunsul Setărilor apucă să sosească înaintea ei — deci în ziua mutării nu se vede nici măcar o clipă strada veche. Măsurat pe pagina vie, nu doar în sursă: `src` iese `…&marker=44.39235,26.12385`, cu fereastra centrată pe el, și nicio cerere nu pleacă vreodată spre o adresă cu acolade. Căderea lui `gp.hq()` e legată la semințe printr-o regulă, nu printr-o politețe: harta se desenează pe dată din ea, deci dacă n-ar fi chiar punctul de pornire, Distribuția ar clipi pe strada greșită la fiecare deschidere. Punctul, o singură dată în toată pagina: nici marcajul, nici logica nu mai poartă o a doua copie a lui, iar singura îngăduită — `data-harta-punct` — nu e un punct de care se ia cineva, ci declarația a ce e desenat în poza înghețată de pe Contact, și are regula ei. [21 septembrie 2026]
 
+- [x] **Pe calculator, butonul plutitor de WhatsApp stătea peste colțul de jos al coșului — peste prețuri, peste „×" și chiar peste butonul verde al coșului, care duce exact în același loc**
+  `Site Public.dc.html:5159` · *mediu*
+  `showFab: !(p === 'catalog' && picks.length > 0)`. Pe catalog, butonul plutitor se dă la o parte ori de câte ori coșul are ceva în el, pe orice ecran, fiindcă atunci coșul își poartă butonul lui verde, cu aceeași legătură: în bara de jos pe telefon, în coloana din dreapta pe calculator. Cu coșul gol, coloana n-are buton de WhatsApp și e scurtă, deci cel plutitor rămâne. La fel pe celelalte pagini. Antetul, lipit sus, își păstrează oricum iconița de WhatsApp. În `check-site-public.mjs` sunt trei reguli noi. Două stau pe instanță și spun când se ascunde și când nu. A treia stă pe marcaj și leagă ascunderea de faptul pe care se sprijină: butonul plutitor are aceeași legătură ca cele două butoane verzi ale coșului, iar cel din coloană stă într-o ramură `hasPicks`. Dacă butonul verde iese vreodată din coș, regula se înroșește și ascunderea trebuie regândită.
+
+- [x] **Produsele bifate „Marchează ca noutate” purtau în magazin insigna „Preț special” — o reducere pe care n-o făcuse nimeni**
+  `Site Public.dc.html:4728` · *mediu*
+  Insigna spune acum „Nou” (în engleză, „New”), ca bifa care o aprinde. Tot din bifa aceea vine și filtrul „Noutăți” de deasupra catalogului, nou în runda 2.5.0.
+
 - [x] **Adresa publică și programul aveau casete în Setări, dar niciun rând în tabel: patronul scria, apăsa „Salvează", primea „ok", și nu se schimba nimic. Niciodată**
   `sql/002_seed.sql:89` · *mediu*
   Hotărârea patronului: „Rândurile, ȘI un refuz lămurit". Partea aceasta e rândurile. O migrare nouă, `sql/018_adresa_si_program.sql`, le seamănă cu `INSERT IGNORE`, pornind de la chiar valorile scrise azi în cod (`seo/index.php`), ca site-ul să arate la fel în clipa actualizării — se schimbă doar cine ține valoarea: baza, nu fișierul. `INSERT IGNORE`, nu `REPLACE`: migrările se rulează de câte ori e nevoie, iar adresa pe care patronul a scris-o din Setări nu trebuie să se întoarcă la cea din cod la următoarea actualizare. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază, fiindcă n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Temeiul de rezervă din cod rămâne, dinadins, și e verificat cu `?:`, nu cu `??`: o casetă golită din panou salvează șir gol, deci `??` ar lăsa pagina fără adresă în loc s-o întoarcă pe cea din cod. Cele trei ghiduri (07, 08, 09) spun acum cum se verifică `018`, iar tabelul „Ce se poate reimporta și ce nu" o are pe rândul ei.
@@ -1456,6 +1484,10 @@ reparația la loc și văzând-o picând.
   `.claude/test-api.mjs:217` · *mic*
   Numărul îndreptat la cincisprezece, cu cele două locuri care țin numele fără să se autentifice spuse pe nume (`test-telegram`, `check-panouri`). Grep-ul promis e acum `grep -n "testangajat\|testclient" .claude/*.mjs docs/*.md`. Lista de nume s-a scos cu totul, cu pricina scrisă acolo: o listă rămâne în urmă exact ca numerele de rând scoase de aici mai demult — numărul spune cât de scump e numele, căutarea spune unde. Rămâne nefăcută aceeași socoteală din `.claude/curata-probe.mjs:509-510`, care spune tot „încă șase”: alt fișier, altă bandă. [16 septembrie 2026]
 
+- [x] **Totalul suitei urma calendarul bazei, nu codul: mătura din `test-comanda-peste-tot` avea trei verificări pentru FIECARE zi cu comenzi, deci paza cifrei din foaia plasturelui se înroșea fără nicio literă schimbată**
+  `.claude/test-comanda-peste-tot.mjs:495` · *mic*
+  Partea C nu mai judecă fiecare zi în parte: `ziuaSeIntelege()` întoarce verdictele zilei, câte unul pentru fiecare din cele trei egalități (`EGALITATI`), iar mătura le strânge în trei verificări peste toate zilele. Zilele care rup o egalitate se spun pe nume în rândul ei, cu cifrele lor, iar fiecare zi își are rândul de informație («ziua 2026-09-23 — se citește la fel»), deci urma rămâne aceeași. Fără nicio zi măsurată, cele trei nu se scriu deloc, ca să nu treacă fără să poată pica, iar marcajul casei «— sărit:» îi spune alergătorului de ce lipsesc din total. Același marcaj îl scrie acum și sărirea de la restanțele ajunse la plafonul de 200, singura altă verificare pe care datele o puteau scoate din socoteală. Comentariul funcției spune acum cine o cheamă, iar comentariul pazei din `verifica-tot.mjs` spune ce presupune: că numărul de verificări al fiecărui modul vine din cod.
+
 - [x] **Baza probelor de instalare se făcea tot din „001 + 002”, adică dintr-o listă scrisă de mână cu două fișiere din optsprezece**
   `.claude/test-defect-instalare.php:87` · *mic*
   `$reset()` rulează acum TOT LANȚUL, și-l află de pe disc, nu din cod: `001`, `002`, registrul migrărilor, apoi `003`+ în ordine, prin `glob($ROOT . '/sql/*.sql')`. Deci a nouăsprezecea migrare intră în probe chiar în ziua în care e scrisă, fără să-și aducă aminte cineva de fișierul ăsta — și asta era boala, o listă scrisă de mână, nu o cifră greșită. `025_registru_migrari.sql` urcă înaintea lui `003`, ca peste tot în casă. Baza oprită la `002` NU s-a pierdut: rămâne pe `$totLantul = false`, fiindcă la capitolul `verifica.php` se măsoară tocmai starea pe care pagina o declara verde. E o bază CERUTĂ anume, și scrie asta la fața locului, ca să nu fie luată mâine drept o scăpare rămasă din vechi. Celelalte capitole — instalarea, autentificarea, parola provizorie — măsoară de-acum codul de azi pe baza pe care o are o instalare adevărată, cu `users.zone`, cu `users.lab_pin` și cu tot ce aduc migrările. [21 septembrie 2026]
@@ -1496,6 +1528,10 @@ reparația la loc și văzând-o picând.
   `actualizeaza-vps.sh:583` · *mic*
   Un semn, `REG_NOU`, se aprinde în ramura în care `025` chiar se naște. Cât e aprins, ramura registrului din hotărâre se sare și socoteala cade înapoi pe amprentă — exact ca înainte de `025`, adică pe singurul martor care a văzut și trecutul. Iar bilanțul spune singur, o dată, că registrul s-a făcut chiar atunci și că de-aceea nu poate spune ce era înaintea lui; de la actualizarea următoare numărătoarea e a lui, și rândul nu mai apare.
 
+- [x] **Raportul actualizării spunea „pus acum” despre procentul de recomandare, adresă și program la FIECARE urcare, deși rularea nu le atinsese — chiar sub rândul care spunea despre aceeași migrare „era deja aplicată”**
+  `actualizeaza-vps.sh:679` · *mic*
+  Rândul casei nu mai spune ce a făcut rularea, ci ce știe: valoarea și a cui e — «Procentul de recomandare: 5% — semănat de casă, nu l-a hotărât nimeni din Setări.», «Adresa publică: … — semănată de casă, n-a scris-o nimeni din Setări.», «Programul de lucru: … — semănat de casă, nu l-a scris nimeni din Setări.». E adevărat la prima urcare și la oricare după ea. Culoarea rămâne verde, fiindcă valoarea casei e o stare bună; ramurile galbene și cea a omului rămân neatinse; iar „semănat de casă” e chiar vorba cu care scriptul și foaia numeau deja zeroul lui `008`. Foaia plasturelui spune la fel, în cele două locuri care explicau rândurile.
+
 - [x] **Pe ecranul de refuz din patru panouri, „← Alege panoul” era o legătură de scris de 26px, la 8px sub „Ieși din cont”**
   `Administrare Comenzi.dc.html:148` · *mic*
   Pe același rând, în toate cele patru pagini: legătura primește tiparul casei, `display:flex;align-items:center;justify-content:center;min-height:44px`, fără `padding-top:4px`, care n-ar mai fi avut rost. Se întinde pe lățimea coloanei, ca butoanele de deasupra. Niciun rând nou, deci nicio trimitere cu număr de linie nu s-a mutat. Proba caută ecranul întreg, poarta cu porțile din ea, și cere în el o singură legătură „← Alege panoul” spre Intrare, de cel puțin 44px.
@@ -1520,6 +1556,22 @@ reparația la loc și văzând-o picând.
   `Administrare Comenzi.dc.html:501` · *mic*
   Regula s-a scris O DATĂ, pe mâner, în foaia paginii (`Administrare Comenzi.dc.html:24`): `[data-adm=autor]{display:inline-block;vertical-align:middle;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}`. Marcajul celor patru insigne nu s-a atins. FIȘA CEREA TRIOUL OBIȘNUIT, IAR TRIOUL SINGUR N-AR FI REPARAT NIMIC. `.h-badge` e `inline-flex`, iar într-un container flex textul gol e un element anonim, pe care `text-overflow` nu-l prinde. Desenate pe pânză și numărate pixel cu pixel, insigna cu `text-overflow:ellipsis` și insigna fără el ies IDENTICE: zero pixeli deosebiți. Declarația n-ar fi fost slabă, ar fi fost moartă — și cine o scria pleca mulțumit că a reparat. De-aia reparația începe cu `display`, nu cu tăietura. Pricina era deja scrisă la `shared/gp-recomandari.css:38`, unde eticheta vecină fusese făcută dinadins `inline-block`; aici nu se citise. Al doilea lucru pe care fișa nu-l spune: `overflow:hidden` nu e numai foarfeca. Un element de grilă ori de flex are `min-width:auto`, adică minimul cât conținutul, iar minimul BATE maximul — fără `overflow`, `max-width:100%` n-ar mușca deloc. Cele cinci declarații lucrează numai împreună; patru din cinci nu taie nimic. Măsurat cu regula așa cum o servește serverul, pe toate trei așezările: rândul de comenzi (element de grilă) ieșea cu 32,9px — fișa măsurase 33 —, cardul de telefon cu 14,2px, iar cel de pe cereri încăpea deja fiindcă numele trecuse pe rândul lui. Cu regula, toate trei încap, iar tăietura trece de la `clip` la `ellipsis`. Înălțimea și așezarea pe verticală nu se schimbă în niciuna. Regula se leagă de MARCAJ, nu de clasă: a cincea insignă de autor o capătă fiindcă poartă `data-adm="autor"`, nu fiindcă și-a adus aminte cineva de ea. Paza, în `.claude/check-panouri.mjs`, e în trei părți: insignele poartă `title` și nu-și scriu singure un `display` (care ar bate orice foaie); pagina care are insigne are și regula, cu toate cinci declarațiile; și nicăieri, în niciuna din cele 18 pagini, `text-overflow` scris pe un container flex — adică paza prinde și REPARAȚIA greșită, nu numai defectul. Partea a treia nu se supără pe `flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:…`, tiparul din unsprezece locuri, fiindcă acolo `flex:` e proprietate de element, nu de container. Toate șapte dovedite roșii, punând defectul la loc, și verzi la loc după.
 
+- [x] **Lista de latură de pe fiecare poziție tăia chiar cuvântul ales, pe orice ecran: „Copt (gata de serv”**
+  `Administrare Comenzi.dc.html:961` · *mic*
+  Lista își ia lățimea singură (`width:auto`), adică lățimea celei mai lungi opțiuni, cu semnul în față. Cele două laturi au aceeași lățime, iar pe telefon lista trece oricum pe rândul al doilea, lângă „×”.
+
+- [x] **Fiecare deschidere a paginii Comenzi scria patru erori în consolă („Expected length”), din schema „Poziții relative”**
+  `Administrare Comenzi.dc.html:738` · *mic*
+  Liniile schemei sunt acum bare subțiri, rotite, puse numai prin `style`: fiecare pornește din punctul ei (`left`, `top`), are lungimea segmentului și se rotește cu unghiul lui. Cutia schemei e pătrată, deci procentele de pe orizontală și de pe verticală înseamnă același lucru, iar unghiul iese drept.
+
+- [x] **Pe telefoanele de 375px și mai înguste, paginarea din „Administrare Comenzi” ieșea din ecran: «, „Înapoi”, „pagina X din Y”, „Înainte” și » stăteau pe un singur rând de 362px, iar pagina se trăgea în lături**
+  `Administrare Comenzi.dc.html:76` · *mic*
+  Numai în banda de telefon (`@media (max-width:760px)`): grupul se poate rupe (`flex-wrap:wrap`), iar eticheta „pagina X din Y” urcă pe rândul ei, deasupra butoanelor (`order:-1`, `flex:1 1 100%`). Butoanele stau pe un rând de 262px și nu se mai mută când crește numărul paginii. Pe calculator paginarea arată ca înainte. Rândul nou din bandă n-a mutat nimic din pagină: comentariul de deasupra lui, o umplutură păstrată pentru reguli scoase, s-a strâns de pe două rânduri pe unul, fiindcă 315 trimiteri din patru fișiere arată spre rânduri de mai jos.
+
+- [x] **În formularul de comandă din panou, latura congelată se alegea sub numele „Congelat (crud)” — singura listă de alegere din aplicație care nu spunea „Congelate”, ca magazinul, Catalogul și filtrele din Statistici**
+  `Administrare Comenzi.dc.html:4637` · *mic*
+  Opțiunea din formular spune „Congelate” (rândul 4637); valoarea trimisă serverului e tot `congelat`, deci nimic nu se schimbă în comenzi. Comentariul de deasupra (rândurile 4633–4634) spune de ce, pe aceleași două rânduri: pagina are tot 4957. „Congelat” rămâne pe cardurile din Laborator și din Comenzi (`gp.variantLabel`), în capetele de coloană din Statistici și pe fișa produsului din magazin, iar insigna de pe prima pagină spune „Congelat crud”: despre ele nu s-a hotărât nimic, iar docs/10 le numește la „Ce NU e defect aici”.
+
 - [x] **API-ul își anunță versiunea de PHP în fiecare răspuns**
   `api/index.php:62` · *mic*
   header_remove('X-Powered-By') în api/index.php, ca să nu depindă de expose_php din configurarea serverului. Probă: test-api.mjs „răspunsul nu mai anunță versiunea de PHP" (plus „antetele de securitate sunt la locul lor", ca să nu se piardă celelalte).
@@ -1539,6 +1591,10 @@ reparația la loc și văzând-o picând.
 - [x] **Anunțul comenzii noi poartă alt număr decât cel scris pe comandă în toată aplicația**
   `api/lib/notify.php:87` · *mic*
   Anunțul comenzii noi poartă referința scrisă pe comandă, aceeași pe care o vede omul în toată aplicația. Probă: `.claude/test-defect-anunturi-esuate.mjs`.
+
+- [x] **Tarifarea lipea rândurile aceluiași produs fără să rotunjească: 20,4 + 46,3 + 33,3 bucăți ieșeau 99,99999999999999**
+  `api/lib/orders.php:1001` · *mic*
+  Suma rândurilor lipite se rotunjește la două zecimale, ca și coloana din bază, deci tarifarea și comanda salvată spun aceeași cantitate.
 
 - [x] **O listă trimisă ca tablou JSON este validată corect, dar salvată ca textul „Array”**
   `api/lib/settings.php:238` · *mic*
@@ -1648,9 +1704,25 @@ reparația la loc și văzând-o picând.
   `Conturi.dc.html:1665` · *mic*
   Butonul golește și `pCodeErr`, cu motivul scris lângă el. Probă: `.claude/check-erori-tacute.mjs`.
 
+- [x] **Pe telefoanele mai înguste de ~350px, în Conturi, „Nu poți șterge contul cu care ești conectat”, jos pe fișa contului tău, era mai lat decât butonul care îl poartă: la 320, ~279px într-un buton de 250**
+  `Conturi.dc.html:122` · *mic*
+  Numai în banda de telefon, pe rândul 122: butoanele din piciorul fișei își pot rupe scrisul (`white-space:normal`) și au 4px pe laturi, nu 20 (sunt cât cardul, deci umplutura nu mai ținea nimic la distanță). La 320 și 340 eticheta stă pe două rânduri, iar de la ~357 de puncte în sus pe unul, ca înainte. Comentariu la capătul rândului, niciun rând nou.
+
+- [x] **Pe telefoanele mai înguste de ~340px, în Conturi, capul unei fișe deschise își înghesuia numele: „Strânge” rămânea lângă el și îl strângea sub cel mai lung cuvânt (la 320, „Constantinescu” intra cu 9px în spațiul dintre ele), iar un nume dintr-o bucată ieșea din coloana lui**
+  `Conturi.dc.html:468` · *mic*
+  Coloana numelui are acum o bază, `flex:1 1 10rem` (rândul 468): când lângă „Strânge” n-ar mai rămâne nici atât, butonul trece dedesubt (sub ~339 de puncte), iar numele are tot rândul. Numele se poate rupe oriunde (`overflow-wrap:anywhere`, rândul 470), deci un nume dintr-o bucată nu mai iese din coloană; `break-word` n-ar fi ajuns, fiindcă nu micșorează lățimea cea mai mică a coloanei. Un nume dintr-o bucată mai lung decât rândul se rupe unde se termină rândul (la 320, „Wolfeschlegelsteinhause” și „n” dedesubt); `hyphens:auto` și `text-wrap:balance`, încercate, n-au mutat ruperea în Chromium. Niciun rând nou: comentariul stă în marcaj, la capătul rândului 468.
+
+- [x] **În Conturi, lista „Acces” purta numele rolului împreună cu tot ce poate el („Manager · comenzi, laborator, rută, depozit, pontaj”), iar o listă închisă nu-și poate scurta textul: la 390 se tăiau, fără „…”, fondatorul, managerul, agentul și angajatul, iar în „Cont nou” fondatorul și managerul chiar și la 1440**
+  `Conturi.dc.html:709` · *mic*
+  În `ROLE_OPTS` (rândurile 874–884) fiecare rol are acum numele (`l`) și, separat, drepturile (`d`); lista arată numai numele, iar fiecare fișă primește `roleRights` (rândul 1734) și îl scrie pe un rând mic, chiar după listă, în etichetă (rândul 713). Lista are `flex:1 1 auto;width:auto;min-width:0` (rândul 709), deci e cât cel mai lung nume și se strânge când n-are loc, iar eticheta are `flex-wrap:wrap` (rândul 708): pe telefon rândul drepturilor trece sub listă. „Cont nou” ia aceleași nume din `ROLE_OPTS`, iar ajutorul lung de sub listă (`nRoleHint`) a rămas cum era. Niciun rând nou: pagina are tot 2514.
+
 - [x] **Butonul de corecție al unei mișcări poate fi apăsat de oricâte ori, generând corecții repetate**
   `Depozit.dc.html:726` · *mic*
   O mișcare deja corectată își spune starea în locul butonului: a doua corecție nu mai poate fi scrisă.
+
+- [x] **Pe telefoanele mai înguste de 348px, bara de jos din Depozit nu încăpea: „+ Intrare” și „− Ieșire” nu se mai puteau strânge, iar „+ Articol” ieșea din ecran, cu 14px la 320**
+  `Depozit.dc.html:439` · *mic*
+  „+ Intrare” și „− Ieșire” au în marcaj 12px pe laturi, nu 20 (rândurile 439 și 440), deci se pot strânge: la 320 nu mai iese nimic din ecran. Mai lat, cele două cresc egal, ca înainte, deci pe telefoanele obișnuite bara arată la fel. Rândul 75, regula care arată bara pe telefon, are un comentariu la capăt care spune de ce; niciun rând nou, fiindcă rândurile din Depozit sunt citate din alte fișiere.
 
 - [x] **Ghidul Setărilor spunea că „Comandă refăcută” ajunge la CLIENT: anunțul pleacă numai spre echipă, pe canalele bifate la „Comandă anulată”**
   `docs/02-panoul-de-setari.md:153` · *mic*
@@ -1667,6 +1739,14 @@ reparația la loc și văzând-o picând.
 - [x] **Paragraful despre coșul care se golește tăcut arăta spre un `</form>`, spre un rând gol și spre un comentariu, iar proba ghidului era verde: tiparul ei nu citea deloc trimiterile spre fișiere cu spațiu în nume, deci „Site Public.dc.html” n-a fost păzit niciodată**
   `docs/07-actualizari.md:573` · *mic*
   Tiparul lasă numele fișierului să se întindă, cu spații cu tot, până la apostroful invers care închide trimiterea; numai primul caracter tot nu poate fi spațiu. Un martor nou cere ca ghidurile să aibă cel puțin trei trimiteri spre „Site Public.dc.html”, ca o întoarcere a tiparului să se audă, nu să tacă. Ancora `byNo` e înlocuită cu `k.indexOf('trial:') === 0 || byNo`, care stă numai pe rândul filtrului din coș. Salvarea coșului e legată anume de fraza „doar cantitățile”. §6 arată acum spre `:1995`, `:2372` și `:2546`. Tot acolo scrie și excepția nouă: coșul refăcut din „Comandă din nou” spune câte produse n-au mai intrat. `test-doc-actualizari.mjs`: **136 trecute · 0 eșuate**, cu 4 din 43 de trimiteri legate anume.
+
+- [x] **În ghidul de publicare, paragraful care spune la ce folosește cheia lui 026 stătea sub capitolul lui 027, care n-are nicio cheie**
+  `docs/08-publicare-vps-hostinger.md:398` · *mic*
+  Paragraful s-a mutat la capătul capitolului lui 026, înaintea lui 027.
+
+- [x] **În ghidul de actualizare, paragraful despre migrarea 026 era tăiat în două de cel despre 027: fraza se oprea în „pe o bază fără”, iar coada ei stătea singură, trei paragrafe mai jos**
+  `docs/09-actualizare-vps.md:493` · *mic*
+  Coada s-a întors la capătul paragrafului lui 026, iar capitolul lui 027 începe iar cu un paragraf al lui.
 
 - [x] **Ghidul de trecere cu ochii și README spuneau două durate, amândouă neadevărate: treizeci de minute în ghid, douăzeci în README, când bucățile scrise în el se adună la peste patruzeci și cinci**
   `docs/10-trecerea-cu-ochii.md:8` · *mic*
@@ -1712,6 +1792,10 @@ reparația la loc și văzând-o picând.
   `plasture-vps 2.4.2/CITESTE-MA.md:5251` · *mic*
   Cifra trimiterilor pusă pe 94 în `plasture-vps 2.4.2/CITESTE-MA.md` (cea a fișierelor fusese deja îndreptată pe 205 la scrierea rundei), plus cele două reguli noi care le leagă de chiar pachetul din plasture. Măsurătoarea istorică a fost lăsată anume în afara lor, și scris în cod de ce.
 
+- [x] **Trei trimiteri din foaia plasturelui 2.4.2 arătau spre ce nu mai era: „martorul 55” în loc de 64, „4 și 5” în loc de 9 și 10, migrările „până la `023`” într-un pachet care mergea până la `027` — două dintre ele îndreptate cu mâna o dată, apoi iar rămase în urmă**
+  `plasture-vps 2.4.2/CITESTE-MA.md:640` · *mic*
+  În foaia lui `2.5.0` cele trei trimiteri sunt scrise pe numerotarea de azi: „nu te mai uita la martorii 18 și 19”, „al doilea rând al martorului 73 — `lab/laborator.html`” și „**Migrările** `003` → `028`”. Prima poartă acum vorba „martorii”, tocmai ca regula să o poată cântări. Cele două reguli noi leagă frazele de martorii documentului și lanțul de `sql/`, deci la următoarea renumerotare ori la următoarea migrare foaia se înroșește singură. Foaia lui `2.4.2` rămâne cum a fost livrată, ca model al unei runde închise.
+
 - [x] **Cifra migrărilor din documentul plasturelui a rămas la 18 vreme de cinci runde: ținută la zi cu mâna de trei ori, apoi niciodată**
   `plasture-vps/CITESTE-MA.md:1357` · *mic*
   Amândouă exemplele s-au rescris pe adevărul de azi: coada unui server rămas la runda trecută (`Bilanț: 1 aplicate acum · 21 erau deja acolo`, cu `024` verde și trei coloane) și, pentru unul la zi, `0 aplicate acum · 22`. Lângă ele, propoziția care lipsea de la început: cele două cifre se adună întotdeauna la 22, nu la 24, fiindcă `001` și `002` se sar — și de ce se sar (`002` ar întoarce în catalog, la fiecare actualizare, produsele de probă șterse). Paza nu numără fișierele: ia din `actualizeaza-vps.sh` chiar rândul care sare migrări (`001_*|002_*) continue ;;`), scoate din el tiparele, și cere ca fiecare `Bilanț: A · B` din document să facă A+B = câte rămân. Deci ziua în care cineva mai sare una, ori adaugă a 25-a migrare, documentul se înroșește singur. Se caută în documentul turtit, nu pe rânduri, ca un `Bilanț:` rupt de reîmpachetarea unui paragraf să nu scape tăcut — adică exact felul în care s-a învechit.
@@ -1735,6 +1819,14 @@ reparația la loc și văzând-o picând.
 - [x] **Pătratul din locul fotografiei lipsă chema rozeta albă pe cartonașul crem: contrast 1,22:1, adică un pătrat gol**
   `Produse.dc.html:493` · *mic*
   `FOTO_LIPSA` arată acum spre `assets/logo-alb.png`, fișierul care are cerneala aurie, cu un comentariu care pune tabelul de contraste la vedere ca nimeni să nu mai „îndrepte” numele înapoi. Proba nouă `.claude/check-sigle.mjs` desface PNG-urile cu zlib, măsoară cerneala fiecărei sigle și cere ca rozeta din locul fotografiei să se vadă în amândouă temele, cu pragul 2,0:1. Dovedit roșu pe defectul pus la loc: 8 trecute · 2 picate; verde după reparație: 10 trecute · 0 picate. [21 septembrie 2026] Numele celor două sigle s-au schimbat între ele în runda 2.4.0, la hotărârea patronului (fișa `assets/logo-alb.png:1`). Rândurile de mai sus se citesc deci cu numele de atunci: desenul auriu, cel pe care arată `FOTO_LIPSA`, se cheamă azi `assets/logo-auriu.png`. Nu s-a mutat niciun desen — numai numele.
+
+- [x] **Insignele din Catalogul panoului erau tăiate de marginea cardului: pe placa „șase” scria „SCOS DIN CATALO”, iar pe rândul de telefon insigna roșie „FĂRĂ PREȚ GATA DE SERVIRE — ASCUNS ACOLO” ieșea din card**
+  `Produse.dc.html:70` · *mic*
+  Insignele din colțul pozei (`[data-pr=placa-insigne]>.h-badge`) și insigna roșie de pe rând (`[data-pr=rand-rosu]`, nou) primesc `white-space:normal` și `max-width:100%`: când nu încap, se rup pe rânduri înăuntrul cutiei lor. Pe calculator arată ca înainte, pe un rând.
+
+- [x] **Pe telefoanele mai înguste de ~342px, în formularul unui produs din catalogul panoului, coloana pozelor era mai lată decât cardul: rândul de ajutor de lângă poză ajungea până în marginea ferestrei, cu până la 22px la 320**
+  `Produse.dc.html:155` · *mic*
+  Numai în banda de telefon, pe rândul 155: coloana grilei e `minmax(0,1fr)`, nu `1fr`, deci se strânge cât cardul, nu cât rândul pozei. Sub ~342 de puncte coloana fișierului trece sub poză, iar rândul de ajutor se rupe în lățimea cardului. Pe telefoanele obișnuite și pe calculator formularul arată ca înainte. Comentariu la capătul rândului, niciun rând nou.
 
 - [x] **Butonul „Fă un cont de cumpărător" din „Recomandări" se arăta oricui nu era client, dar `POST /users` lasă numai administratorul, fondatorul și agentul de vânzări**
   `Recomandari.dc.html:949` · *mic*
@@ -1816,6 +1908,26 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:624` · *mic*
   Numerele barei stau acum într-un singur loc, ca jetoane de CSS (`--gp-bara-margine`, `--gp-bara-rand`, `--gp-bara-golul`, `--gp-bara-litera`, `--gp-bara-linie`), iar `--gp-bara-inalt` le adună — suma o face browserul. Distanțierul e `height:var(--gp-bara-inalt)` și n-are nicio cifră a lui. Odată cu asta bara s-a și strâns de la 94 la ~74 px: dunga pragului a plecat de pe rândul ei pe muchia de sus a barei (3 px, absolut), iar marginile au scăzut de la 0.7rem la 0.45rem. Rândul de 44 px n-a fost atins — e hotărârea rundei 2.1.1 despre ținta de deget. [19 septembrie 2026]
 
+- [x] **În vederile „patru” și „șase”, prețul și scara porneau de la înălțimi diferite pe același rând de carduri: un nume pe un rând lângă unul pe două urca prețul cu un rând**
+  `Site Public.dc.html:4366` · *mic*
+  Rândul și oprirea numelui și ale descrierii sunt acum constante (`RAND_NUME`, `OPRIRE_NUME`, `RAND_DESC`, `OPRIRE_DESC`), iar din ele se face și locul ținut: `min-height` = rând × oprire (2,5em pentru nume, 3em pentru descriere). Un nume scurt ține loc de două rânduri, deci prețul începe la aceeași înălțime pe tot rândul de carduri. Vederea „unu” nu oprește numele la două rânduri, deci nici nu ține loc.
+
+- [x] **În marca din antetul site-ului, coada lui „y” din „Golden Pastry” călca pe „PATISERIE ARTIZANALĂ”: 0,86 px în creștetul majusculelor, pe fiecare pagină**
+  `Site Public.dc.html:186` · *mic*
+  Între cele două rânduri ale mărcii stă acum `gap:0.2rem`: coada lui „y” are 2,33 px de loc până la majusculele de dedesubt. Coloana crește de la 27,3 la 30,5 px, tot mai scundă decât sigla de lângă ea (33,6 px), așa că antetul își păstrează înălțimea (62 px pe telefon, 67,6 px pe calculator), iar marca rămâne centrată.
+
+- [x] **Lângă o vorbă ruptă pe două rânduri, semnul laturii plutea între rânduri: pe fiecare card „patru” de la 1280 px, flacăra stătea între „Gata de servire: 4,69” și „RON”, rămas singur dedesubt**
+  `Site Public.dc.html:694` · *mic*
+  O regulă a casei, în `shared/gp-api.js`, lângă desenul semnului: un rând care poartă `data-semn-sus` își pune copiii sus (`align-items:flex-start`), iar semnul coboară la mijlocul PRIMULUI rând al vorbei, cu `margin-top: calc((1lh − mărimea semnului) / 2)`. Paza stă pe cele patru rânduri [semn][vorbă] care se pot rupe: prețul celeilalte laturi pe card și titlul scării în vederea rapidă (magazin), cele două etichete de fotografie din formularul produsului (panou). Pe lângă asta, prețul și „RON” sunt legate cu un spațiu nedespărțitor, ca rândul să se rupă după „servire:”, nu înaintea lui „RON”.
+
+- [x] **Pe telefoanele mai înguste de 390px, insigna de pe prima pagină — «Producător și distribuitor · București» — nu încăpea în card: la 375 stătea strâmbă, lipită de dreapta, la 360 cardul îi tăia capătul, iar la 320 chiar textul, la „BUCU”, fiindcă insignele nu se rup pe rânduri**
+  `Site Public.dc.html:358` · *mic*
+  Pe rândul 358 insigna se poate rupe (`max-width:100%;white-space:normal;text-wrap:balance`) și poartă `data-insigna-lunga`. Textul stă în două chei, `heroBadgeCe` și `heroBadgeUnde` (rândul 4867), cu spații nedespărțitoare în „ce”, deci se rupe într-un singur loc: între „Producător și distribuitor” și „București”; punctul de legătură stă într-un `<span data-insigna-punct>`. Rândul 98 al foii, care era gol, ține singura regulă nouă: sub 400px pastila ia `width:min-content`, rânduri mai strânse (`line-height:1.45`) și `align-items:flex-start`, bulina ia `flex:none` și `margin-top:calc((1lh - 6px) / 2)` — nu se mai turtește și stă pe mijlocul primului rând, ca semnul laturii de lângă o vorbă ruptă —, iar punctul se ascunde. Prima reparație se oprise la ruperea pe rânduri, iar măsurătoarea de după a arătat prețul: la 390 (iPhone 12–16) insigna se rupea în „PRODUCĂTOR ȘI” / „DISTRIBUITOR · BUCUREȘTI”, într-o pastilă cât coloana, cu vreo 110px goi, și scădea de la 25,6 la 23,9px pe toate ecranele, din rândurile strânse. Acum pastila se strânge pe textul ei, iar de la 401 în sus arată ca înainte. Și a doua reparație a avut un preț, văzut abia pe pozele tăiate de aproape: bulina se turtea (4,4 × 6px) și plutea între rânduri, la 8,4px sub mijlocul primului; flexul îi lua și ei din lățime, fiindcă o cutie goală n-are un minim al ei, iar `align-items:center` o centra pe toată pastila. Nu s-a atins `.h-badge` din hearth.css (e a sistemului de desen și o folosesc și alte pagini) și nici numărul de rânduri al paginii.
+
+- [x] **Pe telefoanele de 360, prima pagină a magazinului se deschidea cu butonul plutitor de WhatsApp peste capătul din dreapta al butonului „Cere ofertă pentru volume” (23 × 40 px la 360 × 780), deși butonul verde mare de deasupra deschide aceeași conversație**
+  `Site Public.dc.html:5198` · *mic*
+  Butonul verde mare de sus poartă o cutie, `waSusRef` (rândul 370). Măsurarea care ascunde deja pastila laturii (`masoaraPastila`, chemată din `_floatTick` la derulare, la schimbarea ferestrei și după fiecare randare) citește și cutia lui (rândurile 2436–2438): e „văzut” cât are înălțime și măcar un pixel între marginile ecranului, iar starea `waSus` se schimbă numai când se schimbă ceva. `showFab` (rândul 5198) ascunde bula pe prima pagină cât `waSus` e adevărat — la fel cum o ascunde pe catalog când coșul are ceva. Fără `view-timeline`: cardul din cap are `overflow:hidden`, deci timeline-ul s-ar fi legat de card, nu de pagină. Niciun rând nou: pagina are tot 6208.
+
 - [x] **Coloana `order_requests.decided_via`, adusă de 013 ca să se știe PE UNDE a fost decisă o cerere (panou sau Telegram), nu e scrisă de nicăieri**
   `sql/013_anunturi_pe_canal.sql:102` · *mic*
   Coloana se scrie acum de la amândouă ușile: `api/routes/requests.php` pune „panou” la hotărârea luată din ecran, `api/routes/telegram.php` pune „telegram” la cea luată din butoanele anunțului, iar ocolirea scrisă lângă ele lasă acceptarea să meargă și pe un server care n-a primit încă migrarea 013. Probe: `.claude/test-defect-amanare-oarba.mjs` și `.claude/test-defect-amanare-mincinoasa.mjs` (amândouă verificate stricând reparația la loc).
@@ -1823,6 +1935,10 @@ reparația la loc și văzând-o picând.
 - [x] **Pe telefon, capetele de coloană care sortează mesele din Statistici aveau 18px, iar rândurile din legenda inelului 30px**
   `Statistici.dc.html:418` · *mic*
   În banda de telefon, după banda de 1150: `.st-capbtn{min-height:44px}`, `.st-leg{gap:0}` și `.st-legrand{min-height:44px}`. Ordinea contează: la aceeași tărie câștigă regula scrisă mai jos, iar proba cere anume ca banda de telefon să vină după cea de 1150. Legenda renunță la golul de 7px, care trece în țintă. Pe monitor și pe tabletă nu s-a atins nimic.
+
+- [x] **Pe telefoanele mai înguste de 366px, în tabelul „Ce s-a vândut, bucată cu bucată” din Statistici, capul „Cât din vârf” călca peste „Gata”, capul de alături: la 320 se citea «CÂT DIN VÂRFGATA»**
+  `Statistici.dc.html:446` · *mic*
+  Numai în banda de telefon, pe rândul 446: regula care dă capetelor 44px pentru deget le lasă acum să se și rupă (`white-space:normal`). „Cât din vârf” stă pe două rânduri, în aceeași înălțime de 44px, deci tabelul nu se mută. Pe calculator capetele arată ca înainte. Rândul are un comentariu la capăt, nu un rând nou: rândurile din Statistici sunt citate din alte fișiere.
 
 ---
 

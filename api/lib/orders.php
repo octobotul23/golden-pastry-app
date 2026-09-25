@@ -448,9 +448,183 @@ function honored_prices(array $rows): array
         $onorate[$cheie][] = [
             'qty'  => (float) ($r['qty'] ?? 0),
             'unit' => (float) $r['unit_price'],
+            // Treapta la care s-a promis prețul și pragul care a câștigat-o
+            // (migrarea 028). Un rând vechi, ori unul citit fără coloanele
+            // astea, e A fără prag — chiar ce era: altă treaptă nu exista.
+            'treapta' => isset($r['treapta']) ? max(1, (int) $r['treapta']) : 1,
+            'prag'    => isset($r['prag_treapta']) ? (int) $r['prag_treapta'] : null,
         ];
     }
     return $onorate;
+}
+
+/**
+ * INSERT-ul unei poziții, cu coloanele pe care baza chiar le are.
+ *
+ * Coloanele de bază sunt ale fiecărui chemător — comanda nouă, rescrierea ei
+ * (cu `done_qty`), cererea de pe site și acceptarea ei. La coadă se lipesc cele
+ * aduse de migrări, fiecare numai dacă migrarea ei a ajuns:
+ *
+ *   `list_price`               011 — prețul de listă, lângă cel plătit
+ *   `treapta`, `prag_treapta`  028 — treapta care a dat prețul
+ *
+ * Numite pe o bază fără ele, ar opri cu eroare de SQL fiecare comandă din
+ * fereastra dintre urcarea fișierelor și import. Alegerea se face o singură
+ * dată, în afara buclei de poziții; valorile se pun în aceeași ordine de
+ * `pozitie_valori()`.
+ *
+ * @return array{0: string, 1: bool, 2: bool}  [SQL, cu listă, cu trepte]
+ */
+function pozitie_insert(string $tabel, string $coloane): array
+{
+    $cuLista  = promo_supported();
+    $cuTrepte = catalog_trepte_supported();
+    $toate    = $coloane
+        . ($cuLista ? ', list_price' : '')
+        . ($cuTrepte ? ', treapta, prag_treapta' : '');
+    $semne = implode(', ', array_fill(0, count(explode(',', $toate)), '?'));
+    return ['INSERT INTO ' . $tabel . ' (' . $toate . ') VALUES (' . $semne . ')', $cuLista, $cuTrepte];
+}
+
+/**
+ * Valorile de la coada rândului, în ordinea coloanelor din `pozitie_insert()`.
+ *
+ * `$lista` e prețul de listă, `$treapta` și `$prag` cele scrise de
+ * `price_items()` — ori, la acceptarea fără corecturi, cele citite de pe
+ * rândul cererii.
+ */
+function pozitie_valori(array $val, bool $cuLista, bool $cuTrepte, $lista, $treapta, $prag): array
+{
+    if ($cuLista) {
+        $val[] = $lista;
+    }
+    if ($cuTrepte) {
+        $val[] = $treapta === null ? null : (int) $treapta;
+        $val[] = $prag === null ? null : (int) $prag;
+    }
+    return $val;
+}
+
+/**
+ * Coloanele de citit de pe rândurile vechi, pentru `honored_prices()`.
+ *
+ * Treapta și pragul se cer numai dacă baza le are (migrarea 028). Uitate aici,
+ * n-ar da nicio eroare — `honored_prices()` ar citi fiecare rând ca „A fără
+ * prag" —, dar un client care și-a tăiat comanda sub pragul lui B ar păstra B.
+ */
+function honored_columns(): string
+{
+    return 'product_id, variant, qty, done_qty, unit_price'
+        . (catalog_trepte_supported() ? ', treapta, prag_treapta' : '');
+}
+
+/**
+ * Câte bucăți cere tot coșul din fiecare pereche produs+latură.
+ *
+ * DUPĂ SUMA ASTA SE ALEGE TREAPTA, nu după cantitatea unui rând. Același produs
+ * poate sosi pe două rânduri — trei bucăți din pachetul de test și o sută puse
+ * cu mâna —, iar clientul a cumpărat o sută trei, nu trei și o sută. Judecate
+ * pe rând, niciunul n-ar fi atins pragul de 100.
+ *
+ * Laturile se numără deosebit: prețurile sunt ale fiecărei laturi, deci 60 de
+ * congelate și 60 gata de servire nu fac 120 din nimic.
+ *
+ * Trecerea e ÎNGĂDUITOARE: un rând strâmb se sare aici și se refuză mai jos,
+ * în bucla lui `price_items()`, cu mesajul lui obișnuit. Refuzat aici, ar fi
+ * ieșit alt cod de eroare decât ieri pentru același coș stricat.
+ *
+ * Suma se rotunjește la doi bani, ca și cantitatea: 20,4 + 46,3 + 33,3 dă în
+ * virgulă mobilă 99,99999999999999, adică sub pragul de 100 pe care clientul
+ * l-a atins. (Nu orice trei numere o fac — 33,33 + 33,33 + 33,34 dă fix 100 —,
+ * de-asta proba folosește tocmai cifrele astea.)
+ *
+ * @return array<string, float>
+ */
+function cantitati_pe_pereche(array $items, string $implicit): array
+{
+    $sume = [];
+    foreach ($items as $it) {
+        if (!is_array($it)) {
+            continue;
+        }
+        $pid = $it['productId'] ?? null;
+        if (!is_int($pid) && !(is_string($pid) && preg_match('/^\d+$/', trim($pid)))) {
+            continue;
+        }
+        $qty = $it['qty'] ?? null;
+        if (!is_int($qty) && !is_float($qty) && !(is_string($qty) && is_numeric(trim($qty)))) {
+            continue;
+        }
+        $qty = round((float) $qty, 2);
+        if ($qty <= 0 || $qty > 10000) {
+            continue;
+        }
+        $v = $it['variant'] ?? null;
+        if ($v === null || $v === '' || (is_string($v) && trim($v) === '')) {
+            $vi = valid_variant($implicit);
+        } elseif (is_string($v) && in_array(trim($v), order_variants(), true)) {
+            $vi = trim($v);
+        } else {
+            continue;
+        }
+        $cheie        = ((int) $pid) . '|' . $vi;
+        $sume[$cheie] = round(($sume[$cheie] ?? 0.0) + $qty, 2);
+    }
+    return $sume;
+}
+
+/**
+ * O felie de preț promis, judecată după cantitatea de ACUM.
+ *
+ * Patru cazuri, și numai unul e nou pentru un produs fără trepte:
+ *
+ *   (a) PROMISIUNEA RĂMÂNE. Cantitatea e tot peste pragul care a câștigat
+ *       treapta — ori treapta e A, care n-a fost câștigată de niciun prag.
+ *       Prețul de atunci se păstrează chiar dacă între timp patronul a scumpit
+ *       ori a mutat pragurile: e exact regula de până azi, „prețul promis are
+ *       întâietate", întinsă pe trepte.
+ *
+ *   (b) CANTITATEA A URCAT ÎNTR-O TREAPTĂ MAI BUNĂ. Clientul care avea 150 la
+ *       B și ajunge la 350 primește C pe toate — dacă C e mai mic decât ce i se
+ *       promisese. Altfel rămâne promisiunea: urcarea nu scumpește nimic.
+ *       Pachetul de test intră tot pe aici (feliile lui sunt „A", cu preț
+ *       redus): bucățile lui se plătesc cu cel mai mic dintre prețul
+ *       pachetului și prețul treptei.
+ *
+ *   (c) CANTITATEA A COBORÂT SUB PRAGUL CARE A CÂȘTIGAT TREAPTA. Promisiunea
+ *       cade, iar bucățile se tarifează la treapta de azi a cantității noi.
+ *       Fără cazul ăsta, „cer 150 la B, apoi tai la 90" ar fi o portiță: B
+ *       pentru o cantitate care nu l-ar fi primit niciodată.
+ *       Dacă latura n-are azi niciun preț, promisiunea rămâne: marfa e deja
+ *       convenită, iar un refuz ar îngheța toată comanda pentru un produs care
+ *       nici nu se mai vinde.
+ *
+ *   (d) Bucățile NOI nu trec pe aici — se tarifează în `price_items()`, la
+ *       treapta de azi.
+ *
+ * @param array{qty: float, unit: float, treapta?: int, prag?: ?int} $promis
+ * @param array{treapta: int, prag: ?int, pret: float}|null $azi  treapta de azi pentru cantitatea coșului
+ * @return array{qty: float, unit: float, treapta: int, prag: ?int}
+ */
+function felie_onorata(array $promis, float $qty, ?array $azi, float $q): array
+{
+    $unit    = (float) $promis['unit'];
+    $treapta = max(1, (int) ($promis['treapta'] ?? 1));
+    $prag    = isset($promis['prag']) ? (int) $promis['prag'] : null;
+
+    $laZi = $azi === null ? null
+        : ['qty' => $qty, 'unit' => $azi['pret'], 'treapta' => $azi['treapta'], 'prag' => $azi['prag']];
+
+    // (c) sub pragul care a câștigat treapta
+    if ($prag !== null && $q < $prag && $laZi !== null) {
+        return $laZi;
+    }
+    // (b) urcată într-o treaptă mai bună, care e și mai ieftină
+    if ($laZi !== null && $azi['treapta'] > $treapta && $azi['pret'] < $unit) {
+        return $laZi;
+    }
+    // (a) promisiunea rămâne
+    return ['qty' => $qty, 'unit' => $unit, 'treapta' => $treapta, 'prag' => $prag];
 }
 
 /**
@@ -622,7 +796,12 @@ function price_items(
     // cerută și negăsită nu dă un câmp gol, dă eroare de SQL — adică nicio
     // comandă salvată în fereastra dintre urcarea fișierelor și importul SQL.
     $coloane = 'id, name, price_frozen, price_baked, active'
-        . (catalog_laturi_supported() ? ', in_frozen, in_baked' : '');
+        . (catalog_laturi_supported() ? ', in_frozen, in_baked' : '')
+        . catalog_trepte_select();
+
+    // Cantitatea după care se alege treapta: a coșului întreg, pe pereche
+    // produs+latură — v. `cantitati_pe_pereche()`.
+    $cantitati = cantitati_pe_pereche($items, $implicit);
 
     foreach ($items as $it) {
         // Numerele se cer numere, nu se storc din ce-a venit.
@@ -727,8 +906,15 @@ function price_items(
             );
         }
 
-        $raw     = $vi === 'congelat' ? $p['price_frozen'] : $p['price_baked'];
-        $catalog = $raw === null ? null : (float) $raw;
+        // PREȚUL DE AZI E AL TREPTEI, nu al rândului. Treapta se alege după
+        // cantitatea din tot coșul pe perechea asta (`$cantitati`), iar un
+        // produs fără trepte are una singură — A, adică prețul unic de ieri.
+        // Pe o bază fără migrarea 028 rândul n-are coloanele treptelor, iar
+        // `latura_treapta()` răspunde tot A.
+        $cheie   = $pid . '|' . $vi;
+        $q       = $cantitati[$cheie] ?? $qty;
+        $azi     = latura_treapta($p, $vi, $q);
+        $catalog = $azi === null ? null : $azi['pret'];
 
         // Prețul promis are întâietate în fața catalogului, dar NUMAI pentru
         // câte bucăți s-au promis. Brutăria care a confirmat acum două
@@ -743,7 +929,11 @@ function price_items(
         // prețuri diferite: `order_items.unit_price` ține un singur preț pe
         // rând, iar un preț mediu inventat ar face ca înmulțirea de pe factură
         // să nu mai dea totalul.
-        $cheie  = $pid . '|' . $vi;
+        //
+        // CU TREPTE, o felie promisă se mai judecă o dată, după cantitatea de
+        // acum: rămâne, urcă într-o treaptă mai bună, ori cade sub pragul care
+        // a câștigat-o — v. `felie_onorata()`. Pentru un produs fără trepte
+        // răspunsul e întotdeauna „rămâne", adică exact regula de mai sus.
         $ramas  = $qty;
         $felii  = [];
 
@@ -758,9 +948,11 @@ function price_items(
             }
             $rest = (float) $promis['qty'] - $ia;
             if ($rest > 0) {
-                array_unshift($onorate[$cheie], ['qty' => $rest, 'unit' => $promis['unit']]);
+                // Restul felie pleacă înapoi în coadă cu treapta și pragul ei —
+                // `+` păstrează cheile din stânga, deci numai cantitatea se schimbă.
+                array_unshift($onorate[$cheie], ['qty' => $rest] + $promis);
             }
-            $felii[] = ['qty' => $ia, 'unit' => (float) $promis['unit']];
+            $felii[] = felie_onorata($promis, $ia, $azi, $q);
             $ramas  -= $ia;
         }
 
@@ -774,7 +966,9 @@ function price_items(
                 fail('Produsul „' . $p['name'] . '” nu are preț pentru varianta „'
                     . latura_cuvant($vi) . '”.', 422, 'missing_price');
             }
-            $felii[] = ['qty' => $ramas, 'unit' => $catalog];
+            // (d) marfa nouă: la treapta de azi a cantității din coș.
+            $felii[] = ['qty' => $ramas, 'unit' => $catalog,
+                        'treapta' => $azi['treapta'], 'prag' => $azi['prag']];
         }
 
         // Feliile cu același preț se adună la loc. În cazul obișnuit — nimeni
@@ -783,19 +977,37 @@ function price_items(
         // despart numai acolo unde prețul chiar diferă, fiindcă
         // `order_items.unit_price` ține un singur preț pe rând, iar un preț
         // mediu inventat ar face ca înmulțirea de pe factură să nu dea totalul.
+        //
+        // Se adună numai feliile cu aceeași treaptă și același prag: rândul
+        // ține o singură pereche din ele, iar o felie A lipită de una B, la
+        // același preț din întâmplare, ar ieși cu pragul lui B — deci ar cădea
+        // toată la prima tăiere sub prag, deși jumătate din ea n-a câștigat
+        // niciodată nimic de la vreun prag.
         foreach ($felii as $f) {
             $unit  = round((float) $f['unit'], 2);
             $ultim = $priced ? array_key_last($priced) : null;
             if ($ultim !== null
                 && $priced[$ultim]['id'] === (int) $p['id']
                 && $priced[$ultim]['variant'] === $vi
+                && $priced[$ultim]['treapta'] === $f['treapta']
+                && $priced[$ultim]['prag'] === $f['prag']
                 && abs($priced[$ultim]['unit'] - $unit) < 0.005) {
-                $priced[$ultim]['qty'] += (float) $f['qty'];
+                // Rotunjită la două zecimale, ca și coloana: 20,4 + 46,3 + 33,3 lipite
+                // pe un rând dădeau 99,99999999999999. În bază se rotunjea la
+                // scriere, dar tarifarea (`POST /orders/quote`) o dădea mai
+                // departe crudă: răspunsul spunea 99,99999999999999, iar
+                // comanda salvată, 100. Formularul n-o arăta (scrie cantitățile
+                // rotunjite), dar orice cititor care le compară le găsea deosebite.
+                $priced[$ultim]['qty'] = round($priced[$ultim]['qty'] + (float) $f['qty'], 2);
             } else {
                 $priced[] = [
                     'id' => (int) $p['id'], 'name' => $p['name'],
                     'qty' => (float) $f['qty'], 'unit' => $unit, 'variant' => $vi,
                     'catalog' => $catalog,
+                    // Treapta și pragul care au dat prețul, de scris pe rând
+                    // (migrarea 028): la corectura de mâine, ele spun dacă
+                    // prețul mai e datorat.
+                    'treapta' => $f['treapta'], 'prag' => $f['prag'],
                 ];
             }
             $total += $unit * (float) $f['qty'];
@@ -1406,6 +1618,10 @@ function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor 
             'doneQty'   => (float) ($r['done_qty'] ?? 0),
             'unitPrice' => (float) $r['unit_price'],
             'variant'   => $r['variant'] ?? 'copt',
+            // Treapta la care s-a pus prețul (1 = A, 2 = B, 3 = C; migrarea 028)
+            // și pragul care a câștigat-o. Un rând vechi e A, fără prag.
+            'treapta'     => isset($r['treapta']) ? (int) $r['treapta'] : 1,
+            'pragTreapta' => isset($r['prag_treapta']) ? (int) $r['prag_treapta'] : null,
         ];
     }
 

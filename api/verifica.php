@@ -405,6 +405,7 @@ if ($hasConfig) {
             '025_registru_migrari.sql',
             '026_cheie_cerere.sql',
             '027_poza_fiecarei_laturi.sql',
+            '028_preturi_pe_trepte.sql',
         ];
         $areRegistru = in_array('schema_migrations', $tables, true);
         check(
@@ -823,6 +824,28 @@ if ($hasConfig) {
                     . 'totdeauna, ca în ziua schimbării amândouă laturile să arate exact ce '
                     . 'arătau. Fără ea, codul nou pe baza veche lasă „gata de servire" fără '
                     . 'nicio poză — fiecare produs cu substituentul „fără poză" pe el.',
+            ],
+            // 028 aduce coloane pe trei tabele ȘI patru rânduri în `settings`.
+            // Se cer toate: `catalog_trepte_supported()` cere coloanele pe
+            // AMÂNDOUĂ felurile de rânduri de comandă, iar cardul „Catalog" din
+            // Setări nu se poate salva fără rândurile lui (salvarea scrie numai
+            // cu UPDATE).
+            '028_preturi_pe_trepte.sql' => [
+                'nume'    => 'Trei prețuri, după cantitate (migrarea 028)',
+                'coloane' => [
+                    'products'            => ['price_frozen_b', 'price_frozen_c', 'price_baked_b',
+                                              'price_baked_c', 'prag_b', 'prag_c'],
+                    'order_items'         => ['treapta', 'prag_treapta'],
+                    'order_request_items' => ['treapta', 'prag_treapta'],
+                ],
+                'setari'  => ['catalog_vedere_telefon', 'catalog_vedere_calculator',
+                              'pret_prag_b_implicit', 'pret_prag_c_implicit'],
+                'ce'      => 'Țin prețurile B și C ale fiecărei laturi, pragurile de la care încep, '
+                    . 'și — pe fiecare rând de comandă — treapta la care s-a pus prețul. Fără ele '
+                    . 'fiecare produs se vinde cu un singur preț, oricâte bucăți s-ar cumpăra: '
+                    . 'casetele B și C din Produse refuză salvarea, iar cardul „Catalog" din '
+                    . 'Setări nu are unde scrie vederea cu care se deschide magazinul. Purtarea '
+                    . 'fără ele nu e stricată, e cea de dinainte — prețul A e prețul de ieri.',
             ],
         ];
 

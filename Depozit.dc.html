@@ -72,7 +72,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-dep=newbtn],[data-dep=newartbtn]{display:none!important}
 [data-dep=stats]{display:none!important}
 [data-dep=phonesummary]{display:flex!important}
-[data-dep=fab]{display:flex!important}
+[data-dep=fab]{display:flex!important} /* sub 348 de puncte butoanele din bară stăteau la lățimea scrisului lor, iar „+ Articol” ieșea din ecran (cu 14px, la 320): „+ Intrare” și „− Ieșire” au în marcaj 12px de margine, nu 20, deci se pot strânge; mai lat, cresc egal și arată la fel */
 /* Subsolul barei e ascuns mai sus, în aceeași bandă, iar caseta „cine e conectat" stă în el: aici era un al doilea display:none, fără urmare. */
 [data-dep=topbar] h1{font-size:20px!important}
 [data-dep=body]{padding:14px 14px 108px!important;gap:14px!important}
@@ -436,8 +436,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <div data-dep="fab" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;gap:10px;padding:10px 14px 14px;background:var(--h-bg-surface);border-top:1px solid var(--h-line);box-shadow:0 -10px 26px rgba(27,18,11,.14)">
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onNewIn }}" style="flex:1;min-height:54px;font-size:16px;border-radius:15px">+ Intrare</button>
-<button type="button" class="h-btn h-btn--primary" onClick="{{ onNewOut }}" style="flex:1;min-height:54px;font-size:16px;border-radius:15px">− Ieșire</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onNewIn }}" style="flex:1;min-height:54px;padding-left:12px;padding-right:12px;font-size:16px;border-radius:15px">+ Intrare</button>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onNewOut }}" style="flex:1;min-height:54px;padding-left:12px;padding-right:12px;font-size:16px;border-radius:15px">− Ieșire</button>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onNewArt }}" style="flex:none;min-height:54px;padding:0 14px;font-size:16px;border-radius:15px;white-space:nowrap">+ Articol</button>
 </div>
 

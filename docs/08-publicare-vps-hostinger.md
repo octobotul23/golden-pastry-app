@@ -395,6 +395,16 @@ O bază care are coloana dar n-are indexul primește chei și nu bagă de seamă
 niciodată că a primit aceeași cheie de două ori: arată reparată și nu e. Tot de
 index întreabă și codul, din aceeași pricină (`request_key_supported()`).
 
+Cheia e ce recunoaște cererea trimisă **a doua oară**: degetul apăsat încă o
+dată, sau legătura căzută tocmai când răspunsul venea încoace. Pe o instalare
+nouă nu se vede nimic din asta — e o pază, nu o pagubă reparată. Fără ea,
+purtarea e cea dinainte: a doua trimitere face a doua cerere, iar laboratorul
+primește două comenzi acolo unde omul a făcut una. Indexul e unic, dar trece
+peste cererile de până acum oricâte ar fi: în SQL `NULL` nu se ciocnește cu
+`NULL`, iar ele toate au cheia goală. Ce **nu** face: nu desface cererile duble
+adunate înainte — n-avem de unde ști dacă omul a apăsat de două ori sau chiar a
+vrut două comenzi.
+
 `027_poza_fiecarei_laturi.sql` **nu se vede nici ea**, și nici n-ar avea cum:
 e singura migrare care nu atinge schema deloc — nici tabel, nici coloană, nici
 index. Numărul rămâne tot **25**. Ea mută date: copiază poza congelată în
@@ -413,15 +423,25 @@ de-aia o poză schimbată la congelate se vedea și la gata de servire. Împrumu
 s-a tăiat, iar migrarea asta e cea care face ca tăierea să nu golească nicio
 vitrină: în ziua schimbării, amândouă laturile arată exact ce arătau.
 
-Cheia e ce recunoaște cererea trimisă **a doua oară**: degetul apăsat încă o
-dată, sau legătura căzută tocmai când răspunsul venea încoace. Pe o instalare
-nouă nu se vede nimic din asta — e o pază, nu o pagubă reparată. Fără ea,
-purtarea e cea dinainte: a doua trimitere face a doua cerere, iar laboratorul
-primește două comenzi acolo unde omul a făcut una. Indexul e unic, dar trece
-peste cererile de până acum oricâte ar fi: în SQL `NULL` nu se ciocnește cu
-`NULL`, iar ele toate au cheia goală. Ce **nu** face: nu desface cererile duble
-adunate înainte — n-avem de unde ști dacă omul a apăsat de două ori sau chiar a
-vrut două comenzi.
+`028_preturi_pe_trepte.sql` **nu se vede nici ea** în numărul de tabele: zece
+coloane și patru setări. Pe `products` stau pragurile (`prag_b`, `prag_c`) și
+prețurile B și C ale fiecărei laturi (`price_frozen_b`, `price_frozen_c`,
+`price_baked_b`, `price_baked_c`); pe `order_items` și pe `order_request_items`,
+`treapta` și `prag_treapta` — treapta la care s-a vândut fiecare poziție și
+pragul care a câștigat-o. Numărul rămâne tot **25**, iar dovada se cere pe
+ultima coloană pe care o adaugă:
+
+```sql
+SHOW COLUMNS FROM order_request_items LIKE 'prag_treapta';
+```
+
+Codul le cere pe **toate zece** deodată (`catalog_trepte_supported()`). Fără
+ele, magazinul arată un singur preț pe latură, ca înainte, iar fișa produsului
+refuză prețurile B și C cu un mesaj care numește migrarea — restul fișei se
+salvează. Pe o instalare nouă fiecare produs pornește cu un singur preț: scara
+se scrie din fila Produse, produs cu produs, iar pragurile se precompletează
+din Setări → General, cardul „Catalogul" (100 și 300 la pornire, cum le-a pus
+migrarea).
 
 ---
 

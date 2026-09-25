@@ -673,7 +673,10 @@ else
       info "veci. Caută mai sus rândul „017_procent_recomandare.sql”: dacă lipsește,"
       info "folderul sql/ urcat e mai vechi decât pachetul."
     elif [[ "$CINE" == "casa" ]]; then
-      verde "  Procentul de recomandare: $VAL% — pus acum (nu-l hotărâse nimeni)."
+      # Fără „pus acum": martorul numai citește, iar la orice urcare de după
+      # prima `017` n-are ce urca — și lista migrărilor de mai sus o dă „era
+      # deja aplicată". Rândul spune ce știe: valoarea, și a cui e.
+      verde "  Procentul de recomandare: $VAL% — semănat de casă, nu l-a hotărât nimeni din Setări."
     elif [[ "$VAL" =~ ^0+([.,]0+)?$ ]]; then
       # Un zero hotărât de om rămâne zero — migrarea nu-i schimbă părerea
       # patronului în somn. Dar nici nu tace despre urmarea lui: procentul se
@@ -739,11 +742,16 @@ else
       CINE="${REST##*$'\t'}"
       # Două nume, fiindcă româna cere acordul: adresa e pusă, programul e pus.
       # O singură formă ar fi scris „Programul de lucru e goală".
+      #
+      # Și aici fără „acum", ca la procent — iar aici „acum" avea și mai puțin
+      # temei: `018` e un `INSERT IGNORE` și atât, deci peste un rând care
+      # există nu scrie nimic, niciodată. Martorul spune a cui e valoarea, nu ce
+      # a făcut rularea.
       if [[ "$CHEIE" == "company_address" ]]; then
-        CE="Adresa publică"; GOL="e goală"; PUS="pusă acum (nu o scrisese nimeni)"
+        CE="Adresa publică"; GOL="e goală"; PUS="semănată de casă, n-a scris-o nimeni din Setări"
         LASAT="scrisă de tine, am lăsat-o în pace"; PUNE="O pui"
       else
-        CE="Programul de lucru"; GOL="e gol"; PUS="pus acum (nu-l scrisese nimeni)"
+        CE="Programul de lucru"; GOL="e gol"; PUS="semănat de casă, nu l-a scris nimeni din Setări"
         LASAT="scris de tine, l-am lăsat în pace"; PUNE="Îl pui"
       fi
       if [[ -z "$VAL" ]]; then

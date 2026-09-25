@@ -257,17 +257,31 @@ function route_products_create(): void
             422, 'missing_price');
     }
 
+    // CELE TREI PREȚURI (migrarea 028). Numai câmpurile trimise; un panou
+    // vechi, care nu le știe, naște produsul cu un singur preț, ca ieri.
+    $trepte = product_trepte_din($b);
+    if ($trepte) {
+        product_trepte_verifica(
+            $trepte
+            + ['price_frozen' => $horeca, 'price_baked' => $retail]
+            + array_fill_keys(array_values(PROD_TREPTE_CAMPURI), null)
+        );
+    }
+
     $sort = (int) scalar('SELECT COALESCE(MAX(sort), 0) + 10 FROM products');
     $args = [$slug, $name, $nameEn, $desc, $descEn, $grams, $horeca, $retail,
              $category, !empty($b['isNew']) ? 1 : 0, $sort];
     if ($laturi) {
         array_push($args, $inFrozen ? 1 : 0, $inBaked ? 1 : 0);
     }
+    array_push($args, ...array_values($trepte));
     q(
         'INSERT INTO products (slug, name, name_en, description, description_en, grams,
                                price_frozen, price_baked, category, is_new, sort'
-        . ($laturi ? ', in_frozen, in_baked' : '') . ')
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . ($laturi ? ', ?, ?' : '') . ')',
+        . ($laturi ? ', in_frozen, in_baked' : '')
+        . ($trepte ? ', ' . implode(', ', array_keys($trepte)) : '') . ')
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . ($laturi ? ', ?, ?' : '')
+        . str_repeat(', ?', count($trepte)) . ')',
         $args
     );
     $id = (int) db()->lastInsertId();
@@ -341,6 +355,13 @@ function route_products_update(string $id): void
         }
     }
 
+    // CELE TREI PREȚURI (migrarea 028): numai câmpurile trimise, ca oricare
+    // altul. Ordinea dintre trepte se judecă mai jos, pe rândul rezultat.
+    foreach (product_trepte_din($b) as $col => $v) {
+        $sets[] = $col . ' = ?';
+        $vals[] = $v;
+    }
+
     // BIFELE DE CATALOG. Se primesc numai dacă baza le are: altfel ar ajunge în
     // UPDATE o coloană necunoscută, adică o eroare de SQL în locul unei
     // salvări. Un panou nou peste o bază veche trimite bifele degeaba, dar
@@ -364,12 +385,18 @@ function route_products_update(string $id): void
     // RÂNDUL REZULTAT: cel din bază, peste care s-a pus ce trimite formularul.
     // Perechile se desfac la fel ca în `audit_diff()`, care citește chiar
     // aceleași două șiruri câteva rânduri mai jos.
+    $rezultat = $p;
+    foreach ($sets as $i => $set) {
+        $rezultat[trim(explode('=', (string) $set, 2)[0])] = $vals[$i];
+    }
     if (catalog_laturi_supported()) {
-        $rezultat = $p;
-        foreach ($sets as $i => $set) {
-            $rezultat[trim(explode('=', (string) $set, 2)[0])] = $vals[$i];
-        }
         product_laturi_verifica($rezultat);
+    }
+    // Treptele se judecă numai când cererea atinge un preț ori un prag. O
+    // bifă de catalog sau „nou" n-are de ce să fie oprită de o scară strâmbă
+    // scrisă cu mâna în bază — iar `latura_scara()` o sare oricum.
+    if (product_trepte_atinse($b) || array_key_exists('priceFrozen', $b) || array_key_exists('priceBaked', $b)) {
+        product_trepte_verifica($rezultat);
     }
 
     // Prețul e motivul pentru care rândul ăsta există. Până acum jurnalul
@@ -386,6 +413,12 @@ function route_products_update(string $id): void
         'grams'          => 'grame',
         'price_frozen'   => 'preț congelat',
         'price_baked'    => 'preț gata de servire',
+        'price_frozen_b' => 'preț B congelat',
+        'price_frozen_c' => 'preț C congelat',
+        'price_baked_b'  => 'preț B gata de servire',
+        'price_baked_c'  => 'preț C gata de servire',
+        'prag_b'         => 'prag B',
+        'prag_c'         => 'prag C',
         'in_frozen'      => ['în congelate', ['1' => 'da', '0' => 'nu']],
         'in_baked'       => ['la gata de servire', ['1' => 'da', '0' => 'nu']],
         'is_new'         => ['nou', ['1' => 'da', '0' => 'nu']],
@@ -790,9 +823,13 @@ function product_laturi_verifica(array $r): void
         }
         $aprinse++;
         if (latura_pret($r, $lat) === null) {
+            // Caseta se numește cum scrie în formular: din runda 2.5.0 fiecare
+            // latură are panoul ei, cu titlul laturii, iar în el trei prețuri —
+            // A, B, C. Cel cerut aici e A, singurul fără de care latura nu se
+            // poate vinde; B și C rămân de voie.
             fail(
                 'Produsul e în catalogul „' . latura_nume($lat) . '”, dar n-are prețul de acolo.'
-                  . ' Scrie prețul din caseta „Preț ' . latura_cuvant($lat) . '”,'
+                  . ' Scrie prețul A din panoul „' . latura_nume($lat) . '”,'
                   . ' sau scoate-l din catalogul ăsta.',
                 422,
                 'missing_price'
@@ -805,6 +842,202 @@ function product_laturi_verifica(array $r): void
               . ' scoate-l din catalog cu butonul de pe rând.',
             422,
             'no_catalog'
+        );
+    }
+}
+
+/**
+ * Câmpurile celor trei prețuri, așa cum le trimite panoul, și coloanele lor.
+ *
+ * O singură listă, citită și la creare, și la modificare — ca un câmp nou să
+ * nu poată fi primit într-un loc și ignorat tăcut în celălalt.
+ */
+const PROD_TREPTE_CAMPURI = [
+    'priceFrozenB' => 'price_frozen_b',
+    'priceFrozenC' => 'price_frozen_c',
+    'priceBakedB'  => 'price_baked_b',
+    'priceBakedC'  => 'price_baked_c',
+    'pragB'        => 'prag_b',
+    'pragC'        => 'prag_c',
+];
+
+/** Cererea atinge vreun câmp al treptelor? */
+function product_trepte_atinse(array $b): bool
+{
+    foreach (array_keys(PROD_TREPTE_CAMPURI) as $in) {
+        if (array_key_exists($in, $b)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Câmpurile treptelor din cerere, verificate ca FORMĂ: prețuri în lei, praguri
+ * în bucăți întregi. Ordinea dintre ele se judecă pe rândul rezultat, în
+ * `product_trepte_verifica()`.
+ *
+ * Întoarce perechi coloană => valoare, numai pentru câmpurile trimise. Gol
+ * înseamnă „fără treapta asta" și se scrie NULL.
+ *
+ * O bază fără migrarea 028 n-are unde scrie: cererea care aduce un preț B se
+ * refuză atunci cu 503, pe față — altfel patronul ar scrie B, ar primi „salvat",
+ * iar clientul ar plăti tot A.
+ *
+ * @return array<string, int|float|null>
+ */
+function product_trepte_din(array $b): array
+{
+    if (!product_trepte_atinse($b)) {
+        return [];
+    }
+    $ceva = false;
+    foreach (array_keys(PROD_TREPTE_CAMPURI) as $in) {
+        $v = $b[$in] ?? null;
+        if ($v !== null && $v !== '') {
+            $ceva = true;
+        }
+    }
+    if (!catalog_trepte_supported()) {
+        if (!$ceva) {
+            // Un panou nou peste baza veche trimite câmpurile goale la fiecare
+            // salvare. Goale, n-au ce strica: se trec cu vederea, ca restul
+            // salvării să meargă.
+            return [];
+        }
+        fail(
+            'Prețurile B și C nu se pot salva încă: baza de date nu are migrarea 028. '
+              . 'Importă sql/028_preturi_pe_trepte.sql și încearcă din nou.',
+            503,
+            'tiers_unavailable'
+        );
+    }
+
+    $pret = static function ($v, string $label) {
+        if ($v === null || $v === '') {
+            return null;
+        }
+        $brut  = is_int($v) || is_float($v) || is_string($v) ? trim((string) $v) : '';
+        $curat = str_replace(',', '.', $brut);
+        if (!preg_match('/^\d+(\.\d*)?$/', $curat) || (float) $curat <= 0 || (float) $curat > 100000) {
+            $vazut = $brut === '' ? '' : ' Am primit „' . mb_substr($brut, 0, 40) . '”.';
+            fail('Prețul ' . $label . ' trebuie să fie un număr între 0,01 și 100000 lei, de pildă „2,60”.'
+                . $vazut, 422, 'bad_tier_price');
+        }
+        return round((float) $curat, 2);
+    };
+    $prag = static function ($v, string $label) {
+        if ($v === null || $v === '') {
+            return null;
+        }
+        $brut = is_int($v) || is_string($v) ? trim((string) $v) : '';
+        // Bucăți întregi. De la 2: pragul 1 ar face din B prețul oricui. Până
+        // la 10000: atâtea bucăți primește cel mult o poziție de comandă, deci
+        // un prag mai mare n-ar putea fi atins niciodată.
+        if (!preg_match('/^\d+$/', $brut) || (int) $brut < 2 || (int) $brut > 10000) {
+            $vazut = $brut === '' ? '' : ' Am primit „' . mb_substr($brut, 0, 40) . '”.';
+            fail('Pragul ' . $label . ' trebuie să fie un număr întreg de bucăți, între 2 și 10000.'
+                . $vazut, 422, 'bad_threshold');
+        }
+        return (int) $brut;
+    };
+
+    $etichete = [
+        'priceFrozenB' => [$pret, 'B pentru congelate'],
+        'priceFrozenC' => [$pret, 'C pentru congelate'],
+        'priceBakedB'  => [$pret, 'B pentru gata de servire'],
+        'priceBakedC'  => [$pret, 'C pentru gata de servire'],
+        'pragB'        => [$prag, 'prețului B'],
+        'pragC'        => [$prag, 'prețului C'],
+    ];
+    $out = [];
+    foreach (PROD_TREPTE_CAMPURI as $in => $col) {
+        if (array_key_exists($in, $b)) {
+            $out[$col] = $etichete[$in][0]($b[$in], $etichete[$in][1]);
+        }
+    }
+    return $out;
+}
+
+/**
+ * ORDINEA TREPTELOR, judecată pe RÂNDUL REZULTAT — din același motiv ca
+ * `product_laturi_verifica()`: „scriu B și pragul lui în aceeași salvare"
+ * trebuie să treacă, iar „scumpesc A peste B" trebuie prins chiar dacă B nu
+ * era în cerere.
+ *
+ * Regulile, fiecare cu codul ei, ca panoul să poată arăta lângă caseta
+ * potrivită ce e de îndreptat:
+ *
+ *   `tier_needs_base`       B fără A pe aceeași latură
+ *   `tier_b_not_lower`      B nu e mai mic decât A
+ *   `tier_c_needs_b`        C fără B pe aceeași latură
+ *   `tier_c_not_lower`      C nu e mai mic decât B
+ *   `tier_needs_threshold`  un preț B fără pragul B, ori un C fără pragul C
+ *   `threshold_order`       pragul C nu e mai mare decât pragul B
+ *
+ * Un prag fără niciun preț al treptei lui e îngăduit: e doar valoarea de
+ * pornire a casetei, iar `latura_scara()` n-are ce face cu el.
+ *
+ * Pe un rând fără coloanele lui 028 nu e nimic de judecat.
+ */
+function product_trepte_verifica(array $r): void
+{
+    if (!array_key_exists('prag_b', $r)) {
+        return;
+    }
+    $n    = static fn($v) => ($v === null || $v === '') ? null : (float) $v;
+    $bani = static fn(float $v) => number_format($v, 2, ',', '.');
+
+    $pragB = $n($r['prag_b'] ?? null);
+    $pragC = $n($r['prag_c'] ?? null);
+    $areB  = false;
+    $areC  = false;
+
+    foreach (laturi() as $lat) {
+        $a    = $n($r[latura_coloana_treapta($lat, 1)] ?? null);
+        $b    = $n($r[latura_coloana_treapta($lat, 2)] ?? null);
+        $c    = $n($r[latura_coloana_treapta($lat, 3)] ?? null);
+        $nume = latura_cuvant($lat);
+
+        if ($b !== null) {
+            $areB = true;
+            if ($a === null) {
+                fail('Prețul B pentru ' . $nume . ' are nevoie de prețul A de acolo. '
+                    . 'Scrie întâi prețul obișnuit, apoi pe cel de la volum.', 422, 'tier_needs_base');
+            }
+            if ($b >= $a) {
+                fail('Prețul B pentru ' . $nume . ' (' . $bani($b) . ' lei) trebuie să fie mai mic '
+                    . 'decât prețul A (' . $bani($a) . ' lei): cine cumpără mai mult plătește mai '
+                    . 'puțin pe bucată.', 422, 'tier_b_not_lower');
+            }
+        }
+        if ($c !== null) {
+            $areC = true;
+            if ($b === null) {
+                fail('Prețul C pentru ' . $nume . ' are nevoie de prețul B de acolo: '
+                    . 'treptele urcă una câte una.', 422, 'tier_c_needs_b');
+            }
+            if ($c >= $b) {
+                fail('Prețul C pentru ' . $nume . ' (' . $bani($c) . ' lei) trebuie să fie mai mic '
+                    . 'decât prețul B (' . $bani($b) . ' lei).', 422, 'tier_c_not_lower');
+            }
+        }
+    }
+
+    if ($areB && $pragB === null) {
+        fail('Scrie de la câte bucăți începe prețul B.', 422, 'tier_needs_threshold');
+    }
+    if ($areC && $pragC === null) {
+        fail('Scrie de la câte bucăți începe prețul C.', 422, 'tier_needs_threshold');
+    }
+    if ($pragC !== null && ($pragB === null || $pragC <= $pragB)) {
+        fail(
+            $pragB === null
+                ? 'Pragul C are nevoie de pragul B: scrie întâi de la câte bucăți începe prețul B.'
+                : 'Pragul C (' . (int) $pragC . ' buc.) trebuie să fie mai mare decât pragul B ('
+                    . (int) $pragB . ' buc.).',
+            422,
+            'threshold_order'
         );
     }
 }

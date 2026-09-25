@@ -374,7 +374,7 @@
    * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
    * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
    */
-  const VERSIUNE = '2.4.2';
+  const VERSIUNE = '2.5.0';
 
   /**
    * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo
@@ -2311,6 +2311,346 @@
       }
     });
   }
+
+  /* ------------------------------ semnul laturii: fulgul și flacăra -- */
+
+  /**
+   * `<gp-semn latura="congelat"></gp-semn>` — fulgul albastru;
+   * `<gp-semn latura="copt"></gp-semn>` — flacăra portocalie, numai contur.
+   *
+   * Cererea patronului din 24 septembrie 2026: semnul stă ÎNAINTEA vorbei
+   * „Congelate" / „Gata de servire", și pe calculator, nu doar în pastila de
+   * pe telefon. Până atunci desenele stăteau scrise de mână, o dată, în
+   * pastila magazinului — deci un al doilea loc ar fi însemnat o a doua copie
+   * a fiecărui desen, iar a treia pagină pe care se cere semnul ar fi primit
+   * a treia. Aici desenul e UNUL, iar paginile scriu doar eticheta.
+   *
+   * Primește și numele din magazin („frozen" / „baked"), fiindcă acolo latura
+   * se numește așa de la început; o valoare necunoscută nu desenează nimic, în
+   * loc să ghicească.
+   *
+   * DE CE NU DESENEAZĂ CÂT STĂ ÎN `<x-dc>`. `support.js` citește șablonul
+   * paginii ca `innerHTML` al lui `<x-dc>` — care e DOM viu, ascuns doar cu
+   * CSS. Un desen pus acolo ar fi intrat în șablon ca un copil al lui
+   * `<gp-semn>`, iar React ar fi ajuns să țină în mână noduri pe care
+   * elementul le rescrie singur. Deci în șablon rămâne gol, și se desenează
+   * abia în pagina adevărată, unde React ține numai NODUL, nu măruntaiele lui
+   * — la fel ca `<gp-versiune>` de mai sus.
+   *
+   * `attributeChangedCallback` desenează numai pe un nod legat de pagină: la
+   * nașterea din parser atributele se pun ÎNAINTE ca nodul să aibă părinte,
+   * deci întrebarea „sunt în `<x-dc>`?" ar fi primit „nu" tocmai în șablon.
+   * Iar comutarea laturii nu naște alt nod: React schimbă doar atributul, și
+   * de-asta semnul se redesenează din el.
+   *
+   * CULORILE sunt ale casei, nu ale butonului: fulgul rămâne rece și flacăra
+   * caldă oriunde ar sta, cu câte o nuanță mai deschisă pe fundal întunecat
+   * (magazinul își pune singur tema întunecată; panourile o iau din sistem).
+   * Unde fundalul e chiar culoarea accentului, `culoare="text"` îl face să ia
+   * culoarea scrisului de lângă el.
+   */
+  const SEMN_FULG_BRAT = 'M12 2.6v18.8M9.3 4.7 12 7.3l2.7-2.6M9.3 19.3 12 16.7l2.7 2.6';
+  const SEMN_SVG = {
+    rece: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"'
+      + ' stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">'
+      + '<path d="' + SEMN_FULG_BRAT + '"/>'
+      + '<path transform="rotate(60 12 12)" d="' + SEMN_FULG_BRAT + '"/>'
+      + '<path transform="rotate(120 12 12)" d="' + SEMN_FULG_BRAT + '"/>'
+      + '</svg>',
+    cald: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1"'
+      + ' stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true">'
+      + '<path d="M12.2 2.3C13.2 5.6 16.1 7.3 17.7 10C18.6 11.6 19 13.1 19 14.8'
+      + 'A7 7 0 0 1 5 14.8C5 12.2 6.2 10.1 7.9 8.4C8.1 10 8.8 11.2 10.1 11.8'
+      + 'C9.6 8 10.4 4.9 12.2 2.3Z"/>'
+      + '</svg>',
+  };
+  const SEMN_LATURA = { congelat: 'rece', frozen: 'rece', copt: 'cald', baked: 'cald' };
+  gp.semnLatura = (latura) => SEMN_LATURA[String(latura || '')] || '';
+
+  if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined'
+    && !customElements.get('gp-semn')) {
+    if (global.document && global.document.head) {
+      const st = global.document.createElement('style');
+      st.setAttribute('data-gp-semn', '');
+      st.textContent = ':root{--gp-semn-rece:#2F74C0;--gp-semn-cald:#CF5F1E}'
+        + '@media (prefers-color-scheme:dark){:root{--gp-semn-rece:#74B6F2;--gp-semn-cald:#F28C4B}'
+        + ':root[data-theme="light"]{--gp-semn-rece:#2F74C0;--gp-semn-cald:#CF5F1E}}'
+        + ':root[data-theme="dark"]{--gp-semn-rece:#74B6F2;--gp-semn-cald:#F28C4B}'
+        + 'gp-semn{display:inline-block;flex:none;width:var(--gp-semn-marime,1.15em);'
+        + 'height:var(--gp-semn-marime,1.15em);vertical-align:-0.2em;line-height:0}'
+        + 'gp-semn>svg{display:block;width:100%;height:100%;overflow:visible}'
+        + 'gp-semn[latura="congelat"],gp-semn[latura="frozen"]{color:var(--gp-semn-rece)}'
+        + 'gp-semn[latura="copt"],gp-semn[latura="baked"]{color:var(--gp-semn-cald)}'
+        + 'gp-semn[culoare="text"]{color:inherit}'
+        // Lângă o vorbă care se poate rupe pe două rânduri, semnul stă la
+        // mijlocul PRIMULUI rând. Centrat pe tot rândul (flex, `center`), el
+        // plutea între cele două rânduri ale vorbei: la 1280px, pe fiecare
+        // card „patru", „Gata de servire: 4,69 / RON". `1lh` e înălțimea
+        // rândului vorbei; de-aia semnul moștenește aici line-height-ul, în
+        // loc de 0. Un browser fără `lh` îl lasă lipit sus, tot pe primul
+        // rând. Numai pentru rânduri fără înălțime fixă: într-un buton înalt,
+        // `flex-start` ar urca și vorba sus.
+        + '[data-semn-sus]{align-items:flex-start!important}'
+        + '[data-semn-sus]>gp-semn{line-height:inherit;'
+        + 'margin-top:calc((1lh - var(--gp-semn-marime,1.15em)) / 2)}'
+        // Fără latură cunoscută nu ține nici loc: fila „Amândouă" de lângă
+        // cele două n-are semn, și n-are voie să aibă nici golul unuia.
+        + 'gp-semn:not([latura="congelat"]):not([latura="copt"])'
+        + ':not([latura="frozen"]):not([latura="baked"]){display:none}';
+      global.document.head.appendChild(st);
+    }
+    customElements.define('gp-semn', class extends HTMLElement {
+      static get observedAttributes() { return ['latura']; }
+      connectedCallback() { this.deseneaza(); }
+      attributeChangedCallback() { if (this.isConnected) this.deseneaza(); }
+      deseneaza() {
+        if (this.closest('x-dc')) return;
+        const fel = gp.semnLatura(this.getAttribute('latura'));
+        if (this.__desenat === fel) return;
+        this.__desenat = fel;
+        if (!this.hasAttribute('aria-hidden')) this.setAttribute('aria-hidden', 'true');
+        this.innerHTML = fel ? SEMN_SVG[fel] : '';
+      }
+    });
+  }
+
+  /* ------------------------------------------ trei prețuri, după cantitate -- */
+
+  /*
+   * OGLINDA lui `latura_scara()` și `latura_treapta()` din api/lib/laturi.php
+   * (migrarea 028). Serverul hotărăște banii — `price_items()` retarifează
+   * orice coș —, dar magazinul, formularul de comandă și fila Produse trebuie
+   * să ARATE aceeași cifră înainte să întrebe serverul. Două socoteli care se
+   * pot despărți ar arăta clientului 3,90 și i-ar cere 4,20.
+   *
+   * Legate de PHP prin `.claude/test-trepte-pret.mjs`: aceeași masă de cazuri
+   * trece prin amândouă, iar răspunsurile trebuie să fie aceleași.
+   *
+   * Rotunjirea e a lui PHP, nu a lui `Math.round`: `round()` din PHP corectează
+   * reprezentarea binară înainte să taie (2,675 → 2,68), `Math.round(x * 100)`
+   * nu (2,675 → 2,67). Trecut prin scrierea cu exponent, numărul se rotunjește
+   * de pe cifrele lui zecimale, ca în PHP.
+   */
+  const rotunjit2 = (v) => {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return 0;
+    const s = String(Math.abs(n));
+    if (s.indexOf('e') !== -1) return Math.round(n * 100) / 100;
+    return Math.sign(n) * Number(Math.round(Number(s + 'e2')) + 'e-2');
+  };
+  /** `is_numeric()` din PHP, pe ce poate veni aici: număr sau text. */
+  const numeric = (v) => (typeof v === 'number' ? Number.isFinite(v)
+    : typeof v === 'string' && /^[+-]?(\d+(\.\d*)?|\.\d+)([eE][+-]?\d+)?$/.test(v.trim()));
+  /** `(float)` din PHP: cifrele de la început, altfel 0. */
+  const flotant = (v) => (typeof v === 'number' ? v : (parseFloat(String(v).trim()) || 0));
+  const gol = (v) => v === null || v === undefined || v === '';
+
+  /**
+   * Scara unei laturi, din câmpurile produsului (`priceFrozen`, `priceFrozenB`,
+   * `priceFrozenC`, `pragB`, `pragC` — ori aceleași cu `Baked`): numai treptele
+   * care CHIAR se aplică, de jos în sus, ca `[{prag, pret}, …]`. A are pragul 1.
+   *
+   * Forma e cea din catalog (`trepte.frozen` / `trepte.baked`), deci paginile
+   * care au catalogul n-au nevoie de funcția asta — o folosește formularul din
+   * fila Produse, ca să arate scara pe măsură ce se scrie.
+   */
+  gp.scaraDinCampuri = (p, latura) => {
+    const r = p || {};
+    const baza = latura === 'copt' || latura === 'baked' ? 'priceBaked' : 'priceFrozen';
+    if (gol(r[baza])) return [];
+    let pret = flotant(r[baza]);
+    let prag = 1;
+    const scara = [{ prag: 1, pret }];
+    for (const [cheiePrag, litera] of [['pragB', 'B'], ['pragC', 'C']]) {
+      const pv = r[cheiePrag];
+      const vv = r[baza + litera];
+      if (gol(pv) || gol(vv) || !numeric(pv) || !numeric(vv)) break;
+      const pi = Math.trunc(flotant(pv));
+      const vi = rotunjit2(flotant(vv));
+      // Pragul trebuie să urce, prețul să coboare — ca în PHP. A stă pe
+      // pragul 1, deci „să urce" refuză și pragul 1.
+      if (pi <= prag || vi <= 0 || vi >= pret) break;
+      scara.push({ prag: pi, pret: vi });
+      prag = pi;
+      pret = vi;
+    }
+    return scara;
+  };
+
+  /**
+   * Treapta în care cade o cantitate, pe o scară `[{prag, pret}, …]`.
+   *
+   * `q` e suma din tot coșul pe perechea produs+latură, ca pe server
+   * (`cantitati_pe_pereche()`); se rotunjește aici la doi bani, tot ca acolo.
+   *
+   * Întoarce `{treapta, prag, pret, urmatoarea}`: `treapta` 1 = A, 2 = B, 3 = C;
+   * `prag` e null la A, ca pe rândul de comandă; `urmatoarea` spune ce treaptă
+   * urmează și câte bucăți mai lipsesc până la ea (null pe ultima). `null` când
+   * scara e goală — latura n-are preț.
+   */
+  gp.treaptaPentru = (scara, q) => {
+    const s = Array.isArray(scara) ? scara : [];
+    if (!s.length) return null;
+    const cant = rotunjit2(Number(q) || 0);
+    let i = 0;
+    for (let k = 1; k < s.length; k++) {
+      if (cant >= Number(s[k].prag)) i = k;
+    }
+    const urm = s[i + 1];
+    return {
+      treapta: i + 1,
+      prag: i === 0 ? null : Number(s[i].prag),
+      pret: Number(s[i].pret),
+      urmatoarea: urm ? {
+        treapta: i + 2,
+        prag: Number(urm.prag),
+        pret: Number(urm.pret),
+        lipsa: rotunjit2(Number(urm.prag) - cant),
+      } : null,
+    };
+  };
+
+  /** „1–99", „100–299", „300+": cantitățile unei trepte, pentru ecran. */
+  gp.intervalTreapta = (scara, i) => {
+    const s = Array.isArray(scara) ? scara : [];
+    if (!s[i]) return '';
+    const urm = s[i + 1];
+    return urm ? s[i].prag + '–' + (Number(urm.prag) - 1) : s[i].prag + '+';
+  };
+
+  /** Litera treptei, pentru etichete: 1 → A, 2 → B, 3 → C. */
+  gp.literaTreptei = (t) => ['A', 'B', 'C'][Number(t) - 1] || 'A';
+
+  /**
+   * Setările catalogului, din `/lists`, cu implicitul migrării 028 când
+   * serverul e mai vechi decât pagina: un pas înapoi la „unul pe rând" pe
+   * telefon și „patru pe ecran" pe calculator, fără prag precompletat.
+   */
+  gp.catalogImplicit = () => {
+    const c = (gp.__lists && gp.__lists.catalog) || {};
+    const vederi = ['unu', 'patru', 'sase'];
+    return {
+      vedereTelefon: vederi.includes(c.vedereTelefon) ? c.vedereTelefon : 'unu',
+      vedereCalculator: vederi.includes(c.vedereCalculator) ? c.vedereCalculator : 'patru',
+      pragB: Number.isInteger(c.pragB) ? c.pragB : null,
+      pragC: Number.isInteger(c.pragC) ? c.pragC : null,
+    };
+  };
+
+  /**
+   * Ce ar refuza serverul la salvarea treptelor — oglinda lui
+   * `product_trepte_din()` și `product_trepte_verifica()` din
+   * api/routes/catalog.php, în aceeași ordine.
+   *
+   * Primește câmpurile formularului așa cum sunt scrise (text) ori ca numere.
+   * Întoarce TOATE problemele, ca formularul să le poată arăta pe fiecare lângă
+   * caseta ei; PRIMA e codul pe care l-ar da serverul (cel legat de probă).
+   *
+   * @return {Array<{cod: string, camp: string, mesaj: string}>}
+   */
+  gp.verificaTrepte = (f) => {
+    const v = f || {};
+    const out = [];
+    const bani = (x) => rotunjit2(x).toFixed(2).replace('.', ',');
+    const PRETURI = [
+      ['priceFrozenB', 'B pentru congelate'], ['priceFrozenC', 'C pentru congelate'],
+      ['priceBakedB', 'B pentru gata de servire'], ['priceBakedC', 'C pentru gata de servire'],
+    ];
+    const curat = {};
+    for (const [camp, eticheta] of PRETURI) {
+      const x = v[camp];
+      if (gol(x)) { curat[camp] = null; continue; }
+      const brut = typeof x === 'number' || typeof x === 'string' ? String(x).trim() : '';
+      const s = brut.replace(/,/g, '.');
+      if (!/^\d+(\.\d*)?$/.test(s) || parseFloat(s) <= 0 || parseFloat(s) > 100000) {
+        out.push({ cod: 'bad_tier_price', camp, mesaj: 'Prețul ' + eticheta + ' trebuie să fie între 0,01 și 100000 lei.' });
+        curat[camp] = undefined;
+      } else {
+        curat[camp] = rotunjit2(parseFloat(s));
+      }
+    }
+    for (const [camp, eticheta] of [['pragB', 'prețului B'], ['pragC', 'prețului C']]) {
+      const x = v[camp];
+      if (gol(x)) { curat[camp] = null; continue; }
+      // Ca în PHP: numai un întreg sau un text; un număr cu zecimale e greșit.
+      const brut = Number.isInteger(x) || typeof x === 'string' ? String(x).trim() : '';
+      if (!/^\d+$/.test(brut) || parseInt(brut, 10) < 2 || parseInt(brut, 10) > 10000) {
+        out.push({ cod: 'bad_threshold', camp, mesaj: 'Pragul ' + eticheta + ' trebuie să fie un număr întreg de bucăți, între 2 și 10000.' });
+        curat[camp] = undefined;
+      } else {
+        curat[camp] = parseInt(brut, 10);
+      }
+    }
+
+    // Ordinea scării, pe ce a trecut de citire. Un câmp necitibil nu mai e
+    // judecat și aici: are deja problema lui.
+    // Prețul A vine din casetă cum l-a scris omul, „4,20" — la server ajunge
+    // deja citit de `product_numbers()`.
+    const n = (x) => (gol(x) ? null : flotant(typeof x === 'string' ? x.replace(',', '.') : x));
+    let areB = false;
+    let areC = false;
+    for (const [baza, nume] of [['priceFrozen', 'congelate'], ['priceBaked', 'gata de servire']]) {
+      const a = n(v[baza]);
+      const b = curat[baza + 'B'];
+      const c = curat[baza + 'C'];
+      if (b !== null && b !== undefined) {
+        areB = true;
+        if (a === null) {
+          out.push({ cod: 'tier_needs_base', camp: baza, mesaj: 'Prețul B pentru ' + nume + ' are nevoie de prețul A de acolo.' });
+        } else if (b >= a) {
+          out.push({ cod: 'tier_b_not_lower', camp: baza + 'B', mesaj: 'Prețul B (' + bani(b) + ' lei) trebuie să fie mai mic decât A (' + bani(a) + ' lei).' });
+        }
+      }
+      if (c !== null && c !== undefined) {
+        areC = true;
+        if (b === null) {
+          out.push({ cod: 'tier_c_needs_b', camp: baza + 'B', mesaj: 'Prețul C pentru ' + nume + ' are nevoie de prețul B de acolo.' });
+        } else if (b !== undefined && c >= b) {
+          out.push({ cod: 'tier_c_not_lower', camp: baza + 'C', mesaj: 'Prețul C (' + bani(c) + ' lei) trebuie să fie mai mic decât B (' + bani(b) + ' lei).' });
+        }
+      }
+    }
+    const pb = curat.pragB;
+    const pc = curat.pragC;
+    if (areB && pb === null) out.push({ cod: 'tier_needs_threshold', camp: 'pragB', mesaj: 'Scrie de la câte bucăți începe prețul B.' });
+    if (areC && pc === null) out.push({ cod: 'tier_needs_threshold', camp: 'pragC', mesaj: 'Scrie de la câte bucăți începe prețul C.' });
+    if (pc !== null && pc !== undefined && pb !== undefined && (pb === null || pc <= pb)) {
+      out.push({
+        cod: 'threshold_order', camp: 'pragC',
+        mesaj: pb === null ? 'Pragul C are nevoie de pragul B.' : 'Pragul C (' + pc + ' buc.) trebuie să fie mai mare decât pragul B (' + pb + ' buc.).',
+      });
+    }
+    return out;
+  };
+
+  /**
+   * Câmpurile treptelor, așa cum pleacă din formular spre server: textul
+   * curățat de spații, iar golul trimis ca `null` („fără treapta asta").
+   *
+   * UN PRAG SE TRIMITE NUMAI CÂND ÎL FOLOSEȘTE UN PREȚ. Caseta pragului vine
+   * precompletată din Setări (100 / 300); trimisă așa la fiecare salvare, ar
+   * îngheța în produs o copie a implicitului, iar când patronul mută implicitul
+   * în Setări, produsele salvate o dată n-ar mai afla. Fără niciun preț B,
+   * pragul B pleacă gol; fără niciun preț C, la fel pragul C.
+   *
+   * Se trimit mereu toate șase: un B șters din casetă trebuie să ajungă la
+   * server ca `null`, nu să lipsească — lipsa ar lăsa în bază prețul vechi.
+   */
+  gp.trepteDeTrimis = (f) => {
+    const v = f || {};
+    const t = (x) => (gol(x) || String(x).trim() === '' ? null : String(x).trim());
+    const out = {
+      priceFrozenB: t(v.priceFrozenB),
+      priceFrozenC: t(v.priceFrozenC),
+      priceBakedB: t(v.priceBakedB),
+      priceBakedC: t(v.priceBakedC),
+    };
+    const areC = out.priceFrozenC !== null || out.priceBakedC !== null;
+    const areB = areC || out.priceFrozenB !== null || out.priceBakedB !== null;
+    out.pragB = areB ? t(v.pragB) : null;
+    out.pragC = areC ? t(v.pragC) : null;
+    return out;
+  };
 
   global.gp = gp;
 })(window);

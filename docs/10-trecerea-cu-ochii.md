@@ -5,12 +5,13 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **optzeci și două de minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele treisprezece plimbări stă singură și își spune la început cât
-ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale bucăților care au
-minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o plimbare, se adună și aici.
+Durează **nouăzeci și nouă de minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele paisprezece plimbări stă singură și își spune la
+început cât ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale
+bucăților care au minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o
+plimbare, se adună și aici.
 
-Cele treisprezece, în ordinea în care se fac cel mai ușor:
+Cele paisprezece, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -40,9 +41,15 @@ Cele treisprezece, în ordinea în care se fac cel mai ușor:
 12. **Runda 2.4.2** — poza mare de pe telefon, micșorată pe server (12.1),
     poza deja mică lăsată neatinsă, ca să rămână dreaptă (12.2), și pagina de
     verificare, care spune ce server web ai (12.3).
-13. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+13. **Runda 2.5.0** — semnele celor două cataloage (13.1), cele trei prețuri
+    în formular (13.2), scara și îndemnul de pe card (13.3), coșul care trece
+    de 100 (13.4), comanda corectată peste trepte (13.5), vederile
+    magazinului și cea de pornire din Setări (13.6), filtrele magazinului
+    (13.7), vederile și filtrele din Catalog (13.8) și conturile, pe plăci
+    (13.9).
+14. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A treisprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
+A paisprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
 ai deschis mai devreme.
 
 ---
@@ -205,9 +212,10 @@ pui unul.
 
 ### 2.1 Pui un cod
 
-**Apeși:** `testadmin` → `/lab/conturi.html` → cauți cardul lui **Angajat Test**
-→ pe rândul **„Cod de pontaj"** apeși **„Pune un cod"** → în caseta **„Codul
-nou"** scrii patru cifre → **„Salvează codul"**.
+**Apeși:** `testadmin` → `/lab/conturi.html` → apeși placa lui **Angajat
+Test**, ca să i se deschidă fișa → pe rândul **„Cod de pontaj"** apeși
+**„Pune un cod"** → în caseta **„Codul nou"** scrii patru cifre →
+**„Salvează codul"**.
 
 **Trebuie să vezi:**
 - lângă „Cod de pontaj", eticheta se schimbă din **„nepus"** (galben) în
@@ -291,16 +299,17 @@ Motivul e obligatoriu — fără el, butonul refuză.
 
 ### 2.5 Iei codul înapoi
 
-**Apeși:** `/lab/conturi.html` → pe cardul lui Angajat Test → **„Ia-i codul"**.
+**Apeși:** `/lab/conturi.html` → placa lui Angajat Test, ca să i se deschidă
+fișa → **„Ia-i codul"**.
 
 **Trebuie să vezi:** butonul se face roșu și scrie **„Apasă din nou: îi iau
 codul"**. Abia a doua apăsare ia codul. Eticheta se face la loc **„nepus"** —
 iar pe `/lab/pontaj.html` omul dispare din lista ceasului.
 
-> **Codul nu se vede niciodată nicăieri.** Nici pe card, nici în Jurnal, nici
-> într-un răspuns al serverului. Pagina știe doar dacă un om ARE sau N-ARE cod.
-> Dacă vezi vreodată patru cifre scrise undeva, ăla e un defect grav — scrie-mi
-> unde.
+> **Codul nu se vede niciodată nicăieri.** Nici pe placă, nici pe fișă, nici
+> în Jurnal, nici într-un răspuns al serverului. Pagina știe doar dacă un om
+> ARE sau N-ARE cod. Dacă vezi vreodată patru cifre scrise undeva, ăla e un
+> defect grav — scrie-mi unde.
 
 ---
 
@@ -991,8 +1000,10 @@ Primele patru se fac în magazin, fără cont. Ultimele trei se fac cu
 
 ### 8.1 Comutatorul congelat ↔ gata de servire
 
-Magazinul, `http://127.0.0.1:8101/`. Sub titlu stă pastila cu două semne —
-fulgul și cuptorul. Apeși pe fiecare, pe rând, de vreo cinci ori, repede.
+Magazinul pe telefon (390), `http://127.0.0.1:8101/catalog`. Derulezi până
+trec uneltele de deasupra produselor: de acolo, sub antet, la mijloc, stă
+pastila cu două semne — fulgul și flacăra. Apeși pe fiecare, pe rând, de
+vreo cinci ori, repede.
 
 **Trebuie să vezi:** un jeton rotund care **alunecă** de sub un semn sub
 celălalt, cu un arc scurt la capăt. Nu sare, nu clipește, nu apare de nicăieri.
@@ -1009,6 +1020,11 @@ dacă a revenit.
 Apasă comutatorul și **cu tastatura** — `Tab` până ajungi pe el, apoi `Enter` —
 nu numai cu mouse-ul. E a doua cale spre același simptom, și se probează la
 fel: nimic alb, nicio clipă.
+
+> S-a schimbat în 2.5.0: cât uneltele sunt pe ecran, pastila stă ascunsă —
+> acolo comutatorul e în bara de unelte, cu semne și cu vorbe, iar două
+> comutatoare deodată ar fi fost unul de prisos. Al doilea semn era un
+> cuptor; acum e o flacără (13.1).
 
 ### 8.2 Bara de finalizare din Catalog, strânsă
 
@@ -1058,13 +1074,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.4.2 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.5.0 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.4.2` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.5.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1135,8 +1151,9 @@ singura cale de întors tocmai când șoferul apasă din greșeală.
 spune ce lipsește, pe ce cont, și cine o pune: semnul „poate confirma livrarea",
 bifat în Conturi.
 
-Intri în `/lab/conturi.html` cu `testadmin`, pui bifa **„Poate confirma
-livrarea"** pe contul acela, te întorci pe rută și reîmprospătezi. Butonul
+Intri în `/lab/conturi.html` cu `testadmin`, apeși placa contului acela și, în
+fișa lui, pui bifa **„Poate confirma livrarea"**; te întorci pe rută și
+reîmprospătezi. Butonul
 trebuie să se **aprindă** și livrarea să treacă. Scoți bifa la loc, ca să nu
 lași contul de probă cu drepturi în plus.
 
@@ -1231,7 +1248,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.4.2 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.5.0 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -1284,22 +1301,27 @@ ca să ai unde pune ceva în ea. **Pe site e pe dos**, și asta se plimbă la 10
 Tot în Catalog, pe „Amândouă". Alegi un produs cu amândouă prețurile și
 deschizi formularul.
 
-**Trebuie să vezi:** patru casete în grilă — fiecare preț lângă comutatorul
-laturii lui —, și deasupra lor scrie **„Preț congelat"** și **„Preț gata de
-servire"**. Vorbele „HoReCa" și „raft" nu mai există nicăieri în casă; dacă
-le mai vezi undeva, pachetul e mai vechi decât crezi.
+**Trebuie să vezi:** două panouri, **„Congelate"** și **„Gata de servire"**,
+fiecare cu semnul lui, cu comutatorul **„În catalog"** și cu prețurile lui.
+Vorbele „HoReCa" și „raft" nu mai există nicăieri în casă; dacă le mai vezi
+undeva, pachetul e mai vechi decât crezi.
 
-Stingi comutatorul **„e în congelate"** și salvezi.
+> S-a schimbat în 2.5.0: până atunci erau patru casete în grilă, sub „Preț
+> congelat" și „Preț gata de servire". Fiecare panou are acum trei prețuri,
+> A, B și C; aici contează numai A, iar celelalte se plimbă la 13.2.
+
+În panoul **„Congelate"** stingi comutatorul **„În catalog"** și salvezi.
 
 **Trebuie să vezi trei lucruri:**
 
 1. Salvarea trece — **nu** te refuză nimic.
 2. **Prețul congelat e tot acolo**, scris, nu șters. Caseta rămâne văzută, nu
    ascunsă: ascunsă, ar fi ascuns tocmai ce ți s-a promis că se păstrează.
-3. Pe rândul din listă apare o **pastilă cenușie „numai gata de servire"**, nu
-   eticheta roșie de până acum. Roșu înseamnă de-acum „nu e în niciun catalog"
-   ori „e în catalog, fără prețul lui" — stări stricate. Un produs dintr-o
-   singură parte e **legiuit**, deci n-are ce căuta în roșu.
+3. Pe rândul din listă, pastila **„congelate"** se stinge (cenușie), iar
+   **„gata de servire"** rămâne aprinsă — nu eticheta roșie de până acum.
+   Roșu înseamnă de-acum „nu e în niciun catalog" ori „e în catalog, fără
+   prețul lui" — stări stricate. Un produs dintr-o singură parte e
+   **legiuit**, deci n-are ce căuta în roșu.
 
 **Încearcă și ce trebuie să fie refuzat**, ca să vezi că paza există:
 
@@ -1533,7 +1555,7 @@ mică redenumită. Orice poză de peste 4 MB e bună.
 
 ### 12.1 Poza mare urcă, iar panoul spune cât s-a micșorat
 
-`demo-fondator`, Catalog → un produs oarecare → **Modifică**. În caseta
+`demo-fondator`, Catalog → un produs oarecare → **„Editează"**. În caseta
 **„Fotografie — congelat"** alegi fotografia mare și salvezi.
 
 **Trebuie să vezi**, întâi, lămurirea de sub casetă scriind **„maximum 10 MB"**
@@ -1597,7 +1619,311 @@ pagina, de pe serverul tău.
 
 ---
 
-## 13 · Telefon, tabletă, calculator
+## 13 · Runda 2.5.0: trei prețuri, vederile catalogului, semnele, conturile
+
+*Șaptesprezece minute. Cele nouă bucăți de mai jos sunt lucrarea rundei
+ăsteia, deci singurele care n-au mai fost plimbate niciodată.*
+
+Pe 24 septembrie 2026 ai cerut, dintr-o suflare: semne noi pentru cele două
+cataloage, și pe calculator, înaintea vorbei; filtre și plăci în Conturi; până
+la trei prețuri după cantitate; mai multe feluri de a vedea catalogul, cu cel
+de pornire ales din Setări; un catalog elegant, nu înghesuit; și nimic
+suprapus nicăieri. Plimbarea de aici le trece pe toate, în ordinea în care se
+sprijină una pe alta.
+
+Se plimbă **pe pachetul construit** (8101): pagina produsului de la 13.3 nu
+există pe 8100.
+
+**Înainte de orice, un produs de plimbare.** Treptele nu se pun pe un produs al
+casei, nici măcar pentru o jumătate de oră. Proba automată de la „După
+plimbare" scrie comenzi de câte 100 de bucăți pe produsele de azi și le
+socotește banii la prețul A; un prag de 100 pus pe unul din ele i-ar muta banii
+pe B, iar proba s-ar înroși fără nicio vină a codului.
+
+`demo-fondator` → `/lab/produse.html` → **„+ Produs nou"**:
+
+- numele **„Plimbare 2.5.0"** și o descriere scurtă, în amândouă limbile,
+  gramajul **140** și o grupă oarecare. Poza poate lipsi — rozeta îi ține
+  locul;
+- pragurile: **100** și **300**. De obicei sunt deja scrise, din Setări;
+- panoul **„Congelate"**, cu comutatorul **„În catalog"** aprins: Preț A
+  **4,20**, Preț B **3,90**, Preț C **3,60**;
+- panoul **„Gata de servire"**, aprins și el: **5,20**, **4,80**, **4,50**;
+- **„Adaugă în catalog"**.
+
+### 13.1 Semnele celor două cataloage
+
+Până acum semnele se vedeau numai în pastila de pe telefon, iar al doilea era
+un cuptor. De-acum fiecare catalog își are semnul lui peste tot unde apare,
+**înaintea vorbei**: **un fulg albastru** la congelate, **o flacără
+portocalie, desenată numai din contur**, la gata de servire.
+
+Magazinul pe calculator (1440): `http://127.0.0.1:8101/catalog`.
+
+**Trebuie să vezi**, în coloana coșului, sub **„Variantă de livrare"**, fulgul
+înaintea lui **„Congelate"** și flacăra înaintea lui **„Gata de servire"**.
+
+Pe telefon (390), aceeași pagină. Sus, chiar deasupra produselor, comutatorul
+e în bara de unelte, cu semne **și** cu vorbe. Derulezi până iese de pe ecran:
+abia atunci vine, sub antet, pastila plutitoare, numai cu semne (8.1).
+
+În panou, tot cu `demo-fondator`, semnele trebuie să stea:
+
+- în **Catalog**: pe comutatorul de deasupra listei, pe cele două pastile de pe
+  fiecare rând și în capul celor două panouri din formular;
+- în **Comenzi**: pe cererile venite de pe site, dacă ai vreuna, și lângă
+  varianta fiecărei poziții din formularul de comandă — care se cheamă
+  acum **„Gata de servire"**, ca în magazin, nu „Copt (gata de servit)";
+- în **Laborator**: pe eticheta variantei, pe fiecare card de comandă;
+- în **Statistici**, pe vederea „Registrul": în legenda cardului „Congelate ori
+  gata de servire?". Același nume stă și pe chipul de sus al vederii
+  „Inelul zilei" și în foaia care se deschide când apeși o categorie
+  (**„Gata de servire · congelate"**).
+
+Pe tema întunecată semnele se luminează un pic, ca să nu se piardă pe fundal.
+
+**Singurul loc fără semn** e lista deschisă a unei casete de alegere — de
+pildă varianta, în formularul de comandă. O listă ca aceea nu poate purta
+desene; închisă, caseta își are semnul în față.
+
+### 13.2 Trei prețuri, și ce refuză formularul
+
+`/lab/produse.html` → pe rândul lui „Plimbare 2.5.0", **„Editează"**.
+
+**Trebuie să vezi**, de sus în jos: **un singur rând de praguri** — „Prețul B
+începe de la" și „Prețul C începe de la" —, apoi cele două panouri, fiecare cu
+**Preț A, Preț B, Preț C**. Sub fiecare preț scrie cine îl primește: **„1–99
+buc."**, **„100–299 buc."**, **„300+ buc."**.
+
+Acum îl strici, câte un lucru o dată, și pui la loc după fiecare:
+
+1. Preț B la congelate: **4,50**. Caseta se încercuiește cu roșu, iar sub
+   panou scrie *„Prețul B (4,50 lei) trebuie să fie mai mic decât A (4,20
+   lei)."*
+2. Pragul C: **80**. Sub rândul pragurilor: *„Pragul C (80 buc.) trebuie să fie
+   mai mare decât pragul B (100 buc.)."*
+3. Pragul B, golit: *„Scrie de la câte bucăți începe prețul B."*
+
+Pe oricare din ele apeși **„Salvează"**.
+
+**Trebuie să vezi:** nu pleacă nimic. Sus scrie prima greșeală, cu
+**„Prețurile după cantitate: …"** în față. Serverul judecă la fel, dar
+formularul nu-l mai deranjează cu o cerere care s-ar întoarce refuzată.
+
+Pui totul la loc (4,20 · 3,90 · 3,60, pragurile 100 și 300) și salvezi.
+
+**Trebuie să vezi**, pe rândul din listă, tabelul treptelor: **„1+"**,
+**„100+"**, **„300+"**, cu prețurile sub ele, câte un rând pentru fiecare
+catalog, cu semnul lui în față. Prețul A e scris apăsat.
+
+### 13.3 Scara de pe card, și îndemnul
+
+Magazinul, 1440, fila **„Congelate"**. Din butoanele desenate de deasupra
+produselor alegi **„Unul pe rând, cu toate detaliile"**, și găsești „Plimbare
+2.5.0" în grupa lui.
+
+**Trebuie să vezi:** trei căsuțe alăturate — **„1–99 buc. · 4,20 RON"**,
+**„100–299 buc. · 3,90 RON"**, **„300+ buc. · 3,60 RON"** — și **niciuna
+aprinsă**: produsul nu e încă în coș, deci n-a ajuns nimeni nicăieri. Dedesubt,
+rândul celuilalt catalog, cu flacăra în față: **„Gata de servire: 5,20 RON"**.
+
+Apeși **„Adaugă la ofertă"**, apoi, în căsuța dintre „−" și „+", scrii **88**.
+
+**Trebuie să vezi:** căsuța **„1–99 buc."** se aprinde în auriu, iar sub scară
+apare îndemnul: *„Încă 12 buc. și prețul scade la 3,90 RON/buc."*
+
+Deschizi și pagina produsului, `/produs/<numele-produsului>`, ca la 10.6.
+
+**Trebuie să vezi amândouă scările**, fiecare cu semnul și numele catalogului
+ei. Aprinsă e numai cea de congelate — latura pe care ai bucăți în coș.
+
+### 13.4 Coșul trece de 100
+
+Înapoi în catalog, pe același card: **100** în loc de 88.
+
+**Trebuie să vezi**, pe rândul din coș: *„140 g · 3,90 RON/buc · preț de la 100
+buc. · Congelate"*, iar suma rândului **390,00 RON** — nu 420. Pe card, auriul
+a trecut pe **„100–299 buc."**, iar îndemnul spune acum cât mai e până la C.
+
+Apoi scrii **60** la congelate, comuți pe **„Gata de servire"** și pui încă
+**60** de acolo.
+
+**Trebuie să vezi:** niciun rând n-a primit B. Bucățile se numără **pe fiecare
+catalog în parte**, fiindcă și prețurile sunt ale fiecăruia: 60 de congelate și
+60 gata de servire nu fac 120, ci câte 60. Pe amândouă rândurile, îndemnul
+spune cât mai lipsește până la 100.
+
+La capăt golești coșul, cu **„Golește"**.
+
+### 13.5 O comandă corectată peste trepte
+
+`/lab/comenzi.html` → **„+ Comandă nouă"**. La client scrii „Plimbare 2.5.0".
+Pe poziție alegi întâi varianta **„Congelate"**, apoi scrii cantitatea
+**150** și, la nume, „plimbare".
+
+**Trebuie să vezi**, în lista scurtă de sub nume, scara produsului pe scurt:
+*„140 g · 4,20 → 3,60 RON"* — de la prețul A până la cel mai mic. Îl alegi.
+
+**Trebuie să vezi**, sub poziție, rândul de bani: *„150 × 3,90 (preț B, de la
+100 buc.) = 585,00 RON"*. Apeși **„Adaugă comanda"**.
+
+Acum schimbi catalogul pe sub comandă: în Catalog, Preț B la congelate devine
+**4,00**, și salvezi. Înapoi în Comenzi, pe comanda nouă: **„Vezi produsele"** →
+**„Editează comanda"**.
+
+**Trebuie să vezi** tot *„150 × 3,90 (preț B, de la 100 buc.)"*. Prețul promis
+rămâne, deși în catalog B e acum mai scump.
+
+Apoi schimbi numai cantitatea, pe rând, **fără să salvezi**:
+
+| Cantitatea | Trebuie să vezi | De ce |
+|---|---|---|
+| **350** | *„350 × 3,60 (preț C, de la 300 buc.)"* | a urcat într-o treaptă mai bună: toate bucățile trec pe ea |
+| **90** | *„90 × 4,20"* | a coborât sub pragul promis, deci promisiunea cade |
+| **160** | *„150 × 3,90 (preț B, de la 100 buc.) + 10 × 4,00 (preț B, de la 100 buc.)"* | cele 150 își păstrează prețul; cele 10 noi iau prețul de azi |
+
+Rândul cu 90 e cel care contează: fără el, „cer 150 la B, apoi tai la 90" ar fi
+adus B unei cantități care nu l-ar fi primit niciodată.
+
+Închizi formularul cu **×**, fără să salvezi. În Catalog pui B la loc,
+**3,90**. Comanda o anulezi ca la 7.4: **„Editează comanda"** → la **„Stare"**,
+**„Anulată"** → **„Salvează modificările"**.
+
+### 13.6 Vederile magazinului, și cea de pornire din Setări
+
+O **fereastră privată** (`Ctrl+Shift+N`), 1440, `http://127.0.0.1:8101/catalog`.
+
+**Trebuie să vezi:** se deschide pe **„Patru pe ecran"** — patru carduri pe
+rând. Treci pe **„Unul pe rând"** și pe **„Șase pe ecran"**: nicio poză, niciun
+nume și niciun preț peste altul, nimic tăiat pe margine. Rămâi pe „Șase" și
+reîncarci: se deschide tot pe „Șase", fiindcă alegerea ta se ține minte.
+
+Acum schimbi pornirea. În panou, `/lab/setari.html` → fila **General** →
+cardul **„Catalogul"** → la **„Cum se deschide magazinul pe calculator"**
+alegi **„Unul pe rând, cu toate detaliile"** → **„Salvează"**. Reîncarci
+fereastra privată.
+
+**Trebuie să vezi:** se deschide pe **„Unul pe rând"**, deși acolo alesesei
+„Șase". Alegerea fusese făcută sub vechea pornire; o pornire nouă ajunge la
+toată lumea, și la cine își alesese alta înainte.
+
+Pui la loc **„Patru pe ecran"** în Setări, și salvezi.
+
+Tot în fereastra privată treci pe 390 și reîncarci.
+
+**Trebuie să vezi:** pornește pe **„Unul pe rând"** — pornirea de telefon, pe
+care n-ai atins-o. Alegerea de pe calculator nu trece pe telefon: se țin minte
+deosebit. „Patru pe ecran" pune **două** carduri pe rând, „Șase pe ecran"
+**trei**: pe un ecran îngust grila pune câte încap, fără să strivească vreun
+card.
+
+### 13.7 Filtrele magazinului
+
+Tot în magazin, pe 1440, cu fila „Congelate":
+
+- în căutare scrii **„plimbare"** → rămâne numai produsul de plimbare;
+- golești căutarea și apeși **„Cu preț de volum"** → rămân numai produsele cu
+  B, adică și al tău;
+- la **„Ordonează"** alegi **„Preț crescător"** → produsele se așază după
+  prețul A, dar **înăuntrul fiecărei grupe**: grupele rămân în ordinea lor;
+- scrii **„zzz"** în căutare.
+
+**Trebuie să vezi**, la ultima: **„Niciun produs nu se potrivește"**, cu
+butonul **„Șterge filtrele"**. Îl apeși, și catalogul revine întreg.
+
+Pe telefon (390), filtrele stau strânse sub butonul **„Filtre"**. Îl deschizi
+și aprinzi **„Cu preț de volum"**.
+
+**Trebuie să vezi:** butonul scrie acum **„Filtre · 1"**. Căutarea nu se
+numără acolo: se vede oricum.
+
+### 13.8 Vederile și filtrele din Catalog
+
+`/lab/produse.html`, 1440. Lângă comutatorul de sus stau trei butoane desenate,
+**„Cum se arată produsele"**.
+
+**Trebuie să vezi:** „Unul pe rând" e lista de până acum; „Patru" și „Șase"
+sunt plăci. Pe placă tabelul treptelor e întors — treptele pe rânduri,
+cataloagele pe coloane, fiindcă trei trepte nu încap pe lățimea unei plăci mici
+—, și nimic nu e tăiat. Alegi „Șase" și reîncarci: se deschide tot pe „Șase".
+Setările nu ating vederea asta; cele de la 13.6 sunt pentru clienți.
+
+Apoi, pe rând:
+
+- pastila **„Cu preț de volum"** → rămâne „Plimbare 2.5.0";
+- **„Doar prețul A"** → rămân celelalte, fără el;
+- ordinea **„Prețul A, crescător"**;
+- **„Arată tot"** → totul revine.
+
+**Trebuie să vezi** pe fiecare pastilă numărul produselor ei. Una cu zero e
+stinsă și nu se apasă: n-ar avea ce arăta.
+
+Pe telefon (390), grupa, ordinea și pastilele stau sub butonul **„Filtre"**,
+iar **„Congelate | Gata de servire | Amândouă"** sunt trei căsuțe egale, pe un
+rând.
+
+### 13.9 Conturile, pe plăci
+
+Ieși și intri cu `testadmin` → `/lab/conturi.html`, 1440.
+
+**Trebuie să vezi:**
+
+- conturile ca **plăci, patru pe rând**, în ordinea rolurilor — fondatorii
+  întâi, clienții la coadă —, iar în fiecare rol după nume;
+- deasupra lor, pastilele rolurilor, fiecare cu numărul ei: **Toate ·
+  Fondatori · Administratori · Manageri · …**. Un rol fără niciun cont nu are
+  pastilă;
+- pe placa fondatorului, insigna rolului în **auriu**;
+- pe placa ta, **„contul tău"**.
+
+Apeși pastila **„Clienți"**, apoi cauți „Angajat". Nu e client, deci lista
+rămâne goală.
+
+**Trebuie să vezi**, sub ea, butonul **„Caută în toate rolurile · …"**, cu
+numărul potrivirilor. Îl apeși, și îl găsești pe Angajat Test.
+
+Apeși placa lui.
+
+**Trebuie să vezi:** fișa lui se deschide **pe loc**, pe toată lățimea, chiar
+sub rândul plăcii — nu pe altă pagină. Apeși altă placă: prima fișă se
+strânge, se deschide a doua. **„Strânge"** o închide.
+
+Deschizi iar fișa lui Angajat Test. **Trebuie să vezi**, la **„Acces"**, în
+listă numai numele rolului, „Angajat", iar lângă ea, mai mic, ce poate rolul:
+*„Laborator, rută, depozit, pontaj"* — pe telefon, rândul acela stă sub listă.
+
+Deasupra butoanelor de jos stă comutatorul **„Cont pornit"**. Îl apeși.
+
+**Trebuie să vezi:** nu pleacă nimic. Comutatorul se stinge, rama rândului se
+face roșie și apare întrebarea **„Oprești contul…?"**, cu **„Renunț"** și
+**„Oprește contul"**. Apeși **„Renunț"**: comutatorul e iar pornit. Nu opri
+contul: e al probelor de la „După plimbare".
+
+Deschizi apoi fișa ta și pe a fondatorului. **Trebuie să vezi** comutatorul
+stins la amândouă, cu motivul dedesubt: pe a ta, *„nimeni nu-și poate opri
+propriul cont"*; pe a fondatorului, *„îl oprește și îl pornește numai un
+fondator"*.
+
+Treci și pe **„Plăci: șase pe rând"** și pe **„Listă"**, apoi reîncarci:
+vederea se ține minte.
+
+**Dacă vreun cont are parolă provizorie**, uită-te la insigna lui la toate
+cele trei lățimi. Pe o placă lată scrie **„PAROLĂ PROVIZORIE"**; pe una
+îngustă, numai **„PROVIZORIE"**. Niciodată tăiat cu „…".
+
+**Dacă vreun cont are un nume lung**, de pildă o firmă, uită-te la placa lui la
+390, în „Șase pe rând". **Trebuie să vezi** cuvintele întregi, cel mult cu
+litera puțin mai mică decât a vecinilor, nu „Restaurant" pe un rând și „ul"
+pe următorul.
+
+**La capăt**, scoți produsul de plimbare. În Catalog, pe rândul lui, **×**.
+Apare într-o comandă — cea anulată de la 13.5 —, deci nu se poate șterge:
+fereastra îți dă **„Scoate din catalog"**. După asta nu se mai vede nici în
+magazin, nici în formularul de comandă.
+
+---
+
+## 14 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -1635,6 +1961,16 @@ cutia lor**. Ce n-au voie e să miște pagina întreagă.
 **Statisticile se probează la toate trei vederile** (cele de la 6.1), nu doar la
 una: e aceeași pagină croită de trei ori, deci sunt trei așezăminte de verificat
 la fiecare lățime. Inelul are voie să se micșoreze, dar nu să-și taie scrisul de pe felii.
+
+**Vederile noi se probează și ele la toate trei** (cele de la 13.6, 13.8 și
+13.9): magazinul în „Unul pe rând", „Patru" și „Șase", Catalogul din panou și
+plăcile din Conturi. La fiecare lățime, niciun card peste altul și nimic
+tăiat pe margine.
+
+**Butonul plutitor de WhatsApp**, pe prima pagină: cât se vede butonul verde
+mare de sus, **plutitorul nu e pe ecran**. Derulezi până iese cel de sus din
+ecran: plutitorul apare în colț, fără să stea peste vreun buton. Urci iar: se
+ascunde.
 
 ---
 
@@ -1677,6 +2013,12 @@ Ca să nu cauți ce nu s-a stricat:
   Conturi și Comenzi. Tot de acolo: **pe tabletă (820) capetele de coloană din
   Statistici au încă 18 px** — banda de tabletă n-a intrat în 2.1.1. Nu le
   scrie ca defecte noi; un buton principal sub 44 px pe 390, da.
+- **Latura congelată are încă două nume**: „Congelate" în magazin, în
+  Catalog, în filtrele din Statistici și, din 2.5.0, în formularul de comandă;
+  „Congelat" pe cardurile din Laborator și din Comenzi și pe fișa produsului
+  din magazin. Capetele scurte de coloană din Statistici („Gata", „Congelat")
+  și insignele de pe prima pagină („Congelat crud", „Gata de consum") sunt
+  alt fel de text. Dacă le vrei la fel peste tot, e o hotărâre, nu un defect.
 
 ---
 
@@ -1695,11 +2037,12 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele treisprezece ies, proba automată se mai trece o dată pe deasupra:
+Când toate cele paisprezece ies, proba automată se mai trece o dată pe
+deasupra:
 
 ```bash
 node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.4.2`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.5.0`.

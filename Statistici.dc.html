@@ -443,7 +443,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
    de loc mort între două ținte, și lista crește mai puțin (213 → 264px, nu 299).
    Pe monitor nu se schimbă nimic. Pe tabletă (761–1150px) capetele rămân de
    18px: banda de tabletă n-a intrat în lucrarea asta și e știută. */
-.st-capbtn{min-height:44px}
+.st-capbtn{min-height:44px;white-space:normal} /* sub 366 de puncte „Cât din vârf” nu mai încape pe un rând în coloana lui (74px la 320) și călca peste „Gata”, de alături: acum se rupe pe două rânduri, în cele 44px pe care capul le are oricum */
 .st-leg{gap:0}
 .st-legrand{min-height:44px}
 .st-azile{width:100%}
@@ -793,11 +793,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <section class="st-bintrebare">
 <span class="st-bnr">A DOUA</span>
-<h3>Congelate ori gata de mâncat?</h3>
+<h3>Congelate ori gata de servire?</h3>
 <p class="st-sub">Aceeași marfă, două feluri de a o cumpăra. Congelatele se coc la client, deci se vând altfel.</p>
 <div class="st-bdoua">
 <div class="st-inelbox">
-<svg viewBox="0 0 160 160" role="img" aria-label="Inel: cât e gata de mâncat și cât e congelat">
+<svg viewBox="0 0 160 160" role="img" aria-label="Inel: cât e gata de servire și cât e congelat">
 <circle cx="80" cy="80" r="66" fill="none" stroke="var(--st-gol)" stroke-width="18"></circle>
 <sc-for list="{{ bFel }}" as="f" hint-placeholder-count="2">
 <circle class="st-felie st-felie--mic" cx="80" cy="80" r="66" fill="none" stroke="{{ f.culoare }}" stroke-dasharray="{{ f.dash }}" stroke-dashoffset="{{ f.off }}" stroke-linecap="round" transform="rotate(-90 80 80)"><title>{{ f.spus }}</title></circle>
@@ -811,7 +811,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="st-blista">
 <sc-for list="{{ bFel }}" as="f" hint-placeholder-count="2">
 <button type="button" class="st-blin" onClick="{{ f.onClick }}">
-<span class="st-blnm">{{ f.nume }}</span>
+<span class="st-blnm"><gp-semn latura="{{ f.latura }}" aria-hidden="true" style="margin-right:6px"></gp-semn>{{ f.nume }}</span>
 <span class="st-blvl">{{ f.scris }} · {{ f.pct }}</span>
 <span class="st-blbr"><i style="width:{{ f.lat }};background:{{ f.culoare }}"></i></span>
 </button>
@@ -1472,7 +1472,7 @@ class Component extends DCLogic {
        se taie la șapte felii, nu la opt: a opta ar fi nimerit tocmai
        portocaliul coptului, iar omul ar fi citit o categorie ca pe un fel. */
     const CULOARE_FEL = { copt: "#FF6A00", congelat: "#00C6FF" };
-    const numeFel = (c) => c === "copt" ? "gata de mâncat" : (c === "congelat" ? "congelate" : (c || "nespus"));
+    const numeFel = (c) => c === "copt" ? "gata de servire" : (c === "congelat" ? "congelate" : (c || "nespus"));
 
     const inelAfara = felii(
       fel.map((f) => ({ nume: numeFel(f.cheie), val: nr(f.bucati), od: f })), 4, RAZA_AFARA,
@@ -1656,7 +1656,7 @@ class Component extends DCLogic {
       })),
     });
     const cete = [
-      ceata("Felul mărfii", "variant", [["", "Toate"], ["copt", "Gata de mâncat"], ["congelat", "Congelate"]]),
+      ceata("Felul mărfii", "variant", [["", "Toate"], ["copt", "Gata de servire"], ["congelat", "Congelate"]]),
       ceata("Categoria", "categorie", [["", "Toate"]].concat((filtre.categorii || []).map((c) => [c, c]))),
       ceata("Cum a venit", "canal", [["", "Toate"]].concat((filtre.canale || []).map((c) => [c, numeCanal(c)]))),
       ceata("Cum a plecat", "onorare", [["", "Toate"]].concat((filtre.onorare || []).map((c) => [c, c]))),
@@ -1707,6 +1707,8 @@ class Component extends DCLogic {
     const bFel = felii(
       fel.map((f) => ({ nume: numeFel(f.cheie), val: nr(f.bucati), od: f })), 4, RAZA_MIC,
     ).map((f, i) => Object.assign(f, {
+      // Semnul laturii, înaintea numelui ei, ca în magazin; felia „altele" n-are.
+      latura: f.rest ? "" : ((fel[i] || {}).cheie || ""),
       culoare: f.rest ? CULOARE_ALTELE : (CULOARE_FEL[(fel[i] || {}).cheie] || CULOARE_ALTELE),
       eticheta: "Felul mărfii",
       scris: buc(f.val) + " buc",
@@ -1817,10 +1819,10 @@ class Component extends DCLogic {
       },
       fel: {
         eyebrow: "Felul mărfii",
-        titlu: "Copt și congelat",
+        titlu: "Gata de servire și congelate",
         mare: buc(rez.bucati) + " buc",
         cifre: fel.map((f) => ({ et: numeFel(f.cheie), val: buc(f.bucati) + " buc · " + lei(f.bani) })),
-        text: "Felul stă pe POZIȚIE, nu pe comandă: o comandă poate avea și copt, și congelat, iar pe ea scrie atunci „mixt”. De-aia cele două cifre de aici se adună exact la total, lucru care nu s-ar fi întâmplat dacă s-ar fi numărat comenzile.",
+        text: "Felul stă pe POZIȚIE, nu pe comandă: o comandă poate avea și marfă gata de servire, și congelată, iar pe ea scrie atunci „mixt”. De-aia cele două cifre de aici se adună exact la total, lucru care nu s-ar fi întâmplat dacă s-ar fi numărat comenzile.",
       },
       onorare: {
         eyebrow: "Cum pleacă marfa",
@@ -1858,7 +1860,7 @@ class Component extends DCLogic {
         if (od.bucati !== undefined) cifre.push({ et: "Bucăți", val: buc(od.bucati) });
         if (od.bani !== undefined) cifre.push({ et: "Bani", val: lei(od.bani) });
         if (od.comenzi !== undefined) cifre.push({ et: "Comenzi", val: String(od.comenzi) });
-        if (od.copt !== undefined) cifre.push({ et: "Copt · congelat", val: buc(od.copt) + " · " + buc(od.congelat) });
+        if (od.copt !== undefined) cifre.push({ et: "Gata de servire · congelate", val: buc(od.copt) + " · " + buc(od.congelat) });
         if (od.produse !== undefined) cifre.push({ et: "Produse în ea", val: String(od.produse) });
         if (od.cont !== undefined) cifre.push({ et: "Are cont", val: od.cont ? "da" : "nu, comandă scrisă pe nume" });
         cifre.push({ et: "Din inel", val: f.pct });
@@ -2008,8 +2010,8 @@ class Component extends DCLogic {
       cCategorie: cio.categorie, onCCategorie: puneCio("categorie"),
       cZona: cio.zona, onCZona: puneCio("zona"),
       cClient: cio.client, onCClient: puneCio("client"),
-      optFel: [{ v: "", l: "toate" }, { v: "copt", l: "gata de mâncat" }, { v: "congelat", l: "congelate" }],
-      optFelC: [{ v: "", l: "Toată marfa" }, { v: "copt", l: "Gata de mâncat" }, { v: "congelat", l: "Congelate" }],
+      optFel: [{ v: "", l: "toate" }, { v: "copt", l: "gata de servire" }, { v: "congelat", l: "congelate" }],
+      optFelC: [{ v: "", l: "Toată marfa" }, { v: "copt", l: "Gata de servire" }, { v: "congelat", l: "Congelate" }],
       optCategorii, optZone,
       aplicaCls: neaplicat ? "st-aplica st-aplica--nou" : "st-aplica",
       aplicaEt: neaplicat ? "Fă socoteala" : "Socoteala e la zi",
@@ -2120,7 +2122,7 @@ class Component extends DCLogic {
         ? "Niciun produs nu trece de filtrele puse. Șterge-le și se întorc toate."
         : "Nicio poziție de comandă pe intervalul ăsta.",
       subsol: D
-        ? "Banii se socotesc din pozițiile comenzilor (cantitate × preț de pe rând), deci o comandă fără nicio poziție nu se numără nicăieri. Felul mărfii — copt sau congelat — stă pe poziție, nu pe comandă. Comenzile din etapa „"
+        ? "Banii se socotesc din pozițiile comenzilor (cantitate × preț de pe rând), deci o comandă fără nicio poziție nu se numără nicăieri. Felul mărfii — gata de servire sau congelată — stă pe poziție, nu pe comandă. Comenzile din etapa „"
           + (etape.anulata || "anulată") + "” sunt scoase din toate cifrele în afară de cele două care le numără anume."
         : "",
 

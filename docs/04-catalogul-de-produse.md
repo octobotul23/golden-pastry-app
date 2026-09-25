@@ -34,31 +34,50 @@ Acum există un singur catalog: baza de date.
 
 ### Cele două cataloage
 
-| Pe site | În formular | Ce înseamnă |
-|---|---|---|
-| Congelate | Preț congelat | livrat în lanț frigorific |
-| Gata de servire | Preț gata de servire | livrat gata de vânzare |
+| Pe site | Semnul | În formular | Ce înseamnă |
+|---|---|---|---|
+| Congelate | fulg albastru | panoul „Congelate" | livrat în lanț frigorific |
+| Gata de servire | flacără portocalie | panoul „Gata de servire" | livrat gata de vânzare |
 
-Fiecare preț stă lângă **bifa catalogului** lui. Un produs poate fi numai
-într-unul din cele două — asta e chiar rostul bifelor: la gata de servire sunt
-mai multe produse decât la congelate, și sunt grupe care se văd numai acolo.
+Fiecare catalog are în formular **panoul lui**: semnul, numele, comutatorul
+**În catalog** și trei casete de preț, **A, B și C**. A e prețul dintotdeauna;
+B și C sunt prețurile de volum și pot rămâne goale — v. „Trei prețuri, după
+cantitate", mai jos. Un produs poate fi numai într-unul din cele două — asta e
+chiar rostul comutatoarelor: la gata de servire sunt mai multe produse decât la
+congelate, și sunt grupe care se văd numai acolo.
 
-Două lucruri de ținut minte, fiindcă altfel par scăpări:
+Trei lucruri de ținut minte, fiindcă altfel par scăpări:
 
-- **scoaterea dintr-un catalog nu șterge prețul.** Caseta rămâne scrisă, doar
-  ștearsă la vedere; bifa îl pune la loc fără să-l cauți;
-- **o bifă aprinsă cere prețul ei.** Dacă îl aprinzi fără preț, salvarea e
-  refuzată și mesajul spune care catalog. Poți aprinde bifa și scrie prețul în
-  aceeași salvare;
+- **scoaterea dintr-un catalog nu șterge prețurile.** Casetele rămân scrise,
+  doar șterse la vedere; comutatorul le pune la loc fără să le cauți;
+- **un comutator aprins cere prețul A de acolo.** Dacă îl aprinzi fără preț,
+  salvarea e refuzată și mesajul spune care catalog. Poți aprinde comutatorul și
+  scrie prețul în aceeași salvare;
 - **un produs trebuie să fie în cel puțin un catalog.** Dacă nu se mai vinde
-  deloc, nu stinge amândouă bifele — apasă „Scoate din catalog" pe rândul lui.
-  Aia e fapta care se numește așa, și se poate întoarce oricând.
+  deloc, nu stinge amândouă comutatoarele — apasă „Scoate din catalog" pe rândul
+  lui. Aia e fapta care se numește așa, și se poate întoarce oricând.
 
-Pe rândurile din listă, cele două bife sunt **pastile**: arată dintr-o privire
-unde e fiecare produs și se apasă ca să-l muți. Deasupra listei,
-**„Congelate | Gata de servire | Amândouă"** taie lista pe un catalog sau
-le arată pe amândouă — pe „Amândouă" se vede oglinda, adică ce lipsește dintr-o
-parte. O grupă fără produse în catalogul deschis se ascunde singură.
+Pe rândurile din listă, cele două comutatoare sunt **pastile**, fiecare cu
+semnul lui: arată dintr-o privire unde e fiecare produs și se apasă ca să-l
+muți. Deasupra listei, **„Congelate | Gata de servire | Amândouă"** taie lista
+pe un catalog sau le arată pe amândouă — pe „Amândouă" se vede oglinda, adică
+ce lipsește dintr-o parte. O grupă fără produse în catalogul deschis se ascunde
+singură.
+
+**Semnele.** Fulgul albastru și flacăra portocalie, desenată numai din contur,
+stau **înaintea cuvântului** oriunde apare unul din cele două cataloage: pe
+comutatorul magazinului — și pe calculator, nu numai în pastila de pe telefon —,
+pe rândul de pe card care spune ce costă produsul în celălalt catalog, deasupra
+scărilor de preț din pagina produsului, aici în Catalog, pe cererile de pe site
+și lângă varianta fiecărei poziții din formularul de comandă, pe cardurile din
+laborator și în Statistici. Sunt desenate într-un singur loc, `shared/gp-api.js`
+(`<gp-semn latura="congelat">` și `latura="copt"`), deci arată la fel peste tot.
+Singurul loc fără ele e lista deschisă a unei casete derulante: o opțiune dintr-un
+`<select>` nu poate purta un desen, deci acolo rămâne numai cuvântul.
+
+> Până la 2.5.0, semnele — un fulg și un clopot de servire — stăteau numai în
+> pastila de pe telefon, iar în formular fiecare catalog avea o singură casetă,
+> „Preț congelat" ori „Preț gata de servire".
 
 **Prețul depinde de variantă, nu de client.** Asta a fost o corecție: coloanele
 se numeau `price_horeca` și `price_retail`, iar serverul alegea prețul după cum
@@ -261,6 +280,239 @@ nu se atinge.
 
 ---
 
+## Trei prețuri, după cantitate
+
+Până la 2.5.0 un produs avea un singur preț în fiecare catalog. Acum poate avea
+trei: **A** pentru puține bucăți, **B** de la un prag, **C** de la al doilea.
+Cine cumpără mai mult plătește mai puțin pe bucată — și vede asta înainte să
+comande, nu abia pe factură.
+
+| Bucăți | Treapta | De pildă |
+|---|---|---|
+| 1–99 | A | 4,20 lei |
+| 100–299 | B | 3,90 lei |
+| 300 și peste | C | 3,60 lei |
+
+Cifrele sunt doar o pildă: fiecare produs își are pragurile lui. Un produs fără
+B și C rămâne cu un singur preț, exact ca până acum — pe site, în coș și pe
+factură nu se schimbă nimic la el.
+
+### Unde se scriu
+
+În formularul produsului, secțiunea **Prețuri, după cantitate**. Sus stă **un
+singur rând de praguri** — „Prețul B începe de la … buc." și „Prețul C începe
+de la … buc." —, iar sub el cele două panouri, fiecare cu **Preț A, Preț B și
+Preț C**.
+
+**Pragurile sunt ale produsului, prețurile ale fiecărui catalog.** Congelatele
+și gata de servire pot avea prețuri deosebite, dar B începe de la aceeași
+cantitate în amândouă. Pus între cele două panouri, rândul pragurilor ar fi
+părut al unuia; de-aia stă deasupra lor.
+
+Sub fiecare casetă de preț scrie cine îl primește, socotit din pragurile de
+deasupra: „1–99 buc.", „100–299 buc.", „300+ buc.". O cifră fără „de la cât"
+te-ar lăsa să ghicești.
+
+Pragurile pornesc precompletate din **Setări → General, cardul „Catalogul"**
+(100 și 300, cum le-a pus migrarea) — la un produs nou, și la unul vechi care
+n-are încă praguri. Nu se aplică însă singure: rândul pragurilor stă șters cât
+nu-l folosește niciun preț B sau C și **nu se salvează** fără ele. Un prag fără
+prețul lui e doar o valoare de pornire.
+
+### Ce se refuză
+
+Formularul judecă treptele **pe măsură ce scrii**: caseta greșită se încercuiește
+cu roșu, iar sub panoul ei scrie ce e de îndreptat. „Salvează" nu pleacă spre
+server cât e ceva roșu, și spune prima greșeală: *„Prețurile după cantitate:
+…"*. Regulile:
+
+- **B mai mic decât A, și C mai mic decât B**, pe fiecare catalog: *„Prețul B
+  (4,50 lei) trebuie să fie mai mic decât A (4,20 lei)."*;
+- **C numai peste un B**, pe același catalog: *„Prețul C pentru congelate are
+  nevoie de prețul B de acolo."*;
+- **un preț B cere pragul B**, un preț C pragul C: *„Scrie de la câte bucăți
+  începe prețul B."*;
+- **pragurile sunt bucăți întregi, între 2 și 10000**, iar **C stă peste B**:
+  *„Pragul C (80 buc.) trebuie să fie mai mare decât pragul B (100 buc.)."*
+  Pragul 1 ar fi făcut din B prețul oricui.
+
+Serverul judecă la fel, cu aceleași reguli, și refuză salvarea întreagă: paza
+din pagină doar îți spune mai devreme.
+
+Dacă cineva scrie totuși cu mâna în bază un B mai scump decât A, treapta aceea
+**nu se aplică** deloc, și nici C de deasupra ei: o treaptă se aplică numai
+întreagă și mai ieftină.
+
+Pe o bază fără migrarea 028, B și C n-au unde se scrie. O salvare care aduce un
+preț B ori C e refuzată pe față, cu numele migrării — altfel ai fi primit
+„salvat", iar clientul ar fi plătit tot A. Cu casetele B și C goale, produsul se
+salvează ca înainte.
+
+### Cum se numără bucățile
+
+**Pe tot coșul, pe fiecare catalog în parte.** Treapta nu se alege după un rând,
+ci după suma produsului din tot coșul: același produs poate sosi pe două rânduri
+— trei bucăți din pachetul de test și o sută puse cu mâna —, iar clientul a
+cumpărat o sută trei, nu trei și o sută.
+
+Cataloagele se numără deosebit, fiindcă prețurile sunt ale fiecăruia: **60 de
+congelate și 60 gata de servire nu fac 120**, ci câte 60 în fiecare parte.
+
+Treapta atinsă se plătește **pe toate bucățile**, nu numai pe cele de peste
+prag: 150 de bucăți la B înseamnă 150 × 3,90, nu 99 × 4,20 + 51 × 3,90.
+
+**Banii îi socotește serverul.** Pagina arată treapta ca omul să știe la ce să
+se aștepte, dar suma comenzii o face serverul la trimitere, după aceleași reguli.
+O pagină rămasă deschisă de ieri nu poate vinde la prețul de ieri.
+
+### Ce vede clientul
+
+În magazin **toate treptele se văd deodată**, pe fiecare card. Cum se așază
+depinde de vedere (v. „Cum se vede catalogul", mai jos):
+
+| Unde | Cum arată scara |
+|---|---|
+| „Unul pe rând" și pagina produsului | trei căsuțe alăturate, sub „Preț pe bucată, după cantitate": „1–99 buc. · 4,20 RON", „100–299 buc. · 3,90 RON", „300+ buc. · 3,60 RON" |
+| „Patru pe ecran", pe calculator | trei rânduri sub poză: „1–99", „100–299", „300+" |
+| „Șase pe ecran", și „patru" pe telefon | A rămâne prețul mare al cardului; dedesubt, pe scurt, numai B și C: „100+ buc. 3,90" |
+
+**Treapta în care a ajuns coșul se aprinde în auriu.** Cu produsul lipsă din
+coș nu se aprinde nimic: nimeni n-a ajuns încă nicăieri.
+
+**Îndemnul.** Cât mai e o treaptă de urcat, sub scară scrie cât lipsește:
+*„Încă 12 buc. și prețul scade la 3,90 RON/buc."* Apare pe cardul din „unul pe
+rând" (după ce produsul e în coș), în pagina produsului, pe rândurile din coș și
+în „Produse selectate", din formularul de comandă. Nu apare la pachetul de test,
+și nici în treapta de sus, unde n-ar mai avea ce promite.
+
+**Rândul din coș** spune prețul plătit și de unde vine: *„140 g · 3,90 RON/buc ·
+preț de la 100 buc. · Congelate"*. Totalul, comanda minimă de 700 RON și textul
+trimis pe WhatsApp socotesc tot cu prețurile treptelor.
+
+### Pachetul de test
+
+Reducerea pachetului de test (−20% la trei bucăți din fiecare produs, o singură
+dată pe client) se socotește din prețul A. Bucățile lui **intră în
+numărătoare**: trei din pachet și 97 puse cu mâna fac 100, deci prețul B. Iar
+ele se plătesc cu **cel mai mic** dintre prețul pachetului și prețul treptei —
+o reducere n-are voie să iasă mai scumpă decât volumul.
+
+### O comandă corectată
+
+Treapta se scrie pe fiecare rând al comenzii, cu pragul care a câștigat-o. La o
+corectură, bucățile deja promise se mai judecă o dată, după cantitatea de acum:
+
+| Ce s-a schimbat | Ce se întâmplă |
+|---|---|
+| cantitatea a rămas peste pragul promis | **promisiunea rămâne**, chiar dacă între timp ai scumpit ori ai mutat pragurile |
+| cantitatea a urcat într-o treaptă mai bună | toate bucățile trec pe ea: 150 la B care ajung 350 se plătesc toate la C, dacă C e mai mic |
+| cantitatea a coborât sub pragul promis | promisiunea cade: bucățile se plătesc la treapta de azi a cantității noi |
+| bucăți adăugate | la treapta de azi |
+
+Al treilea rând închide o portiță: fără el, „cer 150 la B, apoi tai la 90" ar fi
+adus B pentru o cantitate care nu l-ar fi primit niciodată. Singura excepție e
+un catalog care azi **n-are niciun preț**: atunci promisiunea rămâne, fiindcă
+marfa e deja convenită, iar un refuz ar îngheța toată comanda.
+
+Când o comandă păstrează un preț promis deosebit de cel de azi, Jurnalul o
+spune, ca până acum: *„„Croissant" (congelat) × 150 onorat la 3,90 lei, în
+catalog 4,20 lei"*.
+
+Comenzile de dinainte de 2.5.0 n-au treapta scrisă, deci se citesc ca A:
+prețul lor de atunci rămâne, iar o corectură care le urcă peste un prag le dă
+treapta mai bună, ca oricărei alte comenzi.
+
+### Unde se vede treapta
+
+În magazin, pe carduri și în coș. În panou, **numai în formularul de comandă**
+(v. „Banii, cât scrii comanda", mai jos). Restul casei — Statisticile,
+Recomandările, e-mailurile comenzii — citește prețul scris pe rând, ca până
+acum: treapta e doar felul în care s-a ajuns la el.
+
+---
+
+## Cum se vede catalogul: vederi și filtre
+
+### În magazin
+
+Deasupra produselor, trei butoane desenate — **„Cum se vede catalogul"** — aleg
+câte carduri stau pe rând:
+
+| Vederea | Telefon (390) | Tabletă (820) | Calculator, cu coșul alături (1080) | Calculator (1440) |
+|---|---|---|---|---|
+| **Unul pe rând, cu toate detaliile** | 1 | 1 | 1 | 1 |
+| **Patru pe ecran** | 2 | 4 | 3 | 4 |
+| **Șase pe ecran** | 3 | 6 | 5 | 6 |
+
+„Patru" și „șase" sunt **cel mult** atâtea: pe un ecran mai îngust grila pune
+câte încap, fără să strivească vreun card.
+
+- **Unul pe rând** e cardul bogat: poza stă lângă text cât încap amândouă, și
+  deasupra lui pe telefon; are descrierea întreagă, scara în trei căsuțe,
+  îndemnul și rândul celuilalt catalog.
+- **Patru pe ecran**: poză, nume, gramaj, scara. Pe calculator și descrierea,
+  pe două rânduri, și rândul celuilalt catalog.
+- **Șase pe ecran**: poza pătrată, numele, prețul A și, pe scurt, B și C.
+
+**Rândul celuilalt catalog**, cu semnul lui, spune ce costă produsul de partea
+cealaltă — *„Gata de servire: 4,20 RON"* — ori că e numai de-o parte: *„Doar
+congelate"*.
+
+**Cu ce se deschide.** Vederea de pornire o alegi tu, din **Setări → General,
+cardul „Catalogul"**: una pentru telefon și tabletă, alta pentru calculator
+(hotarul e 1080 de puncte). La pornire sunt „Unul pe rând" și „Patru pe ecran".
+Clientul își poate schimba vederea, iar alegerea lui se ține minte în browserul
+lui, deosebit pe telefon și pe calculator — **până schimbi tu vederea din
+Setări**: atunci schimbarea ajunge la toată lumea, și la cine își alesese alta
+înainte.
+
+**Filtrele**, deasupra produselor:
+
+- **„Caută în catalog"** — caută în număr, în nume și în descriere, în amândouă
+  limbile, fără să se uite la diacritice: „strudel" îl găsește pe „Ștrudel";
+- **„Grupe de produse"** — *Toate*, apoi câte o pastilă pe grupă, cu numărul de
+  produse;
+- **„Doar noutăți"** — numai dacă e vreun produs nou;
+- **„Cu preț de volum"** — produsele cu B (ori și C) în catalogul deschis; numai
+  dacă e măcar unul;
+- **„Ordonează"** — *Recomandat · Nume, A–Z · Preț crescător · Preț
+  descrescător*. Prețul e A, iar ordinea se face înăuntrul fiecărei grupe:
+  grupele rămân în ordinea lor.
+
+Când nu se potrivește nimic, pagina scrie **„Niciun produs nu se potrivește"**,
+cu un buton **„Șterge filtrele"**. Pe calculator filtrele stau la vedere; pe
+telefon și tabletă se deschid din butonul **„Filtre"**, chiar sub bara de unelte
+— „Filtre · 2" spune câte sunt aprinse (căutarea nu se numără: se vede oricum).
+
+### În panoul Catalog
+
+Aceleași trei desene, sub numele **„Cum se arată produsele"**: „Unul pe rând"
+e lista de rânduri de până acum, „Patru" și „Șase" sunt plăci. Vederea se ține
+minte în browser și pornește pe „Unul pe rând"; **Setările nu o ating**, fiindcă
+ele sunt pentru clienți.
+
+Lângă **„Congelate | Gata de servire | Amândouă"** stau filtrele panoului:
+
+- **grupa** — *Toate grupele* ori una singură;
+- **ordinea** — *Ordinea din magazin · După nume · Prețul A, crescător · Prețul
+  A, descrescător*; produsele fără preț stau la coadă;
+- câte o pastilă, una singură aprinsă deodată: *Toate · Cu preț de volum · Doar
+  prețul A · Noutăți · Scoase din catalog · De reparat*, fiecare cu numărul ei.
+  „Doar prețul A" sunt produsele cărora li se pot pune praguri; „De reparat",
+  cele cu semnul roșu de pe rând. O pastilă cu zero e stinsă.
+
+**„Arată tot"** le stinge pe toate deodată. Până la 1000 de puncte filtrele stau
+strânse sub butonul **„Filtre"**. Filtrele panoului nu se țin minte: la
+redeschidere pagina arată tot catalogul.
+
+Pe rânduri și pe plăci, prețurile stau într-un tabel mic, **câte un rând pe
+catalog și câte o coloană pe treaptă** — „1+", „100+", „300+" —, cu A îngroșat
+și „—" unde treapta lipsește. Amândouă cataloagele se văd și pe comutatorul unui
+singur catalog: oglinda se citește tocmai punând cifrele una sub alta. Un produs
+cu un singur preț pe catalog arată ca înainte: „2,85 lei", fără tabel.
+
+---
+
 ## Scoaterea unui produs
 
 Butonul **×** de pe rând. Se întâmplă unul din două lucruri, în funcție de
@@ -314,7 +566,8 @@ Acum catalogul vine în întâmpinare, în trei feluri.
 
 Sub casetă apare o listă scurtă cu produsele care se potrivesc: **numele,
 gramajul și prețul bucății** — prețul variantei alese pe poziție, congelat sau
-copt. „cr" scoate croissantele. Potrivirea nu se uită la diacritice și nici la
+copt. La un produs cu trepte, prețul se scrie de la A până la cel mai mic:
+*„140 g · 4,20 → 3,60 RON"*. „cr" scoate croissantele. Potrivirea nu se uită la diacritice și nici la
 majuscule, și caută oriunde în nume, nu doar la început.
 
 Alegi unul din listă și poziția rămâne legată de produsul acela din catalog,
@@ -330,6 +583,11 @@ Fereastra arată, la fiecare produs, **poza lui**, numele, gramajul și prețul
 bucății — prețul variantei alese pe comandă, congelat sau copt. Produsele fără
 fotografie poartă rozeta casei, ca să rămână un rând de aceeași înălțime, nu o
 gaură.
+
+La un produs cu trepte, prețul spune și ce urmează: *„4,20 RON · 3,90 de la 100
+· 3,60 de la 300"*. După ce ai pus 100 de bucăți, același rând arată *„3,90 RON
+(preț B) · 3,60 de la 300"* — cantitatea e cea a produsului pe toată comanda, pe
+varianta lui, cum o numără și serverul.
 
 **Ce ai pus deja se vede, cu cantitate cu tot.** Produsele care au cel puțin o
 bucată pe comandă stau pe **fundal de miere, cu chenar auriu**, iar cifra lor e
@@ -381,6 +639,14 @@ păstrează prețul promis atunci; numai bucata nouă ia prețul de azi. O socot
 din pagină ar fi înmulțit tot cu prețul de azi și ți-ar fi arătat o sumă cu care
 clientul nu fusese de acord.
 
+**Treapta se vede pe rândul de bani.** O poziție plătită la B ori la C își spune
+treapta și pragul care a câștigat-o: *„150 × 3,90 (preț B, de la 100 buc.)"*.
+Pragul e cel promis atunci, adus de server, nu cel de azi din fișa produsului:
+o comandă veche își păstrează treapta chiar dacă între timp ai mutat pragul.
+Ce se întâmplă cu treapta când schimbi cantitatea scrie la „O comandă
+corectată", mai sus; formularul arată exact rezultatul acela, fiindcă îl cere
+serverului.
+
 Cât răspunsul e pe drum, cifra veche stă **stinsă**. O sumă despre care nu se
 știe încă dacă mai e adevărată nu se arată ca și cum ar fi.
 
@@ -397,7 +663,11 @@ date și trimite din prima cerere:
 - titlul și descrierea paginii, cu numărul real de produse și adresa;
 - imaginea de partajare — ce se vede când cineva dă linkul pe WhatsApp;
 - datele structurate **schema.org**: firma, adresa, coordonatele, telefonul,
-  zonele deservite și catalogul complet cu prețuri;
+  zonele deservite și catalogul complet cu prețuri. Prețul unui produs
+  (`offers.price`) rămâne A, cifra pe care o vede omul cu coșul gol; un produs
+  cu trepte mai primește, alături, câte un `UnitPriceSpecification` pe treaptă,
+  cu cantitatea care o primește (`eligibleQuantity`, în bucăți). Treptele se
+  scriu pentru catalogul în care se deschide produsul;
 - catalogul ca text, pentru cine nu rulează JavaScript;
 - `sitemap.xml`, construit tot din baza de date.
 

@@ -22,6 +22,89 @@ body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:v
 a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 @keyframes ct-fade{from{opacity:0}to{opacity:1}}
 @keyframes ct-pop{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* ROLURILE, VEDEREA ȘI PLĂCILE (runda 2.5.0). Pastilele și comutatorul au
+   aceleași forme și aceleași desene ca în Catalog, ca omul care lucrează în
+   amândouă să nu învețe două. Placa e un singur buton: toată suprafața ei
+   deschide fișa, cu tastatura la fel ca cu degetul. */
+[data-ct=roluri]{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+[data-ct=cip]{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);font-family:inherit;font-size:13px;white-space:nowrap;cursor:pointer}
+[data-ct=cip]:hover{border-color:var(--h-accent);color:var(--h-fg)}
+[data-ct=cip][aria-pressed=true]{background:var(--h-accent-soft);border-color:var(--h-accent);color:var(--h-accent-fg);font-weight:700}
+[data-ct=cip]>b{font-weight:700;font-variant-numeric:tabular-nums;opacity:.7}
+[data-ct=vederi]{display:inline-flex;align-items:center;gap:2px;margin-left:auto;padding:3px;border-radius:12px;background:var(--h-bg-surface);border:1px solid var(--h-line);flex:none}
+[data-ct=vederi]>button{display:flex;align-items:center;justify-content:center;width:40px;height:34px;padding:0;border:0;border-radius:9px;background:transparent;color:var(--h-fg-muted);cursor:pointer}
+[data-ct=vederi]>button:hover{color:var(--h-fg);background:var(--h-bg-sunk)}
+[data-ct=vederi]>button[aria-pressed=true]{background:var(--h-accent);color:var(--h-fg-on-accent)}
+[data-ct=placa]{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;container-type:inline-size;margin:0;padding:16px 16px 14px;border-radius:18px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg);font:inherit;text-align:left;cursor:pointer;box-shadow:var(--h-shadow-1);transition:border-color .15s var(--h-ease-out),box-shadow .15s var(--h-ease-out),transform .15s var(--h-ease-out)}
+@media (hover:hover){
+[data-ct=placa]:hover{border-color:var(--h-accent);transform:translateY(-1px);box-shadow:var(--h-shadow-2)}
+}
+@media (prefers-reduced-motion:reduce){
+[data-ct=placa]{transition:none}
+[data-ct=placa]:hover{transform:none}
+}
+[data-ct=placa][aria-expanded=true]{border-color:var(--h-accent);box-shadow:0 0 0 1px var(--h-accent),var(--h-shadow-2);transform:none}
+[data-ct=placa]:focus-visible{outline:2px solid var(--h-accent);outline-offset:2px}
+[data-ct=monograma]{display:flex;align-items:center;justify-content:center;width:44px;height:44px;flex:none;margin-bottom:4px;border-radius:999px;font-family:var(--h-font-display);font-size:17px;font-weight:600;letter-spacing:.02em;line-height:1}
+[data-ct=placa-nume]{max-width:100%;font-family:var(--h-font-display);font-size:17px;font-weight:600;line-height:1.25;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+[data-ct=placa-user],[data-ct=placa-rol]{max-width:100%;font-size:13px;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+[data-ct=placa-user]{color:var(--h-fg-subtle)}
+[data-ct=placa-rol]{font-weight:600;color:var(--h-fg-muted)}
+[data-ct=placa-semne]{display:flex;flex-wrap:wrap;gap:6px;max-width:100%}
+[data-ct=placa-semne]>span{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:10px}
+[data-ct=placa-vazut]{margin-top:auto;padding-top:9px;border-top:1px solid var(--h-line);align-self:stretch;font-size:12px;line-height:1.4;color:var(--h-fg-faint)}
+.ct-sase [data-ct=placa]{gap:4px;padding:12px 12px 11px;border-radius:15px}
+.ct-sase [data-ct=monograma]{width:36px;height:36px;font-size:14px}
+.ct-sase [data-ct=placa-nume]{font-size:15px}
+.ct-sase [data-ct=placa-user],.ct-sase [data-ct=placa-rol]{font-size:12px}
+.ct-sase [data-ct=placa-vazut]{display:none}
+.ct-sase [data-ct=placa-semne]>span{padding:.2rem 6px;letter-spacing:.02em}
+/* NUMELE LUNGI (runda 2.5.0). Un nume al cărui cuvânt cel mai lung n-ar
+   încăpea pe placă se micșorează cât îi trebuie, în loc să se rupă în mijlocul
+   cuvântului („Restaurant / ul"). `--ct-k` e lățimea acelui cuvânt în litere,
+   măsurată de pagină (v. `numeLaMasura`); lățimea plăcii o dă `100cqi`, deci
+   mărimea se potrivește singură la o tabletă rotită. Pixelul scăzut e plasa
+   rotunjirii. Numele nu coboară sub rândurile de sub el (13px în „patru",
+   12px în „șase") și nu crește peste mărimea lui: un cuvânt care nu încape
+   nici la podea se rupe mai departe.
+   De ce `@supports`: o declarație cu `var()` nu cade la citire, ca una
+   greșită obișnuită, ci abia la calcul, iar atunci litera ia mărimea moștenită
+   de la placă (16px), nu pe cea de deasupra. */
+@supports (width:1cqi){
+[data-ct=placa-nume]{font-size:clamp(13px,(100cqi - 1px) / var(--ct-k,.01),17px)}
+.ct-sase [data-ct=placa-nume]{font-size:clamp(12px,(100cqi - 1px) / var(--ct-k,.01),15px)}
+}
+/* „Parolă provizorie" întreagă numai unde încape, după lățimea PLĂCII, nu a
+   ecranului: aceeași placă „patru" are 140px de conținut la 390 și 122px la
+   820. Insigna întreagă măsoară 138px în „patru" și 123px în „șase"; pragurile
+   stau cu ~4px deasupra, ca o literă mai lată pe alt telefon să nu o taie.
+   „parolă" se aude mai departe, iar un browser fără @container rămâne la
+   „provizorie", niciodată la o insignă tăiată. */
+[data-ct=semn-lung]{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+@container (min-width:142px){
+[data-ct=semn-lung]{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;clip-path:none}
+}
+@container (min-width:127px){
+.ct-sase [data-ct=semn-lung]{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;clip-path:none}
+}
+.ct-m-fondator{background:linear-gradient(135deg,var(--h-honey-200),var(--h-honey-400));color:var(--h-cocoa-900)}
+.ct-m-admin{background:var(--h-honey-soft);color:var(--h-honey-soft-fg)}
+.ct-m-manager{background:var(--h-jam-soft);color:var(--h-jam)}
+.ct-m-agent{background:var(--h-success-soft);color:var(--h-success)}
+.ct-m-client{background:var(--h-accent-soft);color:var(--h-accent-fg)}
+.ct-m-alt{background:var(--h-bg-sunk);color:var(--h-fg-muted)}
+.h-badge.ct-fondator{background:linear-gradient(135deg,var(--h-honey-200),var(--h-honey-400));color:var(--h-cocoa-900)}
+[data-ct=fisa]{scroll-margin-top:14px}
+[data-ct=strange]{display:inline-flex;align-items:center;gap:6px;flex:none;height:40px;padding:0 13px;border-radius:12px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+[data-ct=strange]:hover{border-color:var(--h-accent);color:var(--h-fg)}
+/* Comutatorul „Cont pornit" (runda 2.5.0). Hearth n-are o formă pentru
+   comutatorul stins de pagină, iar unul care arată apăsabil și nu face nimic e
+   o capcană: stins, se vede stins. Ținta e eticheta, de 44 px, numai cât
+   comutatorul și vorba lui: întinsă pe tot rândul, pe calculator ar fi prins
+   și un clic dat alături, la 1000 px de el. */
+[data-ct=activ] .h-switch{align-self:flex-start;min-height:44px}
+[data-ct=activ] .h-switch input:disabled{opacity:.45;cursor:not-allowed}
+[data-ct=activ] .h-switch:has(input:disabled){cursor:not-allowed;color:var(--h-fg-subtle)}
 @media (max-width:760px){
 [data-ct=shell]{flex-direction:column!important}
 [data-ct=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
@@ -36,9 +119,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-ct=body]{padding:14px 14px 26px!important;gap:14px!important}
 [data-ct=g2]{grid-template-columns:1fr!important}
 [data-ct=cardfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
-[data-ct=cardfoot]>button{width:100%!important}
+[data-ct=cardfoot]>button{width:100%!important;white-space:normal!important;padding-left:4px!important;padding-right:4px!important} /* „Nu poți șterge contul cu care ești conectat” are 279px, iar butonul, la 320, 250: scrisul se rupe acum pe două rânduri; laturile mici îl țin pe unul de la ~357 în sus */
 [data-ct=editfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
 [data-ct=editfoot]>button{width:100%!important;margin-left:0!important;min-width:0!important}
+[data-ct=cauta]{flex-basis:170px!important}
+[data-ct=cip]{height:40px!important}
+[data-ct=vederi]>button{width:44px!important;height:40px!important}
+[data-ct=strange]{height:44px!important}
 }
 </style>
 </helmet>
@@ -302,12 +389,38 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      Gheorghiță și Mărioara, o căutare care cere semnele scrise întocmai nu
      găsește nimic: nimeni nu scrie „ț" pe tastatura telefonului. Lămurirea
      întreagă e lângă `faraSemne`, în logică. -->
-<div style="max-width:760px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-<input class="h-input" type="search" value="{{ cauta }}" onChange="{{ onCauta }}" placeholder="Caută după nume, utilizator, e-mail, firmă sau rol" aria-label="Caută printre conturi" style="flex:1 1 280px;min-width:0;height:44px;font-size:15px">
+<div data-ct="unelte" style="max-width:{{ uneltLat }};display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<input data-ct="cauta" class="h-input" type="search" value="{{ cauta }}" onChange="{{ onCauta }}" placeholder="Caută un cont" title="Caută după nume, utilizator, e-mail, firmă, zonă sau rol" aria-label="Caută printre conturi" style="flex:1 1 280px;min-width:0;max-width:560px;height:44px;font-size:15px">
 <sc-if value="{{ cautaPusa }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onCautaSterge }}" style="min-height:44px;flex:none">Golește</button>
 </sc-if>
+<!-- VEDEREA (runda 2.5.0): lista de fișe întregi, sau plăci câte patru ori
+     câte șase pe rând. Aceleași trei desene ca în Catalog și în magazin;
+     numele stă pe buton (aria-label), fiindcă desenul singur nu se citește
+     cu glas tare. -->
+<div data-ct="vederi" role="group" aria-label="Cum se arată conturile">
+<sc-for list="{{ vederiConturi }}" as="w" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{ w.apasat }}" aria-label="{{ w.eticheta }}" title="{{ w.eticheta }}" onClick="{{ w.alege }}">
+<sc-if value="{{ w.eUnu }}" hint-placeholder-val="{{ true }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="5" width="8" height="14" rx="1.6"></rect><path d="M14 8h7M14 12h7M14 16h4"></path></svg></sc-if>
+<sc-if value="{{ w.ePatru }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="4" width="7" height="7" rx="1.4"></rect><rect x="13" y="4" width="7" height="7" rx="1.4"></rect><rect x="4" y="13" width="7" height="7" rx="1.4"></rect><rect x="13" y="13" width="7" height="7" rx="1.4"></rect></svg></sc-if>
+<sc-if value="{{ w.eSase }}" hint-placeholder-val="{{ false }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2.5" y="5" width="5" height="6" rx="1.1"></rect><rect x="9.5" y="5" width="5" height="6" rx="1.1"></rect><rect x="16.5" y="5" width="5" height="6" rx="1.1"></rect><rect x="2.5" y="13" width="5" height="6" rx="1.1"></rect><rect x="9.5" y="13" width="5" height="6" rx="1.1"></rect><rect x="16.5" y="13" width="5" height="6" rx="1.1"></rect></svg></sc-if>
+</button>
+</sc-for>
 </div>
+</div>
+
+<!-- PASTILELE DE ROL (runda 2.5.0), în ordinea casei: de la cine hotărăște
+     la cine cumpără. Numărul de pe pastilă e al listei întregi, nu al
+     căutării, ca pastila să nu se miște sub degetul care o alege; un rol fără
+     niciun cont nu are pastilă. Cu un singur rol în toată lista, rândul nu se
+     desenează deloc: n-ar avea ce alege. -->
+<sc-if value="{{ roluriArata }}" hint-placeholder-val="{{ true }}">
+<div data-ct="roluri" role="group" aria-label="Conturile, după rol">
+<sc-for list="{{ roluriCip }}" as="k" hint-placeholder-count="5">
+<button type="button" data-ct="cip" aria-pressed="{{ k.apasat }}" onClick="{{ k.alege }}">{{ k.l }}<b>{{ k.nr }}</b></button>
+</sc-for>
+</div>
+</sc-if>
 
 <sc-if value="{{ cautaPusa }}" hint-placeholder-val="{{ false }}">
 <p role="status" style="margin:0;font-size:13px;color:var(--h-fg-faint)">{{ cautaSocoteala }}</p>
@@ -315,16 +428,46 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <!-- O listă care se golește fără o vorbă arată ca o pagină stricată. -->
 <sc-if value="{{ cautaNimic }}" hint-placeholder-val="{{ false }}">
-<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Niciun cont nu se potrivește cu <strong>{{ cautaCeva }}</strong>. Se caută după nume, utilizator, e-mail, firma clientului, zonă sau rol — semnele de pe litere nu contează.</p>
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Niciun cont{{ cautaInRol }} nu se potrivește cu <strong>{{ cautaCeva }}</strong>. Se caută după nume, utilizator, e-mail, firma clientului, zonă sau rol — semnele de pe litere nu contează.</p>
+<!-- Căutarea caută numai în rolul ales. Când răspunsul e în alt rol, pagina
+     o spune și duce acolo dintr-o apăsare: altfel „niciun cont" ar fi părut
+     un răspuns despre toată casa. -->
+<sc-if value="{{ cautaAiurea }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onToateRolurile }}" style="min-height:44px;align-self:flex-start;font-size:14px">{{ cautaAiurea }}</button>
+</sc-if>
 </sc-if>
 
+<!-- PLĂCILE ȘI FIȘELE (runda 2.5.0). În „listă" fiecare cont e fișa lui
+     întreagă, ca până acum. În plăci, fiecare cont e o placă mică, iar fișa
+     se desenează numai pentru contul deschis, O SINGURĂ DATĂ, după ultima
+     placă din rândul lui, întinsă pe tot rândul (v. `randuri` în logică).
+     Fișa e aceeași, nu o copie a ei: casetele cu `autoFocus` se montează tot
+     o singură dată, și nimic nu trebuie ținut în pas în două locuri. -->
+<div data-ct="conturi" class="{{ conturiCls }}" style="{{ conturiStil }}">
 <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="2">
-<div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:14px;border-color:{{ a.bd }}">
+<sc-if value="{{ a.placa }}" hint-placeholder-val="{{ false }}">
+<button type="button" data-ct="placa" data-u="{{ a.u }}" aria-expanded="{{ a.deschis }}" onClick="{{ a.onPlaca }}">
+<span data-ct="monograma" class="{{ a.monoCls }}" aria-hidden="true">{{ a.initiale }}</span>
+<span data-ct="placa-nume">{{ a.name }}</span>
+<span data-ct="placa-user" class="h-numeric">{{ a.u }}</span>
+<span data-ct="placa-rol">{{ a.rolPlaca }}</span>
+<sc-if value="{{ a.placaSemne }}" hint-placeholder-val="{{ false }}">
+<span data-ct="placa-semne">
+<sc-if value="{{ a.isMe }}" hint-placeholder-val="{{ false }}"><span class="h-badge h-badge--success">{{ a.semnEu }}</span></sc-if>
+<sc-if value="{{ a.tempPass }}" hint-placeholder-val="{{ false }}"><span class="h-badge h-badge--honey" title="Parolă provizorie"><span data-ct="semn-lung">parolă </span>provizorie</span></sc-if>
+<sc-if value="{{ a.oprit }}" hint-placeholder-val="{{ false }}"><span class="h-badge h-badge--danger" title="Contul e oprit: nu mai poate intra în aplicație">{{ a.semnOprit }}</span></sc-if>
+</span>
+</sc-if>
+<span data-ct="placa-vazut" class="h-numeric">{{ a.seen }}</span>
+</button>
+</sc-if>
+<sc-if value="{{ a.fisa }}" hint-placeholder-val="{{ true }}">
+<div class="h-card" data-ct="fisa" data-u="{{ a.u }}" style="max-width:{{ a.fisaLat }};grid-column:{{ a.fisaCol }};padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:14px;border-color:{{ a.bd }}">
 
 <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
-<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 10rem"><!-- 10rem: când numele n-ar mai avea nici atât lângă „Strânge”, butonul trece dedesubt (sub ~339 de puncte), în loc să strângă numele sub cel mai lung cuvânt al lui -->
 <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">
-<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600;line-height:1.2">{{ a.name }}</span>
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600;line-height:1.2;overflow-wrap:anywhere">{{ a.name }}</span>
 <span class="{{ a.roleCls }}" style="font-size:11px">{{ a.roleLabel }}</span>
 <sc-if value="{{ a.isMe }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--success" style="font-size:11px">contul tău</span>
@@ -332,10 +475,16 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ a.tempPass }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--honey" style="font-size:11px">parolă provizorie</span>
 </sc-if>
+<sc-if value="{{ a.oprit }}" hint-placeholder-val="{{ false }}">
+<span class="h-badge h-badge--danger" style="font-size:11px" title="Contul e oprit: nu mai poate intra în aplicație">cont oprit</span>
+</sc-if>
 </div>
 <span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">utilizator: {{ a.u }} · {{ a.changed }}</span>
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-faint)">{{ a.seen }}</span>
 </div>
+<sc-if value="{{ a.strangibil }}" hint-placeholder-val="{{ false }}">
+<button type="button" data-ct="strange" aria-label="Strânge fișa contului {{ a.name }}" onClick="{{ a.onStrange }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M6 15l6-6 6 6"></path></svg>Strânge</button>
+</sc-if>
 </div>
 
 <div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -522,6 +671,23 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 </div>
 </sc-if>
 
+<!-- CONTUL PORNIT ORI OPRIT (runda 2.5.0). Cine îl poate apăsa, și de ce
+     oprirea cere a doua apăsare: v. `activShown` în logică. Butoanele de
+     confirmare stau chiar sub comutator, nu în caseta de sus a paginii: pe
+     telefon, caseta aceea e la un ecran distanță de degetul care a apăsat. -->
+<sc-if value="{{ a.activShown }}" hint-placeholder-val="{{ false }}">
+<div data-ct="activ" style="display:flex;flex-direction:column;gap:4px;padding:3px 13px 11px;border-radius:13px;background:var(--h-bg-sunk);border:1px solid {{ a.activLine }}">
+<label class="h-switch"><input type="checkbox" checked="{{ a.activOn }}" disabled="{{ a.activBlocat }}" onChange="{{ a.onActiv }}"><span>Cont pornit</span></label>
+<span style="font-size:12px;line-height:1.5;color:{{ a.activNotaFg }};text-wrap:pretty">{{ a.activNota }}</span>
+<sc-if value="{{ a.activArmat }}" hint-placeholder-val="{{ false }}">
+<div data-ct="editfoot" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onActivRenunt }}" style="min-height:46px;font-size:14px">Renunț</button>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onActivOpresc }}" style="margin-left:auto;min-height:46px;font-size:14px;color:var(--h-danger)">Oprește contul</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
 <div data-ct="cardfoot" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <sc-if value="{{ a.canEditPass }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--primary" onClick="{{ a.onEdit }}" style="min-height:46px;font-size:15px">Schimbă parola</button>
@@ -530,21 +696,21 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
      refuză ambele cu 422): controalele nu se desenează, ca să nu promită ceva
      ce se termină în „Eroare". -->
 <sc-if value="{{ a.notSystem }}" hint-placeholder-val="{{ true }}">
-<!-- Lista de roluri trebuie să se strângă, nu să dicteze ea lățimea. Cu
-     `width:auto` era largă cât cea mai lungă opțiune — numele unui rol cu
-     toată explicația lui, 325px — iar pe telefon eticheta ieșea 367px într-un
-     părinte de 305: pagina se revărsa cu 12px și se trăgea lateral în gol.
-     `max-width:100%` singur n-a schimbat nimic, fiindcă acel 100% se măsoară
-     din etichetă, a cărei lățime o dădea chiar lista: un cerc. `flex:1 1 170px`
-     cu `min-width:0` îl rupe — baza e 170px, crește când are loc și scade când
-     nu are. Pe 1440 iese tot 325px, ca înainte; pe 390 iese 263px, iar pagina
-     nu mai are ce derula lateral. -->
-<label style="display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
-<select class="h-input" value="{{ a.role }}" onChange="{{ a.onRole }}" title="{{ a.roleHint }}" style="height:46px;font-size:14px;flex:1 1 170px;min-width:0;max-width:100%">
+<!-- În listă stă NUMAI numele rolului; ce poate rolul stă pe rândul mic de
+     lângă ea (`a.roleRights`, din ROLE_OPTS). Până la 2.5.0 opțiunea purta și
+     explicația — „Manager · comenzi, laborator, rută, depozit, pontaj" — iar
+     o listă închisă nu-și poate scurta textul: la 390 se tăiau fondatorul,
+     managerul, agentul și angajatul, fără „…", iar în „Cont nou" și la 1440.
+     `width:auto` + `flex:1 1 auto` + `min-width:0`: lista e cât cel mai lung
+     nume (108px la 14px) și se strânge când n-are loc; eticheta se rupe pe
+     două rânduri (`flex-wrap`), iar pe telefon rândul drepturilor trece sub
+     listă. Măsurat de la 320 la 1440: nimic tăiat, nimic peste margine. -->
+<label style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
+<select class="h-input" value="{{ a.role }}" onChange="{{ a.onRole }}" title="{{ a.roleHint }}" style="height:46px;font-size:14px;flex:1 1 auto;width:auto;min-width:0;max-width:100%">
 <sc-for list="{{ roleOpts }}" as="o" hint-placeholder-count="5">
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
-</select>
+</select><span data-ct="drepturi" style="flex:1 1 auto;min-width:0;font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ a.roleRights }}</span>
 </label>
 <sc-if value="{{ a.delArmed }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onDelCancel }}" style="margin-left:auto;min-height:46px;font-size:14px">Renunț la ștergere</button>
@@ -554,7 +720,9 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 </div>
 
 </div>
+</sc-if>
 </sc-for>
+</div>
 
 <sc-if value="{{ hasResets }}" hint-placeholder-val="{{ false }}">
 <div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px">
@@ -703,17 +871,17 @@ const ROLE_L = {
 // mergea, cu cinci ar fi însemnat patru apăsări ca să ajungi de la „client" la
 // „administrator", fără să vezi vreodată lista întreagă.
 const ROLE_OPTS = [
-  { v: "fondator",      l: "Fondator · tot, plus statistici și rolurile celorlalți" },
-  // „tot, fără statistici", nu „tot": de când există pagina Statistici,
-  // administratorul nu mai are chiar tot. Eticheta asta e primul loc în care
-  // omul care împarte rolurile citește deosebirea — dacă ea minte, o alege pe
-  // cea greșită și află abia peste o lună, când fondatorul întreabă de cifre.
-  { v: "admin",         l: "Administrator · tot, fără statistici" },
-  { v: "manager",       l: "Manager · comenzi, laborator, rută, depozit, pontaj" },
-  { v: "agent_vanzari", l: "Agent de vânzări · recomandări și comenzi" },
-  { v: "angajat",       l: "Angajat · laborator, rută, depozit, pontaj" },
-  { v: "utilizator_lab", l: "Om de laborator · doar pontajul" },
-  { v: "client",        l: "Client · doar comanda lui" }
+  { v: "fondator",       l: "Fondator",         d: "Tot, plus statistici și rolurile celorlalți" },
+  // „Tot, fără statistici", nu „tot": de când există pagina Statistici,
+  // administratorul nu mai are chiar tot. Rândul `d`, de lângă listă, e primul
+  // loc în care omul care împarte rolurile citește deosebirea — dacă el minte,
+  // o alege pe cea greșită și află abia peste o lună, când fondatorul întreabă.
+  { v: "admin",          l: "Administrator",    d: "Tot, fără statistici" },
+  { v: "manager",        l: "Manager",          d: "Comenzi, laborator, rută, depozit, pontaj" },
+  { v: "agent_vanzari",  l: "Agent de vânzări", d: "Recomandări și comenzi" },
+  { v: "angajat",        l: "Angajat",          d: "Laborator, rută, depozit, pontaj" },
+  { v: "utilizator_lab", l: "Om de laborator",  d: "Doar pontajul" },
+  { v: "client",         l: "Client",           d: "Doar comanda lui" }
 ];
 // Ce vede fiecare rol.
 //
@@ -736,6 +904,128 @@ const ROLE_HINT = {
   utilizator_lab: "Omul de laborator are o singură ușă: pontajul. Apasă pe numele lui de pe tabletă, tastează codul de patru cifre, și atât — nici comenzile, nici laboratorul, nici depozitul nu-i sunt deschise. Rolul ăsta e pentru cine vine la lucru fără să aibă nevoie de altceva din aplicație. Codul i-l pui tot de aici, de pe cardul lui.",
   agent_vanzari: "Agenții de vânzări văd recomandările — codul lor, cine au adus și cât au câștigat — și comenzile, ca să știe ce se întâmplă cu ele. Tot din „Recomandări” fac conturi de cumpărători, legate de codul lor. Laboratorul, ruta, depozitul, conturile, catalogul, jurnalul și setările nu le sunt deschise.",
   client: "Clientul își vede doar comenzile lui și comandă din magazin."
+};
+
+/**
+ * Rolurile în ordinea casei (runda 2.5.0), de la cine hotărăște la cine
+ * cumpără. După ea se așază lista și pastilele de deasupra ei. Serverul
+ * trimite conturile după `ORDER BY u.role`, adică după locul valorii în
+ * ENUM-ul din sql/007, unde rolurile noi stau la coadă (v. `ROLE_L`): clienții
+ * ieșeau la mijloc, între angajați și fondatori. Ordinea se face aici, nu pe
+ * server: pagina asta e singura care cere lista, și o primește întreagă.
+ * Un rol necunoscut (unul adăugat după pagina asta) iese la urmă, nu dispare.
+ */
+const RANG = ["fondator", "admin", "manager", "agent_vanzari", "angajat", "utilizator_lab", "client"];
+const rangul = (r) => { const i = RANG.indexOf(r); return i < 0 ? RANG.length : i; };
+const dupaRang = (a, b) => (rangul(roleOf(a)) - rangul(roleOf(b)))
+  || String(a.name || a.u || "").localeCompare(String(b.name || b.u || ""), "ro", { sensitivity: "base" });
+/** Numele pastilelor, la plural: pastila numește un grup, nu un om. */
+const ROL_PLURAL = {
+  fondator: "Fondatori", admin: "Administratori", manager: "Manageri",
+  agent_vanzari: "Agenți de vânzări", angajat: "Angajați",
+  utilizator_lab: "Oameni de laborator", client: "Clienți"
+};
+/**
+ * Rolul scris pe placă. La „patru" încape cuvântul întreg: o placă de
+ * telefon are 120 px de text. La „șase" are 88 px, deci „administrator" și
+ * „agent de vânzări" se scurtează. Lista de roluri din fișă rămâne întreagă.
+ */
+const ROL_PLACA = {
+  fondator: "Fondator", admin: "Administrator", manager: "Manager",
+  agent_vanzari: "Agent de vânzări", angajat: "Angajat",
+  utilizator_lab: "Om de laborator", client: "Client"
+};
+const ROL_SCURT = {
+  fondator: "Fondator", admin: "Admin", manager: "Manager",
+  agent_vanzari: "Agent", angajat: "Angajat",
+  utilizator_lab: "Laborator", client: "Client"
+};
+/**
+ * Culoarea monogramei de pe placă și a insignei din fișă, pe rol. Fondatorul
+ * are aurul lui: până în 2.5.0 insigna lui era cea cenușie a angajaților, deci
+ * contul care poate da și lua rolurile celorlalți arăta ca oricare altul.
+ */
+const MONOGRAMA = {
+  fondator: "ct-m-fondator", admin: "ct-m-admin", manager: "ct-m-manager",
+  agent_vanzari: "ct-m-agent", client: "ct-m-client"
+};
+const INSIGNA = {
+  fondator: "h-badge ct-fondator", admin: "h-badge h-badge--honey", manager: "h-badge h-badge--jam",
+  agent_vanzari: "h-badge h-badge--success", client: "h-badge h-badge--accent"
+};
+/**
+ * Monograma: prima literă din primele două cuvinte ale numelui. Semnele din
+ * nume („Ana · tura de seară") nu sunt cuvinte. Fără nume, din utilizator.
+ */
+const initialeDin = (nume, u) => {
+  const cuv = String(nume || "").split(/\s+/).filter((w) => /^\p{L}/u.test(w));
+  const lit = cuv.slice(0, 2).map((w) => w.charAt(0)).join("") || String(u || "?").charAt(0);
+  return lit.toLocaleUpperCase("ro");
+};
+/**
+ * Bucățile unui nume care nu se pot rupe fără să taie un cuvânt. Rândul se
+ * rupe la spațiu și după o cratimă ori o linie de pauză („Mihai-" /
+ * „Alexandru"), deci tot acolo se taie și bucățile. Spațiul care nu se rupe
+ * (U+00A0, U+2007, U+202F) ține cuvintele lipite, ca pe ecran.
+ */
+const bucatiNerupte = (nume) => String(nume || "").split(/[^\S\u00a0\u2007\u202f]+/)
+  .reduce((tot, w) => tot.concat(w.match(/[^-\u2010\u2013\u2014]*[-\u2010\u2013\u2014]+|[^-\u2010\u2013\u2014]+/g) || []), []);
+/**
+ * Riglele cu care se măsoară bucățile: la 12px, cea mai mică mărime a
+ * numelui (v. CSS-ul „NUMELE LUNGI"). Fraunces își schimbă desenul după
+ * mărime (axa „opsz"), iar la 12px aceleași litere ies cu vreo 0,5% mai late,
+ * pe literă, decât la 17px. Măsurat la mărimea cea mai mică, cuvântul încape
+ * sigur la orice mărime aleasă de CSS.
+ */
+const RIGLA_PX = 12;
+const RIGLA_NUME = "position:absolute;visibility:hidden;display:block;width:auto;max-width:none;"
+  + "white-space:nowrap;overflow:visible;-webkit-line-clamp:none;font-size:" + RIGLA_PX + "px";
+/**
+ * Cum se arată conturile: „lista" — fișele întregi, una sub alta, ca până în
+ * 2.5.0 —, „patru" ori „sase" — plăci, cât încap pe ecran, dar niciodată mai
+ * multe pe rând decât spune numele. Placa se deschide pe loc în fișa
+ * întreagă, sub rândul ei.
+ *
+ * Alegerea se ține minte în browserul ăsta, ca în Catalog: e unealta celui
+ * care lucrează, nu o hotărâre a casei. Implicit „patru": patronul a cerut să
+ * nu mai vadă un singur cont pe rând. Depozitul poate lipsi (fereastră
+ * privată), iar atunci pagina pornește din plăci, fără eroare.
+ */
+const VEDERI_CONTURI = ["lista", "patru", "sase"];
+const VEDERE_CONTURI_CHEIE = "gp-conturi-vedere-v1";
+const vedereConturiTinuta = () => {
+  try {
+    const v = localStorage.getItem(VEDERE_CONTURI_CHEIE);
+    return VEDERI_CONTURI.indexOf(v) >= 0 ? v : "patru";
+  } catch (e) {
+    return "patru";
+  }
+};
+const tineVedereaConturilor = (v) => {
+  try { localStorage.setItem(VEDERE_CONTURI_CHEIE, v); } catch (e) { /* fără depozit: vederea ține cât pagina */ }
+};
+/**
+ * Grila plăcilor, aceeași socoteală ca în Catalog (`grila` din
+ * Produse.dc.html): coloanele se înmulțesc cât încap, niciodată peste N și
+ * niciodată sub MIN, deci o placă nu se strivește sub ce-i trebuie ca să-și
+ * încapă numele. Jumătatea de pixel e plasa rotunjirii.
+ */
+const grilaConturi = (N, MIN, GOL) => "display:grid;gap:" + GOL
+  + ";grid-template-columns:repeat(auto-fill,minmax(max(" + MIN + ",calc((100% - " + (N - 1) + " * " + GOL + ") / " + N + " - 0.5px)),1fr))";
+/**
+ * Câte coloane are grila ACUM, citit din pagină. Fișa deschisă se pune după
+ * ultima placă din rândul ei, iar rândul depinde de lățimea ferestrei, deci
+ * numărul nu se poate ști dinainte. În afara browserului (probele) nu e nicio
+ * pagină: întoarce 0, iar cine cheamă cade pe N.
+ */
+const coloaneGrila = (nod) => {
+  try {
+    const g = (nod && nod.closest && nod.closest("[data-ct=conturi]")) || document.querySelector("[data-ct=conturi]");
+    const c = g ? String(getComputedStyle(g).gridTemplateColumns || "").trim() : "";
+    return c && c !== "none" ? c.split(/\s+/).length : 0;
+  } catch (e) {
+    return 0;
+  }
 };
 // Codul de recomandare se face din PRENUME, cu aceleași reguli ca pe server
 // (api/lib/referral.php): primul cuvânt, fără diacritice, doar litere și cifre.
@@ -811,21 +1101,45 @@ class Component extends DCLogic {
     // n-are cod" de „coloana nici nu există", și ar oferi un buton care se
     // lovește de 503.
     pontaj: false, pinEdit: null, pinVal: "", pinErr: "", pinArm: null,
+    // Comutatorul „Cont pornit" (runda 2.5.0): pe ce cont așteaptă oprirea a
+    // doua apăsare, și pe ce cont a plecat cererea, spre ce stare.
+    activArm: null, activLucru: null, activSpre: false,
     // Adresa firmei și zona ei, la contul nou. Lipseau amândouă din formular:
     // un cont de client se năștea fără loc de livrare, iar adresa se scria abia
     // la prima comandă, de mână, în panoul de comenzi. `zoneReady` spune dacă
     // lista de zone a sosit de la server — până atunci caseta de zonă rămâne
     // goală, și nu pretinde că patiseria n-are nicio zonă.
-    nAddr: "", nZone: "", zoneReady: false };
+    nAddr: "", nZone: "", zoneReady: false,
+    // Runda 2.5.0: rolul ales din pastile ("" = toate), vederea, contul
+    // deschis din plăci și câte coloane avea grila când s-a deschis (v.
+    // `coloaneGrila`).
+    rol: "", vedere: vedereConturiTinuta(), deschis: null, coloane: 0 };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
       const st = this.state || {};
-      if (st.form || st.edit) this.setState({ form: false, edit: null });
+      if (st.form || st.edit || st.deschis) this.setState({ form: false, edit: null, deschis: null });
     };
     window.addEventListener("popstate", this.__gpBack);
+    // Grila plăcilor își schimbă numărul de coloane când se rotește tableta
+    // ori se trage de fereastră. Fișa deschisă stă după ULTIMA placă din
+    // rândul ei, deci numărul se citește din nou; altfel ar rămâne găuri în
+    // rândul de deasupra ei.
+    this.__ctColoane = () => {
+      const st = this.state || {};
+      if (!st.deschis) return;
+      const n = coloaneGrila(null);
+      if (n && n !== st.coloane) this.setState({ coloane: n });
+    };
+    window.addEventListener("resize", this.__ctColoane);
+    // Un font sosit după primul desen schimbă lățimea cuvintelor: numele de pe
+    // plăci se măsoară din nou (v. `numeLaMasura`).
+    this.__ctFonturi = () => { this.__ctRigle = null; this.numeLaMasura(); };
+    try {
+      if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener("loadingdone", this.__ctFonturi);
+    } catch (e) { /* fără `document.fonts` rămâne măsurătoarea de la desen */ }
     if (!window.__gpNav) {
       window.__gpNav = 1;
       document.addEventListener("click", (e) => {
@@ -849,6 +1163,73 @@ class Component extends DCLogic {
     gp.lists().then(() => this.setState({ zoneReady: gp.zones().length > 0 })).catch(() => {});
 
     this.intra();
+  }
+
+  componentDidUpdate() {
+    this.numeLaMasura();
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("popstate", this.__gpBack);
+    window.removeEventListener("resize", this.__ctColoane);
+    try {
+      if (document.fonts && document.fonts.removeEventListener) document.fonts.removeEventListener("loadingdone", this.__ctFonturi);
+    } catch (e) { /* fără `document.fonts` n-a fost nici ascultătorul */ }
+  }
+
+  /**
+   * Numele de pe plăci se micșorează când un cuvânt de-al lor n-ar încăpea pe
+   * lățimea plăcii, în loc să se rupă în mijlocul lui („Restaurant / ul", la
+   * „șase", pe telefon).
+   *
+   * Pagina dă o singură cifră, `--ct-k`: lățimea celei mai lungi bucăți
+   * nerupte din nume (v. `bucatiNerupte`), în litere de `RIGLA_PX`. Mărimea o
+   * alege CSS-ul, din lățimea plăcii (`100cqi`), deci o tabletă rotită ori o
+   * fereastră trasă de margine nu cer nicio măsurătoare nouă.
+   *
+   * Se măsoară cu rigle: copii goale ale numelui, puse lângă el în placă ca să
+   * ia aceeași literă, câte una pe bucată. Întâi se pun toate, apoi se citesc
+   * toate, apoi se scot: pagina se așază o singură dată, oricâte nume ar fi,
+   * iar riglele ies înainte să apuce ecranul să le deseneze. Un nume măsurat o
+   * dată se ține minte după text, deci o tastă apăsată în căutare nu mai
+   * măsoară nimic. Cifra se scrie totuși din nou pe fiecare nod, la fiecare
+   * desen: React își refolosește nodurile, iar nodul unui cont poate purta la
+   * desenul următor numele altuia.
+   */
+  numeLaMasura() {
+    let noduri;
+    try { noduri = Array.prototype.slice.call(document.querySelectorAll("[data-ct=placa-nume]")); } catch (e) { return; }
+    if (!noduri || !noduri.length) return;
+    const masurate = this.__ctRigle || (this.__ctRigle = new Map());
+    const noi = new Map();
+    const rigle = [];
+    noduri.forEach((el) => {
+      const text = String(el.textContent || "").trim();
+      if (!text || masurate.has(text) || noi.has(text)) return;
+      noi.set(text, 0);
+      bucatiNerupte(text).forEach((b) => {
+        const r = el.cloneNode(false);
+        r.style.cssText = RIGLA_NUME;
+        r.textContent = b;
+        el.parentNode.appendChild(r);
+        rigle.push({ text, r });
+      });
+    });
+    rigle.forEach((x) => {
+      const k = x.r.getBoundingClientRect().width / RIGLA_PX;
+      if (k > noi.get(x.text)) noi.set(x.text, k);
+    });
+    rigle.forEach((x) => x.r.remove());
+    // O riglă fără lățime (un nume ascuns, o pagină încă neașezată) nu se
+    // ține minte: numele se măsoară din nou la desenul următor.
+    noi.forEach((k, text) => { if (k > 0) masurate.set(text, k); });
+    noduri.forEach((el) => {
+      const k = masurate.get(String(el.textContent || "").trim());
+      const v = k > 0 ? String(Math.ceil(k * 1000) / 1000) : "";
+      if (el.style.getPropertyValue("--ct-k") === v) return;
+      if (v) el.style.setProperty("--ct-k", v);
+      else el.style.removeProperty("--ct-k");
+    });
   }
 
   /**
@@ -1073,7 +1454,7 @@ class Component extends DCLogic {
 
   __gpSync() {
     const st = this.state || {};
-    const now = !!(st.form || st.edit);
+    const now = !!(st.form || st.edit || st.deschis);
     if (now === this.__gpOvWas) return;
     this.__gpOvWas = now;
     try {
@@ -1267,21 +1648,117 @@ class Component extends DCLogic {
     // celălalt, iar omul n-ar fi avut cum ghici în care.
     const faraSemne = (x) => (x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     const cautat = faraSemne(S.cauta.trim());
-    const potrivite = !cautat ? S.users : S.users.filter(acc =>
+    // PASTILA DE ROL (runda 2.5.0) vine ÎNAINTEA căutării: se caută în rolul
+    // ales. Un rol rămas fără conturi (tocmai s-a șters ultimul) nu mai are
+    // pastilă, deci nici nu mai poate fi ales: pagina cade pe „Toate", altfel
+    // ar fi arătat o listă goală sub o pastilă care nu se mai vede.
+    const rolAles = S.rol && S.users.some(acc => roleOf(acc) === S.rol) ? S.rol : "";
+    const inRol = rolAles ? S.users.filter(acc => roleOf(acc) === rolAles) : S.users;
+    const seCauta = (acc) =>
       [acc.name, acc.u, acc.mail, acc.cust, acc.zona, ROLE_L[roleOf(acc)]]
-        .some(camp => faraSemne(camp).indexOf(cautat) >= 0));
+        .some(camp => faraSemne(camp).indexOf(cautat) >= 0);
+    const potrivite = (!cautat ? inRol : inRol.filter(seCauta)).slice().sort(dupaRang);
+
+    // Vederea (v. VEDERI_CONTURI) și ce ține de plăci.
+    const vedere = VEDERI_CONTURI.indexOf(S.vedere) >= 0 ? S.vedere : "patru";
+    const eGrila = vedere !== "lista";
+    const eSase = vedere === "sase";
+    // Deschiderea altei plăci — ori strângerea fișei, ori o altă vedere —
+    // închide ce rămăsese pe jumătate în fișa de dinainte: o parolă, un cod,
+    // o ștergere armată. Fișa aceea nu se mai vede, iar un „Apasă din nou:
+    // șterg definitiv" rămas armat pe un cont ascuns ar fi o capcană la
+    // întoarcere. `u` e contul care rămâne deschis; `null` le închide pe toate.
+    const curataAltele = (u) => {
+      const x = {};
+      if (S.edit && S.edit !== u) Object.assign(x, { edit: null, n1: "", n2: "", err: "" });
+      if (S.pinEdit && S.pinEdit !== u) Object.assign(x, { pinEdit: null, pinVal: "", pinErr: "" });
+      if (S.pinArm && S.pinArm !== u) x.pinArm = null;
+      if (S.refEdit && S.refEdit !== u) Object.assign(x, { refEdit: null, refCod: "", refRate: "", refErr: "" });
+      if (S.refArm && S.refArm !== u) x.refArm = null;
+      if (S.sterg && S.sterg !== u) x.sterg = null;
+      if (S.activArm && S.activArm !== u) x.activArm = null;
+      return x;
+    };
+    // Butonul „Strânge" dispare odată cu fișa, iar focusul ar fi căzut în
+    // capul paginii: se întoarce pe placa din care s-a deschis fișa.
+    const strange = (u) => this.setState(Object.assign(curataAltele(null), { deschis: null }), () => {
+      try {
+        const p = Array.from(document.querySelectorAll("[data-ct=placa]")).find(x => x.getAttribute("data-u") === u);
+        if (p && p.focus) p.focus();
+      } catch (e) { /* fără pagină (probele): nimic de mutat */ }
+    });
+    // Fișa se pune SUB rândul plăcii. Când rândul e jos pe ecran, fișa ar
+    // începe sub marginea lui, iar omul ar crede că apăsarea n-a făcut nimic.
+    const arataFisa = (u) => {
+      try {
+        const f = Array.from(document.querySelectorAll("[data-ct=fisa]")).find(x => x.getAttribute("data-u") === u);
+        if (!f || f.getBoundingClientRect().top <= window.innerHeight - 140) return;
+        const lin = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        f.scrollIntoView({ block: "start", behavior: lin ? "auto" : "smooth" });
+      } catch (e) { /* fără pagină (probele): nimic de arătat */ }
+    };
+
+    // Contul pornit ori oprit (runda 2.5.0). Cine are voie: aceeași socoteală
+    // ca `guard_leader_role()` din api/routes/users.php — un cont de conducere
+    // (administrator ori fondator) îl oprește și îl pornește numai un fondator,
+    // cât timp există vreunul pornit. Rândul nu promite ce se termină în refuz.
+    const euFondator = authRole(S.auth) === "fondator";
+    const suntFondatori = S.users.some(x => roleOf(x) === "fondator" && x.active !== false);
+    // Cât lucrează cererea, comutatorul stă stins și arată starea CERUTĂ: pus
+    // înapoi pe cea veche, ar fi sărit o clipă îndărăt și apoi iar înainte, iar
+    // omul ar fi crezut că n-a mers și ar fi apăsat din nou.
+    const schimbaActiv = (acc, v) => {
+      this.setState({ activArm: null, activLucru: acc.u, activSpre: v });
+      gp.patch("/users/" + acc.id, { active: v })
+        .then(() => this.pullUsers({ msgBad: false, msg: v
+          ? "Contul „" + acc.name + "” e pornit din nou: poate intra cu parola lui."
+          : "Contul „" + acc.name + "” e oprit: nu mai poate intra. Comenzile și istoria lui rămân." }))
+        .catch((e) => this.setState({ msg: e.message, msgBad: true }))
+        .finally(() => this.setState({ activLucru: null }));
+    };
 
     const accounts = potrivite.map(acc => {
       const editing = S.edit === acc.u;
       const isMe = me === acc.u;
       const rl = roleOf(acc);
+      const activ = acc.active !== false;
+      const activLucru = S.activLucru === acc.u;
+      const activArmat = !activLucru && S.activArm === acc.u;
+      const activDoarFondator = gp.eAdmin(rl) && !euFondator && suntFondatori;
+      const activBlocat = isMe || activDoarFondator || activLucru;
       return {
         u: acc.u, name: acc.name, mail: acc.mail || "",
         role: rl,
         roleLabel: ROLE_L[rl] || rl,
-        roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
-        roleHint: ROLE_HINT[rl] || "",
+        roleCls: INSIGNA[rl] || "h-badge",
+        roleHint: ROLE_HINT[rl] || "", roleRights: (ROLE_OPTS.find((o) => o.v === rl) || {}).d || "",
         isClient: rl === "client",
+        // --- placa (runda 2.5.0) ---
+        // În plăci fiecare cont e o placă; fișa lui întreagă se desenează numai
+        // cât e deschis, o dată, după rândul plăcii (v. `randuri` mai jos).
+        placa: eGrila,
+        fisa: !eGrila,
+        deschis: eGrila && S.deschis === acc.u,
+        fisaLat: "760px",
+        fisaCol: "auto",
+        strangibil: false,
+        initiale: initialeDin(acc.name, acc.u),
+        monoCls: MONOGRAMA[rl] || "ct-m-alt",
+        rolPlaca: (eSase ? ROL_SCURT[rl] : ROL_PLACA[rl]) || ROLE_L[rl] || rl,
+        placaSemne: isMe || (acc.temp && !acc.sys) || acc.active === false,
+        semnEu: eSase ? "al tău" : "contul tău",
+        // Serverul oprește conturi (`active`), iar intrarea le refuză; pagina
+        // n-a avut niciodată semnul, deci un cont oprit din afara ei arăta ca
+        // unul bun. `=== false`, nu `!acc.active`: un cont fără câmp e pornit.
+        oprit: acc.active === false,
+        semnOprit: eSase ? "oprit" : "cont oprit",
+        onPlaca: (e) => {
+          if (S.deschis === acc.u) return strange(acc.u);
+          const n = coloaneGrila(e && e.currentTarget);
+          this.setState(Object.assign(curataAltele(acc.u), { deschis: acc.u, coloane: n || S.coloane }),
+            () => arataFisa(acc.u));
+        },
+        onStrange: () => strange(acc.u),
         // --- „poate confirma livrarea" (runda 2.3.0, lucrarea 9) ---
         //
         // Numai pe conturile de personal: un client n-are ce confirma, iar
@@ -1309,6 +1786,53 @@ class Component extends DCLogic {
           this.patchUser(acc, { poateConfirmaLivrarea: v }, { msg: v
             ? "„" + acc.name + "” poate confirma livrarea."
             : "„" + acc.name + "” nu mai poate confirma livrarea." });
+        },
+        // --- contul pornit ori oprit (runda 2.5.0, cerut de patron) ---
+        //
+        // Oprirea ține pe loc tot ce ia ștergerea: parola, numele de pe
+        // comenzi, istoria. Contul nu mai poate intra, iar dacă e conectat
+        // acum, serverul îl scoate pe loc (îi șterge sesiunile). Se întoarce
+        // oricând — deci e unealta pentru „omul ăsta nu mai lucrează la noi",
+        // nu ștergerea.
+        //
+        // Oprirea cere a doua apăsare, ca ștergerea: pe telefon, un deget
+        // alunecat pe comutator ar scoate pe cineva din cont în plină tură.
+        // Pornirea merge din prima: nu scoate pe nimeni de nicăieri.
+        //
+        // Rândul se desenează și unde nu se poate apăsa (contul tău, un cont de
+        // conducere când nu ești fondator), stins și cu motivul scris, ca „Nu
+        // poți șterge contul cu care ești conectat". Pe contul de sistem nu se
+        // desenează deloc: serverul îl refuză, iar accesul tabletelor se oprește
+        // din Setări.
+        activShown: !acc.sys,
+        activOn: activLucru ? !!S.activSpre : activArmat ? false : activ,
+        activBlocat,
+        activArmat,
+        activLine: activArmat ? "var(--h-danger)" : "var(--h-line)",
+        activNotaFg: activArmat ? "var(--h-fg)" : "var(--h-fg-faint)",
+        activNota: isMe
+          ? "E contul cu care ești conectat: nimeni nu-și poate opri propriul cont."
+          : activDoarFondator
+            ? "Contul unui " + (rl === "fondator" ? "fondator" : "administrator") + " îl oprește și îl pornește numai un fondator."
+            : activLucru
+              ? (S.activSpre ? "Pornesc contul…" : "Opresc contul…")
+              : activArmat
+                ? "Oprești contul „" + acc.name + "”? Nu va mai putea intra, iar dacă e conectat acum, iese pe loc. Comenzile și istoria lui rămân, iar contul se poate porni la loc oricând."
+                : activ
+                  ? "Dacă îl oprești, nu mai poate intra, iar dacă e conectat acum, iese pe loc. Comenzile și istoria lui rămân."
+                  : "Oprit: nu poate intra. Comenzile și istoria lui sunt păstrate; pornit la loc, intră cu parola lui.",
+        onActiv: (e) => {
+          if (activBlocat) return;
+          const v = !!(e && e.target && e.target.checked);
+          // Înapoi pe „pornit" cât oprirea așteaptă a doua apăsare: renunțare.
+          if (v === activ) return set({ activArm: null });
+          if (!v) return set(Object.assign(curataAltele(acc.u), { activArm: acc.u, sterg: null }));
+          schimbaActiv(acc, true);
+        },
+        onActivRenunt: () => set({ activArm: null }),
+        onActivOpresc: () => {
+          if (activBlocat || !activArmat) return;
+          schimbaActiv(acc, false);
         },
         cust: acc.cust || "",
         custEdit: draftVal(acc, "cust", acc.cust || ""),
@@ -1576,7 +2100,7 @@ class Component extends DCLogic {
           if (isMe) return;
           if (S.sterg !== acc.u) {
             return set({
-              sterg: acc.u,
+              sterg: acc.u, activArm: null,
               msg: "Ștergi contul „" + acc.name + "”? Apasă încă o dată pe buton. Contul dispare definitiv, cu tot cu parolă; comenzile lui rămân.",
               msgBad: true
             });
@@ -1587,6 +2111,31 @@ class Component extends DCLogic {
         }
       };
     });
+
+    // În plăci, contul deschis apare de DOUĂ ori: placa lui, aprinsă, rămâne
+    // la locul ei, iar fișa întreagă se pune după ULTIMA placă din rândul lui
+    // și se întinde pe tot rândul. Pusă chiar în locul plăcii, ar fi lăsat gol
+    // restul rândului de deasupra; cu `grid-auto-flow: dense`, plăcile de după
+    // ar fi sărit înaintea ei, și ordinea n-ar mai fi fost cea a numelor.
+    let randuri = accounts;
+    const iDeschis = eGrila ? accounts.findIndex(a => a.deschis) : -1;
+    if (iDeschis >= 0) {
+      const n = Math.max(1, S.coloane || (eSase ? 6 : 4));
+      const dupa = Math.min(accounts.length - 1, Math.floor(iDeschis / n) * n + n - 1);
+      const fisa = Object.assign({}, accounts[iDeschis], {
+        placa: false, fisa: true, fisaLat: "none", fisaCol: "1 / -1",
+        strangibil: true, bd: "var(--h-accent)"
+      });
+      randuri = accounts.slice(0, dupa + 1).concat([fisa], accounts.slice(dupa + 1));
+    }
+
+    // Pastilele: câte conturi are fiecare rol în TOATĂ lista, nu în căutare.
+    // O pastilă care s-ar stinge la fiecare tastă, chiar sub degetul care a
+    // ales-o, ar fi o țintă mișcătoare.
+    const peRol = {};
+    S.users.forEach(acc => { const r = roleOf(acc); peRol[r] = (peRol[r] || 0) + 1; });
+    const roluriPrezente = RANG.filter(r => peRol[r] > 0);
+    const potriviriAiurea = rolAles && cautat && potrivite.length === 0 ? S.users.filter(seCauta).length : 0;
 
     const addUser = () => {
       // Semafor pe instanță, nu în stare: setState NU schimbă starea pe loc,
@@ -1818,15 +2367,48 @@ class Component extends DCLogic {
         this.setState({ eroare: "", pCodeErr: "", loaded: false },
           () => { this.pullUsers(); this.pullPanelCode(); });
       },
-      accounts,
+      accounts: randuri,
       cauta: S.cauta,
       onCauta: (e) => set({ cauta: e.target.value }),
       onCautaSterge: () => set({ cauta: "" }),
       cautaPusa: cautat.length > 0,
       cautaNimic: cautat.length > 0 && potrivite.length === 0,
       cautaCeva: S.cauta.trim(),
-      cautaSocoteala: potrivite.length + " din " + S.users.length
-        + (S.users.length === 1 ? " cont" : " conturi"),
+      cautaSocoteala: potrivite.length + " din " + inRol.length
+        + (inRol.length === 1 ? " cont" : " conturi")
+        + (rolAles ? " · " + ROL_PLURAL[rolAles].toLowerCase() : ""),
+      cautaInRol: rolAles ? " dintre „" + ROL_PLURAL[rolAles] + "”" : "",
+      cautaAiurea: potriviriAiurea
+        ? "Caută în toate rolurile · " + potriviriAiurea + (potriviriAiurea === 1 ? " potrivire" : " potriviri")
+        : "",
+      onToateRolurile: () => set(Object.assign(curataAltele(null), { rol: "", deschis: null })),
+
+      // ── rolurile și vederea (runda 2.5.0) ───────────────────────────────
+      roluriArata: S.loaded && roluriPrezente.length > 1,
+      roluriCip: [{ v: "", l: "Toate", nr: S.users.length }]
+        .concat(roluriPrezente.map(r => ({ v: r, l: ROL_PLURAL[r] || r, nr: peRol[r] })))
+        .map(k => ({
+          l: k.l, nr: k.nr, apasat: rolAles === k.v,
+          alege: () => set(Object.assign(curataAltele(null), { rol: k.v, deschis: null }))
+        })),
+      vederiConturi: [
+        { k: "lista", e: "Listă: fiecare cont cu fișa lui întreagă" },
+        { k: "patru", e: "Plăci: patru pe rând" },
+        { k: "sase", e: "Plăci: șase pe rând" }
+      ].map(w => ({
+        apasat: vedere === w.k, eticheta: w.e,
+        eUnu: w.k === "lista", ePatru: w.k === "patru", eSase: w.k === "sase",
+        alege: () => {
+          tineVedereaConturilor(w.k);
+          set(Object.assign(curataAltele(null), { vedere: w.k, deschis: null, coloane: 0 }));
+        }
+      })),
+      uneltLat: eGrila ? "none" : "760px",
+      conturiCls: eSase ? "ct-sase" : "",
+      // „Patru": cel puțin 9,5rem pe placă, adică două pe rând și pe un
+      // telefon de 360 px. „Șase": cel puțin 7rem, trei pe rând de la 390 px.
+      conturiStil: !eGrila ? "display:flex;flex-direction:column;gap:16px"
+        : eSase ? grilaConturi(6, "7rem", "10px") : grilaConturi(4, "9.5rem", "14px"),
 
       /* --- linkurile de recomandare, strânse la un loc --- */
       // Codul era greu de găsit: stătea pe cardul fiecărui cont, iar ca să dai

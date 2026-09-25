@@ -145,14 +145,25 @@ function seo_data(): array
                   ORDER BY sort, id'
             )->fetchAll(PDO::FETCH_ASSOC);
         };
+        // Cele trei prețuri (migrarea 028) se cer cu încă un ocol, din același
+        // motiv: fișierele urcă înaintea importului. Coloanele sunt cele din
+        // `CATALOG_TREPTE_COLOANE` (api/lib/catalog.php). Fișierul ăsta nu
+        // poate încărca lista de acolo, fiindcă `catalog.php` cere baza prin
+        // `scalar()`; de aceea le ține în pas o probă (`test-trepte-pret`).
+        $undeLaturi = '(in_frozen = 1 AND price_frozen IS NOT NULL)
+                  OR (in_baked = 1 AND price_baked IS NOT NULL)';
         try {
             $products = $intreaba(
-                ', photo_baked, in_frozen, in_baked',
-                '(in_frozen = 1 AND price_frozen IS NOT NULL)
-                  OR (in_baked = 1 AND price_baked IS NOT NULL)'
+                ', photo_baked, in_frozen, in_baked'
+                    . ', price_frozen_b, price_frozen_c, price_baked_b, price_baked_c, prag_b, prag_c',
+                $undeLaturi
             );
-        } catch (Throwable $eFaraLaturi) {
-            $products = $intreaba('', 'price_frozen IS NOT NULL AND price_baked IS NOT NULL');
+        } catch (Throwable $eFaraTrepte) {
+            try {
+                $products = $intreaba(', photo_baked, in_frozen, in_baked', $undeLaturi);
+            } catch (Throwable $eFaraLaturi) {
+                $products = $intreaba('', 'price_frozen IS NOT NULL AND price_baked IS NOT NULL');
+            }
         }
 
         $categories = $pdo->query(
@@ -888,6 +899,16 @@ $produsLd = static function (array $p) use ($base, $nume, $ro, $lang, $company, 
             'seller'        => ['@id' => $base . '/#firma'],
         ],
     ];
+    // Cele trei prețuri, când produsul le are pe latura vitrinei (migrarea
+    // 028): Google citește din ele de la câte bucăți scade prețul. `price`
+    // rămâne A, cifra pe care o vede omul când deschide pagina, iar un produs
+    // cu un singur preț rămâne cu marcajul de ieri — v. `latura_scara_ld()`.
+    if (function_exists('latura_scara_ld') && function_exists('latura_vitrina')) {
+        $trepte = latura_scara_ld($p, latura_vitrina($p));
+        if ($trepte) {
+            $item['offers']['priceSpecification'] = $trepte;
+        }
+    }
     if ($p['grams']) {
         $item['weight'] = ['@type' => 'QuantitativeValue', 'value' => (int) $p['grams'], 'unitCode' => 'GRM'];
     }

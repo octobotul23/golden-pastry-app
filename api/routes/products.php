@@ -44,9 +44,13 @@ function route_products_list(): void
     // s-ar fi întors aprinsă în panou, fără nicio eroare nicăieri.
     $laturi = catalog_laturi_supported() ? ', photo_baked, in_frozen, in_baked' : '';
 
+    // Prețurile B și C (migrarea 028), cu aceeași poartă și din aceeași pricină.
+    // Lăsate afară, scara din `product_public()` ar ieși „numai A" pe fiecare
+    // produs — un răspuns credibil, deci unul pe care nu-l prinde nimeni.
     $rows = all(
         'SELECT id, slug, name, name_en, description, description_en, photo, grams,
                 price_frozen, price_baked, category, is_new, active, sort' . $laturi
+        . catalog_trepte_select()
         . ' FROM products'
         . ($all ? '' : ' WHERE active = 1')
         . ' ORDER BY sort, id'
@@ -199,6 +203,11 @@ function route_lists_get(): void
             [$prima, $ultima] = order_day_window();
             return ['first' => $prima, 'last' => $ultima];
         })(),
+        // Catalogul, cum l-a ales patronul în Setări: vederea cu care se
+        // deschide magazinul (pe telefon și pe calculator) și pragurile cu care
+        // se precompletează un produs nou. Publice fiindcă magazinul le citește
+        // înainte să știe cine e vizitatorul — și n-au nimic de ascuns.
+        'catalog' => catalog_implicite(),
     ]);
 }
 
