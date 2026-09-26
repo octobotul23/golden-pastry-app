@@ -21,7 +21,7 @@ declare(strict_types=1);
  * Cele două variante în care pleacă marfa. Prețul depinde de ea, nu de client.
  *
  *   congelat — livrat congelat, în lanț frigorific;
- *   copt     — gata de servire.
+ *   copt     — copt în laborator, gata de vitrină (pe ecran: „Coapte”).
  *
  * Prețul se alegea după cum clientul are cont sau nu („cu cont = HoReCa"),
  * ceea ce era o citire greșită a catalogului: cele două prețuri de pe site nu
@@ -527,7 +527,7 @@ function honored_columns(): string
  * pe rând, niciunul n-ar fi atins pragul de 100.
  *
  * Laturile se numără deosebit: prețurile sunt ale fiecărei laturi, deci 60 de
- * congelate și 60 gata de servire nu fac 120 din nimic.
+ * congelate și 60 coapte nu fac 120 din nimic.
  *
  * Trecerea e ÎNGĂDUITOARE: un rând strâmb se sare aici și se refuză mai jos,
  * în bucla lui `price_items()`, cu mesajul lui obișnuit. Refuzat aici, ar fi
@@ -765,7 +765,7 @@ function cos_de_tarifat($items): array
  * decât scrie acum.
  *
  * `$ingaduiteVariante` e sora lui `$ingaduite`, pentru cealaltă poartă: de la
- * migrarea 024 un produs poate fi în catalogul de gata de servire și nu în cel
+ * migrarea 024 un produs poate fi în catalogul de coapte și nu în cel
  * de congelate, iar o comandă nouă n-are voie să treacă hotarul ăsta. Numai că
  * îngăduința nu se poate cheia pe id, ca cealaltă: o comandă poate ține legiuit
  * același produs în AMÂNDOUĂ variantele, iar o listă de id-uri ar lăsa să
@@ -961,8 +961,9 @@ function price_items(
         // deja convenită prețul e cel de atunci, nu unul care lipsește azi.
         if ($ramas > 0) {
             if ($catalog === null) {
-                // `latura_cuvant()`, nu `$vi`: „copt" e vorbă de laborator, iar
-                // mesajul ăsta îl citește clientul.
+                // `latura_cuvant()`, nu `$vi`: mesajul ăsta îl citește clientul,
+                // iar vorba de pe ecran se hotărăște într-un singur loc. Că azi
+                // iese tot „copt", ca și cheia, e o potrivire, nu o regulă.
                 fail('Produsul „' . $p['name'] . '” nu are preț pentru varianta „'
                     . latura_cuvant($vi) . '”.', 422, 'missing_price');
             }

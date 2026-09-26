@@ -5,13 +5,13 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **nouăzeci și nouă de minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele paisprezece plimbări stă singură și își spune la
+Durează **o sută șapte minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele cincisprezece plimbări stă singură și își spune la
 început cât ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale
 bucăților care au minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o
 plimbare, se adună și aici.
 
-Cele paisprezece, în ordinea în care se fac cel mai ușor:
+Cele cincisprezece, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -47,9 +47,13 @@ Cele paisprezece, în ordinea în care se fac cel mai ușor:
     magazinului și cea de pornire din Setări (13.6), filtrele magazinului
     (13.7), vederile și filtrele din Catalog (13.8) și conturile, pe plăci
     (13.9).
-14. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+14. **Runda 2.5.1** — numărul unui produs nou (14.1), un număr liber și unul
+    greșit (14.2), un număr ocupat, cu produsele care se dau cu un loc (14.3),
+    întoarcerea la numărul de la început (14.4) și numele nou al laturii
+    coapte, „Coapte", peste tot unde se vede (14.5).
+15. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A paisprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
+A cincisprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
 ai deschis mai devreme.
 
 ---
@@ -998,7 +1002,7 @@ singurele care n-au mai fost plimbate niciodată.*
 Primele patru se fac în magazin, fără cont. Ultimele trei se fac cu
 `demo-manager`, pe telefon (390), în panoul de laborator.
 
-### 8.1 Comutatorul congelat ↔ gata de servire
+### 8.1 Comutatorul congelate ↔ coapte
 
 Magazinul pe telefon (390), `http://127.0.0.1:8101/catalog`. Derulezi până
 trec uneltele de deasupra produselor: de acolo, sub antet, la mijloc, stă
@@ -1007,7 +1011,7 @@ vreo cinci ori, repede.
 
 **Trebuie să vezi:** un jeton rotund care **alunecă** de sub un semn sub
 celălalt, cu un arc scurt la capăt. Nu sare, nu clipește, nu apare de nicăieri.
-Sub pastilă iese o clipă o vorbă — „Congelate" ori „Gata de servire" — scrisă
+Sub pastilă iese o clipă o vorbă — „Congelate" ori „Coapte" — scrisă
 pe **fundal închis, cu o dungă subțire de jur împrejur**, cu literele deschise
 la culoare.
 
@@ -1074,13 +1078,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.5.0 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.5.1 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.5.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.5.1` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1248,7 +1252,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.5.0 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.5.1 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -1280,7 +1284,7 @@ nou de arătat.
 ### 10.1 Comutatorul cu trei poziții, și de ce se deschide pe „Amândouă"
 
 `demo-fondator`, pe 1440, panoul **Catalog**. Deasupra listei stă o bandă cu
-trei poziții: **„Congelate | Gata de servire | Amândouă"**.
+trei poziții: **„Congelate | Coapte | Amândouă"**.
 
 **Trebuie să vezi:** la deschiderea paginii e aprins **„Amândouă"**, iar lista
 arată exact ce arăta înainte de runda asta — toate produsele, în ordinea lor.
@@ -1288,8 +1292,8 @@ Asta e și pricina pentru care lucrarea n-a ieșit o a treia filă: două catalo
 care se oglindesc se citesc comparând treizeci de rânduri, nu editând un
 produs, iar o filă a treia le-ar fi făcut imposibil de văzut deodată.
 
-Apeși **„Congelate"**. Lista se taie la ce se vinde congelat. Apeși **„Gata de
-servire"**: se taie la cealaltă parte, și acolo trebuie să fie **mai multe**
+Apeși **„Congelate"**. Lista se taie la ce se vinde congelat. Apeși
+**„Coapte"**: se taie la cealaltă parte, și acolo trebuie să fie **mai multe**
 rânduri, fiindcă acolo se pun produsele care n-au corespondent congelat.
 
 **Uită-te și la grupe:** o grupă rămasă fără niciun produs pe latura aleasă
@@ -1301,13 +1305,13 @@ ca să ai unde pune ceva în ea. **Pe site e pe dos**, și asta se plimbă la 10
 Tot în Catalog, pe „Amândouă". Alegi un produs cu amândouă prețurile și
 deschizi formularul.
 
-**Trebuie să vezi:** două panouri, **„Congelate"** și **„Gata de servire"**,
+**Trebuie să vezi:** două panouri, **„Congelate"** și **„Coapte"**,
 fiecare cu semnul lui, cu comutatorul **„În catalog"** și cu prețurile lui.
 Vorbele „HoReCa" și „raft" nu mai există nicăieri în casă; dacă le mai vezi
 undeva, pachetul e mai vechi decât crezi.
 
 > S-a schimbat în 2.5.0: până atunci erau patru casete în grilă, sub „Preț
-> congelat" și „Preț gata de servire". Fiecare panou are acum trei prețuri,
+> congelat" și „Preț copt". Fiecare panou are acum trei prețuri,
 > A, B și C; aici contează numai A, iar celelalte se plimbă la 13.2.
 
 În panoul **„Congelate"** stingi comutatorul **„În catalog"** și salvezi.
@@ -1318,7 +1322,7 @@ undeva, pachetul e mai vechi decât crezi.
 2. **Prețul congelat e tot acolo**, scris, nu șters. Caseta rămâne văzută, nu
    ascunsă: ascunsă, ar fi ascuns tocmai ce ți s-a promis că se păstrează.
 3. Pe rândul din listă, pastila **„congelate"** se stinge (cenușie), iar
-   **„gata de servire"** rămâne aprinsă — nu eticheta roșie de până acum.
+   **„coapte"** rămâne aprinsă — nu eticheta roșie de până acum.
    Roșu înseamnă de-acum „nu e în niciun catalog" ori „e în catalog, fără
    prețul lui" — stări stricate. Un produs dintr-o singură parte e
    **legiuit**, deci n-are ce căuta în roșu.
@@ -1335,15 +1339,15 @@ undeva, pachetul e mai vechi decât crezi.
 ### 10.3 Două poze pentru același produs
 
 Tot pe produsul de la 10.2. În formular sunt acum **două casete de fișier**:
-cea de până acum și **„Fotografie — gata de servire"**.
+cea de până acum și **„Fotografie — copt"**.
 
-Urci o poză anume pentru gata de servire — una care se deosebește la prima
+Urci o poză anume pentru coapte — una care se deosebește la prima
 vedere de cea congelată — și salvezi.
 
 **Trebuie să vezi:** previzualizarea din formular arată poza **rezolvată**,
 adică exact ce vede cumpărătorul pe latura aleasă, nu calea scrisă în bază.
 
-Treci pe site (`/`), pe magazin. Comuți **congelate ↔ gata de servire**.
+Treci pe site (`/`), pe magazin. Comuți **congelate ↔ coapte**.
 
 **Trebuie să vezi:** poza de pe cartonaș **se schimbă odată cu fila**.
 
@@ -1380,8 +1384,8 @@ alesese un fișier, și era trimis să caute unde nu era nimic.
 
 ### 10.4 Coșul: rândul care rămâne, și rândul care trebuie să plece
 
-Pe magazin, fără cont. Pui în coș produsul de la 10.2 **pe partea de gata de
-servire**, apoi comuți fila pe congelate și înapoi.
+Pe magazin, fără cont. Pui în coș produsul de la 10.2 **pe partea de
+coapte**, apoi comuți fila pe congelate și înapoi.
 
 **Trebuie să vezi:** rândul din coș **nu piere**, și nici banii de pe el.
 Coșul poate ține legiuit același produs în amândouă variantele, iar fila de sus
@@ -1430,11 +1434,11 @@ fișiere de probă.
 ### 10.6 Pagina produsului, și ce pleacă spre Google
 
 Pe 8101, deschizi `/produs/<numele-produsului>` al produsului de la 10.2 — cel
-care se vinde acum **numai gata de servire**.
+care se vinde acum **numai copt**.
 
 **Trebuie să vezi, pe ecran:**
 
-- butonul își **numește latura**: „Adaugă — gata de servire", nu doar „Adaugă";
+- butonul își **numește latura**: „Adaugă — coapte", nu doar „Adaugă";
 - caseta laturii pe care nu se vinde **nu mai există**: pe un produs de pe o
   singură latură vezi **două** căsuțe, nu trei, iar cele două rămase se lățesc
   ca să umple rândul — fără gol la dreapta. Așa a cerut-o patronul, și din
@@ -1448,12 +1452,12 @@ care se vinde acum **numai gata de servire**.
 **Și ce nu se vede pe ecran** — apeși `Ctrl+U` (codul paginii) și cauți
 `"price"`:
 
-**Trebuie să vezi prețul laturii pe care marfa chiar se vinde** — cel de gata
-de servire —, nu prețul congelat rămas scris în casetă. Asta e defectul cel mai
+**Trebuie să vezi prețul laturii pe care marfa chiar se vinde** — cel de la
+coapte —, nu prețul congelat rămas scris în casetă. Asta e defectul cel mai
 scump al rundei și singurul care nu se vede din niciun ecran: panoul arată
 prețul bun, magazinul arată prețul bun, și numai ce pleacă spre Google era
-altceva. Tot acolo, în cap, titlul trebuie să spună **„gata de servire"**, nu
-„livrare congelată".
+altceva. Tot acolo, în cap, titlul trebuie să spună **„din cuptorul
+nostru"**, nu „livrare congelată".
 
 Deschizi și `/sitemap.xml`: produsul trebuie să fie **înăuntru**. Un produs
 vândut undeva are o adresă publică, oricare ar fi latura lui.
@@ -1470,7 +1474,7 @@ fără poză a ei o arăta pe a celeilalte, ca produsul să nu apară gol pe sit
 ziua dintre cele două urcări. Ideea era bună și scrisă în plan — dar din afară
 nu se poate deosebi de o poză scrisă în amândouă coloanele, și chiar așa s-a
 citit, în prima zi de folosință: *„Când schimb poza la congelate se schimbă și
-la gata de servire."*
+la gata de servire."* (Așa se chema atunci latura coaptă.)
 
 Se plimbă **pe pachetul construit** (8101), ca toată runda 2.4.0.
 
@@ -1485,12 +1489,12 @@ arăta ce se plimbă la 11.1.
 caseta „Fotografie — congelat"** și salvezi.
 
 **Trebuie să vezi, în formular:** miniatura de lângă caseta de congelat arată
-poza urcată, iar cea de lângă „gata de servire" **rămâne goală**. Lămurirea de
+poza urcată, iar cea de lângă „copt" **rămâne goală**. Lămurirea de
 sub casetă o spune pe față: „Fără ea, produsul apare acolo fără poză."
 
-Treci pe site, pe magazin, și comuți **congelate ↔ gata de servire**.
+Treci pe site, pe magazin, și comuți **congelate ↔ coapte**.
 
-**Trebuie să vezi:** pe congelate, poza urcată; pe gata de servire,
+**Trebuie să vezi:** pe congelate, poza urcată; pe coapte,
 **substituentul casei** — rozeta, nu fotografia congelată. Asta e hotărârea, și
 e singura formă în care omul poate deosebi „n-are încă poză aici" de „i-am pus
 poză și aici".
@@ -1501,12 +1505,12 @@ face pe unul nou-nouț.
 
 ### 11.2 Schimbi poza la o latură, și cealaltă nu se clintește
 
-Tot pe produsul de la 11.1. Îi urci acum o poză **și** în caseta „gata de
-servire", una care se deosebește la prima vedere. Salvezi. Apoi îl deschizi din
+Tot pe produsul de la 11.1. Îi urci acum o poză **și** în caseta „Fotografie
+— copt", una care se deosebește la prima vedere. Salvezi. Apoi îl deschizi din
 nou și schimbi **numai** poza de la congelat, cu o a treia, și salvezi iar.
 
-**Trebuie să vezi, pe site:** latura congelată arată a treia poză, iar gata de
-servire o arată **pe a doua, neatinsă**. Exact ce a semnalat patronul, pe dos.
+**Trebuie să vezi, pe site:** latura congelată arată a treia poză, iar cea
+coaptă o arată **pe a doua, neatinsă**. Exact ce a semnalat patronul, pe dos.
 
 Și pe disc, în `products/`: **toate trei fișierele** nu trebuie să fie acolo —
 poza congelată dinainte de ultima schimbare se dezleagă și se șterge, fiindcă
@@ -1516,7 +1520,7 @@ a dispărut și ea, dezlegarea a rămas oarbă la coloana celeilalte laturi.
 ### 11.3 Migrarea nu golește nicio vitrină
 
 Acum un produs **vechi**, din cele care erau în catalog înainte de runda asta —
-unul căruia nu i-ai urcat niciodată o poză anume pentru gata de servire.
+unul căruia nu i-ai urcat niciodată o poză anume pentru coapte.
 
 **Trebuie să vezi, în formular:** **amândouă** miniaturile arată o poză, și e
 **aceeași**. Nu e căderea de ieri — căderea s-a tăiat. E `027`, care a copiat o
@@ -1648,7 +1652,7 @@ pe B, iar proba s-ar înroși fără nicio vină a codului.
 - pragurile: **100** și **300**. De obicei sunt deja scrise, din Setări;
 - panoul **„Congelate"**, cu comutatorul **„În catalog"** aprins: Preț A
   **4,20**, Preț B **3,90**, Preț C **3,60**;
-- panoul **„Gata de servire"**, aprins și el: **5,20**, **4,80**, **4,50**;
+- panoul **„Coapte"**, aprins și el: **5,20**, **4,80**, **4,50**;
 - **„Adaugă în catalog"**.
 
 ### 13.1 Semnele celor două cataloage
@@ -1656,12 +1660,12 @@ pe B, iar proba s-ar înroși fără nicio vină a codului.
 Până acum semnele se vedeau numai în pastila de pe telefon, iar al doilea era
 un cuptor. De-acum fiecare catalog își are semnul lui peste tot unde apare,
 **înaintea vorbei**: **un fulg albastru** la congelate, **o flacără
-portocalie, desenată numai din contur**, la gata de servire.
+portocalie, desenată numai din contur**, la coapte.
 
 Magazinul pe calculator (1440): `http://127.0.0.1:8101/catalog`.
 
 **Trebuie să vezi**, în coloana coșului, sub **„Variantă de livrare"**, fulgul
-înaintea lui **„Congelate"** și flacăra înaintea lui **„Gata de servire"**.
+înaintea lui **„Congelate"** și flacăra înaintea lui **„Coapte"**.
 
 Pe telefon (390), aceeași pagină. Sus, chiar deasupra produselor, comutatorul
 e în bara de unelte, cu semne **și** cu vorbe. Derulezi până iese de pe ecran:
@@ -1673,12 +1677,13 @@ abia atunci vine, sub antet, pastila plutitoare, numai cu semne (8.1).
   fiecare rând și în capul celor două panouri din formular;
 - în **Comenzi**: pe cererile venite de pe site, dacă ai vreuna, și lângă
   varianta fiecărei poziții din formularul de comandă — care se cheamă
-  acum **„Gata de servire"**, ca în magazin, nu „Copt (gata de servit)";
+  **„Coapte"**, ca în magazin, nu „Copt (gata de servit)", cum scria
+  înainte de 2.5.0;
 - în **Laborator**: pe eticheta variantei, pe fiecare card de comandă;
 - în **Statistici**, pe vederea „Registrul": în legenda cardului „Congelate ori
-  gata de servire?". Același nume stă și pe chipul de sus al vederii
+  coapte?". Același nume stă și pe chipul de sus al vederii
   „Inelul zilei" și în foaia care se deschide când apeși o categorie
-  (**„Gata de servire · congelate"**).
+  (**„Coapte · congelate"**).
 
 Pe tema întunecată semnele se luminează un pic, ca să nu se piardă pe fundal.
 
@@ -1725,7 +1730,7 @@ produselor alegi **„Unul pe rând, cu toate detaliile"**, și găsești „Pli
 **Trebuie să vezi:** trei căsuțe alăturate — **„1–99 buc. · 4,20 RON"**,
 **„100–299 buc. · 3,90 RON"**, **„300+ buc. · 3,60 RON"** — și **niciuna
 aprinsă**: produsul nu e încă în coș, deci n-a ajuns nimeni nicăieri. Dedesubt,
-rândul celuilalt catalog, cu flacăra în față: **„Gata de servire: 5,20 RON"**.
+rândul celuilalt catalog, cu flacăra în față: **„Coapte: 5,20 RON"**.
 
 Apeși **„Adaugă la ofertă"**, apoi, în căsuța dintre „−" și „+", scrii **88**.
 
@@ -1745,12 +1750,12 @@ ei. Aprinsă e numai cea de congelate — latura pe care ai bucăți în coș.
 buc. · Congelate"*, iar suma rândului **390,00 RON** — nu 420. Pe card, auriul
 a trecut pe **„100–299 buc."**, iar îndemnul spune acum cât mai e până la C.
 
-Apoi scrii **60** la congelate, comuți pe **„Gata de servire"** și pui încă
+Apoi scrii **60** la congelate, comuți pe **„Coapte"** și pui încă
 **60** de acolo.
 
 **Trebuie să vezi:** niciun rând n-a primit B. Bucățile se numără **pe fiecare
 catalog în parte**, fiindcă și prețurile sunt ale fiecăruia: 60 de congelate și
-60 gata de servire nu fac 120, ci câte 60. Pe amândouă rândurile, îndemnul
+60 de coapte nu fac 120, ci câte 60. Pe amândouă rândurile, îndemnul
 spune cât mai lipsește până la 100.
 
 La capăt golești coșul, cu **„Golește"**.
@@ -1859,7 +1864,7 @@ Apoi, pe rând:
 stinsă și nu se apasă: n-ar avea ce arăta.
 
 Pe telefon (390), grupa, ordinea și pastilele stau sub butonul **„Filtre"**,
-iar **„Congelate | Gata de servire | Amândouă"** sunt trei căsuțe egale, pe un
+iar **„Congelate | Coapte | Amândouă"** sunt trei căsuțe egale, pe un
 rând.
 
 ### 13.9 Conturile, pe plăci
@@ -1923,7 +1928,137 @@ magazin, nici în formularul de comandă.
 
 ---
 
-## 14 · Telefon, tabletă, calculator
+## 14 · Runda 2.5.1: numărul din colțul pozei, și „Coapte"
+
+*Opt minute. Un singur produs de plimbare, mutat de trei ori și pus la loc,
+așa că la capăt numerele sunt exact cele de la început; apoi, fără niciun
+produs nou, numele laturii coapte (14.5).*
+
+Pe 25 septembrie 2026 ai cerut să alegi tu ce număr poartă fiecare produs în
+colțul pozei, iar de la sine numerele să urmeze ordinea în care au fost puse
+produsele. Numărul e și locul produsului în grupa lui: magazinul și Catalogul
+le așază după el.
+
+Tot pe pachetul construit (8101), tot cu `demo-fondator`.
+
+**Plimbarea mută dinadins numerele altor produse, apoi le pune la loc.** Fă
+bucățile în ordine și nu sări peste 14.4: un produs de plimbare șters de pe
+03 ar lăsa acolo un gol, iar toate produsele de după el ar rămâne cu un număr
+mai mare decât aveau.
+
+### 14.1 Numărul unui produs nou
+
+`/lab/produse.html`. **Trebuie să vezi**, pe fiecare rând din listă, un număr
+înaintea numelui — **01**, **02**, **03**… —, iar în fiecare grupă rândurile
+stau în ordinea numerelor. Pe plăci („Patru" și „Șase") numărul stă în colțul
+pozei.
+
+**„+ Produs nou"**. **Trebuie să vezi** caseta **„Număr în catalog"** deja
+scrisă, cu numărul de după cel mai mare din listă, iar lângă ea: *„Următorul
+după ultimul produs — ordinea în care sunt puse. Scrie altul ca să-l pui mai
+în față."* Notează-ți numărul: e locul lui, și la el se întoarce la 14.4.
+
+Completezi:
+
+- numele **„Plimbare 2.5.1"**, o descriere scurtă în amândouă limbile,
+  gramajul **140** și o grupă oarecare. Poza poate lipsi;
+- panoul **„Congelate"**, aprins, cu Preț A **4,20**;
+- panoul **„Coapte"**, stins din comutatorul **„În catalog"**;
+- **„Adaugă în catalog"**.
+
+**Trebuie să vezi**, sus: *„Produsul a fost adăugat în catalog, cu numărul
+…"* — același număr ca în casetă. În magazin
+(`http://127.0.0.1:8101/catalog`, în vederea „Patru"), cardul lui poartă
+numărul în colțul din stânga-sus al pozei, iar în grupa lui stă ultimul.
+
+### 14.2 Un număr liber, și unul greșit
+
+Pe rândul lui „Plimbare 2.5.1", **„Editează"**. **Trebuie să vezi**, lângă
+număr: *„Numărul din colțul pozei, în magazin. Scrie altul ca să-l muți; dacă
+e ocupat, cele de la rând se dau cu un loc, ca într-o listă."*
+
+Scrii **1000**. **Trebuie să vezi**, cu roșu: *„Scrie un număr întreg de la 1
+la 999 — cel din colțul pozei, în magazin."*
+
+Scrii **500**. **Trebuie să vezi**: *„500 e liber — nu se mută niciun alt
+produs."* Apeși **„Salvează"**.
+
+**Trebuie să vezi**: *„Produsul a fost salvat, cu numărul 500."* — nicio vorbă
+despre alte produse. În magazin, cardul poartă **500**, iar vecinii și-au
+păstrat numerele.
+
+### 14.3 Un număr ocupat
+
+**„Editează"** din nou. Scrii **03**. **Trebuie să vezi**, înainte de orice
+salvare, cine se mută, cu numele: *„03 e acum la „…". La salvare se dau cu un
+loc … produse (03–… → 04–…), de la „…" până la „…"."* Notează-ți produsul de
+pe 03.
+
+Apeși **„Salvează"**. **Trebuie să vezi**: *„Produsul a fost salvat, cu
+numărul 03. Alte … produse s-au dat cu un loc."*
+
+În magazin:
+
+- produsul notat poartă acum **04**;
+- „Plimbare 2.5.1" poartă **03** și stă în grupa lui înaintea celor cu număr
+  mai mare;
+- în căsuța de căutare scrii **03**: îl găsește pe „Plimbare 2.5.1".
+
+Pui o bucată de „Plimbare 2.5.1" în coș. **Trebuie să vezi** rândul din coș
+începând cu **„3. Plimbare 2.5.1"** — numărul din colț, cum pleacă și în
+mesajul de WhatsApp. Apoi **„Golește"**.
+
+### 14.4 Înapoi la numărul de la început
+
+**„Editează"**. Scrii numărul notat la 14.1. **Trebuie să vezi**: *„… e acum la
+„…". La salvare se dau cu un loc … produse (04–… → 03–…), …"* — aceleași
+produse ca la 14.3, date înapoi. Apeși **„Salvează"**.
+
+**Trebuie să vezi**, în magazin, produsul notat la 14.3 iar pe **03**.
+
+**La capăt**, pe rândul lui „Plimbare 2.5.1", **×**. N-a intrat în nicio
+comandă, deci fereastra întreabă *„Ștergi „Plimbare 2.5.1"?"* și îți dă
+**„Șterge definitiv"**. Stătea ultimul, deci nu lasă niciun gol: numerele din
+Catalog sunt cele de dinainte de plimbare.
+
+### 14.5 Latura coaptă se cheamă „Coapte"
+
+Pe 26 septembrie 2026 ai hotărât ca partea caldă a catalogului să se cheme
+**„Coapte"**, pereche cu **„Congelate"**, după pozele „acum / coapte" de la
+390 și de la 1440. Până atunci se chema „Gata de servire". Se schimbă numai
+vorba de pe ecran: comenzile, prețurile și pozele sunt aceleași.
+
+Magazinul pe calculator (1440), fără cont: `http://127.0.0.1:8101/catalog`.
+
+**Trebuie să vezi**, sub titlul catalogului: *„… Alege varianta de livrare —
+congelate sau coapte — și adaugă produsele în cererea de ofertă."* În coloana
+coșului, sub **„Variantă de livrare"**, comutatorul **„Congelate | Coapte"**,
+fiecare cu semnul lui. Apeși **„Coapte"**. **Trebuie să vezi** dedesubt: *„Le
+coacem în laboratorul nostru și le livrăm zilnic, gata de vitrină. Fără cuptor
+și fără pregătire la tine."*
+
+Apeși **EN**, sus. **Trebuie să vezi** comutatorul spunând **„Frozen |
+Baked"**. Apoi înapoi pe **RO**.
+
+În panou, cu `demo-fondator`, numele trebuie să fie:
+
+- **„Coapte"** — la plural, ca **„Congelate"** — unde numește catalogul:
+  banda de deasupra listei din **Catalog** (**„Congelate | Coapte |
+  Amândouă"**), al doilea panou din formularul unui produs, lista de latură
+  de pe o poziție din formularul de **Comenzi** și legenda din
+  **Statistici** („Congelate ori coapte?");
+- **„Copt"** — la singular, ca **„Congelat"** — unde numește marfa unui
+  rând: eticheta variantei de pe cardurile din **Laborator** și din
+  **Comenzi**, și capetele de coloană din **Statistici**;
+- **„Fotografie — copt"**, caseta de poză a panoului „Coapte".
+
+**Nicăieri nu trebuie să mai vezi „Gata de servire"** — nici pe o pagină, nici
+într-un mesaj trimis de server, nici în titlul unei pagini de produs
+(`Ctrl+U`, ca la 10.6). Dacă îl vezi, pachetul e mai vechi decât crezi.
+
+---
+
+## 15 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -2013,12 +2148,23 @@ Ca să nu cauți ce nu s-a stricat:
   Conturi și Comenzi. Tot de acolo: **pe tabletă (820) capetele de coloană din
   Statistici au încă 18 px** — banda de tabletă n-a intrat în 2.1.1. Nu le
   scrie ca defecte noi; un buton principal sub 44 px pe 390, da.
-- **Latura congelată are încă două nume**: „Congelate" în magazin, în
-  Catalog, în filtrele din Statistici și, din 2.5.0, în formularul de comandă;
-  „Congelat" pe cardurile din Laborator și din Comenzi și pe fișa produsului
-  din magazin. Capetele scurte de coloană din Statistici („Gata", „Congelat")
-  și insignele de pe prima pagină („Congelat crud", „Gata de consum") sunt
-  alt fel de text. Dacă le vrei la fel peste tot, e o hotărâre, nu un defect.
+- **Fiecare latură are două forme ale numelui, dinadins**: la plural —
+  „Congelate", „Coapte" — unde numește catalogul (în magazin, în Catalog, în
+  filtrele din Statistici și în formularul de comandă); la singular —
+  „Congelat", „Copt" — unde numește marfa unui rând (pe cardurile din
+  Laborator și din Comenzi, pe fișa produsului din magazin și în capetele de
+  coloană din Statistici). Insignele de pe prima pagină („Congelat crud",
+  „Gata de consum") și fraza pentru restaurante („produs finit, gata de
+  servit") descriu marfa, nu numesc latura, deci au rămas cum erau.
+- **Un produs șters își lasă numărul gol.** Ștergi 08: rămân 07 și 09.
+  Numerele pe care le știu deja clienții nu se schimbă din cauza unei
+  ștergeri, iar produsul nou nu umple golul — primește numărul de după cel
+  mai mare. Dacă vrei 08 plin, muți acolo un produs (14.3).
+- **În vederea „Șase" numărul din colț nu se vede.** Cardul e prea mic ca să
+  mai poarte ceva peste poză. Numărul e în „Unul pe rând" și în „Patru".
+- **Pe card numărul are zero în față, în coș nu**: „03" în colțul pozei,
+  „3. Plimbare 2.5.1" în coș și în mesajul de WhatsApp. Așa era și înainte de
+  2.5.1, cu vechiul număr al produsului.
 
 ---
 
@@ -2037,7 +2183,7 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele paisprezece ies, proba automată se mai trece o dată pe
+Când toate cele cincisprezece ies, proba automată se mai trece o dată pe
 deasupra:
 
 ```bash
@@ -2045,4 +2191,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.5.0`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.5.1`.

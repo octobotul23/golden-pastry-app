@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.5.0/deploy
+  Pachet: /root/plasture-vps 2.5.1/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -128,7 +128,7 @@ grep -c session_days_panou /var/www/gp/api/lib/auth.php
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
    și din curățenie (`actualizeaza-vps.sh:886`), iar folderul pozelor e citit din
    `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:816`,
-   `api/routes/catalog.php:688`).
+   `api/routes/catalog.php:864`).
 6. **Drepturile**: totul pe `www-data`, `755` la foldere, `644` la fișiere,
    `640` la `config.php`.
 7. **Apache**: întâi `configtest`, și abia dacă trece, `reload`. O configurație
@@ -337,7 +337,7 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
   de cât de veche e instalarea: pe una lăsată în urmă cu trei versiuni se aprind
   trei, pe una actualizată ieri niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
-  `sql/028_preturi_pe_trepte.sql`;
+  `sql/029_numere_in_catalog.sql`;
 - **25 de tabele** în capul raportului, la „Baza de date" (cel din urmă venit e
   `schema_migrations`, registrul adus de `025_registru_migrari.sql`; înaintea
   lui, `telegram_links` și `lab_production`, aduse de `021_raspundere.sql`).
@@ -470,7 +470,7 @@ produsele cu **amândouă** prețurile. Nu e o stricăciune — e purtarea pe ca
 codul nou o ține dinadins, fiindcă fișierele ajung înaintea importului și nimic
 n-are voie să se golească în fereastra dintre ele. Ce nu merge până la import:
 cele două bife din panou n-au unde se scrie, iar o poză urcată anume pentru
-gata de servire cade peste cea congelată. Bifele se nasc **aprinse**, nu
+coapte cade peste cea congelată. Bifele se nasc **aprinse**, nu
 stinse: un produs născut de codul vechi între cele două momente trebuie să
 apară în amândouă cataloagele, nu în niciunul.
 
@@ -503,15 +503,15 @@ SELECT value FROM settings WHERE setting_key = 'migration_027_poza_pe_latura';
 ```
 
 Rândul acela e și zăvorul ei: a doua actualizare îl găsește și nu mai copiază
-nimic, deci o poză pe care ai schimbat-o între timp la gata de servire rămâne a
+nimic, deci o poză pe care ai schimbat-o între timp la coapte rămâne a
 ta. E aceeași lecție ca la `016` și `024`.
 
 Ce face: copiază o dată poza congelată în coloana laturii coapte acolo unde
 aceea e goală. Până în 2.4.1 o latură fără poză a ei o arăta pe a celeilalte —
-de-aia o poză schimbată la congelate se vedea și la gata de servire. Împrumutul
+de-aia o poză schimbată la congelate se vedea și la coapte. Împrumutul
 s-a tăiat în runda asta, iar migrarea e cea care face ca tăierea să nu golească
 nicio vitrină: în ziua urcării, amândouă laturile arată exact ce arătau. De-acum
-gol înseamnă gol — un produs căruia nu i-ai urcat poză la gata de servire apare
+gol înseamnă gol — un produs căruia nu i-ai urcat poză la coapte apare
 acolo cu substituentul „fără poză", nu cu poza congelată.
 
 `028_preturi_pe_trepte.sql` **nu se vede nici ea în raport**: nici tabel, nici
@@ -531,6 +531,25 @@ alese în Setări → General, cardul „Catalogul" — aceeași lecție ca la `
 citită ca A: o comandă veche corectată după actualizare își păstrează prețul
 promis, ca până acum, și coboară la B ori la C numai dacă noua cantitate ajunge
 la pragul lor.
+
+`029_numere_in_catalog.sql` **nu se vede nici ea în raport**, ca `027`: nu
+atinge schema deloc, deci nici amprenta nu se mișcă. O ceri singur:
+
+```sql
+SELECT value FROM settings WHERE setting_key = 'migration_029_numere_catalog';
+```
+
+Rândul poartă data la care a rulat și e zăvorul ei: numerotarea se face o
+singură dată, la actualizarea care o aduce, iar cele de după găsesc semnul și
+nu mai ating nimic — deci numerele pe care le alegi în fila Produse rămân ale
+tale. Ce face la import: dă fiecărui produs, și celor scoși din catalog,
+numărul 1, 2, 3…, în ordinea în care au fost puse. Dacă n-ai șters niciodată un
+produs, numerele ies exact cele de ieri, iar vitrina nu se mișcă; dacă ai șters
+unul, cele de după el urcă cu un loc și închid golul. Coșurile, pozele și
+comenzile nu simt nimic: ele țin cheia produsului, nu numărul din colț. În
+fereastra dintre fișiere și import magazinul arată numerele de ieri, iar fișa
+produsului refuză schimbarea numărului cu un mesaj care numește `029` — restul
+fișei se salvează.
 
 Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
 adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:636`,

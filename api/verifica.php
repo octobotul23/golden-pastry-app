@@ -406,6 +406,7 @@ if ($hasConfig) {
             '026_cheie_cerere.sql',
             '027_poza_fiecarei_laturi.sql',
             '028_preturi_pe_trepte.sql',
+            '029_numere_in_catalog.sql',
         ];
         $areRegistru = in_array('schema_migrations', $tables, true);
         check(
@@ -455,7 +456,7 @@ if ($hasConfig) {
         $col003 = [
             ['orders',         'route_seq',    'ordinea opririlor pe ruta șoferului'],
             ['orders',         'stock_synced', 'marcajul de scădere din depozit'],
-            ['orders',         'variant',      'cum pleacă marfa comenzii: congelat ori gata de servire'],
+            ['orders',         'variant',      'cum pleacă marfa comenzii: congelat ori copt'],
             ['order_requests', 'variant',      'aceeași alegere, pe cererea venită de pe site'],
             ['users',          'address',      'adresa clientului, pentru livrare'],
         ];
@@ -776,15 +777,15 @@ if ($hasConfig) {
                 'nume'    => 'Două cataloage, o vitrină (migrarea 024)',
                 'coloane' => ['products' => ['in_frozen', 'in_baked', 'photo_baked']],
                 'setari'  => [],
-                'ce'      => 'Cele două bife spun în CARE catalog e produsul — congelate, gata de '
-                    . 'servire, sau amândouă —, iar a treia coloană ține poza laturii coapte. '
+                'ce'      => 'Cele două bife spun în CARE catalog e produsul — congelate, coapte '
+                    . 'sau amândouă —, iar a treia coloană ține poza laturii coapte. '
                     . 'Fără ele magazinul se întoarce la regula veche, „se vede numai cine are '
-                    . 'AMÂNDOUĂ prețurile", și atunci un produs care se vinde numai gata de '
-                    . 'servire nu poate exista: ori îi inventezi un preț congelat pe care nu-l '
+                    . 'AMÂNDOUĂ prețurile", și atunci un produs care se vinde numai copt '
+                    . 'nu poate exista: ori îi inventezi un preț congelat pe care nu-l '
                     . 'vinzi nimănui, ori nu se vede nicăieri. Purtarea fără ele nu e stricată, e '
                     . 'cea de dinainte — codul nou o ține dinadins, fiindcă fișierele ajung pe '
                     . 'server înaintea importului. Ce se pierde până la import: cele două bife din '
-                    . 'panou n-au unde se scrie, iar o poză urcată pentru gata de servire ar cădea '
+                    . 'panou n-au unde se scrie, iar o poză urcată pentru coapte ar cădea '
                     . 'peste cea congelată.',
             ],
             // 026 nu aduce niciun tabel — o coloană pe `order_requests` ȘI
@@ -819,10 +820,10 @@ if ($hasConfig) {
                 'setari'  => ['migration_027_poza_pe_latura'],
                 'ce'      => 'Face a fiecărei laturi poza pe care până acum o ÎMPRUMUTA de la '
                     . 'cealaltă: până în 2.4.1, o latură fără poză a ei o arăta pe a celeilalte, '
-                    . 'și de-aia schimbarea pozei la congelate se vedea și la gata de servire. '
+                    . 'și de-aia schimbarea pozei la congelate se vedea și la coapte. '
                     . 'Împrumutul s-a tăiat, iar migrarea asta e cea care copiază o dată pentru '
                     . 'totdeauna, ca în ziua schimbării amândouă laturile să arate exact ce '
-                    . 'arătau. Fără ea, codul nou pe baza veche lasă „gata de servire" fără '
+                    . 'arătau. Fără ea, codul nou pe baza veche lasă „Coapte" fără '
                     . 'nicio poză — fiecare produs cu substituentul „fără poză" pe el.',
             ],
             // 028 aduce coloane pe trei tabele ȘI patru rânduri în `settings`.
@@ -846,6 +847,19 @@ if ($hasConfig) {
                     . 'casetele B și C din Produse refuză salvarea, iar cardul „Catalog" din '
                     . 'Setări nu are unde scrie vederea cu care se deschide magazinul. Purtarea '
                     . 'fără ele nu e stricată, e cea de dinainte — prețul A e prețul de ieri.',
+            ],
+            // 029 e de soiul lui 027: nu atinge schema, renumerotează o dată
+            // `products.sort`. Singura urmă sigură e semnul din `settings`, pe
+            // care îl citește și serverul ca poartă (`catalog_numere_supported()`).
+            '029_numere_in_catalog.sql' => [
+                'nume'    => 'Numărul din colțul pozei, ales de mână (migrarea 029)',
+                'coloane' => [],
+                'setari'  => ['migration_029_numere_catalog'],
+                'ce'      => 'Numerotează o dată produsele 1, 2, 3… în ordinea în care au fost puse, '
+                    . 'iar de atunci numărul din colțul pozei se alege din Catalog. Fără ea, '
+                    . 'numărul rămâne cel de ieri — cheia bazei, pe care n-o poate schimba nimeni — '
+                    . 'iar caseta „Număr în catalog" din Produse refuză salvarea. Purtarea fără ea '
+                    . 'nu e stricată, e cea de dinainte.',
             ],
         ];
 

@@ -148,6 +148,171 @@ function catalog_numar_sau_null($v, bool $intreg = false)
     return $intreg ? (int) $v : (float) $v;
 }
 
+/* ------------------------------------------ numărul din colțul pozei -- */
+
+/**
+ * Numărul cel mai mare pe care îl poate primi un produs. Trei cifre încap în
+ * colțul pozei fără să-l lățească; iar un catalog cu o mie de produse n-ar
+ * mai fi o vitrină, ci un depozit.
+ */
+const CATALOG_NUMAR_MAX = 999;
+
+/**
+ * Numerele se pot alege de mână, adică a intrat migrarea 029?
+ *
+ * Poarta e SEMNUL scris de migrare, nu o coloană: `products.sort` e acolo din
+ * `001_schema.sql`, dar ține pași de zece (0, 10, 20…) până o renumerotează
+ * 029. Fără semn, numărul din colț rămâne cel de ieri — cheia bazei — și
+ * Catalogul nu lasă numerele să fie mutate: o mutare peste pași de zece ar
+ * fi scris 7 între 60 și 70, iar vitrina ar fi arătat „07" după „06" și
+ * înaintea lui „60", adică exact dezordinea pe care o repară runda.
+ *
+ * „Nu" nu oprește nimic: e starea de ieri. Aceeași formă ca
+ * `catalog_trepte_supported()`, ținută minte pe cererea asta.
+ */
+function catalog_numere_supported(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        $semn = (int) scalar(
+            "SELECT COUNT(*) FROM settings WHERE setting_key = 'migration_029_numere_catalog'"
+        );
+        return $ok = ($semn > 0);
+    } catch (Throwable $e) {
+        return $ok = false;
+    }
+}
+
+/**
+ * Numărul trimis de panou, citit: un întreg de la 1 la 999, sau null.
+ *
+ * Primește și text („07" e chiar ce vede omul pe card), cu spații în jur, dar
+ * nimic altceva: nici „7,5", nici „+7", nici un număr cu virgulă venit din
+ * JSON. Oglinda lui e `gp.numarCatalog()` din shared/gp-api.js, legată de
+ * asta de `.claude/test-numere-oglinda.mjs` pe același tabel de cazuri.
+ */
+function catalog_numar_din($v): ?int
+{
+    if (is_int($v)) {
+        $n = $v;
+    } elseif (is_string($v) && preg_match('/^[ \t\r\n]*(\d{1,6})[ \t\r\n]*$/D', $v, $m)) {
+        $n = (int) $m[1];
+    } else {
+        return null;
+    }
+    return $n >= 1 && $n <= CATALOG_NUMAR_MAX ? $n : null;
+}
+
+/** Numărul așa cum stă în colțul pozei: cu zero în față până la 9. */
+function catalog_numar_afisat(int $n): string
+{
+    return $n < 10 ? '0' . $n : (string) $n;
+}
+
+/**
+ * Cine se mută, și unde, când produsul `$id` primește numărul `$tinta`.
+ *
+ * `$numere` ține numărul de azi al FIECĂRUI produs (id → număr), și al celor
+ * scoase din catalog: își păstrează locul, ca să se întoarcă tot acolo.
+ * Produsul mutat poate lipsi din el — e unul nou, încă fără număr.
+ *
+ * Întoarce id → numărul nou, numai pentru cele care se schimbă (produsul
+ * mutat inclus); [] dacă nu se schimbă nimic; null dacă nu încape (toate
+ * numerele de la țintă până la capăt, în amândouă părțile, ocupate).
+ *
+ * REGULA: se mută cât mai puține produse, și niciunul cu mai mult de un loc.
+ *   - numărul e liber: se mută numai produsul;
+ *   - e ocupat, iar produsul vine de mai încolo (sau e nou): cei de la țintă
+ *     încolo se dau cu un loc mai încolo, până la primul număr liber;
+ *   - e ocupat, iar produsul pleacă spre capăt: cei de la țintă înapoi se dau
+ *     cu un loc în față, până la primul număr liber — cel mai târziu, locul
+ *     lăsat chiar de produs.
+ * Cu numere fără goluri, e exact mutarea prin tragere dintr-o listă: 19 → 7
+ * dă 7…18 cu un loc mai încolo (8…19); 20 → 22 aduce 21 și 22 înapoi (20,
+ * 21). Un gol oprește împingerea: cine stă după el nu se mișcă.
+ *
+ * Două produse cu același număr — scrise cu mâna în bază — se mută împreună.
+ * Oglinda: `gp.mutariNumar()` din shared/gp-api.js, cu care panoul arată
+ * dinainte cine se va muta; aceeași probă le leagă.
+ */
+function catalog_numar_mutari(array $numere, int $id, int $tinta): ?array
+{
+    $de = array_key_exists($id, $numere) ? (int) $numere[$id] : null;
+    if ($de === $tinta) {
+        return [];
+    }
+    $ocupat = [];
+    foreach ($numere as $alt => $n) {
+        if ((int) $alt !== $id) {
+            $ocupat[(int) $n][] = (int) $alt;
+        }
+    }
+    $mutari = [$id => $tinta];
+    if (!isset($ocupat[$tinta])) {
+        return $mutari;
+    }
+
+    // Lanțul de numere ocupate de la țintă într-o parte, până la primul liber;
+    // null dacă vreunul dintre ele ar ieși din 1…999.
+    $lant = static function (int $pas) use ($ocupat, $tinta): ?array {
+        $l = [];
+        for ($n = $tinta; isset($ocupat[$n]); $n += $pas) {
+            if ($n + $pas < 1 || $n + $pas > CATALOG_NUMAR_MAX) {
+                return null;
+            }
+            $l[] = $n;
+        }
+        return $l;
+    };
+    $pas = ($de === null || $tinta < $de) ? 1 : -1;
+    $l   = $lant($pas);
+    if ($l === null) {
+        $pas = -$pas;
+        $l   = $lant($pas);
+    }
+    if ($l === null) {
+        return null;
+    }
+    foreach ($l as $n) {
+        foreach ($ocupat[$n] as $alt) {
+            $mutari[$alt] = $n + $pas;
+        }
+    }
+    return $mutari;
+}
+
+/**
+ * Rândul de jurnal al unei mutări, citit de un om: „număr în catalog: 19 → 07
+ * · 12 produse mutate cu un loc (07–18 → 08–19)". Fără el, jurnalul ar fi
+ * spus că s-a schimbat UN produs, iar vitrina ar fi arătat treisprezece.
+ */
+function catalog_numar_poveste(array $numere, int $id, array $mutari): string
+{
+    $de    = array_key_exists($id, $numere) ? (int) $numere[$id] : null;
+    $text  = 'număr în catalog: ' . ($de === null ? '' : catalog_numar_afisat($de) . ' → ')
+           . catalog_numar_afisat((int) $mutari[$id]);
+    $altii = $mutari;
+    unset($altii[$id]);
+    if (!$altii) {
+        return $text;
+    }
+    $vechi = [];
+    foreach (array_keys($altii) as $alt) {
+        $vechi[] = (int) $numere[$alt];
+    }
+    $interval = static function (array $l): string {
+        return min($l) === max($l)
+            ? catalog_numar_afisat(min($l))
+            : catalog_numar_afisat(min($l)) . '–' . catalog_numar_afisat(max($l));
+    };
+    $n = count($altii);
+    return $text . ' · ' . ($n === 1 ? 'un produs mutat' : $n . ' ' . ro_de($n) . 'produse mutate')
+        . ' cu un loc (' . $interval($vechi) . ' → ' . $interval(array_values($altii)) . ')';
+}
+
 function product_public(array $r): array
 {
     return [
@@ -165,6 +330,11 @@ function product_public(array $r): array
         'isNew'         => (bool) $r['is_new'],
         'active'        => !isset($r['active']) || (bool) $r['active'],
         'sort'          => (int) ($r['sort'] ?? 0),
+        // NUMĂRUL DIN COLȚUL POZEI (migrarea 029): cel ales în Catalog, adică
+        // chiar `sort`. Fără 029, cel de ieri — cheia bazei —, ca vitrina să
+        // nu arate pașii de zece (00, 10, 20…) în fereastra dintre fișiere și
+        // import.
+        'numar'         => catalog_numere_supported() ? (int) ($r['sort'] ?? 0) : (int) $r['id'],
 
         // APARTENENȚA ȘI POZELE, în două feluri deodată, și amândouă sunt
         // folosite: cele CRUDE sunt ce editează panoul (două bife și două

@@ -30,6 +30,21 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 .pr-stins{opacity:.55}
 .pr-vh{position:absolute!important;width:1px!important;height:1px!important;margin:-1px!important;padding:0!important;overflow:hidden!important;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0!important}
 [data-pr=thumb]{width:64px;height:64px;flex:none;border-radius:12px;object-fit:cover;background:var(--h-bg-sunk);border:1px solid var(--h-line)}
+/* Numărul din colțul pozei (runda 2.5.1): același semn ca pe cardul din
+   magazin, ca patronul să-l recunoască dintr-o privire. */
+[data-pr=nr]{display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:1.9rem;height:1.65rem;padding:0 .45rem;box-sizing:border-box;border-radius:999px;background:var(--h-bg-raised);border:1px solid var(--h-line);color:var(--h-fg-muted);font-family:var(--h-font-display);font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1;white-space:nowrap}
+[data-pr=placa-insigne]>[data-pr=nr]{border-color:transparent;box-shadow:0 1px 3px rgba(20,12,6,.18)}
+[data-pr=numar]{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 18px;container-type:inline-size}
+[data-pr=numar-camp]{flex:none}
+[data-pr=numar-camp]>input{width:6.5rem;height:46px;font-size:17px;font-weight:700;letter-spacing:.04em;text-align:center;font-variant-numeric:tabular-nums}
+[data-pr=numar]>.h-help,[data-pr=numar]>.h-error{flex:1 1 15rem;min-width:0;margin:0;display:flex;align-items:center;line-height:1.45;text-wrap:pretty}
+/* Lămurirea ține de casetă, nu de eticheta de deasupra ei: alături de casetă
+   e cel puțin cât ea de înaltă și își centrează rândurile pe ea, ca un singur
+   rând să nu cadă spre marginea de jos. Sub casetă — unde alături nu mai
+   încape: 6,5rem + 18px + 15rem = 362px — stă lipită de ea, fără gol. */
+@container (min-width:362px){
+[data-pr=numar]>.h-help,[data-pr=numar]>.h-error{min-height:46px}
+}
 [data-pr=scrim]{position:fixed;inset:0;background:rgba(20,12,6,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;z-index:50}
 [data-pr=unelte]{display:flex;flex-wrap:wrap;align-items:center;gap:10px 12px}
 [data-pr=vederi]{display:inline-flex;align-items:center;gap:2px;margin-left:auto;padding:3px;border-radius:12px;background:var(--h-bg-surface);border:1px solid var(--h-line)}
@@ -86,7 +101,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-pr=edit-et]{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 [data-pr=placa-rosu]{align-self:flex-start;max-width:100%;white-space:normal;line-height:1.3}
 /* Aceeași insignă pe rând: pe telefon „FĂRĂ PREȚ GATA DE SERVIRE — ASCUNS
-   ACOLO” are ~380px și ieșea din card, tăiată; acum se rupe pe rânduri. */
+   ACOLO” avea ~380px și ieșea din card, tăiată; acum se rupe pe rânduri.
+   (Din 26 septembrie 2026 cea mai lungă e „FĂRĂ PREȚ CONGELAT ȘI COPT —
+   ASCUNS ACOLO”.) */
 [data-pr=rand-rosu]{max-width:100%;white-space:normal;line-height:1.3}
 .pr-sase [data-pr=placa-corp]{gap:7px;padding:8px 8px 9px}
 .pr-sase [data-pr=placa-nume]{font-size:14px}
@@ -331,8 +348,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ isProducts }}" hint-placeholder-val="{{ true }}">
 
 <!-- Cele două cataloage, dintr-o singură listă. NU e a treia filă, dinadins:
-     ce se face aici e o OGLINDĂ — „ce am la congelate și n-am la gata de
-     servire" —, iar oglinda se citește comparând treizeci de rânduri, nu
+     ce se face aici e o OGLINDĂ — „ce am la congelate și n-am la
+     coapte" —, iar oglinda se citește comparând treizeci de rânduri, nu
      deschizând treizeci de formulare. O filă a treia le-ar face imposibil de
      văzut deodată și ar cere încă o copie a marcajului rândului.
      Implicit „Amândouă”, deci pagina se deschide arătând exact ce arăta
@@ -413,6 +430,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <img data-pr="thumb" loading="lazy" src="{{ p.photo }}" alt="{{ p.name }}">
 <div data-pr="rand-nume" style="flex:1 1 230px;min-width:0;display:flex;flex-direction:column;gap:5px">
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<span data-pr="nr" title="{{ p.nrTitlu }}">{{ p.nr }}</span>
 <span style="font-size:16px;font-weight:600;overflow-wrap:anywhere">{{ p.name }}</span>
 <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--accent" style="font-size:10px">nou</span>
@@ -433,7 +451,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      patronul anume. De-aia pastila stinsă e ștearsă, nu roșie: roșul e păstrat
      pentru cele două stări care chiar sunt greșite, v. „faraPret". -->
 <button type="button" data-pr="lat" class="{{ p.latFCls }}" onClick="{{ p.onLatF }}" title="{{ p.latFTitlu }}"><gp-semn latura="congelat" aria-hidden="true"></gp-semn>congelate</button>
-<button type="button" data-pr="lat" class="{{ p.latBCls }}" onClick="{{ p.onLatB }}" title="{{ p.latBTitlu }}"><gp-semn latura="copt" aria-hidden="true"></gp-semn>gata de servire</button>
+<button type="button" data-pr="lat" class="{{ p.latBCls }}" onClick="{{ p.onLatB }}" title="{{ p.latBTitlu }}"><gp-semn latura="copt" aria-hidden="true"></gp-semn>coapte</button>
 <!-- Semnul roșu al produsului fără preț. Stă lângă nume, nu în coloana de
      prețuri, fiindcă acolo scrie de mult „—" — un semn pe care ochiul care
      derulează treizeci de rânduri nu-l deosebește de o cifră. Vezi
@@ -486,6 +504,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div data-pr="placa-foto" onClick="{{ p.onEdit }}">
 <img loading="lazy" src="{{ p.photo }}" alt="">
 <div data-pr="placa-insigne">
+<span data-pr="nr" title="{{ p.nrTitlu }}">{{ p.nr }}</span>
 <sc-if value="{{ p.isNew }}" hint-placeholder-val="{{ false }}"><span class="h-badge h-badge--accent">nou</span></sc-if>
 <sc-if value="{{ p.hidden }}" hint-placeholder-val="{{ false }}"><span class="h-badge">scos din catalog</span></sc-if>
 </div>
@@ -497,7 +516,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <div data-pr="placa-laturi">
 <button type="button" data-pr="lat" class="{{ p.latFCls }}" onClick="{{ p.onLatF }}" title="{{ p.latFTitlu }}"><gp-semn latura="congelat" aria-hidden="true"></gp-semn><span data-pr="lat-et">congelate</span></button>
-<button type="button" data-pr="lat" class="{{ p.latBCls }}" onClick="{{ p.onLatB }}" title="{{ p.latBTitlu }}"><gp-semn latura="copt" aria-hidden="true"></gp-semn><span data-pr="lat-et">gata de servire</span></button>
+<button type="button" data-pr="lat" class="{{ p.latBCls }}" onClick="{{ p.onLatB }}" title="{{ p.latBTitlu }}"><gp-semn latura="copt" aria-hidden="true"></gp-semn><span data-pr="lat-et">coapte</span></button>
 </div>
 <sc-if value="{{ p.faraPret }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--danger" data-pr="placa-rosu" title="{{ p.faraPretTitlu }}">{{ p.faraPretText }}</span>
@@ -638,7 +657,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
 <img data-pr="thumb" loading="lazy" src="{{ f.photoBaked }}" alt="" style="width:88px;height:88px">
 <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px">
-<span class="h-label" style="display:flex;align-items:flex-start;gap:6px" data-semn-sus="1"><gp-semn latura="copt" aria-hidden="true"></gp-semn>Fotografie — gata de servire</span>
+<span class="h-label" style="display:flex;align-items:flex-start;gap:6px" data-semn-sus="1"><gp-semn latura="copt" aria-hidden="true"></gp-semn>Fotografie — copt</span>
 <input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ onPhotoBaked }}" style="font-size:13px">
 <span class="h-help">{{ photoBakedHelp }}</span>
 </div>
@@ -680,6 +699,29 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-label">Gramaj</span>
 <input class="h-input h-numeric" value="{{ f.grams }}" onChange="{{ onGrams }}" placeholder="140" style="height:46px;font-size:15px">
 </label>
+</div>
+
+<!-- Numărul din colțul pozei (runda 2.5.1). Patronul alege ce număr poartă
+     fiecare produs; pornește din ordinea punerii (1, 2, 3…). Numărul E și
+     locul din grupă: magazinul și panoul așază după el, așa că „07” e mereu
+     înaintea lui „08”, fără o a doua ordine care să le poată despărți.
+     Un număr ocupat nu se refuză: produsul intră acolo și cele de la rând se
+     dau cu un loc, până la primul număr liber — ca într-o listă în care muți
+     un rând. Lămurirea de sub casetă spune DINAINTE cine se mută, cu numele,
+     fiindcă altfel o salvare ar schimba în tăcere numerele altor produse.
+     La salvare pleacă numai dacă s-a schimbat: un număr trimis degeaba ar
+     putea muta vecinii pe care i-a mutat între timp altcineva. -->
+<div data-pr="numar">
+<label class="h-field" data-pr="numar-camp">
+<span class="h-label">Număr în catalog</span>
+<input class="h-input h-numeric" inputMode="numeric" value="{{ f.numar }}" onChange="{{ onNumar }}" aria-invalid="{{ numarRau }}" placeholder="{{ numarLoc }}">
+</label>
+<sc-if value="{{ numarAjutor }}" hint-placeholder-val="{{ false }}">
+<span class="h-help">{{ numarAjutor }}</span>
+</sc-if>
+<sc-if value="{{ numarGreseala }}" hint-placeholder-val="{{ false }}">
+<span class="h-error" role="alert">{{ numarGreseala }}</span>
+</sc-if>
 </div>
 
 <!-- Prețurile, după cantitate (runda 2.5.0). Trei prețuri pe fiecare latură —
@@ -730,7 +772,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-help">{{ horecaHelp }}</span>
 </div>
 <div data-pr="latura-panou">
-<div data-pr="latura-cap"><gp-semn latura="copt" aria-hidden="true"></gp-semn><span>Gata de servire</span><label class="h-switch"><input type="checkbox" checked="{{ f.inBaked }}" onChange="{{ onInBaked }}" aria-label="În catalogul de gata de servire"><span>În catalog</span></label></div>
+<div data-pr="latura-cap"><gp-semn latura="copt" aria-hidden="true"></gp-semn><span>Coapte</span><label class="h-switch"><input type="checkbox" checked="{{ f.inBaked }}" onChange="{{ onInBaked }}" aria-label="În catalogul de coapte"><span>În catalog</span></label></div>
 <div data-pr="trepte">
 <label data-pr="treapta"><span data-pr="treapta-et">Preț A<small>{{ f.intervalBA }}</small></span><input class="{{ f.retailCls }}" inputMode="decimal" value="{{ f.retail }}" onChange="{{ onRetail }}" aria-invalid="{{ f.retailRau }}" placeholder="3,49"></label>
 <label data-pr="treapta"><span data-pr="treapta-et">Preț B<small>{{ f.intervalBB }}</small></span><input class="{{ f.retailBCls }}" inputMode="decimal" value="{{ f.retailB }}" onChange="{{ onRetailB }}" aria-invalid="{{ f.retailBRau }}" placeholder="opțional"></label>
@@ -883,9 +925,11 @@ const FOTO_LIPSA = "assets/logo-auriu.png";
  * Cheile sunt chiar cele de pe sârmă (api/lib/laturi.php, order_variants()):
  * „congelat" și „copt" stau scrise în fiecare rând de comandă din trecut și
  * nu se pot redenumi. Redenumirea cerută de patron e numai de AFIȘAT, iar
- * aici e locul unde „copt" moare pentru ecran.
+ * aici cheia se face vorbă de ecran: numele laturii, la plural, ca titlul ei
+ * din magazin — „congelate", „coapte" (hotărârea din 26 septembrie 2026;
+ * până atunci, „gata de servire").
  */
-const LATURA = { congelat: "congelate", copt: "gata de servire" };
+const LATURA = { congelat: "congelate", copt: "coapte" };
 
 // De ce n-a fost micșorată o poză, pe înțelesul cuiva care nu ține servere.
 // Vorbele vin de la `poza_micsoreaza()` (api/lib/poze.php); cele care nu
@@ -903,6 +947,12 @@ const POZA_PRICINA = {
 
 /** „1 comandă" / „3 comenzi" — româna cere forma, nu doar cifra. */
 const bucati = (n, unu, multe) => n + " " + (n === 1 ? unu : multe);
+// „12 produse”, dar „20 de produse” și „101 produse”: de la douăzeci în sus,
+// „de” intră când ultimele două cifre fac 00 ori trec de 19 (ca ro_de() din PHP).
+const cuDe = (n) => n + (n >= 20 && (n % 100 === 0 || n % 100 >= 20) ? " de" : "");
+// Numărul din colțul pozei (runda 2.5.1). Un server de dinainte de 2.5.1 nu-l
+// trimite: atunci numărul e cel de până acum, id-ul — ca în magazin.
+const numarDe = (p) => Number(p.numar) || Number(p.id) || 0;
 
 /**
  * Cum se arată produsele: „unu" — lista de până acum, un produs pe rând, cu
@@ -1075,6 +1125,10 @@ class Component extends DCLogic {
     const prag = (v, implicit) => (v === null || v === undefined || v === ""
       ? (implicit === null ? "" : String(implicit))
       : String(v));
+    // Produsul nou primește numărul de după cel mai mare — ordinea punerii,
+    // ca pe server —, dar cel mult 999. Dacă îl lasă neatins, nici nu-l
+    // trimite: îl pune serverul.
+    const urmator = Math.min(this.state.products.reduce((m, x) => Math.max(m, numarDe(x)), 0) + 1, 999);
     this.setState({
       pendingPhoto: null,
       formErr: "",
@@ -1088,6 +1142,7 @@ class Component extends DCLogic {
             horecaB: txt(p.priceFrozenB), horecaC: txt(p.priceFrozenC),
             retailB: txt(p.priceBakedB), retailC: txt(p.priceBakedC),
             pragB: prag(p.pragB, imp.pragB), pragC: prag(p.pragC, imp.pragC),
+            numar: gp.numarAfisat(numarDe(p)), numarInitial: numarDe(p),
             isNew: !!p.isNew, photo: p.photo || "", photoBaked: p.photoBaked || "",
             // Bifele vin din server ca adevăruri gata socotite: pe o bază de
             // dinainte de migrarea 024 coloanele lipsesc, iar API-ul răspunde
@@ -1106,6 +1161,7 @@ class Component extends DCLogic {
             grams: "", horeca: "", retail: "", isNew: false, photo: "", photoBaked: "",
             horecaB: "", horecaC: "", retailB: "", retailC: "",
             pragB: prag(null, imp.pragB), pragC: prag(null, imp.pragC),
+            numar: gp.numarAfisat(urmator), numarInitial: urmator,
             // Un produs nou se naște în amândouă cataloagele, ca pe server
             // (DEFAULT 1 în migrarea 024): altfel s-ar naște nevăzut nicăieri.
             inFrozen: true, inBaked: true,
@@ -1238,6 +1294,20 @@ class Component extends DCLogic {
       return;
     }
 
+    // Numărul din colțul pozei. Un formular deschis fără el (cel de dinainte
+    // de 2.5.1, ori o probă care-și face singură formularul) nu-l atinge: nu
+    // trimite nimic, iar serverul lasă numărul cum era. Nici numărul lăsat
+    // cum era nu se judecă — nici măcar unul scris de mână în bază peste 999:
+    // o salvare a prețului n-are de ce să se împiedice de el.
+    const numar = f.numar === undefined ? null : gp.numarCatalog(f.numar);
+    const numarNeatins = f.numar === undefined || numar === f.numarInitial
+      || String(f.numar).trim() === gp.numarAfisat(f.numarInitial);
+    if (!numarNeatins && numar === null) {
+      this.__saving = false;
+      this.setState({ formErr: "Numărul din catalog trebuie să fie un număr întreg de la 1 la 999." });
+      return;
+    }
+
     const payload = {
       name: f.name.trim(), nameEn: f.nameEn.trim(),
       description: f.desc.trim(), descriptionEn: f.descEn.trim(),
@@ -1261,13 +1331,27 @@ class Component extends DCLogic {
       inFrozen: !!f.inFrozen,
       inBaked: !!f.inBaked
     };
+    // Numai dacă s-a schimbat. Trimis degeaba, un număr ar putea muta vecinii
+    // pe care i-a mutat între timp altcineva, de la alt calculator.
+    if (!numarNeatins) payload.numar = numar;
 
     this.setState({ saving: true, formErr: "" });
     const eNou = !f.id;
     const req = f.id ? gp.patch("/products/" + f.id, payload) : gp.post("/products", payload);
+    // Ce număr a primit produsul și câte s-au dat cu un loc, spus la capăt.
+    // Serverul le întoarce numai când a pus el numărul (la orice produs nou,
+    // ori când numărul s-a schimbat); altfel propoziția rămâne cea de dinainte.
+    let despreNumar = "";
 
     req
       .then((r) => {
+        if (r && r.numar > 0) {
+          const n = (r.mutate || []).length;
+          const de = n >= 20 && (n % 100 === 0 || n % 100 >= 20) ? " de" : "";
+          despreNumar = ", cu numărul " + gp.numarAfisat(r.numar)
+            + (n === 0 ? "." : n === 1 ? ". Încă un produs s-a dat cu un loc."
+              : ". Alte " + n + de + " produse s-au dat cu un loc.");
+        }
         // Din clipa asta produsul e în catalog și e viu pe site, chiar dacă
         // fotografia mai are de urcat. Îi trecem numărul în formular înainte de
         // poză: altfel, dacă poza e refuzată, formularul rămâne deschis crezând
@@ -1276,7 +1360,10 @@ class Component extends DCLogic {
         // „există deja un produs cu adresa …”, așa că omul nu mai poate nici
         // salva poza, nici scăpa de produsul pe jumătate făcut.
         const id = f.id || r.id;
-        if (eNou) this.setState({ form: Object.assign({}, this.state.form, { id }) });
+        // Și numărul primit devine cel de pornire: dacă poza pică și omul mai
+        // apasă o dată „Salvează”, numărul nu mai pleacă a doua oară.
+        if (eNou) this.setState({ form: Object.assign({}, this.state.form, { id },
+          r && r.numar > 0 ? { numar: gp.numarAfisat(r.numar), numarInitial: r.numar } : {}) });
         // Pozele merg una după alta, nu deodată: sunt două cereri pe același
         // produs, iar o urcare pusă peste alta ar face două UPDATE-uri care
         // se calcă. Cea congelată prima, fiindcă ea e și poza de bază a
@@ -1292,7 +1379,7 @@ class Component extends DCLogic {
       .then(() => this.pull())
       .then(() => this.setState({
         saving: false, form: null, pendingPhoto: null, pendingPhotoUrl: null,
-        msg: (eNou ? "Produsul a fost adăugat în catalog." : "Produsul a fost salvat.")
+        msg: (eNou ? "Produsul a fost adăugat în catalog" : "Produsul a fost salvat") + (despreNumar || ".")
           + (this.__pozeZis.length ? " Poze: " + this.__pozeZis.join(", ") + "." : "")
       }))
       .catch((e) => {
@@ -1459,7 +1546,7 @@ class Component extends DCLogic {
     // apare, cineva a scris de-a dreptul în baza de date.
     const bifatFaraPret = (p) => [
       eIn(p, "congelat") && p.priceFrozen === null ? "congelat" : "",
-      eIn(p, "copt") && p.priceBaked === null ? "gata de servire" : ""
+      eIn(p, "copt") && p.priceBaked === null ? "copt" : ""
     ].filter(Boolean);
     // Poza rezolvată a laturii deschise — pe „Amândouă", cea congelată, care e
     // și poza de bază. Rezolvarea vine de la server („photoFor"): făcută aici
@@ -1520,7 +1607,7 @@ class Component extends DCLogic {
         const vorbe = !s.length
           ? "fără preț"
           : s.map((t, i) => bani(t.pret) + " lei" + (arePraguri ? " (" + gp.intervalTreapta(s, i) + " buc.)" : "")).join(" · ");
-        return (l === "congelat" ? "Congelate" : "Gata de servire") + ": " + vorbe
+        return (l === "congelat" ? "Congelate" : "Coapte") + ": " + vorbe
           + (eIn(p, l) ? "" : " — nu e în catalogul ăsta");
       };
       const linii = LATURI.map((l, k) => {
@@ -1595,8 +1682,10 @@ class Component extends DCLogic {
     // Căutarea și latura întâi, apoi grupa, apoi cernerea. Cifrele de pe
     // cerneri se socotesc pe ce a rămas după grupă, ca să spună câte produse
     // ar arăta fiecare dacă ar fi apăsată ACUM.
+    // Și după număr, ca în magazin: „07” găsește produsul din colțul căruia
+    // scrie 07 — patronul vorbește adesea de produse după număr.
     const potrivite = S.products.filter((p) =>
-      (!q || (p.name + " " + (p.nameEn || "")).toLowerCase().indexOf(q) >= 0)
+      (!q || (gp.numarAfisat(numarDe(p)) + " " + p.name + " " + (p.nameEn || "")).toLowerCase().indexOf(q) >= 0)
       && (lat === "amandoua" || eIn(p, lat)));
     const inGrupa = potrivite.filter((p) => !grupa || p.category === grupa);
     const visible = inGrupa.filter(cernere.f);
@@ -1609,6 +1698,8 @@ class Component extends DCLogic {
           + (c.noteEn || c.note ? " · " + (c.note || "") : ""),
         rows: rows.map((p) => ({
           name: p.name,
+          nr: gp.numarAfisat(numarDe(p)),
+          nrTitlu: "Numărul din colțul pozei, în magazin. Se schimbă din „Editează”.",
           sub: [p.nameEn, p.grams ? p.grams + " g" : ""].filter(Boolean).join(" · "),
           photo: pozaRand(p),
           isNew: !!p.isNew,
@@ -1633,7 +1724,7 @@ class Component extends DCLogic {
 
           // Semnul roșu — și ce NU mai e roșu de la două cataloage încoace.
           //
-          // „Numai congelate" sau „numai gata de servire" e de-acum o stare
+          // „Numai congelate" sau „numai coapte" e de-acum o stare
           // LEGIUITĂ, chiar lucrul care s-a cerut: un produs poate trăi într-un
           // singur catalog, cu prețul celuilalt rămas scris în casetă. Ea nu e
           // însemnată aici deloc — o spun deja pastilele de pe rând, iar un
@@ -1793,6 +1884,65 @@ class Component extends DCLogic {
     // valoarea de pornire, iar la salvare pleacă gol.
     const pragLiber = trepteF.pragB === null && trepteF.pragC === null;
 
+    /* --- numărul din colțul pozei: cine se mută, spus înainte de salvare --- */
+    //
+    // Aceeași regulă ca pe server (`gp.mutariNumar` e oglinda lui
+    // `catalog_numar_mutari()`), socotită pe lista din pagină. Serverul o
+    // socotește din nou, sub lacăt, la salvare; lămurirea spune ce s-ar
+    // întâmpla ACUM, cu numele produselor — o salvare care mută în tăcere
+    // numerele altor produse ar fi o surpriză pe care patronul o află din
+    // magazin.
+    const areNumar = !!S.form && f.numar !== undefined;
+    const numarScris = areNumar ? gp.numarCatalog(f.numar) : null;
+    // Ca la salvare: numărul lăsat cum era nu se judecă și nu pleacă.
+    const numarNeatins = areNumar && (numarScris === f.numarInitial
+      || String(f.numar).trim() === gp.numarAfisat(f.numarInitial));
+    let numarAjutor = "", numarGreseala = "";
+    if (areNumar && !numarNeatins && numarScris === null) {
+      numarGreseala = "Scrie un număr întreg de la 1 la 999 — cel din colțul pozei, în magazin.";
+    } else if (areNumar && numarNeatins && f.id) {
+      numarAjutor = "Numărul din colțul pozei, în magazin. Scrie altul ca să-l muți; dacă e ocupat, cele de la rând se dau cu un loc, ca într-o listă.";
+    } else if (areNumar) {
+      // Produsul nou are și el o țintă când nu e atinsă — numărul de după cel
+      // mai mare. De obicei e liber; pe un 999 ocupat, cel de acolo se dă la o
+      // parte, și lămurirea trebuie s-o spună.
+      const tinta = numarNeatins ? f.numarInitial : numarScris;
+      const numere = {}, dupaId = {};
+      S.products.forEach((p) => { numere[p.id] = numarDe(p); dupaId[p.id] = p; });
+      const eu = f.id || 0;
+      const mutari = gp.mutariNumar(numere, eu, tinta);
+      const nn = gp.numarAfisat(tinta);
+      const altii = mutari === null ? [] : Object.keys(mutari)
+        .filter((k) => Number(k) !== eu && dupaId[k])
+        .map((k) => ({ nume: dupaId[k].name, de: numere[k], la: mutari[k] }))
+        .sort((a, b) => a.de - b.de || a.la - b.la);
+      if (mutari === null) {
+        numarGreseala = "Nu pot face loc numărului " + nn + ": toate numerele de la el până la capete sunt ocupate. Alege un număr liber.";
+      } else if (!altii.length && numarNeatins) {
+        numarAjutor = "Următorul după ultimul produs — ordinea în care sunt puse. Scrie altul ca să-l pui mai în față.";
+      } else if (!altii.length) {
+        numarAjutor = nn + " e liber — nu se mută niciun alt produs.";
+      } else {
+        // Cel care stă ACUM pe numărul ales: el e primul care se dă la o parte.
+        const pe = altii.find((a) => a.de === numarScris) || altii[0];
+        if (altii.length === 1) {
+          numarAjutor = nn + " e acum la „" + pe.nume + "”. La salvare, „" + pe.nume + "” trece pe " + gp.numarAfisat(pe.la) + ".";
+        } else {
+          const de = altii.map((a) => a.de), la = altii.map((a) => a.la);
+          // „(07–18 → 08–19)" dintr-o bucată: rupt la capăt de rând, „08–" sus
+          // și „19)" jos se citesc ca două numere. Legătura de cuvânt (U+2060)
+          // de după linioară și spațiile de nedespărțit din jurul săgeții nu
+          // se văd — de aceea sunt scrise cu `fromCharCode`, nu lipite nevăzute
+          // în sursă.
+          const LEG = String.fromCharCode(0x2060), NB = String.fromCharCode(0xa0);
+          const interval = (xs) => gp.numarAfisat(Math.min(...xs)) + "–" + LEG + gp.numarAfisat(Math.max(...xs));
+          numarAjutor = nn + " e acum la „" + pe.nume + "”. La salvare se dau cu un loc " + cuDe(altii.length)
+            + " produse (" + interval(de) + NB + "→" + NB + interval(la) + "), de la „" + altii[0].nume
+            + "” până la „" + altii[altii.length - 1].nume + "”.";
+        }
+      }
+    }
+
     /* --- cele două fotografii, fiecare pe latura ei --- */
     //
     // „pendingPhoto" e de-acum o pereche cheiată pe latură, nu un singur
@@ -1818,7 +1968,7 @@ class Component extends DCLogic {
     const ajutorPoza = (l) => ((S.pendingPhoto || {})[l]
       ? "Se încarcă la salvare: " + S.pendingPhoto[l].name
       : (l === "copt"
-        ? "Se arată numai la gata de servire. Fără ea, produsul apare acolo fără poză. JPEG, PNG sau WebP, maximum 10 MB."
+        ? "Se arată numai la coapte. Fără ea, produsul apare acolo fără poză. JPEG, PNG sau WebP, maximum 10 MB."
         : "Se arată numai la congelate. JPEG, PNG sau WebP, maximum 10 MB — se verifică după conținut, nu după extensie."));
 
     /* --- rețeta produsului deschis în formular --- */
@@ -1986,14 +2136,14 @@ class Component extends DCLogic {
 
       // Cele trei poziții ale comutatorului. Ordinea e a catalogului, nu a
       // ecranului: întâi congelatele — latura cu care pornește magazinul —,
-      // apoi gata de servire, apoi lipsa cernerii.
+      // apoi coaptele, apoi lipsa cernerii.
       //
       // Cifrele se retrag cât ține caseta roșie, din aceeași pricină ca
       // insignele filelor de mai sus: o cifră e o afirmație, iar pagina
       // n-apucase să numere nimic.
       laturiTabs: [
         { k: "congelat", l: "Congelate", t: "Numai produsele din catalogul de congelate." },
-        { k: "copt", l: "Gata de servire", t: "Numai produsele din catalogul de gata de servire." },
+        { k: "copt", l: "Coapte", t: "Numai produsele din catalogul de coapte." },
         { k: "amandoua", l: "Amândouă", t: "Tot catalogul, ca să se vadă dintr-o privire ce lipsește dintr-o parte." }
       ].map((o) => ({
         label: o.l,
@@ -2120,6 +2270,7 @@ class Component extends DCLogic {
         retailBCls: "h-input h-numeric" + (f.inBaked ? "" : " pr-stins"),
         retailCCls: "h-input h-numeric" + (f.inBaked ? "" : " pr-stins"),
         pragB: f.pragB || "", pragC: f.pragC || "",
+        numar: f.numar === undefined ? "" : f.numar,
         horecaRau: rau("priceFrozen"), horecaBRau: rau("priceFrozenB"), horecaCRau: rau("priceFrozenC"),
         retailRau: rau("priceBaked"), retailBRau: rau("priceBakedB"), retailCRau: rau("priceBakedC"),
         pragBRau: rau("pragB"), pragCRau: rau("pragC"),
@@ -2145,7 +2296,11 @@ class Component extends DCLogic {
       onHorecaB: ff("horecaB"), onHorecaC: ff("horecaC"),
       onRetailB: ff("retailB"), onRetailC: ff("retailC"),
       onPragB: ff("pragB"), onPragC: ff("pragC"),
-      trepteAjutor: "Cine cumpără mai mult plătește mai puțin pe bucată. Pragurile sunt aceleași la congelate și la gata de servire; casetele B și C goale înseamnă un singur preț, ca până acum.",
+      onNumar: ff("numar"),
+      numarAjutor, numarGreseala,
+      numarRau: !!numarGreseala,
+      numarLoc: areNumar && f.numarInitial > 0 ? gp.numarAfisat(f.numarInitial) : "",
+      trepteAjutor: "Cine cumpără mai mult plătește mai puțin pe bucată. Pragurile sunt aceleași la congelate și la coapte; casetele B și C goale înseamnă un singur preț, ca până acum.",
       pragCls: pragLiber ? "pr-liber" : "",
       pragAjutor: pragLiber
         ? "Se păstrează numai când scrii un preț B sau C. La un produs nou pornesc din Setări."

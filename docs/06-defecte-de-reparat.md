@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**475 de defecte confirmate** — 10 critice, 126 grave, 214 medii, 125 mici.
-**475 reparate**, 0 rămase.
+**477 de defecte confirmate** — 10 critice, 126 grave, 214 medii, 127 mici.
+**477 reparate**, 0 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-267 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+269 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -31,11 +31,11 @@ Aceeași listă, cu filtre și căutare:
 | Critice | 10 | 0 | 10 |
 | Grave | 126 | 0 | 126 |
 | Medii | 214 | 0 | 214 |
-| Mici | 125 | 0 | 125 |
+| Mici | 127 | 0 | 127 |
 
 ---
 
-## Ce e reparat — 475
+## Ce e reparat — 477
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -1499,6 +1499,14 @@ reparația la loc și văzând-o picând.
 - [x] **Probe care lăsau în bază rânduri pe care curățenia nu le cunoștea: suita ieșea roșie, iar fila „Cereri de pe site" se umplea**
   `.claude/test-flow.mjs:117` · *mic*
   Probele poartă acum nume de casă, după sfatul scris chiar în curățenie: „Dacă numele e prea general ca să fie șters fără grijă, redenumește-l în probă («Probă …»)". Cererea coșului gol e „Probă Întrebare Fără Coș", iar cele trei probe de refuz — două în `test-flow`, una în `test-api` — sunt „Probă Refuz". Amândouă numele intră în `NUME_DE_TEST_LISTA`, unde comentariul spune de ce o probă care NU trebuie să lase niciun rând are totuși nevoie de un nume de casă: pentru clipa în care o dovadă îi strică poarta. Cele paisprezece rânduri vechi s-au șters cu aceeași cascadă pe care o folosește curățenia — întâi pozițiile, anunțurile și legătura în ambele sensuri, abia apoi cererea și comanda —, fiindcă altfel cheile străine dintre ele nu lasă niciuna să plece.
+
+- [x] **Proba pontajului căuta codul de probă „5731” ca simplu șir în tot răspunsul, deci îl găsea și în id-ul unui cont de probă (#55731) — regula „nu spune CARE e codul” s-a înroșit fără ca vreun cod să fi plecat de pe server**
+  `.claude/test-pontaj.mjs:141` · *mic*
+  Codul se caută ca număr întreg: `CODUL_INTREG(cod)` dă `(^|[^0-9])cod([^0-9]|$)`, iar `areCodul(text, cod)` îl încearcă pe un text (rândurile 141–142). Le folosesc cele trei reguli pe JSON (rândurile 337, 548 și 558) și, ca `REGEXP`, cea pe jurnal (rândul 573). Un cod scăpat stă între ghilimele, după două puncte ori lângă un cuvânt, deci se prinde și acum; într-un id mai lung, cele patru cifre au altă cifră lângă ele, deci nu mai aprind nimic. Comentariul de deasupra (rândurile 134–140) spune de ce.
+
+- [x] **Proba rețetelor purta o zi scrisă de mână, „2026-09-25”, iar din 26 septembrie cererea de pe site de la capătul ei a fost refuzată cu `day_in_past` — suita s-a înroșit singură, fără nicio literă schimbată în cod**
+  `.claude/test-reteta-productie.mjs:356` · *mic*
+  `ZI` se socotește de la azi, cu obiceiul casei pentru ziua locală: `new Date(Date.now() + 23 * 86400000).toLocaleDateString('sv-SE', { timeZone: 'Europe/Bucharest' })` (rândul 356). Comentariul de deasupra (rândurile 347–355) spune de ce nu mai stă acolo o dată scrisă de mână.
 
 - [x] **Proba pentru „app.html cerut direct" acceptă chiar rezultatul pe care ar trebui să-l refuze**
   `.claude/test-seo.mjs:257` · *mic*

@@ -157,7 +157,7 @@ function promo_cere_baza(): void
  * Gama din care se face pachetul: exact ce vede clientul în catalogul public.
  *
  * CU O LATURĂ, gama e a laturii aceleia. De la migrarea 024 un produs poate fi
- * în catalogul de gata de servire și nu în cel de congelate, iar pachetul se
+ * în catalogul de coapte și nu în cel de congelate, iar pachetul se
  * cumpără pe o latură: „toate cele N produse, câte 3 bucăți, în ACEEAȘI
  * variantă". Un singur produs nesimetric lăsat în gama congelată ar face
  * pachetul congelat să nu fie NICIODATĂ întreg — și cum reducerea se dă numai

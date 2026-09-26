@@ -4191,7 +4191,7 @@ class Component extends DCLogic {
           // n-are drum). Pe cererea de pe site lipsește, și atunci banda arată
           // exact ca până acum — `filter` scoate golurile.
           // Semnul stă înaintea benzii, fiindcă latura e chiar primul ei cuvânt;
-          // cheia urmează eticheta: tot ce nu e „congelat" e gata de servire.
+          // cheia urmează eticheta: tot ce nu e „congelat" e copt.
           variantKey: r.variant === "congelat" ? "congelat" : "copt",
           segment: [gp.variantLabel(r.variant), r.fulfillment, r.zone, r.addr]
             .filter(x => String(x || "").trim()).join(" · "),
@@ -4573,7 +4573,7 @@ class Component extends DCLogic {
       catalogDeschis: !!S.catalogDeschis,
       catalogNota: vForm === "congelat"
         ? "Prețurile de mai jos sunt cele pentru marfă congelată. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată."
-        : "Prețurile de mai jos sunt cele pentru marfă gata de servire. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată.",
+        : "Prețurile de mai jos sunt cele pentru marfă coaptă. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată.",
       catalogGrupe: catalogGrupe,
       // Catalogul care n-a venit nu se arată ca un catalog gol: omul trebuie
       // să afle că lipsa e a cererii, nu a produselor.
@@ -4633,7 +4633,7 @@ class Component extends DCLogic {
       // Fiecare poziție își alege varianta (o comandă poate avea din amândouă),
       // cu numele din magazin: „Congelate", nu „Congelat (crud)" (runda 2.5.0).
       variantOpts: [
-        { v: "copt", l: "Gata de servire" },
+        { v: "copt", l: "Coapte" },
         { v: "congelat", l: "Congelate" }
       ],
       frmTimedLabel: f.timed ? "Ora se afișează pe panouri" : "Doar ordinea (ora ascunsă)",

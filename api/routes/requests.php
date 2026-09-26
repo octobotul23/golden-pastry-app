@@ -1052,7 +1052,7 @@ function route_requests_accept(string $id): void
             $seq = (int) scalar('SELECT COALESCE(MAX(seq), 0) + 1 FROM orders WHERE day = ?', [$day]);
             q(
                 // `variant` merge mai departe din cerere: laboratorul trebuie să știe
-                // dacă marfa pleacă congelată sau gata de servire, iar prețul
+                // dacă marfa pleacă congelată sau coaptă, iar prețul
                 // deja calculat corespunde acelei variante.
                 'INSERT INTO orders
                    (seq, ref, customer_id, customer_name, phone, address, zone, day, slot,

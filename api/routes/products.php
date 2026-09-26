@@ -37,7 +37,7 @@ function route_products_list(): void
     //
     // ȘI DE CE S-AU ADĂUGAT AICI, DEȘI RUTA PĂREA ÎNTREAGĂ. Lista de coloane e
     // scrisă cu mâna, iar calea de scriere citește rândul cu `SELECT *`: poza
-    // de gata de servire se salva cum trebuie, dar nu se mai întorcea
+    // de la coapte se salva cum trebuie, dar nu se mai întorcea
     // niciodată. Mai rău: nu se vedea că lipsește. Fără `in_frozen` în rând,
     // `latura_in()` cade pe purtarea de dinainte de 024 („are amândouă
     // prețurile") și răspunde ceva CREDIBIL — deci o latură stinsă de patron

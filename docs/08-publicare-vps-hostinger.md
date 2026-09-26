@@ -371,7 +371,7 @@ s-o aibă. Administratorul și fondatorul o au din cod, deci biroul nu se poate
 
 `024_doua_cataloage.sql` **nu se vede nici ea** în numărul de tabele: trei
 coloane pe `products` și nimic altceva — `in_frozen` și `in_baked` (în care
-catalog e produsul) și `photo_baked` (poza laturii gata de servire). Deci
+catalog e produsul) și `photo_baked` (poza laturii coapte). Deci
 numărul rămâne **24** și după ea, iar dovada se cere anume:
 `SHOW COLUMNS FROM products LIKE 'in_frozen'`.
 
@@ -380,7 +380,7 @@ numai cine are **amândouă** prețurile" —, și asta nu e o stricăciune, ci 
 purtarea pe care codul nou o ține dinadins: fișierele ajung pe server înaintea
 importului SQL, iar în fereastra dintre ele nimic nu are voie să se golească.
 Ce nu merge până la import: cele două bife din panou n-au unde se scrie, iar
-o poză urcată anume pentru gata de servire ar cădea peste cea congelată. Bifele
+o poză urcată anume pentru coapte ar cădea peste cea congelată. Bifele
 se nasc **aprinse** (`DEFAULT 1`), nu stinse: un produs născut de codul vechi
 între cele două momente trebuie să apară în amândouă cataloagele, nu în
 niciunul — nevăzut nicăieri, fără nicio eroare, e tocmai felul de pagubă pe
@@ -419,7 +419,7 @@ Pe o instalare nouă migrarea nu are ce copia — n-are încă niciun produs —
 rândul apare și atât, ceea ce e tocmai răspunsul bun.
 
 Ce repară: până în 2.4.1, o latură fără poză a ei o arăta pe a celeilalte, și
-de-aia o poză schimbată la congelate se vedea și la gata de servire. Împrumutul
+de-aia o poză schimbată la congelate se vedea și la coapte. Împrumutul
 s-a tăiat, iar migrarea asta e cea care face ca tăierea să nu golească nicio
 vitrină: în ziua schimbării, amândouă laturile arată exact ce arătau.
 
@@ -442,6 +442,24 @@ salvează. Pe o instalare nouă fiecare produs pornește cu un singur preț: sca
 se scrie din fila Produse, produs cu produs, iar pragurile se precompletează
 din Setări → General, cardul „Catalogul" (100 și 300 la pornire, cum le-a pus
 migrarea).
+
+`029_numere_in_catalog.sql` **nu se vede nici ea**, și din aceeași pricină ca
+`027`: nu atinge schema deloc. Numărul rămâne tot **25**. Ea dă fiecărui produs
+numărul din colțul pozei — 1, 2, 3…, în ordinea în care au fost puse — în
+coloana `products.sort`, care exista din `001`, și își scrie la coadă semnul
+din `settings`. Dovada se cere de acolo:
+
+```sql
+SELECT value FROM settings WHERE setting_key = 'migration_029_numere_catalog';
+```
+
+Rândul poartă data rulării și e și zăvorul ei: a doua rulare îl găsește și nu
+mai renumerotează nimic, deci numerele alese de patron în fila Produse rămân
+ale lui la fiecare actualizare. Pe o instalare nouă nu are ce numerota — n-are
+încă niciun produs —, deci rândul apare și atât. Primul produs adăugat ia
+numărul 01, următorul 02, și tot așa, până la 999. Fără semn, magazinul arată
+numărul de ieri (cheia bazei), iar fișa produsului refuză schimbarea numărului
+cu un mesaj care numește migrarea.
 
 ---
 

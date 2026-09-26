@@ -1,6 +1,6 @@
 <?php
 /**
- * Cele două laturi ale catalogului: congelat și gata de servire.
+ * Cele două laturi ale catalogului: congelate și coapte.
  *
  * DE CE EXISTĂ FIȘIERUL ĂSTA. Începând cu migrarea 024, un produs poate fi
  * într-un catalog și nu în celălalt, și poate avea o poză a fiecărei laturi.
@@ -18,7 +18,7 @@
  * ÎNȚELESUL COLOANELOR, fiindcă numele nu-l spune singur:
  *
  *   `photo`        latura CONGELATĂ, și poza de bază a amândurora
- *   `photo_baked`  acoperirea pentru gata de servire; NULL = „cade pe `photo`"
+ *   `photo_baked`  acoperirea pentru latura coaptă; NULL = „cade pe `photo`"
  *
  * Numele `photo` a rămas ce era dinadins — v. migrarea 024, „DE CE `photo` NU
  * SE REDENUMEȘTE".
@@ -57,27 +57,30 @@ function latura_normalizeaza($v, string $implicit = 'congelat'): string
     return in_array($s, laturi(), true) ? $s : $implicit;
 }
 
-/** Numele laturii, ca titlu — exact vorbele de pe site. */
+/** Numele laturii, ca titlu — exact vorbele de pe site: „Congelate", „Coapte". */
 function latura_nume(string $latura, bool $ro = true): string
 {
     if ($latura === 'copt') {
-        return $ro ? 'Gata de servire' : 'Ready to serve';
+        return $ro ? 'Coapte' : 'Baked';
     }
     return $ro ? 'Congelate' : 'Frozen';
 }
 
 /**
- * Numele laturii, ca vorbă în propoziție: „nu se mai vinde congelat".
+ * Numele laturii, ca vorbă în propoziție: „nu se mai vinde congelat", „nu se
+ * mai vinde copt".
  *
- * Aici moare cuvântul „copt" pentru ochii omului. El rămâne în bază și pe
- * sârmă, dar niciun ecran și niciun mesaj de eroare nu-l mai arată: „copt" e
- * vorbă de laborator, iar panoul și magazinul sunt ale biroului și ale
- * clientului.
+ * Până pe 26 septembrie 2026 latura caldă se chema pe ecran „gata de servire",
+ * iar „copt" nu ieșea din bază și de pe sârmă: era socotit vorbă de laborator.
+ * Atunci patronul a ales „Coapte", după pozele „acum / coapte". Titlul e la
+ * plural, ca „Congelate"; în propoziție vorba se acordă cu produsul, ca
+ * „congelat" — deci „copt". Cheia de sârmă rămâne `copt`, neatinsă: stă scrisă
+ * în fiecare rând de comandă din trecut.
  */
 function latura_cuvant(string $latura, bool $ro = true): string
 {
     if ($latura === 'copt') {
-        return $ro ? 'gata de servire' : 'ready to serve';
+        return $ro ? 'copt' : 'baked';
     }
     return $ro ? 'congelat' : 'frozen';
 }
@@ -177,7 +180,7 @@ function latura_vandabil(array $r): bool
  *
  * Magazinul pornește pe „congelate" (Site Public.dc.html), deci aceea e latura
  * vitrinei — DAR numai pentru un produs care chiar se vinde acolo. Un produs
- * din afara catalogului de congelate e văzut întâi la gata de servire, fiindcă
+ * din afara catalogului de congelate e văzut întâi la coapte, fiindcă
  * acolo e singurul loc unde e.
  *
  * De asta atârnă prețul și poza din datele pentru Google: perechea trebuie să

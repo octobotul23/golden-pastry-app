@@ -141,8 +141,10 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 /* PE TELEFONUL ÎNGUST, INSIGNELE COBOARĂ PE RÂNDUL LOR.
    Antetul cardului ține patru lucruri de lățime fixă și unul care se întinde:
    mânerul 28 + cifra poziției ~17 + săgețile 2×44 + patru spații de 9 = 160,
-   plus cele 32 de margine ale cardului. Insigna cea mai lată de pe card e
-   „Gata de servire", 129 măsurați la 390. Adică antetul cere 321 ca să stea
+   plus cele 32 de margine ale cardului. Insigna cea mai lată de pe card era
+   „Gata de servire", 129 măsurați la 390 (numele laturii calde până pe 26
+   septembrie 2026; „Copt" e mult mai scurt, dar o insignă de stare ori de
+   rang îi poate lua locul, iar regula nu atârnă de o vorbă). Adică antetul cerea 321 ca să stea
    pe un rând; cardul are lățimea ecranului fără 72 (14 marginea din stânga a
    listei + 58 locul clapei „Toate produsele"), deci rândul se rupe sub 393.
    La 375 chiar s-a rupt, și nu frumos: insigna nu se micșorează — scrisul ei
@@ -2140,7 +2142,7 @@ class Component extends DCLogic {
         status: st, statusCls: ST[st] || "h-badge",
         rang: rg.fel, rangSemn: rg.semn, rangEt: rg.et,
         rangCls: rg.cls, rangTitlu: rg.titlu,
-        // Congelat sau gata de servire: fără asta laboratorul nu are de unde
+        // Congelat sau copt: fără asta laboratorul nu are de unde
         // ști ce pregătește, deși de varianta aleasă depinde și prețul plătit.
         variant: gp.variantLabel(ord.variant),
         variantKey: ord.variant,

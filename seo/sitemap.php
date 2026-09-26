@@ -88,7 +88,7 @@ function sitemap_chei(): array
         );
 
         // Harta trimisă motoarelor pomenește fiecare produs care se vinde
-        // UNDEVA — reuniune, nu alăturare. Un produs numai gata-de-servire are
+        // UNDEVA — reuniune, nu alăturare. Un produs vândut numai copt are
         // o pagină bună (v. `seo/index.php`), deci lipsa lui de aici ar fi o
         // pagină pe care nimic n-o arată către Google.
         //

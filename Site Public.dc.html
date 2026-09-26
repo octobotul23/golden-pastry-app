@@ -2086,10 +2086,10 @@ class Component extends DCLogic {
       // nu vorba gata scrisă: dacă omul schimbă limba cât vorba stă pe ecran,
       // una pusă deoparte ar rămâne în limba de dinainte.
       tierSpus: '',
-      // Produsul arătat în fereastra de previzualizare, după NUMĂRUL lui din
-      // catalog (`r[1]`), sau `null` cât fereastra e închisă.
+      // Produsul arătat în fereastra de previzualizare, după CHEIA lui din
+      // catalog (`r[1]`, id-ul), sau `null` cât fereastra e închisă.
       //
-      // Numărul, nu cheia de coș (`tier + ':' + nr`): cheia poartă și varianta,
+      // Cheia, nu cea de coș (`tier + ':' + nr`): aceea poartă și varianta,
       // iar fereastra trebuie să arate prețul variantei de ACUM. Și nu rândul
       // însuși: catalogul se reîmprospătează de la server cât pagina stă
       // deschisă, iar un rând pus deoparte ar fi rămas cel vechi — fereastra ar
@@ -2198,14 +2198,14 @@ class Component extends DCLogic {
           // deci pagina n-o mai ghicește din prețuri. 1/0, nu true/false, ca
           // restul tuplului — v. `x.isNew` de mai sus.
           x.photoBaked || '', x.inFrozen === false ? 0 : 1, x.inBaked === false ? 0 : 1,
-          // Scările de preț ale celor două laturi (migrarea 028), tot la coadă:
-          // `[{prag, pret}, …]`, de jos în sus, gata curățate de server
-          // (`latura_scara_publica()`, api/lib/laturi.php) — adică numai
-          // treptele care chiar se aplică. Un răspuns de dinainte de 028 nu le
-          // are: atunci rămân goale, iar pagina cade pe prețul unic, ca până
-          // azi (v. `scaraLat()` din render).
+          // Scările de preț ale laturilor (028), `[{prag, pret}, …]` de jos în
+          // sus, curățate de server (`latura_scara_publica()`); fără 028 goale,
+          // iar pagina cade pe prețul unic (v. `scaraLat()`). Apoi (029) NUMĂRUL
+          // din colțul pozei, ales în Catalog — nu cheia `x.id` din r[1], care
+          // rămâne a coșului, a pozei și a adresei. Un server de dinainte de 029
+          // nu-l trimite: atunci numărul e cheia, ca ieri.
           (x.trepte && Array.isArray(x.trepte.frozen)) ? x.trepte.frozen : [],
-          (x.trepte && Array.isArray(x.trepte.baked)) ? x.trepte.baked : []
+          (x.trepte && Array.isArray(x.trepte.baked)) ? x.trepte.baked : [], x.numar > 0 ? x.numar : x.id
         ]);
         const groups = (r.categories || []).map((c) => [
           c.slug, c.name, c.nameEn || c.name, c.note || '', c.noteEn || c.note || ''
@@ -3183,7 +3183,7 @@ class Component extends DCLogic {
     if (!R || R.cernut) return null;
     // PE CHEIA ÎNTREAGĂ, NU PE ID. De când cele două cataloage sunt deosebite,
     // „se mai vinde?" e o întrebare despre PERECHEA produs-latură: un croasant
-    // poate să se vândă gata de servire și să fi ieșit din congelate. Cheiat pe
+    // poate să se vândă copt și să fi ieșit din congelate. Cheiat pe
     // id, un asemenea produs ar fi trecut prin sită pe amândouă laturile, și
     // comanda refăcută ar fi cerut o variantă pe care serverul o refuză —
     // ecranul ar fi arătat un coș bun pentru o comandă care nu pleacă.
@@ -3337,8 +3337,8 @@ class Component extends DCLogic {
         ? 'background:var(--h-bg-raised);color:var(--h-fg);box-shadow:var(--h-shadow-1)'
         : 'background:transparent;color:var(--h-fg-muted)');
 
-    const TIER_RO = { frozen: 'Congelate', baked: 'Gata de servire' };
-    const TIER_EN = { frozen: 'Frozen', baked: 'Ready to serve' };
+    const TIER_RO = { frozen: 'Congelate', baked: 'Coapte' };
+    const TIER_EN = { frozen: 'Frozen', baked: 'Baked' };
     const tierName = (k) => (ro ? TIER_RO[k] : TIER_EN[k]);
     const tier = this.state.tier === 'baked' ? 'baked' : 'frozen';
     const res = (id, url) => (typeof window !== 'undefined' && window.__resources && window.__resources[id]) || url;
@@ -3460,7 +3460,7 @@ class Component extends DCLogic {
     // spus una și vorba de sub el alta.
     const numeTier = (k) => (k === 'frozen'
       ? t('Congelate', 'Frozen')
-      : t('Gata de servire', 'Ready to serve'));
+      : t('Coapte', 'Baked'));
 
     // Cele două semne nu iau culoarea de la buton: fulgul e albastru rece,
     // flacăra e portocalie, fiindcă asta CHIAR spun cele două variante —
@@ -3805,7 +3805,7 @@ class Component extends DCLogic {
     const cuvinteCautate = faraSemne(this.state.cautare).split(/\s+/).filter(Boolean);
     const doarNoi = !!this.state.doarNoi;
     const doarVolum = !!this.state.doarVolum;
-    const textDeCautat = (r) => faraSemne([r[1] < 10 ? '0' + r[1] : String(r[1]), r[2], r[3], r[7], r[8]].join(' '));
+    const textDeCautat = (r) => faraSemne([gp.numarAfisat(r[17] || r[1]), r[2], r[3], r[7], r[8]].join(' '));
     const treceFiltrele = (r) => (!doarNoi || !!r[9])
       && (!doarVolum || scaraLat(r, tier).length > 1)
       && cuvinteCautate.every((c) => textDeCautat(r).indexOf(c) >= 0);
@@ -3868,7 +3868,7 @@ class Component extends DCLogic {
         const urm = n > 0 && acum ? acum.urmatoarea : null;
         const other = tier === 'frozen' ? 'baked' : 'frozen';
         return {
-          no: r[1] < 10 ? '0' + r[1] : String(r[1]),
+          no: gp.numarAfisat(r[17] || r[1]),
           // ID DEOSEBIT PE FIECARE LATURĂ. Cele două laturi arată, de regulă,
           // două fotografii deosebite ale aceluiași produs — deci au nevoie de
           // două sloturi. Cu un singur id, o poză pusă cu mâna peste slot (prin
@@ -4007,7 +4007,7 @@ class Component extends DCLogic {
     // prin „nu e nimic aici", între desenare și răspunsul serverului.
     //
     // Latura cealaltă e întrebată pe GRUPĂ când se cere o grupă: „vezi-le la
-    // gata de servire" pe o grupă goală și acolo ar fi o trimitere într-o altă
+    // coapte" pe o grupă goală și acolo ar fi o trimitere într-o altă
     // pagină albă.
     const laturaCealalta = tier === 'frozen' ? 'baked' : 'frozen';
     const celalaltAre = grupaCeruta
@@ -4034,7 +4034,7 @@ class Component extends DCLogic {
     // ăstuia, unul dintre ele uitat.
     const randVedere = this.state.vedere === null ? null : (byNo[this.state.vedere] || null);
     // Din `VANDABIL`: o sosire rece de pe Google cade mereu pe „congelate"
-    // (v. starea de pornire), iar un produs care se vinde numai gata de servire
+    // (v. starea de pornire), iar un produs care se vinde numai copt
     // ar fi arătat atunci „nu există" pe propria lui adresă — tocmai adresa pe
     // care harta trimisă la Google o pomenește.
     const randProd = randVedere
@@ -4045,7 +4045,7 @@ class Component extends DCLogic {
     //
     // Fișa n-are comutator, dinadins (v. mai jos, la `pvTier`). Latura ei e
     // cea deschisă — numai că o sosire rece de pe Google e mereu „congelate",
-    // iar un produs care se vinde numai gata de servire ar fi arătat atunci un
+    // iar un produs care se vinde numai copt ar fi arătat atunci un
     // buton care scrie în coș o cheie pe care serverul o refuză: omul ar fi
     // aflat abia la trimitere, după ce completa tot formularul.
     //
@@ -4175,7 +4175,7 @@ class Component extends DCLogic {
           // cerut și congelat, și copt; până acum spre server pleca o
           // singură variantă pentru tot coșul.
           variant: parts[0] === 'frozen' ? 'congelat' : 'copt',
-          name: r[1] + '. ' + t(r[2], r[3]),
+          name: (r[17] || r[1]) + '. ' + t(r[2], r[3]),
           meta: r[4] + ' g · ' + money(unitPrice) + '/' + t('buc', 'pc')
             + (acum && acum.treapta > 1 ? ' · ' + t('preț de la ' + acum.prag + ' buc.', 'price from ' + acum.prag + ' pcs') : '')
             + ' · ' + tierName(parts[0]),
@@ -4794,10 +4794,10 @@ class Component extends DCLogic {
         ? (grupaAsta.note || t('Toate sortimentele din grupa aceasta, cu gramaje și prețuri en-gros.',
                                'Every line in this group, with weights and wholesale prices.'))
         : mine
-        ? t('Alege varianta de livrare — congelate sau gata de servire — și adaugă produsele în comandă.',
-            'Pick the delivery format — frozen or ready to serve — and add products to your order.')
-        : t('Patiserie artizanală preparată zilnic în laboratorul nostru. Alege varianta de livrare — congelate sau gata de servire — și adaugă produsele în cererea de ofertă.',
-            'Artisan pastry made fresh every day in our own kitchen. Pick the delivery format — frozen or ready to serve — and add products to your quote request.'),
+        ? t('Alege varianta de livrare — congelate sau coapte — și adaugă produsele în comandă.',
+            'Pick the delivery format — frozen or baked — and add products to your order.')
+        : t('Patiserie artizanală preparată zilnic în laboratorul nostru. Alege varianta de livrare — congelate sau coapte — și adaugă produsele în cererea de ofertă.',
+            'Artisan pastry made fresh every day in our own kitchen. Pick the delivery format — frozen or baked — and add products to your quote request.'),
       // „Continuă spre ofertă" spunea unde te duce, nu ce se întâmplă — și
       // te ducea într-adevăr: schimba pagina, lăsând coșul în urmă. Acum nu
       // mai pleacă nimeni nicăieri; formularul vine el, ca fereastră peste
@@ -5130,7 +5130,7 @@ class Component extends DCLogic {
         + (randVedere ? 'font-size:0.9375rem' : 'font-size:1.0625rem'),
       pvEtGramaj: t('Gramaj', 'Weight'),
       pvEtCongelat: t('Congelat', 'Frozen'),
-      pvEtCopt: t('Gata de servire', 'Ready to serve'),
+      pvEtCopt: t('Copt', 'Baked'),
       pvGramaj: randProd ? randProd[4] + ' g' : '—',
       // Latura pe care produsul nu se vinde nu se mai scrie DELOC: căsuța ei
       // piere din grilă, iar `pvFapte` numără coloanele rămase. Până azi scria
@@ -5513,7 +5513,7 @@ class Component extends DCLogic {
         + 'white-space:nowrap;box-shadow:var(--h-shadow-2);animation:gp-tier-spus var(--h-dur-base) var(--h-ease-out)',
       tierNote: tier === 'frozen'
         ? t('Congelate imediat după producție și livrate în lanț frigorific. Le coci tu, în locație, pe măsură ce vinzi.', 'Frozen right after production and delivered in an unbroken cold chain. You bake them on site, as you sell.')
-        : t('Coapte în laboratorul nostru și livrate zilnic, gata de vitrină. Fără cuptor și fără pregătire la tine.', 'Baked in our own kitchen and delivered daily, ready for the counter. No oven, no prep on your side.'),
+        : t('Le coacem în laboratorul nostru și le livrăm zilnic, gata de vitrină. Fără cuptor și fără pregătire la tine.', 'We bake them in our own kitchen and deliver them daily, ready for the counter. No oven, no prep on your side.'),
       // „Nou", nu „Preț special": insigna se aprinde pe bifa „Marchează ca
       // noutate" din Catalog (`isNew`), iar un preț special nu există nicăieri
       // în bază. Cardul promitea o ofertă pe care n-o făcuse nimeni.

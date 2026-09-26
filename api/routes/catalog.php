@@ -253,7 +253,7 @@ function route_products_create(): void
         // Fereastra dintre urcarea fișierelor și importul SQL. Fără coloanele
         // laturilor, magazinul ascunde orice produs care n-are amândouă
         // prețurile: unul cu un singur preț chiar n-ar avea cum să se vadă.
-        fail('Completează amândouă prețurile: cel pentru congelate și cel pentru gata de servire.',
+        fail('Completează amândouă prețurile: cel pentru congelate și cel pentru coapte.',
             422, 'missing_price');
     }
 
@@ -268,26 +268,144 @@ function route_products_create(): void
         );
     }
 
-    $sort = (int) scalar('SELECT COALESCE(MAX(sort), 0) + 10 FROM products');
-    $args = [$slug, $name, $nameEn, $desc, $descEn, $grams, $horeca, $retail,
-             $category, !empty($b['isNew']) ? 1 : 0, $sort];
-    if ($laturi) {
-        array_push($args, $inFrozen ? 1 : 0, $inBaked ? 1 : 0);
+    // NUMĂRUL DIN COLȚUL POZEI (migrarea 029). Fără număr cerut, produsul nou
+    // îl ia pe următorul — „în ordinea în care sunt postate", cum a cerut
+    // patronul. Cu număr cerut, i se face loc ca la o mutare. Se judecă aici,
+    // înaintea tranzacției: `fail()` încheie scriptul pe loc.
+    $numerotat  = catalog_numere_supported();
+    $numarCerut = product_numar_cerut($b, 'numar');
+    if ($numarCerut !== null && !$numerotat) {
+        fail('Numărul din catalog se poate alege după importul migrării 029 '
+            . '(sql/029_numere_in_catalog.sql). Salvează fără el: produsul își primește singur numărul.',
+            409, 'numbers_unavailable');
     }
-    array_push($args, ...array_values($trepte));
-    q(
-        'INSERT INTO products (slug, name, name_en, description, description_en, grams,
-                               price_frozen, price_baked, category, is_new, sort'
-        . ($laturi ? ', in_frozen, in_baked' : '')
-        . ($trepte ? ', ' . implode(', ', array_keys($trepte)) : '') . ')
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . ($laturi ? ', ?, ?' : '')
-        . str_repeat(', ?', count($trepte)) . ')',
-        $args
-    );
-    $id = (int) db()->lastInsertId();
 
-    audit('product_create', 'product', (string) $id, $name);
-    json_out(['id' => $id, 'slug' => $slug], 201);
+    $insereaza = static function (int $sort) use ($slug, $name, $nameEn, $desc, $descEn, $grams, $horeca,
+                                                  $retail, $category, $b, $laturi, $inFrozen, $inBaked, $trepte): int {
+        $args = [$slug, $name, $nameEn, $desc, $descEn, $grams, $horeca, $retail,
+                 $category, !empty($b['isNew']) ? 1 : 0, $sort];
+        if ($laturi) {
+            array_push($args, $inFrozen ? 1 : 0, $inBaked ? 1 : 0);
+        }
+        array_push($args, ...array_values($trepte));
+        q(
+            'INSERT INTO products (slug, name, name_en, description, description_en, grams,
+                                   price_frozen, price_baked, category, is_new, sort'
+            . ($laturi ? ', in_frozen, in_baked' : '')
+            . ($trepte ? ', ' . implode(', ', array_keys($trepte)) : '') . ')
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . ($laturi ? ', ?, ?' : '')
+            . str_repeat(', ?', count($trepte)) . ')',
+            $args
+        );
+        return (int) db()->lastInsertId();
+    };
+
+    if (!$numerotat) {
+        // Baza de dinainte de 029: pașii de zece de ieri, neatinși.
+        $id = $insereaza((int) scalar('SELECT COALESCE(MAX(sort), 0) + 10 FROM products'));
+        audit('product_create', 'product', (string) $id, $name);
+        json_out(['id' => $id, 'slug' => $slug], 201);
+    }
+
+    // Sub lacăt, ca două produse puse deodată să nu ia același număr.
+    //
+    // Următorul după cel mai mare, dar niciodată peste 999: un produs pus de
+    // mână pe 999 („să stea ultimul") ar fi dat altfel produsului nou 1000 —
+    // un număr pe care formularul nu-l mai primește înapoi. Acolo produsul nou
+    // intră pe 999 ca pe orice număr ocupat, iar cel de pe el se dă spre cap.
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $numere  = product_numere_sub_lacat();
+        $urmator = min($numere ? max($numere) + 1 : 1, CATALOG_NUMAR_MAX);
+        $tinta   = $numarCerut ?? $urmator;
+        $mutari  = catalog_numar_mutari($numere, 0, $tinta);
+        if ($mutari === null) {
+            $pdo->rollBack();
+            product_numar_plin($tinta);
+        }
+        $id = $insereaza($tinta);
+        $altii = $mutari;
+        unset($altii[0]);
+        product_numere_scrie($altii);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    // Jurnalul spune numărul numai când s-a cerut unul ori când s-a mutat
+    // cineva; produsul pus la coadă, ca de obicei, rămâne „Croissant" și atât.
+    audit('product_create', 'product', (string) $id, $name
+        . ($numarCerut === null && !$altii ? '' : ' · ' . catalog_numar_poveste($numere, 0, $mutari)));
+    json_out(['id' => $id, 'slug' => $slug, 'numar' => $tinta,
+              'mutate' => product_numere_mutate($numere, $altii)], 201);
+}
+
+/**
+ * Numărul din catalog cerut de panou, judecat — sau null dacă cererea nu cere
+ * niciunul. Refuzul (422) spune ce a primit, ca omul să vadă ce a scris.
+ */
+function product_numar_cerut(array $b, string $cheie): ?int
+{
+    if (!array_key_exists($cheie, $b)) {
+        return null;
+    }
+    $n = catalog_numar_din($b[$cheie]);
+    if ($n !== null) {
+        return $n;
+    }
+    $aratat = text_de_aratat($b[$cheie]);
+    fail('Numărul din catalog trebuie să fie un număr întreg de la 1 la ' . CATALOG_NUMAR_MAX . '.'
+        . ($aratat === '' ? ' Căsuța a rămas goală.' : ' Am primit „' . $aratat . '”.'),
+        422, 'bad_catalog_number');
+    return null;
+}
+
+/**
+ * Numerele TUTUROR produselor, prinse cu `FOR UPDATE` (id → număr).
+ *
+ * În ordinea id-ului, la orice cerere: două mutări date deodată din două
+ * panouri se așază una după alta, fără blocaj de moarte, iar a doua o vede pe
+ * prima întreagă. Cheam-o NUMAI dintr-o tranzacție deschisă.
+ */
+function product_numere_sub_lacat(): array
+{
+    $numere = [];
+    foreach (all('SELECT id, sort FROM products ORDER BY id FOR UPDATE') as $r) {
+        $numere[(int) $r['id']] = (int) $r['sort'];
+    }
+    return $numere;
+}
+
+/** Scrie numerele noi (id → număr). Tot din tranzacție. */
+function product_numere_scrie(array $mutari): void
+{
+    foreach ($mutari as $pid => $nr) {
+        q('UPDATE products SET sort = ? WHERE id = ?', [(int) $nr, (int) $pid]);
+    }
+}
+
+/**
+ * Cine s-a mai mutat, pentru răspuns: [{id, de, la}]. Panoul le pune la loc
+ * în listă fără să mai întrebe serverul, și scrie omului câte s-au mișcat.
+ */
+function product_numere_mutate(array $numere, array $mutari): array
+{
+    $out = [];
+    foreach ($mutari as $pid => $nr) {
+        $out[] = ['id' => (int) $pid, 'de' => (int) ($numere[$pid] ?? 0), 'la' => (int) $nr];
+    }
+    return $out;
+}
+
+/** Nu mai e loc: de la numărul cerut până la 1 și până la 999, totul e ocupat. */
+function product_numar_plin(int $n): void
+{
+    fail('Nu pot face loc numărului ' . catalog_numar_afisat($n) . ': de la el până la capete, toate numerele '
+        . 'de la 1 la ' . CATALOG_NUMAR_MAX . ' sunt ocupate.', 409, 'catalog_numbers_full');
 }
 
 function route_products_update(string $id): void
@@ -302,6 +420,21 @@ function route_products_update(string $id): void
     $b    = body();
     $sets = [];
     $vals = [];
+
+    // NUMĂRUL DIN COLȚUL POZEI (migrarea 029), judecat primul: `fail()`
+    // încheie scriptul pe loc, deci niciun refuz nu are voie să vină după
+    // vreo scriere. `sort` a fost primit aici dintotdeauna și scris ca atare;
+    // de la 029 e numărul însuși, deci trece pe același drum ca `numar` — scris
+    // ca atare, ar fi pus două produse pe același număr.
+    $numerotat  = catalog_numere_supported();
+    $numarCerut = product_numar_cerut($b, array_key_exists('numar', $b) || !$numerotat ? 'numar' : 'sort');
+    if ($numarCerut !== null && !$numerotat && $numarCerut !== $id) {
+        // Fără 029, numărul din colț e cheia bazei: îl poți „alege" numai pe
+        // cel pe care îl are deja.
+        fail('Numărul din catalog se poate schimba după importul migrării 029 '
+            . '(sql/029_numere_in_catalog.sql). Până atunci, fiecare produs poartă numărul lui de la naștere.',
+            409, 'numbers_unavailable');
+    }
 
     // La modificare, câmpurile lipsă rămân neatinse — dar cele trimise goale
     // sunt refuzate: catalogul e bilingv, iar un nume gol n-are ce căuta.
@@ -348,7 +481,7 @@ function route_products_update(string $id): void
         }
         if (array_key_exists('priceBaked', $b)) {
             if ($retail === null && !catalog_laturi_supported()) {
-                fail('Prețul pentru gata de servire nu poate rămâne gol.', 422, 'missing_price');
+                fail('Prețul pentru coapte nu poate rămâne gol.', 422, 'missing_price');
             }
             $sets[] = 'price_baked = ?';
             $vals[] = $retail;
@@ -376,9 +509,9 @@ function route_products_update(string $id): void
     }
     if (array_key_exists('isNew', $b))  { $sets[] = 'is_new = ?'; $vals[] = !empty($b['isNew']) ? 1 : 0; }
     if (array_key_exists('active', $b)) { $sets[] = 'active = ?'; $vals[] = !empty($b['active']) ? 1 : 0; }
-    if (array_key_exists('sort', $b))   { $sets[] = 'sort = ?';   $vals[] = (int) $b['sort']; }
+    if (array_key_exists('sort', $b) && !$numerotat) { $sets[] = 'sort = ?'; $vals[] = (int) $b['sort']; }
 
-    if (!$sets) {
+    if (!$sets && $numarCerut === null) {
         fail('Nu ai trimis nimic de schimbat.', 422, 'nothing_to_update');
     }
 
@@ -412,25 +545,68 @@ function route_products_update(string $id): void
         'category'       => 'grupă',
         'grams'          => 'grame',
         'price_frozen'   => 'preț congelat',
-        'price_baked'    => 'preț gata de servire',
+        'price_baked'    => 'preț copt',
         'price_frozen_b' => 'preț B congelat',
         'price_frozen_c' => 'preț C congelat',
-        'price_baked_b'  => 'preț B gata de servire',
-        'price_baked_c'  => 'preț C gata de servire',
+        'price_baked_b'  => 'preț B copt',
+        'price_baked_c'  => 'preț C copt',
         'prag_b'         => 'prag B',
         'prag_c'         => 'prag C',
         'in_frozen'      => ['în congelate', ['1' => 'da', '0' => 'nu']],
-        'in_baked'       => ['la gata de servire', ['1' => 'da', '0' => 'nu']],
+        'in_baked'       => ['în coapte', ['1' => 'da', '0' => 'nu']],
         'is_new'         => ['nou', ['1' => 'da', '0' => 'nu']],
         'active'         => ['în catalog', ['1' => 'da', '0' => 'nu']],
         'sort'           => 'ordine',
     ]);
     $vals[] = $id;
-    q('UPDATE products SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
 
-    audit('product_update', 'product', (string) $id,
-        $p['name'] . ($schimbari === '' ? '' : ' · ' . $schimbari));
-    json_out(['ok' => true]);
+    if ($numarCerut === null || !$numerotat) {
+        // Fără 029 se ajunge aici și cu numărul pe care produsul îl are deja
+        // (cheia lui): nimic de scris, deci nici de trecut în jurnal.
+        if ($sets) {
+            q('UPDATE products SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
+            audit('product_update', 'product', (string) $id,
+                $p['name'] . ($schimbari === '' ? '' : ' · ' . $schimbari));
+        }
+        json_out(['ok' => true]);
+    }
+
+    // Cu număr nou: restul câmpurilor și mutarea se scriu deodată, sub lacăt.
+    // Numerele se citesc abia aici, nu din `$p`: între timp le-a putut muta
+    // alt panou, iar o mutare socotită pe numere vechi ar lăsa două produse
+    // pe același loc.
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $numere = product_numere_sub_lacat();
+        $mutari = catalog_numar_mutari($numere, $id, $numarCerut);
+        if ($mutari === null) {
+            $pdo->rollBack();
+            product_numar_plin($numarCerut);
+        }
+        if ($sets) {
+            q('UPDATE products SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
+        }
+        product_numere_scrie($mutari);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    // Numărul pe care produsul îl avea deja nu mută nimic; trimis singur, nu
+    // lasă nici rând în jurnal — n-a schimbat nimic.
+    $poveste = $mutari ? catalog_numar_poveste($numere, $id, $mutari) : '';
+    $detalii = array_values(array_filter([$schimbari, $poveste], static fn($s) => $s !== ''));
+    if ($sets || $mutari) {
+        audit('product_update', 'product', (string) $id,
+            $p['name'] . ($detalii ? ' · ' . implode(' · ', $detalii) : ''));
+    }
+    $altii = $mutari;
+    unset($altii[$id]);
+    json_out(['ok' => true, 'numar' => $numarCerut, 'mutate' => product_numere_mutate($numere, $altii)]);
 }
 
 /**
@@ -643,7 +819,7 @@ function route_products_photo(string $id): void
     // venite odată cu proiectul pot fi folosite și în altă parte.
     //
     // „Dinainte" înseamnă cea a LATURII ĂSTEIA. Cu `$p['photo']` scris aici,
-    // fiecare urcare de gata-de-servire ar fi șters poza congelată de pe disc
+    // fiecare urcare pentru coapte ar fi șters poza congelată de pe disc
     // — iar rândul din bază ar fi rămas, deci poza s-ar fi rupt tăcut.
     //
     // ȘI NICI DACĂ CEALALTĂ LATURĂ O MAI FOLOSEȘTE. Două coloane pot arăta
@@ -653,7 +829,7 @@ function route_products_photo(string $id): void
     // unul singur — iar codul de mai jos presupunea tăcut că fiecare fișier
     // are un singur stăpân. Fără rândul ăsta, prima poză nouă de congelate ar
     // fi șters de pe disc tocmai fișierul spre care `photo_baked` încă arată,
-    // și poza de la gata de servire s-ar fi rupt în tăcere, la fiecare produs,
+    // și poza de la coapte s-ar fi rupt în tăcere, la fiecare produs,
     // în ziua următoare migrării.
     $cealaltaCol = latura_coloana_poza($latura === 'copt' ? 'congelat' : 'copt');
     $tinutDeCealalta = (string) ($p[$cealaltaCol] ?? '') === $old;
@@ -791,7 +967,7 @@ function product_numbers(array $b): array
     return [
         $grams,
         $price($b['priceFrozen'] ?? null, 'pentru congelate'),
-        $price($b['priceBaked'] ?? null, 'pentru gata de servire'),
+        $price($b['priceBaked'] ?? null, 'pentru coapte'),
     ];
 }
 
@@ -945,8 +1121,8 @@ function product_trepte_din(array $b): array
     $etichete = [
         'priceFrozenB' => [$pret, 'B pentru congelate'],
         'priceFrozenC' => [$pret, 'C pentru congelate'],
-        'priceBakedB'  => [$pret, 'B pentru gata de servire'],
-        'priceBakedC'  => [$pret, 'C pentru gata de servire'],
+        'priceBakedB'  => [$pret, 'B pentru coapte'],
+        'priceBakedC'  => [$pret, 'C pentru coapte'],
         'pragB'        => [$prag, 'prețului B'],
         'pragC'        => [$prag, 'prețului C'],
     ];

@@ -37,14 +37,21 @@ Acum există un singur catalog: baza de date.
 | Pe site | Semnul | În formular | Ce înseamnă |
 |---|---|---|---|
 | Congelate | fulg albastru | panoul „Congelate" | livrat în lanț frigorific |
-| Gata de servire | flacără portocalie | panoul „Gata de servire" | livrat gata de vânzare |
+| Coapte | flacără portocalie | panoul „Coapte" | copt la noi, livrat gata de vitrină |
 
 Fiecare catalog are în formular **panoul lui**: semnul, numele, comutatorul
 **În catalog** și trei casete de preț, **A, B și C**. A e prețul dintotdeauna;
 B și C sunt prețurile de volum și pot rămâne goale — v. „Trei prețuri, după
 cantitate", mai jos. Un produs poate fi numai într-unul din cele două — asta e
-chiar rostul comutatoarelor: la gata de servire sunt mai multe produse decât la
+chiar rostul comutatoarelor: la coapte sunt mai multe produse decât la
 congelate, și sunt grupe care se văd numai acolo.
+
+> Până pe 26 septembrie 2026 al doilea catalog se chema „Gata de servire".
+> Numele s-a schimbat numai pe ecran: comenzile, prețurile și pozele sunt
+> aceleași. Unde numește catalogul, vorba e la plural — „Congelate",
+> „Coapte" —, iar unde numește marfa unui rând (cardurile din Laborator,
+> capetele de coloană din Statistici), la singular — „Congelat", „Copt".
+> În engleză, „Frozen" și „Baked".
 
 Trei lucruri de ținut minte, fiindcă altfel par scăpări:
 
@@ -59,7 +66,7 @@ Trei lucruri de ținut minte, fiindcă altfel par scăpări:
 
 Pe rândurile din listă, cele două comutatoare sunt **pastile**, fiecare cu
 semnul lui: arată dintr-o privire unde e fiecare produs și se apasă ca să-l
-muți. Deasupra listei, **„Congelate | Gata de servire | Amândouă"** taie lista
+muți. Deasupra listei, **„Congelate | Coapte | Amândouă"** taie lista
 pe un catalog sau le arată pe amândouă — pe „Amândouă" se vede oglinda, adică
 ce lipsește dintr-o parte. O grupă fără produse în catalogul deschis se ascunde
 singură.
@@ -77,7 +84,7 @@ Singurul loc fără ele e lista deschisă a unei casete derulante: o opțiune di
 
 > Până la 2.5.0, semnele — un fulg și un clopot de servire — stăteau numai în
 > pastila de pe telefon, iar în formular fiecare catalog avea o singură casetă,
-> „Preț congelat" ori „Preț gata de servire".
+> „Preț congelat" ori „Preț copt".
 
 **Prețul depinde de variantă, nu de client.** Asta a fost o corecție: coloanele
 se numeau `price_horeca` și `price_retail`, iar serverul alegea prețul după cum
@@ -97,7 +104,7 @@ intra cu 0 lei și nimeni nu vedea de unde vine.
 ### Fotografiile
 
 **Două casete, una de fiecare catalog:** „Fotografie — congelat" și
-„Fotografie — gata de servire". JPEG, PNG sau WebP, maximum 10 MB. Alegi
+„Fotografie — copt". JPEG, PNG sau WebP, maximum 10 MB. Alegi
 fișierul, se încarcă la salvare.
 
 **Poza se micșorează pe server, și de-aia poți urca direct de pe telefon.**
@@ -117,10 +124,10 @@ cumpărătorul pe latura aceea.
 Până în 2.4.1 nu era așa: latura fără poză o împrumuta pe a celeilalte, ca
 produsul să nu apară gol în ziua dintre cele două urcări. Ideea era bună, dar
 din afară **nu se putea deosebi de o poză scrisă în amândouă locurile**: urcai
-o fotografie nouă la congelate și o vedeai apărând și la gata de servire, fără
-s-o fi pus acolo. Împrumutul s-a tăiat, iar la actualizare fiecare produs care
-avea poză numai la congelate a primit-o, o dată, și în caseta de gata de
-servire — deci în ziua schimbării nimic nu s-a golit pe site.
+o fotografie nouă la congelate și o vedeai apărând și la coapte, fără s-o fi
+pus acolo. Împrumutul s-a tăiat, iar la actualizare fiecare produs care avea
+poză numai la congelate a primit-o, o dată, și în caseta de la coapte — deci
+în ziua schimbării nimic nu s-a golit pe site.
 
 Două urmări ale acelei copieri, ca să nu te mire:
 
@@ -129,7 +136,7 @@ Două urmări ale acelei copieri, ca să nu te mire:
   dar e pe dos față de cum se purta înainte. Când vrei aceeași fotografie pe
   amândouă, o urci de două ori.
 - **Un produs adăugat de acum înainte** pornește cu amândouă casetele goale.
-  Îi pui poză numai la congelate, iar la gata de servire va apărea
+  Îi pui poză numai la congelate, iar la coapte va apărea
   substituentul până îi urci una și acolo.
 
 Pozele făcute cu telefonul intră ca atare; nu-i nevoie să le micșorezi
@@ -305,7 +312,7 @@ de la … buc." —, iar sub el cele două panouri, fiecare cu **Preț A, Preț 
 Preț C**.
 
 **Pragurile sunt ale produsului, prețurile ale fiecărui catalog.** Congelatele
-și gata de servire pot avea prețuri deosebite, dar B începe de la aceeași
+și coaptele pot avea prețuri deosebite, dar B începe de la aceeași
 cantitate în amândouă. Pus între cele două panouri, rândul pragurilor ar fi
 părut al unuia; de-aia stă deasupra lor.
 
@@ -356,7 +363,7 @@ ci după suma produsului din tot coșul: același produs poate sosi pe două râ
 cumpărat o sută trei, nu trei și o sută.
 
 Cataloagele se numără deosebit, fiindcă prețurile sunt ale fiecăruia: **60 de
-congelate și 60 gata de servire nu fac 120**, ci câte 60 în fiecare parte.
+congelate și 60 de coapte nu fac 120**, ci câte 60 în fiecare parte.
 
 Treapta atinsă se plătește **pe toate bucățile**, nu numai pe cele de peste
 prag: 150 de bucăți la B înseamnă 150 × 3,90, nu 99 × 4,20 + 51 × 3,90.
@@ -455,7 +462,7 @@ câte încap, fără să strivească vreun card.
 - **Șase pe ecran**: poza pătrată, numele, prețul A și, pe scurt, B și C.
 
 **Rândul celuilalt catalog**, cu semnul lui, spune ce costă produsul de partea
-cealaltă — *„Gata de servire: 4,20 RON"* — ori că e numai de-o parte: *„Doar
+cealaltă — *„Coapte: 4,20 RON"* — ori că e numai de-o parte: *„Doar
 congelate"*.
 
 **Cu ce se deschide.** Vederea de pornire o alegi tu, din **Setări → General,
@@ -491,7 +498,7 @@ e lista de rânduri de până acum, „Patru" și „Șase" sunt plăci. Vederea
 minte în browser și pornește pe „Unul pe rând"; **Setările nu o ating**, fiindcă
 ele sunt pentru clienți.
 
-Lângă **„Congelate | Gata de servire | Amândouă"** stau filtrele panoului:
+Lângă **„Congelate | Coapte | Amândouă"** stau filtrele panoului:
 
 - **grupa** — *Toate grupele* ori una singură;
 - **ordinea** — *Ordinea din magazin · După nume · Prețul A, crescător · Prețul
@@ -510,6 +517,87 @@ catalog și câte o coloană pe treaptă** — „1+", „100+", „300+" —, c
 și „—" unde treapta lipsește. Amândouă cataloagele se văd și pe comutatorul unui
 singur catalog: oglinda se citește tocmai punând cifrele una sub alta. Un produs
 cu un singur preț pe catalog arată ca înainte: „2,85 lei", fără tabel.
+
+---
+
+## Numărul din colțul pozei
+
+Fiecare produs poartă în magazin un număr în colțul din stânga-sus al pozei:
+**01**, **02**, **03**… Clientul îl spune la telefon și îl scrie pe WhatsApp,
+iar numărul pleacă și în mesajul comenzii, înaintea numelui: *„3 × 7. Croasant
+cu unt"*. În panou stă înaintea numelui, pe fiecare rând, și în colțul pozei,
+pe plăci.
+
+Până la 2.5.1 numărul era cheia produsului din baza de date: nu se putea
+alege, iar un produs șters lăsa în urmă un gol. De-acum îl alegi tu, din
+formularul produsului, la **„Număr în catalog"** — orice număr întreg de la 1
+la 999.
+
+**Numărul e și locul produsului.** Magazinul și panoul așază produsele după el,
+înăuntrul fiecărei grupe: „07" stă mereu înaintea lui „08". Asta e ordinea
+**„Recomandat"** din magazin și **„Ordinea din magazin"** din panou.
+
+### Un produs nou
+
+Primește numărul de după cel mai mare din catalog, deci, de la sine, numerele
+urmează ordinea în care sunt puse produsele. Caseta e deja scrisă cu el, iar
+lângă ea scrie *„Următorul după ultimul produs — ordinea în care sunt puse"*.
+Dacă vrei produsul mai în față, scrii alt număr înainte de „Adaugă în catalog".
+
+### Un număr liber, un număr ocupat
+
+Scrii un număr, iar lângă casetă apare, **înainte de salvare**, ce se va
+întâmpla:
+
+- **Numărul e liber** — *„12 e liber — nu se mută niciun alt produs."* Se mută
+  numai produsul tău.
+- **Numărul e ocupat** — nu se refuză. Produsul tău intră acolo, iar cele de la
+  rând **se dau cu un loc**, ca într-o listă în care muți un rând. Lămurirea
+  spune cine se mută, cu numele: *„07 e acum la „Croasant cu unt". La salvare se
+  dau cu un loc 12 produse (07–18 → 08–19), de la „Croasant cu unt" până la
+  „Trigon cu mere"."*
+
+| Ce faci | Ce se întâmplă |
+|---|---|
+| muți produsul **mai în față**, de pe 19 pe 07 | 07–18 trec pe 08–19, în locul lăsat de el |
+| muți produsul **mai în spate**, de pe 07 pe 19 | 08–19 trec pe 07–18, în locul lăsat de el |
+| pui un produs **nou** pe un număr ocupat | cele de la el încolo trec cu un loc mai în spate |
+
+Șirul care se dă cu un loc se oprește la primul număr liber: dacă între 07 și
+19 e un gol, golul se umple, iar ce e după el rămâne pe loc.
+
+După salvare, mesajul de sus le numără: *„Produsul a fost salvat, cu numărul
+07. Alte 12 produse s-au dat cu un loc."*
+
+Un număr care nu e întreg, zero ori peste 999 nu pleacă: caseta se face roșie,
+cu *„Scrie un număr întreg de la 1 la 999 — cel din colțul pozei, în
+magazin."*
+
+### Un produs șters, unul scos din catalog
+
+**Șters**, își lasă numărul gol: ștergi 08, rămân 07 și 09. Numerele pe care
+le știu clienții nu se schimbă din cauza unei ștergeri, iar produsul nou nu
+umple golul — ia numărul de după cel mai mare. Dacă vrei 08 plin, muți acolo un
+produs.
+
+**Scos din catalog**, rămâne în numărătoare: își ține locul, iar în magazin,
+cât stă scos, locul lui arată ca un gol. Repus cu **↩**, se întoarce acolo.
+
+### La urcarea pe server
+
+Migrarea `029` dă numerele o singură dată, în ordinea în care au fost puse
+produsele: 01, 02, 03… fără goluri. Pe 26 septembrie 2026, cele 22 de produse
+din magazin aveau numerele 01–22, fără niciun gol — urcată atunci, migrarea nu
+schimbă **niciun număr pe care îl văd clienții**. Un produs șters între timp
+ar închide golul: fiecare produs de după el ar primi un număr cu unu mai mic.
+Coșurile deschise, pozele și comenzile vechi nu se ating: ele merg pe cheia
+produsului, nu pe numărul lui.
+
+### Unde nu se vede
+
+În vederea **„Șase pe ecran"** a magazinului numărul nu apare: cardul e prea
+mic ca să mai poarte ceva peste poză. Pe card are zero în față („03"); în coș
+și în mesajul de WhatsApp, nu („3. Ștrudel cu dovleac"), ca și până acum.
 
 ---
 

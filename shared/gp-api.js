@@ -374,7 +374,7 @@
    * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
    * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
    */
-  const VERSIUNE = '2.5.0';
+  const VERSIUNE = '2.5.1';
 
   /**
    * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo
@@ -1769,9 +1769,13 @@
      * Eticheta variantei în care pleacă marfa.
      *
      * Prețul produsului depinde de ea: „congelat" folosește prețul pentru
-     * livrare în lanț frigorific, „copt" pe cel pentru marfă gata de servire.
+     * livrare în lanț frigorific, „copt" pe cel pentru marfa coaptă în
+     * laborator, gata de vitrină.
+     *
+     * La singular, ca pe un rând de comandă: „Congelat" / „Copt". Titlul
+     * laturii, în magazin și în Catalog, e la plural: „Congelate" / „Coapte".
      */
-    variantLabel: (v) => (v === 'congelat' ? 'Congelat' : 'Gata de servire'),
+    variantLabel: (v) => (v === 'congelat' ? 'Congelat' : 'Copt'),
 
     /**
      * Insigna care spune cine e clientul din spatele unei comenzi.
@@ -2319,7 +2323,7 @@
    * `<gp-semn latura="copt"></gp-semn>` — flacăra portocalie, numai contur.
    *
    * Cererea patronului din 24 septembrie 2026: semnul stă ÎNAINTEA vorbei
-   * „Congelate" / „Gata de servire", și pe calculator, nu doar în pastila de
+   * „Congelate" / „Coapte", și pe calculator, nu doar în pastila de
    * pe telefon. Până atunci desenele stăteau scrise de mână, o dată, în
    * pastila magazinului — deci un al doilea loc ar fi însemnat o a doua copie
    * a fiecărui desen, iar a treia pagină pe care se cere semnul ar fi primit
@@ -2385,7 +2389,9 @@
         // Lângă o vorbă care se poate rupe pe două rânduri, semnul stă la
         // mijlocul PRIMULUI rând. Centrat pe tot rândul (flex, `center`), el
         // plutea între cele două rânduri ale vorbei: la 1280px, pe fiecare
-        // card „patru", „Gata de servire: 4,69 / RON". `1lh` e înălțimea
+        // card „patru", „Gata de servire: 4,69 / RON" (numele laturii calde
+        // până pe 26 septembrie 2026; „Coapte" e mai scurt, dar un nume de
+        // produs ori o limbă nouă pot rupe iar rândul). `1lh` e înălțimea
         // rândului vorbei; de-aia semnul moștenește aici line-height-ul, în
         // loc de 0. Un browser fără `lh` îl lasă lipit sus, tot pe primul
         // rând. Numai pentru rânduri fără înălțime fixă: într-un buton înalt,
@@ -2554,7 +2560,7 @@
     const bani = (x) => rotunjit2(x).toFixed(2).replace('.', ',');
     const PRETURI = [
       ['priceFrozenB', 'B pentru congelate'], ['priceFrozenC', 'C pentru congelate'],
-      ['priceBakedB', 'B pentru gata de servire'], ['priceBakedC', 'C pentru gata de servire'],
+      ['priceBakedB', 'B pentru coapte'], ['priceBakedC', 'C pentru coapte'],
     ];
     const curat = {};
     for (const [camp, eticheta] of PRETURI) {
@@ -2589,7 +2595,7 @@
     const n = (x) => (gol(x) ? null : flotant(typeof x === 'string' ? x.replace(',', '.') : x));
     let areB = false;
     let areC = false;
-    for (const [baza, nume] of [['priceFrozen', 'congelate'], ['priceBaked', 'gata de servire']]) {
+    for (const [baza, nume] of [['priceFrozen', 'congelate'], ['priceBaked', 'coapte']]) {
       const a = n(v[baza]);
       const b = curat[baza + 'B'];
       const c = curat[baza + 'C'];
@@ -2650,6 +2656,78 @@
     out.pragB = areB ? t(v.pragB) : null;
     out.pragC = areC ? t(v.pragC) : null;
     return out;
+  };
+
+  /* ------------------------------------------ numărul din colțul pozei -- */
+
+  /*
+   * OGLINDA lui `catalog_numar_din()` și `catalog_numar_mutari()` din
+   * api/lib/catalog.php (migrarea 029). Serverul hotărăște cine se mută — sub
+   * lacăt, pe numerele din bază —, dar fila Produse trebuie să SPUNĂ dinainte,
+   * cât omul scrie numărul, care produse se vor da cu un loc. Două reguli care
+   * se pot despărți ar anunța „se mută 07–18" și ar muta altceva.
+   *
+   * Legate de PHP prin `.claude/test-numere-oglinda.mjs`: același tabel de
+   * cazuri trece prin amândouă, iar răspunsurile trebuie să fie aceleași.
+   */
+  const NUMAR_MAX = 999;
+
+  /** Numărul scris de om: un întreg de la 1 la 999, sau null. „07" trece. */
+  gp.numarCatalog = (v) => {
+    let n;
+    if (typeof v === 'number') {
+      if (!Number.isInteger(v)) return null;
+      n = v;
+    } else if (typeof v === 'string') {
+      const m = /^[ \t\r\n]*(\d{1,6})[ \t\r\n]*$/.exec(v);
+      if (!m) return null;
+      n = parseInt(m[1], 10);
+    } else {
+      return null;
+    }
+    return n >= 1 && n <= NUMAR_MAX ? n : null;
+  };
+
+  /** Numărul așa cum stă în colțul pozei: „07", „19", „120". */
+  gp.numarAfisat = (n) => (n < 10 ? '0' + n : String(n));
+
+  /**
+   * Cine se mută, și unde ({id: numărul nou}), când produsul `id` primește
+   * numărul `tinta`. `numere` ține {id: numărul de azi} pentru toate
+   * produsele; `id` poate lipsi din el — e unul nou. {} dacă nu se schimbă
+   * nimic, null dacă nu încape. Regula, pe larg, la `catalog_numar_mutari()`.
+   */
+  gp.mutariNumar = (numere, id, tinta) => {
+    const toate = numere || {};
+    const cheie = String(id);
+    const de = Object.prototype.hasOwnProperty.call(toate, cheie) ? Number(toate[cheie]) : null;
+    if (de === tinta) return {};
+    const ocupat = new Map();
+    for (const [alt, n] of Object.entries(toate)) {
+      if (alt === cheie) continue;
+      const k = Number(n);
+      if (!ocupat.has(k)) ocupat.set(k, []);
+      ocupat.get(k).push(Number(alt));
+    }
+    const mutari = { [cheie]: tinta };
+    if (!ocupat.has(tinta)) return mutari;
+    const lant = (pas) => {
+      const l = [];
+      for (let n = tinta; ocupat.has(n); n += pas) {
+        if (n + pas < 1 || n + pas > NUMAR_MAX) return null;
+        l.push(n);
+      }
+      return l;
+    };
+    let pas = de === null || tinta < de ? 1 : -1;
+    let l = lant(pas);
+    if (l === null) {
+      pas = -pas;
+      l = lant(pas);
+    }
+    if (l === null) return null;
+    for (const n of l) for (const alt of ocupat.get(n)) mutari[alt] = n + pas;
+    return mutari;
   };
 
   global.gp = gp;

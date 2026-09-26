@@ -123,7 +123,7 @@ function seo_data(): array
         // îl ștergea o clipă mai târziu.
         //
         // DE LA MIGRAREA 024 condiția e o REUNIUNE, nu o alăturare. Un produs
-        // poate fi numai în catalogul congelat sau numai la gata de servire, și
+        // poate fi numai în catalogul congelat sau numai în cel de coapte, și
         // atunci are exact o adresă pe site — a lui — pe care trebuie s-o aibă.
         // Lăsat „și", filtrul ar fi ascuns tocmai produsele dintr-o singură
         // parte, adică tot ce aduce nou runda asta: ele ar fi fost singurele
@@ -527,9 +527,9 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
         );
         $desc = $t(
             'Ștrudele, trigoane, croissante, covrigi și specialități, cu gramaje și prețuri en-gros. '
-                . 'Congelate pentru cuptorul tău sau gata de servire. Comandă minimă 700 lei.',
+                . 'Congelate pentru cuptorul tău sau coapte, gata de vitrină. Comandă minimă 700 lei.',
             'Strudels, triangles, croissants, pretzels and specialities, with weights and wholesale prices. '
-                . 'Frozen for your own oven or ready to serve. 700 RON minimum order.'
+                . 'Frozen for your own oven or baked, ready for the counter. 700 RON minimum order.'
         );
         break;
 
@@ -577,7 +577,7 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
         $inGrupa = 0;
         // Și câte dintre ele se vând chiar congelate: titlul de mai jos le
         // numește „sortimente congelate", iar de la migrarea 024 o grupă poate
-        // ține și marfă numai gata de servire. Numărul rămâne al grupei
+        // ține și marfă numai coaptă. Numărul rămâne al grupei
         // întregi — omul numără rândurile de pe pagină și trebuie să-i iasă —,
         // dar cuvântul cade când n-ar mai fi adevărat despre toate.
         $receGrupa = 0;
@@ -634,7 +634,7 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
         // produsului, deci se poate scrie o dată pentru toate.
         //
         // DAR DEPINDE DE LATURĂ, de la migrarea 024. Un produs care se vinde
-        // numai gata de servire nu se livrează congelat deloc, iar titlul și
+        // numai copt nu se livrează congelat deloc, iar titlul și
         // descrierea de aici sunt chiar cele două rânduri pe care omul le
         // citește în rezultatele Google, înainte să deschidă ceva. Un titlu
         // care promite altă marfă decât cea din pagină nu e o scăpare de
@@ -646,15 +646,15 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
                 $prodNume . ' frozen, wholesale | ' . $company
             )
             : $t(
-                $prodNume . ' en-gros, gata de servire | ' . $company,
-                $prodNume . ' ready to serve, wholesale | ' . $company
+                $prodNume . ' en-gros, din cuptorul nostru | ' . $company,
+                $prodNume . ' baked, wholesale | ' . $company
             );
         $desc = trim($t((string) $produs['description'], (string) ($produs['description_en'] ?: $produs['description'])));
         $coada = $t(
             ($g ? $g . ' g. ' : '') . ($pret !== null ? 'Preț en-gros ' . $lei((float) $pret) . ' bucata. ' : '')
-                . ($rece ? 'Livrare congelată în București și Ilfov.' : 'Livrare în București și Ilfov, gata de servire.'),
+                . ($rece ? 'Livrare congelată în București și Ilfov.' : 'Din cuptorul nostru, cu livrare în București și Ilfov.'),
             ($g ? $g . ' g. ' : '') . ($pret !== null ? 'Wholesale ' . $lei((float) $pret) . ' each. ' : '')
-                . ($rece ? 'Frozen delivery in Bucharest and Ilfov.' : 'Delivered ready to serve in Bucharest and Ilfov.')
+                . ($rece ? 'Frozen delivery in Bucharest and Ilfov.' : 'Baked by us, delivered in Bucharest and Ilfov.')
         );
         $desc = $desc === '' ? $coada : $desc . ' ' . $coada;
         break;
@@ -681,8 +681,8 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
                     . ' Next-day delivery, 700 RON minimum order.'
             )
             : $t(
-                'Patiserie românească produsă în București și livrată congelată sau gata de servire.',
-                'Romanian pastry produced in Bucharest and delivered frozen or ready to serve.'
+                'Patiserie românească produsă în București și livrată congelată sau coaptă.',
+                'Romanian pastry produced in Bucharest and delivered frozen or baked.'
             );
         break;
 }
@@ -697,8 +697,8 @@ $caleEn   = gp_cale($ruta['pagina'], 'en', $ruta['fel'], $ruta['cheie']);
 /**
  * Poza de partajare: a produsului, când e vorba de un produs.
  *
- * Tot latura vitrinei, ca peste tot. Pe `photo` gol, un produs numai
- * gata-de-servire ar fi ieșit în WhatsApp cu sigla firmei în locul mărfii —
+ * Tot latura vitrinei, ca peste tot. Pe `photo` gol, un produs vândut
+ * numai copt ar fi ieșit în WhatsApp cu sigla firmei în locul mărfii —
  * iar poza lui era pe disc tot timpul, doar în cealaltă coloană.
  */
 $poza = $base . '/logo-full-gold.png';
@@ -848,7 +848,7 @@ if (count($firimituri) > 1) {
  *
  * Prețul trimis motoarelor de căutare trebuie să fie cel pe care omul îl vede
  * când deschide pagina. Magazinul pornește pe varianta congelată, deci numărul
- * mare de pe card e cel congelat, iar cel gata de servire stă dedesubt. Cu
+ * mare de pe card e cel congelat, iar cel al laturii coapte stă dedesubt. Cu
  * prețul celălalt în marcaj, în rezultatele căutării apărea o sumă mai mare
  * decât cea de pe pagină, iar omul ajungea aici crezând că prețul s-a schimbat.
  *
@@ -1056,7 +1056,7 @@ if ($ruta['fel'] === 'product' && $produs) {
         $bits[] = $t('congelat ', 'frozen ') . $bani((float) $produs['price_frozen']);
     }
     if ($seVinde($produs, 'copt')) {
-        $bits[] = $t('gata de servire ', 'ready to serve ') . $bani((float) $produs['price_baked']);
+        $bits[] = $t('copt ', 'baked ') . $bani((float) $produs['price_baked']);
     }
     $noscript .= '<p>' . $e(implode(' · ', $bits)) . "</p>\n"
         . '<p><a href="' . $e(gp_cale('catalog', $lang)) . '">' . $t('Vezi tot catalogul', 'See the full catalogue') . "</a></p>\n";
@@ -1095,7 +1095,7 @@ if ($ruta['fel'] === 'product' && $produs) {
                 $bits[] = $t('congelat ', 'frozen ') . $bani((float) $p['price_frozen']);
             }
             if ($seVinde($p, 'copt')) {
-                $bits[] = $t('gata de servire ', 'ready to serve ') . $bani((float) $p['price_baked']);
+                $bits[] = $t('copt ', 'baked ') . $bani((float) $p['price_baked']);
             }
             $descrP = $ro ? (string) $p['description'] : (string) ($p['description_en'] ?: $p['description']);
 
@@ -1120,7 +1120,7 @@ if ($ruta['fel'] === 'product' && $produs) {
                 // Google Imagini are ce citi.
                 $altP = $nume($p, 'name') . ($seVinde($p, 'congelat')
                     ? $t(' — patiserie congelată en-gros', ' — wholesale frozen pastry')
-                    : $t(' — patiserie en-gros, gata de servire', ' — wholesale pastry, ready to serve'));
+                    : $t(' — patiserie coaptă en-gros', ' — wholesale baked pastry'));
                 $pozaP = '<img src="' . $e($base . '/' . ltrim($pozaLat, '/')) . '"'
                     . ' alt="' . $e($altP) . '" loading="lazy"'
                     . ' style="max-width:180px;height:auto;display:block;margin:.4rem 0"><br>';
