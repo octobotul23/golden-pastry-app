@@ -380,8 +380,9 @@ depinde de vedere (v. „Cum se vede catalogul", mai jos):
 | Unde | Cum arată scara |
 |---|---|
 | „Unul pe rând" și pagina produsului | trei căsuțe alăturate, sub „Preț pe bucată, după cantitate": „1–99 buc. · 4,20 RON", „100–299 buc. · 3,90 RON", „300+ buc. · 3,60 RON" |
-| „Patru pe ecran", pe calculator | trei rânduri sub poză: „1–99", „100–299", „300+" |
-| „Șase pe ecran", și „patru" pe telefon | A rămâne prețul mare al cardului; dedesubt, pe scurt, numai B și C: „100+ buc. 3,90" |
+| „Patru pe ecran", pe calculator | A stă în cutia catalogului, lângă A-ul celuilalt; sub „Preț pe bucată, după cantitate", numai B și C: „100–299 · 3,90 RON", „300+ · 3,60 RON" |
+| „Șase pe ecran", pe calculator | trei rânduri sub „Preț pe bucată, după cantitate": „1–99", „100–299", „300+" |
+| „Patru" și „Șase", pe telefon și tabletă | în bula de peste poză, A rămâne prețul mare; dedesubt, pe scurt, numai B și C: „100+ buc. 3,90" („100+ 3,90" în „Șase") |
 
 **Treapta în care a ajuns coșul se aprinde în auriu.** Cu produsul lipsă din
 coș nu se aprinde nimic: nimeni n-a ajuns încă nicăieri.
@@ -448,18 +449,33 @@ câte carduri stau pe rând:
 | Vederea | Telefon (390) | Tabletă (820) | Calculator, cu coșul alături (1080) | Calculator (1440) |
 |---|---|---|---|---|
 | **Unul pe rând, cu toate detaliile** | 1 | 1 | 1 | 1 |
-| **Patru pe ecran** | 2 | 4 | 3 | 4 |
-| **Șase pe ecran** | 3 | 6 | 5 | 6 |
+| **Patru pe ecran** | 2 | 4 | 2 | 3 |
+| **Șase pe ecran** | 3 | 6 | 3 | 4 |
 
-„Patru" și „șase" sunt **cel mult** atâtea: pe un ecran mai îngust grila pune
-câte încap, fără să strivească vreun card.
+Numele vederilor spun cât de mult încape, nu numărul exact: de la runda 2.5.2
+(29 septembrie 2026), pe calculator „Patru" are carduri **mai mari** decât
+„Șase", iar pe un ecran mai îngust grila pune câte încap, fără să strivească
+vreun card. „Patru" pe calculator trece de la două la trei pe rând pe la
+1130 de puncte, când cardul are loc pentru scara lui.
 
 - **Unul pe rând** e cardul bogat: poza stă lângă text cât încap amândouă, și
   deasupra lui pe telefon; are descrierea întreagă, scara în trei căsuțe,
   îndemnul și rândul celuilalt catalog.
-- **Patru pe ecran**: poză, nume, gramaj, scara. Pe calculator și descrierea,
-  pe două rânduri, și rândul celuilalt catalog.
-- **Șase pe ecran**: poza pătrată, numele, prețul A și, pe scurt, B și C.
+- **Patru pe ecran, pe calculator**: poză, nume, gramaj, descrierea pe cel
+  mult trei rânduri, apoi **două cutii, câte una pe catalog**, fiecare cu
+  semnul și prețul ei — cea a catalogului deschis e aurie, iar un catalog în
+  care produsul nu e scrie *„nu se vinde"*. Când cardul e prea îngust ca să
+  le țină alăturate, stau una sub alta. Dedesubt, scara, dacă are.
+- **Șase pe ecran, pe calculator**: cardul pe care „Patru" îl avea până la
+  2.5.2, neschimbat — poză, nume, gramaj, rândul celuilalt catalog,
+  descrierea pe două rânduri, scara.
+- **Patru și Șase, pe telefon și tabletă**: numele și prețul stau într-o
+  **bulă întunecată peste poză**, iar sub poză o bară cu **„+ Adaugă"**, care
+  după prima apăsare se face **„−", cantitatea, „+"**. În „Patru" prețul
+  are semnul catalogului, iar bula mai poartă prețul celuilalt catalog, cu
+  semnul lui, și gramajul; în „Șase", numai numele, prețul și scara, pe
+  scurt. Poza e urcată cât să se vadă produsul deasupra
+  bulei, iar apăsată oriunde — și pe bulă — deschide fereastra produsului.
 
 **Rândul celuilalt catalog**, cu semnul lui, spune ce costă produsul de partea
 cealaltă — *„Coapte: 4,20 RON"* — ori că e numai de-o parte: *„Doar
@@ -593,10 +609,11 @@ ar închide golul: fiecare produs de după el ar primi un număr cu unu mai mic.
 Coșurile deschise, pozele și comenzile vechi nu se ating: ele merg pe cheia
 produsului, nu pe numărul lui.
 
-### Unde nu se vede
+### Unde se vede
 
-În vederea **„Șase pe ecran"** a magazinului numărul nu apare: cardul e prea
-mic ca să mai poarte ceva peste poză. Pe card are zero în față („03"); în coș
+În colțul pozei, în toate trei vederile magazinului. Până la 2.5.2, în
+**„Șase pe ecran"** nu apărea: cardul de atunci era prea mic ca să mai poarte
+ceva peste poză. Pe card are zero în față („03"); în coș
 și în mesajul de WhatsApp, nu („3. Ștrudel cu dovleac"), ca și până acum.
 
 ---

@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**477 de defecte confirmate** — 10 critice, 126 grave, 214 medii, 127 mici.
-**477 reparate**, 0 rămase.
+**484 de defecte confirmate** — 10 critice, 126 grave, 217 medii, 131 mici.
+**484 reparate**, 0 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-269 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+276 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -30,12 +30,12 @@ Aceeași listă, cu filtre și căutare:
 |---|---|---|---|
 | Critice | 10 | 0 | 10 |
 | Grave | 126 | 0 | 126 |
-| Medii | 214 | 0 | 214 |
-| Mici | 127 | 0 | 127 |
+| Medii | 217 | 0 | 217 |
+| Mici | 131 | 0 | 131 |
 
 ---
 
-## Ce e reparat — 477
+## Ce e reparat — 484
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -1168,6 +1168,10 @@ reparația la loc și văzând-o picând.
   `docs/10-trecerea-cu-ochii.md:15` · *mediu*
   Lista e la zi — are runda 2.4.0 a zecea, runda 2.4.1 a unsprezecea, „Telefon, tabletă, calculator" a douăsprezecea. Dar îndreptarea cifrelor, singură, n-ar fi o reparație: peste o rundă ar fi iar veche. Deci lista a căpătat paznicul ei în `.claude/test-doc-ghiduri.mjs`, lângă cel al minutelor: numerele și numele din listă se cântăresc pe titlurile `## N ·` ale documentului (tăiate la două puncte, fiindcă titlurile de rundă poartă și un rezumat pe care lista nu-l repetă), iar cele două cifre scrise în litere și rangul de sub listă se cântăresc pe câte capitole sunt. Lista de ranguri e scrisă cu mâna și se va opri o dată — atunci se aude, are regula ei.
 
+- [x] **Pe site, Tab-ul se oprea de două ori pe fiecare poză, pe butoanele „Replace” și „Edit” din umbra lui `image-slot`, care pe o pagină needitabilă nu se văd — 46 de opriri moarte în catalog, anunțate în engleză de un cititor de ecran**
+  `image-slot.js:1119` · *mediu*
+  În `_render`, lângă `data-editable`: `this._ctl.inert = !editable;` (rândul 1119), deci se pune și se scoate la fiecare randare, odată cu atributul, iar pe o pagină editabilă `.ctl` rămâne exact ca înainte. E un PETEC LOCAL într-un fișier venit din Claude Design; comentariul de deasupra (rândurile 1110–1118) spune de ce și că trebuie repus după un reimport. Dacă dispare, `test-defect-slot-tab` se înroșește: proba scoate blocul din `_render` și îl rulează, cu și fără `window.omelette.writeFile`, și numără ce primește focus în marcajul umbrei.
+
 - [x] **După deschiderea panourilor cu codul tabletei, toate cardurile arată „—" și scrie „cere autentificare"**
   `Intrare.dc.html:383` · *mediu*
   După deschiderea panourilor cu codul tabletei, pagina cere din nou cifrele: cardurile arată numerele zilei în loc de „—” și de „cere autentificare”. Probe în .claude/check-panouri.mjs.
@@ -1424,6 +1428,14 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:4728` · *mediu*
   Insigna spune acum „Nou” (în engleză, „New”), ca bifa care o aprinde. Tot din bifa aceea vine și filtrul „Noutăți” de deasupra catalogului, nou în runda 2.5.0.
 
+- [x] **Inelul de focus al steperului de cantitate se vedea numai pe un sfert: Hearth îl desenează în afara butonului, iar pastila `.h-stepper`, cu `overflow: hidden`, îl tăia; căsuța cantității n-avea inel deloc (`outline: none` scris pe element)**
+  `Site Public.dc.html:117` · *mediu*
+  Două reguli scrise la capătul rândului 117, nu sub el, ca să nu mute numerele de rând ale paginii. `.h-stepper > .h-stepper__btn:focus-visible { outline-offset: -4px; border-radius: 50% }` trage inelul 4px înăuntru și îl face rotund, deci încape întreg în capătul pastilei: butonul are 36px (44 pe telefon, strâns la 36x44 în cardul îngust), iar capătul are raza 18 (22). `.h-stepper > .h-stepper__value:focus-visible { outline: 2px solid var(--h-accent) !important; outline-offset: -4px; … }` dă căsuței un inel; `!important` bate `outline: none` scris pe element (`qtyInput`), ca la căutare (rândul 115). Căsuța e un câmp de text, deci `:focus-visible` o prinde și la clic, iar inelul se vede și atunci. Căsuța din bara bulei (`micCasuta`) nu stă într-o pastilă și are inelul ei; regulile nu o ating. Cheile `stepBtn` și `qtyInput` au rămas neatinse.
+
+- [x] **Antetul de calculator nu încăpea între 1080 și ~1250 px (1360 cu un nume lung de client): „Despre noi” și „Golden Pastry” se rupeau pe două rânduri, antetul creștea de la 68 la 90 px, iar numele din siglă se scria peste „Acasă”**
+  `Site Public.dc.html:99` · *mediu*
+  Varianta A din foile trimise patronului (a doua, B, pune legăturile sub un buton „Meniu”; patronul alege). Foaia (rândurile 99–128): pe calculator nicio bucată a antetului nu se mai strânge (`flex:none`) și nicio vorbă nu se rupe (`nowrap`), deci un antet care nu încape iese din pastilă și ieșirea se poate măsura. Logica: `potrivesteAntetul` o măsoară (`scrollWidth > clientWidth + 1`) și trece antetul pe „strâns” (`data-antet`, din `antetFel`): legăturile rămân, golurile se micșorează, iar „Intră în cont” și butonul contului rămân numai cu semnul, ca pe telefon; vorba rămâne în buton, ascunsă numai vederii, pentru cititorul de ecran, și în `title`, pentru mouse. Ține minte cât i-ar fi trebuit întreg și se întoarce când pastila are atât, cu același pixel îngăduit, ori când s-a schimbat ce scrie în antet (limba, numele). Se cheamă după fiecare desenare, la `resize` (acolo desenarea vine înainte de cadru), după `document.fonts.ready` și dintr-un `ResizeObserver` pe antet și pe cele trei bucăți, pentru ce se schimbă fără desenare. Rămas dinadins: o schimbare prinsă de pază se desenează în sarcina următoare, deci un cadru poate arăta antetul ieșit câțiva pixeli (la încărcare, 2 px, înăuntrul căptușelii); a-l schimba chiar din pază ar arunca „ResizeObserver loop”.
+
 - [x] **Adresa publică și programul aveau casete în Setări, dar niciun rând în tabel: patronul scria, apăsa „Salvează", primea „ok", și nu se schimba nimic. Niciodată**
   `sql/002_seed.sql:89` · *mediu*
   Hotărârea patronului: „Rândurile, ȘI un refuz lămurit". Partea aceasta e rândurile. O migrare nouă, `sql/018_adresa_si_program.sql`, le seamănă cu `INSERT IGNORE`, pornind de la chiar valorile scrise azi în cod (`seo/index.php`), ca site-ul să arate la fel în clipa actualizării — se schimbă doar cine ține valoarea: baza, nu fișierul. `INSERT IGNORE`, nu `REPLACE`: migrările se rulează de câte ori e nevoie, iar adresa pe care patronul a scris-o din Setări nu trebuie să se întoarcă la cea din cod la următoarea actualizare. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază, fiindcă n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Temeiul de rezervă din cod rămâne, dinadins, și e verificat cu `?:`, nu cu `??`: o casetă golită din panou salvează șir gol, deci `??` ar lăsa pagina fără adresă în loc s-o întoarcă pe cea din cod. Cele trei ghiduri (07, 08, 09) spun acum cum se verifică `018`, iar tabelul „Ce se poate reimporta și ce nu" o are pe rândul ei.
@@ -1447,6 +1459,10 @@ reparația la loc și văzând-o picând.
 - [x] **Cele trei subdomenii de pagini se publică fără `Options -Indexes`: folderele fără index se pot răsfoi**
   `.claude/build-deploy.mjs:196` · *mic*
   Reprodus prin numărare pe pachetul generat: `Options -Indexes` apărea doar în `deploy/api/.htaccess` (1), iar în `deploy/public_html`, `deploy/clienti`, `deploy/lab` de 0 ori. Am mutat interdicţia în `HT_COMMON`, blocul din care se naşte .htaccess-ul tuturor celor trei subdomenii de pagini (`HT_COMMON + (host === 'root' ? HT_SEO : HT_NOINDEX)`), pusă înaintea blocului „fişiere care nu au ce căuta în browser", cu un c
+
+- [x] **Proba datelor fixe acuza o explicație dintr-un comentariu de foaie de stil: rândurile din mijlocul unui `/* … */` scris fără steluțe nu erau recunoscute ca comentariu, iar suita ieșea roșie pe o frază pe care browserul n-o arată nimănui**
+  `.claude/check-dates.mjs:106` · *mic*
+  `randuriDeComentariuBloc` (rândul 106) întoarce, pentru fiecare rând din mijlocul unui `/* … */`, ce mai rămâne de citit din el: nimic la cele dinăuntru, iar la cel care închide, ce vine după `*/`. Tiparele se caută pe rest, nu pe rândul întreg. E mai strâmtă decât scutirea pentru `<!--`, dinadins: se deschide numai la un rând care ÎNCEPE cu `/*` (la mijlocul rândului, `/*` poate fi `accept="image/*"` ori un șir), și se ține numai când are pereche, fiindcă un comentariu luat greșit ar orbi proba până la primul `*/`. Explicația din `Produse.dc.html` a rămas cum era.
 
 - [x] **Comentariile din check-deploy și check-pachet spuneau că pachetul nu se poate reface cât merge serverul de pe 8101 („EPERM”), iar build-deploy, când nu putea șterge, te trimitea să oprești serverul; măsurat, serverul nu ține folderul, iar suita însăși reface pachetul de 24 de ori pe rulare cu el pornit**
   `.claude/check-deploy.mjs:11` · *mic*
@@ -1935,6 +1951,18 @@ reparația la loc și văzând-o picând.
 - [x] **Pe telefoanele de 360, prima pagină a magazinului se deschidea cu butonul plutitor de WhatsApp peste capătul din dreapta al butonului „Cere ofertă pentru volume” (23 × 40 px la 360 × 780), deși butonul verde mare de deasupra deschide aceeași conversație**
   `Site Public.dc.html:5198` · *mic*
   Butonul verde mare de sus poartă o cutie, `waSusRef` (rândul 370). Măsurarea care ascunde deja pastila laturii (`masoaraPastila`, chemată din `_floatTick` la derulare, la schimbarea ferestrei și după fiecare randare) citește și cutia lui (rândurile 2436–2438): e „văzut” cât are înălțime și măcar un pixel între marginile ecranului, iar starea `waSus` se schimbă numai când se schimbă ceva. `showFab` (rândul 5198) ascunde bula pe prima pagină cât `waSus` e adevărat — la fel cum o ascunde pe catalog când coșul are ceva. Fără `view-timeline`: cardul din cap are `overflow:hidden`, deci timeline-ul s-ar fi legat de card, nu de pagină. Niciun rând nou: pagina are tot 6208.
+
+- [x] **Pe calculator, în vederea „Unul” și în fișa produsului, prețurile treptelor se rupeau pe două rânduri („3,79 / RON”) la ferestrele de 1080–1124 px (1140 cu bara clasică de derulare): 27 din 29 de prețuri**
+  `Site Public.dc.html:3885` · *mic*
+  În `randuriScara`, ramura „lat”, prețul de pe calculator ia `clamp(0.9375rem,19cqi,1.1875rem)`: 19% din conținutul treptei (treapta era deja container, pentru telefon), între 15 și 19 px, legea din cutia laturilor. De la 100 px de conținut în sus rămâne 19 px. Între 93 și 100 px iese cu cel mult 1,4 px mai mic decât ar fi încăput, o marjă voită pentru o literă de rezervă mai lată decât Fraunces. Regula din `check-site-public` (eticheta :3885) cere acum `clamp(…cqi…)` și pe calculator, cu maximul din 2.5.1 și minimul peste litera cantității. Comentariul regulii spune de ce regula veche a fost scrisă greșit.
+
+- [x] **În scara lată („Unul” și fișa produsului) prețurile celor trei trepte nu stăteau pe aceeași linie: unde pragul „100–299 buc.” se rupe (320–344 pe telefon, 1080 cu bara pe calculator) treapta lui își cobora prețul cu un rând, până la 9,7 px; iar unde prețul se strânge după lățime, prima treaptă îl scria mai mare, cu până la 0,8 px mai jos**
+  `Site Public.dc.html:3880` · *mic*
+  În `randuriScara`, ramura „lat”, treapta e o coloană cu `justify-content:space-between`: pragul stă sus, prețul jos, în toate treptele. Unde niciun prag nu se rupe, treptele au aceeași înălțime și nu se mișcă nimic. Prima treaptă primește `padding-right:calc(… + 1px)`, pixelul pe care celelalte îl dau liniei din stânga; scrisul ei e aliniat la stânga, deci nu se mișcă nimic unde litera e deja la margine. Două reguli noi în `check-site-public` (eticheta :3880): treptele sunt coloane cu `space-between`, iar toate iau la fel din lățime (umplutura, citită în ordinea scrierii ca în browser, plus linia din stânga).
+
+- [x] **Pe telefoanele de 320–335 px, numele din siglă se rupea în „Golden / Pastry” și antetul creștea de la 62 la 76 px**
+  `Site Public.dc.html:135` · *mic*
+  Un pas mai mic pentru nume, numai sub 336 px: `@media (max-width: 335.98px) { header.h-header .h-logo > span > span:first-child { font-size: 0.90625rem !important; } }` (rândul 135). Mărimea de 17 px e scrisă pe element, de-aia `!important`. Regula ține mărimea legată de o măsurătoare: altă mărime ori altă coloană o înroșește și cere o măsurătoare nouă, în loc să ghicească.
 
 - [x] **Coloana `order_requests.decided_via`, adusă de 013 ca să se știe PE UNDE a fost decisă o cerere (panou sau Telegram), nu e scrisă de nicăieri**
   `sql/013_anunturi_pe_canal.sql:102` · *mic*

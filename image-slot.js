@@ -1107,6 +1107,16 @@
       // Controls and reframe entry gate on this so share links stay read-only.
       const editable = !!(window.omelette && window.omelette.writeFile);
       this.toggleAttribute('data-editable', editable);
+      // PETEC LOCAL (de repus după un reimport din Claude Design).
+      // Butoanele „Replace”/„Edit” din umbră au opacitate 0 pe o pagină
+      // needitabilă, dar rămâneau în ordinea Tab-ului: două opriri moarte
+      // pe fiecare poză, 46 în catalog (22 de carduri și pachetul de test,
+      // numărate cu Tab adevărat la 1280 și 390), iar un cititor de ecran
+      // le citea, în engleză. `inert` le scoate din Tab și din arborele de
+      // accesibilitate odată cu `data-editable`; atributul `hidden` nu
+      // ajunge, `.ctl{display:flex}` de mai sus îl bate. Pe o pagină
+      // editabilă (`window.omelette.writeFile`) rămân exact ca înainte.
+      this._ctl.inert = !editable;
       this._sub.style.display = editable ? '' : 'none';
 
       // Content. The sidecar is also writable by the agent's write_file

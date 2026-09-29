@@ -5,13 +5,13 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **o sută șapte minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele cincisprezece plimbări stă singură și își spune la
+Durează **o sută paisprezece minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele șaisprezece plimbări stă singură și își spune la
 început cât ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale
 bucăților care au minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o
 plimbare, se adună și aici.
 
-Cele cincisprezece, în ordinea în care se fac cel mai ușor:
+Cele șaisprezece, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -51,9 +51,12 @@ Cele cincisprezece, în ordinea în care se fac cel mai ușor:
     greșit (14.2), un număr ocupat, cu produsele care se dau cu un loc (14.3),
     întoarcerea la numărul de la început (14.4) și numele nou al laturii
     coapte, „Coapte", peste tot unde se vede (14.5).
-15. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+15. **Runda 2.5.2** — „Patru" mare și „Șase" ca vechiul „Patru", pe
+    calculator (15.1), bulele de pe telefon (15.2) și de pe tabletă (15.3),
+    antetul pe un calculator mai mic (15.4) și `Tab` prin cantitate (15.5).
+16. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A cincisprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
+A șaisprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
 ai deschis mai devreme.
 
 ---
@@ -1078,13 +1081,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.5.1 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.5.2 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.5.1` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.5.2` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1252,7 +1255,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.5.1 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.5.2 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -1798,8 +1801,8 @@ adus B unei cantități care nu l-ar fi primit niciodată.
 
 O **fereastră privată** (`Ctrl+Shift+N`), 1440, `http://127.0.0.1:8101/catalog`.
 
-**Trebuie să vezi:** se deschide pe **„Patru pe ecran"** — patru carduri pe
-rând. Treci pe **„Unul pe rând"** și pe **„Șase pe ecran"**: nicio poză, niciun
+**Trebuie să vezi:** se deschide pe **„Patru pe ecran"** — trei carduri mari pe
+rând (cum arată, la 15.1). Treci pe **„Unul pe rând"** și pe **„Șase pe ecran"**: nicio poză, niciun
 nume și niciun preț peste altul, nimic tăiat pe margine. Rămâi pe „Șase" și
 reîncarci: se deschide tot pe „Șase", fiindcă alegerea ta se ține minte.
 
@@ -2058,7 +2061,89 @@ Baked"**. Apoi înapoi pe **RO**.
 
 ---
 
-## 15 · Telefon, tabletă, calculator
+## 15 · Runda 2.5.2: vederile catalogului, refăcute
+
+*Șapte minute. Numai magazinul, fără cont și fără niciun produs nou: se
+schimbă doar cum arată cardurile.*
+
+Pe 29 septembrie 2026 ai cerut ca pe calculator „Patru pe ecran" să aibă
+carduri mai mari și mai bogate, „Șase pe ecran" să ia cardurile de până
+atunci ale lui „Patru", iar pe telefon cele două vederi să fie desenate din
+nou. „Unul pe rând" a rămas cum era.
+
+Tot pe pachetul construit (8101), într-o **fereastră privată**
+(`Ctrl+Shift+N`), ca să nu te încurce o vedere aleasă mai demult.
+
+### 15.1 Calculatorul: „Patru" mare, „Șase" ca vechiul „Patru"
+
+1440, `http://127.0.0.1:8101/catalog`.
+
+**Trebuie să vezi:** se deschide pe **„Patru pe ecran"** — **trei** carduri pe
+rând. Sub descriere, fiecare card are **două cutii**, câte una pe catalog:
+„Congelate" cu prețul ei, aurie, și „Coapte" cu al ei, fiecare cu semnul ei.
+
+În coloana coșului apeși **„Coapte"**. **Trebuie să vezi** cutia aurie trecând
+pe „Coapte", pe fiecare card. Pui la loc „Congelate".
+
+Treci pe **„Șase pe ecran"**. **Trebuie să vezi** **patru** carduri pe rând,
+fiecare cum arăta „Patru" până la 2.5.2: poza, numele, gramajul, prețul
+celuilalt catalog, descrierea pe două rânduri și **„Adaugă la ofertă"**.
+
+Înapoi pe „Patru", treci pe **1100**. **Trebuie să vezi** **două** carduri pe
+rând: la trei, cutiile n-ar mai avea loc. De pe la **1130** revin trei.
+
+### 15.2 Telefonul: numele și prețul, într-o bulă
+
+Treci pe **390**, reîncarci și apeși **„Patru pe ecran"**.
+
+**Trebuie să vezi:** **două** carduri pe rând. Jos pe fiecare poză, o **bulă
+întunecată**: numele, prețul cu semnul catalogului, apoi prețul celuilalt
+catalog, cu semnul lui, și gramajul. Deasupra bulei se vede produsul, cu
+numărul lui în colț. Sub poză, o bară: **„+ Adaugă"**.
+
+Apeși „+ Adaugă" pe primul card. **Trebuie să vezi** bara făcută **„−", o
+căsuță cu 1, „+"**, fiecare cât un deget: 44 px în F12. Apeși „+": 2. Apeși
+„−" de două ori: bara redevine „+ Adaugă".
+
+Apeși pe bulă, nu pe bară. **Trebuie să vezi** fereastra produsului, ca la o
+apăsare pe poză. O închizi.
+
+Treci pe **„Șase pe ecran"**. **Trebuie să vezi** **trei** carduri pe rând, cu
+numai numele și prețul în bulă. Apeși „+ Adaugă": bara se face **„−", cifra
+1, „+"** — fără căsuță, că n-are loc.
+
+### 15.3 Tableta
+
+Treci pe **820** și reîncarci.
+
+**Trebuie să vezi:** tot bulele de pe telefon, pe amândouă vederile —
+„Patru pe ecran" cu **patru** carduri pe rând, „Șase pe ecran" cu **șase**.
+Sub 1080 de puncte, magazinul folosește cardurile de telefon.
+
+### 15.4 Antetul, pe un calculator mai mic
+
+Treci pe **1200** și urci sus de tot.
+
+**Trebuie să vezi:** antetul pe un singur rând, cu nimic tăiat și nimic ieșit
+din el. Legăturile stau mai strâns, iar „Intră în cont" a rămas **numai cu
+semnul lui**, într-un buton rotund; ții mausul pe el și scrie *„Intră în
+cont"*. Pe **1440** vorba se vede iar întreagă, lângă semn.
+
+Treci pe **320**. **Trebuie să vezi** „Golden Pastry" pe un singur rând.
+
+### 15.5 Tab prin cantitate
+
+Pe 1440, în „Șase pe ecran", apeși **„Adaugă la ofertă"** pe primul card,
+apoi `Tab`.
+
+**Trebuie să vezi** inelul auriu pe **„−"** al aceluiași card. Încă un `Tab`:
+căsuța cu cantitatea. Încă unul: **„+"**. Încă unul: cardul următor. Inelul
+se vede întreg la fiecare pas, și niciun `Tab` nu dispare într-un loc pe care
+nu-l vezi.
+
+---
+
+## 16 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -2097,9 +2182,9 @@ cutia lor**. Ce n-au voie e să miște pagina întreagă.
 una: e aceeași pagină croită de trei ori, deci sunt trei așezăminte de verificat
 la fiecare lățime. Inelul are voie să se micșoreze, dar nu să-și taie scrisul de pe felii.
 
-**Vederile noi se probează și ele la toate trei** (cele de la 13.6, 13.8 și
-13.9): magazinul în „Unul pe rând", „Patru" și „Șase", Catalogul din panou și
-plăcile din Conturi. La fiecare lățime, niciun card peste altul și nimic
+**Vederile noi se probează și ele la toate trei** (cele de la 13.6, 13.8,
+13.9 și 15): magazinul în „Unul pe rând", „Patru" și „Șase", Catalogul din
+panou și plăcile din Conturi. La fiecare lățime, niciun card peste altul și nimic
 tăiat pe margine.
 
 **Butonul plutitor de WhatsApp**, pe prima pagină: cât se vede butonul verde
@@ -2160,8 +2245,15 @@ Ca să nu cauți ce nu s-a stricat:
   Numerele pe care le știu deja clienții nu se schimbă din cauza unei
   ștergeri, iar produsul nou nu umple golul — primește numărul de după cel
   mai mare. Dacă vrei 08 plin, muți acolo un produs (14.3).
-- **În vederea „Șase" numărul din colț nu se vede.** Cardul e prea mic ca să
-  mai poarte ceva peste poză. Numărul e în „Unul pe rând" și în „Patru".
+- **Pe tabletă, în „Șase", o grupă mică lasă loc gol în dreapta.** Grupa cu
+  patru produse ocupă patru din cele șase coloane. E hotărârea ta din 29
+  septembrie 2026: pe tabletă, „Șase" rămâne de șase pe rând.
+- **Pe telefon, butonul de WhatsApp și pastila cu fulgul și flacăra plutesc
+  peste carduri** cât derulezi. Așa erau și în 2.5.1; pentru WhatsApp ai
+  hotărât pe 29 septembrie 2026 să rămână cum e.
+- **Pe calculator, de la 1130 până pe la 1240 de puncte, cele două cutii din
+  „Patru" stau una sub alta**, nu alăturate: cardul e prea îngust ca să le
+  țină pe amândouă cu prețul pe un rând.
 - **Pe card numărul are zero în față, în coș nu**: „03" în colțul pozei,
   „3. Plimbare 2.5.1" în coș și în mesajul de WhatsApp. Așa era și înainte de
   2.5.1, cu vechiul număr al produsului.
@@ -2183,7 +2275,7 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele cincisprezece ies, proba automată se mai trece o dată pe
+Când toate cele șaisprezece ies, proba automată se mai trece o dată pe
 deasupra:
 
 ```bash
@@ -2191,4 +2283,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.5.1`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.5.2`.

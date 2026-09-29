@@ -96,6 +96,43 @@
         + env(safe-area-inset-bottom));
     }
     @media (max-width: 400px) { .h-badge[data-insigna-lunga] { width: min-content; line-height: 1.45; align-items: flex-start; } [data-insigna-lunga] > .h-badge__dot { flex: none; margin-top: calc((1lh - 6px) / 2); } [data-insigna-punct] { display: none; } } /* Insigna de deasupra titlului are 297px pe un rând: sub 400px nu mai încape în coloană. Acolo se rupe numai între „ce” și „unde” (spațiile din „ce” sunt nedespărțitoare), iar pastila se strânge pe textul ei; fără `min-content` rămânea cât coloana, cu jumătate goală. Bulina nu se turtește (pastila strânsă e cât textul, iar flexul îi lua și bulinei din lățime: o cutie goală n-are un minim al ei) și stă pe mijlocul primului rând, ca semnul laturii de lângă o vorbă ruptă; centrată pe toată pastila, plutea între rânduri. Un browser fără `lh` o lasă lipită sus, tot pe primul rând. Rândurile mai strânse tot numai aici: pe un rând, insigna păstrează înălțimea de dinainte. Rândul ăsta era gol: scris aici, nu sub el, ca să nu mute numerele de rând ale paginii. Regula: check-site-public, „insignele lungi”. */
+    /* ANTETUL DE CALCULATOR: ÎNTREG, ORI STRÂNS CÂND NU ÎNCAPE.
+
+       Sigla, cele cinci legături și butoanele din dreapta cer ~1100 px fără
+       cont și ~1250 cu un nume lung de client; antetul are ~950 la 1080.
+       Până acum fiecare bucată se strângea cum putea: „Despre noi" și
+       „Golden Pastry" se rupeau pe două rânduri, antetul creștea de la 68 la
+       90 px, iar sigla (`min-width:0`) se făcea mai îngustă decât numele ei,
+       care se scria PESTE „Acasă" — până la 87 px, cu semnul auriu strâns la
+       zero. Se vedea până la 1250 px fără cont și până la 1360 cu un nume
+       lung, adică pe un laptop de 1366.
+
+       Acum nimic nu se mai strânge și nimic nu se mai rupe: un antet care nu
+       încape IESE din pastilă, iar ieșirea se poate măsura. `potrivesteAntetul`
+       (în logică) o măsoară și trece antetul pe „strâns": legăturile rămân,
+       golurile se micșorează, iar „Intră în cont" și butonul contului rămân
+       numai cu semnul, ca pe telefon (vorba rămâne în buton, pentru cititorul
+       de ecran, și în `title`). Pragul nu e o lățime scrisă aici: e cât cere
+       antetul întreg, în limba și cu numele de pe ecran. De la cât încape
+       întreg, nu se schimbă niciun pixel. Regula: check-site-public, „antetul
+       de calculator". */
+    header.h-header[data-antet="intreg"] > *, header.h-header[data-antet="strans"] > * { flex: none; }
+    header.h-header[data-antet="intreg"] .h-logo span, header.h-header[data-antet="strans"] .h-logo span, header.h-header[data-antet="intreg"] .h-nav__link, header.h-header[data-antet="strans"] .h-nav__link { white-space: nowrap; }
+    [data-antet-dreapta] { gap: 0.75rem; }
+    header.h-header[data-antet="strans"] { gap: 0.875rem; padding-inline: 0.875rem; }
+    header.h-header[data-antet="strans"] .h-nav { gap: 2px; }
+    header.h-header[data-antet="strans"] .h-nav__link { padding-inline: 0.6875rem; }
+    header.h-header[data-antet="strans"] [data-antet-dreapta] { gap: 0.5rem; }
+    header.h-header[data-antet="strans"] [data-antet-buton] { width: 2.25rem; height: 2.25rem; min-height: 2.25rem; padding: 0; justify-content: center; }
+    header.h-header[data-antet="strans"] [data-antet-eticheta] { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    header.h-header[data-antet="strans"] [data-antet-sageata] { display: none; }
+    /* Pe telefon, sub 336 px, numele din siglă se rupea în „Golden / Pastry"
+       și antetul creștea de la 62 la 76 px: coloana siglei are acolo 150 px,
+       iar numele la 17 px cere 166. Un pas mai mic (14,5 px) îl ține pe un
+       rând până la 320. Mărimea e scrisă pe element, de-aia `!important`.
+       De la 336 în sus nu se schimbă nimic. Regula: check-site-public, „coada
+       lui y” (măsurată și la mărimea asta). */
+    @media (max-width: 335.98px) { header.h-header .h-logo > span > span:first-child { font-size: 0.90625rem !important; } }
     /* Cardurile catalogului: o ridicare de doi pixeli sub mouse, iar poza se
        apropie încet. Numai unde există mouse (`hover: hover`) — pe telefon o
        atingere ar lăsa cardul „ridicat" până la următoarea — și deloc pentru
@@ -114,7 +151,7 @@
        căsuța are crucea ei, cât un deget. */
     [data-unelte] [data-cauta]:focus-within { border-color: var(--h-accent) !important; box-shadow: 0 0 0 3px var(--h-accent-soft); }
     [data-unelte] input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
-    [data-unelte] input::placeholder { color: var(--h-fg-subtle); }
+    [data-unelte] input::placeholder { color: var(--h-fg-subtle); } .h-stepper > .h-stepper__btn:focus-visible { outline-offset: -4px; border-radius: 50%; } .h-stepper > .h-stepper__value:focus-visible { outline: 2px solid var(--h-accent) !important; outline-offset: -4px; border-radius: var(--h-radius-sm); } /* Inelul de focus al steperului de cantitate (card, coș, fereastra rapidă, pagina produsului, finalizare). Hearth îl desenează pe buton cu `outline-offset: 2px`, adică în afara butonului, iar `.h-stepper { overflow: hidden }` îl taie pe marginea pastilei: la Tab se vedeau 66 din 252 de pixeli ai inelului la 1280 și 348 din 1334 la 390, 26%, numărați în poză față de aceeași pastilă netăiată. Tras 4px înăuntru și rotund, încape întreg în capătul rotunjit al pastilei: butonul are 36px (44 pe telefon, strâns până la 36x44 în cardul îngust), iar capătul are raza 18 (22). Căsuța cantității avea `outline: none` scris pe element (`qtyInput`) și niciun alt semn decât selecția; de-aia `!important` la ea, ca la căutare. Căsuța din bara bulei (`micCasuta`) nu stă într-o pastilă și are inelul ei: regulile de aici nu o ating. Scris la capătul rândului, nu sub el, ca să nu mute numerele de rând ale paginii. Regula: test-defect-inel-steper. */
   </style>
 </helmet>
 
@@ -170,7 +207,7 @@
          Blocul `accOpen` de mai jos nu strică cele trei coloane: perdeaua lui e
          `fixed` și cartonașul `absolute`, adică amândouă scoase din curgere,
          deci nu sunt căsuțe de grilă. -->
-    <header class="h-header" style="{{ antetStil }}">
+    <header class="h-header" style="{{ antetStil }}" data-antet="{{ antetFel }}">
       <sc-if value="{{ mob }}">
         <button type="button" aria-label="{{ menuLabel }}" aria-expanded="{{ menuExpanded }}" onClick="{{ toggleMenu }}" style="display:inline-flex;align-items:center;justify-content:center;width:2.75rem;height:2.75rem;min-height:2.75rem;flex:none;justify-self:start;padding:0;border:1px solid var(--h-line-strong);border-radius:14px;background:var(--h-bg-raised);color:var(--h-fg);cursor:pointer">
           <sc-if value="{{ menuClosed }}" hint-placeholder-val="{{ true }}">
@@ -222,18 +259,18 @@
         </div>
       </sc-if>
       <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
-      <div style="display:flex;align-items:center;gap:0.75rem">
+      <div data-antet-dreapta="1" style="display:flex;align-items:center">
         <sc-if value="{{ anon }}" hint-placeholder-val="{{ true }}">
-        <a class="h-btn h-btn--secondary h-btn--sm" href="Intrare.dc.html" style="gap:0.4rem;text-decoration:none;white-space:nowrap">
+        <a class="h-btn h-btn--secondary h-btn--sm" href="Intrare.dc.html" data-antet-buton="1" title="{{ ctaLogin }}" style="gap:0.4rem;text-decoration:none;white-space:nowrap">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path></svg>
-          {{ ctaLogin }}
+          <span data-antet-eticheta="1">{{ ctaLogin }}</span>
         </a>
         </sc-if>
         <sc-if value="{{ signed }}" hint-placeholder-val="{{ false }}">
-        <button type="button" class="h-btn h-btn--secondary h-btn--sm" aria-expanded="{{ accExpanded }}" onClick="{{ toggleAcc }}" style="gap:0.45rem;white-space:nowrap;max-width:15rem">
+        <button type="button" class="h-btn h-btn--secondary h-btn--sm" aria-expanded="{{ accExpanded }}" onClick="{{ toggleAcc }}" data-antet-buton="1" title="{{ accName }}" style="gap:0.45rem;white-space:nowrap;max-width:15rem">
           <span style="{{ accDot }}">{{ accInitials }}</span>
-          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ accName }}</span>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.6"><path d="M6 9l6 6 6-6"></path></svg>
+          <span data-antet-eticheta="1" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ accName }}</span>
+          <svg data-antet-sageata="1" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;opacity:.6"><path d="M6 9l6 6 6-6"></path></svg>
         </button>
         </sc-if><div role="group" aria-label="Language" style="display:inline-flex;gap:0.25rem;padding:0.25rem;background:var(--h-bg-sunk);border-radius:999px">
           <button type="button" aria-pressed="{{ isRo }}" onClick="{{ setRo }}" style="{{ roBtn }}">RO</button>
@@ -681,7 +718,7 @@
                          fiecare din cele treizeci de carduri, ar fi însemnat
                          treizeci de apăsări de Tab în plus până la coș. -->
                     <div onClick="{{ pr.vezi }}" style="{{ prodMedia }}">
-                      <image-slot id="{{ pr.slot }}" src="{{ pr.photo }}" fit="cover" shape="rect" placeholder="{{ pr.name }}"></image-slot>
+                      <image-slot id="{{ pr.slot }}" src="{{ pr.photo }}" style="{{ pr.pozaSt }}" fit="cover" shape="rect" placeholder="{{ pr.loc }}"></image-slot>
                       <span style="{{ noBadge }}">{{ pr.no }}</span>
                       <sc-if value="{{ pr.special }}">
                         <span class="h-badge" style="{{ cardSpecial }}">{{ tagSpecial }}</span>
@@ -694,8 +731,19 @@
                         <p class="h-caption" style="{{ prodAlt }}" data-semn-sus="1"><gp-semn latura="{{ pr.altLatura }}" aria-hidden="true"></gp-semn><span>{{ pr.alt }}</span></p>
                       </div>
                       <p class="h-small" style="{{ prodDesc }}">{{ pr.desc }}</p>
+                      <sc-if value="{{ cuLaturi }}">
+                        <div style="{{ laturiCutie }}">
+                          <sc-for list="{{ pr.laturi }}" as="lt" hint-placeholder-count="2">
+                            <div style="{{ lt.st }}">
+                              <span style="{{ lt.stEt }}"><gp-semn latura="{{ lt.latura }}" aria-hidden="true"></gp-semn>{{ lt.nume }}</span>
+                              <span style="{{ lt.stPret }}">{{ lt.pret }}</span>
+                            </div>
+                          </sc-for>
+                        </div>
+                      </sc-if>
                       <sc-if value="{{ pr.arataPret }}" hint-placeholder-val="{{ true }}">
                         <div style="{{ prodPriceRow }}">
+                          <gp-semn latura="{{ pr.latura }}" aria-hidden="true" style="{{ semnPret }}"></gp-semn>
                           <span style="{{ prodPrice }}">{{ pr.price }}</span>
                           <span class="h-caption" style="{{ prodUnit }}">{{ pr.unit }}</span>
                         </div>
@@ -735,15 +783,32 @@
                             <span style="{{ prodLineTotal }}">{{ pr.lineTotal }}</span>
                           </div>
                         </sc-if>
-                        <!-- Cardul mic (șase pe ecran): cantitatea și suma pe un
-                             rând, „−" și „+" dedesubt, fiecare cât un deget. -->
+                        <!-- Bula (telefon, „Patru" și „Șase"): bara de sub poză
+                             ține „−", cantitatea și „+", fiecare buton cât un
+                             deget; suma se vede în coș, nu aici. În „Patru"
+                             cantitatea e căsuța de scris (a cincea, copiată
+                             literă cu literă după celelalte patru): o sută de
+                             bucăți nu se cer cu o sută de apăsări pe „+". În
+                             „Șase" căsuța nu încape lângă două butoane de
+                             36 px, deci rămâne cifra; se scrie în fișă.
+                             Ordinea din marcaj e cea de pe ecran: „−",
+                             cantitatea, „+". Grila le-ar așeza bine și
+                             altfel, dar Tab-ul și cititorul de ecran merg
+                             după marcaj: cu căsuța scrisă înaintea
+                             butoanelor, Tab sărea din căsuță pe „−" (înapoi,
+                             spre stânga) și de pe „−" direct pe „+". -->
                         <sc-if value="{{ pr.someMic }}">
-                          <div style="{{ micRand }}">
-                            <span style="{{ micCant }}">{{ pr.cantText }}</span>
-                            <span style="{{ micSuma }}">{{ pr.lineTotal }}</span>
-                          </div>
                           <div style="{{ micButoane }}">
                             <button type="button" aria-label="{{ lessLabel }}" onClick="{{ pr.dec }}" style="{{ micBtn }}">−</button>
+                            <div style="{{ micRand }}">
+                              <sc-if value="{{ micCuCasuta }}">
+                                <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ pr.qty }}" onChange="{{ pr.set }}" onBlur="{{ pr.blur }}" onFocus="{{ pr.pick }}" aria-label="{{ qtyLabel }}" style="{{ micCasuta }}">
+                              </sc-if>
+                              <sc-if value="{{ micFaraCasuta }}">
+                                <span style="{{ micCant }}">{{ pr.cantText }}</span>
+                              </sc-if>
+                              <span style="{{ micSuma }}">{{ pr.lineTotal }}</span>
+                            </div>
                             <button type="button" aria-label="{{ moreLabel }}" onClick="{{ pr.inc }}" style="{{ micBtn }}">+</button>
                           </div>
                         </sc-if>
@@ -2723,10 +2788,19 @@ class Component extends DCLogic {
       if (this._off !== target) this._raf = requestAnimationFrame(this._floatTick);
     };
     this._onScroll = () => { if (!this._raf) this._raf = requestAnimationFrame(this._floatTick); };
+    // Când trece pragul de telefon, desenarea care urmează potrivește și
+    // antetul (din `componentDidUpdate`); până atunci `mob` din stare e vechi.
     this._onResize = () => {
       const m = window.innerWidth < 1080;
       if (m !== this.state.mob) this.setState({ mob: m, menuOpen: false });
+      else this.potrivesteAntetul();
     };
+    // Literele din siglă și din legături vin după prima desenare: măsurat cu
+    // litera de rezervă, antetul ar putea rămâne strâns fără să fie nevoie.
+    this.potrivesteAntetul();
+    if (document.fonts && document.fonts.ready) {
+      document.fonts.ready.then(() => { this.__antetCheie = null; this.potrivesteAntetul(); });
+    }
     // Escape închide sertarul. Nu și celelalte ferestre: ele n-au avut
     // niciodată Escape, iar a le da acum unul e altă lucrare — fișă în docs/06.
     this._onEsc = (ev) => {
@@ -2870,7 +2944,69 @@ class Component extends DCLogic {
     d.style.overflow = this.__derulareaVeche || '';
   }
 
+  // ANTETUL DE CALCULATOR, ÎNTREG ORI STRÂNS. Pricina și stilul stau în
+  // `<style>`, la „ANTETUL DE CALCULATOR”. Se cheamă după fiecare desenare,
+  // la fiecare schimbare a ferestrei și după ce s-au încărcat literele.
+  //
+  // Întreg, antetul nu se strânge și nu se rupe (`flex:none`, `nowrap`), deci
+  // când nu încape iese din pastilă: `scrollWidth` trece de `clientWidth`.
+  // Atunci trece pe „strâns” și ține minte cât i-ar fi trebuit întreg. Se
+  // întoarce la „întreg” numai când pastila are cel puțin atât, ori când s-a
+  // schimbat ce scrie în el (limba, numele contului, „Intră” în loc de nume).
+  // Atunci încearcă din nou și măsoară din nou.
+  //
+  // Nu se poate legăna: din „întreg” pleacă numai dacă iese cu mai mult de
+  // un pixel, iar înapoi vine numai când îi ajunge tot cu acel pixel — același
+  // prag în amândouă sensurile. (Cu `clientWidth >= nevoie` la întoarcere,
+  // era o bandă de un pixel în care urcând rămânea strâns și coborând
+  // rămânea întreg.) Pixelul de îngăduință e rotunjirea: `scrollWidth` și
+  // `clientWidth` sunt întregi, bucățile nu. Cheia se citește din textul
+  // bucăților, nu din stare: în „strâns” vorbele ascunse rămân în butoane,
+  // deci cheia e aceeași în amândouă felurile, iar orice vorbă nouă o schimbă.
+  //
+  // Paza (`ResizeObserver` pe antet și pe cele trei bucăți) prinde ce se
+  // schimbă FĂRĂ o desenare React: o literă sosită târziu, care lățește
+  // legăturile (la încărcare, 465 → 469 px, iar antetul a ieșit 2 px până
+  // la următoarea desenare), ori bara de derulare apărută fără `resize`.
+  // Fiecare bucată se prinde o singură dată: `observe` pe una deja prinsă o
+  // ia de la zero, deci ar chema din nou, la fiecare cadru, fără sfârșit.
+  // Desenarea cerută de pază vine în sarcina următoare, deci un singur cadru
+  // poate arăta antetul ieșit. Ca să nu-l arate deloc, ar trebui schimbat
+  // antetul chiar din pază, iar atunci bucățile prinse își schimbă mărimea în
+  // același cadru și browserul aruncă „ResizeObserver loop”.
+  potrivesteAntetul() {
+    const strans = !!this.state.antetStrans;
+    if (this.state.mob) {
+      if (strans) this.setState({ antetStrans: false });
+      return;
+    }
+    const h = typeof document !== 'undefined' ? document.querySelector('header.h-header') : null;
+    if (!h) return;
+    const bucati = [...h.querySelectorAll('.h-logo, .h-nav, [data-antet-dreapta]')];
+    if (typeof ResizeObserver !== 'undefined') {
+      if (!this.__antetPaza) {
+        this.__antetPrinse = new WeakSet();
+        this.__antetPaza = new ResizeObserver((intrari) => {
+          for (const i of intrari) if (!i.target.isConnected) { this.__antetPaza.unobserve(i.target); this.__antetPrinse.delete(i.target); }
+          this.potrivesteAntetul();
+        });
+      }
+      for (const e of [h, ...bucati]) if (!this.__antetPrinse.has(e)) { this.__antetPrinse.add(e); this.__antetPaza.observe(e); }
+    }
+    const cheie = bucati.map((e) => e.textContent).join('|');
+    if (!strans) {
+      if (h.scrollWidth > h.clientWidth + 1) {
+        this.__antetNevoie = h.scrollWidth;
+        this.__antetCheie = cheie;
+        this.setState({ antetStrans: true });
+      }
+      return;
+    }
+    if (h.clientWidth + 1 >= this.__antetNevoie || cheie !== this.__antetCheie) this.setState({ antetStrans: false });
+  }
+
   componentDidUpdate() {
+    this.potrivesteAntetul();
     this.potrivesteIstoricul();
     this.legDerularea(!!this.state.menuOpen);
     if (this._onScroll) this._onScroll();
@@ -2915,6 +3051,7 @@ class Component extends DCLogic {
     window.removeEventListener('scroll', this._onScroll);
     window.removeEventListener('resize', this._onScroll);
     window.removeEventListener('resize', this._onResize);
+    if (this.__antetPaza) this.__antetPaza.disconnect();
     if (this._onPop) window.removeEventListener('popstate', this._onPop);
     if (this.__peDeget) window.removeEventListener('pointerdown', this.__peDeget, true);
     if (this._onIntoarcere) window.removeEventListener('pageshow', this._onIntoarcere);
@@ -3574,6 +3711,25 @@ class Component extends DCLogic {
     const vd = alesAici && eVederea(alesAici.v) && alesAici.sub === implicitAcum ? alesAici.v : implicitAcum;
     const eUnu = vd === 'unu';
     const eSase = vd === 'sase';
+    // FELUL CARDULUI (runda 2.5.2), după vedere și după ecran:
+    //   calculator · „Patru" → `mare`: trei pe rând (două sub ~1130 px),
+    //                cu descrierea pe trei
+    //                rânduri și cu prețul AMÂNDUROR laturilor, fiecare cu
+    //                semnul ei (`cuLaturi`);
+    //              · „Șase"  → `mediu`: cardul pe care „Patru" îl avea până
+    //                la 2.5.1, neschimbat la pixel;
+    //   telefon    · „Patru" → `bula2`, „Șase" → `bula`: numele și prețul
+    //                stau într-o bulă de sticlă peste poză, iar „Adaugă" (și
+    //                „−" cantitatea „+", după el) într-o bară sub poză;
+    //   oricare    · „Unul"  → `rand`, neschimbat.
+    // Tableta (sub 1080) e „telefon" aici, ca în tot restul paginii.
+    const felCard = eUnu ? 'rand'
+      : !mob ? (eSase ? 'mediu' : 'mare')
+      : (eSase ? 'bula' : 'bula2');
+    const peBula = felCard === 'bula' || felCard === 'bula2';
+    const eMare = felCard === 'mare';
+    // Cutia cu amândouă laturile stă numai pe cardul mare.
+    const cuLaturi = eMare;
     // GRILA NU POATE CĂLCA PESTE NIMIC.
     //
     // `auto-fill` cu o lățime minimă: coloanele se înmulțesc cât încap, dar
@@ -3584,24 +3740,30 @@ class Component extends DCLogic {
     // plasa rotunjirii: împărțirea exactă cade uneori cu o sutime peste
     // rând, iar atunci browserul ar fi pus N-1 coloane.
     //
-    // Socotite (patru / șase): 360 și 390 → 2 / 3 · 820 → 4 / 6 · 1080 → 3 / 5,
-    // fiindcă acolo coșul stă alături · 1440 → 4 / 6.
+    // Măsurate (patru / șase, 29 sep. 2026): 360 și 390 → 2 / 3 · 820 → 4 / 6 ·
+    // 1080 → 2 / 3, fiindcă acolo coșul stă alături (de la ~1130 „Patru" are
+    // deja 3) · 1280 și 1440 → 3 / 4.
     const grilaDe = (N, MIN, GOL) => 'display:grid;gap:' + GOL
       + ';grid-template-columns:repeat(auto-fill,minmax(max(' + MIN + ',calc((100% - ' + (N - 1) + ' * ' + GOL + ') / ' + N + ' - 0.5px)),1fr))';
     // Corpul cardului, pe vedere și pe ecran: cu cât cardul e mai mic, cu atât
     // golurile se strâng — dar nu dispar.
     const corpPe = {
-      telefon: {
-        unu: 'gap:0.7rem;padding:1rem 1rem 1.15rem',
-        patru: 'gap:0.5rem;padding:0.7rem 0.65rem 0.75rem',
-        sase: 'gap:0.4rem;padding:0.5rem 0.45rem 0.55rem'
-      },
-      calculator: {
-        unu: 'gap:0.75rem;padding:1.3rem 1.5rem 1.4rem',
-        patru: 'gap:0.55rem;padding:0.95rem 1rem 1rem',
-        sase: 'gap:0.4rem;padding:0.6rem 0.65rem 0.7rem'
-      }
+      rand: mob ? 'gap:0.7rem;padding:1rem 1rem 1.15rem' : 'gap:0.75rem;padding:1.3rem 1.5rem 1.4rem',
+      mediu: 'gap:0.55rem;padding:0.95rem 1rem 1rem',
+      mare: 'gap:0.7rem;padding:1.15rem 1.25rem 1.25rem',
+      // Bula: corpul e chiar bula de peste poză, lipită de marginea ei de
+      // jos; bara cu „Adaugă" stă sub poză (v. `prodJos`).
+      // Marginea de SUS ține loc insignelor din colțurile pozei (numărul, sus
+      // la 0.5rem, înalt de 1.65rem; în „Șase" 0.3 + 1.35) și încă un gol
+      // mic. Bula crește în sus odată cu numele, treptele și cealaltă latură;
+      // fără margine urca peste număr — măsurat la 360, „Patru", cu trepte:
+      // „02" acoperit 19,6 px din 26,4. Cu ea, o bulă prea înaltă nu mai
+      // acoperă nimic: crește rândul grilei, iar poza se lungește odată cu el
+      // (`align-self:stretch` în `prodMedia`, `cover` în slot).
+      bula: 'grid-area:1/1;align-self:end;margin:1.9rem 0.3rem 0.3rem;gap:0.1rem;padding:0.35rem 0.45rem 0.4rem;border-radius:11px',
+      bula2: 'grid-area:1/1;align-self:end;margin:2.45rem 0.4rem 0.4rem;gap:0.2rem;padding:0.5rem 0.6rem 0.55rem;border-radius:13px'
     };
+    const bulaFond = ';background:rgba(22,15,10,0.66);-webkit-backdrop-filter:blur(10px) saturate(1.3);backdrop-filter:blur(10px) saturate(1.3);color:#FBF3E8;box-shadow:0 6px 18px rgba(0,0,0,0.28);border:1px solid rgba(255,244,230,0.14)';
     // În „unul pe rând" poza și corpul stau alături cât încap amândouă, și
     // una sub alta când nu: corpul are `flex-grow` uriaș, deci ia tot ce
     // rămâne lângă poză, iar sub 20rem trece singur pe rândul următor.
@@ -3609,8 +3771,13 @@ class Component extends DCLogic {
 
     const unselBtn = 'background:var(--h-bg-raised);color:var(--h-fg);border:1px solid var(--h-line-strong);box-shadow:var(--h-shadow-1)';
     const cardBase = 'padding:0;overflow:hidden;display:flex;min-width:0;transition:border-color 180ms ease,box-shadow 180ms ease,transform 180ms ease;'
-      + (eUnu ? 'flex-wrap:wrap;align-items:stretch' : 'flex-direction:column')
-      + (eSase ? ';border-radius:16px' : eUnu ? '' : ';border-radius:20px');
+      + (eUnu ? 'flex-wrap:wrap;align-items:stretch'
+        // Bula: un singur rând, întins pe tot cardul (`align-content:stretch`).
+        // Când vecinul de pe rând e mai înalt (bula lui a crescut peste
+        // poză), poza se lungește și aici, iar bara rămâne jos, la aceeași
+        // înălțime pe tot rândul — nu cu un gol gol sub ea.
+        : peBula ? 'display:grid;grid-template-columns:minmax(0,1fr);align-content:stretch;position:relative;padding-bottom:calc(2.75rem + 1px);border-radius:' + (felCard === 'bula' ? '16px' : '18px')
+        : 'flex-direction:column;border-radius:' + (eMare ? '22px' : '20px'));
     const cardOn = ';border-color:var(--h-accent);box-shadow:0 0 0 2px var(--h-accent-soft),var(--h-shadow-2)';
 
     // Din VANDABIL, nu din PROD: v. lămurirea de sus. `picks` dezleagă chei
@@ -3751,9 +3918,10 @@ class Component extends DCLogic {
 
     // Cum se arată scara pe card. „lat" — treptele alăturate, ca două ori
     // trei coloane (unul pe rând, și în fișa produsului); „tabel" — rânduri
-    // sub poză (patru pe ecran, pe calculator); „mic" — numai B și C, sub
-    // prețul A, care rămâne prețul mare al cardului (cardurile înguste).
-    const felScara = eUnu ? 'lat' : (eSase || mob) ? 'mic' : 'tabel';
+    // sub poză (calculator, „Patru" și „Șase"; pe cardul mare fără A, care
+    // stă în cutia laturilor); „mic" — numai B și C, sub prețul A, care
+    // rămâne prețul mare al cardului (bulele de telefon).
+    const felScara = eUnu ? 'lat' : mob ? 'mic' : 'tabel';
     // „4,20" în loc de „4,20 RON", unde locul e cât un deget.
     const sumaScurta = (v) => money(v).replace(/\s*RON$/, '');
     const indemnPt = (urm) => t(
@@ -3775,25 +3943,64 @@ class Component extends DCLogic {
       const lit = aprins ? 'var(--h-accent-fg)' : '';
       if (fel === 'mic') {
         return {
-          cant: s.prag + '+ ' + t('buc.', 'pcs'),
+          cant: s.prag + '+' + (felCard === 'bula' ? '' : ' ' + t('buc.', 'pcs')),
           pret: sumaScurta(s.pret),
-          st: 'display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0 0.35rem;min-width:0;line-height:1.35',
-          stCant: 'font-size:0.6875rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:' + (lit || 'var(--h-fg-subtle)'),
-          stPret: 'font-size:0.75rem;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;margin-left:auto;color:' + (lit || 'var(--h-fg-muted)')
+          st: 'display:flex;flex-wrap:' + (felCard === 'bula' ? 'nowrap' : 'wrap') + ';align-items:baseline;justify-content:space-between;gap:0 0.35rem;min-width:0;line-height:1.35',
+          // „Mic" stă numai în bulă, pe sticla închisă de peste poză — nu pe
+          // fondul plin al paginii. Culorile estompate ale paginii nu mai
+          // ajung acolo: peste aluatul crem, „100+ buc." în `--h-fg-subtle`
+          // ieșea 2,99:1 (360, „Patru"), sub pragul de 4,5. Crema bulei, cea
+          // a rândului celeilalte laturi, trece de 7:1.
+          stCant: 'font-size:0.6875rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:' + (lit || 'rgba(251,243,232,0.8)'),
+          stPret: 'font-size:0.75rem;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;margin-left:auto;color:' + (lit || '#FBF3E8')
         };
       }
       return {
         cant: gp.intervalTreapta(scara, i) + (lat ? ' ' + t('buc.', 'pcs') : ''),
         pret: money(s.pret),
+        // „Lat" pe telefon: trei trepte alăturate la 320–360 lasă ~70 px
+        // fiecăreia, iar „2,85 RON" la 17 px se rupea în „2,85 / RON" (9
+        // carduri, RO și EN). Treapta e container, ca cutia laturilor de pe
+        // cardul mare, iar prețul ia 19% din ea (v. `laturi`). Sub 330 px
+        // prețul stă pe podeaua lui clamp (13 px) și tot îi mai lipseau
+        // 0,16–0,66 px la 320–323 (5 din 29, „margini"); umplutura laterală
+        // de 0.45rem, nu 0.55, îi dă înapoi 3,2 px.
+        // Pragul („100–299 buc.") e mai lung decât celelalte și la 320–344
+        // se rupe pe două rânduri; centrată, treapta lui își cobora prețul
+        // cu un rând față de vecine. Cu `space-between` pragul stă sus și
+        // prețul jos în toate trei, deci prețurile rămân pe aceeași linie;
+        // unde niciun prag nu se rupe, treptele au aceeași înălțime și nu se
+        // mișcă nimic.
+        // Pe calculator prețul stătea la 19 px ficși. Între 1080 și 1124
+        // (1140 cu bara clasică) cardul „Unul" și fișa lasă treptei 74–92 px
+        // de conținut, iar „2,60 RON" la 19 px cere ~93: se rupea în „2,60 /
+        // RON" (27 din 29 de prețuri, „margini"; la fel în 2.5.1). Aceeași
+        // lege ca în cutia laturilor: 19% din conținutul treptei, între 15
+        // și 19 px. De la 100 px în sus (1160, 1180 cu bara) rămâne 19 px și
+        // nu se mișcă nimic; între 93 și 100 px prețul iese cu cel mult
+        // 1,4 px mai mic decât ar fi încăput — marja pentru o literă de
+        // rezervă mai lată decât Fraunces.
+        // Linia de 1 px din stânga treptelor 2 și 3 le lua din conținut, deci
+        // și din `cqi`: unde prețul e între margini, prima treaptă îl scria
+        // cu ~0,19 px mai mare, iar prețurile ieșeau pe linii deosebite cu
+        // până la 0,78 px (1110 și 1140 cu bara). Prima treaptă primește
+        // același pixel în dreapta; scrisul ei stă la stânga, deci nu se
+        // mișcă nimic unde litera e deja la margine.
         st: (lat
-          ? 'display:flex;flex-direction:column;justify-content:center;gap:0.2rem;min-width:0;padding:' + (mob ? '0.6rem 0.55rem' : '0.65rem 0.8rem') + (i > 0 ? ';border-left:1px solid var(--h-line)' : '')
+          ? 'display:flex;flex-direction:column;justify-content:space-between;gap:0.2rem;min-width:0;container-type:inline-size;padding:' + (mob ? '0.6rem 0.45rem' : '0.65rem 0.8rem') + (i > 0 ? ';border-left:1px solid var(--h-line)' : ';padding-right:calc(' + (mob ? '0.45rem' : '0.8rem') + ' + 1px)')
           : 'display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0.1rem 0.5rem;min-width:0;padding:0.3rem 0.55rem;border-radius:9px')
           + (aprins ? ';background:var(--h-accent-soft);box-shadow:inset 0 0 0 1px var(--h-accent)' : ''),
         stCant: 'font-size:0.75rem;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;color:' + (lit || 'var(--h-fg-muted)'),
         stPret: 'font-family:var(--h-font-display);font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;'
-          + (lat ? '' : 'margin-left:auto;') + 'font-size:' + (lat ? (mob ? '1.0625rem' : '1.1875rem') : '0.9375rem') + ';color:' + (lit || 'var(--h-fg)')
+          + (lat ? '' : 'margin-left:auto;') + 'font-size:' + (lat ? (mob ? 'clamp(0.8125rem,19cqi,1.0625rem)' : 'clamp(0.9375rem,19cqi,1.1875rem)') : '0.9375rem') + ';color:' + (lit || 'var(--h-fg)')
       };
-    }).filter((x, i) => fel !== 'mic' || i > 0);
+    // Rândul A cade unde prețul A e deja scris mare deasupra: pe cardurile
+    // înguste („mic"), și pe cardul mare de calculator („tabel" cu cutia
+    // laturilor). Hotărăște felul CERUT, nu vederea: fișa produsului cere
+    // „lat" și își păstrează toate trei treptele în orice vedere — până la
+    // această paranteză, cu „Patru" ales pe calculator, fișa își pierdea
+    // rândul A.
+    }).filter((x, i) => i > 0 || !(fel === 'mic' || (fel === 'tabel' && cuLaturi)));
 
     // CĂUTAREA ȘI FILTRELE CATALOGULUI.
     //
@@ -3888,7 +4095,27 @@ class Component extends DCLogic {
           // celeilalte laturi — ceea ce, din afară, nu se putea deosebi de o
           // poză scrisă în amândouă coloanele, și chiar așa s-a citit.
           photo: pozaLat(r, tier) ? res('prod' + r[1] + coadaLat, pozaLat(r, tier)) : '',
+          // Pe bule poza urcă, ca produsul să stea deasupra bulei, nu sub ea
+          // (ales de patron pe 29 sep. 2026, propunerea P1). Pozele sunt
+          // făcute cu produsul la mijloc, iar bula acoperă jumătatea de jos a
+          // cardului: la 360, „Patru", produsul stătea sub bulă 72% la mijloc
+          // (median) și 95% cel mai rău; urcat cu 20% — 20% și 40%, iar
+          // cardurile cu produsul acoperit peste jumătate scad de la 20 la 0.
+          // Se mută gazda (`translate` pe `image-slot`), nu imaginea din ea:
+          // încadrarea pozei stă în `.image-slots.state.json`. Fâșia rămasă
+          // goală jos o umple o umbră închisă, cât ramele bulei, tăiată de
+          // `overflow:hidden` al lui `prodMedia` — stă oricum sub sticlă.
+          // Treptele (16% „Șase", 20% „Patru") sunt vârfurile măsurate din 0,
+          // 8, 12, 16, 20, 24. Pe produs, nu pe vedere: un card fără poză își
+          // păstrează fondul cald întreg.
+          pozaSt: peBula && pozaLat(r, tier) ? 'translate:0 -' + (felCard === 'bula' ? 16 : 20) + '%;box-shadow:0 0 0 100vmax #1c140e' : '',
           name: t(r[2], r[3]),
+          // Textul din locul pozei lipsă. În bulă numele stă deja peste poză,
+          // deci aici nu se mai scrie — dar nici gol: `image-slot` citește un
+          // text gol ca „nu mi s-a dat niciunul” și scrie „Drop an image”, în
+          // engleză, pe cardul unui client. Un spațiu care nu se rupe e un
+          // text adevărat și nu se vede.
+          loc: peBula ? ' ' : t(r[2], r[3]),
           desc: t(r[7], r[8]),
           weight: r[4] + ' g',
           price: money(pretA),
@@ -3903,7 +4130,7 @@ class Component extends DCLogic {
           // (fără A): în celelalte două, A e chiar primul rând al scării.
           arataPret: scara.length <= 1 || felScara === 'mic',
           indemn: urm ? indemnPt(urm) : '',
-          areIndemn: !!urm && eUnu,
+          areIndemn: !!urm && (eUnu || eMare),
           // Rândul celeilalte laturi. `money(null)` întoarce „preț la cerere",
           // ceea ce pe un produs care NU se vinde acolo s-ar citi ca o ofertă:
           // omul ar cere un preț care nu există. Când cealaltă latură lipsește,
@@ -3912,23 +4139,42 @@ class Component extends DCLogic {
           // îngust (1280px, „patru") rândul se rupe după „servire:", nu lasă
           // „RON" singur pe al doilea rând.
           alt: vinde(r, other)
-            ? tierName(other) + ': ' + money(other === 'frozen' ? r[5] : r[6]).replace(' RON', '\u00a0RON')
+            ? (peBula ? '' : tierName(other) + ': ') + money(other === 'frozen' ? r[5] : r[6]).replace(' RON', '\u00a0RON')
             : t('Doar ', 'Only ') + tierName(tier).toLowerCase(),
           // Latura semnului de lângă rândul de mai sus: cealaltă, când
           // produsul se vinde și acolo; a filei, când e „Doar …".
           altLatura: vinde(r, other) ? other : tier,
+          latura: tier,
           special: !!r[9],
           // Cât timp se scrie în căsuță se arată textul brut, nu numărul din
           // coș — vezi `scrieCant()`. Aceeași expresie ca pe rândul din coș,
           // fiindcă e aceeași căsuță.
           qty: key === this.state.editKey ? String(this.state.editText) : String(n),
           none: n === 0,
-          // Pe cardul mic (șase pe ecran) căsuța de scris nu încape lângă
-          // butoane: rămân „−" și „+", cât un deget fiecare, iar cantitatea
-          // se scrie în coș ori în fereastra produsului.
-          someMare: n > 0 && !eSase,
-          someMic: n > 0 && eSase,
-          cantText: t(n + ' în coș', n + ' in cart'),
+          // Pe bulă (telefon, „Patru" și „Șase") steperul mare nu încape în
+          // bara de sub poză: rămân „−" și „+", cât un deget fiecare, cu
+          // căsuța între ele în „Patru" și cu cifra în „Șase" (v. `micCasuta`).
+          someMare: n > 0 && !peBula,
+          someMic: n > 0 && peBula,
+          cantText: String(n),
+          laturi: ['frozen', 'baked'].map((lt) => ({
+            latura: lt,
+            nume: tierName(lt),
+            pret: vinde(r, lt) ? money(lt === 'frozen' ? r[5] : r[6]) : t('nu se vinde', 'not sold'),
+            // LITERA PREȚULUI SE ȚINE DUPĂ CUTIE. Între 1250 și 1379 px grila
+            // are trei coloane de ~241 px, iar cutia ~76 px înăuntru; „2,99 RON"
+            // la 19 px are ~83: toate cele 22 de prețuri se rupeau în „2,99 /
+            // RON" (baleiat 1080–1920, 29 sep. 2026). Cutia e deci container
+            // (`container-type`: lățimea îi vine din grila `laturiCutie`, nu
+            // din scris, deci nu se mișcă nimic), iar prețul ia 19%
+            // din ea, între 15 și 19 px. Un browser fără `cqi` sare declarația
+            // și lasă litera moștenită (16 px) — tot pe un rând.
+            st: 'display:flex;flex-direction:column;gap:0.15rem;min-width:0;padding:0.5rem 0.55rem;border-radius:12px;container-type:inline-size;'
+              + (lt === tier ? 'background:var(--h-accent-soft);box-shadow:inset 0 0 0 1px var(--h-accent)' : 'background:var(--h-bg-sunk);box-shadow:inset 0 0 0 1px var(--h-line)'),
+            stEt: 'display:inline-flex;align-items:center;gap:0.3rem;font-size:0.75rem;font-weight:600;white-space:nowrap;color:' + (lt === tier ? 'var(--h-accent-fg)' : 'var(--h-fg-subtle)'),
+            stPret: 'font-family:var(--h-font-display);font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;font-size:'
+              + (vinde(r, lt) ? 'clamp(0.9375rem,19cqi,1.1875rem)' : '0.8125rem') + ';color:' + (lt === tier ? 'var(--h-fg)' : 'var(--h-fg-muted)')
+          })),
           add: () => this.bump(key, 1),
           inc: () => this.bump(key, 1),
           dec: () => this.bump(key, -1),
@@ -4339,10 +4585,27 @@ class Component extends DCLogic {
       antetStil: mob
         ? 'max-width:1740px;margin-inline:auto;position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.5rem;min-height:3.5rem;padding:0.5rem 0.75rem'
         : 'max-width:1740px;margin-inline:auto;position:relative',
+      // Pe calculator, „întreg” ori „strâns” după cât loc are (`potrivesteAntetul`).
+      antetFel: mob ? 'telefon' : (this.state.antetStrans ? 'strans' : 'intreg'),
       mLink: 'display:flex;align-items:center;min-height:2.75rem;padding:0 0.85rem;border-radius:12px;text-decoration:none;color:var(--h-fg);font-weight:600;font-size:1rem',
       prodGrid: eUnu
         ? 'display:grid;grid-template-columns:minmax(0,1fr);gap:' + (mob ? '0.9rem' : '1.25rem')
-        : grilaDe(eSase ? 6 : 4, eSase ? '6.25rem' : '9rem', eSase ? (mob ? '0.5rem' : '0.9rem') : (mob ? '0.75rem' : '1.15rem')),
+        : ({
+          mediu: grilaDe(4, '9rem', '1.15rem'),
+          // Trei pe rând de la un card de 13rem (208 px), nu de 15rem: între
+          // ~1130 și 1249 px „Patru" arăta numai două carduri mari pe ecran
+          // (ales de patron pe 29 sep. 2026, propunerea P5b). Pragul vine din
+          // rândurile scării, nu din fereastră: rândul „100–299 · 2,65 RON"
+          // are nevoie de ~148 px, deci cardul de ~200; cu 11.25rem (180 px)
+          // se rupeau 9 din 19 rânduri la 1080. 13rem lasă loc și pentru un
+          // preț cu două cifre înainte de virgulă. Pragul e socotit din
+          // lățimea GRILEI, deci ține și cu bara de derulare a Windows-ului.
+          // De la ~1240 în sus grila ia oricum o treime: acolo nimic nu s-a
+          // mișcat (identic la pixel la 1240, 1280, 1440, 1920).
+          mare: grilaDe(3, '13rem', '1.35rem'),
+          bula2: grilaDe(4, '9rem', '0.6rem'),
+          bula: grilaDe(6, '6.25rem', '0.45rem')
+        })[felCard],
       heroMedia: 'position:relative;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-3);background:var(--h-grad-warm);aspect-ratio:' + (mob ? '4/3' : '4/5'),
       grpHead: mob
         ? 'display:flex;flex-direction:column;gap:0.2rem;padding-bottom:0.6rem;margin-bottom:0.9rem;border-bottom:1px solid var(--h-line)'
@@ -4354,39 +4617,60 @@ class Component extends DCLogic {
       // omul de văzut.
       prodMedia: 'cursor:pointer;' + (eUnu
         ? 'position:relative;overflow:hidden;background:var(--h-grad-warm);flex:1 1 clamp(16rem,34%,22rem);min-width:0;aspect-ratio:3/2'
-        : 'position:relative;overflow:hidden;background:var(--h-grad-warm);flex:none;aspect-ratio:' + (eSase ? '1/1' : '4/3')),
-      // PE CARDURILE MICI NUMELE ȚINE MEREU LOC DE DOUĂ RÂNDURI.
+        : 'position:relative;overflow:hidden;background:var(--h-grad-warm);flex:none;aspect-ratio:' + (felCard === 'bula' ? '3/4;grid-area:1/1;align-self:stretch;width:100%;min-width:0' : felCard === 'bula2' ? '4/5;grid-area:1/1;align-self:stretch;width:100%;min-width:0' : '4/3')),
+      // PE CARDURILE DE CALCULATOR NUMELE ȚINE LOC DE DOUĂ RÂNDURI.
       //
       // Se oprește la două (`prodTitleLink`), dar oprirea singură nu ajunge:
       // un nume pe un rând lângă unul pe două lăsa prețul și scara cu un rând
       // mai sus decât la vecin. Măsurat pe grilă, la 390 / 820 / 1080 / 1280 /
       // 1440 px, în „patru" și în „șase": pe patru-cinci rânduri de carduri
       // din șapte, prețurile începeau la înălțimi deosebite, cu 17–22 px.
-      // Înălțimea e scrisă din aceleași două numere — rândul și oprirea —, ca
-      // să nu se poată despărți de ele.
+      // Înălțimea e scrisă din rândul și oprirea ei, ca să nu se despartă.
+      // Bulele (telefon, 2.5.2) n-au nevoie: stau lipite de josul pozei.
       prodTitle: 'margin:0;min-width:0;overflow-wrap:anywhere;' + (eUnu
         ? 'line-height:1.2;font-size:' + (mob ? '1.25rem' : '1.375rem')
+        : peBula ? 'line-height:1.22;color:#FFF8EE;font-size:' + (felCard === 'bula' ? '0.75rem' : '0.875rem')
         : 'line-height:' + RAND_NUME + ';min-height:' + (RAND_NUME * OPRIRE_NUME) + 'em;font-size:'
-          + (eSase ? (mob ? '0.8125rem' : '0.875rem') : (mob ? '0.9375rem' : '1.0625rem'))),
+          + (eMare ? '1.25rem' : '1.0625rem')),
       prodTitleLink: 'color:inherit;text-decoration:none'
-        + (eUnu ? '' : ';display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:' + OPRIRE_NUME + ';line-clamp:' + OPRIRE_NUME + ';overflow:hidden'),
-      prodMeta: 'display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem 0.6rem;min-width:0',
+        + (eUnu ? '' : ';display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:' + OPRIRE_NUME + ';line-clamp:' + OPRIRE_NUME + ';overflow:hidden')
+        + (peBula ? ';pointer-events:auto' : ''),
+      prodMeta: 'display:flex;flex-wrap:wrap;align-items:center;gap:0.35rem 0.6rem;min-width:0'
+        + (felCard === 'bula' ? ';display:none' : felCard === 'bula2' ? ';order:3;gap:0.25rem 0.45rem' : ''),
+      // Cutiile celor două laturi stau alăturate cât fiecare are cel puțin
+      // 5.75rem (92 px), altfel una sub alta: pe cardul de 208 px (trei pe
+      // rând de la ~1130) au 168 px de împărțit, deci se pun una sub alta; de
+      // la ~1250 cutia are 95 px și rămân alăturate, ca până acum. Lățimea
+      // nu vine din scris (cutia e container, v. `lt.st`), deci nimic nu
+      // sare de la un rând la altul după preț.
+      laturiCutie: 'display:grid;grid-template-columns:repeat(auto-fit,minmax(5.75rem,1fr));gap:0.5rem;min-width:0',
+      // Semnul laturii lângă preț: numai în bula mare, unde prețul celeilalte
+      // laturi nu se mai spune cu vorbe.
+      semnPret: felCard === 'bula2' ? '--gp-semn-marime:1em;align-self:center' : 'display:none',
       prodDesc: eUnu
         ? 'margin:0;color:var(--h-fg-muted);line-height:1.6;text-wrap:pretty;max-width:62ch' + (mob ? ';font-size:0.875rem' : '')
-        : (eSase || mob)
+        : mob
           ? 'display:none'
-          : 'margin:0;color:var(--h-fg-muted);font-size:0.8125rem;line-height:' + RAND_DESC + ';min-height:' + (RAND_DESC * OPRIRE_DESC)
-            + 'em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:' + OPRIRE_DESC + ';line-clamp:' + OPRIRE_DESC + ';overflow:hidden',
-      prodPriceRow: 'display:flex;flex-wrap:wrap;align-items:baseline;gap:0.1rem 0.45rem;min-width:0',
+          : 'margin:0;color:var(--h-fg-muted);font-size:' + (cuLaturi ? '0.875rem' : '0.8125rem') + ';line-height:' + RAND_DESC + ';min-height:' + (RAND_DESC * (cuLaturi ? 3 : OPRIRE_DESC))
+            + 'em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:' + (cuLaturi ? 3 : OPRIRE_DESC) + ';line-clamp:' + (cuLaturi ? 3 : OPRIRE_DESC) + ';overflow:hidden',
+      // Pe bulă rândul nu se rupe: semnul laturii rămânea singur pe un rând,
+      // cu prețul dedesubt, ca un preț fără latură (360, „Patru", de la
+      // 123,45 RON în sus). Suma se rupe acum ea însăși (`overflow-wrap`),
+      // lângă semn.
+      prodPriceRow: 'display:flex;flex-wrap:wrap;align-items:baseline;gap:0.1rem 0.45rem;min-width:0'
+        + (cuLaturi ? ';display:none' : felCard === 'bula' ? ';flex-wrap:nowrap;gap:0.1rem 0.3rem' : felCard === 'bula2' ? ';order:1;flex-wrap:nowrap;gap:0.1rem 0.35rem' : ''),
       prodPrice: 'font-family:var(--h-font-display);font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;font-size:'
-        + (eUnu ? (mob ? '1.375rem' : '1.5rem') : eSase ? (mob ? '0.9375rem' : '1rem') : (mob ? '1.0625rem' : '1.1875rem')),
-      prodUnit: eSase ? 'display:none' : 'color:var(--h-fg-subtle)' + (mob ? ';font-size:0.6875rem' : ''),
-      prodWeight: 'text-transform:none;letter-spacing:0;font-weight:600;flex:none' + (mob || eSase ? ';font-size:0.625rem;padding:0.2rem 0.45rem' : ''),
-      prodAlt: eSase || (mob && !eUnu)
+        + (eUnu ? (mob ? '1.375rem' : '1.5rem') : felCard === 'bula' ? '0.875rem' : felCard === 'bula2' ? '1.0625rem' : '1.1875rem')
+        + (peBula ? ';color:var(--h-accent-fg)' : ''),
+      prodUnit: peBula ? 'display:none' : 'color:var(--h-fg-subtle)' + (mob ? ';font-size:0.6875rem' : ''),
+      prodWeight: 'text-transform:none;letter-spacing:0;font-weight:600;flex:none' + (mob ? ';font-size:0.625rem;padding:0.2rem 0.45rem' : '')
+        + (felCard === 'bula2' ? ';background:rgba(255,248,238,0.14);color:#FBF3E8' : ''),
+      prodAlt: cuLaturi || felCard === 'bula'
         ? 'display:none'
-        : 'margin:0;display:flex;align-items:flex-start;gap:0.35rem;min-width:0;color:var(--h-fg-subtle)' + (mob ? ';font-size:0.75rem' : ''),
+        : 'margin:0;display:flex;align-items:flex-start;gap:0.35rem;min-width:0;color:' + (felCard === 'bula2' ? 'rgba(251,243,232,0.8)' : 'var(--h-fg-subtle)')
+          + (mob ? ';font-size:0.75rem' : '') + (felCard === 'bula2' ? ';gap:0.25rem;font-weight:600;order:-1' : ''),
       // Scara de prețuri a cardului (migrarea 028).
-      scaraCutie: 'display:flex;flex-direction:column;gap:0.35rem;min-width:0',
+      scaraCutie: 'display:flex;flex-direction:column;gap:0.35rem;min-width:0' + (felCard === 'bula2' ? ';order:2' : ''),
       scaraCuTitlu: felScara !== 'mic',
       scaraTitlu: 'margin:0;color:var(--h-fg-subtle);font-weight:600;letter-spacing:0.02em',
       scaraEticheta: t('Preț pe bucată, după cantitate', 'Price per piece, by quantity'),
@@ -4394,40 +4678,53 @@ class Component extends DCLogic {
       cosIndemn: 'margin:0.2rem 0 0;color:var(--h-accent-fg);font-weight:600;line-height:1.4;text-wrap:pretty' + (mob ? ';font-size:0.75rem' : ''),
       // Butonul și cantitatea stau jos, la aceeași înălțime pe tot rândul de
       // carduri, oricât de lung ar fi numele de deasupra.
-      prodJos: 'margin-top:auto;display:flex;flex-direction:column;gap:0.45rem;min-width:0' + (eUnu ? ';padding-top:0.25rem' : ''),
-      micRand: 'display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:0 0.4rem;min-width:0',
-      micCant: 'font-size:0.6875rem;font-weight:700;color:var(--h-accent-fg);white-space:nowrap',
-      micSuma: 'font-family:var(--h-font-display);font-size:0.75rem;font-weight:700;white-space:nowrap;margin-left:auto',
-      micButoane: 'display:flex;gap:0.3rem;min-width:0',
-      micBtn: unselBtn + ';display:inline-flex;align-items:center;justify-content:center;flex:1 1 0;min-width:0;padding:0;border-radius:999px;font-size:1.125rem;font-weight:700;line-height:1;cursor:pointer;font-family:inherit;min-height:'
-        + (mob ? '2.75rem' : '2.25rem'),
+      prodJos: peBula
+        ? 'position:absolute;left:calc(-' + (felCard === 'bula' ? '0.3rem' : '0.4rem') + ' - 1px);right:calc(-' + (felCard === 'bula' ? '0.3rem' : '0.4rem') + ' - 1px);top:calc(100% + ' + (felCard === 'bula' ? '0.3rem' : '0.4rem') + ' + 1px);height:calc(2.75rem + 1px);display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:stretch;border-top:1px solid var(--h-line);color:var(--h-fg);pointer-events:auto'
+        : 'margin-top:auto;display:flex;flex-direction:column;gap:0.45rem;min-width:0' + (eUnu ? ';padding-top:0.25rem' : eMare ? ';padding-top:0.15rem' : ''),
+      micRand: 'display:contents',
+      micCant: 'grid-column:2;grid-row:1;align-self:center;text-align:center;min-width:1.75rem;padding-inline:0.15rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--h-accent-fg);font-size:' + (felCard === 'bula' ? '0.9375rem' : '1rem'),
+      // Căsuța din bara bulei mari. 3.5rem ține „9999" (38,4 px la 16 px
+      // aldin); litera rămâne de 16 px, sub care iOS mărește pagina la
+      // atingere. Inelul de focus nu se șterge (cel al browserului, tras
+      // înăuntru): e singurul semn că degetul a nimerit căsuța.
+      micCuCasuta: felCard === 'bula2',
+      micFaraCasuta: felCard !== 'bula2',
+      micCasuta: 'grid-column:2;grid-row:1;align-self:stretch;width:3.5rem;min-width:0;height:auto;margin:0;padding:0;border:0;border-inline:1px solid var(--h-line);border-radius:0;'
+        + 'background:rgba(251,243,232,0.05);outline-offset:-3px;text-align:center;font-family:inherit;font-size:1rem;font-weight:800;font-variant-numeric:tabular-nums;color:var(--h-accent-fg)',
+      micSuma: 'display:none',
+      micButoane: 'display:contents',
+      micBtn: 'display:flex;align-items:center;justify-content:center;min-width:0;min-height:2.75rem;padding:0;border:0;border-radius:0;background:transparent;color:var(--h-fg);font-size:1.25rem;font-weight:700;line-height:1;cursor:pointer;font-family:inherit',
       prodQtyRow: 'display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.5rem;margin-top:0.25rem;min-width:0',
       noBadge: 'position:absolute;top:0.5rem;left:0.5rem;display:inline-flex;align-items:center;justify-content:center;min-width:1.65rem;height:1.65rem;padding-inline:0.4rem;border-radius:999px;background:var(--h-bg-raised);color:var(--h-fg-muted);font-family:var(--h-font-display);font-size:0.6875rem;font-weight:700;box-shadow:var(--h-shadow-1)'
-        + (eSase ? ';display:none' : ''),
+        + (felCard === 'bula' ? ';top:0.3rem;left:0.3rem;min-width:1.35rem;height:1.35rem;padding-inline:0.3rem;font-size:0.5625rem' : ''),
       specialBadge: 'position:absolute;top:0.5rem;right:0.5rem;background:var(--h-jam-700);color:#FDF6EC;box-shadow:var(--h-shadow-1)'
         + (mob ? ';font-size:0.5rem;padding:0.2rem 0.4rem;letter-spacing:0.04em' : ''),
       // Insigna „Nou" a cardului: ca a fișei, strânsă pe cardul mic.
       cardSpecial: 'position:absolute;top:0.5rem;right:0.5rem;background:var(--h-jam-700);color:#FDF6EC;box-shadow:var(--h-shadow-1)'
-        + (eSase
+        + (felCard === 'bula'
           ? ';top:0.35rem;right:0.35rem;font-size:0.5rem;padding:0.15rem 0.35rem;letter-spacing:0.04em'
           : mob ? ';font-size:0.5rem;padding:0.2rem 0.4rem;letter-spacing:0.04em' : ''),
-      addStyle: unselBtn + (mob ? ';min-height:2.75rem;font-size:0.875rem' : '')
-        + (eSase ? ';padding-inline:0.4rem' : '')
-        + (eUnu && !mob ? ';align-self:flex-start;padding-inline:1.5rem' : ''),
+      addStyle: peBula
+        ? 'grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:0.3rem;width:100%;height:100%;padding:0;border:0;border-radius:0;background:transparent;color:var(--h-accent-fg);font-family:inherit;font-weight:700;cursor:pointer;font-size:' + (felCard === 'bula' ? '0.8125rem' : '0.875rem')
+        : unselBtn + (mob ? ';min-height:2.75rem;font-size:0.875rem' : '')
+          + (eUnu && !mob ? ';align-self:flex-start;padding-inline:1.5rem' : '')
+          + (eMare ? ';min-height:2.75rem;font-size:0.9375rem' : ''),
       // Pe telefon și pe tabletă, „−" și „+" au 44 px, cât un deget (runda
-      // 2.5.0, cerut de patron; până atunci 41,6). Pe cardul cel mai strâmt se
-      // pot îngusta până la 36 px, dar niciodată nu scad în înălțime: v.
-      // `cardSteper`.
+      // 2.5.0, cerut de patron; până atunci 41,6). Se pot îngusta până la
+      // 36 px, dar niciodată nu scad în înălțime: v. plasa din `cardSteper`.
       stepBtn: mob ? 'width:2.75rem;height:2.75rem;min-width:2.25rem;font-size:1.125rem' : 'width:2.25rem;height:2.25rem',
       // Steperul de pe card. Pe telefon se poate strânge până la minimul lui
       // adevărat — două butoane de 36 px, căsuța de 40 și rama —, nu mai jos.
-      // Măsurat din pixel în pixel de la 320 la 1079, cel mai strâmt rând de
-      // cantitate e de 121,2 px (vederea „patru", la 340); la 360 are 131,2,
-      // deci steperul întreg (130 px) încape cu butoane de 44×44. Cu
-      // `flex:none`, cel de 44 (134 px) ar fi ieșit din card la 340, iar cel
-      // de 41,6 ieșea deja din rândul lui cu până la 8 px, în marginea
-      // dinăuntru a cardului, la 340–354 și la trecerile de pe tabletă la trei
-      // și la patru coloane (496–519, 666–697).
+      // De la 2.5.2 îl mai poartă pe telefon numai vederea „Unul": „Patru" și
+      // „Șase" sunt bule, cu bara lor de sub poză („−", cantitatea, „+" —
+      // `micBtn`). Măsurat din pixel în pixel de la 320 la 1079 (29 sep. 2026,
+      // pagina servită din fișier, datele „margini", trei produse în coș),
+      // rândul de cantitate din „Unul" are cel puțin 246 px, la 320; la 360
+      // are 286, iar pe tabletă, când poza trece lângă corp (la 629), coboară
+      // o dată la 288,7. Steperul întreg (130 px) încape deci peste tot, cu
+      // butoane de 44×44: strângerea nu mai lucrează azi pe niciun card și a
+      // rămas plasă. Până în 2.5.1 o cerea cardul „patru" de telefon, al cărui
+      // rând cobora la 121,2 px (la 340).
       // Un minim scris, nu `min-width:0`: pastila are `overflow:hidden`, deci
       // sub minim „+" ar fi fost tăiat pe tăcute, în loc să se vadă ieșind.
       cardSteper: (mob ? 'flex:0 1 auto;min-width:calc(7rem + 2px)' : 'flex:none') + ';background:var(--h-bg-raised)',
@@ -4451,7 +4748,7 @@ class Component extends DCLogic {
         + (mob ? ';min-height:2.75rem;display:flex;align-items:center;width:100%' : ''),
       clearBtn: mob ? 'min-height:2.75rem;padding-inline:0.75rem' : 'padding-inline:0.5rem',
       rmBtn: mob ? 'min-width:2.75rem;min-height:2.75rem;padding:0.25rem' : 'padding:0.15rem 0.5rem',
-      prodBtnClass: mob ? 'h-btn h-btn--block' : eUnu ? 'h-btn' : 'h-btn h-btn--sm h-btn--block',
+      prodBtnClass: peBula ? '' : eUnu && !mob ? 'h-btn' : felCard === 'mediu' ? 'h-btn h-btn--sm h-btn--block' : 'h-btn h-btn--block',
       // `min-width:0` NU e podoabă: fără el, corpul cardului nu poate coborî
       // sub lățimea lui minimă de conținut, iar suma rândului — scrisă cu
       // `white-space:nowrap` — crește la fiecare cifră: „2,85 RON" are 60px,
@@ -4461,9 +4758,21 @@ class Component extends DCLogic {
       // de bucăți capătul ei era la 350 / 360 / 371 / 382 px, ultimele trei pe
       // dinafara cardului (tăiate de `overflow:hidden`). Defectul #1 al
       // patronului: „scrisul despre câte grame are produsul fuge la dreapta".
-      prodBody: mob
-        ? 'display:flex;flex-direction:column;' + corpPe.telefon[vd] + ';flex:' + flexCorp + ';min-width:0'
-        : 'display:flex;flex-direction:column;' + corpPe.calculator[vd] + ';flex:' + flexCorp + ';min-width:0',
+      // Pe bulă corpul stă peste poză. Două lucruri îi sunt cerute acolo:
+      // • `position:relative` — bara de sub poză (`prodJos`) e `absolute` în
+      //   el. Fără poziție, ce o ținea la loc era numai `backdrop-filter` (și
+      //   el face corpul bloc de așezare): un browser care sare filtrul ar fi
+      //   dus bara sub card, tăiată de `overflow:hidden` — telefon fără
+      //   „Adaugă". Măsurat la 390 cu filtrul scos: bara la 384,9–428,9 px,
+      //   cardul se oprea la 377,5.
+      // • `pointer-events:none` — omul atinge fotografia, iar bula e desenată
+      //   pe ea. Fără asta, jumătate din poză nu mai deschidea fișa (măsurat
+      //   pe 390 cu trepte: 51% fișa, 49% nimic; în 2.5.1, 99%). Atingerea
+      //   trece acum prin bulă la poza de dedesubt; numele și bara își țin
+      //   clicul lor (`pointer-events:auto` în `prodTitleLink` și `prodJos`).
+      prodBody: 'display:flex;flex-direction:column;' + corpPe[felCard] + ';flex:' + flexCorp + ';min-width:0'
+        + (peBula ? bulaFond + ';position:relative;z-index:1;pointer-events:none' : ''),
+      cuLaturi: cuLaturi,
       asideRef: this.asideRef, colsRef: this.colsRef,
       unelteRef: this.unelteRef, laturaRandRef: this.laturaRandRef,
       pastilaRef: this.pastilaRef, baraRef: this.baraRef, waSusRef: this.waSusRef,
@@ -5423,7 +5732,9 @@ class Component extends DCLogic {
       trialRemove: () => this.setQty('trial:' + trialTier, 0),
       ctaRemove: t('Scoate', 'Remove'),
       trialCta: t('Adaugă pachetul de test', 'Add the trial pack'),
-      addLabel: mob || eSase
+      addLabel: peBula
+        ? t('+ Adaugă', '+ Add')
+        : mob
         ? t('Adaugă', 'Add')
         : (mine ? t('Adaugă în comandă', 'Add to order') : t('Adaugă la ofertă', 'Add to quote')),
       lessLabel: t('Scade cantitatea', 'Decrease quantity'),

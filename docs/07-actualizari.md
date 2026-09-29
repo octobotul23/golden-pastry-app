@@ -746,9 +746,9 @@ comenzi pe jumătate în bază**.
 
 Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
-(`Site Public.dc.html:2884`), deci o schimbare de preț se vede corect. **Dar
-dispariția e complet tăcută**: `:3515` ține în vitrină numai produsele bifate în
-catalogul deschis și cu prețul de acolo scris, iar `:4110-4116` scoate din coș
+(`Site Public.dc.html:3020`), deci o schimbare de preț se vede corect. **Dar
+dispariția e complet tăcută**: `:3652` ține în vitrină numai produsele bifate în
+catalogul deschis și cu prețul de acolo scris, iar `:4356-4362` scoate din coș
 rândurile rămase fără latura lor, fără niciun mesaj.
 
 Singura excepție e coșul refăcut din **„Comandă din nou”** (butonul de pe
