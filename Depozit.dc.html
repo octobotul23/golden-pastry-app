@@ -97,6 +97,38 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </style>
 </helmet>
 
+<!--
+  Ecranul de refuz. Serverul a răspuns 403 la citirea stocului: contul ăsta
+  n-are ce face aici, deci nu i se desenează nici butoanele, nici pastilele,
+  nici cifrele — toate ar fi spus ceva despre un stoc pe care pagina nu l-a
+  primit. Legăturile vin din meniul rolului (`refuzPanouri`), întoarcerea din
+  `gp.iesire()`, ca în Comenzi și în Pontaj.
+-->
+<sc-if value="{{ depozitInchis }}" hint-placeholder-val="{{ false }}">
+<div data-dep="refuz" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.14), transparent 70%)">
+<div style="width:100%;max-width:460px;display:flex;flex-direction:column;gap:18px;text-align:center;align-items:center">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:58px;height:58px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Depozit</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ refuzLine }}</span>
+</div>
+<div style="width:100%;display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ refuzPanouri }}" as="p" hint-placeholder-count="3">
+<sc-if value="{{ p.prim }}" hint-placeholder-val="{{ false }}">
+<a href="{{ p.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">{{ p.et }}</a>
+</sc-if>
+<sc-if value="{{ p.rest }}" hint-placeholder-val="{{ true }}">
+<a href="{{ p.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">{{ p.et }}</a>
+</sc-if>
+</sc-for>
+<button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;color:rgba(255,255,255,.72);text-decoration:none">{{ navBack.et }}</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ depozitDeschis }}" hint-placeholder-val="{{ true }}">
 <div data-dep="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
 <div data-dep="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
@@ -120,10 +152,22 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <div data-dep="sidefoot" style="flex:none;margin-top:auto;display:flex;flex-direction:column;gap:10px">
 <div data-dep="whobox" style="display:flex;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
-<a href="{{ accountHref }}" style="display:flex;flex-direction:column;min-width:0;flex:1;padding:6px 0;color:var(--h-cream-100);text-decoration:none" style-hover="opacity:.85">
+<!-- Caseta e legătură numai când duce undeva: omul intrat pe numele lui are
+     „Parola mea". Tura de pe tableta comună n-are parolă de schimbat, iar cât
+     contul încă nu s-a citit nu se știe cine e — amândurora li se scrie numele
+     ca text, fără nimic de apăsat. -->
+<sc-if value="{{ contLeg }}" hint-placeholder-val="{{ false }}">
+<a href="Parola.dc.html" style="display:flex;flex-direction:column;min-width:0;flex:1;padding:6px 0;color:var(--h-cream-100);text-decoration:none" style-hover="opacity:.85">
 <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ who }}</span>
-<span style="font-size:12px;opacity:.6">{{ accountHint }}</span>
+<span style="font-size:12px;line-height:1.3;min-height:1.3em;opacity:.6">{{ accountHint }}</span>
 </a>
+</sc-if>
+<sc-if value="{{ contText }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1;padding:6px 0;color:var(--h-cream-100)">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ who }}</span>
+<span style="font-size:12px;line-height:1.3;min-height:1.3em;opacity:.6">{{ accountHint }}</span>
+</div>
+</sc-if>
 <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
 <button type="button" onClick="{{ onLogout }}" style="flex:none;min-height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.22);border-radius:10px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:13px;font-weight:600;cursor:pointer">Ieși</button>
 </sc-if>
@@ -246,11 +290,15 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 </div>
 <span data-dep="filtersep" style="display:none;flex:none;width:1px;align-self:stretch;min-height:30px;background:var(--h-line);margin:0 3px"></span>
+<!-- Ordonarea e a listei de stoc. Registrul se citește pe zile, de la cea mai
+     nouă, și nu ascultă de butoanele astea: acolo nu se desenează. -->
+<sc-if value="{{ isStock }}" hint-placeholder-val="{{ true }}">
 <div data-dep="sorts" style="display:flex;flex-wrap:wrap;gap:6px;margin-left:auto;min-width:0">
 <sc-for list="{{ sorts }}" as="s" hint-placeholder-count="3">
 <button type="button" class="{{ s.cls }}" onClick="{{ s.onClick }}" style="height:42px;font-size:14px;border-radius:12px">{{ s.label }}</button>
 </sc-for>
 </div>
+</sc-if>
 </div>
 
 <sc-if value="{{ isStock }}" hint-placeholder-val="{{ true }}">
@@ -285,14 +333,21 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;gap:6px;justify-content:flex-end">
 <button type="button" class="h-btn h-btn--secondary h-btn--sm" onClick="{{ r.onIn }}" style="height:38px;min-width:78px;white-space:nowrap">+ Intrare</button>
 <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onOut }}" style="height:38px;min-width:78px;white-space:nowrap">− Ieșire</button>
+<sc-if value="{{ r.poateSterge }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" title="{{ r.delTitle }}" style="height:38px;padding:0 10px;white-space:nowrap;color:{{ r.delFg }}">{{ r.delLabel }}</button>
+</sc-if>
+<sc-if value="{{ r.inReteta }}" hint-placeholder-val="{{ false }}">
+<span title="{{ retetaTitlu }}" style="display:flex;align-items:center;height:38px;padding:0 6px;font-size:12px;white-space:nowrap;color:var(--h-fg-subtle)">în rețetă</span>
+</sc-if>
 </div>
 </div>
 </sc-for>
 <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
 <div style="padding:44px 18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
-<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nimic pe filtrele alese.</p>
+<p style="margin:0;font-size:16px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ noRowsLine }}</p>
+<sc-if value="{{ areFiltre }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="height:42px;font-size:14px">Șterge filtrele</button>
+</sc-if>
 </div>
 </sc-if>
 </div>
@@ -331,18 +386,29 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      din card cu 61px și din ecran cu 18. Cu `flex-wrap` și o bază adevărată de
      96px, primele două rămân perechea de pe rândul întâi, iar „Șterge" trece
      dedesubt. Pe ecran lat sau pe telefon, unde cardul e întreg, toate trei
-     stau tot pe un rând, ca până acum. -->
+     stau tot pe un rând, ca până acum.
+
+     Articolul care intră într-o rețetă nu se poate scoate din depozit (serverul
+     refuză cu `in_recipe`), deci „Șterge" nu i se desenează: în locul lui stă
+     „în rețetă", scris mai mic decât butonul, ca să nu ceară mai mult loc. -->
 <div style="display:flex;gap:8px;flex-wrap:wrap">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ r.onIn }}" style="flex:1 1 96px;min-height:46px;font-size:15px">+ Intrare</button>
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onOut }}" style="flex:1 1 96px;min-height:46px;font-size:15px">− Ieșire</button>
+<sc-if value="{{ r.poateSterge }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onDelete }}" style="flex:none;min-height:46px;padding:0 14px;font-size:15px;color:{{ r.delFg }}">{{ r.delLabel }}</button>
+</sc-if>
+<sc-if value="{{ r.inReteta }}" hint-placeholder-val="{{ false }}">
+<span title="{{ retetaTitlu }}" style="flex:none;display:flex;align-items:center;min-height:46px;padding:0 10px;font-size:13px;color:var(--h-fg-subtle)">în rețetă</span>
+</sc-if>
 </div>
 </div>
 </sc-for>
 <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}">
 <div class="h-card" style="padding:26px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
-<p style="margin:0;font-size:15px;color:var(--h-fg-muted)">Nimic pe filtrele alese.</p>
+<p style="margin:0;font-size:15px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ noRowsLine }}</p>
+<sc-if value="{{ areFiltre }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="min-height:44px;font-size:14px">Șterge filtrele</button>
+</sc-if>
 </div>
 </sc-if>
 </div>
@@ -399,7 +465,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 <sc-if value="{{ noLog }}" hint-placeholder-val="{{ false }}">
 <div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center">
-<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Nicio mișcare înregistrată pe filtrul ales.</p>
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">{{ noLogLine }}</p>
 </div>
 </sc-if>
 </div>
@@ -424,6 +490,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ v.mark }}</span>
 </button>
 </sc-for>
+<sc-if value="{{ isStock }}" hint-placeholder-val="{{ true }}">
 <p class="h-eyebrow" style="margin:10px 0 0;font-size:12px;color:var(--h-fg-subtle)">Ordonează lista</p>
 <sc-for list="{{ menuSorts }}" as="s" hint-placeholder-count="3">
 <button type="button" onClick="{{ s.onClick }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border-radius:15px;border:1px solid {{ s.bd }};background:{{ s.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:15px;font-weight:600;text-align:left;cursor:pointer">
@@ -431,6 +498,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="width:22px;text-align:center;font-size:17px;color:var(--h-accent)">{{ s.mark }}</span>
 </button>
 </sc-for>
+</sc-if>
 </div>
 </div>
 </sc-if>
@@ -561,6 +629,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+</sc-if>
+
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;showReserved&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Depozit&quot;},&quot;autoDeduct&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Depozit&quot;},&quot;defaultView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Stoc&quot;,&quot;Registru&quot;],&quot;default&quot;:&quot;Stoc&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Depozit&quot;}}">
 const MKEY = "gp-stock-moves-v1", NKEY = "gp-stock-min-v1", SKEY = "gp-stock-sync-v1";
@@ -645,7 +715,10 @@ class Component extends DCLogic {
   // n-au voie să intre în socotelile de zi cu zi — „Sub prag", „Lipsă", numărul
   // de poziții, lista din formularul de mișcare — fiindcă marfa lor nu mai e de
   // vândut. Au nevoie de exact un lucru: o cale înapoi.
-  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], deScazut: null, auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", pastila: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", sterg: null };
+  //
+  // `refuzat` e răspunsul serverului la citirea stocului (403), nu o socoteală
+  // a paginii: cât e adevărat, se desenează ecranul de refuz și nimic altceva.
+  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], deScazut: null, auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", pastila: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", refuzat: false, sterg: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -719,7 +792,7 @@ class Component extends DCLogic {
             // Clipa vine de la server, dar se citea cu câmpurile locale ale
             // aparatului: pe o tabletă pe alt fus, mișcarea din tura de noapte
             // apărea pe rândul altei zile. Serverul o socotește pe
-            // Europe/Bucharest (`stock_local_day_utc`, `api/routes/stock.php:403`),
+            // Europe/Bucharest (`stock_local_day_utc`, `api/routes/stock.php:414`),
             // deci și registrul o citește așa.
             const dt = gp.laPatiserie(new Date(gp.utc(m.createdAt)));
             const p2 = (n) => (n < 10 ? '0' : '') + n;
@@ -746,10 +819,33 @@ class Component extends DCLogic {
           who: user ? user.name : 'Laborator',
           role: user ? user.role : '',
           loaded: true,
+          // Citirea a reușit, deci caseta roșie de la o citire picată mai
+          // devreme nu mai are ce spune: rămasă aprinsă, scria „Depozitul nu
+          // s-a încărcat.” deasupra unei liste care tocmai s-a încărcat, până
+          // apăsa cineva „Încearcă din nou”.
+          eroare: "",
+          refuzat: false,
         });
       })
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
+        // Parola provizorie: serverul refuză TOT cu 403 până e schimbată
+        // (`require_auth`, codul `must_change_password`), deși rolul are
+        // Depozitul. „N-ai rolul potrivit” ar fi fost o minciună, iar butoanele
+        // lăsate la vedere ar fi dat fiecare același refuz. Omul e dus unde
+        // poate face singurul lucru care îl deblochează — ca în „Comanda mea”.
+        else if (e.code === "must_change_password") this.laParola();
+        // 403 nu e o defecțiune, e un răspuns: contul ăsta n-are Depozitul.
+        //
+        // Se întreabă și de COD, nu numai de 403. Ușa rolurilor răspunde mereu
+        // cu `forbidden` (`require_role`, api/lib/auth.php). Un 403 care nu e
+        // al aplicației — pagina de refuz a găzduirii, fără JSON, căreia
+        // `shared/gp-api.js` îi pune drept cod chiar „403” — ar fi închis
+        // Depozitul unui om care ARE rolul, i-ar fi scris că „nu are acces la
+        // depozit” și ar fi oprit de tot citirea din 15 în 15 secunde. Acela
+        // rămâne o pană: caseta roșie de mai jos, cu „Încearcă din nou”, iar
+        // citirea merge mai departe și pagina își revine singură.
+        else if (e.isForbidden && e.code === "forbidden") return this.refuz();
         // `loaded` rămâne adevărat, ca pagina să nu se învârtă la nesfârșit —
         // asta ar fi altă minciună. Lacătul care oprește cardurile de gol să
         // pretindă că depozitul e gol e `eroare`, nu `loaded`: „Nimic pe
@@ -758,6 +854,53 @@ class Component extends DCLogic {
         // închide cu un × și nu se mai întoarce.
         else this.setState({ eroare: gp.motiv(e, "stocul"), loaded: true });
       });
+  }
+
+  /**
+   * Serverul a refuzat citirea stocului (403): pagina trece pe ecranul de refuz.
+   *
+   * Contul se RECITEȘTE, nu se ia din stare. Rolul se poate schimba din Conturi
+   * cu Depozitul deschis în altă filă, iar schimbarea nu închide sesiunea:
+   * `S.auth` ar fi rămas cel vechi, cu meniul și numele rolului de dinainte, iar
+   * ecranul de refuz și-ar fi trimis omul tocmai în panourile pe care nu le mai
+   * are. La prima deschidere cu un rol fără Depozit e pe dos: `S.auth` e încă
+   * gol, fiindcă `gp.me()` stătea în același `Promise.all` cu citirile refuzate.
+   *
+   * Citirea din 15 în 15 secunde se oprește: `gp.poll()` nu se oprește singur la
+   * 403, deci fila lăsată deschisă ar fi cerut la nesfârșit patru liste pe care
+   * serverul le refuză de fiecare dată.
+   */
+  refuz() {
+    if (typeof this.timer === "function") { this.timer(); this.timer = null; }
+    // Casetele deschise se închid: din ele nu mai pleacă nimic pe care serverul
+    // să-l primească.
+    const inchis = { refuzat: true, eroare: "", loaded: true, form: null, art: null, menu: false, navOpen: false, sterg: null };
+    return gp.me()
+      .then((user) => {
+        if (!user) return gp.toLogin();
+        if (user.mustChangePassword === true) return this.laParola();
+        this.setState(Object.assign(inchis, { auth: gp.auth(user), who: user.name, role: user.role }));
+      })
+      .catch((e) => {
+        if (e && e.isAuth) return gp.toLogin();
+        if (e && e.code === "must_change_password") return this.laParola();
+        // Contul n-a putut fi recitit. Refuzul rămâne adevărat — l-a spus
+        // serverul —, dar cine e dincolo de ecran nu se mai știe: contul vechi
+        // se șterge din stare, ca ecranul să nu-i înșire panourile altui rol.
+        this.setState(Object.assign(inchis, { auth: null, who: "Laborator", role: "" }));
+      });
+  }
+
+  /**
+   * Parola provizorie: omul e dus la „Parola mea”.
+   *
+   * Cu coada adresei (`?api=…`) cu tot, ca legăturile paginii (`componentDidMount`)
+   * și ca Pontajul. Plecarea asta nu e un clic pe o legătură, deci ascultătorul de
+   * acolo n-o vede: fără coadă, pe un server de probă „Parola mea” s-ar fi deschis
+   * pe alt server decât cel care tocmai a cerut schimbarea parolei.
+   */
+  laParola() {
+    location.href = "Parola.dc.html" + (location.search || "");
   }
 
   /**
@@ -917,6 +1060,12 @@ class Component extends DCLogic {
       res: it.reserved === undefined ? 0 : it.reserved,
       avail: it.available === undefined ? it.qty : it.available,
       low: it.low,
+      // Articolul intră într-o rețetă din Catalog (`inRecipe`, din
+      // `stock_item_public()`). Serverul nu-l lasă scos din depozit cât e acolo
+      // (409 `in_recipe`), deci rândul lui n-are buton „Șterge”. `=== true`,
+      // nu `!!`: un server de dinaintea câmpului nu-l trimite, iar atunci
+      // butonul rămâne, ca până acum, și refuzul îl spune serverul.
+      inRecipe: it.inRecipe === true,
     }));
   }
 
@@ -1153,6 +1302,11 @@ class Component extends DCLogic {
       // spune ce se întâmplă, a doua execută. Un singur clic lângă „− Ieșire"
       // ar scoate din depozit un articol din greșeală, iar articolul cu istoric
       // n-ar mai putea fi pus înapoi din pagină.
+      //
+      // Două steaguri, nu unul negat (`sc-if` primește o valoare): articolul
+      // dintr-o rețetă n-are buton, are în locul lui vorba „în rețetă”.
+      poateSterge: !x.c.inRecipe,
+      inReteta: x.c.inRecipe,
       delLabel: S.sterg === x.c.id ? "Sigur?" : "Șterge",
       delFg: S.sterg === x.c.id ? "var(--h-danger)" : "var(--h-fg-faint)",
       delTitle: S.sterg === x.c.id
@@ -1255,8 +1409,29 @@ class Component extends DCLogic {
     // Se întreabă o dată, fiindcă răspunsul se folosește în cinci locuri
     // dedesubt și toate trebuie să spună același lucru.
     const omAnume = !!S.auth && !S.auth.isSystem;
+    // Lista de stoc e strânsă de ceva ce omul poate desface? Categoria, căutarea
+    // și pastila strâng; ordonarea nu scoate niciun rând, deci nu se pune.
+    const areFiltre = S.cat !== "Toate" || q !== "" || S.pastila !== "";
+    // Aceeași întrebare pentru registru. Filtrele lui sunt cele din `logDays`:
+    // categoria, căutarea și pastila de intrări ori de ieșiri.
+    const areFiltreLog = S.cat !== "Toate" || q !== "" || S.pastila === "in" || S.pastila === "out";
 
     return {
+      // ECRANUL DE REFUZ (runda 2.6.0). Două steaguri, nu unul negat, fiindcă
+      // `sc-if` primește o valoare. Sub `depozitDeschis` stă toată pagina — bara
+      // laterală, capul, pastilele, lista, bara de jos și casetele —, deci cât
+      // serverul refuză contul nu se desenează niciun buton care scrie și nicio
+      // cifră despre un stoc pe care pagina nu l-a primit.
+      depozitInchis: S.refuzat,
+      depozitDeschis: !S.refuzat,
+      // Clientul și angajatul primesc propoziții deosebite, ca în Comenzi:
+      // clientul nu e trimis după un rol, fiindcă n-are ce căuta în panouri.
+      refuzLine: !S.auth
+        ? "Contul cu care ești intrat nu are acces la depozit. Cere-i unui administrator să-ți pună rolul potrivit."
+        : S.auth.role === "client"
+          ? "Contul „" + S.auth.name + "” e cont de client: aici lucrează doar personalul. Comenzile tale le vezi în „Comanda mea”."
+          : "Contul „" + S.auth.name + "” nu are acces la depozit. Dacă ai nevoie de stoc, cere-i unui administrator să-ți pună rolul potrivit.",
+
       // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
       // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
       // există — bara e acum un șablon peste lista de aici, ca nu cumva un
@@ -1269,6 +1444,14 @@ class Component extends DCLogic {
       // `.claude/check-meniu.mjs`.
       meniu: gp.meniu("Depozit", S.auth),
       navHere: "Depozit",
+      // Panourile oferite pe ecranul de refuz: ale rolului, din același meniu
+      // comun — nu o listă scrisă aici, care l-ar duce pe om din refuz în refuz.
+      // „Depozit” se scoate și dacă meniul l-ar da: e chiar pagina care tocmai a
+      // refuzat. Stă DUPĂ meniul paginii, ca în Comenzi și în Conturi:
+      // `.claude/check-meniu.mjs` citește prima chemare `gp.meniu("…", cine)`
+      // din fișier ca să afle ce intrare aprinde pagina.
+      refuzPanouri: gp.meniu("", S.auth).filter((m) => m.et !== "Depozit")
+        .map((m, i) => ({ et: m.et, href: m.href, prim: i === 0, rest: i > 0 })),
       // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
       // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
       // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
@@ -1300,8 +1483,22 @@ class Component extends DCLogic {
       authName: S.who,
       who: S.who,
       signedIn: omAnume,
-      accountHref: gp.eAdmin(S.role) ? "Conturi.dc.html" : omAnume ? "Depozit.dc.html" : "Administrare%20Comenzi.dc.html",
-      accountHint: gp.eAdmin(S.role) ? "contul tău · schimbă parola" : omAnume ? "cont de angajat" : "intră în cont →",
+      // CASETA DE CONT ARE TREI STĂRI (runda 2.6.0).
+      //
+      // Era o legătură pentru oricine, iar unde ducea se hotăra aici: omului
+      // pe nume care nu e administrator îi reîncărca Depozitul și îi scria
+      // „cont de angajat” (și managerului); turei de pe tableta comună îi scria
+      // „intră în cont →” și o ducea în Comenzi, care o refuză; administratorului
+      // îi scria „schimbă parola” și îl ducea în Conturi, unde parola proprie se
+      // poate numai reseta — adică îl scotea afară.
+      //
+      // Acum: omul pe nume are legătura spre „Parola mea”, pe care o au toate
+      // rolurile (`gp.PANOURI_ROL`); contul de sistem are numele și „tabletă
+      // comună”, ca text; iar cât contul nu s-a citit, rândul mic rămâne gol —
+      // pagina nu știe încă cine e, deci nu spune nimic despre el.
+      contLeg: omAnume,
+      contText: !omAnume,
+      accountHint: omAnume ? "contul tău · schimbă parola" : S.auth ? "tabletă comună" : "",
       // Ieșirea adevărată: sesiunea se închide pe SERVER, apoi pagina duce la
       // intrare. Înainte se ștergea doar o cheie din localStorage pe care n-o
       // mai citea nimeni: cookie-ul HttpOnly rămânea valabil, următorul
@@ -1384,10 +1581,14 @@ class Component extends DCLogic {
         return {
           label: t, count: String(count),
           cls: active ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
-          onClick: () => set(isLogTab ? { view: "Registru", pastila: "" } : { view: "Stoc", cat: t, pastila: "" })
+          // Fila „Registru” stinge și categoria. Altfel registrul rămânea strâns
+          // pe categoria de dinainte fără ca vreo filă să arate asta: în Registru
+          // nicio filă de categorie nu e aprinsă, deci omul n-avea de unde ști de
+          // ce cifra din cap e mai mică decât cea de pe filă.
+          onClick: () => set(isLogTab ? { view: "Registru", cat: "Toate", pastila: "" } : { view: "Stoc", cat: t, pastila: "" })
         };
       }),
-      sorts: [{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
+      sorts:[{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
         label: s.l, cls: S.sort === s.v ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
         onClick: () => set({ sort: s.v })
       })),
@@ -1430,7 +1631,7 @@ class Component extends DCLogic {
           mark: active ? "✓" : "",
           bg: active ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
           bd: active ? "var(--h-accent)" : "var(--h-line)",
-          onClick: () => set(isLogTab ? { view: "Registru", menu: false, pastila: "" } : { view: "Stoc", cat: t, menu: false, pastila: "" })
+          onClick: () => set(isLogTab ? { view: "Registru", cat: "Toate", menu: false, pastila: "" } : { view: "Stoc", cat: t, menu: false, pastila: "" })
         };
       }),
       menuSorts: [{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
@@ -1444,7 +1645,28 @@ class Component extends DCLogic {
       resDisplay: showRes ? "flex" : "none",
       resInline: showRes ? "inline" : "none",
       rows: rowVals, noRows: rowVals.length === 0 && !S.eroare,
-      onClearFilters: () => set({ cat: "Toate", search: "", sort: "cat" }),
+      // „ȘTERGE FILTRELE” ȘTERGE TOT CE STRÂNGE LISTA (runda 2.6.0).
+      //
+      // Pastila lipsea de aici. Apăsată o pastilă cu cifra 0 („Sub prag minim”
+      // într-o zi bună), lista ieșea goală, apărea butonul, iar apăsat nu
+      // schimba nimic: categoria, căutarea și ordonarea erau deja cele din
+      // pornire, iar singurul filtru aprins era tocmai cel pe care nu-l atingea.
+      //
+      // Iar când nu e nimic de șters, butonul nu se desenează (`areFiltre`):
+      // pe un depozit fără niciun articol, ori în prima clipă, până vine lista,
+      // „Nimic pe filtrele alese.” vorbea despre filtre pe care nu le pusese
+      // nimeni. Rândul spune acum ce e de fapt.
+      areFiltre,
+      noRowsLine: areFiltre ? "Nimic pe filtrele alese."
+        : S.loaded ? "Niciun articol în depozit încă. Adaugă-l pe primul cu „+ Articol”."
+        : "Se citește stocul…",
+      onClearFilters: () => set({ cat: "Toate", search: "", sort: "cat", pastila: "" }),
+      // De ce n-are articolul buton „Șterge”, spus sub cursor. Rețeta se schimbă
+      // din Catalog, pe care îl au numai administratorul și fondatorul; celorlalți
+      // nu li se spune „scoate-l din rețetă”, fiindcă n-au de unde.
+      retetaTitlu: gp.eAdmin(S.role)
+        ? "Articolul intră într-o rețetă. Cât e acolo nu se poate scoate din depozit: scoate-l întâi din rețetă, din Catalog."
+        : "Articolul intră într-o rețetă. Cât e acolo nu se poate scoate din depozit: cere-i unui administrator să-l scoată întâi din rețetă.",
 
       // Raftul celor scoase: se arată numai când chiar există așa ceva, altfel
       // ar fi un rând gol care întreabă din senin „ce-i asta?".
@@ -1458,6 +1680,14 @@ class Component extends DCLogic {
         onRepune: () => this.repuneArticol(i.id, i.name)
       })),
       logDays, noLog: logDays.length === 0 && !S.eroare,
+      // Ce scrie rândul registrului gol — trei pricini, ca la lista de stoc
+      // (`noRowsLine`). „pe filtrul ales” stătea scris fix în șablon, deci
+      // apărea și când nimeni nu alesese niciun filtru: pe un registru fără
+      // nicio mișcare și, în prima clipă, până vine lista — când spunea că
+      // registrul e gol. Când chiar un filtru l-a golit, o spune mai departe.
+      noLogLine: areFiltreLog ? "Nicio mișcare înregistrată pe filtrul ales."
+        : S.loaded ? "Nicio mișcare în registru încă."
+        : "Se citește registrul…",
 
       // Deschiderea casetei stinge semaforul: o cerere rămasă fără răspuns nu
       // trebuie să blocheze adăugarea până la reîncărcarea paginii.

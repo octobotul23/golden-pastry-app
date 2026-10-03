@@ -166,6 +166,37 @@ function seo_data(): array
             }
         }
 
+        // Fișele tehnice (migrarea 031) se cer cu o întrebare A LOR, în
+        // `try`-ul lor — NU ca a patra treaptă a ocolurilor de mai sus. Pusă
+        // acolo, o bază care are 028 și n-are încă 031 ar fi căzut pe treapta a
+        // doua și ar fi pierdut, odată cu fișele, și cele trei prețuri din
+        // datele pentru Google: o coloană lipsă ar fi costat alta, care există.
+        // Așa, lipsa lui 031 costă exact un rând de legătură și nimic altceva.
+        //
+        // Coloanele sunt cele din `CATALOG_FISE_COLOANE` (api/lib/catalog.php),
+        // scrise aici din același motiv ca treptele: fișierul acela cere baza.
+        // Le ține în pas `.claude/check-fise-tehnice.mjs`. Se lipesc de produs
+        // după cheie, nu după loc: lista de sus e deja cernută și ordonată.
+        try {
+            $fise = [];
+            $cuFise = $pdo->query('SELECT slug, sheet_frozen, sheet_baked FROM products WHERE active = 1')
+                ->fetchAll(PDO::FETCH_ASSOC);
+            foreach ($cuFise as $r) {
+                $fise[(string) $r['slug']] = $r;
+            }
+            foreach ($products as $i => $p) {
+                $f = $fise[(string) $p['slug']] ?? null;
+                if ($f !== null) {
+                    $products[$i]['sheet_frozen'] = $f['sheet_frozen'];
+                    $products[$i]['sheet_baked']  = $f['sheet_baked'];
+                }
+            }
+        } catch (Throwable $eFaraFise) {
+            // Baza n-are încă 031 (fișierele urcă înaintea importului): niciun
+            // produs nu primește câmpurile, `latura_fisa()` răspunde null, iar
+            // pagina arată ce arăta ieri. Nu e o eroare de scris în jurnal.
+        }
+
         $categories = $pdo->query(
             'SELECT slug, name, name_en, note, note_en FROM product_categories WHERE active = 1 ORDER BY sort, id'
         )->fetchAll(PDO::FETCH_ASSOC);
@@ -376,6 +407,17 @@ $seVinde = static function (array $p, string $latura): bool {
         return latura_se_vinde($p, $latura);
     }
     return ($p['price_frozen'] ?? null) !== null && ($p['price_baked'] ?? null) !== null;
+};
+/**
+ * Fișa tehnică de oferit în pagină: a laturii vitrinei, aceeași latură ca
+ * prețul și poza. Împrumutul Coapte ← Congelate îl face `latura_fisa()`, nu
+ * pagina asta. Rezerva de aici nu e o a doua regulă: în secundele urcării, fără
+ * ajutor, nu se oferă nicio fișă — adică exact pagina de ieri.
+ */
+$fisaVitrina = static function (array $p): ?string {
+    return function_exists('latura_fisa') && function_exists('latura_vitrina')
+        ? latura_fisa($p, latura_vitrina($p))
+        : null;
 };
 
 
@@ -1058,7 +1100,18 @@ if ($ruta['fel'] === 'product' && $produs) {
     if ($seVinde($produs, 'copt')) {
         $bits[] = $t('copt ', 'baked ') . $bani((float) $produs['price_baked']);
     }
+    // Fișa tehnică, pentru cine citește pagina fără JavaScript: butonul din
+    // magazin se desenează în browser, deci de aici nu se vedea. Adresa pleacă
+    // de la rădăcina site-ului, ca legăturile de alături — pe „/produs/…” una
+    // relativă ar fi căutat fișa în „/produs/fise/”. PDF-ul însuși poartă
+    // `X-Robots-Tag: noindex` (v. `.htaccess`-ul din pachet): legătura e pentru
+    // om, nu ca fișa să ajungă rezultat de căutare în locul paginii.
+    $fisa = $fisaVitrina($produs);
     $noscript .= '<p>' . $e(implode(' · ', $bits)) . "</p>\n"
+        . ($fisa !== null
+            ? '<p><a href="' . $e('/' . ltrim($fisa, '/')) . '">'
+                . $t('Fișa tehnică (PDF)', 'Technical data sheet (PDF, in Romanian)') . "</a></p>\n"
+            : '')
         . '<p><a href="' . $e(gp_cale('catalog', $lang)) . '">' . $t('Vezi tot catalogul', 'See the full catalogue') . "</a></p>\n";
 } elseif ($prods) {
     // Pe pagina unei grupe intră doar produsele ei: altfel toate paginile de

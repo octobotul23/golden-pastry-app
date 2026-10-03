@@ -261,6 +261,12 @@ function route_referrals_all(): void
             // ce butonul acela nu duce nicăieri.
             $r['code_account_name'] = $nume[(string) $r['code_account']]['name'] ?? null;
             $r['code_typed_name']   = $nume[(string) $r['code_typed']]['name'] ?? null;
+            // Și cine e omul, nu doar cum îl cheamă: pe un rând deja plătit
+            // serverul primește numai hotărârea în favoarea celui plătit
+            // (`referral_guard_paid_code_change`), iar pagina compară id-ul
+            // stăpânului cu `referrer_id` ca să nu deseneze butonul refuzat.
+            $r['code_account_owner_id'] = $nume[(string) $r['code_account']]['id'] ?? null;
+            $r['code_typed_owner_id']   = $nume[(string) $r['code_typed']]['id'] ?? null;
         }
         unset($r);
     }

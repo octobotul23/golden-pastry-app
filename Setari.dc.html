@@ -66,9 +66,21 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Setări</span>
 <span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
 </div>
-<div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">Comenzi</a>
-<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<!-- DOUĂ IEȘIRI, AMÂNDOUĂ CALCULATE, NICIUNA SCRISĂ DE MÂNĂ (runda 2.6.0).
+     Aici stăteau două legături scrise pe litere, aceleași pentru oricine:
+     „Comenzi” și „← Alege panoul”. Ecranul ăsta se aprinde însă peste orice
+     cont în afară de administrator și de fondator, iar „Comenzi” era al doilea
+     refuz la rând pentru angajat, pentru contul de pontaj, pentru client și
+     pentru contul comun al tabletelor: niciunul n-are panoul acela. Tiparul e
+     cel din Statistici și din Jurnal: prima duce la panoul de acasă al rolului
+     (`gp.primaPagina`), a doua la ieșirea lui obișnuită (`gp.iesire`) —
+     clientul la magazin, personalul la alegerea panoului. O singură coloană,
+     ca fraza mai lungă a primei legături să aibă loc și pe telefonul îngust.
+     Le păzește `.claude/check-vede-poate.mjs`, cu tabelul din
+     `.claude/vede-poate/setari.mjs`. -->
+<div style="width:100%;display:grid;grid-template-columns:1fr;gap:8px">
+<a href="{{ acasaHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">{{ acasaEt }}</a>
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">{{ navBack.et }}</a>
 </div>
 </div>
 </div>
@@ -556,15 +568,27 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Etapele cu rol special</span>
 <span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Poți redenumi etapele cum vrei, dar aplicația trebuie să știe care încheie comanda și care o anulează. De asta depind pagina clientului, ruta șoferului și scăderea din depozit.</span>
 </div>
+<!-- Refuzul serverului pentru o etapă cu rol special (`bad_special_status`),
+     cu vorbele lui, chiar deasupra celor două liste din care s-a ales. Bara
+     roșie de sus îl arată și ea, ca pe orice refuz, dar ea stă deasupra
+     filelor: cardul ăsta e ultimul din „Liste”, iar „Salvează” se apasă din
+     bara lipită de marginea ecranului, deci omul ar rămâne cu ochii pe o
+     alegere refuzată fără să vadă de ce. N-are ×: se stinge singur de cum se
+     umblă la etape ori la una dintre cele două alegeri. -->
+<sc-if value="{{ etapeRefuz }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" role="alert" data-st="etape-refuz" style="border-radius:14px;padding:12px 16px">
+<p style="margin:0;font-size:14px;line-height:1.5;text-wrap:pretty">{{ etapeRefuz }}</p>
+</div>
+</sc-if>
 <div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 <label class="h-field">
-<span class="h-label">Comanda este gata când ajunge la</span>
+<span class="h-label">Comanda este încheiată (livrată) când ajunge la</span>
 <select class="h-select" value="{{ doneStatus }}" onChange="{{ onDoneStatus }}" style="height:46px;font-size:15px">
 <sc-for list="{{ doneOpts }}" as="o" hint-placeholder-count="5">
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
 </select>
-<span class="h-help">Ultima etapă din fluxul de producție.</span>
+<span class="h-help">Etapa în care marfa a ajuns la client. O pune șoferul, de pe „Rută”, ori biroul, din „Comenzi”. Etapa dinaintea ei e ultima pe care o poate pune laboratorul.</span>
 </label>
 <label class="h-field">
 <span class="h-label">Comanda este anulată când ajunge la</span>
@@ -626,7 +650,7 @@ const LISTS = [
   {
     k: "order_statuses",
     t: "Etape în laborator",
-    h: "Ordinea în care avansează o comandă. Butonul de etapă din panoul laboratorului poartă numele etapei următoare de aici și duce comanda exact acolo.",
+    h: "Ordinea în care avansează o comandă. Butonul de etapă din panoul laboratorului poartă numele etapei următoare de aici și duce comanda exact acolo — până la etapa dinaintea celei care încheie comanda. Mai departe laboratorul nu merge: etapa care încheie comanda o pune șoferul, de pe „Rută”, ori biroul, din „Comenzi”.",
     ph: "Ex.: La glazurat"
   },
   {
@@ -673,11 +697,11 @@ const LISTS = [
  * codul, aici sunt pentru cine se uită la ecran cu telefonul în mână.
  */
 const ANUNTURI = [
-  { k: "request_new", l: "Cerere nouă de pe site",
-    h: "Cineva a completat coșul și așteaptă un răspuns. Pe Telegram vine cu două butoane: acceptă și respinge." },
+  { k: "request_new", l: "Cerere nouă",
+    h: "Cineva a trimis o cerere și așteaptă un răspuns: un client, de pe site, ori un agent de-al tău. Anunțul spune cine a scris-o. Pe Telegram vine cu două butoane: acceptă și respinge." },
   { k: "order_new", l: "Comandă nouă",
-    h: "O comandă scrisă în panou sau născută dintr-o cerere acceptată." },
-  { k: "order_done", l: "Comandă gata",
+    h: "O comandă scrisă în panou sau născută dintr-o cerere acceptată. Anunțul spune cine a scris-o, al cui e clientul, produsele pe laturi și unde merge marfa." },
+  { k: "order_done", l: "Comandă livrată",
     h: "Comanda a ajuns în etapa care o încheie. Util dacă vrei să știi de departe că a plecat marfa." },
   { k: "order_cancelled", l: "Comandă anulată",
     h: "Comanda a fost trecută pe etapa de anulare, adică ștearsă din panou. Pe aceleași canale pleacă și „Comandă refăcută”, dacă o aduci înapoi." },
@@ -772,6 +796,11 @@ const VEDERI = [
 
 const isMasked = (v) => typeof v === "string" && v.indexOf("•") === 0;
 
+// Cele trei setări care țin de etape: lista și cele două roluri speciale.
+// Serverul le judecă împreună (`guard_status_list`), deci și refuzul lui de
+// lângă ele se stinge la umblatul prin oricare dintre cele trei.
+const ETAPE_CHEI = ["order_statuses", "order_status_done", "order_status_cancelled"];
+
 class Component extends DCLogic {
   state = {
     navOpen: false,
@@ -781,6 +810,12 @@ class Component extends DCLogic {
     // de ea: până nu apar aici, singurul care află este clientul, la telefon.
     failed: [], failedTotal: 0,
     msg: "", err: "", saving: false, testing: "", tested: {},
+    // Refuzul serverului pentru etapele cu rol special, cu vorbele lui. Se
+    // arată în cardul „Etapele cu rol special”, lângă cele două liste, pe
+    // lângă bara `err` de sus. Gol = nimic refuzat. Îl scrie numai `save()`,
+    // la codul `bad_special_status`; îl sting `put()` (la orice umblat prin
+    // etape), salvarea următoare și „Renunță”.
+    etapeRefuz: "",
     // De ce n-au venit datele, spus omului care se uită la ecran. Gol
     // înseamnă „nu s-a întâmplat nimic rău”, niciodată „nu e nimic de
     // arătat”: a doua e o afirmație despre lume, și se face din altă parte.
@@ -903,7 +938,13 @@ class Component extends DCLogic {
 
   /** Schimbă o valoare din formular. */
   put(key, value) {
-    this.setState({ s: Object.assign({}, this.state.s, { [key]: value }), msg: "" });
+    const x = { s: Object.assign({}, this.state.s, { [key]: value }), msg: "" };
+    // Refuzul de lângă etapele cu rol special vorbește despre ce era pe ecran
+    // la salvare. De cum se umblă la listă ori la una dintre cele două
+    // alegeri, nu mai e despre ce se vede, deci se stinge; serverul îl spune
+    // din nou la salvarea următoare, dacă mai e cazul.
+    if (ETAPE_CHEI.indexOf(key) >= 0) x.etapeRefuz = "";
+    this.setState(x);
   }
 
   /** O listă, ca tablou de valori. */
@@ -999,7 +1040,7 @@ class Component extends DCLogic {
     const diff = this.changes();
     const trimise = Object.keys(diff);
     if (!trimise.length) {
-      this.setState({ msg: "Nu e nimic de salvat.", err: "" });
+      this.setState({ msg: "Nu e nimic de salvat.", err: "", etapeRefuz: "" });
       return;
     }
     // Paza de dinainte de drum: nicio cheie fără rând în tabel nu pleacă.
@@ -1041,7 +1082,7 @@ class Component extends DCLogic {
       });
       return;
     }
-    this.setState({ saving: true, err: "", msg: "" });
+    this.setState({ saving: true, err: "", msg: "", etapeRefuz: "" });
     gp.put("/settings", { settings: diff })
       .then((r) => {
         const s = r.settings || {};
@@ -1100,7 +1141,17 @@ class Component extends DCLogic {
             : ""
         });
       })
-      .catch((e) => this.setState({ saving: false, err: e.message }));
+      // Refuzul se arată sus, ca până acum, cu vorbele serverului. Cel despre
+      // etapele cu rol special (`guard_status_list`, api/routes/settings.php:
+      // etapa căzută din listă, aceeași etapă pe amândouă rolurile, o etapă
+      // de „încheiată” care nu e ultima) se scrie ȘI lângă cele două liste din
+      // care s-a ales, tot cu vorbele lui: ele spun omului ce are de făcut.
+      // Se alege după COD, nu după text, ca o frază schimbată pe server să nu
+      // mute mesajul din loc.
+      .catch((e) => this.setState({
+        saving: false, err: e.message,
+        etapeRefuz: e && e.code === "bad_special_status" ? String(e.message || "") : ""
+      }));
   }
 
   /**
@@ -1371,8 +1422,18 @@ class Component extends DCLogic {
         items: items.map((name, i) => ({
           n: String(i + 1),
           name,
+          // Semnul de lângă etapa finală spunea „gata”. De la migrarea 030
+          // lista are, chiar deasupra ei, o etapă care se cheamă „Gata de
+          // livrare”: cu semnul vechi, „gata” stătea scris pe rândul de sub
+          // cea gata. Acum poartă vorba din titlul listei de mai jos —
+          // „Comanda este încheiată (livrată) când ajunge la” — și anume pe
+          // cea scurtă: „livrată” are tot șapte litere, ca „anulare”, deci
+          // semnul nu iese mai lat decât cel care încăpea deja pe rând. Socotit
+          // din stiluri, nu măsurat pe ecran: pe un telefon de 320, numele și
+          // semnul au la un loc vreo șaptezeci de pixeli, iar „încheiată” ar
+          // fi cerut singură peste nouăzeci.
           badge: L.k === "order_statuses"
-            ? (name === done ? "gata" : name === cancelled ? "anulare" : "")
+            ? (name === done ? "livrată" : name === cancelled ? "anulare" : "")
             : "",
           onUp: move(i, -1),
           onDown: move(i, 1),
@@ -1594,6 +1655,12 @@ class Component extends DCLogic {
       // scoate pe ecran. Cine n-are sesiune nu ajunge aici — îl duce
       // `gp.toLogin()`, din `pullTot()`.
       blockedLine: "Contul „" + (S.auth ? S.auth.name : "") + "” nu are acces la setări. Doar administratorii pot schimba configurarea aplicației.",
+      // Prima ieșire de pe ecranul de refuz: panoul de acasă al ROLULUI, din
+      // aceeași tabelă din care îl ia și intrarea (`gp.primaPagina`). A doua e
+      // `navBack`, de mai sus. Aceleași două chei ca în `Statistici.dc.html` și
+      // în `Jurnal.dc.html`.
+      acasaHref: gp.primaPagina(S.auth),
+      acasaEt: "← Înapoi la panoul meu",
       authName: S.auth ? S.auth.name : "",
 
       sub: dirty ? "Ai modificări nesalvate" : "Se aplică pe toate dispozitivele",
@@ -1602,7 +1669,7 @@ class Component extends DCLogic {
       saveLabel: S.saving ? "Se salvează…" : "Salvează",
       onSave: () => this.save(),
       resetCls: dirty ? "h-btn h-btn--ghost" : "h-btn h-btn--ghost",
-      onReset: () => set({ s: Object.assign({}, S.orig), drafts: {}, msg: "", err: "" }),
+      onReset: () => set({ s: Object.assign({}, S.orig), drafts: {}, msg: "", err: "", etapeRefuz: "" }),
 
       msg: S.msg, onMsgClose: () => set({ msg: "" }),
       err: S.err, onErrClose: () => set({ err: "" }),
@@ -1992,6 +2059,9 @@ class Component extends DCLogic {
       cancelOpts: etapaOpts(v("order_status_cancelled")),
       cancelStatus: v("order_status_cancelled"),
       onCancelStatus: field("order_status_cancelled"),
+      // Ce a refuzat serverul la etapele cu rol special, cu vorbele lui; gol
+      // când n-a refuzat nimic (v. `etapeRefuz`, în stare).
+      etapeRefuz: S.etapeRefuz || "",
 
       /* --- acces --- */
       panelOn: on("panel_enabled"),

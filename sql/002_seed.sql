@@ -133,7 +133,7 @@ INSERT IGNORE INTO settings (setting_key, value, is_secret) VALUES
   ('stock_min_default', '10', 0),
   ('panel_code', '', 1),
   ('panel_enabled', '1', 0),
-  ('order_statuses', '["În așteptare","La dospit","În cuptor","La ambalare","Predată","Anulată"]', 0),
+  ('order_statuses', '["În așteptare","La dospit","În cuptor","La ambalare","Gata de livrare","Predată","Anulată"]', 0),
   -- Care etapă din listă înseamnă „gata” și care înseamnă „anulată”.
   -- Sunt reținute separat fiindcă lista este editabilă: dacă redenumești
   -- „Predată” în „Livrată”, aplicația trebuie să știe în continuare care etapă

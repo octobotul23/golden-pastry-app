@@ -116,7 +116,7 @@ function setting_list(string $key, array $fallback = []): array
 /** Etapele din laborator, în ordinea în care avansează o comandă. */
 function order_statuses(): array
 {
-    return setting_list('order_statuses', ['În așteptare', 'La dospit', 'În cuptor', 'La ambalare', 'Predată', 'Anulată']);
+    return setting_list('order_statuses', ['În așteptare', 'La dospit', 'În cuptor', 'La ambalare', 'Gata de livrare', 'Predată', 'Anulată']);
 }
 
 /**
@@ -174,12 +174,19 @@ function order_flow(): array
  * Ultima etapă pe care o poate pune LABORATORUL: cea dinaintea celei finale.
  *
  * HOTĂRÂREA PATRONULUI, 19 septembrie 2026. Etapa finală înseamnă „ajunsă la
- * client", iar lista n-are una separată pentru „dată curierului". Laboratorul
- * o apăsa când termina de ambalat, deci comanda apărea livrată înainte să fi
- * urcat în mașină.
+ * client". Laboratorul o apăsa când termina de ambalat, deci comanda apărea
+ * livrată înainte să fi urcat în mașină.
+ *
+ * ȘI CEA DIN 2 OCTOMBRIE 2026. În septembrie lista n-avea o etapă a ei pentru
+ * „ambalată, așteaptă curierul", deci plafonul cădea pe ambalare, iar o
+ * comandă abia intrată la ambalat arăta la fel ca una gata lângă ușă. De la
+ * `sql/030_gata_de_livrare.sql` lista o are: „Gata de livrare" stă chiar
+ * înaintea celei finale, iar plafonul iese pe ea fără ca funcția de mai jos să
+ * se fi schimbat. Laboratorul se oprește acolo; de-acolo comanda e a
+ * curierului.
  *
  * SE SOCOTEȘTE, NU SE SCRIE ÎN COD. Lista de etape e editabilă din Setări:
- * scrisă pe litere („La ambalare"), plafonul ar fi rămas în urmă tăcut la
+ * scrisă pe litere („Gata de livrare"), plafonul ar fi rămas în urmă tăcut la
  * prima redenumire, iar laboratorul ar fi rămas fie cu o etapă în plus, fie
  * blocat cu una mai devreme. Tot din Setări se ia și care e cea finală
  * (`status_done()`), nu „ultima din listă".

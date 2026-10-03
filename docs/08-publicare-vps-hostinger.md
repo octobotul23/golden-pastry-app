@@ -107,7 +107,7 @@ Cele trei module Apache nu sunt de formă:
 | Modul | Fără el |
 |---|---|
 | `rewrite` | adresele fără `.html` nu mai merg, iar API-ul nu-și mai găsește rutele: 404 pe aproape tot |
-| `headers` | cad antetele de securitate, `noindex`-ul panourilor și oprirea memorării paginilor în browser |
+| `headers` | cad antetele de securitate, `noindex`-ul panourilor și al fișelor tehnice (PDF) și oprirea memorării paginilor în browser |
 | `expires` | pozele, `.css`-ul și `.js`-ul pleacă fără termen de păstrare și se cer din nou la fiecare deschidere |
 
 `expires` e singurul care lipsește des: pe Debian și Ubuntu nu e aprins din
@@ -205,6 +205,17 @@ scp -r deploy root@IP_VPS:/root/
 
 `scp -r` duce și fișierele ascunse (`.htaccess`, `.image-slots.state.json`) —
 sunt esențiale. Alternativ, cu interfață: [WinSCP](https://winscp.net/).
+
+De la runda 2.6.0, în `deploy/public_html/` stă și folderul **`fise/`**: cele
+21 de fișe tehnice ale produselor, în PDF, câte una pe produs, toate ale
+laturii congelate (`fisa-tehnica-rolldog-congelat.pdf` și celelalte). Pleacă
+numai la magazin, cu `public_html/`; `lab/` și `clienti/` n-au copie, iar
+`.htaccess`-ul lor trimite orice cerere `fise/…` la `goldenpastry.ro` cu un
+302, la fel ca pe cele pentru poze (`.claude/build-deploy.mjs:568-576`).
+`.htaccess`-ul magazinului le dă PDF-urilor tipul `application/pdf`, le cere
+browserului să întrebe de fiecare dată dacă fișa s-a schimbat (`no-cache`) și
+le ține în afara Google (`X-Robots-Tag: noindex`) — blocul „fișele tehnice
+(PDF)” din `HT_SEO` (`:478`). Pe `api/` nu ajunge nimic din toate astea.
 
 Pe server:
 
@@ -455,11 +466,47 @@ SELECT value FROM settings WHERE setting_key = 'migration_029_numere_catalog';
 
 Rândul poartă data rulării și e și zăvorul ei: a doua rulare îl găsește și nu
 mai renumerotează nimic, deci numerele alese de patron în fila Produse rămân
-ale lui la fiecare actualizare. Pe o instalare nouă nu are ce numerota — n-are
-încă niciun produs —, deci rândul apare și atât. Primul produs adăugat ia
-numărul 01, următorul 02, și tot așa, până la 999. Fără semn, magazinul arată
-numărul de ieri (cheia bazei), iar fișa produsului refuză schimbarea numărului
-cu un mesaj care numește migrarea.
+ale lui la fiecare actualizare. Pe o instalare nouă numerotează chiar la primul
+import cele 22 de produse semănate de `002`, de la 01 la 22; un produs adăugat
+după aceea ia numărul de după cel mai mare, până la 999. Fără semn, magazinul
+arată numărul vechi (cheia bazei), iar fișa produsului refuză schimbarea
+numărului cu un mesaj care numește migrarea.
+
+`030_gata_de_livrare.sql` **nu se vede nici ea**, și din aceeași pricină ca
+`029`: nu atinge schema deloc. Numărul rămâne tot **25**. Ea pune etapa „Gata
+de livrare" în lista de etape, chiar înaintea celei finale, și își scrie la
+coadă semnul din `settings`. Dovada se cere de acolo:
+
+```sql
+SELECT value FROM settings WHERE setting_key = 'migration_030_gata_de_livrare';
+```
+
+Rândul poartă data rulării și e și zăvorul ei: a doua rulare îl găsește și nu
+mai atinge lista, deci o etapă pe care o redenumești ori o scoți din Setări →
+Liste rămâne cum ai lăsat-o, la fiecare actualizare. Pe o instalare nouă
+migrarea n-are ce pune — lista semănată de `002` are deja etapa —, deci rândul
+apare și atât. Ce înseamnă etapa: laboratorul duce comanda până la „Gata de
+livrare" și se oprește acolo; de-acolo comanda e a curierului. Locul ei în
+listă e cel care contează, nu numele: laboratorul se oprește la etapa
+dinaintea celei finale, oricum s-ar chema ea.
+
+`031_fise_tehnice.sql` **nu se vede nici ea** în numărul de tabele: două
+coloane pe `products` — `sheet_frozen` și `sheet_baked` — și semnul ei din
+`settings`. Numărul rămâne tot **25**, iar dovada se cere pe a doua coloană:
+
+```sql
+SHOW COLUMNS FROM products LIKE 'sheet_baked';
+```
+
+În coloane stă calea fișei tehnice a fiecărei laturi. Migrarea leagă o dată,
+după `slug`, fișele venite cu pachetul de latura congelată a produselor lor;
+pe o instalare nouă, produsele semănate de `002` și le primesc de la primul
+import. Latura coaptă împrumută fișa celei congelate cât n-are una a ei, iar
+împrumutul se face în cod, nu în bază — deci `sheet_baked` rămâne gol, și așa
+trebuie. Legarea e zăvorâtă cu semnul `migration_031_fise_tehnice`: o rulare de
+după nu mai pune la loc o fișă pe care ai scos-o din Catalog. Fără
+coloane, magazinul nu arată butonul fișei la niciun produs, iar încărcarea
+unei fișe e refuzată cu un mesaj care numește migrarea.
 
 ---
 
@@ -508,6 +555,10 @@ cu un mesaj care numește migrarea.
    Așa nu se suprascriu datele de conectare la bază și nu se șterg pozele urcate
    din panoul Catalog. Bifează *Preview changes* înainte de OK — lista îți arată
    exact ce se scrie peste ce.
+
+   `fise/` **nu** intră în mască, dinadins: e folderul fișelor tehnice venite
+   cu pachetul și se înlocuiește la fiecare urcare. Fișele pe care le încarci
+   tu din Catalog stau în `products/`, lângă poze, deci le apără aceeași mască.
 
 ---
 
@@ -653,6 +704,22 @@ rm /var/www/gp/api/setup.php
    trebuie să fie acolo.
 4. Acceptă cererea → devine comandă.
 5. `https://clienti.goldenpastry.ro` — intră cu un cont de client, vezi comanda.
+6. Fișele tehnice. Pe pagina unui produs din magazin, „Descarcă fișa tehnică”
+   descarcă PDF-ul. Butonul stă numai la produsele care au fișă: dacă nu-l vezi,
+   alege alt produs — „Trigon cu vanilie și fructe”, de pildă, n-are una în
+   pachet. Apoi, de pe server, antetele:
+
+   ```bash
+   curl -sI https://goldenpastry.ro/fise/fisa-tehnica-rolldog-congelat.pdf
+   curl -sI https://lab.goldenpastry.ro/fise/fisa-tehnica-rolldog-congelat.pdf
+   ```
+
+   Prima trebuie să arate `200`, `Content-Type: application/pdf` și
+   `X-Robots-Tag: noindex`; a doua, `302` și `Location:
+   https://goldenpastry.ro/fise/…` (dacă numele antetelor ies cu litere mici,
+   e tot ce trebuie). Un `200` fără `X-Robots-Tag` la prima
+   înseamnă `headers` stins (pasul 2); un `404` la a doua, un `.htaccess`
+   lipsă din `/var/www/gp/lab/`.
 
 Dacă pasul 3 merge, partea grea e gata: datele chiar circulă între dispozitive.
 
@@ -707,7 +774,10 @@ sudo bash /root/actualizeaza-vps.sh
 
 Face singur copia de siguranță a bazei, aplică migrările care lipsesc, copiază
 cele patru foldere și repornește Apache. Ce **nu** se atinge niciodată:
-`api/config.php` (nu e în pachet) și folderul pozelor urcate din panoul Catalog.
+`api/config.php` (nu e în pachet) și folderul pozelor urcate din panoul Catalog
+— în care stau și fișele tehnice încărcate de acolo. `fise/`, în schimb, e al
+pachetului: se scrie peste la fiecare actualizare, iar o fișă pusă cu mâna în el
+dispare la urcarea următoare.
 
 `instaleaza-vps.sh` se poate rula și el a doua oară, dar nu aplică migrările —
 pe o bază care are deja tabele nu importă nimic dinadins

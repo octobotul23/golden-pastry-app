@@ -64,11 +64,19 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Jurnal de modificări</span>
 <span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
 </div>
-<div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<a href="Conturi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">Conturi</a>
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Comenzi</a>
-<a href="Depozit.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Depozit</a>
-<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<!-- DOUĂ IEȘIRI, AMÂNDOUĂ CALCULATE, NICIUNA SCRISĂ DE MÂNĂ (runda 2.6.0).
+     Aici stăteau patru legături scrise pe litere, aceleași pentru oricine:
+     „Conturi”, „Comenzi”, „Depozit”, „← Alege panoul”. Ecranul ăsta se aprinde
+     însă peste orice cont în afară de administrator și de fondator, iar
+     pentru ei „Conturi” era al doilea refuz pentru toți, „Comenzi” pentru
+     angajat și client, „Depozit” pentru agent și client. Tiparul e cel din
+     Statistici: prima duce la panoul de acasă al rolului (`gp.primaPagina`),
+     a doua la ieșirea lui obișnuită (`gp.iesire`) — clientul la magazin,
+     personalul la alegerea panoului. O singură coloană, ca fraza mai lungă a
+     primei legături să aibă loc și pe telefonul îngust. -->
+<div style="width:100%;display:grid;grid-template-columns:1fr;gap:8px">
+<a href="{{ acasaHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">{{ acasaEt }}</a>
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">{{ navBack.et }}</a>
 </div>
 </div>
 </div>
@@ -239,7 +247,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
 <div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
 <p style="margin:0;font-size:16px;color:var(--h-fg-muted)">{{ emptyLine }}</p>
+<!-- Numai când e ceva de șters. Pe jurnalul cu totul gol, fără niciun filtru
+     pus, butonul punea la loc aceleași valori și nu se întâmpla nimic. -->
+<sc-if value="{{ areCeSterge }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onClearFilters }}" style="min-height:44px;font-size:14px">Șterge filtrele</button>
+</sc-if>
 </div>
 </sc-if>
 
@@ -907,6 +919,11 @@ class Component extends DCLogic {
       // scoate pe ecran. Cine n-are sesiune nu ajunge aici — îl duce
       // `gp.toLogin()`.
       blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces la jurnal. Doar administratorii văd ce a schimbat fiecare cont.",
+      // Prima ieșire de pe ecranul de refuz: panoul de acasă al ROLULUI, din
+      // aceeași tabelă din care îl ia și intrarea (`gp.primaPagina`). A doua e
+      // `navBack`, de mai sus. Aceleași două chei ca în `Statistici.dc.html`.
+      acasaHref: gp.primaPagina(auth),
+      acasaEt: "← Înapoi la panoul meu",
       authName: auth ? auth.name : "",
 
       // Subtitlul numără ce a venit de la server, deci e o AFIRMAȚIE despre
@@ -916,7 +933,12 @@ class Component extends DCLogic {
       // adică exact minciuna pe care caseta o repară. Tace și până la primul
       // răspuns, din același motiv: zero nu e un răspuns, e o așteptare. Tace
       // de tot (șir gol), fiindcă orice altă frază ar repeta ce scrie caseta.
-      sub: (!S.loaded || S.eroare) ? "" : all.length + (all.length === 1 ? " acțiune înregistrată" : " acțiuni înregistrate") + " · " + accounts.length + (accounts.length === 1 ? " cont" : " conturi"),
+      // Cu o căutare pusă, `S.log` ține numai potrivirile: subtitlul spune câte
+      // a găsit serverul în tot jurnalul, nu „0 acțiuni înregistrate” deasupra
+      // casetei „Nicio acțiune care să conțină …”.
+      sub: (!S.loaded || S.eroare) ? ""
+        : S.q ? (S.total || 0) + ((S.total || 0) === 1 ? " acțiune găsită" : " acțiuni găsite") + " în tot jurnalul"
+        : all.length + (all.length === 1 ? " acțiune înregistrată" : " acțiuni înregistrate") + " · " + accounts.length + (accounts.length === 1 ? " cont" : " conturi"),
       search: S.search,
       onSearch: (e) => {
         const text = e.target.value;
@@ -1036,6 +1058,10 @@ class Component extends DCLogic {
       emptyLine: S.q
         ? "Nicio acțiune care să conțină „" + S.q + "”, în tot jurnalul."
         : all.length === 0 ? "Nicio acțiune înregistrată încă. Schimbă o comandă sau o parolă și apare aici." : "Nicio acțiune pe filtrele alese.",
+      // „Șterge filtrele” se desenează numai când chiar e un filtru pus: un
+      // cont ales, o zonă aleasă, o căutare trimisă (`S.q`) ori una încă în
+      // casetă (`S.search`). Fără niciunul, butonul nu avea ce schimba.
+      areCeSterge: S.who !== "Toate" || S.page !== "Toate" || !!S.q || !!S.search,
       // Serverul trimite câte 50 de intrări. Pagina arăta doar primele și n-avea
       // nicio cale către cele mai vechi, deși scria că jurnalul e permanent.
       footLine: S.total

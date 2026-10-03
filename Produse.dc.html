@@ -24,6 +24,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 @keyframes pr-fade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 [data-pr=mini]{display:flex;align-items:center;justify-content:center;width:32px;height:32px;flex:none;padding:0;font-size:14px;border-radius:9px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);cursor:pointer}
 [data-pr=mini]:hover{border-color:var(--h-accent);color:var(--h-fg)}
+[data-pr=mini-gol]{width:32px;height:32px;flex:none}
 [data-pr=lat]{font-family:inherit;font-size:10px;line-height:1;flex:none;display:inline-flex;align-items:center;gap:4px;--gp-semn-marime:1.25em;padding:5px 9px;border-radius:999px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-faint);cursor:pointer;opacity:.62}
 [data-pr=lat]:hover{border-color:var(--h-accent);color:var(--h-fg);opacity:1}
 [data-pr=lat].pr-on{border-color:var(--h-accent);color:var(--h-fg);font-weight:700;opacity:1}
@@ -204,9 +205,22 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Catalog de produse</span>
 <span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
 </div>
-<div style="width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px">
-<a href="Administrare%20Comenzi.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">Comenzi</a>
-<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<!-- DOUĂ IEȘIRI, AMÂNDOUĂ CALCULATE, NICIUNA SCRISĂ DE MÂNĂ (runda 2.6.0).
+     Aici stăteau două legături scrise pe litere, aceleași pentru oricine:
+     „Comenzi” și „← Alege panoul”. Ecranul ăsta se aprinde însă peste orice
+     cont în afară de administrator și de fondator, iar „Comenzi” era al doilea
+     refuz la rând pentru angajat, pentru contul de pontaj, pentru client și
+     pentru contul comun al tabletelor: niciunul n-are panoul acela. Iar
+     clientul n-are niciun panou de ales. Tiparul e cel din Setări, din Jurnal
+     și din Statistici: prima duce la panoul de acasă al rolului
+     (`gp.primaPagina`), a doua la ieșirea lui obișnuită (`gp.iesire`) —
+     clientul la magazin, personalul la alegerea panoului. O singură coloană,
+     ca fraza mai lungă a primei legături să aibă loc și pe telefonul îngust.
+     Le păzește `.claude/check-vede-poate.mjs`, cu tabelul din
+     `.claude/vede-poate/produse.mjs`. -->
+<div style="width:100%;display:grid;grid-template-columns:1fr;gap:8px">
+<a href="{{ acasaHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">{{ acasaEt }}</a>
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">{{ navBack.et }}</a>
 </div>
 </div>
 </div>
@@ -583,7 +597,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:14px">
 <div style="display:flex;flex-direction:column;gap:4px">
 <span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Grupele din catalog</span>
-<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Ordinea de aici e ordinea în care apar pe site. O grupă care are produse în ea nu poate fi ștearsă — nici dacă produsele sunt doar scoase din catalog.</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">Ordinea de aici e ordinea în care apar pe site. O grupă care are produse în ea nu poate fi ștearsă — nici dacă produsele sunt doar scoase din catalog —, așa că × apare numai la grupele goale.</span>
 </div>
 <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
 <div style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
@@ -594,7 +608,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-badge" style="font-size:10px;flex:none">{{ c.count }}</span>
 <button type="button" data-pr="mini" onClick="{{ c.onUp }}" title="Mai sus">↑</button>
 <button type="button" data-pr="mini" onClick="{{ c.onDown }}" title="Mai jos">↓</button>
-<button type="button" data-pr="mini" onClick="{{ c.onDel }}" title="Șterge">×</button>
+<!-- × numai la grupa GOALĂ. Serverul refuză ștergerea unei grupe cu produse
+     în ea (409 `category_in_use`), iar pagina știe dinainte câte sunt — le
+     scrie în insigna de alături. Până în 2.6.0 butonul stătea pe fiecare rând
+     și, apăsat pe o grupă plină, aducea numai refuzul. În locul lui rămâne un
+     gol de aceeași mărime, ca rândurile să nu se strâmbe unul față de altul. -->
+<sc-if value="{{ c.poateSterge }}" hint-placeholder-val="{{ true }}">
+<button type="button" data-pr="mini" onClick="{{ c.onDel }}" title="Șterge grupa" aria-label="Șterge grupa">×</button>
+</sc-if>
+<sc-if value="{{ c.areProduse }}" hint-placeholder-val="{{ false }}">
+<span data-pr="mini-gol" aria-hidden="true"></span>
+</sc-if>
 </div>
 <div data-pr="row" style="display:flex;align-items:center;gap:8px">
 <span style="width:22px;flex:none"></span>
@@ -603,11 +627,18 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </div>
 </sc-for>
+<!-- Rândul de adăugat se retrage odată cu „+ Produs nou”, pe același steag: cât
+     catalogul nu s-a încărcat — ori cât e caseta roșie pe ecran — pagina nu
+     știe nici al cui e contul, nici ce grupe sunt deja. Până în 2.6.0 „Adaugă”
+     stătea aici și atunci: singura unealtă care scrie, întinsă de o pagină
+     care tocmai spusese că n-a aflat nimic. -->
+<sc-if value="{{ potAdauga }}" hint-placeholder-val="{{ true }}">
 <div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px">
 <input class="h-input" value="{{ catDraft }}" onChange="{{ onCatDraft }}" placeholder="Grupă nouă (RO)" style="height:46px;font-size:15px">
 <input class="h-input" value="{{ catDraftEn }}" onChange="{{ onCatDraftEn }}" placeholder="New group (EN)" style="height:46px;font-size:15px">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onCatAdd }}" style="height:46px;font-size:14px">Adaugă</button>
 </div>
+</sc-if>
 </div>
 </sc-if>
 
@@ -642,9 +673,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      prima zi de folosință. Produsele de dinainte poartă totuși același fișier
      în amândouă casetele — nu e căderea, e migrarea 027, care a copiat o
      singură dată. Lămurirea de sub fiecare casetă spune pe față ce se
-     întâmplă dacă lipsește. -->
+     întâmplă dacă lipsește.
+     Cele două blocuri se aliniază LA VÂRF (`flex-start`), nu la mijloc: lămurirea
+     din stânga are un rând mai mult decât cea din dreapta, iar la mijloc
+     eticheta „Fotografie — congelat” urca atunci cu 10px peste perechea ei. -->
 <div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
 <!-- Leneșă din același motiv ca miniatura din listă: altfel parserul cere
      de la server textul cu acolade al legăturii, la fiecare deschidere. -->
 <img data-pr="thumb" loading="lazy" src="{{ f.photo }}" alt="" style="width:88px;height:88px">
@@ -654,13 +688,52 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="h-help">{{ photoHelp }}</span>
 </div>
 </div>
-<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+<div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
 <img data-pr="thumb" loading="lazy" src="{{ f.photoBaked }}" alt="" style="width:88px;height:88px">
 <div style="flex:1;min-width:160px;display:flex;flex-direction:column;gap:6px">
 <span class="h-label" style="display:flex;align-items:flex-start;gap:6px" data-semn-sus="1"><gp-semn latura="copt" aria-hidden="true"></gp-semn>Fotografie — copt</span>
 <input type="file" accept="image/jpeg,image/png,image/webp" onChange="{{ onPhotoBaked }}" style="font-size:13px">
 <span class="h-help">{{ photoBakedHelp }}</span>
 </div>
+</div>
+</div>
+
+<!-- Două fișe tehnice, una de fiecare catalog (runda 2.6.0) — documentul pe
+     care clientul îl descarcă din magazin și îl arată la un control. Casetele
+     arată fișa PROPRIE a laturii, nu pe cea oferită: Coapte împrumută în
+     magazin fișa de la congelate cât n-are a ei (api/lib/laturi.php,
+     `latura_fisa()`), iar aici trebuie să se vadă tocmai că n-are — altfel
+     „Scoate fișa” de la coapte ar părea că nu face nimic. Lămurirea de sub
+     casetă spune împrumutul în cuvinte.
+     Ca la poze, nimic nu pleacă până la „Salvează”: nici fișierul ales, nici
+     scoaterea. „Vezi fișa” se deschide în filă nouă, ca formularul să rămână
+     cum e. -->
+<div data-pr="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<span class="h-label" style="display:flex;align-items:flex-start;gap:6px" data-semn-sus="1"><gp-semn latura="congelat" aria-hidden="true"></gp-semn>Fișă tehnică (PDF) — congelat</span>
+<sc-if value="{{ fisaAre }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<a class="h-btn h-btn--secondary" href="{{ fisaHref }}" target="_blank" rel="noopener" style="min-height:44px;font-size:13px;text-decoration:none">Vezi fișa</a>
+<sc-if value="{{ fisaScoateArata }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onFisaScoate }}" style="min-height:44px;font-size:13px">{{ fisaScoateEt }}</button>
+</sc-if>
+</div>
+</sc-if>
+<input type="file" accept="application/pdf,.pdf" aria-label="Fișă tehnică pentru congelate (PDF)" onChange="{{ onFisa }}" style="font-size:13px;max-width:100%">
+<span class="h-help">{{ fisaHelp }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+<span class="h-label" style="display:flex;align-items:flex-start;gap:6px" data-semn-sus="1"><gp-semn latura="copt" aria-hidden="true"></gp-semn>Fișă tehnică (PDF) — copt</span>
+<sc-if value="{{ fisaBakedAre }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<a class="h-btn h-btn--secondary" href="{{ fisaBakedHref }}" target="_blank" rel="noopener" style="min-height:44px;font-size:13px;text-decoration:none">Vezi fișa</a>
+<sc-if value="{{ fisaBakedScoateArata }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onFisaBakedScoate }}" style="min-height:44px;font-size:13px">{{ fisaBakedScoateEt }}</button>
+</sc-if>
+</div>
+</sc-if>
+<input type="file" accept="application/pdf,.pdf" aria-label="Fișă tehnică pentru coapte (PDF)" onChange="{{ onFisaBaked }}" style="font-size:13px;max-width:100%">
+<span class="h-help">{{ fisaBakedHelp }}</span>
 </div>
 </div>
 
@@ -1009,6 +1082,9 @@ class Component extends DCLogic {
     // mereu, iar steagul ăsta nu schimbă nimic acolo.
     filtreDeschise: false,
     form: null, formErr: "", saving: false, pendingPhoto: null,
+    // Fișele tehnice care așteaptă salvarea, cheiate pe latură ca pozele:
+    // `pendingSheet` ține fișierul ales, `scoateFisa` ține „scoate-o”.
+    pendingSheet: null, scoateFisa: null,
     // Produsul pentru care s-a apăsat ×, cu tot ce trebuie ca fereastra să
     // scrie adevărul: numele, dacă chiar se poate șterge, și de ce nu.
     sterge: null,
@@ -1129,8 +1205,13 @@ class Component extends DCLogic {
     // ca pe server —, dar cel mult 999. Dacă îl lasă neatins, nici nu-l
     // trimite: îl pune serverul.
     const urmator = Math.min(this.state.products.reduce((m, x) => Math.max(m, numarDe(x)), 0) + 1, 999);
+    // Casetele de fișier ale formularului de dinainte nu mai sunt pe ecran.
+    this.__casete = null;
+    // Nici vorbele despre pozele lui nu-l privesc pe ăsta (v. `save()`).
+    this.__pozeZis = {};
     this.setState({
       pendingPhoto: null,
+      pendingSheet: null, scoateFisa: null,
       formErr: "",
       form: p
         ? {
@@ -1144,6 +1225,11 @@ class Component extends DCLogic {
             pragB: prag(p.pragB, imp.pragB), pragC: prag(p.pragC, imp.pragC),
             numar: gp.numarAfisat(numarDe(p)), numarInitial: numarDe(p),
             isNew: !!p.isNew, photo: p.photo || "", photoBaked: p.photoBaked || "",
+            // Fișele PROPRII ale laturilor (`sheet`, `sheetBaked`), nu cele
+            // oferite (`sheetFor`): formularul schimbă ce e scris pe latură,
+            // iar împrumutul îl face serverul. Un server de dinainte de 031 nu
+            // le trimite — casete goale.
+            sheet: p.sheet || "", sheetBaked: p.sheetBaked || "",
             // Bifele vin din server ca adevăruri gata socotite: pe o bază de
             // dinainte de migrarea 024 coloanele lipsesc, iar API-ul răspunde
             // purtarea de până atunci (v. latura_in()). Panoul nu le mai
@@ -1159,6 +1245,7 @@ class Component extends DCLogic {
             id: null, name: "", nameEn: "", desc: "", descEn: "",
             category: (this.state.cats[0] || {}).slug || "",
             grams: "", horeca: "", retail: "", isNew: false, photo: "", photoBaked: "",
+            sheet: "", sheetBaked: "",
             horecaB: "", horecaC: "", retailB: "", retailC: "",
             pragB: prag(null, imp.pragB), pragC: prag(null, imp.pragC),
             numar: gp.numarAfisat(urmator), numarInitial: urmator,
@@ -1258,10 +1345,15 @@ class Component extends DCLogic {
     // tocmai creat de prima.
     if (this.__saving) return;
     this.__saving = true;
-    // Ce a pățit fiecare poză, strâns pe drum și spus la capăt. Se golește
-    // aici, nu la sfârșit: o salvare picată n-are voie să lase vorbe vechi
-    // care s-ar lipi de următoarea.
-    this.__pozeZis = [];
+    // Ce a pățit fiecare poză, strâns pe drum și spus la capăt: câte o vorbă
+    // de latură. NU se mai golește la fiecare apăsare: de când o poză urcată
+    // nu mai pleacă a doua oară (v. `uploadPhoto()`), vorba despre ea trebuie
+    // să apuce și apăsarea următoare. Golită aici, când pica un pas de după
+    // poză (o fișă, rețeta), mesajul de la capătul apăsării a doua tăcea
+    // despre poze — și despre una rămasă nemicșorată. Vorbele nu se lipesc
+    // de alt produs: le uită deschiderea formularului (`openForm()`), iar
+    // urcarea următoare a aceleiași laturi o înlocuiește pe cea veche.
+    this.__pozeZis = this.__pozeZis || {};
 
     // Verificăm aici ce poate fi verificat aici, ca să nu plece o cerere doar
     // ca să se întoarcă cu aceeași eroare. Serverul verifică oricum din nou.
@@ -1342,9 +1434,13 @@ class Component extends DCLogic {
     // Serverul le întoarce numai când a pus el numărul (la orice produs nou,
     // ori când numărul s-a schimbat); altfel propoziția rămâne cea de dinainte.
     let despreNumar = "";
+    // A ajuns PRODUSUL pe server? De aici știe ramura de eroare, la capăt, să
+    // deosebească „nu s-a salvat nimic” de „produsul e salvat, restul nu”.
+    let salvat = false;
 
     req
       .then((r) => {
+        salvat = true;
         if (r && r.numar > 0) {
           const n = (r.mutate || []).length;
           const de = n >= 20 && (n % 100 === 0 || n % 100 >= 20) ? " de" : "";
@@ -1369,19 +1465,29 @@ class Component extends DCLogic {
         // se calcă. Cea congelată prima, fiindcă ea e și poza de bază a
         // amândurora — dacă a doua cade, produsul are măcar ce arăta pe site.
         //
+        // Fișele tehnice merg după poze, tot una după alta și din același
+        // motiv: două cereri pe același produs. Cea congelată prima, fiindcă
+        // pe ea o împrumută și Coapte.
+        //
         // Rețeta merge ultima: e singura care are nevoie de numărul produsului
         // și, dacă pică, celelalte sunt deja salvate — omul poate repara doar
         // cantitatea, fără să reia tot.
         return this.uploadPhoto(id, "congelat")
           .then(() => this.uploadPhoto(id, "copt"))
+          .then(() => this.schimbaFisa(id, "congelat"))
+          .then(() => this.schimbaFisa(id, "copt"))
           .then(() => this.salveazaReteta(id));
       })
       .then(() => this.pull())
-      .then(() => this.setState({
-        saving: false, form: null, pendingPhoto: null, pendingPhotoUrl: null,
-        msg: (eNou ? "Produsul a fost adăugat în catalog" : "Produsul a fost salvat") + (despreNumar || ".")
-          + (this.__pozeZis.length ? " Poze: " + this.__pozeZis.join(", ") + "." : "")
-      }))
+      .then(() => {
+        const zise = ["congelat", "copt"].map((l) => (this.__pozeZis || {})[l]).filter(Boolean);
+        this.setState({
+          saving: false, form: null, pendingPhoto: null, pendingPhotoUrl: null,
+          pendingSheet: null, scoateFisa: null,
+          msg: (eNou ? "Produsul a fost adăugat în catalog" : "Produsul a fost salvat") + (despreNumar || ".")
+            + (zise.length ? " Poze: " + zise.join(", ") + "." : "")
+        });
+      })
       .catch((e) => {
         // Rețeta pleacă ultima, deci produsul și fotografia sunt deja salvate.
         // Mesajul de mai jos — „adăugat, dar fără fotografie" — ar fi aici o
@@ -1391,23 +1497,60 @@ class Component extends DCLogic {
           this.pull();
           return;
         }
+        // La fel și fișa tehnică: pleacă după produs și după poze, deci ele
+        // sunt salvate. Eroarea ei poartă `fisa`, nu `latura` — pe `latura`
+        // ramura de mai jos ar fi citit-o drept fotografie și i-ar fi spus
+        // omului să aleagă altă poză. Rețeta vine DUPĂ fișe și n-a mai apucat
+        // să plece; propoziția a doua o spune, ca omul să nu închidă
+        // formularul crezând că numai fișa a rămas pe drum.
+        if (e && e.fisa) {
+          this.setState({
+            saving: false,
+            formErr: "Produsul a fost salvat, dar fișa tehnică pentru " + LATURA[e.fisa] + " nu: " + e.message
+              + " Îndreapt-o și apasă „Salvează” din nou: rețeta pleacă abia după fișe."
+          });
+          this.pull();
+          return;
+        }
         // Când produsul s-a creat și doar poza a căzut, spunem asta pe față și
         // reîmprospătăm lista din spate: altfel omul citește doar plângerea
         // despre fotografie și pleacă convins că n-a salvat nimic.
         const creat = eNou && this.state.form && this.state.form.id;
-        // CARE poză a căzut, nu doar „o poză". Cu două casete în formular,
-        // „fără fotografie" l-ar pune pe om s-o încerce pe cea care trecuse.
-        const careaPoza = e && e.latura
-          ? "fotografia pentru " + LATURA[e.latura]
-          : "fotografie";
-        this.setState({
-          saving: false,
-          formErr: creat
-            ? "Produsul a fost adăugat în catalog, dar fără " + careaPoza + ": " + e.message
-              + " Alege altă fotografie și apasă „Salvează”, ori renunță — produsul rămâne, cu poza lipsă."
-            : e.message
-        });
-        if (creat) this.pull();
+        // Fotografia: eroarea ei poartă `latura`. CARE poză a căzut, nu doar
+        // „o poză” — cu două casete în formular, „fără fotografie” l-ar pune
+        // pe om s-o încerce pe cea care trecuse. La un produs de dinainte se
+        // spune la fel de limpede că produsul e salvat: până acum rămânea numai
+        // vorba serverului, fără latură, sub două casete de poză.
+        if (e && e.latura) {
+          this.setState({
+            saving: false,
+            formErr: creat
+              ? "Produsul a fost adăugat în catalog, dar fără fotografia pentru " + LATURA[e.latura] + ": " + e.message
+                + " Alege altă fotografie și apasă „Salvează”, ori renunță — produsul rămâne, cu poza lipsă."
+              : "Produsul a fost salvat, dar fotografia pentru " + LATURA[e.latura] + " nu: " + e.message
+                + " Alege altă fotografie și apasă „Salvează” din nou: fișele și rețeta pleacă abia după poze."
+          });
+          this.pull();
+          return;
+        }
+        // O eroare FĂRĂ etichetă, după ce produsul a ajuns pe server: nu se știe
+        // care pas a căzut, deci nu se dă vina pe niciunul. Ramura de aici
+        // scria „dar fără fotografie” pentru orice — și pentru o cădere care
+        // n-avea nicio legătură cu poza —, iar omul schimba o fotografie bună.
+        // Vorbele erorii stau la coadă, întregi, ca să nu le strice punctuația
+        // propoziției.
+        if (salvat) {
+          this.setState({
+            saving: false,
+            formErr: (creat ? "Produsul a fost adăugat în catalog" : "Produsul a fost salvat")
+              + ", dar restul salvării (poze, fișe, rețetă) nu a putut fi dus la capăt."
+              + " Apasă „Salvează” din nou. Eroarea: " + ((e && e.message) || "necunoscută")
+          });
+          this.pull();
+          return;
+        }
+        // Nici produsul n-a ajuns: vorba serverului, întreagă.
+        this.setState({ saving: false, formErr: (e && e.message) || "Produsul nu a putut fi salvat." });
       })
       .finally(() => { this.__saving = false; });
   }
@@ -1439,13 +1582,40 @@ class Component extends DCLogic {
         // obișnuită și nu merită niciun cuvânt; celelalte pricini da —
         // mai ales `gd_lipseste`, care altfel ar lăsa pozele întregi pe
         // site fără ca nimeni să afle.
+        // Vorba laturii se scrie din nou la fiecare urcare a ei: poza de acum
+        // o înlocuiește pe cea urcată la o apăsare de dinainte, cu vorba ei cu
+        // tot — și când cea nouă n-are nimic de spus.
         const p = (r && r.poza) || null;
+        const zise = Object.assign({}, this.__pozeZis, { [latura]: "" });
         if (p && p.micsorata) {
-          this.__pozeZis.push(LATURA[latura] + " " + p.scrisDe + " → " + p.scrisLa);
+          zise[latura] = LATURA[latura] + " " + p.scrisDe + " → " + p.scrisLa;
         } else if (p && p.pricina && p.pricina !== "era_deja_mica") {
-          this.__pozeZis.push(LATURA[latura] + " a rămas la " + p.scrisDe
-            + " (" + (POZA_PRICINA[p.pricina] || p.pricina) + ")");
+          zise[latura] = LATURA[latura] + " a rămas la " + p.scrisDe
+            + " (" + (POZA_PRICINA[p.pricina] || p.pricina) + ")";
         }
+        this.__pozeZis = zise;
+        // Poza a ajuns: alegerea ei se uită PE LOC, nu la capătul lanțului.
+        // Golită abia la izbânda întreagă, o poză deja urcată mai pleca o dată
+        // la a doua apăsare pe „Salvează” — de câte ori pica un pas de după ea
+        // (cealaltă poză, o fișă, rețeta). Aceeași purtare ca la fișe, în
+        // `schimbaFisa()`.
+        //
+        // Formularul ia adresa pozei din răspuns: cu alegerea uitată, miniatura
+        // nu mai arată previzualizarea locală, iar fără rândul ăsta ar sări
+        // înapoi la poza veche, deși pe server e cea nouă. Un server care nu
+        // trimite adresa lasă în loc previzualizarea. Și numai pe formularul
+        // ACELUIAȘI produs: închis și redeschis pe altul cât cererea era pe
+        // drum, poza n-are ce căuta în el.
+        const fara = (o) => Object.assign({}, o, { [latura]: null });
+        const f = this.state.form;
+        const noua = (r && r.photo) || (this.state.pendingPhotoUrl || {})[latura] || "";
+        const dinRaspuns = noua && f && f.id === id
+          ? { form: Object.assign({}, f, { [latura === "copt" ? "photoBaked" : "photo"]: noua }) }
+          : {};
+        this.setState(Object.assign({
+          pendingPhoto: fara(this.state.pendingPhoto), pendingPhotoUrl: fara(this.state.pendingPhotoUrl)
+        }, dinRaspuns));
+        this.golesteCaseta("poza", latura);
         return undefined;
       })
       .catch((e) => {
@@ -1455,6 +1625,92 @@ class Component extends DCLogic {
         gresit.latura = latura;
         throw gresit;
       });
+  }
+
+  /**
+   * Fișa tehnică a unei laturi: se încarcă, se scoate, ori rămâne cum e.
+   *
+   * Se cheamă o dată pentru fiecare latură, după poze, și tace când omul n-a
+   * atins caseta ei. Un fișier ales câștigă în fața unui „scoate”: cel nou îl
+   * înlocuiește pe cel vechi, iar serverul îl șterge singur pe cel vechi.
+   *
+   * La încărcare pleacă două câmpuri, „sheet” și „latura” — numele pe care le
+   * citește `route_products_sheet()`. La scoatere latura se spune ANUME, în
+   * adresă: fără ea ruta refuză (422 `latura_lipsa`), ca o cerere scrisă pe
+   * jumătate să nu scoată fișa de la congelate, pe care o împrumută și Coapte.
+   *
+   * Răspunsul aduce fișele amânduror laturilor așa cum au rămas, iar formularul
+   * le ia de acolo. Nu e de frumusețe: după o încărcare, fișa veche a laturii
+   * nu mai e pe disc, iar dacă latura cealaltă pică și formularul rămâne
+   * deschis, „Vezi fișa” ar duce la un fișier șters.
+   */
+  schimbaFisa(id, latura) {
+    const file = (this.state.pendingSheet || {})[latura];
+    const scoate = !!(this.state.scoateFisa || {})[latura];
+    if (!id || (!file && !scoate)) return Promise.resolve();
+
+    let cerere;
+    if (file) {
+      const fd = new FormData();
+      fd.append("sheet", file);
+      fd.append("latura", latura);
+      cerere = gp.upload("/products/" + id + "/sheet", fd);
+    } else {
+      cerere = gp.del("/products/" + id + "/sheet?latura=" + latura);
+    }
+    return cerere
+      .then((r) => {
+        const fara = (o) => Object.assign({}, o, { [latura]: null });
+        const dinRaspuns = r && r.sheet !== undefined && this.state.form
+          ? { form: Object.assign({}, this.state.form, { sheet: r.sheet || "", sheetBaked: r.sheetBaked || "" }) }
+          : {};
+        this.setState(Object.assign({
+          pendingSheet: fara(this.state.pendingSheet), scoateFisa: fara(this.state.scoateFisa)
+        }, dinRaspuns));
+        // Și caseta de fișier, nu numai starea: altfel, când latura cealaltă
+        // pică și formularul rămâne deschis, caseta arată mai departe numele
+        // fișei deja urcate (v. `golesteCaseta()`).
+        this.golesteCaseta("fisa", latura);
+        return undefined;
+      })
+      .catch((e) => {
+        // Latura călătorește cu eroarea, ca la poze, dar sub alt nume: `fisa`.
+        // save() deosebește după el o fișă picată de o fotografie picată.
+        const gresit = new Error((e && e.message)
+          || (file ? "Fișa tehnică nu a putut fi încărcată." : "Fișa tehnică nu a putut fi scoasă."));
+        gresit.fisa = latura;
+        throw gresit;
+      });
+  }
+
+  /**
+   * Casetele de fișier ale formularului: patru, câte o poză și o fișă de
+   * fiecare latură.
+   *
+   * O casetă de fișier nu se golește din stare. Șablonul n-o redesenează cât
+   * formularul rămâne deschis, iar browserul nu lasă scris în ea decât golul.
+   * Așa că, după ce fișierul ei ajungea pe server și un pas de mai încolo pica,
+   * caseta arăta mai departe numele fișierului deja urcat — iar lămurirea de
+   * dedesubt spunea că nu mai e nimic de încărcat. Două vorbe despre același
+   * lucru, din care omul o credea pe cea greșită și alegea fișierul iar.
+   *
+   * Nodul casetei se ține minte la alegere (`e.target`), pe instanță, nu în
+   * stare: nu e ceva de desenat. Se golește când fișierul A AJUNS — din
+   * `uploadPhoto()` și din `schimbaFisa()` — și se uită la fiecare deschidere
+   * a formularului (`openForm()`), când casetele sunt altele.
+   */
+  tineCaseta(fel, latura, nod) {
+    this.__casete = Object.assign({}, this.__casete, { [fel + ":" + latura]: nod || null });
+  }
+
+  golesteCaseta(fel, latura) {
+    const cheie = fel + ":" + latura;
+    const nod = (this.__casete || {})[cheie];
+    if (!nod) return;
+    // Golul scris de aici nu pornește „change”, deci nu mai trece prin
+    // `alegePoza` / `alegeFisa`: starea a golit-o deja cine cheamă.
+    try { nod.value = ""; } catch (e) {}
+    this.__casete = Object.assign({}, this.__casete, { [cheie]: null });
   }
 
   /**
@@ -1825,6 +2081,13 @@ class Component extends DCLogic {
         onNameBlur: incheie("name", c.name), onNameEnBlur: incheie("nameEn", c.nameEn),
         onNoteBlur: incheie("note", c.note), onNoteEnBlur: incheie("noteEn", c.noteEn),
         onUp: move(-1), onDown: move(1),
+        // × se desenează numai la grupa pe care serverul chiar o șterge: una
+        // fără niciun produs, nici scos din catalog (`route_categories_delete`
+        // numără tot ce are `category` egal cu cheia grupei — adică
+        // `productsAll`). Un server mai vechi nu trimite `productsAll`; atunci
+        // rămâne `products`. Două steaguri, nu unul negat: `sc-if` ia o valoare.
+        poateSterge: Math.max(c.productsAll || 0, c.products || 0) === 0,
+        areProduse: Math.max(c.productsAll || 0, c.products || 0) > 0,
         onDel: () => {
           gp.del("/categories/" + c.id)
             .then(() => self.pull())
@@ -1952,6 +2215,8 @@ class Component extends DCLogic {
     const alegePoza = (l) => (e) => {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
+      // Caseta se ține minte, ca s-o poată goli urcarea (v. `golesteCaseta()`).
+      self.tineCaseta("poza", l, e.target);
       // Previzualizare locală: fișierul pleacă spre server abia la salvare,
       // ca o poză aleasă din greșeală să nu rămână urcată degeaba.
       let url = "";
@@ -1970,6 +2235,53 @@ class Component extends DCLogic {
       : (l === "copt"
         ? "Se arată numai la coapte. Fără ea, produsul apare acolo fără poză. JPEG, PNG sau WebP, maximum 10 MB."
         : "Se arată numai la congelate. JPEG, PNG sau WebP, maximum 10 MB — se verifică după conținut, nu după extensie."));
+
+    /* --- cele două fișe tehnice, fiecare pe latura ei --- */
+    //
+    // Trei lucruri pe fiecare latură: fișa ținută acum de produs (cea PROPRIE,
+    // din formular), fișierul ales și încă neplecat, și „scoate-o”. Ultimele
+    // două stau în `pendingSheet` și `scoateFisa`, cheiate pe latură, și pleacă
+    // abia la salvare (v. `schimbaFisa()`).
+    const fisaTinuta = (l) => (S.form ? S.form[l === "copt" ? "sheetBaked" : "sheet"] || "" : "");
+    const fisaAleasa = (l) => (S.pendingSheet || {})[l] || null;
+    // Un fișier ales ține loc de scoatere: la salvare cel nou îl înlocuiește
+    // pe cel vechi, deci „se scoate” ar fi spus doar jumătate.
+    const fisaDeScos = (l) => !!(S.scoateFisa || {})[l] && !fisaAleasa(l);
+    const alegeFisa = (l) => (e) => {
+      const file = (e.target.files && e.target.files[0]) || null;
+      // Fără `if (!file) return` de la poze: când omul redeschide fereastra de
+      // ales și o închide fără nimic, unele browsere golesc caseta. Starea o
+      // urmează — altfel sub o casetă goală ar scrie „Se încarcă la salvare”.
+      //
+      // Caseta se ține minte, ca s-o poată goli `schimbaFisa()` după ce fișa
+      // a ajuns pe server (v. `golesteCaseta()`).
+      self.tineCaseta("fisa", l, e.target);
+      set({ pendingSheet: Object.assign({}, S.pendingSheet, { [l]: file }) });
+    };
+    // „Scoate fișa” se apasă a doua oară ca să se răzgândească omul: până la
+    // salvare n-a plecat nimic.
+    const comutaScoaterea = (l) => () => set({
+      scoateFisa: Object.assign({}, S.scoateFisa, { [l]: !(S.scoateFisa || {})[l] })
+    });
+    // Ce va oferi magazinul la congelate DUPĂ salvare — de asta atârnă ce se
+    // spune sub caseta de la coapte, care împrumută de acolo.
+    const ramaneRece = () => !!fisaAleasa("congelat") || (!!fisaTinuta("congelat") && !fisaDeScos("congelat"));
+    const ajutorFisa = (l) => {
+      const aleasa = fisaAleasa(l);
+      if (aleasa) return "Se încarcă la salvare: " + aleasa.name;
+      if (fisaDeScos(l)) {
+        return "Se scoate la salvare." + (l === "copt" && ramaneRece()
+          ? " La coapte, magazinul va oferi apoi fișa de la congelate."
+          : " Ca s-o ai înapoi, o încarci din nou de aici.");
+      }
+      if (fisaTinuta(l)) {
+        return "Magazinul oferă fișa asta la " + LATURA[l] + ". Alege alt PDF ca s-o înlocuiești (maximum 10 MB).";
+      }
+      if (l === "copt" && ramaneRece()) {
+        return "Coapte nu are fișa ei: magazinul o oferă pe cea de la congelate. Încarcă una aici ca să o înlocuiești.";
+      }
+      return "Fără fișă, butonul nu apare în magazin. PDF, maximum 10 MB.";
+    };
 
     /* --- rețeta produsului deschis în formular --- */
     const rec = (S.form && S.form.recipe) || [];
@@ -2069,6 +2381,12 @@ class Component extends DCLogic {
       // însemna un ecran de refuz fără nicio propoziție pe el — exact ce s-a
       // și văzut pe drumul de mai sus.
       blockedLine: "Contul „" + (S.auth ? S.auth.name : "") + "” nu are acces la catalog. Prețurile și produsele le schimbă doar administratorii.",
+      // Prima ieșire de pe ecranul de refuz: panoul de acasă al ROLULUI, din
+      // aceeași tabelă din care îl ia și intrarea (`gp.primaPagina`). A doua e
+      // `navBack`, de mai sus. Aceleași două chei ca în `Setari.dc.html`, în
+      // `Jurnal.dc.html` și în `Statistici.dc.html`.
+      acasaHref: gp.primaPagina(S.auth),
+      acasaEt: "← Înapoi la panoul meu",
       authName: S.auth ? S.auth.name : "",
 
       // Subtitlul numără, deci afirmă. Cât nu s-a întors nimic — sau cât e
@@ -2249,7 +2567,13 @@ class Component extends DCLogic {
       },
 
       /* --- formular --- */
-      form: !!S.form,
+      // Fereastra de produs stă în marcaj ÎN AFARA porții `allowed`, deci își
+      // poartă singură lacătul: se desenează numai contului care poate și
+      // salva (rutele ei cer toate `require_admin()`). Azi niciun drum nu
+      // duce la ea altfel — butoanele care o deschid sunt sub `allowed` —, dar
+      // un buton pus mâine în altă parte ar fi deschis-o oricui. La fel
+      // fereastra de ștergere, mai jos.
+      form: !!S.form && isAdmin,
       formTitle: S.form && S.form.id ? "Editează produsul" : "Produs nou",
       formErr: S.formErr,
       f: {
@@ -2314,6 +2638,19 @@ class Component extends DCLogic {
       // scriu prețul" încape într-o singură salvare.
       onInFrozen: () => set({ form: Object.assign({}, S.form, { inFrozen: !S.form.inFrozen }) }),
       onInBaked: () => set({ form: Object.assign({}, S.form, { inBaked: !S.form.inBaked }) }),
+      // Fișele tehnice. „Vezi fișa” se arată cât latura are fișa EI; „Scoate
+      // fișa” numai cât nu e aleasă una nouă peste ea — atunci n-ar mai avea
+      // ce scoate. Legătura e relativă, ca la poze: pe gazda panoului,
+      // `.htaccess`-ul din pachet o trimite la site-ul public.
+      fisaAre: !!fisaTinuta("congelat"), fisaBakedAre: !!fisaTinuta("copt"),
+      fisaHref: fisaTinuta("congelat"), fisaBakedHref: fisaTinuta("copt"),
+      fisaScoateArata: !!fisaTinuta("congelat") && !fisaAleasa("congelat"),
+      fisaBakedScoateArata: !!fisaTinuta("copt") && !fisaAleasa("copt"),
+      fisaScoateEt: fisaDeScos("congelat") ? "Păstrează fișa" : "Scoate fișa",
+      fisaBakedScoateEt: fisaDeScos("copt") ? "Păstrează fișa" : "Scoate fișa",
+      onFisa: alegeFisa("congelat"), onFisaBaked: alegeFisa("copt"),
+      onFisaScoate: comutaScoaterea("congelat"), onFisaBakedScoate: comutaScoaterea("copt"),
+      fisaHelp: ajutorFisa("congelat"), fisaBakedHelp: ajutorFisa("copt"),
       onPhoto: alegePoza("congelat"),
       onPhotoBaked: alegePoza("copt"),
       photoHelp: ajutorPoza("congelat"),
@@ -2328,15 +2665,16 @@ class Component extends DCLogic {
       saveCls: S.saving ? "h-btn h-btn--primary h-btn--loading" : "h-btn h-btn--primary",
       saveLabel: S.saving ? "Se salvează…" : (S.form && S.form.id ? "Salvează" : "Adaugă în catalog"),
       onSave: () => self.save(),
-      onCancel: () => set({ form: null, formErr: "", pendingPhoto: null, pendingPhotoUrl: null }),
-      onBackdrop: () => set({ form: null, formErr: "", pendingPhoto: null, pendingPhotoUrl: null }),
+      onCancel: () => set({ form: null, formErr: "", pendingPhoto: null, pendingPhotoUrl: null, pendingSheet: null, scoateFisa: null }),
+      onBackdrop: () => set({ form: null, formErr: "", pendingPhoto: null, pendingPhotoUrl: null, pendingSheet: null, scoateFisa: null }),
       stop: (e) => { e.stopPropagation(); },
 
       /* --- fereastra de ștergere --- */
       // Cele două fețe nu sunt o părere a paginii: „poate" vine din cifrele
       // trimise de server odată cu lista. Fereastra care nu poate șterge nici
       // nu arată butonul roșu — arată fapta care chiar se poate face.
-      stergeOpen: !!st,
+      // Sub același lacăt ca formularul: numai contului care poate și șterge.
+      stergeOpen: !!st && isAdmin,
       stergePoate: !!st && st.poate,
       stergeAreIstoric: !!st && !st.poate,
       stergeTitlu: st

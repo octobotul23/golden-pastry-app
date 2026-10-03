@@ -16,8 +16,10 @@ sunt până la el. Magazinul rămâne la un clic: butonul **„Intră în magazi
 pe pagina de intrare, și rândul din meniul contului.
 
 În magazin, când ajunge acolo, în locul butonului „Intră în cont" antetul îi
-arată numele firmei și un meniu cu două intrări: `Comanda mea` și
-`Ieși din cont`.
+arată numele firmei, iar sub el meniul contului: **„Comanda mea”**,
+**„Recomandări”** — numai dacă are cod de recomandare —, **„Parola mea”** și
+**„Ieși din cont”**. „Recomandări” e nouă acolo în 2.6.0: clientul cu cod o
+avea deja în meniul din „Comanda mea”, dar în magazin n-o găsea.
 
 > O vreme l-am trimis de-a dreptul în magazin, cu socoteala „clientul vine să
 > comande, nu să-și citească istoricul". Socoteala era a patiseriei, nu a
@@ -37,6 +39,46 @@ următoare. La fiecare comandă poate scrie alta — nu e blocată.
 ignoră ce vine din pagină, ca o comandă să nu poată intra pe numele altui
 client.
 
+Pe „Comanda mea” stă și cardul **„Recomandă Golden Pastry”**: cu linkul lui de
+recomandare, butonul „Copiază” și „Vezi ce ai câștigat →”, ori, dacă n-are încă
+un cod, cu butonul „Fă-ți un cod →”, care îl duce în pagina „Recomandări”, unde
+își face unul. Clientul vede cardul cu cod ori fără; intrarea „Recomandări” din
+meniu apare însă numai clientului care are deja un cod.
+
+### Ce scrie pe comanda lui
+
+Pe „Comanda mea”, fiecare comandă poartă o insignă cu etapa, pe limba
+clientului, nu pe a laboratorului:
+
+| Unde e comanda | Ce citește clientul |
+|---|---|
+| „În așteptare” | Programată |
+| „În lucru”, „La dospit”, „În cuptor” | Se prepară |
+| „La ambalare” | La ambalare (verde) |
+| etapa dinaintea celei finale („Gata de livrare”) | **Gata de livrare** (verde) — ori **Gata de ridicat**, când vine singur după marfă |
+| etapa finală („Predată”) | **Livrată** (pe plin, închis la culoare) — ori **Ridicată** |
+| etapa de anulare | Anulată (roșu) |
+
+Ultimele trei rânduri se citesc după **locul** etapei în listă, nu după nume:
+dacă redenumești „Predată” din Setări, clientul citește mai departe „Livrată”.
+O etapă pe care ai adăugat-o tu și care nu e în tabel apare cu numele ei. Cine
+„vine singur după marfă” spune lista „Moduri fără mașină” din Setări — v.
+`docs/02-panoul-de-setari.md`, la „Ce ajunge pe ruta șoferului”.
+
+Până la 2.6.0 cartonul de sus scria „Gata” la etapa finală, iar istoricul
+scria „Livrată” ori „Ridicată” despre aceeași comandă. De la „Gata de livrare”
+încoace, „gata” e tocmai numele etapei dinaintea predării, iar clientul care
+citea „Gata” n-ar mai fi știut dacă marfa îl așteaptă ori a primit-o. Acum
+cartonul și istoricul spun aceeași vorbă.
+
+În ziua livrării, când marfa pleacă cu mașina, deasupra comenzii stă și
+cartonașul **„Livrarea de azi”**, cu câte opriri mai sunt până la client și
+insigna „Pe rută”. Când marfa a ajuns, insigna lui e chiar
+cea a comenzii, „Livrată”, pe plin: clientul vede atunci două „Livrată” pe
+același ecran, de aceeași culoare. Până la 2.6.0 insigna cartonașului era
+verde la sosire; acum verdele stă numai pe comenzile încă nepredate, „La
+ambalare” și „Gata de livrare”.
+
 ---
 
 ## Istoricul comenzilor
@@ -46,6 +88,10 @@ client.
 Fiecare rând arată ziua, câte bucăți și cât a fost. Apăsat, se desface și arată
 produsele, numărul comenzii și adresa la care a plecat. Comenzile anulate apar
 și ele, marcate, oricând ar fi fost.
+
+Insigna de pe fiecare rând e aceeași ca pe cartonul de sus, din aceeași
+socoteală (tabelul de la „Ce scrie pe comanda lui”): o comandă predată scrie
+„Livrată” ori „Ridicată” în amândouă locurile.
 
 Se afișează șase, cu un buton pentru restul.
 
@@ -98,21 +144,45 @@ mai rea decât lipsa ei.
 
 ### Codul de recomandare, la comanda nouă
 
-Formularul se deschide cu **codul tău** scris deja, dar poți pune altul: comanda
-poate fi adusă de un coleg, iar tu doar o scrii. Asta valabil pentru oricine
-poate naște o comandă — administrator, manager, fondator.
+Cine scrie comenzi — administrator, fondator, manager — are în formular caseta
+**„Cod de recomandare”**, deschisă cu **codul lui** scris deja. Poate pune altul:
+comanda poate fi adusă de un coleg, iar el doar o scrie; dacă n-a adus-o nimeni,
+golește caseta. Cine n-are cod pe cont găsește caseta goală.
 
-Două lucruri rămân neschimbate, și e bine de știut de ce:
+**Agentul de vânzări nu mai are casetă** (hotărârea patronului, 2 octombrie
+2026). Codul lui pleacă singur odată cu cererea, exact ca până acum — numai că
+nu-l mai poate schimba în al altcuiva. În locul casetei citește un singur rând:
+**„Cererea pleacă cu codul tău: …”**, cu codul lui. Dacă n-are cod pe cont, nu
+vede nici rândul, iar cererea pleacă fără cod.
+
+Pe cererea pentru un client care are deja cont la el, serverul nu scrie codul
+(hotărârea din 14 septembrie 2026): comisionul îl hotărăște cel trecut pe
+contul clientului drept cel care l-a adus, adică tot agentul. Codul ajunge pe
+hârtie când cererea nu se leagă de niciun cont: un client nou, ori unul care nu
+e al lui — adus de altcineva, ori unul vechi al casei. La cele două din urmă,
+anunțurile „Cerere nouă” și „Comandă nouă” au și rândul „Atenție” (v.
+`docs/02-panoul-de-setari.md`, la „Ce anunțuri primești, și ce scrie în ele”).
+
+**La acceptarea unei cereri nu e casetă pentru nimeni.** Până la 2.6.0 se
+desena, dar acceptarea nu citea ce scriai în ea: un cod pus acolo se pierdea la
+salvare, fără un cuvânt. Codul cererii rămâne cel cu care a venit, arătat pe
+cardul ei.
+
+Sub casetă stă bifa **„leagă și contul cumpărătorului pe viitor”**, pornită
+nebifată, la comanda nouă ca și la corectare (hotărârea patronului, 19
+septembrie 2026). Nebifată, codul e numai al comenzii de față: ea intră în
+„Recomandări” ca adusă de cel cu codul, iar comisionul ei se calculează întreg.
+Bifată, și comenzile viitoare ale aceluiași cumpărător merg la același om, fără
+să mai scrie nimeni nimic. Până pe 19 septembrie 2026, un cod pus la nașterea
+comenzii lega contul cumpărătorului pe tăcute, pentru totdeauna.
+
+Două lucruri e bine de știut:
 
 - **Nu te poți recomanda pe tine.** Dacă cel cu codul e chiar cumpărătorul,
   legătura nu se scrie, iar în jurnal rămâne `referral_self_blocked`.
-- **Pe o comandă deja salvată, codul îl schimbă tot numai administratorul.**
-  Vezi „Ce poate fiecare rol", la coada ghidului.
-
-Un cod pus la **nașterea** comenzii leagă contul cumpărătorului de recomandant
-pentru totdeauna, dacă acela n-avea încă unul. La **corectarea** unei comenzi
-vechi, legătura nu se mai scrie singură: acolo trebuie bifat anume, tocmai
-fiindcă legatul e o faptă care se cere pe față.
+- **Pe o comandă deja salvată, codul îl îndreaptă cine poate corecta
+  comanda**: administratorul, fondatorul și, din 19 septembrie 2026, managerul.
+  Vezi „Ce poate fiecare rol”, la coada ghidului.
 
 ---
 ## Contul făcut imediat după comandă
@@ -248,6 +318,13 @@ Se ajunge la pagină oricând, nu doar la prima intrare: din meniul lateral al
 panourilor, din antetul panoului clientului, și din meniul contului din
 magazin. Întrebarea se arată **numai** cât timp contul poartă semnul; după, e
 formularul obișnuit.
+
+**Contul comun al tabletelor nu are „Parola mea”**, de la 2.6.0: rândul a ieșit
+și din meniul lateral, și din meniul contului din magazin. Parola lui e a
+întregii ture, iar cine ar fi schimbat-o de pe o tabletă ar fi închis panoul
+tuturor. Dacă cineva deschide totuși pagina cu adresa scrisă de mână, citește
+„Acesta e contul comun al tabletelor: parola lui nu se schimbă de aici.” și,
+dedesubt, „Codul tabletelor îl schimbă un administrator, din Setări.”
 
 **Cine poate păstra: oricine are semnul, personalul inclusiv.** A fost o
 alegere a patronului, luată știind urmarea, și e bine să fie scrisă aici:
@@ -443,14 +520,28 @@ loc, iar parola nu-l mai lasă să intre până nu-l pornești la loc. Cât plea
 cererea, comutatorul stă stins și scrie „Opresc contul…" ori „Pornesc
 contul…"; răspunsul apare sus, în mesajul paginii.
 
-**Cine pe cine.** Regulile sunt ale serverului; pagina doar le arată dinainte,
-cu comutatorul stins și motivul scris dedesubt:
+**Cine pe cine.** Regulile sunt ale serverului; pagina doar le arată dinainte.
+Unde comutatorul n-ar putea fi apăsat, de la 2.6.0 **nu se mai desenează**: în
+locul lui scrie starea, **„Cont pornit”** ori **„Cont oprit”**, iar dedesubt
+motivul. Până atunci stătea acolo un comutator stins, pe care omul îl vedea și
+nu-l putea folosi.
 
-- nimeni nu-și poate opri propriul cont;
+- nimeni nu-și poate opri propriul cont — pe fișa ta scrie „E contul cu care
+  ești conectat: nimeni nu-și poate opri propriul cont.”;
 - contul unui administrator ori al unui fondator îl oprește **și** îl pornește
-  numai un fondator, cât timp există vreunul pornit;
-- contul de sistem „panou", al tabletelor din laborator, n-are comutator:
+  numai un fondator, cât timp există vreunul pornit — celorlalți le scrie
+  „Contul unui administrator îl oprește și îl pornește numai un fondator.”
+  (ori „…unui fondator…”);
+- contul de sistem „panou", al tabletelor din laborator, n-are deloc rândul:
   accesul lui cu cod se oprește din Setări.
+
+Tot în fișă, deasupra rândului „Cont pornit”, stă comutatorul **„Poate confirma
+livrarea”**: cine îl are pune etapa finală de pe „Rută” și, dacă are panoul,
+din „Comenzi”; cine nu, nu. Se scrie de cum îl apeși, fără alt buton, și se
+desface apăsând încă o dată. Clientul și omul de laborator nu-l au deloc. Ce înseamnă pentru laborator și
+pentru șofer, de la „Gata de livrare” încoace, e scris în
+`docs/02-panoul-de-setari.md`, la „„Gata de livrare”: unde se oprește
+laboratorul”.
 
 Al doilea rând e mai nou decât pare. Până în 2.5.0 serverul cerea un fondator
 numai la **oprire**, așa că un administrator putea porni la loc contul unui
@@ -478,19 +569,27 @@ oglinda porților de pe server, nu o pază în plus.
 
 | Panou | administrator / fondator | manager | agent de vânzări | angajat / tablete | client |
 |---|:-:|:-:|:-:|:-:|:-:|
-| Comenzi | tot | vede și mută etapa | **numai ale lui**, mută etapa | — | — |
+| Comenzi | tot | scrie și corectează comenzi | **numai ale lui**, mută etapa | — | — |
 | Laborator | da | da | — | da | — |
 | Rută | da | da | — | da | — |
 | Depozit | da | da | — | da | — |
 | Pontaj | da | da | — | da | — |
 | Catalog | da | — | — | — | — |
 | Conturi | da | — | — | — | — |
-| Recomandări | da | — | da | — | dacă are cod |
+| Recomandări | da | dacă are cod | da | angajatul, dacă are cod; tableta nu | dacă are cod |
 | Jurnal | da | — | — | — | — |
 | Statistici | **numai fondatorul** | — | — | — | — |
 | Setări | da | — | — | — | — |
 | Comanda mea | — | — | — | — | da |
-| Parola mea | da | da | da | da | da |
+| Parola mea | da | da | da | angajatul da; tableta nu | da |
+
+**„Recomandări” se hotărăște după cod, nu numai după rol.** Un cod se dă din
+„Conturi” oricărui cont care nu e de sistem, iar cine îl are câștigă comision,
+oricare i-ar fi rolul. De aceea managerul sau angajatul **cu** cod vede
+„Recomandări” în meniu, ca să-și găsească banii; cel fără cod nu vede nicio
+schimbare. Clientul o vede numai cu cod, agentul de vânzări întotdeauna — el își
+poate face codul chiar de acolo. Contul comun al tabletelor n-o are niciodată:
+lui nu i se face cod.
 
 Mai e un rol, care nu încape în tabel fiindcă are o singură ușă:
 **„utilizator de laborator"** — omul care vine la lucru și atât. El vede
@@ -516,11 +615,22 @@ administrator, manager sau fondator. Managerul poate deci lua o comandă la
 telefon și o poate scrie el, cu ce cod de recomandare vrea. Agentul de vânzări
 și contul de tură nu mai pot: ei scriu o **cerere**, care așteaptă o apăsare.
 
-**Formularul de editare al unei comenzi DEJA SALVATE — client, adresă, poziții,
-cod de recomandare — rămâne al administratorului.** Din contul de personal se
-schimbă numai etapa. Asimetria e voită: la naștere scrie oricine poate naște, la
-corectare scrie cine răspunde de bani. O comandă salvată are deja socoteli făcute
-pe ea, poate chiar o plată; una care abia se naște n-are ce răsturna.
+**O comandă DEJA SALVATĂ — client, adresă, poziții, cod de recomandare — o
+corectează cine o poate naște**: administratorul, fondatorul și managerul.
+Hotărârea patronului, 19 septembrie 2026. Până atunci corectarea era numai a
+administratorului, iar managerul care luase comanda la telefon nu-și putea
+îndrepta nici propria greșeală de tastare de acum patru minute: trebuia să sune
+un administrator. Din agentul de vânzări și din contul de tură se schimbă mai
+departe numai etapa (agentul mai poate anula ori reface o comandă a oamenilor
+lui).
+
+Două lucruri **nu** s-au lărgit odată cu ea, fiindcă au porțile lor:
+
+- **ordinea opririlor pe rută** o pune tot numai administratorul: traseul se
+  hotărăște în birou, iar managerului nu i se desenează butoanele de ordonat;
+- **„Bifează ca plătit”**, la comisionul unei recomandări, e tot numai al
+  administratorului și al fondatorului. A corecta o comandă și a plăti un
+  comision sunt două drepturi, și numai primul s-a lărgit.
 
 **Agentul vede în „Comenzi" numai comenzile oamenilor aduși de el** — ale
 cumpărătorilor legați de codul lui pentru totdeauna și cele care poartă codul
@@ -563,9 +673,11 @@ Iar în „Comenzi", între cele două trepte de personal:
 | **Scrie o comandă nouă, de-a dreptul** | da | **da** | **nu** — scrie o cerere |
 | **Acceptă, respinge sau redeschide o cerere** | da | **da** | **nu** |
 | **Stabilește ordinea opririlor pe rută** | da | **nu** | **nu** |
-| Editează comanda salvată: client, adresă, poziții, cod de recomandare | da | **nu** | **nu** |
+| Editează comanda salvată: client, adresă, poziții, cod de recomandare | da | **da** | **nu** — numai etapa |
+| **Bifează ca plătit** comisionul unei recomandări | da | **nu** | **nu** |
 
-Managerul a intrat pe primele două rânduri la 18 septembrie 2026. Acceptarea
+Managerul a intrat pe primele două rânduri la 18 septembrie 2026, iar pe al
+patrulea la 19 septembrie 2026. Acceptarea
 unei cereri **este** nașterea unei comenzi, doar pe celălalt drum — sunt
 singurele două din casă. Lăsată numai pe administrator, poarta i-ar fi spus
 managerului „scrie tu una nouă în loc s-o accepți pe asta", adică exact comanda
@@ -579,4 +691,82 @@ consolă cererea unui client, iar de acolo cererea nu se mai putea accepta
 niciodată: se pierdea, și jurnalul nu putea spune cine a apăsat, fiindcă îl
 trecea pe autor ca „Panou comun". La fel cu ordinea opririlor: se putea
 răsturna de pe orice tabletă, iar șoferul pleca pe alt traseu decât cel stabilit
-în birou. Acum ambele cer un cont de administrator, verificat pe server.
+în birou. Acum amândouă se verifică pe server: cererile le acceptă ori le
+respinge un administrator, un fondator ori un manager, iar ordinea opririlor o
+pune numai administratorul (și fondatorul).
+
+### Formularul de comandă, pe roluri
+
+Formularul din „Comenzi” e unul singur, dar fiecare rol vede în el numai ce
+poate folosi. Din 2.6.0 au ieșit casetele care cereau ochi și nu dădeau nimic.
+
+**Titlul și butoanele spun ce se întâmplă la apăsare:**
+
+| Cine, și ce face | Butonul de deasupra listei | Titlul formularului | Butonul de jos |
+|---|---|---|---|
+| administrator, fondator, manager — comandă nouă | „+ Comandă nouă” | „Comandă nouă” | „Adaugă comanda” |
+| agentul de vânzări — cerere nouă | „+ Cerere nouă” | „Cerere nouă” | „Trimite spre aprobare” |
+| acceptarea unei cereri | — | „Comandă nouă” | „Acceptă cererea” |
+| corectarea unei comenzi salvate | — | „Editează comanda …”, cu numărul ei | „Salvează modificările” |
+
+La acceptarea unei cereri titlul rămâne „Comandă nouă”, deși butonul de jos
+spune „Acceptă cererea”. E lăsat așa dinadins, până hotărăște patronul ce să
+scrie acolo.
+
+**„Stare” și „Referință” apar numai la corectare** (2 octombrie 2026). Pe o
+comandă nouă erau amândouă casete moarte. „Stare” se putea alege, dar nu pleca
+nicăieri: comanda nouă intră mereu în prima etapă, pusă de server — omul alegea
+„În cuptor”, salva, și găsea comanda „În așteptare”. „Referință” era
+doar-citire, cu „se completează automat” în ea: numărul îl dă serverul, pe zi,
+în ordine. La corectare rămân amândouă, fiindcă acolo chiar scriu.
+
+**Codul de recomandare**: caseta o au administratorul, fondatorul și managerul;
+agentul citește „Cererea pleacă cu codul tău: …”; la acceptarea unei cereri nu
+e casetă. Pe larg, mai sus, la „Codul de recomandare, la comanda nouă”.
+
+**„Adus de …”**, eticheta care spune cine a adus clientul, e legătură numai
+pentru administrator și fondator: îi duce în „Recomandări”, la dosarul celui
+care a adus comanda. Managerului și agentului li se arată același text, dar
+fără legătură: managerul n-are pagina, iar agentul ar fi ajuns la propria lui
+pagină, fără nimic din ce promitea eticheta. Nici lămurirea de la trecerea cu
+mausul nu-i mai trimite acolo: pe pastila „Recomandare de lămurit” lor le
+scrie „…până alege un administrator.”, nu „…până alegi. Deschide
+Recomandări.”
+
+**„Bifează ca plătit”**, sub comisionul unei comenzi, o văd numai
+administratorul și fondatorul. Managerul, care deschide formularul de corectare
+din 19 septembrie 2026, vedea butonul, îl apăsa și primea refuz: plata
+comisionului e un drept de administrator.
+
+**Etapa finală** („Predată”) se oferă în lista „Stare” și în „Etapa” din
+vederea rapidă numai celui care o poate pune: administratorul, fondatorul și
+contul cu bifa „Poate confirma livrarea”. Celorlalți, sub listă le scrie
+„„Predată” o pune un administrator ori un cont cu bifa „Poate confirma
+livrarea”, din „Conturi”.”, cu numele pe care îl poartă etapa în Setări. O
+comandă care e deja în etapa finală o arată mai departe, la oricine.
+
+### Ecranele de refuz, și pe unde ieși din ele
+
+Cine deschide cu adresa scrisă de mână un panou care nu e al rolului lui dă de
+un ecran de refuz. Fiecare are ieșiri care duc undeva, nu în alt refuz:
+
+| Panoul | Ce scrie | Butoanele |
+|---|---|---|
+| Setări, Catalog, Jurnal, Statistici | „Contul „…” nu are acces la setări.” (ori „la catalog”, „la jurnal”, „la statistici”), cu motivul pe scurt | **„← Înapoi la panoul meu”**, apoi „← Alege panoul” (clientului: „← Înapoi la magazin”) |
+| Comenzi | clientului: „Contul „…” e cont de client: aici lucrează doar personalul. Comenzile tale le vezi în „Comanda mea”.”; personalului: „Contul „…” e cont de angajat: nu are acces la comenzi și la conturi. Folosește panourile de lucru de mai jos.” | clientului „Vezi comanda mea”, personalului panourile din meniul lui (primul, plin); apoi „Ieși din cont” și „← Alege panoul” |
+| Conturi | clientului: „Contul „…” e cont de client: conturile și parolele se văd doar dintr-un cont de administrator.”; personalului: „Contul „…” e cont de manager: nu poate vedea sau schimba parolele.”, cu rolul fiecăruia în loc de „manager” | clientului „Vezi comanda mea”, personalului panourile din meniul lui; apoi „Ieși din cont” și ieșirea obișnuită a rolului |
+| Depozit | de ce nu poate intra | panourile din meniul lui, „Ieși din cont” și ieșirea obișnuită a rolului |
+
+**„← Înapoi la panoul meu”** duce fiecare rol în panoul în care ajunge după
+autentificare: administratorul (oprit doar la Statistici) și managerul în
+„Comenzi”, agentul de vânzări în „Recomandări”,
+angajatul și tableta în „Laborator”, omul de laborator în „Pontaj”, clientul în
+„Comanda mea”. În Setări, Catalog și Jurnal butonul e nou în 2.6.0. Până atunci
+refuzul avea legături scrise pe litere, aceleași pentru oricine — „Comenzi” în
+Setări și în Catalog; „Conturi”, „Comenzi” și „Depozit” în Jurnal —, iar pentru
+cele mai multe roluri fiecare ducea în alt refuz. Statistici îl avea de
+dinainte.
+
+„Ieșirea obișnuită a rolului” e „← Alege panoul” pentru personal și „← Înapoi la
+magazin” pentru client. Pe refuzul din „Comenzi”, ultimul rând scrie „← Alege
+panoul” și clientului.

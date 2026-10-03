@@ -204,6 +204,55 @@ function latura_poza_vitrina(array $r): ?string
     return latura_poza($r, latura_vitrina($r));
 }
 
+/* ------------------------------------------------------- fișa tehnică -- */
+
+/*
+ * HOTĂRÂREA PATRONULUI, 2 octombrie 2026: fiecare produs are două locuri de
+ * fișă tehnică, câte unul de latură (migrarea 031), iar Coapte ÎMPRUMUTĂ fișa
+ * de la Congelate cât timp n-are una a ei.
+ *
+ * E pe dos față de poze, și dinadins. La poze împrumutul s-a tăiat pe 21
+ * septembrie (v. `latura_poza()`), fiindcă nu se putea deosebi de un defect:
+ * schimbai poza unei laturi și se schimba și cealaltă. La fișe patronul îl
+ * cere: a trimis un singur rând de fișe, „patiserie congelată", iar produsul
+ * copt e același produs, cu aceleași ingrediente și aceiași alergeni.
+ *
+ * Ca împrumutul să nu se mai poată citi drept defect, el stă într-UN SINGUR
+ * loc — `latura_fisa()` — și nu se scrie în bază: `sheet_baked` rămâne NULL,
+ * iar panoul vede, alături, și fișa proprie a fiecărei laturi
+ * (`latura_fisa_proprie()`), deci poate spune „Coapte n-are fișa ei". În ziua
+ * în care patronul zice „gata cu împrumutul", se șterge un rând de aici și
+ * nicio pagină nu trebuie refăcută.
+ *
+ * Pe un rând fără coloanele lui 031 (baza nemigrată) amândouă răspund null:
+ * magazinul nu arată niciun buton — adică exact ce arăta ieri.
+ */
+
+/** Coloana de fișă a laturii — cea PROPRIE, fără împrumut. */
+function latura_coloana_fisa(string $latura): string
+{
+    return $latura === 'copt' ? 'sheet_baked' : 'sheet_frozen';
+}
+
+/** Fișa pusă chiar pe latura asta, sau null. Pentru panou și pentru ștergeri. */
+function latura_fisa_proprie(array $r, string $latura): ?string
+{
+    return latura_text($r[latura_coloana_fisa($latura)] ?? null);
+}
+
+/**
+ * Fișa de OFERIT pe latura asta: a ei, iar la Coapte, în lipsă, cea congelată.
+ *
+ * Singurul loc din tot proiectul unde o latură ia fișa celeilalte. Congelate
+ * nu împrumută nimic de la Coapte: o fișă de produs copt nu spune cum se ține
+ * și cum se coace unul congelat.
+ */
+function latura_fisa(array $r, string $latura): ?string
+{
+    return latura_fisa_proprie($r, $latura)
+        ?? ($latura === 'copt' ? latura_fisa_proprie($r, 'congelat') : null);
+}
+
 /* ------------------------------------------- trei prețuri, după cantitate -- */
 
 /*

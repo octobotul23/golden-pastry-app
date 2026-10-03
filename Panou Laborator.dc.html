@@ -666,7 +666,14 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 <p style="margin:0;font-size:13px;color:var(--h-fg-faint)">Cifra e un ADAOS: „tocmai am mai făcut atâtea". Se împart pe comenzile zilei de sus în jos, în ordinea de lucru; ce trece peste necesar rămâne al casei, pe raft.</p>
 <p style="margin:0;font-size:13px;color:var(--h-fg-faint)">Apasă pe o comandă ca să bifezi pozițiile și să-i schimbi starea.</p>
 <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px">
+<!-- NUMAI CUI ARE PANOUL „COMENZI” (runda 2.6.0). Legătura stătea aici pentru
+     oricine: angajatul și tableta comună a turei, care n-au panoul acela,
+     apăsau pe ea și nimereau în ecranul lui de refuz. O ușă desenată spre o
+     cameră încuiată; sertarul ☰ n-o arăta, raftul da. Steagul se ia din
+     același meniu (v. `areComenzi`). -->
+<sc-if value="{{ areComenzi }}" hint-placeholder-val="{{ false }}">
 <a href="Administrare%20Comenzi.dc.html" class="h-btn h-btn--secondary" style="height:46px;font-size:14px;border-radius:12px;text-decoration:none">Administrare comenzi</a>
+</sc-if>
 <a href="Intrare.dc.html" class="h-btn h-btn--ghost" style="height:44px;font-size:14px;border-radius:12px;text-decoration:none">← Alege panoul</a>
 <p style="margin:0;font-size:12px;color:var(--h-fg-faint)">Cantitățile făcute și ordinea de lucru se salvează pe server: le văd toate tabletele din laborator.</p>
 </div>
@@ -723,10 +730,44 @@ const CH = (chan) => {
   if (!chan || !ridicare.length) return "h-badge";
   return ridicare.indexOf(chan) >= 0 ? "h-badge h-badge--honey" : "h-badge h-badge--accent";
 };
+// Vine clientul după marfă, ori pleacă marfa cu duba? Aceeași listă din Setări
+// după care se colorează insigna de mai sus. De răspunsul ăsta atârnă ce scrie
+// pe carton când comanda a ajuns la capătul laboratorului (v. `laPlafon`):
+// „Așteaptă șoferul” ori „Așteaptă clientul”.
+//
+// Rezerva `chan === "Ridicare"` acoperă răstimpul în care lista n-a venit: o
+// clipă la deschiderea paginii, până se întoarce `gp.lists()` — ori mai mult,
+// dacă cererea a picat și panoul o mai cere (v. `cereListele`). Fără rezervă
+// ieșea „nu” pentru orice: cartonul unei ridicări scria „Așteaptă șoferul”, iar
+// fișa trimitea omul la un șofer care nu vine. Butonul e stins oricum; vorba de
+// pe el e însă tot ce citește laboratorul despre cine ia marfa. E aceeași
+// rezervă ca a lui `CU_MASINA` din „Client.dc.html”, privită din partea
+// cealaltă. (Culoarea de mai sus rămâne fără rezervă, dinadins: acolo „nu știu”
+// are insigna lui, cea neutră.)
+const SE_RIDICA = (chan) => { const p = gp.pickupFulfillments(); return p.length ? p.indexOf(chan) >= 0 : chan === "Ridicare"; };
+// Culoarea insignei de etapă, după NUMELE etapei.
+//
+// „În lucru” e etapa pe care și-a pus-o casa din Setări; „Gata de livrare” vine
+// cu migrarea 030. „La dospit” și „În cuptor” sunt etapele cu care pornește o
+// instalare nouă (`sql/002_seed.sql`) și rămân în hartă: pagina nu are de unde
+// ști pe care listă lucrează.
 const ST = {
-  "În așteptare": "h-badge", "La dospit": "h-badge", "În cuptor": "h-badge h-badge--warning",
-  "La ambalare": "h-badge h-badge--success", "Predată": "h-badge h-badge--solid"
+  "În așteptare": "h-badge", "În lucru": "h-badge h-badge--warning",
+  "La dospit": "h-badge", "În cuptor": "h-badge h-badge--warning",
+  "La ambalare": "h-badge h-badge--success", "Gata de livrare": "h-badge h-badge--success",
+  "Predată": "h-badge h-badge--solid"
 };
+// … și, pentru un nume pe care harta nu-l știe, după LOCUL etapei.
+//
+// Etapele se redenumesc din Setări. „Gata de livrare” botezată „Gata de drum”
+// cădea pe insigna neutră și rămânea gri — tocmai etapa după care se uită
+// șoferul. Locul nu se redenumește: ultima pe care o poate pune laboratorul e
+// verde, cea care încheie comanda e plină, oricum le-ar chema. Finala se
+// întreabă întâi: într-un flux cu o singură etapă ea e și plafonul.
+const ST_CLS = (st) => ST[st]
+  || (st && st === gp.done() ? "h-badge h-badge--solid"
+    : st && st === gp.labCeiling() ? "h-badge h-badge--success"
+    : "h-badge");
 const o = (ref, cust, chan, status, items, extra) => Object.assign({ ref, cust, chan, status, items }, extra || {});
 // Fereastra de zile a panoului: ziua curentă și următoarele șase.
 // Varianta veche avea zilele scrise în cod („26 august"), deci panoul ar fi
@@ -1022,7 +1063,7 @@ class Component extends DCLogic {
     document.documentElement.setAttribute("data-theme", "light");
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
     // dacă le redenumești din panou, pagina trebuie să afle de la server.
-    gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    this.cereListele();
     // Cine a deschis panoul? Până acum scria în cod că nu-i nimeni — adevărat
     // pentru tableta din tură, care intră cu codul comun, și mincinos pentru
     // managerul care deschide aceeași pagină de pe telefonul lui. Din
@@ -1452,6 +1493,36 @@ class Component extends DCLogic {
   }
 
   /**
+   * Listele din Setări — etapele, plafonul, modurile de ridicare — cerute până
+   * vin.
+   *
+   * Se cereau o singură dată, la montare, cu `.catch(() => {})`: tăcere. Dacă
+   * cererea aceea pica — serverul repornit chiar atunci, tableta abia prinsă
+   * de rețea — nimeni nu mai întreba, iar panoul rămânea toată ziua pe lista
+   * de rezervă din `shared/gp-api.js`: etapele unei instalări noi, nu ale
+   * casei. O comandă aflată într-o etapă a casei nu se găsea în ele, deci
+   * butonul ei stătea stins, cu „—”, fără niciun cuvânt despre pricină — până
+   * reîncărca cineva pagina. Pagina șoferului pățise la fel și reîncearcă din
+   * tura ei (`Ruta Sofer.dc.html` · `pull`); aici e aceeași îndreptare.
+   *
+   * Ieftin: `gp.lists()` ține minte răspunsul reușit, iar steagul de mai jos
+   * oprește orice altă cerere după el. `__listePeDrum` ține o SINGURĂ cerere
+   * în aer: la montare `pull()` vine la un rând după prima chemare, iar tura
+   * de patru secunde poate bate înainte ca un răspuns încet să se întoarcă.
+   *
+   * Refuzul rămâne nespus pe ecran, ca până acum: comenzile zilei au caseta
+   * lor (`eroare`), iar o cădere a serverului le prinde pe amândouă. Aici nu
+   * mai e însă o tăcere pe vecie, ci una de patru secunde.
+   */
+  cereListele() {
+    if (this.state.listsReady || this.__listePeDrum) return;
+    this.__listePeDrum = true;
+    gp.lists()
+      .then(() => { this.__listePeDrum = false; this.setState({ listsReady: true }); })
+      .catch(() => { this.__listePeDrum = false; });
+  }
+
+  /**
    * Aduce comenzile de pe server.
    *
    * Aici se vede diferența față de varianta veche: comenzile nu mai vin din
@@ -1471,6 +1542,9 @@ class Component extends DCLogic {
     // numai că aici e mai simplu s-o oprești de tot: o tragere ține două-trei
     // secunde, iar `pointercancel` o încheie chiar dacă degetul se pierde.
     if (this.state.trag) return;
+    // Listele se mai cer, dacă prima cerere a picat (v. `cereListele`). După
+    // paza tragerii, din aceeași pricină: sosirea lor redesenează panoul.
+    this.cereListele();
     const days = DAY_KEYS.map(d => d.date);
     // Ziua deschisă, nu toată fereastra.
     //
@@ -2065,29 +2139,89 @@ class Component extends DCLogic {
     const set = (p) => this.setState(p);
     const day = DAY_KEYS[S.day];
 
-    // PÂNĂ UNDE POATE DUCE ECRANUL ĂSTA O COMANDĂ (runda 2.3.0, lucrarea 9).
+    // PÂNĂ UNDE POATE DUCE ECRANUL ĂSTA O COMANDĂ (runda 2.3.0, lucrarea 9;
+    // strâns în runda 2.6.0).
     //
-    // Gol = până la capăt. Altfel, etapa dinaintea celei finale: ultimul pas îl
-    // pune cine duce marfa, de pe telefonul lui.
+    // Până la etapa dinaintea celei finale — „Gata de livrare”, de la migrarea
+    // 030 — și nu mai departe. Ultimul pas îl pune cine dă marfa din mână:
+    // șoferul, de pe „Rută”, după ce a bifat ce a încărcat; ori biroul, din
+    // „Comenzi”, când clientul vine singur după ea.
     //
-    // Atârnă de OM, nu de panou: același cont `angajat` are și ecranul ăsta, și
-    // „Ruta Șofer". Un șofer care se uită aici își vede butoanele întregi.
+    // ATÂRNĂ DE ECRAN, NU DE OM. Până la 2.6.0 atârna de om: cine avea semnul
+    // de confirmat livrarea — orice admin, orice șofer — își vedea aici
+    // butoanele întregi și putea duce comanda până la etapa finală, de pe
+    // tableta din laborator. La fel ecranul deschis fără cont, cât nu se știa
+    // cine e: oprirea cădea deschisă. Comanda trecea drept livrată înainte să
+    // fi urcat în mașină. Patronul a cerut ca ecranul ăsta să se oprească aici
+    // PENTRU TOȚI, și pentru admini, și la comenzile pe care clientul le
+    // ridică singur.
     //
-    // Fără `S.auth` încă adus, ori pe un server de dinaintea rundei, iese gol —
-    // adică purtarea de până acum. Aceeași cădere deschisă ca pe server: paza
-    // adevărată e `poarta_etapei_finale()`, iar un ecran care se încuie singur
-    // în fereastra de actualizare ar fi mai rău decât paguba de care fuge.
-    const poateLivra = !S.auth || S.auth.poateConfirmaLivrarea !== false;
-    const plafon = poateLivra ? "" : gp.labCeiling();
+    // E o regulă a paginii, nu a serverului, și dinadins: serverul nu are de
+    // unde ști de pe ce ecran a plecat cererea, iar adminii trebuie să poată
+    // încheia o comandă din „Comenzi”. Paza de pe server rămâne cea de până
+    // acum — `poarta_etapei_finale()`, pentru conturile fără semn. Pentru un
+    // admin, deci, oprirea e chiar rândul de mai jos și cel din `advance`.
+    //
+    // Pe un server de dinaintea rundei 2.3.0, care nu spune plafonul,
+    // `gp.labCeiling()` îl socotește singur din etape. Gol iese numai când nu
+    // există nicio etapă — și atunci nu e nimic de oprit.
+    const plafon = gp.labCeiling();
     const laPlafon = (st) => plafon !== "" && st === plafon;
+    // CE SCRIE PE BUTONUL STINS, LA PLAFON. Pe carton, de la doi metri: pe
+    // cine așteaptă comanda. În fișă, unde e loc: și cine pune etapa finală,
+    // și de unde — ca omul din laborator să nu caute un buton care nu mai e.
+    //
+    // Până la 2.6.0 butonul spunea că lotul a fost dat curierului. Era adevărat
+    // cât plafonul era ultima etapă de lucru; la „Gata de livrare” ar fi mințit
+    // de două ori: marfa n-a plecat, așteaptă — iar la o ridicare nu vine
+    // niciun curier.
+    const notaPlafon = (ord) => SE_RIDICA(ord.chan)
+      ? "Comanda e gata de ridicat. „" + gp.done() + "” o pune biroul, din „Comenzi”, "
+        + "când clientul și-a luat marfa."
+      : "Comanda e gata de plecare. „" + gp.done() + "” o pune șoferul, de pe „Rută”, "
+        + "după ce bifează ce a încărcat — ori biroul, din „Comenzi”.";
     // „Etapa nu e nicăieri în ciclu" se socotește O SINGURĂ DATĂ pe card, nu cu
     // `indexOf` chemat de patru ori. Centură, nu reparație: `pull()` scoate deja
     // comenzile anulate (`:1155`), deci pe drumul obișnuit `i` nu poate fi `−1`.
     // Dar o etapă redenumită din Setări cât timp comenzile poartă textul vechi
     // ar aduce-o aici — iar `CYCLE_OF()[-1 + 1]` e chiar PRIMA etapă, adică un
     // buton aprins care ar trimite comanda îndărăt la început.
+    // DE LA ETAPA FINALĂ ÎNCOLO, COMANDA E ÎNCHEIATĂ PENTRU ECRANUL ĂSTA.
+    //
+    // Din Setări se poate așeza o etapă DUPĂ cea finală — „Facturată” după
+    // „Predată”, de pildă. Până la 2.6.0 pagina întreba numai „e chiar etapa
+    // finală?”, iar o comandă ajunsă mai departe îi părea una în lucru:
+    //   · pe ultima etapă a listei, butonul cartonului stătea APRINS, fără
+    //     nicio vorbă pe el, iar fișa scria „Trece la: undefined”;
+    //   · pe una de la mijloc, butonul o ducea și mai departe, de pe tabletă;
+    //   · „Înapoi” scria chiar etapa finală — adică laboratorul punea „Predată”
+    //     pe o comandă, tocmai pasul pe care ecranul ăsta nu-l are (v. mai sus).
+    // Acum orice etapă de la cea finală încolo se citește la fel: butonul stins,
+    // cu „Finalizată”, iar „Înapoi” duce cel mult până la plafon — de la etapa
+    // finală, ca până acum; de la una de după ea, sărind peste cea finală.
+    //
+    // Când etapa finală nu e în listă (ori e chiar prima), `dupaFinala` iese
+    // „nu” ori plafonul iese chiar etapa finală: atunci „Înapoi” lipsește de
+    // tot, nu ghicește.
+    const iFinala = CYCLE_OF().indexOf(gp.done());
+    const dupaFinala = (st) => iFinala >= 0 && CYCLE_OF().indexOf(st) > iFinala;
+    const incheiata = (st) => st === gp.done() || dupaFinala(st);
+    // UNDE DUCE „ÎNAPOI”, ori gol dacă nu duce nicăieri. Un singur loc pentru
+    // butonul de pe carton, cel din fișă, eticheta lor și cererea care pleacă:
+    // cât erau socotite de trei ori, eticheta putea spune una și cererea alta.
+    // Etapa finală nu iese de aici niciodată.
+    const inapoiLa = (cur) => {
+      const i = CYCLE_OF().indexOf(cur);
+      if (i <= 0) return "";
+      const nx = incheiata(cur) ? plafon : CYCLE_OF()[i - 1];
+      return nx && nx !== cur && nx !== gp.done() ? nx : "";
+    };
     const advance = (id, cur) => {
+      // De la plafon nu se pleacă înainte de pe ecranul ăsta, oricine ar apăsa.
+      // Butonul e stins, dar funcția e chemată din două locuri; oprirea stă aici.
       if (laPlafon(cur)) return;
+      // Nici de la etapa finală ori de după ea: comanda e încheiată.
+      if (incheiata(cur)) return;
       const nx = CYCLE_OF()[Math.min(CYCLE_OF().indexOf(cur) + 1, CYCLE_OF().length - 1)];
       // Plafonul de mai sus dă, la ULTIMA etapă, tot etapa de acum — iar
       // cererea plecă oricum. Serverul o primea și scria în jurnal
@@ -2100,7 +2234,10 @@ class Component extends DCLogic {
       this.writeStatus(id, nx);
     };
     const back = (id, cur) => {
-      const nx = CYCLE_OF()[Math.max(CYCLE_OF().indexOf(cur) - 1, 0)];
+      // Butonul lipsește când nu e unde să ducă; oprirea stă și aici, din
+      // aceeași pricină ca la `advance`: funcția e chemată din două locuri.
+      const nx = inapoiLa(cur);
+      if (!nx) return;
       this.writeStatus(id, nx);
     };
     // Cifrele se scriu ca la tejghea: „7", nu „7.00"; „0,5", nu „0.5".
@@ -2139,7 +2276,7 @@ class Component extends DCLogic {
       // altul: același semn n-are voie să spună lucruri deosebite.
       const rg = gp.rangClient(ord.rangClient);
       return Object.assign({}, ord, {
-        status: st, statusCls: ST[st] || "h-badge",
+        status: st, statusCls: ST_CLS(st),
         rang: rg.fel, rangSemn: rg.semn, rangEt: rg.et,
         rangCls: rg.cls, rangTitlu: rg.titlu,
         // Congelat sau copt: fără asta laboratorul nu are de unde
@@ -2164,29 +2301,32 @@ class Component extends DCLogic {
         bd: ord.urgent ? "var(--h-jam)" : "var(--h-line)",
         outline: S.sel === ord.id ? "3px solid var(--h-accent)" : "none",
         progress: nrScurt(b.facut) + "/" + nrScurt(b.cerut) + " buc.",
-        nextLabel: st === gp.done() ? "Finalizată"
+        nextLabel: incheiata(st) ? "Finalizată"
           : iCiclu < 0 ? "—"
-          : laPlafon(st) ? "Predată curierului"
+          : laPlafon(st) ? (SE_RIDICA(ord.chan) ? "Așteaptă clientul" : "Așteaptă șoferul")
           : CYCLE_OF()[iCiclu + 1],
-        nextTitle: laPlafon(st)
-          ? "Lotul e gata și așteaptă șoferul. „" + gp.done() + "” o pune el, "
-            + "de pe telefonul lui, când marfa ajunge la client."
-          : "",
+        // Nu și pe o comandă încheiată (v. `nextStop`, în fișă).
+        nextTitle: laPlafon(st) && !incheiata(st) ? notaPlafon(ord) : "",
         // O SINGURĂ FOAIE ODATĂ, ca până acum între raft și detaliu: alegerea
         // unei comenzi închide produsele zilei. Pe un telefon, două foi de jos
         // suprapuse înseamnă că una se închide fără să știe nimeni care.
         onSelect: () => set({ sel: ord.id, totale: false }),
-        canBack: iCiclu > 0,
-        backLabel: CYCLE_OF()[Math.max(iCiclu - 1, 0)],
+        canBack: inapoiLa(st) !== "",
+        backLabel: inapoiLa(st),
         onAdvance: (e) => { if (e && e.stopPropagation) e.stopPropagation(); advance(ord.id, st); },
         // Stins la ultima etapă: eticheta lui spune deja „Finalizată”, deci
         // arăta ca un buton care duce undeva. Nu ducea nicăieri — numai în
         // jurnal.
         //
         // Stins și la PLAFON, din runda 2.3.0: mai departe nu e treaba
-        // ecranului ăstuia. Butonul stins nu e paza — paza e pe server —, dar
-        // un buton care duce numai într-un 403 e un buton care minte.
-        advanceOff: st === gp.done() || iCiclu < 0 || laPlafon(st),
+        // ecranului ăstuia. Pentru un cont fără semn paza e pe server, iar un
+        // buton care duce numai într-un 403 e un buton care minte. Pentru un
+        // admin, din 2.6.0, serverul ar primi cererea — deci aici butonul stins
+        // și întoarcerea din `advance` SUNT paza; proba `check-plafon-laborator`
+        // apasă butonul cu un cont de admin și numără cererile plecate.
+        //
+        // Stins și DUPĂ etapa finală (v. `incheiata`), din aceeași rundă.
+        advanceOff: st === gp.done() || dupaFinala(st) || iCiclu < 0 || laPlafon(st),
         onBack: (e) => { if (e && e.stopPropagation) e.stopPropagation(); back(ord.id, st); }
       });
     };
@@ -2269,7 +2409,7 @@ class Component extends DCLogic {
         variantKey: ord.variant,
         variantCls: ord.variant === "congelat" ? "h-badge h-badge--accent" : "h-badge h-badge--honey",
         slot: ord.timed ? "ora " + t + " fix" : "poziția " + (ids.indexOf(ord.id) >= 0 ? ids.indexOf(ord.id) + 1 : "—"),
-        status: st, statusCls: ST[st] || "h-badge", note: ord.note || "",
+        status: st, statusCls: ST_CLS(st), note: ord.note || "",
         pct: Math.round(b.cerut > 0 ? b.facut / b.cerut * 100 : 0) + "%",
         progress: nrScurt(b.facut) + " din " + nrScurt(b.cerut) + " bucăți făcute",
         items: ord.items.map((it) => {
@@ -2292,20 +2432,25 @@ class Component extends DCLogic {
             onPlus: () => pas(1)
           };
         }),
-        nextLabel: st === gp.done() ? "Comandă finalizată"
+        nextLabel: incheiata(st) ? "Comandă finalizată"
           : iDet < 0 ? "Comandă în afara fluxului"
-          : laPlafon(st) ? "Predată curierului"
+          : laPlafon(st) ? (SE_RIDICA(ord.chan) ? "Gata — o ridică clientul" : "Gata — o ia șoferul")
           : "Trece la: " + CYCLE_OF()[iDet + 1],
-        nextCls: st === gp.done() || laPlafon(st) ? "h-btn h-btn--secondary" : "h-btn h-btn--primary",
+        nextCls: incheiata(st) || laPlafon(st) ? "h-btn h-btn--secondary" : "h-btn h-btn--primary",
         onAdvance: () => advance(ord.id, st),
-        advanceOff: st === gp.done() || iDet < 0 || laPlafon(st),
+        advanceOff: st === gp.done() || dupaFinala(st) || iDet < 0 || laPlafon(st),
         // Lămurirea stă numai pe foaia de detaliu: acolo e loc. Pe card, unde
         // butonul are un singur rând, aceeași vorbă stă în `title`.
-        nextStop: laPlafon(st),
-        nextNote: "Lotul e gata și așteaptă șoferul. „" + gp.done() + "” o pune el, de pe "
-          + "telefonul lui, când marfa ajunge la client.",
-        canBack: iDet > 0,
-        backLabel: "Înapoi la: " + CYCLE_OF()[Math.max(iDet - 1, 0)],
+        //
+        // Nu și pe o comandă ÎNCHEIATĂ. Unde plafonul e chiar etapa finală
+        // (flux cu o singură etapă, ori etapa finală pusă prima), sub „Comandă
+        // finalizată” stătea „e gata de plecare, o pune șoferul”: comanda
+        // încheiată, citită drept una care așteaptă. Etapa finală se întreabă
+        // întâi, ca la culoare (v. `ST_CLS`).
+        nextStop: laPlafon(st) && !incheiata(st),
+        nextNote: notaPlafon(ord),
+        canBack: inapoiLa(st) !== "",
+        backLabel: "Înapoi la: " + inapoiLa(st),
         onBack: () => back(ord.id, st),
         // Tot lotul deodată: o singură cerere cu toate pozițiile, nu una pe
         // poziție — ruta le scrie într-o singură tranzacție, deci ori intră tot
@@ -2387,6 +2532,11 @@ class Component extends DCLogic {
       // din el — de-aia se vede la orice lățime. Lista vine din `gp.meniu()`
       // (shared/gp-api.js), una singură pentru toate panourile.
       meniu: gp.meniu("Laborator", S.auth),
+      // „Administrare comenzi” din josul raftului, numai cui are panoul
+      // „Comenzi”. Se întreabă meniul, nu o listă de roluri scrisă aici: când
+      // matricea din `shared/gp-api.js` se mută, legătura o urmează. Cât nu se
+      // știe cine a deschis panoul, lipsește — ca intrările din sertar.
+      areComenzi: gp.meniu("Laborator", S.auth).some((m) => m.et === "Comenzi"),
       navHere: "Laborator",
       // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
       // magazin" pentru client, care n-are niciun panou de ales. Hotărăște

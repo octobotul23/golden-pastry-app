@@ -104,6 +104,65 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 [data-adm=phonemenu]{display:flex!important}
 [data-adm=filters]{display:none!important}
 [data-adm=topbar] h1{font-size:20px!important}
+/* FEREASTRA „DIN CATALOG" PE TELEFON: o foaie cât tot ecranul, nu o fereastră. Pagina n-are o stare de lățime (și nici n-ar avea cine s-o țină la zi: metodele de ciclu de viață pot să nu ruleze), deci forma de telefon se scrie AICI, nu cu un steag în logică. Mânerul e îndoit (`modalcard` + `data-cat`) ca să bată rândul 88, care îmbracă orice fereastră: scris cu un singur mâner ar fi atârnat de ordinea rândurilor. `100vh` întâi și `100dvh` după el: cine nu știe de `dvh` îl sare și rămâne cu primul. Caseta de căutat scrie cu 16 px, sub care telefonul apropie singur pagina la prima atingere; țintele de 44 px nu mai sunt aici, ci după bandă, fiindcă nu mai sunt numai ale telefonului. Golurile din laturi sunt de 14 px, nu de 16: cu ele, la 360 px încap două carduri de 9rem pe rând (două coloane și golul dintre ele cer 306 px); la 320 rămâne unul pe rând, fiindcă `−`, cantitatea și `+` de 44 px nu încap într-un card mai îngust de ~150 px. */
+[data-adm=modalcard][data-cat=foaie]{height:100vh!important;height:100dvh!important;max-height:none!important;border-radius:0!important;padding:0!important}
+/* CAPUL FIX E SCURT: titlul cu „×" și comutatorul, atât. Pe 320×568 capul întreg (titlu, notă, comutator, căutare) lua ~215 px și, cu piciorul de ~70, lăsa ~283 px unui card de ~375: nu se vedea niciunul întreg. Nota și căutarea din cap (`data-cat=sus`) se sting, iar copiile lor din mijloc (`catjos`) se aprind și se derulează cu cardurile. Socoteala capului: 5 + 46 („×": 44 scriși pe el, înălțat la 46 de rândul `modalclose` al benzii ăsteia, ca la toate ferestrele) + 6 + ~56 (pastila comutatorului: butoane de 44, 0.3rem de jur împrejur și conturul) + 5 + 1 ≈ 119 px. Titlul se așază pe mijlocul lui „×", că nota de sub el a plecat. */
+[data-adm=catcap]{padding:5px 14px 5px!important;gap:6px!important}
+[data-adm=cattitlu]{align-items:center!important}
+[data-adm=catcap] [data-cat=sus]{display:none!important}
+[data-adm=catjos]{display:flex!important}
+[data-adm=catcorp]{padding:12px 14px 16px!important}
+[data-adm=cattext]{padding:10px 10px 12px!important;gap:6px!important}
+[data-adm=catpicior]{padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))!important}
+[data-adm=catlat]{max-width:none!important}
+/* La 320 px o jumătate de comutator are ~138 px, iar semnul, vorba „Congelate" și cifra pozițiilor cer ~136: se strâng golurile butonului, ca o cifră de două semne să nu-l scoată din pastilă. */
+[data-adm=catlat]>button{min-width:0!important;padding-inline:0.25rem!important;gap:0.3rem!important}
+[data-adm=catcauta]{flex:1 1 100%!important;max-width:none!important}
+/* În mijloc cutia căutării stă într-o coloană: `flex:1 1 100%` de mai sus ar cere acolo toată ÎNĂLȚIMEA, nu toată lățimea. */
+[data-adm=catjos]>[data-adm=catcauta]{flex:none!important}
+[data-adm=catcauta] input{font-size:16px!important}
+[data-adm=catalogata]{min-height:50px!important}
+}
+/* „Adus de …" scris ca TEXT, pentru cine n-are unde ajunge cu legătura (manager,
+   agent — v. `adusPe` în `renderVals`). Aceeași pastilă, dar nu se aprinde sub
+   maus și nu ia mânuța: o pastilă care răspunde la trecere promite o apăsare.
+   Aprinderea n-o mai stinge pagina: `shared/gp-recomandari.css` o dă acum
+   numai legăturii (`a.rc-badge:hover`), deci un `<span>` rămâne pe culorile
+   lui de repaus fără nimic scris aici. Până la 2.6.0 regula de acolo era pe
+   clasă și cerea trei rânduri de stins la loc, câte unul de fel de pastilă;
+   au plecat odată cu ea. A rămas săgeata: un text nu ia nici bara de scris.
+   Rândul stă la coada blocului dinadins: tot ce e mai sus își păstrează
+   numărul. */
+[data-adm=adustext]{cursor:default}
+/* Căutarea din fereastra „Din catalog": caseta dinăuntru n-are contur (stilul
+   e copiat din magazin, unde conturul îl poartă cutia), deci cutia trebuie să
+   spună ea unde e tastatura. Aceeași regulă ca în `Site Public.dc.html`. */
+[data-adm=catcauta]:focus-within{border-color:var(--h-accent)!important;box-shadow:0 0 0 3px var(--h-accent-soft)}
+/* Ștersul căutării e butonul nostru, de 44 px pe telefon; crucea mică pe care
+   o desenează singur browserul într-o casetă de căutare ar fi a doua, lipită
+   de el. Tot ca în magazin. */
+[data-adm=catcauta] input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}
+/* ȚINTELE DE ATINS ALE FERESTREI „DIN CATALOG", LA ORICE LĂȚIME. Hainele ei
+   sunt cele de CALCULATOR ale magazinului (`CAT_STIL`: butonul de latură iese
+   de 42 px, cutia căutării de 40, ștersul ei de 32), iar cele 44 px stăteau
+   numai în banda de 760. Între 761 și 1079 rămânea deci mai mică decât
+   magazinul însuși, care trece pe forma de telefon sub 1080 (`mob`): pe o
+   tabletă, comutatorul avea 42 px și căutarea 38. Comutatorul și căutarea au
+   acum 44 px peste tot — formularul de comandă se lucrează și cu degetul, pe
+   ecranul din birou. `CAT_STIL` nu se atinge: e copia literă cu literă a
+   magazinului, păzită de `check-fereastra-catalog.mjs` (D10).
+   Ștersul de 44 px stă într-o cutie de 44 cu contur de 1 px, deci cu 2 px mai
+   înalt decât golul ei: marginea de −1 px îl lasă să calce pe contur, ca
+   toată cutia să nu crească cu 2 px la prima literă scrisă. */
+[data-adm=catlat]>button{min-height:44px!important}
+[data-adm=catcauta]{min-height:44px!important}
+[data-adm=catcauta]>button{width:44px!important;height:44px!important;margin-block:-1px}
+/* Pastilele de grupă rămân CA ÎN MAGAZIN, la aceeași lățime: 36 px de la 1080
+   în sus (`min-height:2.25rem`, din `CAT_STIL`), 44 px sub 1080, unde
+   magazinul le dă `2.75rem`. Pragul e al lui (`window.innerWidth < 1080`),
+   nu al benzilor paginii ăsteia. */
+@media (max-width:1079px){
+[data-adm=catcipuri]>button{min-height:44px!important}
 }
 </style>
 </helmet>
@@ -139,10 +198,21 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <a href="Client.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Vezi comanda mea</a>
 </sc-if>
 <sc-if value="{{ deniedStaff }}" hint-placeholder-val="{{ true }}">
+<!--
+  Lista vine din meniul rolului (`deniedPanouri`), nu mai e scrisă aici. Erau
+  trei legături de mână — laborator, depozit, rută —, bune pentru angajat și
+  toate trei greșite pentru contul de pontaj, pe care îl duceau din refuz în
+  refuz.
+-->
 <div style="display:flex;flex-direction:column;gap:8px">
-<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Panoul din laborator</a>
-<a href="Depozit.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Depozit · stoc</a>
-<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Ruta șoferului</a>
+<sc-for list="{{ deniedPanouri }}" as="p" hint-placeholder-count="3">
+<sc-if value="{{ p.prim }}" hint-placeholder-val="{{ false }}">
+<a href="{{ p.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">{{ p.et }}</a>
+</sc-if>
+<sc-if value="{{ p.rest }}" hint-placeholder-val="{{ true }}">
+<a href="{{ p.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">{{ p.et }}</a>
+</sc-if>
+</sc-for>
 </div>
 </sc-if>
 <button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
@@ -262,7 +332,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </div>
 <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
 <input data-adm="search" class="h-input" value="{{ search }}" onChange="{{ onSearch }}" placeholder="Caută client, referință, produs" style="width:290px;height:44px;font-size:15px">
-<button data-adm="newbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" style="height:44px;font-size:15px">+ Comandă nouă</button>
+<button data-adm="newbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" style="height:44px;font-size:15px">{{ newLabel }}</button>
 </div>
 </div>
 
@@ -440,8 +510,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </sc-if>
 <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ r.onDelete }}" style="height:38px;color:var(--h-danger)">Anulează</button>
 </div>
-<sc-if value="{{ r.adus }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ r.adusLeg }}" hint-placeholder-val="{{ false }}">
 <a class="{{ r.adusCls }}" href="{{ r.adusHref }}" title="{{ r.adusTitlu }}" style="grid-column:2/-1;justify-self:start;margin-top:-4px">{{ r.adus }}</a>
+</sc-if>
+<sc-if value="{{ r.adusText }}" hint-placeholder-val="{{ false }}">
+<span data-adm="adustext" class="{{ r.adusCls }}" title="{{ r.adusTitlu }}" style="grid-column:2/-1;justify-self:start;margin-top:-4px">{{ r.adus }}</span>
 </sc-if>
 <sc-if value="{{ r.creatDe }}" hint-placeholder-val="{{ false }}">
 <span data-adm="autor" class="{{ r.creatDeCls }}" title="{{ r.creatDeTitlu }}" style="grid-column:2/-1;justify-self:start;margin-top:-4px;font-size:11px">{{ r.creatDe }}</span>
@@ -494,8 +567,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
 <span class="{{ r.chanCls }}" style="font-size:12px">{{ r.chan }}</span>
 <span class="{{ r.statusCls }}" style="font-size:12px">{{ r.status }}</span>
-<sc-if value="{{ r.adus }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ r.adusLeg }}" hint-placeholder-val="{{ false }}">
 <a class="{{ r.adusClsTap }}" href="{{ r.adusHref }}" title="{{ r.adusTitlu }}">{{ r.adus }}</a>
+</sc-if>
+<sc-if value="{{ r.adusText }}" hint-placeholder-val="{{ false }}">
+<span data-adm="adustext" class="{{ r.adusCls }}" title="{{ r.adusTitlu }}">{{ r.adus }}</span>
 </sc-if>
 <sc-if value="{{ r.creatDe }}" hint-placeholder-val="{{ false }}">
 <span data-adm="autor" class="{{ r.creatDeCls }}" title="{{ r.creatDeTitlu }}" style="font-size:12px">{{ r.creatDe }}</span>
@@ -585,8 +661,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <sc-if value="{{ r.hotaratDe }}" hint-placeholder-val="{{ false }}">
 <span data-adm="autor" class="h-badge" title="{{ r.hotaratDeTitlu }}" style="font-size:11px">{{ r.hotaratDe }}</span>
 </sc-if>
-<sc-if value="{{ r.adus }}" hint-placeholder-val="{{ false }}">
+<sc-if value="{{ r.adusLeg }}" hint-placeholder-val="{{ false }}">
 <a class="{{ r.adusClsTap }}" href="{{ r.adusHref }}" title="{{ r.adusTitlu }}">{{ r.adus }}</a>
+</sc-if>
+<sc-if value="{{ r.adusText }}" hint-placeholder-val="{{ false }}">
+<span data-adm="adustext" class="{{ r.adusCls }}" title="{{ r.adusTitlu }}">{{ r.adus }}</span>
 </sc-if>
 </div>
 
@@ -743,7 +822,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </div>
 <p style="margin:0;font-size:12px;line-height:1.5;color:var(--h-fg-subtle)">Schemă a pozițiilor pe zonă, nu hartă rutieră. „L" e laboratorul. Distanțele sunt în linie dreaptă × 1,35 — bune pentru comparat ordinea, nu pentru navigație.</p>
 </div>
+<sc-if value="{{ veziSofer }}" hint-placeholder-val="{{ true }}">
 <a href="Ruta%20Sofer.dc.html" class="h-btn h-btn--secondary" style="height:48px;font-size:15px;text-decoration:none">Vezi ce vede șoferul →</a>
+</sc-if>
 </div>
 
 </div>
@@ -774,7 +855,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </div>
 </sc-for>
 </div>
-<p style="margin:0;font-size:14px;color:var(--h-fg-subtle)">Totalurile se calculează din comenzile din listă — nu există încă un catalog separat de produse. Spune-mi dacă vrei catalog cu prețuri și stoc.</p>
+<p style="margin:0;font-size:14px;color:var(--h-fg-subtle)">Totalurile se socotesc din comenzile din listă: câte comenzi cer produsul și câte bucăți, în total.</p>
 </div>
 </sc-if>
 
@@ -790,7 +871,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <button data-adm="modalclose" type="button" aria-label="Închide formularul comenzii" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
 </div>
 
-<div data-adm="g2" style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px">
+<div data-adm="g2" style="display:grid;grid-template-columns:{{ frmG2Col }};gap:14px">
 <!-- CLIENTUL, cu căutare prin cei de până acum.
      Caseta rămâne o casetă obișnuită: numele se poate scrie de mână, iar
      comanda se face și pentru cineva care n-a mai comandat niciodată. Lista
@@ -836,18 +917,23 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Telefon
 <input class="h-input" value="{{ frm.phone }}" onChange="{{ onPhone }}" placeholder="ex. 0722 000 000" style="height:46px;font-size:16px">
 </label>
-<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Referință
-<!-- La o comandă NOUĂ referința se naște pe server (api/routes/orders.php ·
+<!-- REFERINȚA — numai la corectare (`frmCuReferinta`).
+     La o comandă NOUĂ referința se naște pe server (api/routes/orders.php ·
      `route_orders_create()`): numărul se dă pe zi, în ordine, ca să nu se
-     ciocnească două comenzi luate în aceeași clipă. Caseta primea totuși
-     text, iar textul murea acolo — antetul cererii nici nu-l ducea. Pe ecran
-     apărea „Comandă nouă adăugată: #1042", cu alt număr decât cel scris, și
-     nicăieri nu scria că referința tastată a fost aruncată.
+     ciocnească două comenzi luate în aceeași clipă. Caseta primea cândva
+     text, iar textul murea acolo — antetul cererii nici nu-l ducea. A fost
+     apoi făcută doar-citire, cu „se completează automat" în ea: o casetă care
+     cerea ochi și nu dădea nimic. Din 2 octombrie 2026 nu se mai desenează
+     deloc pe o comandă nouă, iar grila rămâne în două coloane (`frmG2Col`).
 
-     `readOnly` și nu `disabled`, din același motiv ca la codul de recomandare
-     de mai jos: un câmp stins nu se poate nici citi cu ochii. -->
+     `readOnly` și cele două texte de sub el au rămas legate, deși la
+     corectare sunt mereu pe ramura „se poate scrie": le citește proba, iar
+     scoase ar fi lăsat-o fără reper. -->
+<sc-if value="{{ frmCuReferinta }}" hint-placeholder-val="{{ false }}">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Referință
 <input class="h-input" value="{{ frm.ref }}" onChange="{{ onRef }}" readOnly="{{ frmRefNoua }}" title="{{ frmRefNotaTitlu }}" placeholder="se completează automat" style="height:46px;font-size:16px;color:{{ frmRefFg2 }}">
 </label>
+</sc-if>
 </div>
 
 <sc-if value="{{ frmContNota }}" hint-placeholder-val="{{ false }}">
@@ -871,7 +957,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <button type="button" class="{{ frmUrgentCls }}" onClick="{{ onToggleUrgent }}" style="height:46px;align-self:flex-start;min-width:250px;font-size:15px;border-radius:14px">{{ frmUrgentLabel }}</button>
 </div>
 
-<div data-adm="g3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+<div data-adm="g3" style="display:grid;grid-template-columns:{{ frmG3Col }};gap:14px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Zi
 <select class="h-input" value="{{ frm.day }}" onChange="{{ onDay }}" style="height:46px;font-size:15px">
 <sc-for list="{{ dayOpts }}" as="o" hint-placeholder-count="7">
@@ -890,6 +976,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <span style="font-size:12px;font-weight:400;line-height:1.4;color:var(--h-fg-subtle)">{{ frmOraSfat }}</span>
 </sc-if>
 </label>
+<!-- STAREA — numai la corectare (`frmCuStare`). Pe o comandă nouă alegerea nu
+     pleca nicăieri: antetul cererii n-are `status`, iar serverul pune comanda
+     în capul fluxului orice s-ar fi ales aici. Grila rămâne în două coloane
+     (`frmG3Col`). -->
+<sc-if value="{{ frmCuStare }}" hint-placeholder-val="{{ false }}">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Stare
 <select class="h-input" value="{{ frm.status }}" onChange="{{ onStatus }}" style="height:46px;font-size:15px">
 <sc-for list="{{ statusOpts }}" as="o" hint-placeholder-count="5">
@@ -897,6 +988,14 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </sc-for>
 </select>
 </label>
+<!-- Cui nu i se oferă etapa finală i se spune și de ce (`etapaFinalaNota`).
+     Rândul e al grilei, pe toată lățimea ei, nu al etichetei: pus în `<label>`
+     ar fi intrat în numele casetei, citit de cititorul de ecran la fiecare
+     oprire pe ea. -->
+<sc-if value="{{ etapaFinalaNota }}" hint-placeholder-val="{{ false }}">
+<p data-adm="etapanota" style="grid-column:1/-1;margin:0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">{{ etapaFinalaNota }}</p>
+</sc-if>
+</sc-if>
 </div>
 
 <div style="display:flex;flex-direction:column;gap:10px">
@@ -983,7 +1082,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
      plasă; ăsta e doar semnul dat la timp, cu locul unde se scriu
      preparatele din afara catalogului. -->
 <sc-if value="{{ it.faraProdus }}" hint-placeholder-val="{{ false }}">
-<span data-adm="faracatalog" style="font-size:12px;line-height:1.45;color:var(--h-fg-subtle)">Nu e niciun produs cu numele ăsta în catalog. Scrie-l în „Notă pentru laborator".</span>
+<span data-adm="faracatalog" style="font-size:12px;line-height:1.45;color:var(--h-fg-subtle)">{{ it.faraProdusText }}</span>
 </sc-if>
 <!-- Banii rândului. Acolo unde s-a onorat un preț promis, se văd amândouă
      feliile: „10 × 3,49 + 1 × 5,49 = 40,39 RON". -->
@@ -1014,7 +1113,14 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 
 <sc-if value="{{ frmAdus }}" hint-placeholder-val="{{ false }}">
 <div data-adm="refbox" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<!-- Legătură numai pentru administrator; celorlalți, același text fără ea
+     (v. `adusPe` în `renderVals`). -->
+<sc-if value="{{ frmAdusLeg }}" hint-placeholder-val="{{ true }}">
 <a class="{{ frmAdusCls }}" href="{{ frmAdusHref }}" title="{{ frmAdusTitlu }}">{{ frmAdus }}</a>
+</sc-if>
+<sc-if value="{{ frmAdusText }}" hint-placeholder-val="{{ false }}">
+<span data-adm="adustext" class="{{ frmAdusClsText }}" title="{{ frmAdusTitlu }}">{{ frmAdus }}</span>
+</sc-if>
 <span style="flex:1 1 200px;min-width:0;font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ frmAdusNota }}</span>
 <sc-if value="{{ frmPoatePlati }}" hint-placeholder-val="{{ true }}">
 <button type="button" onClick="{{ onPlataComision }}" title="Aceeași bifă ca în pagina Recomandări — același rând din registru." style="flex:none;display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid {{ frmPlataLine }};background:{{ frmPlataBg }};color:{{ frmPlataFg }};font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">
@@ -1028,11 +1134,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 <sc-if value="{{ frmPotRecomandare }}" hint-placeholder-val="{{ false }}">
 <div data-adm="refcod" style="display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">{{ frmRefEt }}
-<!-- Câmpul nu mai e blocat nimănui. A fost, pentru agent, cât timp serverul îi
-     refuza codul altcuiva (`referral_not_yours`); poarta aceea a căzut pe 19
-     septembrie 2026, deci `readOnly` n-ar mai apăra nimic — ar ascunde doar o
-     putere pe care omul o are. Odată cu ea a căzut și culoarea stinsă care
-     spunea „aici nu se scrie". -->
+<!-- Câmpul nu e blocat nimănui dintre cei care îl VĂD. A fost, pentru agent,
+     cât timp serverul îi refuza codul altcuiva (`referral_not_yours`); poarta
+     aceea a căzut pe 19 septembrie 2026, și odată cu ea `readOnly` și culoarea
+     stinsă care spunea „aici nu se scrie". Din 2 octombrie 2026 agentul nu
+     mai are cutia deloc — nu una blocată, ci niciuna: codul lui pleacă singur,
+     iar el citește rândul `frmCodulMeu` de sub cutie. -->
 <input class="h-input" value="{{ frm.refCode }}" onChange="{{ onRefCode }}" title="{{ frmRefTitlu }}" placeholder="ex. mihai — gol dacă n-a trimis-o nimeni" style="height:46px;font-size:16px">
 </label>
 <sc-if value="{{ frmPotLega }}" hint-placeholder-val="{{ false }}">
@@ -1043,6 +1150,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </sc-if>
 <span style="font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ frmRefNota }}</span>
 </div>
+</sc-if>
+
+<!-- Rândul agentului, în locul cutiei de mai sus: spune ce cod pleacă odată
+     cu cererea, fără să-l lase schimbat. Fără cod pe cont nu se arată. -->
+<sc-if value="{{ frmCodulMeu }}" hint-placeholder-val="{{ false }}">
+<p data-adm="codulmeu" style="margin:0;padding:10px 14px;border-radius:12px;background:var(--h-bg-sunk);border:1px solid var(--h-line);font-size:14px;line-height:1.45;color:var(--h-fg-muted)">{{ frmCodulMeuText }}</p>
 </sc-if>
 
 <sc-if value="{{ formErr }}" hint-placeholder-val="{{ false }}">
@@ -1079,48 +1192,158 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
      încuviințare (50), care n-au voie să fie acoperite de nimic.
      Nu se închide la fiecare alegere: de cele mai multe ori se iau mai
      multe produse deodată, iar o fereastră care se închide singură ar
-     trebui redeschisă la fiecare rând. -->
+     trebui redeschisă la fiecare rând.
+
+     CA ÎN MAGAZIN (runda 2.6.0). Până acum era o listă de 560 px cu poze de
+     44, pe latura FORMULARULUI — iar formularul nou n-are de unde alege
+     latura, deci din fereastră se puteau pune numai produse coapte. Acum are
+     comutatorul magazinului (Congelate / Coapte), căutarea și pastilele lui
+     de grupă, și carduri cu poza laturii deschise. Hainele sunt copiate din
+     `Site Public.dc.html` în `CAT_STIL` (v. logica), nu împrumutate de acolo.
+
+     TREI BUCĂȚI, una sub alta: capul și piciorul stau pe loc, se derulează
+     numai mijlocul. Piciorul e un frate al mijlocului, nu o bară lipită peste
+     el — deci n-are cum să acopere ultimul rând de carduri. Pe telefon
+     fereastra e o foaie cât tot ecranul (v. banda de 760 din foaia de stil).
+
+     NOTA ȘI CĂUTAREA STAU DE DOUĂ ORI, și se vede mereu numai una. Pe un
+     telefon scund (320×568) capul cu titlu, notă, comutator și căutare lua
+     ~215 px, piciorul ~70, iar un card are ~375: în cei ~283 px rămași nu se
+     vedea niciun card întreg. Pe telefon capul ține deci numai titlul cu „×"
+     și comutatorul, iar nota și căutarea se derulează cu mijlocul. Pagina
+     n-are o stare de lățime, așa că nu le poate MUTA: copia din cap poartă
+     `data-cat="sus"` și se stinge în banda de 760, iar copia din mijloc
+     (`catjos`) e stinsă din marcaj și se aprinde tot acolo. Cele două casete
+     sunt legate de aceeași stare (`catalogCauta`), deci ce s-a scris într-una
+     e scris și în cealaltă. Pe calculator nu se schimbă nimic: comutatorul și
+     căutarea rămân pe un rând, în cap. -->
 <sc-if value="{{ catalogDeschis }}" hint-placeholder-val="{{ false }}">
 <div data-adm="modalwrap" style="position:fixed;inset:0;background:rgba(28,18,11,.55);display:flex;align-items:center;justify-content:center;padding:28px;z-index:44;animation:pf-fade .2s var(--h-ease-out)" onClick="{{ onInchideCatalog }}">
-<div data-adm="modalcard" class="h-card" style="width:560px;max-height:86vh;overflow-y:auto;padding:22px 24px;border-radius:22px;display:flex;flex-direction:column;gap:16px;animation:pf-pop .28s var(--h-ease-spring)" onClick="{{ stop }}">
-<div style="display:flex;align-items:flex-start;gap:12px">
+<div data-adm="modalcard" data-cat="foaie" class="h-card" style="width:min(1080px,100%);max-height:90vh;overflow:hidden;padding:0;border-radius:22px;display:flex;flex-direction:column;animation:pf-pop .28s var(--h-ease-spring)" onClick="{{ stop }}">
+<div data-adm="catcap" style="flex:none;display:flex;flex-direction:column;gap:12px;min-width:0;padding:20px 22px 14px;border-bottom:1px solid var(--h-line)">
+<div data-adm="cattitlu" style="display:flex;align-items:flex-start;gap:12px;min-width:0">
 <div style="display:flex;flex-direction:column;gap:4px;min-width:0">
 <h2 class="h-h3" style="margin:0;font-size:20px">Din catalog</h2>
-<span style="font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ catalogNota }}</span>
+<span data-adm="catnota" data-cat="sus" style="font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty;overflow-wrap:anywhere">{{ catalogNota }}</span>
 </div>
-<button data-adm="modalclose" type="button" aria-label="Închide catalogul" class="h-btn h-btn--ghost" onClick="{{ onInchideCatalog }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
+<button data-adm="modalclose" type="button" aria-label="Închide catalogul" class="h-btn h-btn--ghost" onClick="{{ onInchideCatalog }}" style="margin-left:auto;flex:none;height:44px;width:44px;padding:0;font-size:20px">×</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;min-width:0">
+<!-- Comutatorul laturii, cu marcajul magazinului: semnul ÎNAINTEA vorbei
+     (paza: `test-semn-laturi.mjs`). Cifra de pe fiecare pastilă spune câte
+     poziții are comanda pe latura aceea, și se vede de pe amândouă: o comandă
+     amestecată nu are voie să pară goală fiindcă te uiți la latura cealaltă. -->
+<div data-adm="catlat" role="group" aria-label="Latura catalogului" style="{{ catLaturaRand }}">
+<button type="button" aria-pressed="{{ catFrozenOn }}" onClick="{{ onCatFrozen }}" style="{{ catFrozenBtn }}"><gp-semn latura="congelat" aria-hidden="true"></gp-semn><span>Congelate</span><sc-if value="{{ catFrozenAre }}" hint-placeholder-val="{{ false }}"><span style="{{ catNr }}">{{ catFrozenNr }}</span></sc-if></button>
+<button type="button" aria-pressed="{{ catBakedOn }}" onClick="{{ onCatBaked }}" style="{{ catBakedBtn }}"><gp-semn latura="copt" aria-hidden="true"></gp-semn><span>Coapte</span><sc-if value="{{ catBakedAre }}" hint-placeholder-val="{{ false }}"><span style="{{ catNr }}">{{ catBakedNr }}</span></sc-if></button>
+</div>
+<!-- Căutarea NU cere focusul la deschidere: pe telefon tastatura ar acoperi
+     tocmai cardurile pentru care s-a deschis fereastra (paza:
+     `check-focus.mjs`, lista locurilor ținute dinadins fără focus). -->
+<div data-adm="catcauta" data-cat="sus" style="{{ catCautaCutie }}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" value="{{ catalogCauta }}" onChange="{{ onCatCauta }}" placeholder="Caută după nume sau număr" aria-label="Caută în catalog" autoComplete="off" style="{{ catCautaInput }}">
+<sc-if value="{{ catAreCautare }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ onCatGoleste }}" aria-label="Șterge căutarea" title="Șterge căutarea" style="{{ catCautaSterge }}">×</button>
+</sc-if>
+</div>
+</div>
+</div>
+<div data-adm="catcorp" style="flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;display:flex;flex-direction:column;gap:16px;padding:16px 22px 20px">
+<!-- Nota și căutarea, pentru TELEFON: aceleași două din cap, puse aici ca să
+     se deruleze cu cardurile. Stinse din marcaj, aprinse în banda de 760
+     (v. povestea de deasupra ferestrei). Nici caseta asta nu cere focusul. -->
+<div data-adm="catjos" style="display:none;flex-direction:column;gap:10px;min-width:0">
+<span data-adm="catnota" style="font-size:13px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty;overflow-wrap:anywhere">{{ catalogNota }}</span>
+<div data-adm="catcauta" data-cat="jos" style="{{ catCautaCutie }}">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false" style="flex:none"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+<input type="search" value="{{ catalogCauta }}" onChange="{{ onCatCauta }}" placeholder="Caută după nume sau număr" aria-label="Caută în catalog" autoComplete="off" style="{{ catCautaInput }}">
+<sc-if value="{{ catAreCautare }}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{ onCatGoleste }}" aria-label="Șterge căutarea" title="Șterge căutarea" style="{{ catCautaSterge }}">×</button>
+</sc-if>
+</div>
 </div>
 <sc-if value="{{ catalogGol }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--warning" style="border-radius:14px;padding:12px 16px;font-size:14px;line-height:1.45">Catalogul nu a venit de la server. Scrie numele produsului în caseta lui — salvarea spune dacă nimerește.</div>
 </sc-if>
+<!-- Pastilele de grupă, cu câte produse are fiecare PE LATURA DESCHISĂ și
+     după căutare. O grupă rămasă fără nimic nu se arată: o pastilă cu zero
+     duce la o listă goală. Butoane, nu legături: nu schimbă adresa. -->
+<sc-if value="{{ catAreCipuri }}" hint-placeholder-val="{{ false }}">
+<div data-adm="catcipuri" role="group" aria-label="Grupele catalogului" style="{{ catCipuriRand }}">
+<sc-for list="{{ catalogCipuri }}" as="cp" hint-placeholder-count="3">
+<button type="button" aria-pressed="{{ cp.on }}" onClick="{{ cp.onPick }}" style="{{ cp.st }}"><span>{{ cp.name }}</span><span style="{{ catCipNr }}">{{ cp.nr }}</span></button>
+</sc-for>
+</div>
+</sc-if>
+<!-- Lista goală își spune pricina: nimic pe latura asta, ori nimic pentru
+     ce s-a căutat. Altfel omul ar citi-o drept „catalogul n-a venit". -->
+<sc-if value="{{ catalogNimic }}" hint-placeholder-val="{{ false }}">
+<p data-adm="catnimic" style="margin:0;padding:18px 16px;border-radius:14px;border:1px dashed var(--h-line-strong);font-size:14px;line-height:1.5;color:var(--h-fg-muted);text-align:center;overflow-wrap:anywhere">{{ catalogNimicText }}</p>
+</sc-if>
 <sc-for list="{{ catalogGrupe }}" as="g" hint-placeholder-count="2">
-<div style="display:flex;flex-direction:column;gap:6px">
-<h3 style="margin:0;font-family:var(--h-font-body);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ g.name }}</h3>
-<sc-for list="{{ g.prod }}" as="p" hint-placeholder-count="3">
-<!-- Rândul NU mai e un buton: în el stau acum trei ținte deosebite — scade,
-     scrie, adaugă —, iar butoanele nu se pot cuibări unul în altul. Cutia de
-     afară poartă marcajul și culoarea, apăsările stau înăuntru. Se înfășoară
-     ca rândurile de poziții din formular: pe 390 numele nu are voie să se
-     strângă sub deget ca să încapă lângă stepper. -->
-<div data-adm="catalogprod" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:56px;padding:6px 10px;border:1px solid {{ p.bd }};border-radius:12px;background:{{ p.bg }};color:var(--h-fg);font-family:var(--h-font-body);font-size:14px">
-<!-- Leneșă din aceeași pricină ca miniaturile din „Produse": marcajul stă
-     într-un <x-dc> ascuns până la desenare, deci o poză leneșă nu se cere de
-     la server la fiecare deschidere a paginii. -->
-<img data-adm="catalogfoto" loading="lazy" src="{{ p.photo }}" alt="" style="flex:none;width:44px;height:44px;border-radius:9px;object-fit:cover;background:var(--h-bg-sunk)">
-<div style="flex:1 1 150px;min-width:0;display:flex;flex-direction:column;gap:1px">
-<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.name }}</span>
-<span class="h-numeric" style="font-size:12px;color:var(--h-fg-muted)">{{ p.detaliu }}</span>
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+<!-- Sub „Toate" fiecare grupă își poartă numele; cu o singură grupă aleasă
+     numele ei e deja pe pastila aprinsă, deci nu se mai scrie o dată. -->
+<sc-if value="{{ g.cuTitlu }}" hint-placeholder-val="{{ true }}">
+<h3 style="margin:0;font-family:var(--h-font-body);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle);overflow-wrap:anywhere">{{ g.name }}</h3>
+</sc-if>
+<!-- Grila magazinului, literă cu literă (`grilaDe(4,'9rem','1.15rem')`):
+     patru pe rând cât încap, apoi trei, două, unul — fără nicio bandă scrisă
+     aici, deci poza are mărimea din magazin la orice lățime. -->
+<div data-adm="catgrila" style="{{ catGrila }}">
+<sc-for list="{{ g.prod }}" as="p" hint-placeholder-count="4">
+<!-- Cardul NU e un buton: în el stau trei ținte deosebite — scade, scrie,
+     adaugă —, iar butoanele nu se pot cuibări unul în altul. Cutia de afară
+     poartă marcajul și culoarea (miere pe ce e deja pe comandă), apăsările
+     stau înăuntru. -->
+<div data-adm="catalogprod" style="display:flex;flex-direction:column;min-width:0;overflow:hidden;border:1px solid {{ p.bd }};border-radius:16px;background:{{ p.bg }};color:var(--h-fg);font-family:var(--h-font-body)">
+<div style="{{ catProdMedia }}">
+<!-- Poza LATURII DESCHISE, și numai a ei (`gp.pozaPe`): o latură fără poză
+     capătă sigla, nu poza celeilalte. Leneșă din aceeași pricină ca
+     miniaturile din „Produse": marcajul stă într-un <x-dc> ascuns până la
+     desenare, deci o poză leneșă nu se cere de la server la fiecare
+     deschidere a paginii. -->
+<img data-adm="catalogfoto" loading="lazy" src="{{ p.photo }}" alt="" style="{{ p.pozaSt }}">
+<span style="{{ catNoBadge }}">{{ p.no }}</span>
 </div>
-<div style="flex:none;display:flex;align-items:center;gap:4px">
+<div data-adm="cattext" style="{{ catProdBody }}">
+<span style="{{ catProdTitle }}">{{ p.name }}</span>
+<sc-if value="{{ p.areGram }}" hint-placeholder-val="{{ true }}">
+<span class="h-numeric" style="{{ catProdGram }}">{{ p.gram }}</span>
+</sc-if>
+<span class="h-numeric" style="{{ catProdPrice }}">{{ p.pret }}</span>
+<!-- Scara de volum, pe un rând stins: de la câte bucăți scade prețul. Un
+     produs cu un singur preț n-o are. -->
+<sc-if value="{{ p.areScara }}" hint-placeholder-val="{{ false }}">
+<span data-adm="catscara" class="h-numeric" style="{{ catProdScara }}">{{ p.scara }}</span>
+</sc-if>
+</div>
+<!-- Bara de jos ține „−", cantitatea și „+", de la o margine a cardului la
+     cealaltă: cele două butoane au 44 px oricât de îngust ar fi cardul (cel
+     mai îngust pe care îl dă grila are 9rem), iar caseta ia ce rămâne între
+     ele. Ordinea din marcaj e cea de pe ecran, ca Tab-ul să meargă la fel.
+     „+" lipsește numai pe o poziție rămasă pe comandă de pe o latură unde
+     produsul nu mai are preț: serverul n-ar primi o bucată în plus. -->
+<div data-adm="catsteper" style="margin-top:auto;display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:4px;min-width:0;padding:4px;border-top:1px solid var(--h-line)">
 <button data-adm="catalogminus" type="button" onClick="{{ p.onMinus }}" aria-label="{{ p.minusEt }}" style="height:44px;width:44px;padding:0;border:1px solid var(--h-line);border-radius:10px;background:var(--h-bg-raised);color:var(--h-fg);font-size:18px;font-weight:700;line-height:1;cursor:pointer;opacity:{{ p.minusOp }}">−</button>
-<input data-adm="catalogqty" class="h-input h-numeric" value="{{ p.q }}" onChange="{{ p.onQ }}" inputMode="decimal" placeholder="0" aria-label="{{ p.qEt }}" style="width:62px;height:44px;font-size:15px;text-align:center;padding:0 6px">
+<input data-adm="catalogqty" class="h-input h-numeric" value="{{ p.q }}" onChange="{{ p.onQ }}" inputMode="decimal" placeholder="0" aria-label="{{ p.qEt }}" style="width:100%;min-width:0;height:44px;font-size:16px;text-align:center;padding:0 2px">
+<sc-if value="{{ p.cuPlus }}" hint-placeholder-val="{{ true }}">
 <button data-adm="catalogplus" type="button" onClick="{{ p.onPick }}" aria-label="{{ p.plusEt }}" style="height:44px;width:44px;padding:0;border:1px solid var(--h-accent);border-radius:10px;background:var(--h-bg-raised);color:var(--h-accent);font-size:18px;font-weight:700;line-height:1;cursor:pointer">+</button>
+</sc-if>
 </div>
 </div>
 </sc-for>
 </div>
+</div>
 </sc-for>
-<button data-adm="catalogata" type="button" class="h-btn h-btn--primary" onClick="{{ onInchideCatalog }}" style="align-self:flex-end;height:48px;font-size:15px;min-width:150px">Gata</button>
+</div>
+<!-- Piciorul: câte poziții are comanda acum, pe amândouă laturile la un loc,
+     și „Gata". Stă sub mijloc, nu peste el. -->
+<div data-adm="catpicior" style="flex:none;display:flex;align-items:center;gap:12px;min-width:0;padding:12px 22px;border-top:1px solid var(--h-line)">
+<span data-adm="catpozitii" class="h-numeric" style="min-width:0;font-size:14px;font-weight:600;color:var(--h-fg-muted);overflow-wrap:anywhere">{{ catalogPozitii }}</span>
+<button data-adm="catalogata" type="button" class="h-btn h-btn--primary" onClick="{{ onInchideCatalog }}" style="margin-left:auto;flex:none;height:48px;font-size:15px;min-width:150px">Gata</button>
+</div>
 </div>
 </div>
 </sc-if>
@@ -1172,6 +1395,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </sc-for>
 </select>
 </label>
+<sc-if value="{{ etapaFinalaNota }}" hint-placeholder-val="{{ false }}">
+<p data-adm="etapanota" style="margin:-8px 0 0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">{{ etapaFinalaNota }}</p>
+</sc-if>
 
 <div data-adm="modalfoot" style="display:flex;align-items:center;gap:10px;margin-top:2px">
 <button data-adm="btncancel" type="button" class="h-btn h-btn--secondary" onClick="{{ onPeekClose }}" style="margin-left:auto;height:48px;font-size:15px">Închide</button>
@@ -1214,6 +1440,84 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 // browserul cere ÎNCĂ O DATĂ pagina însăși, o primește ca imagine stricată, și
 // scrie o eroare roșie în consolă la fiecare rând din fereastra catalogului.
 const FOTO_LIPSA = "assets/logo-auriu.png";
+
+/**
+ * HAINELE FERESTREI „DIN CATALOG", COPIATE DIN MAGAZIN.
+ *
+ * Fereastra din formularul de comandă arată ca vitrina magazinului: același
+ * comutator de latură, aceeași căutare, aceleași pastile de grupă, aceeași
+ * grilă de carduri cu poza în 4/3 și numărul în colț. Stilurile de mai jos
+ * sunt luate LITERĂ CU LITERĂ din `Site Public.dc.html` (de-aia au ghilimele
+ * simple, ca acolo, într-o pagină care scrie cu duble), în forma lor de
+ * calculator și de vedere „Șase" (`mob` fals, `felCard` „mediu").
+ *
+ * DE CE COPIATE, ȘI NU SCOASE LA COMUN. Magazinul pleacă pe alt nume de
+ * domeniu decât panoul, iar făcătorii lui de stiluri sunt legați de starea
+ * lui (`mob`, `felCard`, latura) și păziți literă cu literă de
+ * `check-site-public.mjs`. Scoaterea lor într-un fișier comun ar fi rescris
+ * vitrina publică pentru o fereastră a personalului. O copie are un singur
+ * cusur — rămâne în urmă —, și tocmai pe ăla îl păzește
+ * `check-fereastra-catalog.mjs`: scoate aceleași stiluri din magazin, le
+ * socotește și le pune față în față cu cele de aici. Schimbat într-un singur
+ * loc, se înroșește.
+ *
+ * CE NU E COPIAT: mărimile de telefon. Magazinul le alege cu `mob`; pagina
+ * asta n-are o stare de lățime, deci cele 44 px ale țintelor stau în banda de
+ * 760 a foii de stil. Și `prodMedia` n-are `cursor:pointer`-ul din față: în
+ * magazin poza deschide fișa produsului, aici nu deschide nimic, iar o mânuță
+ * peste ceva care nu se apasă e o făgăduială mincinoasă.
+ */
+const grilaDe = (N, MIN, GOL) => 'display:grid;gap:' + GOL
+  + ';grid-template-columns:repeat(auto-fill,minmax(max(' + MIN + ',calc((100% - ' + (N - 1) + ' * ' + GOL + ') / ' + N + ' - 0.5px)),1fr))';
+const CAT_STIL = {
+  laturaRand: 'display:flex;gap:0.3rem;padding:0.3rem;width:100%;max-width:30rem;min-width:0;'
+    + 'background:var(--h-bg-sunk);border:1px solid var(--h-line);border-radius:999px',
+  tierBtn: (on) =>
+    'flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:0.45rem;border:0;border-radius:999px;cursor:pointer;font-family:var(--h-font-body);font-size:0.875rem;font-weight:700;white-space:nowrap;transition:all 180ms ease;' +
+    'padding:0.6rem 0.5rem;' +
+    (on
+      ? 'background:var(--h-bg-raised);color:var(--h-fg);box-shadow:var(--h-shadow-1)'
+      : 'background:transparent;color:var(--h-fg-muted)'),
+  cautaCutie: 'display:flex;align-items:center;gap:0.5rem;min-width:0;padding:0 0.35rem 0 0.95rem;border-radius:999px;'
+    + 'background:var(--h-bg-sunk);border:1px solid var(--h-line-strong);color:var(--h-fg-subtle);cursor:text;'
+    + 'transition:border-color 180ms ease,box-shadow 180ms ease;'
+    + 'flex:1 1 16rem;max-width:28rem;min-height:2.5rem',
+  cautaInput: 'flex:1 1 auto;min-width:0;width:100%;border:0;outline:none;background:transparent;color:var(--h-fg);font-family:inherit;padding:0.45rem 0;font-size:'
+    + '0.9375rem',
+  cautaSterge: 'display:inline-flex;align-items:center;justify-content:center;flex:none;padding:0;border:0;border-radius:999px;background:transparent;color:var(--h-fg-muted);cursor:pointer;font-family:inherit;font-size:1.25rem;line-height:1;'
+    + 'width:2rem;height:2rem',
+  cipuriRand: 'display:flex;flex-wrap:wrap;align-items:center;gap:0.4rem;min-width:0',
+  cipNr: 'font-weight:500;opacity:0.7;font-variant-numeric:tabular-nums',
+  cip: (on) => 'display:inline-flex;align-items:center;gap:0.35rem;max-width:100%;padding:0.3rem 0.9rem;border-radius:999px;'
+    + 'font-family:inherit;font-size:0.8125rem;font-weight:600;line-height:1.25;overflow-wrap:anywhere;text-decoration:none;cursor:pointer;'
+    + 'transition:background-color 180ms ease,border-color 180ms ease,color 180ms ease;'
+    + 'min-height:2.25rem;'
+    + (on
+      ? 'background:var(--h-accent-soft);border:1px solid var(--h-accent);color:var(--h-accent-fg)'
+      : 'background:transparent;border:1px solid var(--h-line-strong);color:var(--h-fg-muted)'),
+  prodGrid: grilaDe(4, '9rem', '1.15rem'),
+  prodMedia: 'position:relative;overflow:hidden;background:var(--h-grad-warm);flex:none;aspect-ratio:' + '4/3',
+  noBadge: 'position:absolute;top:0.5rem;left:0.5rem;display:inline-flex;align-items:center;justify-content:center;min-width:1.65rem;height:1.65rem;padding-inline:0.4rem;border-radius:999px;background:var(--h-bg-raised);color:var(--h-fg-muted);font-family:var(--h-font-display);font-size:0.6875rem;font-weight:700;box-shadow:var(--h-shadow-1)',
+  // De aici în jos sunt ale ferestrei, nu ale magazinului: cardul de aici are
+  // altă treabă (se pune pe o comandă, nu într-un coș), deci alt cuprins.
+  //
+  // Corpul cardului are golurile vederii „Șase" din magazin (`corpPe.mediu`).
+  prodBody: 'display:flex;flex-direction:column;gap:0.55rem;padding:0.95rem 1rem 1rem;flex:1 1 auto;min-width:0',
+  // Numele se rupe oriunde e nevoie, nu se taie cu puncte: pe un card de 9rem
+  // „Croissant cu unt și ciocolată belgiană" trebuie citit întreg — după nume
+  // se alege produsul.
+  prodTitle: 'margin:0;min-width:0;overflow-wrap:anywhere;font-size:0.9375rem;font-weight:700;line-height:1.25',
+  prodGram: 'min-width:0;font-size:0.75rem;color:var(--h-fg-subtle)',
+  prodPrice: 'min-width:0;font-family:var(--h-font-display);font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;font-size:1.0625rem',
+  prodScara: 'min-width:0;font-size:0.75rem;line-height:1.35;color:var(--h-fg-subtle);overflow-wrap:anywhere',
+  // Poza umple cutia de 4/3. Sigla care ține locul unei poze lipsă se arată
+  // ÎNTREAGĂ și stinsă, nu tăiată ca o fotografie: altfel treizeci de carduri
+  // fără poză ar arăta treizeci de bucăți de siglă mărită.
+  poza: 'position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:cover',
+  pozaLipsa: 'position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:contain;padding:16%;opacity:0.5',
+  // Cifra de pe pastila unei laturi: câte poziții are comanda acolo.
+  nr: 'display:inline-flex;align-items:center;justify-content:center;flex:none;min-width:1.35rem;height:1.35rem;padding-inline:0.3rem;border-radius:999px;background:var(--h-accent-soft);color:var(--h-accent-fg);font-size:0.75rem;font-weight:700;line-height:1;font-variant-numeric:tabular-nums'
+};
 
 // Catalogul, ca să putem trimite serverului productId când personalul
 // introduce o comandă direct din panou.
@@ -1335,11 +1639,77 @@ const pretScurt = (p, variant) => {
  */
 const inCatalog = (p) => p.active !== false;
 
+/**
+ * Numele de ecran al celor două laturi ale catalogului, la plural, ca pe
+ * comutatorul ferestrei. Tabel, nu un ternar pe „congelat": îndemnul ferestrei
+ * goale numește CEALALTĂ latură, iar un ternar întors pe dos se citește ca și
+ * cum latura coaptă s-ar numi „Congelate" (`test-semn-laturi.mjs`).
+ */
+const NUME_LATURA = { congelat: "Congelate", copt: "Coapte" };
+
+/**
+ * Latura pe care se deschide fereastra „Din catalog", cât omul n-a ales încă
+ * una din comutatorul ei (`catalogLatura` gol).
+ *
+ * Cea pe care comanda are MAI MULTE BUCĂȚI din catalog: cine corectează o
+ * comandă de coapte vrea să vadă coaptele, cu cantitățile lor, nu o vitrină
+ * de congelate goală. La egalitate — și o comandă abia deschisă e o
+ * egalitate, zero la zero — hotărăște felul formularului:
+ *   · comanda NOUĂ se deschide pe Congelate, ca magazinul. Până la runda 2.6.0
+ *     se deschidea pe latura formularului, care pe o comandă nouă e „copt" și
+ *     n-are niciun control din care să se schimbe: din fereastră nu se putea
+ *     pune niciun produs congelat;
+ *   · corectarea și acceptarea unei cereri rămân pe latura hârtiei (`variant`
+ *     din antet), care spune ce a cerut clientul.
+ *
+ * Se numără numai rândurile legate de un produs din catalog: un nume scris de
+ * mână n-are încă latură hotărâtă de nimeni.
+ */
+const laturaImplicita = (f) => {
+  let congelate = 0, coapte = 0;
+  ((f && f.items) || []).forEach((i) => {
+    if (i.productId == null) return;
+    const q = gp.qty(i.q);
+    if (!(q > 0)) return;
+    if ((i.variant || "copt") === "congelat") congelate += q; else coapte += q;
+  });
+  if (congelate !== coapte) return congelate > coapte ? "congelat" : "copt";
+  if (f && (f.id || f.fromReq)) return f.variant === "congelat" ? "congelat" : "copt";
+  return "congelat";
+};
+
+/**
+ * Perechile „produs|latură" de pe o hârtie deja scrisă (comanda care se
+ * corectează, cererea care se acceptă), ca `{ "12|copt": true }`.
+ *
+ * Oglinda lui `$ingaduiteVariante` din `api/lib/orders.php`: un produs scos
+ * între timp dintr-o latură rămâne pe comanda care îl avea — serverul nu-l
+ * refuză la corectare —, deci nici fereastra nu-l ascunde. Altfel omul ar
+ * deschide o comandă cu cinci poziții și ar vedea în fereastră patru.
+ */
+const perechiDe = (items, laturaAntet) => {
+  const m = {};
+  (items || []).forEach((i) => {
+    if (i && i.productId != null) m[i.productId + "|" + (i.variant || laturaAntet || "copt")] = true;
+  });
+  return m;
+};
+
+/** „Nicio poziție", „1 poziție", „3 poziții", „20 de poziții". */
+const catePozitii = (n) => (n === 0 ? "Nicio poziție"
+  : n === 1 ? "1 poziție"
+    : n + (n % 100 === 0 || n % 100 > 19 ? " de" : "") + " poziții");
+
 const sugestiiDinCatalog = (text, variant) => {
   const n = fara(text);
   if (n.length < 2) return [];
   const v = variant === "congelat" ? "congelat" : "copt";
-  const potrivite = CATALOG.filter((p) => inCatalog(p) && fara(p.name).indexOf(n) >= 0);
+  // Numai ce SE VINDE pe latura rândului (`gp.seVindePe`, oglinda serverului).
+  // Până la runda 2.6.0 lista oferea și produsul scos din latura aceea, cu
+  // prețul lui scris alături, iar serverul îl refuza apoi cu
+  // `bad_variant_side`; pe cel fără preț îl arăta cu „fără preț", adică oferea
+  // pe față ceva ce oprește salvarea.
+  const potrivite = CATALOG.filter((p) => inCatalog(p) && gp.seVindePe(p, v) && fara(p.name).indexOf(n) >= 0);
   // Cine începe cu textul scris e mai aproape de ce caută omul decât cine îl
   // poartă pe la mijloc.
   potrivite.sort((a, b) => {
@@ -1512,7 +1882,12 @@ const adusDe = (c, t) => {
         adusCls: "rc-badge rc-badge--wait",
         adusHref: "Recomandari.dc.html?conf=1",
         adusTitlu: "Două coduri se bat pe comanda asta, iar comisionul nu se "
-          + "numără pentru nimeni până alegi. Deschide Recomandări."
+          + "numără pentru nimeni până alegi. Deschide Recomandări.",
+        // Aceeași lămurire, pentru cine vede pastila ca TEXT (manager, agent):
+        // nu el alege între coduri și n-are ce deschide. Care dintre cele
+        // două se arată hotărăște `adusSpus`, în `renderVals`.
+        adusTitluText: "Două coduri se bat pe comanda asta, iar comisionul nu se "
+          + "numără pentru nimeni până alege un administrator."
       };
     }
     const nume = String(c.label || "").trim();
@@ -1679,8 +2054,21 @@ const CH = (chan) => {
 };
 const ST = {
   "În așteptare": "h-badge", "La dospit": "h-badge", "În cuptor": "h-badge h-badge--warning",
-  "La ambalare": "h-badge h-badge--success", "Predată": "h-badge h-badge--solid"
+  "La ambalare": "h-badge h-badge--success", "Predată": "h-badge h-badge--solid",
+  "În lucru": "h-badge h-badge--warning", "Gata de livrare": "h-badge h-badge--success"
 };
+// Culoarea insignei de etapă, cu plasă pentru numele pe care harta nu-l știe.
+//
+// Etapele se editează din Setări, ca modurile de onorare de mai sus. Harta ține
+// numele cu care a plecat casa și pe cele două din 2.6.0; orice altul cădea pe
+// insigna neutră — inclusiv cele două care spun cel mai mult: „e gata" și „a
+// plecat". De aceea, la un nume necunoscut, culoarea se ia după LOCUL etapei:
+// plafonul laboratorului e verde, capătul drumului e plin, restul rămâne
+// neutru. Locul îl spune `gp`, cu listele venite de la server — aceleași după
+// care laboratorul se oprește și ruta predă.
+const culoareEtapa = (s) => ST[s]
+  || (s && s === gp.labCeiling() ? "h-badge h-badge--success"
+    : s && s === gp.done() ? "h-badge h-badge--solid" : "h-badge");
 
 // Câte comenzi intră într-o pagină de tabel.
 //
@@ -1778,6 +2166,13 @@ class Component extends DCLogic {
     sugRand: -1,
     // Fereastra cu tot catalogul, deschisă din antetul pozițiilor.
     catalogDeschis: false,
+    // Ce se vede în ea. `catalogLatura` e latura deschisă („congelat" /
+    // „copt"); `null` înseamnă „încă n-a ales nimeni", iar atunci hotărăște
+    // `laturaImplicita()`. `catalogCauta` e textul din caseta de căutare, iar
+    // `catalogGrupa` grupa aleasă din pastile (gol = „Toate"). Latura ține cât
+    // formularul — se golește unde formularul se deschide ori se închide —,
+    // căutarea și grupa numai cât fereastra: se golesc la „Gata".
+    catalogLatura: null, catalogCauta: "", catalogGrupa: "",
     // CĂUTAREA DE CLIENT, sub caseta „Client".
     //
     // `cliLista` sunt rândurile venite de la `GET /clients`; `cliStare` spune
@@ -1856,7 +2251,7 @@ class Component extends DCLogic {
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
       const st = this.state || {};
-      if (st.menu || st.form || st.peek || st.confirm) this.setState({ menu: false, form: null, peek: null, confirm: null, formErr: "", catalogDeschis: false });
+      if (st.menu || st.form || st.peek || st.confirm) this.setState({ menu: false, form: null, peek: null, confirm: null, formErr: "", catalogDeschis: false, catalogLatura: null, catalogCauta: "", catalogGrupa: "" });
     };
     window.addEventListener("popstate", this.__gpBack);
     if (!window.__gpNav) {
@@ -2270,8 +2665,15 @@ class Component extends DCLogic {
         // Refuzurile adevărate — produs fără preț, cantitate strâmbă — se
         // arată, fiindcă tocmai ele sunt câștigul: omul află cât încă scrie
         // comanda, nu după ce a scris-o toată.
+        //
+        // `bad_variant_side` e „produsul nu se mai vinde pe latura asta"
+        // (`price_items()`). Lipsea din listă, deci refuzul trecea drept pană
+        // de rețea: formularul rămânea fără bani și fără nicio vorbă, iar omul
+        // afla abia la „Salvează". Fereastra „Din catalog" și sugestiile nu-l
+        // mai oferă, dar latura unui rând se schimbă și din lista lui, cu mâna.
         const stiut = e && (e.code === "missing_price" || e.code === "bad_product"
-          || e.code === "bad_qty" || e.code === "total_too_big");
+          || e.code === "bad_qty" || e.code === "total_too_big"
+          || e.code === "bad_variant_side");
         this.setState({
           tarif: null,
           tarifStare: "fara",
@@ -2537,7 +2939,12 @@ class Component extends DCLogic {
   /** Închide formularul și reîncarcă din sursa de adevăr: serverul. */
   commit(msg) {
     this.__saving = false;
-    this.setState({ msg: msg || "", msgBad: false, form: null, confirm: null, formErr: "", saving: false });
+    this.setState({
+      msg: msg || "", msgBad: false, form: null, confirm: null, formErr: "", saving: false,
+      // Fereastra catalogului moare odată cu formularul, cu latura ei cu tot:
+      // comanda următoare n-are de ce să pornească pe latura celei de dinainte.
+      catalogDeschis: false, catalogLatura: null, catalogCauta: "", catalogGrupa: ""
+    });
     this.__ordSeen = null;
     this.__listaSeen = null;
     this.__reqSeen = null;
@@ -2632,6 +3039,48 @@ class Component extends DCLogic {
     // nu păzește nimic aici: doar nu-i mai arată managerului un „Editează" care
     // ducea sigur la 403, și nu-i mai ascunde unul care de-acum merge.
     const potEdita = !!S.auth && scrieComenzi(S.auth);
+    // Ce etape i se DAU DE ALES omului ăstuia, în „Stare" (formular) și în
+    // „Etapa" (vederea rapidă).
+    //
+    // Etapa finală o pune numai cine are bifa „Poate confirma livrarea" din
+    // Conturi; serverul îi răspunde celuilalt cu 403 (`poarta_etapei_finale()`).
+    // Lista o oferea totuși tuturor: omul o alegea, salva, și afla abia din
+    // mesajul roșu că n-avea voie. Acum nu i se mai oferă. Întrebarea e scrisă
+    // ca pe ecranul șoferului (`poateLivra`, Ruta Sofer) — lipsa câmpului
+    // înseamnă „poate", ca un server vechi să nu ascundă nimic nimănui.
+    //
+    // DOUĂ LUCRURI RĂMÂN ÎNTREGI DINADINS. Etapa pe care comanda o are DEJA
+    // (`salvata`) și cea pe care o arată acum lista (`aleasa`) stau în ea orice
+    // ar fi: un `<select>` fără opțiunea valorii lui arată altă etapă decât cea
+    // adevărată, iar omul ar citi una și ar salva alta. `aleasa` nu e o
+    // portiță: cui nu i se oferă etapa finală n-are de unde s-o aleagă, deci
+    // la el ea e finală numai când așa a venit comanda. Și filtrele
+    // (`statusFilters`, `menuStatuses`) nu trec pe aici: a CĂUTA comenzile
+    // predate nu e a preda una.
+    //
+    // Rândul cu `forEach` face ce făceau cele două liste înainte, fiecare pe
+    // limba ei: o etapă scoasă între timp din Setări se pune în față, ca să
+    // aibă `<select>`-ul ce arăta.
+    const poateLivra = !S.auth || S.auth.poateConfirmaLivrarea !== false;
+    const etapeDeAles = (salvata, aleasa) => {
+      let toate = gp.statuses();
+      [salvata, aleasa].forEach((s) => { if (s && toate.indexOf(s) < 0) toate = [s].concat(toate); });
+      return poateLivra ? toate : toate.filter((s) => s !== gp.done() || s === salvata || s === aleasa);
+    };
+    // CE I SE SPUNE CELUI CĂRUIA ETAPA FINALĂ NU I SE MAI OFERĂ.
+    //
+    // Cât lista o oferea tuturor, 403-ul serverului aducea și lămurirea: „o
+    // pune un cont cu bifa…". Scoasă din listă, etapa a dispărut cu tot cu
+    // lămurire: managerul fără bifă căuta „Predată" ca să închidă o ridicare,
+    // n-o găsea, și nimic de pe ecran nu-i spunea nici că există, nici cui s-o
+    // ceară. Rândul stă sub AMÂNDOUĂ listele și e gol pentru cine are bifa —
+    // gol, nu fals, fiindcă tot el e și valoarea `<sc-if>`-ului.
+    //
+    // Numele etapei vine din listele serverului (`gp.done()`), ca la filtrul de
+    // mai sus: rebotezată din Setări, rândul o numește cum o citește omul în
+    // restul paginii. Fără etapă finală în liste n-are ce numi, deci tace.
+    const etapaFinalaNota = poateLivra || !gp.done() ? ""
+      : "„" + gp.done() + "” o pune un administrator ori un cont cu bifa „Poate confirma livrarea”, din „Conturi”.";
     // ORDINEA OPRIRILOR NU S-A LĂRGIT ODATĂ CU EA, deci are steagul ei.
     // `PUT /routes` cere mai departe `require_admin()` (route_driver_reorder),
     // fiindcă traseul se hotărăște în birou și așa scrie și pe ecranul
@@ -2643,6 +3092,26 @@ class Component extends DCLogic {
     // cer trei locuri depărtate unul de altul: salvarea formularului, cele două
     // liste de meniu și fila de cereri.
     const potComenzi = !!S.auth && scrieComenzi(S.auth);
+    // „Adus de X" e LEGĂTURĂ numai pentru cine are unde ajunge.
+    //
+    // Eticheta duce în Recomandări — la dosarul unui recomandant (`?ref=`) ori
+    // la lista codurilor de lămurit (`?conf=1`). Amândouă sunt vederi de
+    // administrator. Managerul n-are panoul deloc, iar agentul îl are numai pe
+    // al lui: clicul îl ducea pe unul la un refuz și pe celălalt la propria
+    // pagină, fără nimic din ce promitea eticheta. Lor li se arată același
+    // text, cu aceeași lămurire la trecerea cu mausul, dar fără legătură.
+    //
+    // Două steaguri-pereche, nu unul și negația lui: `<sc-if>` primește o
+    // valoare, nu o expresie (ca `m.activ`/`m.link` din meniu). Se lipesc de
+    // rând cu `Object.assign`, lângă celelalte patru câmpuri ale etichetei.
+    const eAdm = !!S.auth && isAdmin(S.auth);
+    const adusPe = (ad) => ({ adusLeg: eAdm && !!ad.adus, adusText: !eAdm && !!ad.adus });
+    // ȘI LĂMURIREA DE LA TRECEREA CU MAUSUL E PE ROL. Pastila „Recomandare de
+    // lămurit" îi spunea oricui „…până alegi. Deschide Recomandări." — iar
+    // managerul și agentul n-aleg nimic și n-au ce deschide: pentru ei pastila
+    // e text. `adusDe` dă amândouă vorbele; aici se ia cea a cititorului.
+    // Unde nu e o a doua (toate celelalte feluri de pastilă), rămâne prima.
+    const adusSpus = (ad) => (eAdm ? ad.adusTitlu : ad.adusTitluText || ad.adusTitlu);
     // Ce file are omul ăsta — o singură listă, din care se croiesc amândouă
     // meniurile de mai jos. „Cereri de pe site" e fila celui care APROBĂ, iar
     // agentul de vânzări nu aprobă: el trimite. Arătată lui, ar fi fost o filă
@@ -2653,12 +3122,25 @@ class Component extends DCLogic {
     //
     // Până la 19 septembrie 2026 aici stătea `esteAgentNou` — agentul cu cod,
     // singurul căruia i se deschidea cutia codului la o comandă nouă, și încă
-    // blocată pe codul lui. Hotărârea patronului a șters și îngustimea, și
-    // blocarea: „toată lumea trebuie să poată face comenzi cu codul altuia,
-    // doar că la deschiderea formularului să fie scris al lui". Deci întrebarea
-    // nu mai e CINE scrie, ci DACĂ e o comandă nouă — restul steagurilor de mai
-    // jos se croiesc din asta.
+    // blocată pe codul lui. Hotărârea patronului de atunci a șters și
+    // îngustimea, și blocarea: „toată lumea trebuie să poată face comenzi cu
+    // codul altuia, doar că la deschiderea formularului să fie scris al lui".
+    //
+    // PE 2 OCTOMBRIE 2026 S-A ÎNTORS PE JUMĂTATE. Cine scrie comenzi (admin,
+    // fondator, manager) are mai departe cutia, cu codul lui pus din pornire și
+    // slobod de schimbat. AGENTUL nu mai are cutie: cererea lui pleacă cu codul
+    // lui, ca și până acum, iar el citește un singur rând care i-o spune
+    // (`frmCodulMeu`). Pagina doar nu-i mai arată un câmp — serverul primește
+    // de la el același corp, octet cu octet (v. `openForm`, `save()`).
+    //
+    // Trei feluri de formular, deci, și fiecare steag de mai jos întreabă de
+    // unul dintre ele, nu de „e nou ori nu":
+    //   · `formEdit`   — corectarea unei comenzi salvate (are `id`);
+    //   · `formCerere` — acceptarea unei cereri (are `fromReq`, n-are `id`);
+    //   · restul lui `formNou` — comanda scrisă de la zero, ori cererea agentului.
     const formNou = !!S.form && !S.form.id;
+    const formEdit = !!(S.form && S.form.id);
+    const formCerere = !!(S.form && S.form.fromReq);
     // O comandă din afara ferestrei de șapte zile — una veche, sau una promisă
     // peste două săptămâni — nu-și mai arată data brută: o scriem la fel ca pe
     // celelalte, „Joi 10 sep".
@@ -2694,9 +3176,15 @@ class Component extends DCLogic {
     // Deschiderea sau închiderea unui formular stinge semaforul: dacă o cerere
     // rămâne fără răspuns, panoul nu trebuie să rămână blocat până la
     // reîncărcarea paginii.
-    const openFromReq = (r) => (this.__saving = false, this.__formBase = null, set({
+    const openFromReq = (r) => (this.__saving = false, this.__formBase = null,
+      // Ce e deja pe cerere rămâne de văzut în fereastra „Din catalog", chiar
+      // dacă produsul a ieșit între timp din latura aceea (v. `perechiDe`).
+      this.__catIngaduite = perechiDe(r.items, r.variant), set({
       view: "comenzi",
       formErr: "", saving: false,
+      // Fereastra catalogului pornește închisă și fără latură aleasă: o
+      // hotărăște cererea (`laturaImplicita`), nu formularul de dinainte.
+      sugRand: -1, catalogDeschis: false, catalogLatura: null, catalogCauta: "", catalogGrupa: "",
       form: {
         // Precompletat din cerere, exact cum a trimis-o clientul. Câmpurile
         // rămân editabile: rostul acestui pas e ca administratorul să poată
@@ -2742,13 +3230,18 @@ class Component extends DCLogic {
 
     // Odată cu formularul se reține și comanda așa cum a venit de la server:
     // la salvare se compară cu ea, ca să nu plece înapoi câmpuri neatinse.
-    const openForm = (o) => (this.__saving = false, this.__formBase = o ? this.antetDin(o) : null, set({
+    const openForm = (o) => (this.__saving = false, this.__formBase = o ? this.antetDin(o) : null,
+      // Perechile „produs|latură" ale comenzii așa cum a venit de la server:
+      // fereastra „Din catalog" le arată și dacă produsul nu se mai vinde pe
+      // latura aceea, fiindcă serverul le îngăduie la corectare. O comandă
+      // nouă n-are niciuna.
+      this.__catIngaduite = o ? perechiDe(o.items, o.variant) : {}, set({
       formErr: "", saving: false,
       // Banii comenzii de dinainte nu au voie să clipească pe comanda asta:
       // `cerTarif()` de la capătul rândului cere cifrele noi, dar abia peste
       // o clipă, iar până atunci ecranul ar fi arătat totalul altcuiva.
       tarif: null, tarifStare: "asteapta", tarifErr: "",
-      sugRand: -1, catalogDeschis: false,
+      sugRand: -1, catalogDeschis: false, catalogLatura: null, catalogCauta: "", catalogGrupa: "",
       // Clientul căutat pentru comanda de dinainte n-are ce căuta pe asta.
       cliLista: [], cliStare: "", cliDosar: 0, cliAles: null,
       form: o
@@ -2784,15 +3277,21 @@ class Component extends DCLogic {
             contId: null,
             // Comanda nouă pornește cu codul CELUI CARE SCRIE, oricine ar fi el.
             //
-            // Hotărârea patronului, 19 septembrie 2026: formularul se deschide
-            // cu codul tău, dar câmpul rămâne liber — dacă a adus-o altcineva,
-            // scrii codul lui; dacă n-a adus-o nimeni, îl golești. Până azi
-            // numai agentul îl primea scris, și încă blocat. Scris, fiindcă
-            // ăsta e cazul obișnuit — omul care ia comanda e și cel care a
-            // adus clientul; liber, fiindcă celălalt caz există și el.
-            //
-            // Cine n-are cod pe cont capătă un câmp gol, nu unul lipsă: acum
-            // are ce scrie în el, codul altuia.
+            // Rândul de mai jos NU s-a schimbat din 19 septembrie 2026, când
+            // patronul a hotărât că formularul se deschide cu codul tău. S-a
+            // schimbat, pe 2 octombrie 2026, cine îl mai poate ATINGE:
+            //   · cine scrie comenzi (admin, fondator, manager) are cutia
+            //     codului, cu al lui scris din pornire și slobod — dacă a
+            //     adus-o altcineva, scrie codul aceluia; dacă n-a adus-o nimeni,
+            //     îl golește. Fără cod pe cont, capătă un câmp gol;
+            //   · AGENTUL nu mai are cutie. Codul lui stă tot aici, în formular,
+            //     și pleacă odată cu cererea, exact ca înainte — numai că nu-l
+            //     mai poate schimba în al altuia. Pe ecran are un singur rând,
+            //     „Cererea pleacă cu codul tău: …" (`frmCodulMeu`). Fără cod pe
+            //     cont n-are nici rândul: cererea pleacă fără cod, ca până acum.
+            // De aceea paza corpului trimis de agent (check-formular-roluri.mjs)
+            // se uită la CE PLEACĂ, nu la ce se vede: ascunderea unei cutii nu
+            // are voie să schimbe un octet din cerere.
             //
             // `S.auth`, nu `s.auth`: `openForm` cheamă `set()` cu un OBIECT, nu
             // cu o funcție, deci aici nu există niciun `s`. Scris greșit, clicul
@@ -3443,7 +3942,7 @@ class Component extends DCLogic {
       ref: o.ref, cust: o.cust, chan: o.chan, chanCls: CH(o.chan),
       when: dayLabel(o.date) + (o.timed ? " · ora " + o.slot : ""),
       itemsLine: o.items.map(i => i.q + " " + i.n).join(" · "),
-      qty: gp.qtyLabel(this.qty(o)), status: o.status, statusCls: ST[o.status] || "h-badge",
+      qty: gp.qtyLabel(this.qty(o)), status: o.status, statusCls: culoareEtapa(o.status),
       // Suma comenzii, așa cum a socotit-o serverul la salvare. Sosea de
       // mult în răspuns (`gp-api.js` · `total`) și se arunca aici: registrul
       // număra bucăți, nu bani. Gol când lipsește — comenzile scrise înainte
@@ -3478,7 +3977,7 @@ class Component extends DCLogic {
       onEdit: () => openForm(o),
       onDelete: () => askDelete(o),
       onPeek: () => set({ peek: o.id })
-    }, ad, { adusClsTap: ad.adusCls + " rc-badge--tap" }); });
+    }, ad, { adusClsTap: ad.adusCls + " rc-badge--tap", adusTitlu: adusSpus(ad) }, adusPe(ad)); });
 
     const today = S.orders.filter(o => o.date === TODAY);
     const openCount = S.orders.filter(o => o.status !== gp.done()).length;
@@ -3577,7 +4076,7 @@ class Component extends DCLogic {
         addr: (o.addr || "adresă necompletată") + (o.zone ? " · " + o.zone : ""),
         itemsLine: o.items.map(it => it.q + " " + it.n).join(" · "),
         qty: gp.qtyLabel(this.qty(o)), note: o.note || "",
-        status: o.status, statusCls: ST[o.status] || "h-badge",
+        status: o.status, statusCls: culoareEtapa(o.status),
         urgent: !!o.urgent,
         leg: laRuta ? lg.legs[i].toFixed(1) + " km" : "", eta,
         warn: late ? "Ajunge " + eta + ", promis " + o.slot : outOfOrder ? "Interval promis " + o.slot + ", mai devreme decât oprirea anterioară" : "",
@@ -3792,24 +4291,60 @@ class Component extends DCLogic {
     // preparatelor din afara catalogului.
     const sugFaraNimic = !!randulSug && sugGasit === null
       && fara(randulSug.n).length >= 2 && sugLista.length === 0;
+    // Lista a ieșit goală fiindcă numele nu e în catalog, ori fiindcă e, dar
+    // nu pe latura rândului? Sunt două sfaturi deosebite: primul trimite la
+    // notă, al doilea la lista de latură de lângă casetă. Cu unul singur, omul
+    // care scrie „cozonac" pe un rând congelat ar citi că n-avem cozonac.
+    const sugPeAltaLatura = sugFaraNimic
+      && CATALOG.some((p) => inCatalog(p) && fara(p.name).indexOf(fara(randulSug.n)) >= 0);
 
     // ------------------------------------------ fereastra „Din catalog" --
     //
-    // Lista întreagă, așezată pe grupe, pentru cine nu știe numele pe de
-    // rost. Prețul scris e al variantei FORMULARULUI — chiar varianta pe
-    // care o primește rândul nou —, deci cifra de pe listă e cea care se va
+    // Catalogul, așezat pe grupe, pentru cine nu știe numele pe de rost — ca
+    // în magazin: o latură deschisă, cu prețurile și pozele EI. Rândul nou
+    // primește chiar latura deschisă, deci cifra de pe card e cea care se va
     // socoti, nu una de altă coloană.
-    const vForm = f.variant === "congelat" ? "congelat" : "copt";
+    //
+    // LATURA DESCHISĂ. Cea aleasă din comutator (`catalogLatura`); cât n-a
+    // ales nimeni, cea a comenzii (`laturaImplicita`). Până la runda 2.6.0
+    // era latura din antetul formularului, care pe o comandă nouă e mereu
+    // „copt" și n-are niciun control: din fereastră nu se putea pune nimic
+    // congelat. Numele `vForm` a rămas, fiindcă tot ce scrie pe comandă —
+    // „+", „−", cantitatea tastată — îl citește pe el.
+    const vForm = S.catalogLatura || laturaImplicita(f);
     // Cu treptele produsului, la cantitatea pusă deja pe comandă: omul vede
     // de la câte bucăți scade prețul cât încă vorbește cu clientul.
     const pretulLui = (p) => pretCuTrepte(p, vForm, cateAre(f.items, p));
     // Aceeași cernere ca la sugestii: ce nu se mai poate pune pe o comandă
-    // nu se arată în nicio listă din care se alege.
-    const deAles = CATALOG.filter(inCatalog);
+    // nu se arată în nicio listă din care se alege. Pe deasupra, latura:
+    // se arată numai ce SE VINDE pe cea deschisă (`gp.seVindePe`, oglinda lui
+    // `latura_se_vinde()` de pe server) — altfel „+" ar scrie un rând pe care
+    // `price_items()` îl refuză cu `bad_variant_side`. Rămâne la vedere ce e
+    // DEJA pe hârtia salvată, pe latura aceea (`__catIngaduite`, oglinda lui
+    // `$ingaduiteVariante`): serverul îl îngăduie la corectare, iar o poziție
+    // care e pe comandă n-are voie să lipsească din fereastră.
+    const ingaduite = this.__catIngaduite || {};
+    const deAles = CATALOG.filter(inCatalog)
+      .filter((p) => gp.seVindePe(p, vForm) || ingaduite[p.id + "|" + vForm] === true);
     const slugurile = GRUPE.map((g) => g.slug);
-    // „Fără grupă" se adaugă numai dacă are cine să stea în ea: un produs a
-    // cărui grupă e stinsă sau ștearsă n-are voie să dispară din listă —
-    // altfel s-ar putea comanda la telefon, dar nu din panou.
+    // CĂUTAREA: fiecare cuvânt scris trebuie să se regăsească în numărul din
+    // colțul pozei, în nume (română ori engleză) sau în numele grupei.
+    // Normalizarea e `fara()`, ca „strudel" să găsească „Ștrudel".
+    const numeGrupa = (p) => ((GRUPE.find((g) => g.slug === p.category) || {}).name || "");
+    const cuvinteCautate = fara(S.catalogCauta || "").split(" ").filter(Boolean);
+    const seGaseste = (p) => {
+      if (!cuvinteCautate.length) return true;
+      const fan = fara([gp.numarAfisat(p.numar || p.id), p.name, p.nameEn || "", numeGrupa(p)].join(" "));
+      return cuvinteCautate.every((c) => fan.indexOf(c) >= 0);
+    };
+    // Câte poziții are comanda pe fiecare latură: rândurile cu un nume scris.
+    // Se numără din formular, nu din fereastră, deci cu amândouă laturile
+    // deodată, oricare ar fi deschisă.
+    const pozitiiPe = (latura) => (f.items || [])
+      .filter((i) => String(i.n || "").trim() && (i.variant || "copt") === latura).length;
+    const pozCongelate = pozitiiPe("congelat");
+    const pozCoapte = pozitiiPe("copt");
+
     // Alegerea din fereastră iese pe ACELAȘI drum ca alegerea din sugestii:
     // scrie `n`, `n0` și `productId`. `n0` lângă `n` e ce face regula de la
     // salvare să recunoască un produs ales pe față, nu unul ghicit din nume.
@@ -3899,26 +4434,77 @@ class Component extends DCLogic {
         .filter((i, j) => j === tine || ale.indexOf(j) < 0);
     });
 
-    const catalogGrupe = !S.catalogDeschis ? [] : GRUPE
-      .map((g) => ({ name: g.name, slug: g.slug }))
-      .concat([{ name: "Fără grupă", slug: null }])
+    // GRUPELE, pe latura deschisă și după căutare. „Fără grupă" se adaugă
+    // numai dacă are cine să stea în ea: un produs a cărui grupă e stinsă sau
+    // ștearsă n-are voie să dispară din listă — altfel s-ar putea comanda la
+    // telefon, dar nu din panou. Fiecare grupă își poartă o cheie de șir, ca
+    // pastila ei să aibă ce ține minte: slugul, iar pentru „Fără grupă" — care
+    // n-are slug — unul care nu poate fi al nimănui.
+    const grupeleVii = !S.catalogDeschis ? [] : GRUPE
+      .map((g) => ({ name: g.name, slug: g.slug, cheie: String(g.slug) }))
+      .concat([{ name: "Fără grupă", slug: null, cheie: "(fara)" }])
+      .map((g) => Object.assign(g, {
+        ale: deAles
+          .filter((p) => (g.slug === null ? slugurile.indexOf(p.category) < 0 : p.category === g.slug))
+          .filter(seGaseste)
+      }))
+      .filter((g) => g.ale.length > 0);
+    // Grupa aleasă ține numai cât mai are ce arăta. Rămasă goală — s-a
+    // schimbat latura, ori căutarea n-a mai nimerit nimic în ea —, fereastra
+    // cade pe „Toate" în loc să arate o listă pustie sub o pastilă dispărută.
+    const grupaVie = grupeleVii.some((g) => g.cheie === S.catalogGrupa) ? S.catalogGrupa : "";
+    const cateGasite = grupeleVii.reduce((a, g) => a + g.ale.length, 0);
+    const catalogCipuri = grupeleVii.length < 2 ? [] : [{ name: "Toate", cheie: "", nr: cateGasite }]
+      .concat(grupeleVii.map((g) => ({ name: g.name, cheie: g.cheie, nr: g.ale.length })))
+      .map((c) => ({
+        name: c.name, nr: String(c.nr),
+        on: grupaVie === c.cheie,
+        st: CAT_STIL.cip(grupaVie === c.cheie),
+        onPick: () => set({ catalogGrupa: c.cheie })
+      }));
+
+    const catalogGrupe = grupeleVii
+      .filter((g) => !grupaVie || g.cheie === grupaVie)
       .map((g) => ({
         name: g.name,
-        prod: deAles
-          .filter((p) => (g.slug === null ? slugurile.indexOf(p.category) < 0 : p.category === g.slug))
+        cuTitlu: !grupaVie,
+        prod: g.ale
           .map((p) => {
             // Cât e deja pe comandă din produsul ăsta. Patronul a cerut-o pe
             // față: „dacă ai deja produse adăugate, ele trebuie să apară acolo
             // cu cantitatea lor" — altfel omul deschide catalogul, nu-și mai
             // amintește ce a pus, și pune a doua oară.
             const are = cateAre(f.items, p);
+            // Prețul bucății la cantitatea de pe comandă, pe latura deschisă.
+            // `pretulLui` îl scrie cu treptele rămase în coadă („4,20 RON ·
+            // 3,90 de la 100"); pe card capul stă mare, iar scara întreagă
+            // dedesubt, pe rândul ei stins — deci aici se ține numai capul.
+            const pretTot = pretulLui(p);
+            const iCoada = pretTot.indexOf(" · ");
+            const scara = gp.scaraDinCampuri(p, vForm);
+            // Poza LATURII, fără împrumut de la cealaltă (`gp.pozaPe`).
+            const poza = gp.pozaPe(p, vForm);
             return {
               name: p.name,
-              detaliu: (p.grams ? p.grams + " g · " : "") + pretulLui(p),
-              // Poza produsului, ca la miniaturile din „Produse". Un produs
-              // adăugat din Catalog fără fotografie are `photo` gol, iar un
-              // `src` gol e o cerere spre pagina însăși: se pune sigla.
-              photo: p.photo || FOTO_LIPSA,
+              // Numărul din colțul pozei, ca în magazin: după el se caută la
+              // telefon („dă-mi zece din 07").
+              no: gp.numarAfisat(p.numar || p.id),
+              gram: p.grams ? p.grams + " g" : "",
+              areGram: !!p.grams,
+              pret: iCoada < 0 ? pretTot : pretTot.slice(0, iCoada),
+              // Scara de volum: treptele de deasupra prețului A, toate, oricare
+              // ar fi cea câștigată acum. Un produs cu un singur preț n-o are.
+              areScara: scara.length > 1,
+              scara: scara.slice(1).map((x) => cifra(x.pret) + " de la " + x.prag).join(" · "),
+              // Un produs fără fotografie pe latura asta are poza goală, iar
+              // un `src` gol e o cerere spre pagina însăși: se pune sigla.
+              photo: poza || FOTO_LIPSA,
+              pozaSt: poza ? CAT_STIL.poza : CAT_STIL.pozaLipsa,
+              // „+" numai unde serverul primește o bucată în plus: produsul se
+              // vinde pe latura deschisă, ori — pe o poziție îngăduită de pe
+              // hârtia salvată — are măcar preț acolo. Fără preț, răspunsul ar
+              // fi `missing_price`; poziția se poate numai scădea ori scoate.
+              cuPlus: gp.seVindePe(p, vForm) || scara.length > 0,
               // Cifra e goală la zero, nu „0": o casetă plină de zerouri pe
               // treizeci de rânduri se citește ca o listă de cantități, când
               // de fapt e o listă goală.
@@ -3941,8 +4527,7 @@ class Component extends DCLogic {
               onQ: (e) => puneDinCatalog(p, e.target.value)
             };
           })
-      }))
-      .filter((g) => g.prod.length > 0);
+      }));
 
     const reqs = (S.requests || []).slice().sort((a, b) => b.at - a.at);
     // Ceasul PATISERIEI, nu al aparatului. `gp.laPatiserie` întoarce aceeași
@@ -4268,9 +4853,15 @@ class Component extends DCLogic {
           // vede din clipa în care intră cererea — asta a fost și cerința: să
           // se știe cine a adus omul înainte de a face comanda.
           adus: ad.adus,
+          adusCls: ad.adusCls,
           adusClsTap: ad.adusCls + " rc-badge--tap",
           adusHref: ad.adusHref,
+          // Lămurirea cererii e una pentru oricine: pastila „de lămurit", singura
+          // cu două vorbe (v. `adusSpus`), se naște abia odată cu comisionul.
           adusTitlu: ad.adusTitlu,
+          // Legătură pentru administrator, text pentru manager (v. `adusPe`).
+          adusLeg: adusPe(ad).adusLeg,
+          adusText: adusPe(ad).adusText,
           onAccept: () => openFromReq(r),
           // `r` e cererea de la server, nu rândul desenat: `company` și
           // `person` sunt câmpuri din prototip și lipsesc, așa că mesajul
@@ -4441,13 +5032,50 @@ class Component extends DCLogic {
       routeManual: !!S.seq[S.rDay],
 
       formOpen: !!S.form,
-      formTitle: S.form && S.form.id ? "Editează comanda " + S.form.ref : "Comandă nouă",
+      // TITLUL ȘI BUTONUL SPUN CE SE ÎNTÂMPLĂ LA APĂSARE, nu ce formular e.
+      //
+      // Agentul de vânzări nu naște comenzi: formularul lui pleacă spre
+      // `POST /requests` și așteaptă un da din birou. Citea totuși „Comandă
+      // nouă" sus și „Adaugă comanda" jos, iar adevărul îl afla abia din
+      // mesajul de după — „Cerere trimisă spre aprobare". La fel la acceptare:
+      // butonul spunea „Adaugă comanda" despre o cerere care exista deja.
+      // Patru fapte. BUTONUL de jos are patru etichete (`saveLabel`), iar
+      // întrebarea lui e aceeași după care `save()` își alege ușa (`id` →
+      // `fromReq` → `potComenzi`), în aceeași ordine. TITLUL are numai trei:
+      // la ACCEPTAREA unei cereri rămâne „Comandă nouă", fiindcă pe `fromReq`
+      // nu-l întreabă. Că acolo ar trebui să scrie altceva e o hotărâre a
+      // patronului, nu o scăpare de îndreptat din mers.
+      formTitle: formEdit ? "Editează comanda " + S.form.ref
+        : potComenzi ? "Comandă nouă" : "Cerere nouă",
+      // Butonul de deasupra tabelului, perechea titlului de mai sus.
+      newLabel: potComenzi ? "+ Comandă nouă" : "+ Cerere nouă",
       // Cât timp cererea e pe drum, butonul spune ce face și nu mai primește
       // clicuri: altfel a doua apăsare trimite a doua comandă.
       saveLabel: S.saving
         ? "Se salvează…"
-        : (S.form && S.form.id ? "Salvează modificările" : "Adaugă comanda"),
+        : formEdit ? "Salvează modificările"
+          : formCerere ? "Acceptă cererea"
+            : potComenzi ? "Adaugă comanda" : "Trimite spre aprobare",
       saveOff: !!S.saving,
+      // „Stare" și „Referință" — NUMAI LA CORECTARE (2 octombrie 2026).
+      //
+      // Pe o comandă care încă nu există, amândouă erau câmpuri moarte:
+      //   · „Stare" se putea alege, dar nu pleca nicăieri — `antet`, din
+      //     `save()`, n-are `status`; comanda nouă intră mereu în capul
+      //     fluxului, pus de server. Omul alegea „În cuptor", salva, și găsea
+      //     comanda „În așteptare";
+      //   · „Referință" era doar-citire, cu un „se completează automat" în ea.
+      // Două casete care cer ochi și nu dau nimic. La corectare rămân amândouă,
+      // fiindcă acolo chiar scriu.
+      //
+      // Coloanele grilei vin tot de aici, lângă steag, ca să nu rămână un loc
+      // gol în rând unde a fost caseta. Blocul de 761–1000px din `<style>` nu
+      // spune nimic despre `g2`/`g3`, deci pe tabletă și pe birou hotărăște
+      // rândul ăsta; sub 761 le face oricum o singură coloană, cu `!important`.
+      frmCuStare: formEdit,
+      frmG3Col: formEdit ? "1fr 1fr 1fr" : "1fr 1fr",
+      frmCuReferinta: formEdit,
+      frmG2Col: formEdit ? "1.4fr 1fr 1fr" : "1.4fr 1fr",
       // Cele două butoane ale subsolului sunt perechi, nu vecini: unul scoate
       // comanda din flux, celălalt o aduce înapoi. Pe o comandă deja anulată,
       // „Șterge comanda" ar fi întrebat „Anulezi comanda #X?" despre una
@@ -4480,17 +5108,33 @@ class Component extends DCLogic {
       frmAdus: aduseF.adus,
       frmAdusCls: aduseF.adusCls + " rc-badge--tap",
       frmAdusHref: aduseF.adusHref,
-      frmAdusTitlu: aduseF.adusTitlu,
+      frmAdusTitlu: adusSpus(aduseF),
+      // Eticheta e legătură numai pentru cine are unde ajunge (v. `adusPe`).
+      frmAdusLeg: adusPe(aduseF).adusLeg,
+      frmAdusText: adusPe(aduseF).adusText,
+      frmAdusClsText: aduseF.adusCls,
+      // Nota vorbește cu cel care o citește: „până alegi" și „bifa rămâne" sunt
+      // adevărate numai pentru administrator, singurul care alege între două
+      // coduri și singurul care vede bifa (`frmPoatePlati`, mai jos).
       frmAdusNota: !comF ? ""
         : comF.status === "in_asteptare"
-          ? "Comanda a intrat cu un cod, dar contul are deja alt recomandant. Până alegi, comisionul nu se numără pentru nimeni."
+          ? "Comanda a intrat cu un cod, dar contul are deja alt recomandant. "
+            + (eAdm ? "Până alegi" : "Până alege un administrator") + ", comisionul nu se numără pentru nimeni."
           : comF.status === "anulat"
-            ? "Comanda e anulată, deci comisionul s-a stins." + (comF.paid ? " Banii au fost însă deja dați — bifa rămâne, ca să știi ce ai de cerut înapoi." : "")
+            ? "Comanda e anulată, deci comisionul s-a stins."
+              + (!comF.paid ? "" : eAdm ? " Banii au fost însă deja dați — bifa rămâne, ca să știi ce ai de cerut înapoi." : " Banii au fost însă deja dați.")
             : bani(comF.amount) + ", adică " + String(comF.rate).replace(".", ",") + "% din comandă.",
       // Bifa are rost numai unde există bani: un rând în așteptare are suma
       // zero și niciun stăpân. Rândul anulat DAR plătit rămâne bifabil, ca
       // patronul să poată desface plata după ce cere banii înapoi.
-      frmPoatePlati: !!(comF && comF.id && (comF.status === "activ" || (comF.status === "anulat" && comF.paid))),
+      //
+      // ȘI NUMAI PENTRU CINE O POATE PUNE. `POST /referrals/pay` cere
+      // `require_admin()` (api/routes/referrals.php), iar managerul, care
+      // deschide formularul ăsta din 19 septembrie, vedea butonul, îl apăsa și
+      // primea 403. `isAdmin`, nu `potEdita`: a corecta o comandă și a plăti un
+      // comision sunt două drepturi, și numai primul s-a lărgit.
+      frmPoatePlati: eAdm
+        && !!(comF && comF.id && (comF.status === "activ" || (comF.status === "anulat" && comF.paid))),
       frmPlataBifa: comF && comF.paid ? "✓" : "",
       frmPlataEt: comF && comF.paid ? "Plătit" : "Bifează ca plătit",
       frmPlataBg: comF && comF.paid ? "rgba(34,150,83,.16)" : "var(--h-bg-surface)",
@@ -4501,11 +5145,10 @@ class Component extends DCLogic {
       // Cutia de SCRIS codul, spre deosebire de eticheta de deasupra, care doar
       // îl arată. Se deschide în două împrejurări deosebite:
       //
-      //   · o comandă NOUĂ, pentru oricine o poate scrie — codul pornește al
-      //     lui și se poate schimba în al altcuiva;
-      //   · corectarea unei comenzi SALVATE, numai pentru administrator — acolo
-      //     codul se scrie de mână, iar bifa hotărăște dacă legătura rămâne și
-      //     pe viitor.
+      //   · o comandă NOUĂ scrisă de-a dreptul (admin, fondator, manager) —
+      //     codul pornește al lui și se poate schimba în al altcuiva;
+      //   · corectarea unei comenzi SALVATE, de către aceiași — acolo codul se
+      //     scrie de mână, iar bifa hotărăște dacă legătura rămâne și pe viitor.
       //
       // ASIMETRIA DE IERI A CĂZUT. Până pe 19 septembrie 2026, `PATCH /orders`
       // refuza codul oricui nu era administrator, deci managerul îl putea
@@ -4514,7 +5157,25 @@ class Component extends DCLogic {
       // întrebare — „poate scrie comanda?" —, iar rândul de aici o oglindește:
       // cine naște comanda o și corectează. Scrisă pe larg în
       // api/routes/orders.php, la `poarta_scrierii_comenzii()`.
-      frmPotRecomandare: formNou || (potEdita && !!(S.form && S.form.id)),
+      //
+      // ȘI NU SE DESCHIDE ÎN ALTE DOUĂ (2 octombrie 2026):
+      //   · AGENTULUI, la cererea lui. Hotărârea patronului: codul agentului
+      //     pleacă singur, iar el nu-l mai schimbă în al altuia. În locul cutiei
+      //     are rândul `frmCodulMeu` de mai jos;
+      //   · la ACCEPTAREA unei cereri, nimănui. Acolo cutia era moartă de la
+      //     început: `/requests/#/accept` nu citește niciun `referralCode` —
+      //     corpul e `antet` + poziții, vezi `save()` —, iar codul cererii e
+      //     cel tastat în coș, arătat de eticheta de pe card. Un cod scris în
+      //     cutie se pierdea la salvare fără un cuvânt.
+      frmPotRecomandare: (formNou && potComenzi && !formCerere) || (potEdita && formEdit),
+      // Rândul agentului: spune CE COD pleacă, fără să-l lase schimbat.
+      //
+      // Se citește din formular (`refCode`), nu din sesiune: e chiar valoarea
+      // pe care `save()` o pune în cerere, deci rândul nu poate spune un cod și
+      // cererea să plece cu altul. Fără cod pe cont nu se arată nimic — n-are
+      // ce promite.
+      frmCodulMeu: formNou && !potComenzi && !formCerere && !!String(f.refCode || "").trim(),
+      frmCodulMeuText: "Cererea pleacă cu codul tău: " + String(f.refCode || "").trim(),
       // BIFA MERGE ORIUNDE MERGE CÂMPUL, inclusiv la comanda nouă.
       //
       // Hotărârea patronului, 19 septembrie 2026. Până azi bifa se desena
@@ -4534,7 +5195,9 @@ class Component extends DCLogic {
       //     14 septembrie). O bifă acolo ar fi o apăsare fără urmare.
       //   · acceptarea unei cereri (`fromReq`) — pleacă spre
       //     `/requests/#/accept`, tot fără `referralLink`.
-      // Câmpul codului rămâne deschis în amândouă: el chiar ajunge undeva.
+      // Din 2 octombrie 2026 nici cutia codului nu se mai deschide în cele
+      // două (`frmPotRecomandare`, sus), deci bifa n-ar mai avea oricum unde
+      // sta; steagul rămâne scris pe întrebarea lui, ca să nu atârne de al ei.
       frmPotLega: potEdita && !!S.form && !S.form.fromReq,
       // Eticheta nu mai spune „al tău": din 19 septembrie 2026 câmpul pornește
       // cu codul tău, dar poate ajunge al oricui, deci un titlu care pretinde
@@ -4568,16 +5231,78 @@ class Component extends DCLogic {
       // Fereastra se deschide după ce catalogul a sosit, ca să nu se arate
       // goală pe o legătură înceată. Sugestiile se închid odată cu ea: două
       // liste de produse deodată, una peste alta, n-ar ști care ascultă.
-      onDeschideCatalog: () => { CATALOG_ADUS.then(() => set({ catalogDeschis: true, sugRand: -1 })); },
-      onInchideCatalog: () => set({ catalogDeschis: false }),
+      //
+      // LATURA SE PRINDE LA DESCHIDERE. Cât `catalogLatura` e gol, latura e
+      // socotită din comandă la fiecare desenare; lăsată așa și cu fereastra
+      // deschisă, ar fi sărit singură de pe o latură pe alta în clipa în care
+      // omul scade câteva bucăți — cu cardurile de sub deget schimbate. Deci
+      // prima deschidere o scrie în stare, iar de acolo o mai mută numai
+      // comutatorul. Rămâne aceeași la redeschidere, cât ține formularul.
+      onDeschideCatalog: () => { CATALOG_ADUS.then(() => set({ catalogDeschis: true, sugRand: -1 })); set((s) => (s.catalogLatura ? {} : { catalogLatura: vForm })); },
+      // „Gata" golește căutarea și grupa, nu și latura: cine redeschide
+      // fereastra ca să mai pună un produs o vrea pe aceeași latură, dar cu
+      // tot catalogul în față, nu cu ce a căutat data trecută.
+      onInchideCatalog: () => set({ catalogDeschis: false, catalogCauta: "", catalogGrupa: "" }),
       catalogDeschis: !!S.catalogDeschis,
-      catalogNota: vForm === "congelat"
-        ? "Prețurile de mai jos sunt cele pentru marfă congelată. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată."
-        : "Prețurile de mai jos sunt cele pentru marfă coaptă. Apasă un produs ca să-l adaugi; apasă-l iar ca să pui încă o bucată.",
+      catalogNota: "Prețurile și pozele sunt ale laturii deschise. "
+        + (pozCongelate + pozCoapte > 0
+          ? "Pe comandă: " + pozCongelate + " la Congelate · " + pozCoapte + " la Coapte."
+          : "Comanda n-are încă nicio poziție."),
       catalogGrupe: catalogGrupe,
       // Catalogul care n-a venit nu se arată ca un catalog gol: omul trebuie
-      // să afle că lipsa e a cererii, nu a produselor.
-      catalogGol: !!S.catalogDeschis && catalogGrupe.length === 0,
+      // să afle că lipsa e a cererii, nu a produselor. Se judecă pe catalogul
+      // ÎNTREG, nu pe ce a rămas după latură și căutare — acelea au vorba lor.
+      catalogGol: !!S.catalogDeschis && CATALOG.filter(inCatalog).length === 0,
+      // Lista goală din altă pricină: nimic pe latura asta, ori nimic pentru
+      // ce s-a căutat. Îndemnul arată spre cealaltă latură, unde de cele mai
+      // multe ori e produsul căutat.
+      catalogNimic: !!S.catalogDeschis && CATALOG.filter(inCatalog).length > 0 && catalogGrupe.length === 0,
+      catalogNimicText: cuvinteCautate.length
+        ? "Nimic la " + NUME_LATURA[vForm] + " pentru „" + String(S.catalogCauta || "").trim() + "”. "
+          + "Caută și la " + NUME_LATURA[vForm === "congelat" ? "copt" : "congelat"] + ", ori șterge căutarea."
+        // „Catalog” e numele din meniu al paginii de produse. Aici scria „fila
+        // „Produse””: pe pagina asta singura filă cu numele ăsta e „Produse
+        // cerute”, care adună bucăți, nu aprinde laturi.
+        : "Niciun produs nu se vinde acum la " + NUME_LATURA[vForm] + ". "
+          + "Latura unui produs se aprinde din „Catalog”.",
+      // Comutatorul laturii. Cifra de pe pastilă lipsește la zero, ca și
+      // cantitatea de pe card: două zerouri ar spune „comandă goală" de două
+      // ori, pe lângă nota de sus.
+      catLaturaRand: CAT_STIL.laturaRand,
+      catFrozenOn: vForm === "congelat",
+      catBakedOn: vForm !== "congelat",
+      catFrozenBtn: CAT_STIL.tierBtn(vForm === "congelat"),
+      catBakedBtn: CAT_STIL.tierBtn(vForm !== "congelat"),
+      onCatFrozen: () => set({ catalogLatura: "congelat" }),
+      onCatBaked: () => set({ catalogLatura: "copt" }),
+      catFrozenAre: pozCongelate > 0,
+      catFrozenNr: String(pozCongelate),
+      catBakedAre: pozCoapte > 0,
+      catBakedNr: String(pozCoapte),
+      catNr: CAT_STIL.nr,
+      // Căutarea, tăiată la 60 de litere ca în magazin: nimeni nu caută un
+      // produs cu un paragraf, iar un text lipit din greșeală n-are de ce să
+      // treacă prin `fara()` la fiecare card.
+      catCautaCutie: CAT_STIL.cautaCutie,
+      catCautaInput: CAT_STIL.cautaInput,
+      catCautaSterge: CAT_STIL.cautaSterge,
+      catalogCauta: S.catalogCauta || "",
+      catAreCautare: !!S.catalogCauta,
+      onCatCauta: (e) => { if (e && e.target) set({ catalogCauta: String(e.target.value || "").slice(0, 60) }); },
+      onCatGoleste: () => set({ catalogCauta: "" }),
+      catalogCipuri: catalogCipuri,
+      catAreCipuri: catalogCipuri.length > 0,
+      catCipuriRand: CAT_STIL.cipuriRand,
+      catCipNr: CAT_STIL.cipNr,
+      catGrila: CAT_STIL.prodGrid,
+      catProdMedia: CAT_STIL.prodMedia,
+      catNoBadge: CAT_STIL.noBadge,
+      catProdBody: CAT_STIL.prodBody,
+      catProdTitle: CAT_STIL.prodTitle,
+      catProdGram: CAT_STIL.prodGram,
+      catProdPrice: CAT_STIL.prodPrice,
+      catProdScara: CAT_STIL.prodScara,
+      catalogPozitii: catePozitii(pozCongelate + pozCoapte),
 
       frm: {
         ref: f.ref, cust: f.cust, phone: f.phone || "", day: f.day, slot: f.slot,
@@ -4621,6 +5346,12 @@ class Component extends DCLogic {
           // Numele scris care nu duce nicăieri. Refuzul de la salvare rămâne
           // pe loc, ca plasă; ăsta e doar semnul dat la timp.
           faraProdus: sugRand === i && sugFaraNimic,
+          // Două sfaturi, după pricină (vezi `sugPeAltaLatura`): numele e în
+          // catalog dar pe cealaltă latură, ori nu e deloc.
+          faraProdusText: sugPeAltaLatura
+            ? "Produsele cu numele ăsta nu se vând " + ((it.variant || "copt") === "congelat" ? "congelate" : "coapte")
+              + ". Schimbă latura rândului ori alege alt produs."
+            : "Nu e niciun produs cu numele ăsta în catalog. Scrie-l în „Notă pentru laborator”.",
           onQ: (e) => setItem(i, { q: e.target.value }),
           onN: (e) => { setItem(i, { n: e.target.value }); set({ sugRand: i }); },
           onV: (e) => setItem(i, { variant: e.target.value }),
@@ -4664,8 +5395,12 @@ class Component extends DCLogic {
       frmOraSfat: gp.zoneFaraPunct(f.zone)
         ? "Zonă din afara orașului: ora e orientativă, o confirmăm la telefon."
         : "",
-      statusOpts: (gp.statuses().indexOf(f.status) >= 0 ? gp.statuses() : [f.status].concat(gp.statuses()))
-        .map(s => ({ v: s, l: s })),
+      // Lista „Stare" — numai la corectare (`frmCuStare`), și fără etapa finală
+      // pentru cine n-are voie s-o pună (v. `etapeDeAles`, sus).
+      statusOpts: etapeDeAles(etapaComenzii, f.status).map(s => ({ v: s, l: s })),
+      // Rândul de sub „Stare" și de sub „Etapa" din fișă: cui nu i se oferă
+      // etapa finală i se spune cine o pune. Gol pentru cine are bifa.
+      etapaFinalaNota,
       // Fiecare literă scrisă în „Client" pornește și căutarea.
       onCust: (e) => { const v = e.target.value; setF({ cust: v }); this.cautaClienti(v); },
       cliAre: cliRanduri.length > 0,
@@ -4679,8 +5414,10 @@ class Component extends DCLogic {
       onPhone: (e) => setF({ phone: e.target.value }),
       onRef: (e) => setF({ ref: e.target.value }),
       // Comanda nouă n-are încă referință: o dă serverul, pe zi, în ordine.
-      // Caseta rămâne citibilă (placeholderul o promite de mult), dar nu mai
-      // primește text care oricum n-ar pleca nicăieri.
+      // Din 2 octombrie 2026 caseta nici nu se mai desenează acolo
+      // (`frmCuReferinta`); cele trei chei de mai jos rămân, ca plasă — dacă
+      // steagul s-ar pierde vreodată, caseta s-ar întoarce doar-citire, nu
+      // deschisă spre un text care n-ar pleca nicăieri.
       frmRefNoua: !(S.form && S.form.id),
       frmRefNotaTitlu: (S.form && S.form.id)
         ? "Numărul după care se caută comanda în laborator și pe bon. Nu poate rămâne gol."
@@ -4711,7 +5448,7 @@ class Component extends DCLogic {
       // încuviințată. Legat de-a dreptul la buton, ar fi primit evenimentul de
       // clic — care e adevărat — și salvarea ar fi sărit peste casetă.
       onSave: () => save(),
-      onCancel: () => { this.__saving = false; set({ form: null, formErr: "", saving: false, catalogDeschis: false }); },
+      onCancel: () => { this.__saving = false; set({ form: null, formErr: "", saving: false, catalogDeschis: false, catalogLatura: null, catalogCauta: "", catalogGrupa: "" }); },
       // AMÂNDOUĂ BUTOANELE SUBSOLULUI TREC PRIN CASETĂ CA O SALVARE.
       //
       // Chemau caseta fără al treilea argument, deci ea nu știa de unde vine
@@ -4739,7 +5476,7 @@ class Component extends DCLogic {
         ref: pk ? pk.ref : "", cust: pk ? pk.cust : "",
         when: pk ? dayLabel(pk.date) + (pk.timed ? " · ora " + pk.slot : "") : "",
         chan: pk ? pk.chan : "", chanCls: pk ? CH(pk.chan) : "h-badge",
-        status: pk ? pk.status : "", statusCls: pk ? (ST[pk.status] || "h-badge") : "h-badge",
+        status: pk ? pk.status : "", statusCls: pk ? culoareEtapa(pk.status) : "h-badge",
         urgent: !!(pk && pk.urgent), note: pk ? pk.note || "" : "",
         addr: pk && CU_MASINA(pk.chan) ? (pk.addr || "adresă necompletată") + (pk.zone ? " · " + pk.zone : "") : "",
         qty: pk ? gp.qtyLabel(this.qty(pk)) : "0",
@@ -4756,9 +5493,10 @@ class Component extends DCLogic {
       // Trimite exclusiv `status`, adică singura cheie pe care serverul o ia
       // de la tot personalul. Administratorului îi prinde bine la fel: e
       // drumul scurt spre ce făcea până acum în opt apăsări.
-      peekStatusOpts: (pk && gp.statuses().indexOf(pk.status) < 0
-        ? [pk.status].concat(gp.statuses())
-        : gp.statuses()).map(s => ({ v: s, l: s })),
+      //
+      // Etapa finală nu i se oferă cui n-are bifa de livrare (`etapeDeAles`):
+      // îi răspundea 403, și tocmai aici, pe drumul scurt, durea cel mai tare.
+      peekStatusOpts: etapeDeAles(pk && pk.status, pk && pk.status).map(s => ({ v: s, l: s })),
       onPeekStatus: (e) => {
         const et = e.target.value;
         if (!pk || et === pk.status) return;
@@ -4806,6 +5544,27 @@ class Component extends DCLogic {
       denied: !!S.auth && !vedeComenzi(S.auth),
       deniedClient: !!S.auth && authRole(S.auth) === "client",
       deniedStaff: !!S.auth && authRole(S.auth) !== "client",
+      // UNDE POATE MERGE cel refuzat aici — din meniul rolului lui, nu dintr-o
+      // listă scrisă de mână.
+      //
+      // Ecranul oferea oricui din personal aceleași trei legături: laborator,
+      // depozit, rută. Angajatului îi erau bune. Contului de pontaj
+      // (`utilizator_lab`) nu — n-are niciunul dintre cele trei panouri, deci
+      // fiecare îl ducea la alt ecran de refuz, iar singurul lui panou,
+      // Pontajul, nu era pe listă. O listă care trebuia să crească odată cu
+      // matricea rolurilor și n-a crescut.
+      //
+      // `gp.meniu("", …)` e aceeași întrebare pe care o pune bara laterală, cu
+      // „nicio pagină curentă": cine capătă mâine un panou îl capătă și aici.
+      // Primul rând e butonul plin; perechea `prim`/`rest` e pentru șablon,
+      // care nu știe să nege.
+      deniedPanouri: gp.meniu("", S.auth).map((m, i) => ({ et: m.et, href: m.href, prim: i === 0, rest: i > 0 })),
+      // Butonul „Vezi ce vede șoferul →", de sub rută. Duce pe ecranul
+      // șoferului, pe care agentul de vânzări nu-l are: îl apăsa și dădea de
+      // refuz. Întrebarea se pune matricei de panouri, ca `vedeComenzi` — NU
+      // lui `potEdita`, care răspunde la altceva (cine corectează o comandă) și
+      // s-ar despărți de matrice la prima ei schimbare.
+      veziSofer: (gp.PANOURI_ROL[authRole(S.auth)] || []).indexOf("Rută") >= 0,
       // Ce poate face cine a intrat. Butoanele de aici sunt OGLINDA porților
       // de pe server, nu o pază în plus: un buton care duce sigur la 403 e mai
       // rău decât un buton lipsă, fiindcă pare că merge — și, de cealaltă

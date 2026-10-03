@@ -283,9 +283,10 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 </div>
 </div>
 
-<div data-in="grid" style="width:100%;max-width:1060px;margin:0 auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch">
+<div data-in="grid" style="width:100%;max-width:1060px;margin:0 auto;display:grid;grid-template-columns:{{ grilaCol }};gap:16px;align-items:stretch">
 
 <sc-for list="{{ panels }}" as="p" hint-placeholder-count="4">
+<sc-if value="{{ p.arata }}" hint-placeholder-val="{{ true }}">
 <a data-in="card" href="{{ p.href }}" style="display:flex;flex-direction:column;gap:16px;padding:24px 22px;border-radius:22px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.055);color:var(--h-cream-100);text-decoration:none;min-height:250px;animation:in-up .34s var(--h-ease-out) both" style-hover="background:rgba(255,255,255,.1);border-color:var(--h-accent)">
 <div style="display:flex;align-items:center;gap:10px">
 <span class="h-eyebrow" style="font-size:12px;color:var(--h-accent)">{{ p.role }}</span>
@@ -301,13 +302,16 @@ a{color:var(--h-accent)}a:hover{color:var(--h-honey)}
 <span style="margin-left:auto;font-size:22px;color:var(--h-accent);line-height:1">→</span>
 </div>
 </a>
+</sc-if>
 </sc-for>
 
 </div>
 
 <div style="width:100%;max-width:1060px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:4px">
 <p style="margin:0;flex:1;min-width:240px;font-size:13px;line-height:1.55;color:rgba(255,255,255,.45);text-wrap:pretty">Toate panourile citesc aceleași comenzi de pe server: ce schimbi în administrare apare imediat în laborator, în depozit și în telefonul șoferului, pe orice dispozitiv.</p>
+<sc-if value="{{ veziClient }}" hint-placeholder-val="{{ false }}">
 <a href="Client.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:var(--h-cream-100);font-size:14px;font-weight:600;text-decoration:none;flex:none" style-hover="background:rgba(255,255,255,.16)">Ești client? Vezi comanda ta →</a>
+</sc-if>
 <a href="Site%20Public.dc.html" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:var(--h-cream-100);font-size:14px;font-weight:600;text-decoration:none;flex:none" style-hover="background:rgba(255,255,255,.16)">Site public ↗</a>
 <button type="button" onClick="{{ onLock }}" style="flex:none;min-height:46px;padding:0 16px;border:1px solid rgba(255,255,255,.2);border-radius:12px;background:transparent;color:rgba(255,255,255,.8);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">Blochează panoul</button>
 <sc-if value="{{ signedIn }}" hint-placeholder-val="{{ false }}">
@@ -377,7 +381,11 @@ class Component extends DCLogic {
   // fu — utilizatorul scris în formularul „am uitat parola".
   // rtoken — tokenul din adresa paginii, când omul vine din e-mail.
   // next — pagina din care a fost trimis aici, ca să-l ducem înapoi în ea.
-  state = { stats: null, auth: null, loaded: false, next: "", open: false, view: "client", code: "", cerr: "", cshow: false, shakes: 0, lu: "", lp: "", lshow: false, lerr: "", lshakes: 0, lbusy: false,
+  // rolGrila — rolul contului cu care s-a deschis grila de panouri (contul
+  //   comun al tabletelor). Cheie A LUI, nu `auth`: `auth` e omul intrat cu
+  //   parola lui, iar pus aici ar aprinde „conectat” și cardul de sesiune
+  //   pentru o tabletă pe care nu s-a conectat nimeni.
+  state = { stats: null, auth: null, loaded: false, next: "", open: false, rolGrila: "", view: "client", code: "", cerr: "", cshow: false, shakes: 0, lu: "", lp: "", lshow: false, lerr: "", lshakes: 0, lbusy: false,
     forgot: false, fu: "", fmsg: "", ferr: "", fbusy: false,
     rtoken: "", rp: "", rshow: false, rerr: "", rbusy: false, rdone: false,
     // ftoken — tokenul de fondator, tot din e-mail. Stări proprii, nu
@@ -607,7 +615,7 @@ class Component extends DCLogic {
         if (!user) return;
         // Contul de sistem „panou" înseamnă tabletă deschisă cu cod.
         if (user.username === "panou") {
-          this.setState({ open: true });
+          this.setState({ open: true, rolGrila: user.role || "" });
         } else if (user.mustChangePassword === true) {
           // Sesiune veche, cu parola provizorie încă pe cont: cardul „Ești
           // deja autentificat" l-ar fi trimis în magazin sau în panou, unde
@@ -761,6 +769,17 @@ class Component extends DCLogic {
     const areOpriri = !!(st && st.stops);
     const areMiscari = !!st && typeof st.moves === "number";
     const n = (are, v) => (are ? String(v) : "—");
+    // CE CARDURI SE DESENEAZĂ ÎN GRILĂ: numai panourile pe care contul grilei
+    // le are în `gp.PANOURI_ROL` — aceeași matrice din care se face meniul.
+    // Contul comun al tabletelor e „angajat": are Laborator, Rută și Depozit,
+    // nu și Comenzi, deci cardul „Administrare" nu i se mai desenează (pagina
+    // aceea îi răspundea cu un ecran de refuz). Fără rol aflat, niciun card.
+    //
+    // Stă aici, lângă celelalte socoteli ale cardurilor, și întreabă întâi de
+    // rol: `.claude/check-panouri.mjs` taie bucata dintre `const stops` și
+    // `const lbl` și o rulează singură, cu un `S` fără `rolGrila` și un `gp`
+    // fără matrice.
+    const aleGrilei = S.rolGrila ? (gp.PANOURI_ROL[S.rolGrila] || []) : [];
     // Fără sesiune omul trebuie să se autentifice; cu sesiune, dar cu o cerere
     // picată, „cere autentificare" ar fi o minciună care îl trimite să se
     // reconecteze degeaba. Sunt două cauze, deci două texte.
@@ -776,8 +795,11 @@ class Component extends DCLogic {
       if (!code) return this.setState({ cerr: "Scrie codul." });
 
       try {
-        await gp.panelUnlock(code);
-        this.setState({ open: true, code: "", cerr: "" });
+        // `gp.panelUnlock()` întoarce chiar contul cu care s-a deschis sesiunea
+        // (serverul îl trimite în răspuns). Rolul lui hotărăște ce carduri se
+        // desenează în grilă; nu mai e nevoie de o a doua cerere.
+        const contGrila = await gp.panelUnlock(code);
+        this.setState({ open: true, rolGrila: (contGrila && contGrila.role) || "", code: "", cerr: "" });
         // Cifrele se cereau o singură dată, la încărcarea paginii, și numai dacă
         // exista deja o sesiune. Pe tabletă nu există: omul tocmai a scris
         // codul corect, iar pe toate cele patru carduri scria „—" și „cere
@@ -1141,35 +1163,55 @@ class Component extends DCLogic {
         // administrare”, deși pe server nu mai există nicio sesiune — omul l-ar
         // apăsa și ar ajunge într-un ecran blocat, fără să înțeleagă de ce.
         gp.logout().catch(() => {});
-        this.setState({ auth: null, open: false, view: "client", code: "", cerr: "" });
+        this.setState({ auth: null, open: false, rolGrila: "", view: "client", code: "", cerr: "" });
       },
       sub: S.loaded ? TODAY_LABEL + " · alege panoul pentru tura ta" : "Se încarcă comenzile…",
+      // `arata` e steagul de desenare al fiecărui card: panoul lui, cu numele
+      // din meniu (`gp.MENIU`), trebuie să fie printre ale contului grilei.
+      // Lista rămâne întreagă, cu toate patru: cardul nedesenat nu se scoate
+      // din ea, ca cifrele să poată fi citite pe loc de probe.
       panels: [
         {
           role: "Laborator", title: "Panoul de producție", href: "Panou%20Laborator.dc.html",
           desc: "Comenzile pe intervale, urgențele în față, bifat pe produs și schimbat starea direct de pe ecranul din bucătărie.",
           stat: n(areComenzi, open.length), statLabel: lbl(areComenzi, gp.qtyLabel(pieces) + " bucăți de făcut azi"),
-          tag: "fără parolă", tagCls: "h-badge"
+          tag: "fără parolă", tagCls: "h-badge",
+          arata: aleGrilei.indexOf("Laborator") >= 0
         },
         {
           role: "Șofer", title: "Foaia de rută", href: "Ruta%20Sofer.dc.html",
           desc: "Opririle zilei în ordinea stabilită în administrare, bifat la încărcare, navigație și marcat livrat din telefon.",
           stat: n(areOpriri, left), statLabel: lbl(areOpriri, stops.length + " opriri · " + total.toFixed(1) + " km"),
-          tag: "telefon", tagCls: "h-badge h-badge--accent"
+          tag: "telefon", tagCls: "h-badge h-badge--accent",
+          arata: aleGrilei.indexOf("Rută") >= 0
         },
         {
           role: "Depozit", title: "Intrări, ieșiri, stoc", href: "Depozit.dc.html",
           desc: "Înregistrezi ce intră din producție și de la furnizori, ce iese la comenzi și consum, și vezi stocul exact pe fiecare produs.",
           stat: n(areMiscari, (st && st.moves) || 0), statLabel: lbl(areMiscari, "mișcări înregistrate azi"),
-          tag: "fără parolă", tagCls: "h-badge h-badge--success"
+          tag: "fără parolă", tagCls: "h-badge h-badge--success",
+          arata: aleGrilei.indexOf("Depozit") >= 0
         },
         {
           role: "Administrare", title: "Comenzi, rute, produse", href: "Administrare%20Comenzi.dc.html",
           desc: "Adaugi și editezi comenzi, marchezi urgențe, ordonezi ruta șoferului și vezi ce produse se cer cel mai mult.",
           stat: n(areComenzi, st && typeof st.ordersTotal === "number" ? st.ordersTotal : all.length), statLabel: lbl(areComenzi, "comenzi în registrul pe 7 zile"),
-          tag: S.auth ? "conectat" : "cu parolă", tagCls: S.auth ? "h-badge h-badge--success" : "h-badge h-badge--honey"
+          tag: S.auth ? "conectat" : "cu parolă", tagCls: S.auth ? "h-badge h-badge--success" : "h-badge h-badge--honey",
+          arata: aleGrilei.indexOf("Comenzi") >= 0
         }
       ],
+      // Trei carduri stau pe un rând de trei, nu două-și-unul cu un sfert de
+      // ecran gol; patru rămân două câte două, ca până acum. Trei coloane
+      // egale, nu „auto-fit" cu un prag: cu pragul de 300px, între 901 și
+      // 987px lățime cădeau tocmai pe două-și-unul. Sub 900px foaia de stil le
+      // pune oricum unul sub altul, deci cel mai îngust card de pe trei
+      // coloane are 271px — mai lat decât pe orice telefon.
+      grilaCol: ["Laborator", "Rută", "Depozit", "Comenzi"].filter((et) => aleGrilei.indexOf(et) >= 0).length === 3
+        ? "repeat(3,minmax(0,1fr))" : "repeat(2,minmax(0,1fr))",
+      // „Ești client? Vezi comanda ta →" duce în panoul clientului, care îi
+      // răspunde contului tabletei cu „e cont de angajat". Se desenează numai
+      // dacă contul grilei are „Comanda mea" printre panouri.
+      veziClient: aleGrilei.indexOf("Comanda mea") >= 0,
       signedIn: !!S.auth,
       authLine: S.auth ? "Administrare: " + S.auth.name : "",
 
@@ -1355,7 +1397,7 @@ class Component extends DCLogic {
         // Închidem și grila de panouri, de unde se vede butonul acesta: fără
         // sesiune, cardurile duc în pagini goale, iar omul ar apăsa în ele
         // crezând că panoul e încă deschis, până la o reîncărcare.
-        gp.logout().finally(() => this.setState({ auth: null, open: false, view: "client" }));
+        gp.logout().finally(() => this.setState({ auth: null, open: false, rolGrila: "", view: "client" }));
       }
     };
   }

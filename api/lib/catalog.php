@@ -94,6 +94,49 @@ function catalog_trepte_select(): string
 }
 
 /**
+ * Coloanele fișelor tehnice (migrarea 031), așa cum se cer într-un SELECT.
+ *
+ * Scrise o singură dată, din același motiv ca treptele: o coloană uitată în
+ * lista de produse n-ar da nicio eroare — `latura_fisa()` ar răspunde cuminte
+ * „fără fișă", iar butonul ar lipsi tăcut din tot magazinul.
+ */
+const CATALOG_FISE_COLOANE = 'sheet_frozen, sheet_baked';
+
+/**
+ * Știe baza de fișe, adică a intrat migrarea 031?
+ *
+ * „Nu" nu oprește nimic la citire: un catalog fără fișe e starea de ieri, iar
+ * magazinul pur și simplu nu arată butonul. Numai ÎNCĂRCAREA și SCOATEREA unei
+ * fișe se refuză, cu 503 și cu numele fișierului de importat — v.
+ * `route_products_sheet()` în api/routes/catalog.php.
+ *
+ * Aceeași formă ca `catalog_trepte_supported()`, ținută minte pe cererea asta.
+ */
+function catalog_fise_supported(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        $coloane = (int) scalar(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products'
+                AND COLUMN_NAME IN ('sheet_frozen', 'sheet_baked')"
+        );
+        return $ok = ($coloane === 2);
+    } catch (Throwable $e) {
+        return $ok = false;
+    }
+}
+
+/** Bucata de SELECT pentru fișele tehnice: goală pe o bază fără 031. */
+function catalog_fise_select(): string
+{
+    return catalog_fise_supported() ? ', ' . CATALOG_FISE_COLOANE : '';
+}
+
+/**
  * Vederile catalogului: un produs pe rând (cu toate detaliile), patru pe ecran,
  * șase pe ecran. Numele sunt cele scrise în Setări (migrarea 028).
  */
@@ -371,6 +414,23 @@ function product_public(array $r): array
         'trepte'       => [
             'frozen' => latura_scara_publica($r, 'congelat'),
             'baked'  => latura_scara_publica($r, 'copt'),
+        ],
+
+        // FIȘA TEHNICĂ (migrarea 031), tot în două feluri. Cele CRUDE — `sheet`
+        // și `sheetBaked` — sunt ce editează panoul: fișa pusă chiar pe latura
+        // aceea, fără împrumut, ca panoul să poată spune „Coapte n-are fișa
+        // ei". `sheetFor` e ce OFERĂ magazinul: la Coapte, în lipsa unei fișe
+        // proprii, pe cea congelată. Împrumutul se face într-un singur loc,
+        // `latura_fisa()` din api/lib/laturi.php — magazinul citește numai
+        // `sheetFor`, deci nu-l poate face a doua oară, altfel.
+        //
+        // Pe o bază fără 031 coloanele lipsesc din rând și toate patru sunt
+        // null: niciun buton, ca ieri.
+        'sheet'      => latura_fisa_proprie($r, 'congelat'),
+        'sheetBaked' => latura_fisa_proprie($r, 'copt'),
+        'sheetFor'   => [
+            'frozen' => latura_fisa($r, 'congelat'),
+            'baked'  => latura_fisa($r, 'copt'),
         ],
     ];
 }

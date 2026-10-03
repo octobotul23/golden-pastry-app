@@ -47,9 +47,14 @@ function route_items_list(): void
     // fiecare mișcare s-ar înmulți cu fiecare rezervare a articolului, iar
     // stocul ar crește cu numărul comenzilor deschise.
     $rows = all(
+        // `in_recipe` e o subinterogare, nu un al treilea JOIN: un articol care
+        // intră în trei rețete ar fi ieșit de trei ori în listă, cu stocul și
+        // rezervările înmulțite la fel — pricina pentru care și celelalte două
+        // agregări stau deoparte.
         "SELECT i.*,
                 COALESCE(mv.qty, 0)  AS qty,
-                COALESCE(rez.qty, 0) AS reserved
+                COALESCE(rez.qty, 0) AS reserved,
+                EXISTS (SELECT 1 FROM product_recipes pr WHERE pr.item_id = i.id) AS in_recipe
            FROM stock_items i
            LEFT JOIN (
                 SELECT m.item_id, SUM(m.qty * m.direction) AS qty
@@ -113,6 +118,12 @@ function stock_item_public(array $r): array
         // putea repune. `?? 1` fiindcă pe aici trec și rândurile proaspăt
         // scrise (creare, modificare), care nu citesc coloana înapoi.
         'active'    => (int) ($r['active'] ?? 1) === 1,
+        // Articolul intră în rețeta unui produs. `route_items_delete()` îl
+        // refuză atunci cu 409 `in_recipe`, iar rețeta o poate schimba numai un
+        // administrator — deci Depozitul trebuie să știe dinainte, ca să nu
+        // deseneze un „Șterge” pe care depozitarul nu-l poate duce la capăt.
+        // Vine din listare (`in_recipe`); `?? 0` pentru un rând care n-o poartă.
+        'inRecipe'  => (int) ($r['in_recipe'] ?? 0) === 1,
     ];
 }
 
@@ -419,7 +430,11 @@ function stock_local_day_utc(string $day, int $plusZile = 0): string
  *  1. **Intră într-o rețetă** → refuz, cu produsele numite. `fk_recipe_item` e
  *     ON DELETE RESTRICT, deci baza ar refuza oricum — dar cu „Eroare internă.",
  *     iar depozitarul n-ar afla că vinovată e rețeta unui produs. Rețeta se
- *     schimbă din pagina Produse, de un administrator; noi doar spunem unde.
+ *     schimbă din Catalog (așa se cheamă pagina în meniu), de un administrator;
+ *     noi doar spunem unde. Cui nu e administrator nu-i spunem „scoate-l din
+ *     rețetă” — n-are pagina în meniu și ruta îl refuză —, ci cui să i-o ceară.
+ *     Depozitul nici nu mai desenează butonul pe un asemenea articol (`inRecipe`
+ *     din listare); refuzul rămâne pentru rețeta scrisă între două citiri.
  *
  *  2. **Are istoric** — mișcări în registru sau marfă rezervată pentru comenzi
  *     → articolul se SCOATE DIN LISTĂ (`active = 0`), nu se șterge. Rândurile
@@ -442,7 +457,7 @@ function stock_local_day_utc(string $day, int $plusZile = 0): string
  */
 function route_items_delete(string $id): void
 {
-    require_ops();
+    $u  = require_ops();
     $id = (int) $id;
 
     $item = one('SELECT id, name, active FROM stock_items WHERE id = ?', [$id]);
@@ -464,7 +479,9 @@ function route_items_delete(string $id): void
         fail(
             'Articolul „' . $item['name'] . '” intră în rețeta produsului '
             . (count($nume) === 1 ? '„' . $nume[0] . '”' : 'următoarelor produse: „' . implode('”, „', $nume) . '”')
-            . '. Scoate-l întâi din rețetă, din pagina Produse.',
+            . (e_admin($u)
+                ? '. Scoate-l întâi din rețetă, din Catalog.'
+                : '. Cere-i unui administrator să-l scoată întâi din rețetă, din Catalog.'),
             409,
             'in_recipe'
         );

@@ -7,7 +7,7 @@ reale, clienți reali și poze urcate de tine. Instalarea de la zero e în
 Ideea de bază, în două rânduri: **sursa e pe calculatorul tău, `deploy/` e doar
 rezultatul.** Modifici sursa, rulezi un script, urci ce a ieșit. Folderul
 `deploy/` se șterge și se reface complet la fiecare construire
-(`.claude/build-deploy.mjs:673`), deci orice ai scrie direct acolo dispare.
+(`.claude/build-deploy.mjs:706`), deci orice ai scrie direct acolo dispare.
 
 ---
 
@@ -17,8 +17,8 @@ Cinci lucruri. Niciunul nu are excepții.
 
 **1. `public_html/api/config.php` nu se suprascrie niciodată.**
 Acolo stau parola bazei de date și cheia de criptare. Nu e în pachet deloc —
-scriptul îl scoate (`.claude/build-deploy.mjs:879-881`) și mai verifică o dată
-la final (`:899-906`), deci nicio urcare nu-l poate atinge din greșeală.
+scriptul îl scoate (`.claude/build-deploy.mjs:912-914`) și mai verifică o dată
+la final (`:932-939`), deci nicio urcare nu-l poate atinge din greșeală.
 **Cheia de criptare nu se schimbă niciodată după instalare.** Dacă se schimbă,
 `api/lib/crypto.php:85` întoarce `null`, iar `api/lib/settings.php:36` doar
 scrie o linie în jurnal și merge mai departe — *tăcut*. Efectul vizibil:
@@ -28,11 +28,16 @@ pe dinafară.
 
 **2. `public_html/products/` nu se șterge și nu se mai urcă după prima instalare.**
 Pozele pe care le încarci din pagina Catalog trăiesc **numai** acolo:
-`api/routes/catalog.php:799` le scrie pe disc sub un nume cu cifre aleatoare
+`api/routes/catalog.php:809` le scrie pe disc sub un nume cu cifre aleatoare
 (`prod-14-9c3a71ef.jpg`), și nimic nu le aduce înapoi în proiect. Pachetul conține și el un folder `products/`, construit din copia
 mea locală — cele două se depărtează unul de altul din prima zi. Urcând peste,
 ștergi pozele adăugate live, iar în bază rămân trimiteri către fișiere care
-nu mai există.
+nu mai există. De la runda 2.6.0 tot acolo stau și **fișele tehnice** pe care
+le încarci din Catalog, la „Fișă tehnică (PDF) — congelat” ori „Fișă tehnică
+(PDF) — copt”: serverul le dă un nume de același fel (`fisa-14-3b9e02aa.pdf`,
+din `fisa_nume_urcat()`, `api/lib/fise.php`), iar pachetul nu le cunoaște.
+Fișele venite cu pachetul stau în alt folder, `fise/`, care se urcă de fiecare
+dată — vezi harta de la pasul 2.
 
 **3. `sql/001_schema.sql` nu se mai importă niciodată.**
 Al doilea import al schemei se oprește cu eroarea `#1826`
@@ -54,7 +59,7 @@ care distruge.
 Orice altă corectură făcută în File Manager — într-o pagină, într-un `.php`,
 în `.htaccess` — dispare fără avertisment la prima urcare. Dacă e nevoie de o
 schimbare permanentă în `.htaccess`, ea se scrie în sursă
-(`.claude/build-deploy.mjs:353, 478, 528, 546`), nu pe server.
+(`.claude/build-deploy.mjs:353, 478, 553, 579`), nu pe server.
 
 ---
 
@@ -70,18 +75,18 @@ node .claude/build-deploy.mjs
 ```
 
 Dacă la final scrie „N probleme", **te oprești aici** — scriptul iese cu cod 1
-(`:802`). Sunt **șapte** lucruri din care se poate opri, și fiecare e scris pe
+(`:1085`). Sunt **șapte** lucruri din care se poate opri, și fiecare e scris pe
 ecran cu un `!` la început:
 
 | Ce scrie | Ce înseamnă | Unde |
 |---|---|---|
-| `legături nerezolvate` | o pagină trimite spre altă pagină pe care harta n-o cunoaște — pe server, butonul acela ar da 404 | `:586` |
-| `lipsește … (cerut de …)` | un fișier din lista gazdei nu e pe disc | `:617` |
-| `a ajuns în pachet — conține parola bazei de date` | `api/config.php` a intrat în pachet. Scriptul îl și șterge, dar tot se oprește: vrea să afli cum a ajuns acolo | `:681` |
-| `fără zăvorul de după instalare` | `setup.php` sau `verifica.php` a intrat în pachet fără zăvorul lui | `:707` |
-| `nume din dezvoltare rămase în pachet` | o trimitere a rămas pe numele de fișier din dezvoltare, nu pe adresa de pe server | `:748` |
-| `nu am putut citi adresele din seo/adrese.php` | tabelul de adrese al magazinului n-a putut fi citit, deci verificarea de după el ar fi mințit | `:782` |
-| `fișiere care fură o adresă a magazinului` | un fișier adevărat stă exact pe o adresă pe care ar trebui s-o servească `index.php` — Apache îl servește pe el, iar pagina aceea dispare din magazin | `:793` |
+| `legături nerezolvate` | o pagină trimite spre altă pagină pe care harta n-o cunoaște — pe server, butonul acela ar da 404 | `:836` |
+| `lipsește … (cerut de …)` | un fișier din lista gazdei nu e pe disc | `:867` |
+| `a ajuns în pachet — conține parola bazei de date` | `api/config.php` a intrat în pachet. Scriptul îl și șterge, dar tot se oprește: vrea să afli cum a ajuns acolo | `:936` |
+| `fără zăvorul de după instalare` | `setup.php` sau `verifica.php` a intrat în pachet fără zăvorul lui | `:962` |
+| `nume din dezvoltare rămase în pachet` | o trimitere a rămas pe numele de fișier din dezvoltare, nu pe adresa de pe server | `:1009` |
+| `nu am putut citi adresele din seo/adrese.php` | tabelul de adrese al magazinului n-a putut fi citit, deci verificarea de după el ar fi mințit | `:1043` |
+| `fișiere care fură o adresă a magazinului` | un fișier adevărat stă exact pe o adresă pe care ar trebui s-o servească `index.php` — Apache îl servește pe el, iar pagina aceea dispare din magazin | `:1054` |
 
 Niciunul nu e „aproape bine": fiecare înseamnă un pachet care, urcat, strică
 ceva pe server.
@@ -102,6 +107,7 @@ Harta sursă → pachet e fixă (`.claude/build-deploy.mjs:35-66` și `:71-78`):
 | `support.js` · `shared/gp-api.js` · `_ds/` · `assets/` | **câte trei copii** | **toate trei subdomeniile** |
 | `image-slot.js` · `.image-slots.state.json` | o singură copie | `public_html/` |
 | `seo/index.php` · `seo/sitemap.php` · `seo/adrese.php` | `public_html/index.php`, `sitemap.php`, `adrese.php` | `public_html/` |
+| `fise/` (fișele tehnice, PDF) | `public_html/fise/`, o singură copie | `public_html/` |
 
 `Intrare`, `Parola` și `Recomandari` sunt **cele trei** pagini care ajung în
 două locuri, iar **cele două copii nu sunt identice**: scriptul le injectează
@@ -114,17 +120,38 @@ magazinului**, citit și de pagină, și de harta de site. Fără el pe server,
 fiecare adresă în afară de „/" primește 404 — adică tot catalogul, toate
 paginile de produs și amândouă limbile.
 
+`fise/` ține cele 21 de fișe tehnice venite cu pachetul, câte una pe produs,
+toate ale laturii congelate (`fisa-tehnica-rolldog-congelat.pdf` și celelalte).
+Stă numai lângă magazin: pe `lab.` și pe `clienti.` folderul nu există, iar
+cine cere de acolo o adresă `fise/…` — butonul „Vezi fișa” din Catalog — e
+trimis la gazda publică cu un 302, la fel ca pozele (cele două redirecționări
+sunt scrise una sub alta, `.claude/build-deploy.mjs:568-576`). Tot numai la
+gazda publică stau și antetele PDF-urilor — tipul `application/pdf`,
+`no-cache` și `X-Robots-Tag: noindex` —, în constanta `HT_SEO` (`:478`), la
+blocul „fișele tehnice (PDF)”: fișa e un document de dat clientului, nu o
+pagină de găsit pe Google. Spre deosebire de `products/`, `fise/` **se urcă la
+fiecare actualizare** și se înlocuiește întreg, fiindcă pe server nu scrie
+nimeni în el. Fișele încărcate de tine din Catalog nu ajung acolo, ci în
+`products/` (regula 2).
+
 ### 3. Scoate din pachet ce n-are voie să plece
 
 Înainte de a face arhiva, șterge din `deploy/`:
 
-- **`deploy/public_html/products/`** — regula 2 de mai sus.
+- **`deploy/public_html/products/`** — regula 2 de mai sus. Vecinul lui,
+  `deploy/public_html/fise/`, **rămâne**: fișele din el sunt ale pachetului și
+  pleacă de fiecare dată.
 - **`deploy/api/setup.php`** și **`deploy/api/verifica.php`** — revin în pachet
-  la fiecare construire, deliberat (`:655`, motivat la `:686-695`). Amândouă au
+  la fiecare construire, deliberat (`:910`, motivat la `:941-950`). Amândouă au
   zăvor propriu, dar zăvorul lui `setup.php` depinde de existența unui
   administrator activ (`api/setup.php:39-48`). Șterge-le de pe server după
   fiecare urcare.
 - **`.htaccess`** — la actualizările obișnuite nu-l urca deloc. Vezi capcana 4.
+  Pachetul **2.6.0** nu e una obișnuită: aduce blocul PDF-urilor în
+  `.htaccess`-ul din `public_html/` și trimiterea `fise/` în cele din `lab/` și
+  `clienti/`. Fără ele, fișa se deschide pe magazin fără `noindex`, iar „Vezi
+  fișa” din Catalog dă 404. La pachetul acesta, cele trei `.htaccess` de pagini
+  se urcă, după pașii din capcana 4.
 
 ### 4. Urcă
 
@@ -150,7 +177,7 @@ patru subdomeniile odată**.
 
 API-ul e aproape întotdeauna aditiv: rute noi, câmpuri noi, iar paginile vechi
 ignoră ce nu cunosc. Paginile noi, în schimb, cer rute noi. Dacă urci întâi
-paginile, clientul primește pe ecran exact textul de la `api/index.php:372` —
+paginile, clientul primește pe ecran exact textul de la `api/index.php:378` —
 „Rută inexistentă: POST /requests/12/reopen" — iar comanda pur și simplu nu se
 face. Cu ordinea corectă, fereastra e „API nou + pagini vechi", care nu strică
 nimic.
@@ -209,7 +236,7 @@ peste schema nouă. Codul vechi nu știe de coloana nouă și nu o cere;
 funcționează normal tot intervalul.
 
 **De ce nu invers.** Codul nou cere o coloană care încă nu există → PDO ridică
-excepție → `api/index.php:372-378` întoarce „Eroare internă." Nu e o pagină
+excepție → `api/index.php:378-384` întoarce „Eroare internă." Nu e o pagină
 urâtă, e o **oprire**: formularul de comandă cade la trimitere, panoul nu mai
 încarcă lista. Nu există coadă și nu există reîncercare — comenzile din acel
 interval se pierd.
@@ -263,6 +290,8 @@ după nu.
 | `027_poza_fiecarei_laturi.sql` | Da — și e singura de până acum care **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Ea copiază o dată `products.photo` în `products.photo_baked` acolo unde a doua e goală, adică face a fiecărei laturi poza pe care până în 2.4.1 o ÎMPRUMUTA de la cealaltă. Zăvorul nu e în `information_schema` — n-ar avea ce căuta acolo, fiindcă nu se schimbă nimic în schemă —, ci în `settings`: `migration_027_poza_pe_latura`, scris la coada ei. A doua rulare îl găsește și nu mai copiază nimic, deci o poză pe care ai schimbat-o între timp la gata de servire rămâne a ta. **Ce NU face: nu pune la loc pozele de după ea.** Un produs născut după migrare are `photo_baked` gol până îi urci una — și așa și trebuie, de vreme ce împrumutul s-a tăiat. O bază care ia migrarea fără fișierele noi nu pățește nimic: cele două coloane ajung să poarte același nume de fișier, iar codul vechi arăta oricum poza aceea pe amândouă laturile. Nu cere nimic și se rulează oriunde. |
 | `028_preturi_pe_trepte.sql` | Da — zece coloane, fiecare cu paza ei în `information_schema`: șase pe `products` (`price_frozen_b`, `price_frozen_c`, `price_baked_b`, `price_baked_c`, `prag_b`, `prag_c`) și câte două pe `order_items` și pe `order_request_items` (`treapta`, `prag_treapta`), plus patru setări ale catalogului, cu `INSERT IGNORE`. A doua rulare nu face nimic și nu calcă ce ai ales între timp în Setări. Nu atinge niciun rând existent: coloanele noi se nasc `NULL`, adică „nicio treaptă" pe produs — fiecare produs rămâne cu prețul lui unic, exact cum îl vindeai — și „treapta A" pe fiecare poziție de comandă de dinainte. Codul le cere **pe toate zece** deodată (`catalog_trepte_supported()`): pe o bază cu jumătate din migrare casa vinde ca ieri, numai cu prețul A, în loc să scrie comenzi tarifate la B fără să țină minte pragul care le-a câștigat. Nu cere nicio migrare anterioară; registrul (`025`) îl folosește numai dacă îl găsește. |
 | `029_numere_in_catalog.sql` | Da — și, ca `027`, **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Dă o dată fiecărui produs — și celor scoși din catalog, care își păstrează locul pentru când se întorc — numărul din colțul pozei, 1, 2, 3…, în ordinea în care au fost puse (`id`), în coloana `products.sort`, care exista din `001` și ținea până acum pași de zece. Zăvorul e tot în `settings`: `migration_029_numere_catalog`, scris la coada ei, cu data rulării. A doua rulare îl găsește și nu mai renumerotează nimic — fără zăvor, fiecare actualizare ar fi pus la loc numerele de la import și ar fi șters, lună de lună, pe cele alese de patron în fila Produse. Pe o bază din care n-a fost șters niciun produs numerele ies exact cele de ieri (01 rămâne 01, 19 rămâne 19), deci vitrina nu se mișcă în clipa importului; unde s-a șters unul, cele de după el urcă cu un loc și închid golul. **Ce NU face: nu pune un index unic pe `sort`.** Unicitatea o ține serverul, sub lacăt, la fiecare mutare; un index ar fi făcut orice produs scris cu mâna în bază, fără `sort`, să cadă la import pe un zero dublu. Nu schimbă cheile: coșurile, pozele și comenzile trimit tot la ele. O bază care ia fișierele noi fără migrare nu pățește nimic: magazinul arată cheia bazei, ca ieri, iar fișa produsului refuză lămurit schimbarea numărului (`numbers_unavailable`, cu numele fișierului). Cere `001` și MySQL 8.0 sau mai nou (`ROW_NUMBER()`); registrul (`025`) îl folosește numai dacă îl găsește. |
+| `030_gata_de_livrare.sql` | Da — și, ca `027` și `029`, **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Pune o dată numele „Gata de livrare" în lista ta de etape (`order_statuses`), **chiar înaintea etapei finale** — cea numită în `order_status_done`, oricum s-ar chema ea la tine —, și numai dacă nu e deja acolo. Nu e un `UPDATE` cu lista scrisă în fișier, greșeala lui `003`: celelalte etape rămân cum le-ai lăsat, cu numele și cu ordinea lor. Dacă setarea etapei finale lipsește ori arată spre un nume care nu mai e în listă, locul e cel dinaintea ultimei etape care nu e anularea — aceeași regulă după care serverul își alege singur etapa finală (`status_done()`). Zăvorul e în `settings`: `migration_030_gata_de_livrare`, scris la coada ei, cu data rulării. A doua rulare îl găsește și nu mai atinge lista — fără zăvor, o etapă redenumită ori scoasă de tine din Setări s-ar întoarce sub numele vechi la fiecare actualizare, exact pățania lui `016`. Pe o instalare nouă n-are ce pune: lista din `002` are deja etapa. **Ce NU face: nu mută nicio comandă.** Cele aflate la „La ambalare" în clipa importului rămân acolo; laboratorul mai apasă o dată pe fiecare, și abia atunci se aprinde butonul curierului. Nu atinge `order_status_done` și `order_status_cancelled`, iar pe lângă o listă care nu e JSON trece fără s-o atingă. O bază care ia fișierele noi fără migrare nu pățește nimic: laboratorul se oprește tot la etapa dinaintea celei finale — numai că aceea e atunci ambalarea, deci de la „La ambalare” comanda e a curierului. Cere `001` și funcțiile JSON ale bazei (MySQL 5.7 sau mai nou); registrul (`025`) îl folosește numai dacă îl găsește. |
+| `031_fise_tehnice.sql` | Da — două coloane pe `products`, `sheet_frozen` și `sheet_baked`, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie străină. În ele stă calea fișei tehnice a fiecărei laturi; `NULL` înseamnă „fără fișă", și atunci magazinul nu arată niciun buton. Are și un pas care **scrie date**: leagă o dată, după `slug`, cele 21 de fișe venite cu pachetul de latura congelată a produselor lor, și numai acolo unde coloana e goală. Pasul e zăvorât în `settings` cu `migration_031_fise_tehnice`, scris la coada ei: a doua rulare îl găsește și nu mai leagă nimic — fără zăvor, o fișă scoasă de tine din Catalog s-ar întoarce la fiecare actualizare, fiindcă tocmai „goală" e starea pe care ai ales-o. **Ce NU face: nu scrie nimic în `sheet_baked`.** Coapte împrumută fișa de la congelate cât n-are una a ei, iar împrumutul se face în cod (`latura_fisa()`, `api/lib/laturi.php`), nu în bază — scris în bază, n-ar mai putea fi deosebit de o fișă pusă dinadins. Nu atinge greutatea, prețul ori descrierea niciunui produs și nu mută niciun fișier: scrie numai căi. Un produs pus de tine în Catalog cu altă adresă decât cea din pachet (alt `slug` — de pildă unul făcut din nou sub alt nume) nu e găsit și rămâne fără fișă; i se încarcă una din Catalog. O bază care ia fișierele noi fără migrare nu pățește nimic: magazinul nu arată butonul fișei, iar încărcarea unei fișe e refuzată lămurit (`fise_unavailable`, cu numele fișierului). Cere `001`; registrul (`025`) îl folosește numai dacă îl găsește. |
 
 Dacă o versiune viitoare are nevoie de o **setare** nouă, primești un fișier
 separat care conține doar acel `INSERT IGNORE INTO settings`. Nu reimportul
@@ -271,7 +300,7 @@ seed-ului.
 ### Cum verifici că migrarea a intrat
 
 `api/verifica.php` **nu te ajută**: pe o instalare vie răspunde 404
-(`api/verifica.php:1035-1041`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
+(`api/verifica.php:1068-1074`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
 
 **Întâi întreabă registrul.** Din `025_registru_migrari.sql` încoace, fiecare
 migrare își scrie numele într-un tabel când rulează, deci răspunsul se citește
@@ -288,8 +317,8 @@ unde-și scrie numele. Dacă tabelul însuși lipsește, baza n-a văzut încă 
 ci schema, deci spune adevărul și despre o bază care a trecut prin actualizări
 de dinaintea lui.
 
-Pentru starea de azi — migrările **003 … 029** — trebuie să întoarcă
-**68 de rânduri**:
+Pentru starea de azi — migrările **003 … 031** — trebuie să întoarcă
+**72 de rânduri**:
 
 ```sql
 SELECT TABLE_NAME, COLUMN_NAME
@@ -320,7 +349,8 @@ SELECT TABLE_NAME, COLUMN_NAME
         ('products','price_baked_c'), ('products','prag_b'),
         ('products','prag_c'), ('order_items','treapta'),
         ('order_items','prag_treapta'), ('order_request_items','treapta'),
-        ('order_request_items','prag_treapta'))
+        ('order_request_items','prag_treapta'), ('products','sheet_frozen'),
+        ('products','sheet_baked'))
 UNION ALL
 SELECT TABLE_NAME, '(tabel)'
   FROM information_schema.TABLES
@@ -334,7 +364,9 @@ SELECT 'settings', CONCAT(setting_key, ' = ', value)
  WHERE setting_key IN ('referral_rate_default', 'company_address', 'company_hours',
                        'catalog_vedere_telefon', 'catalog_vedere_calculator',
                        'pret_prag_b_implicit', 'pret_prag_c_implicit',
-                       'migration_029_numere_catalog')
+                       'migration_029_numere_catalog',
+                       'migration_030_gata_de_livrare',
+                       'migration_031_fise_tehnice')
 UNION ALL
 SELECT TABLE_NAME, INDEX_NAME
   FROM information_schema.STATISTICS
@@ -344,7 +376,7 @@ SELECT TABLE_NAME, INDEX_NAME
    AND SEQ_IN_INDEX = 1;
 ```
 
-**Mai puține rânduri decât 68 → citește care lipsesc.** Numele coloanei îți
+**Mai puține rânduri decât 72 → citește care lipsesc.** Numele coloanei îți
 spune singur unde s-a oprit importul: `referral_rate` e din 008, `vouched_at`
 din 010, `promo` din 011, `dismissed_at` din 012, `snoozed_until` din 013,
 `lab_pin` din 014, `zone` din 016, tabelul `request_claims` din 019, indexul
@@ -359,7 +391,10 @@ indexul `ix_req_autor` din 022, iar `lab_seq` (pe `orders`) și
 ale celor trei prețuri — șase pe `products`, de la `price_frozen_b` la
 `prag_c`, și `treapta` cu `prag_treapta` pe cele două tabele de poziții —
 împreună cu cele patru setări ale catalogului, din 028, iar semnul
-`migration_029_numere_catalog` din 029.
+`migration_029_numere_catalog` din 029, iar semnul
+`migration_030_gata_de_livrare` din 030, iar cele două coloane ale fișelor de
+pe `products` — `sheet_frozen` și `sheet_baked` — împreună cu semnul
+`migration_031_fise_tehnice`, din 031.
 
 Rândurile care pot lipsi fără pagubă sunt cele trei de index: `020`, plus câte o
 bucată din `021` și din `022`. Fără ele insignele de client, lista de comenzi și
@@ -419,7 +454,7 @@ nu se schimba nimic. Niciodată. Tăcerea aceea nu mai e cu putință: o cheie f
 rând închide caseta din panou, iar cererea care o poartă totuși — un script, un
 import, o pagină rămasă deschisă de ieri — e refuzată întreagă, cu **toate**
 cheile lipsă numite și fără să se scrie nimic din ea
-(`api/lib/settings.php:441-455`, codul `unknown_setting`). De-aceea aici nu
+(`api/lib/settings.php:448-462`, codul `unknown_setting`). De-aceea aici nu
 contează numai că rândurile **există**, ci și **ce scrie în ele**: pe o
 instalare proaspăt migrată trebuie să citești
 `company_address = Șos. Olteniței 103` și
@@ -457,6 +492,31 @@ salvează. Cu el, numărul e `products.sort`, pe care migrarea l-a pus 1, 2, 3�
 în ordinea în care au fost puse produsele. Semnul e și zăvorul ei: dacă îl
 ștergi cu mâna, actualizarea următoare renumerotează tot catalogul și calcă
 numerele alese între timp în fila Produse.
+
+`030` urcă și ea numărul cu unu, și tot cu un semn din `settings`:
+`migration_030_gata_de_livrare = 2026-…`. E de felul lui `029` — nu atinge
+schema —, iar ce a făcut se vede în altă parte: în **Setări → Liste**, etapa
+„Gata de livrare" stă chiar înaintea celei finale. Numele etapei **nu** e în
+interogarea asta, dinadins: lista e a ta, iar o etapă pe care ai redenumit-o
+ori ai scos-o după aceea ar arăta ca o migrare lipsă pe o instalare cinstită.
+Semnul spune numai că migrarea a trecut pe-acolo. Fără el, fișierele noi
+opresc laboratorul tot la etapa dinaintea celei finale, care e atunci
+ambalarea, deci o comandă abia intrată la ambalat arată la fel ca una gata de
+plecare, iar butonul curierului se aprinde pe ea de cum îi sunt bifate toate
+pozițiile. Semnul e și zăvorul ei: dacă îl ștergi cu mâna, actualizarea
+următoare pune etapa la loc, sub numele ei dintâi, lângă cea redenumită de
+tine.
+
+`031` urcă numărul cu trei: două coloane pe `products` — `sheet_frozen` și
+`sheet_baked` — și semnul `migration_031_fise_tehnice`, citit tot cu data
+rulării. Coloanele spun că fișa tehnică are unde se ține; semnul spune că
+fișele venite cu pachetul au fost legate o dată de produsele lor. Fără coloane,
+fișierele noi se poartă ca o casă fără fișe: magazinul nu arată butonul fișei la niciun
+produs, iar încărcarea unei fișe din Catalog e refuzată cu un mesaj care
+numește migrarea. Produsul și pozele lui se salvează, dar rețeta nu: ea pleacă
+abia după fișe, iar formularul rămâne deschis și o spune. Semnul e zăvorul
+legării: dacă îl ștergi cu mâna, actualizarea următoare pune la loc fișele pe
+care le-ai scos între timp.
 
 Lista nu se mai ține de mână. `.claude/test-doc-actualizari.mjs` chiar rulează
 interogarea asta pe baza de dezvoltare și numără rândurile, iar pe lângă asta o
@@ -496,8 +556,15 @@ Vreo trei minute. Fiecare pas prinde altceva.
    vechi. Dacă scrie „Nu s-a salvat: …", s-a urcat numai jumătate din pachet
    (API nou cu pagini vechi, ori invers): rulează din nou actualizarea.
 6. **Catalog → un produs cu poză urcată de tine.** Confirmă că se vede
-   miniatura: cererea trece prin redirecționarea din `.claude/build-deploy.mjs:543`,
-   deci probează și `.htaccess`-ul de pe `lab`.
+   miniatura: cererea trece prin redirecționarea din `.claude/build-deploy.mjs:568`,
+   deci probează și `.htaccess`-ul de pe `lab`. Tot acolo, la un produs care are
+   fișă tehnică, apasă „Vezi fișa”: PDF-ul trebuie să se deschidă într-o filă
+   nouă, de pe `goldenpastry.ro`. Trece prin redirecționarea vecină, scrisă la
+   fel pentru `fise/`. Dacă în locul fișei vine o pagină „nu am găsit”, uită-te
+   la adresa din filă: dacă începe cu `lab.goldenpastry.ro/fise/`, pe `lab` a
+   rămas `.htaccess`-ul de dinaintea rundei 2.6.0; dacă începe cu
+   `goldenpastry.ro/fise/`, redirecționarea a mers, dar folderul `fise/` n-a
+   ajuns în `public_html/`.
 7. **Setări → anunțurile care n-au plecat.** Dacă apar eșecuri cu ora
    actualizării, niște e-mailuri de comandă s-au pierdut în fereastra de urcare.
    Comenzile sunt salvate, doar mesajele n-au plecat — sunt scrise în tabelul
@@ -542,7 +609,7 @@ rândul de intrare cu referința comenzii.
 2.1.1, Depozitul număra comenzile de scăzut din cele mai noi 500 de comenzi, deci
 o comandă „Predată” mai veche — oprită de un articol lipsă sau redeschisă de o
 corectură — rămânea nescăzută fără niciun semn. Acum cifra vine de pe server,
-din toate comenzile (`api/routes/stock.php:650`). Dacă semnul apare cu comenzi
+din toate comenzile (`api/routes/stock.php:667`). Dacă semnul apare cu comenzi
 la care nu te așteptai, gândește-te întâi dacă nu le-ai scos deja marfa de mână,
 cu o mișcare de ieșire în registru: apăsarea pe „Scade din stoc” le-ar scădea a
 doua oară. În cazul ăsta adaugă o mișcare de intrare cu aceeași cantitate după
@@ -611,7 +678,7 @@ Până la 2.1.1, o comandă scoasă din „Anulată" — cu „Reface comanda", 
 lista de etape a fișei sau din lista „Stare" a formularului, la salvare — se
 întorcea pe ziua ei salvată, oricât de veche, fără niciun semn. Rămânea în lucru pe o zi pe care n-o mai arată nici panoul din
 laborator, nici ruta șoferului, iar marfa ei stătea pusă deoparte: rezervarea
-ține seama numai de etapă, nu de zi (`api/routes/stock.php:63`). Acum caseta
+ține seama numai de etapă, nu de zi (`api/routes/stock.php:68`). Acum caseta
 spune că ziua e în trecut, dar comenzile refăcute înainte au rămas unde erau.
 
 ```sql
@@ -738,7 +805,7 @@ lipește-le înapoi sub blocul generat, după extragere.
 ### 5. Urcare întreruptă la jumătate
 
 `support.js` trunchiat → pagina cu ambele limbi și `{{ }}` pe ecran. Un fișier
-din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:372-378`.
+din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:378-384`.
 Vestea bună: comenzile și cererile rulează în tranzacții, deci **nu rămân
 comenzi pe jumătate în bază**.
 
@@ -746,9 +813,9 @@ comenzi pe jumătate în bază**.
 
 Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
-(`Site Public.dc.html:3020`), deci o schimbare de preț se vede corect. **Dar
-dispariția e complet tăcută**: `:3652` ține în vitrină numai produsele bifate în
-catalogul deschis și cu prețul de acolo scris, iar `:4356-4362` scoate din coș
+(`Site Public.dc.html:3063`), deci o schimbare de preț se vede corect. **Dar
+dispariția e complet tăcută**: `:3702` ține în vitrină numai produsele bifate în
+catalogul deschis și cu prețul de acolo scris, iar `:4412-4418` scoate din coș
 rândurile rămase fără latura lor, fără niciun mesaj.
 
 Singura excepție e coșul refăcut din **„Comandă din nou”** (butonul de pe
@@ -764,7 +831,7 @@ mai puțini lei, fără nicio explicație.
 **Prețul gol nu mai poate face asta.** Până la cele două cataloage, ștergerea
 unui singur preț ascundea produsul din **amândouă** variantele, deși atinseseși
 un singur câmp. Acum serverul refuză golirea unui preț cât catalogul lui e bifat
-(422, mesajul numește catalogul și caseta — `api/routes/catalog.php:1007`), iar
+(422, mesajul numește catalogul și caseta — `api/routes/catalog.php:1230`), iar
 stingerea bifei **lasă prețul scris**. Deci scoaterea dintr-un catalog e o
 singură apăsare, și atunci pier din coșuri numai rândurile laturii aceleia;
 cealaltă nu se clintește.

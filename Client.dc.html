@@ -415,12 +415,41 @@ const CH = { Ridicare: "h-badge h-badge--honey", Livrare: "h-badge h-badge--acce
 // la încărcarea paginii — să se întoarcă; după aceea pagina se redesenează
 // oricum, cu `listsReady`.
 const CU_MASINA = (chan) => { const p = gp.pickupFulfillments(); return p.length ? p.indexOf(chan) < 0 : chan === "Livrare"; };
+// Etapele de LUCRU, pe limba clientului. Numai ele: capetele fluxului — etapa
+// dinaintea celei finale, cea finală și anularea — se citesc după LOC, în
+// `ETAPA_CLIENT` de mai jos, nu după nume. („La dospit” și „În cuptor” sunt
+// etapele cu care pornește o instalare nouă — `sql/002_seed.sql`; „În lucru”
+// e etapa pe care și-a pus-o casa din Setări, în locul lor. Harta le ține pe
+// toate trei, fiindcă pagina nu are de unde ști pe care listă lucrează.)
 const CLIENT_ST = {
   "În așteptare": { l: "Programată", c: "h-badge" },
+  "În lucru": { l: "Se prepară", c: "h-badge h-badge--warning" },
   "La dospit": { l: "Se prepară", c: "h-badge h-badge--warning" },
   "În cuptor": { l: "Se prepară", c: "h-badge h-badge--warning" },
-  "La ambalare": { l: "La ambalare", c: "h-badge h-badge--success" },
-  "Predată": { l: "Gata", c: "h-badge h-badge--solid" }
+  "La ambalare": { l: "La ambalare", c: "h-badge h-badge--success" }
+};
+// CE CITEȘTE CLIENTUL PE O COMANDĂ — o singură socoteală, pentru cartonul de
+// sus și pentru istoric.
+//
+// Până la 2.6.0 erau două. Cartonul de sus întreba harta de mai sus, după
+// NUME, și la „Predată” scria „Gata”; istoricul întreba după LOC și scria
+// „Livrată” ori „Ridicată”. Aceeași comandă, două vorbe. Iar de la migrarea
+// 030 „gata” e chiar numele etapei DINAINTEA predării: clientul care citea
+// „Gata” nu mai avea de unde ști dacă marfa îl așteaptă ori a primit-o deja.
+//
+// Capetele se citesc după loc, ca o etapă redenumită din Setări să nu cadă
+// din hartă și să ajungă pe ecran cu numele ei de atelier:
+//   · etapa finală        → „Livrată” / „Ridicată”
+//   · cea dinaintea ei    → „Gata de livrare” / „Gata de ridicat”
+// Cine vine cu mașina și cine vine la ușă spune `CU_MASINA`, adică lista din
+// Setări. Etapa finală se întreabă ÎNTÂI: într-un flux cu o singură etapă ea
+// e și plafonul laboratorului, iar o comandă încheiată nu mai „e gata”.
+const ETAPA_CLIENT = (o) => {
+  const st = o ? o.status : "";
+  if (st && st === gp.cancelled()) return { l: "Anulată", c: "h-badge h-badge--danger" };
+  if (st && st === gp.done()) return { l: CU_MASINA(o.chan) ? "Livrată" : "Ridicată", c: "h-badge h-badge--solid" };
+  if (st && st === gp.labCeiling()) return { l: CU_MASINA(o.chan) ? "Gata de livrare" : "Gata de ridicat", c: "h-badge h-badge--success" };
+  return CLIENT_ST[st] || { l: st, c: "h-badge" };
 };
 const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
 const idx = (v) => DAYS.findIndex(d => d.v === v);
@@ -502,7 +531,7 @@ class Component extends DCLogic {
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
     // dacă le redenumești din panou, pagina trebuie să afle de la server.
-    gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    this.cereListele();
     document.documentElement.setAttribute("data-theme", "light");
     if (!window.__gpNav) {
       window.__gpNav = 1;
@@ -533,6 +562,31 @@ class Component extends DCLogic {
   }
 
   /**
+   * Listele din Setări — etapele, etapa finală, modurile de ridicare — cerute
+   * până vin.
+   *
+   * Se cereau o singură dată, la montare, cu `.catch(() => {})`. Dacă cererea
+   * aceea pica — telefonul abia ieșit din lift — nimeni nu mai întreba, iar
+   * pagina rămânea pe lista de rezervă din `shared/gp-api.js` cât stătea
+   * deschisă: într-o casă cu etapele rebotezate din Setări, clientul citea
+   * numele de atelier al etapei în loc de „Gata de ridicat” ori „Livrată”, iar
+   * un mod de ridicare botezat altfel decât „Ridicare” era citit drept livrare
+   * (v. `CU_MASINA`). Aceeași îndreptare ca pe pagina șoferului și pe panoul
+   * din laborator: se cer din nou din tura de cinci secunde.
+   *
+   * `gp.lists()` ține minte răspunsul reușit, iar steagul oprește orice cerere
+   * de după el. `__listePeDrum` ține una singură în aer: `gp.poll` cheamă
+   * `pull()` îndată după montare, înainte ca prima cerere să se întoarcă.
+   */
+  cereListele() {
+    if (this.state.listsReady || this.__listePeDrum) return;
+    this.__listePeDrum = true;
+    gp.lists()
+      .then(() => { this.__listePeDrum = false; this.setState({ listsReady: true }); })
+      .catch(() => { this.__listePeDrum = false; });
+  }
+
+  /**
    * Aduce sesiunea, comenzile și cererile neconfirmate de pe server.
    *
    * API-ul întoarce clientului exclusiv comenzile lui — filtrul se aplică în
@@ -546,6 +600,8 @@ class Component extends DCLogic {
    * trimis și suna, iar marfa se comanda a doua oară.
    */
   pull() {
+    // Listele se mai cer, dacă prima cerere a picat (v. `cereListele`).
+    this.cereListele();
     return gp.me()
       .then((user) => {
         if (!user) {
@@ -713,7 +769,7 @@ class Component extends DCLogic {
     const first = mine[0] || null;
     const days = first ? zDif(first.date) : -1;
     const dayLabel = first ? zLung(first.date) : "";
-    const st = first ? (CLIENT_ST[first.status] || { l: first.status, c: "h-badge" }) : null;
+    const st = first ? ETAPA_CLIENT(first) : null;
 
     // Istoricul: tot ce a trecut, plus comenzile anulate, oricând ar fi fost.
     // Panoul arăta doar ce urmează, deci clientul nu avea de unde ști ce a
@@ -742,11 +798,6 @@ class Component extends DCLogic {
     const respinse = toateCererile
       .filter((c) => c.status === "respinsa")
       .sort((a, b) => (b.at || 0) - (a.at || 0));
-    const stIstoric = (o) => anulata(o)
-      ? { l: "Anulată", c: "h-badge h-badge--danger" }
-      : o.status === gp.done()
-        ? { l: CU_MASINA(o.chan) ? "Livrată" : "Ridicată", c: "h-badge h-badge--success" }
-        : (CLIENT_ST[o.status] || { l: o.status, c: "h-badge" });
 
     // Câte opriri mai are șoferul până la tine — cifra o dă serverul, nu
     // pagina. `GET /orders` îi dă clientului exclusiv comenzile LUI, deci
@@ -775,6 +826,14 @@ class Component extends DCLogic {
         rand.zone ? "zona " + rand.zone : "",
         rand.slot ? "intervalul " + rand.slot : ""
       ].filter(Boolean).join(", ");
+      // CÂND MARFA A AJUNS, insigna de aici e chiar cea de pe cartonul comenzii,
+      // de două palme mai jos: aceeași vorbă, aceeași culoare, din aceeași
+      // socoteală (`ETAPA_CLIENT`). Până la 2.6.0 cele două spuneau vorbe
+      // deosebite („Livrată” aici, „Gata” dedesubt); runda a adus cartonul la
+      // „Livrată”, pe plin, iar insigna de aici a rămas verde, cu culoarea ei
+      // scrisă de mână — două „Livrată” de culori deosebite pe același ecran.
+      // Verdele e acum numai al mărfii care AȘTEAPTĂ („Gata de livrare”).
+      const ajunsa = ETAPA_CLIENT({ status: gp.done(), chan: first.chan });
       route = {
         show: true,
         num: livrata ? "✓" : poz === null ? "—" : String(poz),
@@ -790,8 +849,8 @@ class Component extends DCLogic {
         driver: !showZone ? "" : livrata
           ? "Mulțumim! Ne vedem la comanda următoare."
           : unde ? "Livrarea ta e trecută pe " + unde + "." : "",
-        badge: livrata ? "Livrată" : poz === null ? "Se socotește" : "Pe rută",
-        cls: livrata ? "h-badge h-badge--success" : poz === null ? "h-badge" : "h-badge h-badge--accent",
+        badge: livrata ? ajunsa.l : poz === null ? "Se socotește" : "Pe rută",
+        cls: livrata ? ajunsa.c : poz === null ? "h-badge" : "h-badge h-badge--accent",
         // Ziua întreagă, nu doar comanda ta: câte opriri mai are șoferul și
         // în ce zone. Fraza o scrie `gp.rutaRezumat()`, aceeași și pe
         // ecranul agentului — două copii s-ar fi depărtat la prima corectură.
@@ -952,7 +1011,17 @@ class Component extends DCLogic {
       // În previzualizarea de administrator rămâne ascuns: acolo pagina imită
       // contul altcuiva, iar codul și linkul afișate ar fi ale adminului, nu ale
       // clientului ales din listă.
-      hasReferral: !isPreview && !!auth,
+      //
+      // ȘI NUMAI CUI ARE „RECOMANDĂRI” (runda 2.6.0). „Oricui e conectat”
+      // prindea și personalul venit aici cu adresa scrisă de mână: managerul,
+      // angajatul, omul de laborator și tableta comună a turei citeau „ecranul
+      // ăsta e doar pentru clienți” și, dedesubt, „Fă-ți un cod →” spre un
+      // panou pe care rolul lor nu-l are — iar tabletei serverul nici nu-i
+      // face cod. Întrebarea e cea a meniului (`gp.meniu`): panoul e în
+      // matricea rolului, ori contul are deja un cod. Clientul fără cod îl
+      // păstrează, din matrice — pentru el s-a deschis ușa asta.
+      hasReferral: !isPreview && !!auth
+        && ((gp.PANOURI_ROL[auth.role] || []).indexOf("Recomandări") >= 0 || !!auth.referralCode),
       refHasCode: !!(auth && auth.ref && auth.ref.code && auth.ref.link),
       refCode: auth && auth.ref ? auth.ref.code : "",
       refLink: auth && auth.ref ? auth.ref.link : "",
@@ -1105,8 +1174,9 @@ class Component extends DCLogic {
           id: o.id,
           when: zScurt(o.date),
           line: [gp.qtyLabel(qty(o)) + " buc", bani(o.total)].filter(Boolean).join(" · "),
-          status: stIstoric(o).l,
-          cls: stIstoric(o).c,
+          // Aceeași socoteală ca pe cartonul de sus (`ETAPA_CLIENT`).
+          status: ETAPA_CLIENT(o).l,
+          cls: ETAPA_CLIENT(o).c,
           caret: deschis ? "▾" : "▸",
           open: deschis,
           expanded: String(deschis),

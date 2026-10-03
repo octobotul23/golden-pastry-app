@@ -50,7 +50,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.5.2/deploy
+  Pachet: /root/plasture-vps 2.6.0/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -128,7 +128,11 @@ grep -c session_days_panou /var/www/gp/api/lib/auth.php
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
    și din curățenie (`actualizeaza-vps.sh:886`), iar folderul pozelor e citit din
    `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:816`,
-   `api/routes/catalog.php:864`).
+   `api/routes/catalog.php:874`). Folderul fișelor tehnice, `public_html/fise/`,
+   **nu** e ocolit: vine cu pachetul și se scrie peste, cu tot cu curățenie, deci
+   o fișă care nu mai e în pachet dispare și de pe server. Fișele încărcate din
+   Catalog nu stau acolo, ci lângă poze, în `products/`, așa că le apără aceeași
+   ocolire.
 6. **Drepturile**: totul pe `www-data`, `755` la foldere, `644` la fișiere,
    `640` la `config.php`.
 7. **Apache**: întâi `configtest`, și abia dacă trece, `reload`. O configurație
@@ -151,7 +155,7 @@ exact în minutele dintre cele două jumătăți ale actualizării.
 | Ce | De ce |
 |---|---|
 | `api/config.php` | parola bazei, cheia de criptare, codul de instalare. Nu e în pachet și nu se poate reface: cheia aia descuie tokenurile salvate din Setări. |
-| pozele produselor | urcate din panoul Catalog, nu ies din niciun `build-deploy`. Folderul se citește din `photo_dir` și se ocolește. |
+| pozele produselor | urcate din panoul Catalog, nu ies din niciun `build-deploy`. Folderul se citește din `photo_dir` și se ocolește. Tot acolo stau și fișele tehnice încărcate din Catalog. Fișele venite cu pachetul, din `fise/`, **nu** sunt în rândul ăsta: ele se scriu peste la fiecare actualizare. |
 | rândurile din bază | toate migrările sunt aditive. Nimic nu se șterge și nimic nu se rescrie. |
 | certificatele, gazdele virtuale, `apt` | treaba instalării, nu a actualizării. De-aia actualizarea ține sub un minut. |
 
@@ -335,9 +339,9 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
 - **rândurile verzi „aplicată acum"** — câte unul pentru fiecare migrare pe
   care serverul n-o avea. Câte sunt nu depinde de pachetul pe care îl urci, ci
   de cât de veche e instalarea: pe una lăsată în urmă cu trei versiuni se aprind
-  trei, pe una actualizată ieri niciuna. A doua oară scriu toate „era deja
+  trei, pe una deja la zi niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
-  `sql/029_numere_in_catalog.sql`;
+  `sql/031_fise_tehnice.sql`;
 - **25 de tabele** în capul raportului, la „Baza de date" (cel din urmă venit e
   `schema_migrations`, registrul adus de `025_registru_migrari.sql`; înaintea
   lui, `telegram_links` și `lab_production`, aduse de `021_raspundere.sql`).
@@ -358,6 +362,15 @@ picat la mijloc: repari ce era de reparat și continui de unde a rămas.
 
 Apoi, din browser: intră în panou, deschide **Recomandări** și **Catalog**. Dacă
 amândouă se încarcă, actualizarea e întreagă.
+
+De la runda 2.6.0, tot în **Catalog**: la un produs care are fișă tehnică,
+„Vezi fișa” trebuie să deschidă PDF-ul într-o filă nouă, de pe
+`goldenpastry.ro`. Dacă în locul lui vine o pagină „nu am găsit”, adresa din
+filă îți spune care din două: cu `lab.goldenpastry.ro/fise/` în față, în `lab/`
+a rămas `.htaccess`-ul vechi; cu `goldenpastry.ro/fise/`, folderul `fise/` n-a
+ajuns în `public_html/`. Antetele
+fișei le vezi și de pe server, cu cele două comenzi `curl -sI` de la pasul 8c
+din [08-publicare-vps-hostinger.md](08-publicare-vps-hostinger.md).
 
 Pentru `016` mai e o privire de aruncat, fiindcă ea nu se vede în numărul de
 tabele: **Setări → Zone** trebuie să aibă „În afara Bucureștiului și Ilfovului"
@@ -550,6 +563,86 @@ comenzile nu simt nimic: ele țin cheia produsului, nu numărul din colț. În
 fereastra dintre fișiere și import magazinul arată numerele de ieri, iar fișa
 produsului refuză schimbarea numărului cu un mesaj care numește `029` — restul
 fișei se salvează.
+
+`030_gata_de_livrare.sql` **nu se vede nici ea în raport**, ca `029`: nu
+atinge schema deloc, deci nici amprenta nu se mișcă. O ceri singur:
+
+```sql
+SELECT value FROM settings WHERE setting_key = 'migration_030_gata_de_livrare';
+```
+
+Ce face la import: pune etapa „Gata de livrare" în lista ta de etape, chiar
+înaintea celei finale — cea aleasă în Setări → Liste, oricum s-ar chema la
+tine. Celelalte etape rămân cum le-ai lăsat, cu numele și cu ordinea lor. O
+vezi cu ochii tot acolo, în Setări → Liste. Rândul de mai sus poartă data
+rulării și e zăvorul ei: etapa se pune o singură dată, la actualizarea care o
+aduce, iar cele de după găsesc semnul și nu mai ating lista — deci dacă
+redenumești etapa ori o scoți, rămâne cum ai lăsat-o.
+
+**În ziua actualizării, o privire în laborator.** Migrarea nu mută nicio
+comandă. Cele care stăteau la „La ambalare” în clipa importului rămân acolo,
+iar de-acum ambalarea nu mai e ultima etapă a laboratorului: pe fiecare din ele
+laboratorul mai apasă o dată, până la „Gata de livrare”, și abia atunci se
+aprinde butonul curierului. Dacă șoferul spune că la o comandă ambalată înainte
+de actualizare butonul de livrare stă stins, asta e pricina, nu o stricăciune.
+
+În fereastra dintre fișiere și import — fișierele noi pe o bază încă fără
+`030` — lista de etape e cea veche, dar purtarea e deja cea nouă. Laboratorul
+se oprește la etapa dinaintea celei finale, care e atunci ambalarea, și se
+oprește acolo pentru toți, administratorii cu tot: etapa finală o pun de-acum
+numai „Rută” și „Comenzi”. Pe „Rută”, „Marchează livrat” se aprinde la
+comenzile ajunse la ambalare, și numai după ce curierul a bifat fiecare poziție
+a comenzii.
+
+**După urcare, ecranele rămase deschise.** Comenzile se împrospătează singure
+în „Laborator”, pe „Rută” și în „Comenzi”, dar codul paginii și lista de etape
+din Setări se citesc o singură dată, la deschidere. De-aceea, în ziua
+actualizării:
+
+- **Tabletele din laborator și fiecare „Rută” deschisă se reîncarcă.** O
+  pagină deschisă înainte de urcare e pagina veche: tableta nu cunoaște „Gata
+  de livrare”, deci nu poate duce comanda până acolo, iar „Rută” cea veche are
+  încă „Tot încărcat” și aprinde „Marchează livrat” pe orice etapă, cu lista
+  nebifată. Reîncărcată, fiecare primește regulile noi.
+- **Bifele de pe telefonul șoferului se văd nebifate.** Pagina nouă ține bifa
+  pe poziția comenzii, nu pe locul din listă, iar bifele vechi nu se potrivesc
+  cu nicio poziție. Nu se pierde nimic: șoferul bifează încă o dată comenzile
+  zilei.
+- **O filă „Setări” rămasă deschisă de dinainte se reîncarcă înainte de orice
+  salvare**, pe orice calculator ori telefon. Dacă în ea umbli la etape — muți,
+  adaugi ori ștergi una — și salvezi, fila veche trimite lista ei veche, iar
+  „Gata de livrare” dispare fără niciun semn. (Numai dacă vreo comandă stă deja
+  în ea, serverul refuză salvarea și spune de ce.) Dacă s-a întâmplat, într-o
+  filă reîncărcată:
+  Setări → „Liste”, la „Etape în laborator” scrii „Gata de livrare” în caseta
+  de sub listă și apeși „Adaugă”. Etapa intră la coada listei, așa că o urci cu
+  săgeata ↑ („Mai sus”) până stă chiar deasupra etapei cu semnul „livrată”.
+  Apoi „Salvează”, în bara de sus. Migrarea n-o mai pune singură: zăvorul ei e
+  deja scris.
+- **Un cont fără bifa „Poate confirma livrarea” nu mai vede „Marchează
+  livrat”** pe „Rută”; sub comandă scrie ce lipsește și unde se pune. Bifa se
+  pune din „Conturi”, pe contul șoferului, iar butonul apare singur, fără
+  reîncărcare, la următoarea împrospătare a paginii — cam în cincisprezece
+  secunde. Administratorul și fondatorul o au din cod; un manager care închide
+  din „Comenzi” comenzile cu ridicare are nevoie și el de bifă.
+
+`031_fise_tehnice.sql` **nu se vede nici ea în raport**: nici tabel, nici
+index — două coloane pe `products`, `sheet_frozen` și `sheet_baked`, și semnul
+ei din `settings`. O ceri singur, pe a doua coloană:
+`SHOW COLUMNS FROM products LIKE 'sheet_baked'`.
+În coloane stă calea fișei tehnice a fiecărei laturi. La import, migrarea leagă
+o dată, după `slug`, fișele venite cu pachetul de latura congelată a
+produselor lor; latura coaptă o împrumută pe aceea cât n-are una a ei, iar
+împrumutul se face în cod, deci `sheet_baked` rămâne gol. Un produs pus de tine
+în Catalog cu altă adresă decât cea din pachet (alt `slug` — de pildă unul
+făcut din nou sub alt nume) nu e găsit și rămâne fără fișă: i se încarcă una
+din Catalog. Legarea e zăvorâtă cu semnul `migration_031_fise_tehnice` —
+aceeași lecție ca la `016`, `024`, `027` și `029`: o fișă pe care ai scos-o
+între timp rămâne scoasă la actualizările de după. În fereastra dintre fișiere
+și import magazinul nu arată butonul fișei la niciun produs, iar încărcarea
+unei fișe e refuzată cu un mesaj care numește `031`. Produsul și pozele lui se
+salvează, dar rețeta nu: ea pleacă abia după fișe, iar formularul rămâne
+deschis și o spune.
 
 Raportul face singur privirea asta, după `Bilanț:`: citește din bază procentul,
 adresa și programul și le spune cu valoarea lor (`actualizeaza-vps.sh:636`,

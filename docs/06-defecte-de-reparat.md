@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**484 de defecte confirmate** — 10 critice, 126 grave, 217 medii, 131 mici.
-**484 reparate**, 0 rămase.
+**574 de defecte confirmate** — 10 critice, 131 grave, 251 medii, 182 mici.
+**566 reparate**, 8 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-276 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+366 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -29,13 +29,13 @@ Aceeași listă, cu filtre și căutare:
 | Gravitate | Reparate | Rămase | Total |
 |---|---|---|---|
 | Critice | 10 | 0 | 10 |
-| Grave | 126 | 0 | 126 |
-| Medii | 217 | 0 | 217 |
-| Mici | 131 | 0 | 131 |
+| Grave | 131 | 0 | 131 |
+| Medii | 251 | 0 | 251 |
+| Mici | 174 | 8 | 182 |
 
 ---
 
-## Ce e reparat — 484
+## Ce e reparat — 566
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -207,6 +207,14 @@ reparația la loc și văzând-o picând.
 - [x] **Formularul rămâne blocat după un 409: a doua apăsare pleacă tot de pe etapa veche și ia același refuz, la nesfârșit**
   `Administrare Comenzi.dc.html:2371` · *grav*
   După `this.recitesteLista()`, în `.catch()`-ul salvării, reperul se mută pe etapa adevărată: `if (this.__formBase) this.__formBase.status = e.detalii.current;`. Coada mesajului spune acum ce face a doua apăsare — că mută comanda din etapa de acum în cea aleasă, ori, când ele coincid, că salvează restul fără s-o mai miște. Un 409 se naște numai dacă salvarea chiar a trimis `status`, deci omul chiar alesese o etapă; dacă etapa de pe server e chiar cea aleasă de el, a doua apăsare nu mai trimite `status` deloc; dacă e cea de anulare, a doua apăsare trece prin caseta ușii a treia. [16 septembrie 2026]
+
+- [x] **Fereastra „Din catalog” și sugestiile din rând ofereau un produs pe latura unde nu se vinde, cu preț cu tot; serverul îl refuza, iar formularul rămânea fără total și fără nicio vorbă până la „Salvează”**
+  `Administrare Comenzi.dc.html:4328` · *grav*
+  `gp.seVindePe(p, latura)` și `gp.pozaPe(p, latura)` în `shared/gp-api.js`, oglinzi ale lui `latura_se_vinde()` și `latura_poza()` din api/lib/laturi.php. Fereastra arată numai ce se vinde pe latura deschisă, iar perechile de pe hârtia salvată (corectare, acceptare) rămân la vedere prin `__catIngaduite`, ca la server; sugestiile trec prin aceeași regulă; `bad_variant_side` a intrat în `stiut` și se arată lângă total, cu vorbele serverului. Păzit de `.claude/check-fereastra-catalog.mjs` (D6 și D9: „D6 pe Congelate fereastra arată numai ce se vinde congelat”, „D9 sugestiile la scris nu oferă produsul pe latura unde nu se vinde”, „D9 refuzul bad_variant_side se arată lângă total, cu vorbele serverului”), de `.claude/check-bani-panou.mjs` („produsul nu se sugerează pe latura unde nu se vinde”) și, viu, de `.claude/test-catalog-laturi.mjs`.
+
+- [x] **Fereastra „Din catalog” n-avea latura ei: pe o comandă nouă rămânea blocată pe Coapte, iar fiecare rând congelat trebuia întors apoi de mână din lista lui**
+  `Administrare Comenzi.dc.html:4314` · *grav*
+  Fereastra are starea ei, `catalogLatura`, cu comutator Congelate / Coapte care numără pozițiile comenzii de pe fiecare latură; `vForm = S.catalogLatura || laturaImplicita(f)`: comanda nouă se deschide pe Congelate, corectarea pe latura cu mai multe bucăți, acceptarea pe latura cererii. „+”, „−” și cantitatea scrisă lucrează pe latura deschisă, cu prețul și scara ei. Păzit de `.claude/check-fereastra-catalog.mjs` (D7: „D7 comanda nouă deschide fereastra pe Congelate”, „D7 „+” pune produsul pe latura deschisă: Congelate”, „D7 corectarea se deschide pe latura cu mai multe bucăți”, „D7 acceptarea unei cereri se deschide pe latura cererii”, „D7 prețul și scara de volum de pe card sunt ale laturii deschise”).
 
 - [x] **Limita cererilor de parolă nouă este globală, nu pe conexiune: 10 cereri opresc recuperarea pentru toată lumea**
   `api/lib/auth.php:142` · *grav*
@@ -444,6 +452,10 @@ reparația la loc și văzând-o picând.
   `Conturi.dc.html:574` · *grav*
   Ștergerea unui cont cere o a doua apăsare pe același buton, cu un avertisment care spune ce dispare și ce rămâne, plus un buton de renunțare. Probe: check-panouri „ștergerea unui cont cere o a doua apăsare”, „și se poate opri înainte să se întâmple”.
 
+- [x] **Îți schimbai parola de pe propria fișă din Conturi și erai scos din cont; cu „Generează”, parola nouă nici nu apuca să fie arătată**
+  `Conturi.dc.html:2220` · *grav*
+  Pe fișa ta nu mai sunt butoanele de parolă (`parolaDeAici` e fals pe contul tău, Conturi.dc.html:1816–1822); în locul lor (`parolaMea: isMe && !acc.sys`, :2220, șablonul la :569–572) scrie că parola contului tău se schimbă din „Parola mea”, unde rămâi conectat, cu butonul „Parola mea →”. Păzit de check-vede-poate.mjs, rândurile „„Schimbă parola”” și „„Generează” o parolă”, cazul „pe propria fișă” din .claude/vede-poate/conturi.mjs (2 reguli, văzute roșii întâi), și de check-conturi-vederi.mjs, regula INCHIS_SCRIS („Parola mea” numai pe fișa ta).
+
 - [x] **Pagina Depozit calculează stocul din ultimele 1000 de mișcări, nu din soldul trimis de server**
   `Depozit.dc.html:658` · *grav*
   Stocul pornește de la soldul trimis de server, nu de la suma ultimelor 1000 de mișcări; caseta de ieșire nu mai refuză o ieșire acoperită.
@@ -492,6 +504,10 @@ reparația la loc și văzând-o picând.
   `Panou Laborator.dc.html:2319` · *grav*
   Regula s-a mutat într-un singur loc, `gp.intraLaProductie(st)` din `shared/gp-api.js`, scrisă după purtarea serverului (inclusiv „Setare goală înseamnă că etapa asta nu există", adică `$anulata !== ''`). Pagina o cheamă la socotit totaluri; CARDURILE RĂMÂN TOATE, ziua se vede întreagă — se schimbă numai socoteala. Două probe deosebite o țin: `test-productie-imparte` pune față în față cifra cerută de panou cu cea pe care serverul CHIAR a putut-o pune, pe aceeași zi (10 față de 30), iar `check-panouri` scoate socoteala din pagină și o rulează. A doua are și pază de vacuitate: cu predicatul întors la `() => true`, aceeași zi de probă dă 30 — deci se vede că proba chiar deosebește cele două socoteli. Dovedită punând defectul la loc în patru feluri; toate patru s-au înroșit.
 
+- [x] **Laboratorul putea încheia comanda ca livrată de pe tableta lui: plafonul cădea pentru admini, pentru orice cont cu semnul „poate confirma livrarea” și pentru ecranul deschis fără cont**
+  `Panou Laborator.dc.html:2168` · *grav*
+  `const plafon = gp.labCeiling();`, fără nicio condiție, iar `advance` are centura `if (laPlafon(cur)) return;`: la plafon butonul e stins și apăsarea nu trimite nimic, oricine a deschis panoul. Poarta serverului e neatinsă, dinadins: cine are semnul încheie comanda din „Comenzi” ori de pe telefonul șoferului. Păzit de `.claude/check-plafon-laborator.mjs` (în verifica-tot), regulile „la plafon butonul de pe carton e stins, oricine a deschis panoul”, „apăsat la plafon cu un cont de admin, butonul de pe carton nu trimite nimic” și „plafonul nu mai atârnă de cine a deschis panoul”.
+
 - [x] **A doua mătură din documentul plasturelui rămăsese la patru nume din zece: omul o rula, capăta tăcere, și se credea apărat cu șase plasturi vechi încă pe server**
   `plasture-vps/CITESTE-MA.md:1374` · *grav*
   Mătura e una singură acum, cea de sus, cu toate cele zece nume. Capitolul vechi nu mai repetă lista: trimite la ea, și spune de ce — „o listă scrisă în două locuri e o listă care se învechește într-unul din ele”. Odată cu ea s-au scos și celelalte nume înghețate din acel capitol: nu se mai numește „cea mai proaspătă din istorie” (se schimbă la fiecare rundă), și nu se mai înșiră ce e pe disc, ci se spune că sunt toate. Paza cere patru lucruri: o singură mătură în tot documentul; ea să cuprindă fiecare folder `plasture-vps <cifre>` de lângă proiect, citit de pe disc, nu scris în probă; să nu-l cuprindă pe cel care tocmai urcă; și să aibă și numele fără cifre, al primului plasture. Poate fi mai lungă decât discul — pe server pot zăcea foldere șterse de la mine —, dar niciodată mai scurtă: pe partea aia e paguba.
@@ -531,6 +547,10 @@ reparația la loc și văzând-o picând.
 - [x] **Ecranul șoferului vedea numai șapte zile înainte, pe când o comandă se poate scrie pe orice zi dintr-un an — și, de către personal, chiar pe una trecută: comanda scrisă de administrator în afara celor șapte zile exista, era pe rută, era numărată, și nu se putea ajunge la ea de pe telefon**
   `Ruta Sofer.dc.html:431` · *grav*
   Reparat în runda 2.2.1. `gp.days(n)` capătă al doilea parametru, `deLa`: singurul fel în care o pagină poate privi înapoi, fiindcă `+ i` merge numai înainte. Gol înseamnă azi, deci `gp.today()` și repararea trecerii în ziua nouă rămân cu un ceas care merge; un ISO stricat cade tăcut pe azi. Pagina șoferului capătă meniul „Istoric", cu două întrebări deosebite în ordinea în care le pune un om: RESTANȚELE (ruta nouă `GET /routes/restante`, opririle zilelor trecute neîncheiate — se GĂSESC, fiindcă nimeni nu știe pe ce zi a rămas o livrare) și CALENDARUL laboratorului, aceeași grilă de 42 de căsuțe, prin care se alege o zi știută. Ziua aleasă mută toată fereastra de șapte zile și se spune pe ecran, cu „Înapoi la azi" lângă ea; pe o zi trecută insigna nu mai îndrumă („Următoarea · oprirea 3" pe ruta de marțea trecută e o poruncă, nu o informație), ci consemnează ce a rămas. Cheile meniului au trecut de pe ziua din lună pe ISO, iar plafonul lui `GET /routes/counts` a urcat de la 31 la 92 de zile — la 31, calendarul lua 422 fix pe luna pe care omul voia s-o vadă. Păzit de `.claude/check-ruta-istoric.mjs`; că o comandă născută oricum se vede pe toate ecranele e păzit deosebit, de `.claude/test-comanda-peste-tot.mjs`. `check-ruta-istoric`: 39 trecute · 0 picate, cu nouă stricăciuni dovedite că aprind fiecare exact regula ei; `test-comanda-peste-tot`: 155 trecute · 0 eșuate, cu cinci stricăciuni dovedite. [18 septembrie 2026]
+
+- [x] **Șoferul putea marca „livrată” o comandă aflată încă la dospit ori la cuptor, fără să fi bifat nimic din ce încarcă: butonul asculta numai de semnul de pe cont**
+  `Ruta Sofer.dc.html:1219` · *grav*
+  `piedicaLivrarii(o)` întoarce „semn”, „liste”, „etapa”, „bife” ori nimic; o citesc și cartonul (buton stins, lămurirea de sub el, `title`), și `markDone` (`if (!delivered && piedicaLivrarii(o) !== "") return;`). Butonul se aprinde numai la plafon („Gata de livrare”) și cu fiecare poziție bifată; anularea livrării nu trece prin ea. „Tot încărcat”, `allItems` și `onAll` sunt scoase. Păzit de `.claude/check-ruta-bife.mjs` (secțiunile B, D și E: „la plafon, dar cu lista nebifată, „Marchează livrat" e stins”, „înaintea plafonului, cu toate bifele, butonul rămâne stins”, „fără bife, apăsarea pe „Marchează livrat" nu trimite nimic la server”), de `.claude/check-panouri.mjs` (scena A7) și, viu, de `.claude/test-defect-etapa-veche.mjs` (scena E3).
 
 - [x] **Prețul trimis lui Google era al laturii pe care marfa NU se vinde: 2,99 în loc de 3,69, pe exact produsele pentru care s-a făcut runda**
   `seo/index.php:867` · *grav*
@@ -644,6 +664,10 @@ reparația la loc și văzând-o picând.
   `.claude/check-panouri.mjs:638` · *mediu*
   Reparat pe 16 septembrie 2026. `poarta(fisier)` întoarce acum `null` în loc să arunce, iar un al doilea ajutor, `deCePoarta(fisier)`, spune în cuvinte ce lipsește: care din cele două mărci nu se mai găsește în marcaj, sau că refuzul e scris înaintea lacătului, deci bucata dintre ele e goală. Fiecare pagină capătă o regulă a ei, cu nume — «<Pagina>: poarta se găsește în pagină (lacăt, apoi refuz)» —, iar regula veche despre parolă nu mai citește dintr-o bucată care nu există. Cheia de registru a rămas `<fișier>:poartă`, neschimbată. Dovada `runda-2-1-1/dovezi/dovada-resturi.mjs`: S1 (refuzul redenumit pe Conturi) → 4 reguli picate, proba merge până la capăt; S2 (lacătul redenumit pe Conturi) → 2 reguli, fiindcă ecranul de refuz rămâne întreg; S3 (refuzul redenumit pe Administrare Comenzi) → 4 reguli, iar vecina rămâne verde. `check-panouri`: 852 · 0 → **854 · 0** după punctul ăsta. [16 septembrie 2026]
 
+- [x] **Probele ecranului de șofer mureau cu `TypeError` în loc să se înroșească atunci când pagina nu trimitea nicio cerere: fără rând de sumă și fără regulile de după**
+  `.claude/check-panouri.mjs:7721` · *mediu*
+  Hamul din `check-panouri.mjs` are `serverul()`, care întoarce prima cerere ori un răspuns gol; cele cinci chemări s-au mutat pe el (și cele două noi ale rundei, `scos` și `dubla`, stau tot pe el), deci o cerere care n-a plecat face regulile de după să pice, nu proba să moară. În scena E a probei vii, `cereri[0]?.da({});`. Păzit de cele două probe înseși (check-panouri în verifica-tot, test-defect-etapa-veche în suita vie); după îndreptare, fiecare dintre stricăciunile M01, M08 și M30 a dat rând de sumă.
+
 - [x] **Regula care păzește rozeta din locul fotografiei lipsă se uita într-o singură pagină, scrisă cu mâna — a doua, apărută azi, nu era măsurată de nimeni**
   `.claude/check-sigle.mjs:315` · *mediu*
   Regula caută acum `const FOTO_LIPSA = "…"` în toate paginile `*.dc.html`, cu comentariile ascunse, și cântărește fiecare găsită pe numele ei de pagină și de rând. Deasupra lor stă un martor — „am găsit pătratul din locul fotografiei lipsă (are ce măsura regula de mai jos)" — fără de care o redenumire a constantei ar goli lista și proba ar trece verde fără să fi măsurat nimic. [19 septembrie 2026]
@@ -696,6 +720,10 @@ reparația la loc și văzând-o picând.
   `.claude/curata-probe.mjs:584` · *mediu*
   Reparat în runda 2.2.1. Ajutor nou `potrivitInSubiect()`, frate cu `potrivitInNota()`, care caută numele de probă în subiectul anunțului — ancorat pe „de la ”, ca `%Probă %` să nu prindă orice subiect în care apare cuvântul. Intrarea nouă șterge anunțurile butonului de test și pe cele ORFANE cu nume de probă; anunțurile care AU comandă nu se ating, fiindcă acolo hotărăște comanda, și hotărăște deja. Numele `Cofetăria Rămasă În Urmă` a intrat în listă, cu lămurirea de ce lipsea. [19 septembrie 2026]
 
+- [x] **Curățenia de probe putea scrie parola bazei în jurnalul suitei: la o comandă mysql picată tipărea toată linia de comandă, cu `-p…` cu tot**
+  `.claude/curata-probe.mjs:732` · *mediu*
+  O singură funcție, `pricinaCurata(e)` (.claude/curata-probe.mjs:732-745): ia vorba de pe stderr (sărind avertismentul despre parola din linia de comandă), niciodată linia de comandă; comanda care n-a putut porni e spusă cu numele programului și codul; folderul de poze lipsă, pe nume; la urmă parola, dacă a ajuns totuși în text, e înlocuită cu `***`. Toate `catch`-urile trec prin ea (:771, :880, :931, :1024, :1139). Dovedit pe funcția scoasă din fișier, cu un proces-copil de probă; curățenia n-a fost rulată pe bază. Probă: `.claude/check-fise-tehnice.mjs` — „o comandă picată se spune cu vorba ei de pe stderr, fără linia de comandă și fără parolă” și cele șase de lângă ea.
+
 - [x] **Fereastra de mucava a probelor avea o pază de rețea care nu putea trage niciodată: `shared/gp-api.js` cheamă `fetch` gol, nu `window.fetch`, deci o probă „statică" ar fi lovit serverul adevărat de pe 8100**
   `.claude/meniu-real.mjs:51` · *mediu*
   Fereastra s-a mutat într-o funcție, `mucava(fetchAlNostru)`, care primește fetch-ul din afară și îl dă de DOUĂ ori: o dată pe fereastră, o dată ca PARAMETRU al funcției încărcate — al doilea e cel care umbrește numele global. `gpReal` se face acum din `mucava(() => { throw … })`, deci paza chiar trage. Și fiindcă ușa există, s-a deschis și în cealaltă parte: `gpCuRetea(fetch)` dă un `gp` care CHIAR vorbește cu serverul, pentru probele vii — de el atârnă grupul B2-bis din `.claude/test-roluri.mjs`, care cheamă `gp.me()` adevărat în loc să reproducă lipirea de câmpuri cu mâna.
@@ -732,6 +760,10 @@ reparația la loc și văzând-o picând.
   `.claude/test-defect-unelte.mjs:1191` · *mediu*
   Ramură nouă (b), înaintea celei cu declarația (acum (c)): se pârăște `await fetch(…)` care are în fața lui capătul unei fraze (`;`, `{`, `}`) și, după paranteza de închidere, de-a dreptul `;`. Amândouă semnele sunt cerute dinadins — primul lasă afară `x = await fetch(…)` (răspunsul pus într-o variabilă deja făcută, scutire veche și scrisă), al doilea lasă afară `await fetch(u).then((r) => r.text())`, care își citește corpul. Trei santinele noi: una pentru cazul prins, două pentru marginile astea. Rămâne în afara ei un `await fetch(…)` aruncat FĂRĂ punct și virgulă la capăt (pe ASI); în casă nu există niciun astfel de rând. [16 septembrie 2026]
 
+- [x] **Ghidurile de actualizare puteau pierde capitolul unei migrări, ori rămâne cu „cea mai nouă” pe una veche, cu proba lor verde: pentru docs/08 și docs/09, regula păzea numai ultima migrare de pe disc**
+  `.claude/test-doc-actualizari.mjs:959` · *mediu*
+  Patru reguli noi lângă cea veche, legate de dosarul `sql/`, nu de o listă: „ghidul docs/07-actualizari.md duce „migrările 003 … NNN" pana la cea mai noua” (`capat07`), „ghidul docs/09-actualizare-vps.md numeste migrarea cea mai noua chiar unde spune care e” (`capat09`) și, câte una pe ghid, „ghidul … numeste fiecare migrare de la 017 incoace, nu numai pe cea mai noua” (`PRIMA_CU_CAPITOL`, locul de unde amândouă ghidurile numesc fiecare migrare). Cele două reguli ale cititorului au fost văzute roșii pe copie: la capitolul lui 030 scos din 08, din 09, și la numele lui 022 scos din 08.
+
 - [x] **Tiparul trimiterilor dintre bucățile ghidului cerea o singură cifră înaintea punctului: din ziua în care ghidul a ajuns la a zecea plimbare, toate trimiterile la „10.x" au încetat tăcut să mai fie cântărite**
   `.claude/test-doc-ghiduri.mjs:398` · *mediu*
   Tiparul cere acum cel mult două cifre înaintea punctului (`\d{1,2}\.\d`), cu aceeași pază din spate — deci „2.1.1" și „8.3.33" rămân afară, iar „10.3" intră. Și pragul s-a înlocuit cu un fapt: lista din capul ghidului numește fiecare bucată cu numărul ei, deci fiecare bucată care există E atinsă de cel puțin o trimitere. Regula cere tocmai asta, și tipărește alături „46/46 bucăți atinse" — cifra care deosebește o regulă care s-a uitat de una care n-a mai avut la ce.
@@ -767,6 +799,10 @@ reparația la loc și văzând-o picând.
 - [x] **Regula „«Am văzut» stinge rândurile arătate” cerea ca TOATĂ casa să fie goală, nu doar rândurile arătate — o afirmație care ținea proba ostatică la tot ce rulase înaintea ei**
   `.claude/test-settings.mjs:777` · *mediu*
   Reparat în runda 2.2.1. Se ține minte ce id-uri s-au arătat și se cere ca NICIUNUL dintre ele să nu mai fie în listă — nici în răspunsul apăsării, nici la reîncărcarea setărilor; ce mai e în casă de la alții nu e treaba regulii. Un martor („am avut ce stinge”) ține regula să nu treacă verde pe o listă goală. Golirea de la început merge acum până la 800 de rânduri și SPUNE dacă n-a prididit, cu comanda de curățenie în mesaj. [19 septembrie 2026]
+
+- [x] **Proba care păzește scăderea dublă din stoc trecea cu MySQL oprit: se încheia după prima regulă, iar suita o însemna cu ✓**
+  `.claude/test-stoc-concurent.php:49` · *mediu*
+  Pază la ieșire: `$GP_PROBA_DUSA_LA_CAPAT = false;` și `register_shutdown_function` la începutul probei; steagul se face `true` numai pe ultimul rând, chiar înaintea lui `exit($fail ? 1 : 0);`, iar orice ieșire de dinainte scrie „FAIL proba s-a oprit înainte de capăt, după N reguli — cel mai des: MySQL e oprit” și iese cu 1. Proba e în verifica-tot („scăderea din stoc nu se poate dubla”). Dovada din intrare: cu baza oprită, 2.5.2 iese 0, 2.6.0 iese 1. N-a fost văzută verde cu baza pornită: tura aceasta n-a rulat MySQL.
 
 - [x] **Raportul suitei aruncă tocmai rândul care spune ce a picat: nu știe al doilea semn al casei („✗"), pierde cifrele de sub el, și dintr-o prăbușire de cincisprezece rânduri arată unul**
   `.claude/verifica-tot.mjs:414` · *mediu*
@@ -867,6 +903,26 @@ reparația la loc și văzând-o picând.
 - [x] **Pe telefon, formularul de comandă se trăgea în lături: capul pozițiilor, cu totalul aprins, cerea 423 px într-o fereastră de 388, iar „+ Adaugă poziție” ieșea din ecran**
   `Administrare Comenzi.dc.html:912` · *mediu*
   Capul pozițiilor se înfășoară (`flex-wrap:wrap`). Cele două butoane stau într-o cutie a lor, împinsă la dreapta, deci trec amândouă pe rândul al doilea, nu unul singur. Bucățile și totalul nu se mai rup pe două rânduri (`white-space:nowrap`). Pe calculator totul rămâne pe un rând, ca înainte.
+
+- [x] **Managerul vedea „Bifează ca plătit” la comisionul unei comenzi și, la apăsare, primea refuzul serverului: plata comisionului e numai a administratorului**
+  `Administrare Comenzi.dc.html:5136` · *mediu*
+  `frmPoatePlati: eAdm && …`, cu `eAdm` adevărat numai pentru administrator; condiția de bani de după e neschimbată. Păzit de `.claude/check-formular-roluri.mjs` (în verifica-tot), regula „D2 bifa de plată a comisionului: … → unde sunt bani / niciodată”, rulată pe fiecare rol.
+
+- [x] **Lista „Stare” din formular și „Etapa” din fișa rapidă ofereau etapa finală și conturilor fără semnul de livrare: alegerea ei se termina cu un refuz, iar toată salvarea pica odată cu ea**
+  `Administrare Comenzi.dc.html:3065` · *mediu*
+  `etapeDeAles(salvata, aleasa)` scoate etapa finală pentru cine n-are semnul (o păstrează numai dacă e deja cea salvată ori cea aleasă); o folosesc și `statusOpts`, și `peekStatusOpts`, iar filtrele listei rămân pe `gp.statuses()`. Sub amândouă listele, un rând spune cui să ceară închiderea. Păzit de `.claude/check-formular-roluri.mjs`: „etapa finală nu se oferă în „Stare” din formular fără bifa de livrare: …” și „etapa finală nu se oferă în „Etapa” din fișă fără bifa de livrare: …”.
+
+- [x] **La acceptarea unei cereri, cutia codului de recomandare era deschisă, dar codul scris în ea nu pleca nicăieri: comisionul rămânea pe codul cererii, fără nicio vorbă**
+  `Administrare Comenzi.dc.html:5170` · *mediu*
+  `frmPotRecomandare: (formNou && potComenzi && !formCerere) || (potEdita && formEdit)`: cutia rămâne numai la nașterea unei comenzi de către cine scrie comenzi și la corectare; la acceptare nu se mai arată; agentul, pe formularul lui, are în loc un rând care îi spune ce cod pleacă. Păzit de `.claude/check-formular-roluri.mjs`: „D4 la acceptarea unei cereri nu se arată nici cutia codului, nici rândul agentului: …”, „D4 cine scrie comenzi păstrează cutia codului, la naștere și la corectare: …” și „D4 cererea agentului pleacă, octet cu octet, cu același corp ca înainte de 2.6.0”.
+
+- [x] **Pe comanda nouă și la acceptarea unei cereri, formularul arăta „Stare” și „Referință”, câmpuri care nu scriu nimic: etapa aleasă acolo se pierdea fără nicio vorbă**
+  `Administrare Comenzi.dc.html:5075` · *mediu*
+  `frmCuStare` și `frmCuReferinta` sunt adevărate numai la corectare (`formEdit`), iar grilele își iau coloanele din stare (`frmG3Col`, `frmG2Col`), ca rândul să nu rămână cu o gaură. Păzit de `.claude/check-formular-roluri.mjs`: „D1 comanda nouă n-are „Stare” și nici „Referință”: …”, „D1 acceptarea unei cereri n-are „Stare” și nici „Referință”: …”, „D1 corectarea păstrează „Stare” și „Referință”, pe trei coloane: …” și „D1 comanda nouă nu trimite nicio etapă, deci lista nu avea ce alege”.
+
+- [x] **Fereastra „Din catalog” arăta poza produsului într-un pătrățel de 44 px, și tot pe cea congelată, pe orice latură: pe o comandă de coapte operatoarea vedea aluatul crud**
+  `Administrare Comenzi.dc.html:4486` · *mediu*
+  Cardul pune `gp.pozaPe(p, latura)` — poza laturii deschise și numai a ei — într-o cutie de 4/3, ca în magazin; latura fără poză primește sigla întreagă (`contain`), nu tăiată ca o fotografie, iar numărul din Catalog stă în colțul pozei. Păzit de `.claude/check-fereastra-catalog.mjs` (D8: „D8 poza de pe card e a laturii deschise, fără împrumut de la cealaltă”, „D8 latura fără poză primește sigla întreagă, nu tăiată ca o fotografie”, „D8 poza stă în cutia de 4/3 a magazinului, nu într-un pătrat de 44”) și de regula „D6 gp.pozaPe dă poza laturii și numai a ei”.
 
 - [x] **Pachetul spunea, în două locuri deodată și amândouă scrise în ziua aceea, că VPS-ul casei merge pe nginx — pe un server instalat anume cu Apache, unde scriptul de instalare se oprește cu totul dacă portul 80 e al altcuiva**
   `api/.user.ini:10` · *mediu*
@@ -1092,6 +1148,10 @@ reparația la loc și văzând-o picând.
   `Client.dc.html:588` · *mediu*
   Catch-ul întoarce acum un răspuns cu steag: pe picare lista de dinainte rămâne neatinsă și motivul pleacă în câmpul nou `cerEroare`, desenat în aceeași casetă. Cardul de gol are amândouă lacătele, iar `eroareTitlu` spune care dintre cele două cereri a picat. Probă: `.claude/check-erori-tacute.mjs`.
 
+- [x] **Pe pagina clientului, comanda predată scria „Gata” în ziua ei și „Livrată” abia de a doua zi, în istoric, iar comanda aflată „În lucru” apărea gri, cu numele de atelier**
+  `Client.dc.html:447` · *mediu*
+  O singură funcție, `ETAPA_CLIENT(o)`, folosită și sus, și în istoric: anulată → „Anulată”; etapa finală → „Livrată” ori „Ridicată” (plin); plafonul → „Gata de livrare” ori „Gata de ridicat” (verde); altfel harta, care știe acum și „În lucru” → „Se prepară”. Etapele se recunosc după loc (`gp.cancelled()`, `gp.done()`, `gp.labCeiling()`), deci o etapă rebotezată din Setări nu rupe socoteala. Păzit de `.claude/check-plafon-laborator.mjs`: „la plafon, clientul cu livrare citește „Gata de livrare”, sus și în istoric”, „la etapa finală, clientul cu livrare citește „Livrată”, sus și în istoric”, „clientul nu mai citește „Gata” gol la nicio etapă” și „„În lucru” se citește „Se prepară”, sus și în istoric”.
+
 - [x] **Fiecare tastă apăsată în Nume / E-mail / Nume client trimite un PATCH și scrie o intrare în jurnal**
   `Conturi.dc.html:561` · *mediu*
   Casetele Nume / E-mail / Nume client scriu într-o ciornă a paginii și se salvează o singură dată, la ieșirea din câmp sau la Enter, nu la fiecare tastă. Verificat în browser: 20 de taste → 0 cereri, o ieșire din câmp → un singur PATCH cu valoarea întreagă. Probe: check-panouri „casetele de nume nu mai trimit un PATCH la fiecare tastă”, „ce se tastează se ține într-o ciornă a paginii”, „caseta «saveName/saveMail/saveCust» se salvează la ieșirea din câmp”.
@@ -1115,6 +1175,26 @@ reparația la loc și văzând-o picând.
 - [x] **După o salvare izbutită urmată de o reîmprospătare picată, ecranul poartă trei propoziții care se bat cap în cap**
   `Conturi.dc.html:877` · *mediu*
   Catch-ul se uită acum la ce e pe ecran și la ce tocmai s-a făcut: când lista e desenată, motivul spune că lista nu s-a reîmprospătat și adaugă „Fapta de mai sus s-a făcut pe server; ce se vede în listă e starea de dinainte.” Titlul vine din `eroareTitlu` și spune „nu s-a reîmprospătat” în loc de „nu s-au încărcat”. Probă: `.claude/check-erori-tacute.mjs`.
+
+- [x] **Administratorul putea alege „Fondator” (ori „Administrator”, cât există un fondator pornit) în lista „Acces”, apoi primea refuzul serverului**
+  `Conturi.dc.html:2649` · *mediu*
+  Lista ține numai rolurile pe care serverul le primește de la cel care privește (`rolDat`, Conturi.dc.html:1786): la „Cont nou” `ROLE_OPTS.filter((o) => rolDat(o.v))` (:2649), pe fișă plus rolul de acum al omului (:2004). Păzit de check-vede-poate.mjs, rândurile „„Fondator” în lista „Acces” de la „Cont nou””, „„Administrator” în lista „Acces” de la „Cont nou”” și lista „Acces” de pe fișă din .claude/vede-poate/conturi.mjs: 7 reguli, văzute roșii întâi.
+
+- [x] **Pe fișa unui fondator, administratorul vedea „Schimbă parola”, „Generează”, „Trimite pe mail”, caseta de e-mail și lista „Acces”, deși serverul nu-l lasă să schimbe nimic acolo**
+  `Conturi.dc.html:1812` · *mediu*
+  Pe fișa unei conduceri pe care cel care privește n-o poate atinge (`conducereInchisa`, Conturi.dc.html:1812) parola, „Generează”, caseta de e-mail și lista „Acces” nu se mai desenează (`parolaDeAici`, `mailLiber` la :2202, `rolFix`); rolul și e-mailul se citesc, iar un rând (`conducereNota`, :2221, șablonul la :575) spune că parola, e-mailul de recuperare și rolul unui fondator le schimbă numai un fondator. Păzit de check-vede-poate.mjs, cazurile „administratorul pe fișa unui fondator” și „administratorul pe fișa altui administrator, cât e un fondator pornit” din .claude/vede-poate/conturi.mjs (13 reguli, văzute roșii întâi), și de check-conturi-vederi.mjs, regula INCHIS_SCRIS.
+
+- [x] **Pe propria fișă din Conturi, lista „Acces” se putea deschide, dar orice alegere era respinsă, iar comutatorul „Cont pornit” stătea stins, fără să spună de ce**
+  `Conturi.dc.html:2006` · *mediu*
+  Pe fișa ta nu mai e nici listă, nici comutator: rolul se citește (`rolFix`, Conturi.dc.html:2006, șablonul la :767; nota „propriul acces nu ți-l poți schimba singur”, :2008), iar starea contului la fel (`activFix`, :1836, :1927, șablonul la :722), cu motivul dedesubt. Păzit de check-vede-poate.mjs, cazul „pe propria fișă” la lista „Acces” și la comutatorul „Cont pornit” din .claude/vede-poate/conturi.mjs, și de check-conturi-vederi.mjs, regulile ACTIV_EU și INCHIS_SCRIS.
+
+- [x] **Cât se verifica sesiunea, pagina Conturi se desena oricui, cu „+ Cont nou”, „Jurnal de modificări →” și cardul codului tabletelor vii**
+  `Conturi.dc.html:2414` · *mediu*
+  Până se află contul se vede numai „Se verifică sesiunea…” (`locked: !S.auth`, Conturi.dc.html:2393); pagina se desenează doar unui cont de conducere aflat (`unlocked: !!S.auth && isAdmin(S.auth)`, :2414). Păzit de check-vede-poate.mjs, cazurile „cât se verifică sesiunea” la „+ Cont nou” și la codul tabletelor din .claude/vede-poate/conturi.mjs (2 reguli, văzute roșii întâi), și de check-conturi-vederi.mjs, regula TREI_ECRANE, pusă de recititor.
+
+- [x] **„Vezi contul” din Jurnal ducea în Conturi fără nicio fișă deschisă: omul trebuia să-și caute singur contul printre plăci**
+  `Conturi.dc.html:1351` · *mediu*
+  `deschideCerutul()` (Conturi.dc.html:1351) deschide fișa contului cerut și pagina coboară la ea, în orice vedere. Păzit de check-conturi-vederi.mjs, regula CERUT_FISA; văzută roșie întâi.
 
 - [x] **Comenzile anulate continuă să blocheze („rezervă”) stoc pe pagina Depozit**
   `Depozit.dc.html:597` · *mediu*
@@ -1156,6 +1236,22 @@ reparația la loc și văzând-o picând.
   `Depozit.dc.html:1385` · *mediu*
   Capul nu mai numără nimic: ia lungimea CHIAR a listei care se desenează (`rows.length` pentru stoc, suma mișcărilor rămase din `logDays` pentru registru). Un filtru nou de mâine intră în ea de la sine. Și numele din stânga spune ce se vede — cu o pastilă apăsată, „Tot stocul · 14 poziții" ar fi fost o propoziție care se contrazice. Proba scoate socoteala din pagină și o rulează ÎNTR-O LUME FĂRĂ `items`: întoarsă la numărătoarea veche, ea crapă — iar o crăpătură e tot un roșu.
 
+- [x] **Pe tableta comună, „intră în cont →” din Depozit ducea tura în Comenzi, unde contul tabletei e refuzat**
+  `Depozit.dc.html:1501` · *mediu*
+  Pe tableta comună caseta e text, nu legătură (sub `contText`, Depozit.dc.html:165), cu numele și „tabletă comună” (:1501); până se citește contul, rândul mic e gol. Păzit de check-vede-poate.mjs (cazurile „tableta comună are numele ca text, fără legătură” și „contul încă necitit nu are legătură” din .claude/vede-poate/depozit.mjs) și de test-defect-depozit.mjs („caseta de cont: tableta comună are numele ca text și „tabletă comună”, fără legătură”, „caseta de cont: cât contul nu s-a citit, rândul mic e gol și nu e nicio legătură”); văzute roșii întâi.
+
+- [x] **Cine n-avea Depozitul, dar ajungea pe pagină, vedea tot depozitul cu butoane pe care serverul le refuza, o casetă roșie „nu s-a încărcat” și cereri repetate la 15 secunde, la nesfârșit**
+  `Depozit.dc.html:873` · *mediu*
+  La 403 `forbidden`, `pull()` (Depozit.dc.html:848) cheamă `refuz()` (:873): pagina recitește contul, oprește sondajul și arată un singur ecran, sub `depozitInchis` (:107, :1425), cu „Contul „X” nu are acces la depozit…”, panourile pe care contul chiar le are, „Ieși din cont” și drumul înapoi; clientul e trimis la „Comanda mea” și la magazin. Păzit de check-vede-poate.mjs („cine vede e primit” și „mânerul stă sub steag” pe rândurile Depozitului) și de test-defect-depozit.mjs („403 la citirea stocului: se desenează ecranul de refuz, nu pagina”, „403: contul se recitește — în stare rămăsese rolul de dinainte”, „403: panourile oferite sunt ale rolului recitit, fără „Depozit””, „403: citirea din 15 în 15 secunde se oprește”, „șablonul: niciun mâner nu stă în afara celor două steaguri”); văzute roșii întâi. A rămas clipa de dinaintea primului răspuns: fișa „Până vine primul răspuns al serverului, Depozitul se desenează deschis…”.
+
+- [x] **Cu parola provizorie, Depozitul îi spunea omului să ceară „rolul potrivit”, deși rolul îl avea, în loc să-l trimită să-și aleagă parola**
+  `Depozit.dc.html:837` · *mediu*
+  `pull()` deosebește acum codul: `else if (e.code === "must_change_password") this.laParola();` (Depozit.dc.html:837), iar recitirea contului din `refuz()` duce tot acolo (:881, :886); `laParola()` (:902) pleacă la „Parola mea” păstrând coada adresei. Păzit de test-defect-depozit.mjs („parola provizorie: pagina pleacă la „Parola mea”, fără ecran de refuz”, „parola provizorie aflată la recitirea contului: tot la „Parola mea””, „parola provizorie spusă la recitirea contului: tot la „Parola mea”, nu ecran de refuz fără cont”); văzute roșii întâi. Neprobat în browser, cu un cont adevărat.
+
+- [x] **„Șterge” pe un articol dintr-o rețetă era un buton care, apăsat de două ori, primea refuz, cu un sfat spre o pagină pe care depozitarul n-o are și care în meniu are alt nume**
+  `Depozit.dc.html:1308` · *mediu*
+  Serverul spune pe fiecare articol dacă intră într-o rețetă (api/routes/stock.php:57, subinterogarea `in_recipe`; :126 `inRecipe`); pagina desenează „Șterge” numai sub `r.poateSterge` (Depozit.dc.html:1308, :336, :397), iar în locul lui scrie „în rețetă”. Refuzul, dacă tot apare, spune „din Catalog” administratorului și „Cere-i unui administrator să-l scoată întâi din rețetă, din Catalog.” celorlalți (stock.php:483–484). Păzit de check-vede-poate.mjs (cazurile „articolul intră într-o rețetă” pentru manager și administrator, „articolul din afara rețetelor rămâne cu butonul”) și de test-defect-depozit.mjs („articolul dintr-o rețetă nu mai are „Șterge”: are „în rețetă””, „serverul trimite `inRecipe` în lista de articole…”, „refuzul `in_recipe` spune „Catalog”, iar cui nu e administrator îi spune cui să ceară”); văzute roșii întâi. Pe baza de date adevărată nu s-a probat (MySQL oprit).
+
 - [x] **7.7 spunea „Confirmi.” la anularea din fișă, unde nu se deschide nicio casetă — iar 7.1, în același document, spunea pe bună dreptate altceva**
   `docs/10-trecerea-cu-ochii.md:801` · *mediu*
   „Confirmi.” e scos din amândouă locurile unde 7.7 anula din fișă. În locul lui, pasul spune că merge direct, fără casetă, și trimite la 7.1 pentru regula întreagă: caseta se deschide numai la ieșirea din „Anulată”. [16 septembrie 2026]
@@ -1187,6 +1283,10 @@ reparația la loc și văzând-o picând.
 - [x] **Ecranul de start număra comenzile anulate printre cele „de făcut azi": o dimineață cu două anulări de aseară trimitea laboratorul după făină pentru marfa nimănui**
   `Intrare.dc.html:664` · *mediu*
   Reparat pe 16 septembrie 2026, într-un singur rând din `Intrare.dc.html` (acum `:664`): sita cardului „Laborator" cere `o.status !== gp.done() && o.status !== gp.cancelled()`. Numele etapei se ia din Setări prin `gp.cancelled()`, nu e scris în pagină, ca patiseria care o botează altfel să fie cernută la fel — exact ca la vecinul din `Panou Laborator.dc.html`. Cardul „Administrare" a rămas neatins, dinadins. Patru reguli noi în `check-panouri`, sub cheia de registru care era deja acolo (`Intrare.dc.html:330`) și, pentru cardul „Administrare", sub numele lui, nu sub un rând — `Intrare.dc.html:1038` alunecase la `:1051` chiar din reparația asta; mocheta probei primește acum `done()` și `cancelled()` adevărate și o a doua lume, cu etapa redenumită. `check-panouri`: 854 · 0 → **858 · 0**. [16 septembrie 2026]
+
+- [x] **Grila tabletelor de la intrare avea un card „Administrare”, care ducea contul tabletei într-un ecran de refuz**
+  `Intrare.dc.html:1200` · *mediu*
+  Grila ține minte rolul contului cu care s-a deschis (`rolGrila`, Intrare.dc.html:618, :802) și desenează numai panourile lui: fiecare card are `arata` din `gp.PANOURI_ROL` (:782, :1179–1200) și stă sub `<sc-if value="{{ p.arata }}">` (:289). Pentru tabletă: Laborator, Șofer, Depozit, pe un rând. Păzit de check-vede-poate.mjs, tabelul .claude/vede-poate/intrare.mjs („Cardul „Administrare” din grilă” și cardurile turei), văzute roșii întâi în copie, și de check-pontaj-parola-intrare.mjs, secțiunea „Intrare.dc.html · grila tabletei (I-1, I-2)”: „cu cele trei carduri ale turei, fără „Administrare”” (la reîncărcare și după cod) și „în șablon, cardul din grilă stă sub steagul lui (`p.arata`)”.
 
 - [x] **Căutarea din Jurnal caută doar în cele ~50 de intrări încărcate, deși serverul știe să caute în tot jurnalul**
   `Jurnal.dc.html:284` · *mediu*
@@ -1232,6 +1332,26 @@ reparația la loc și văzând-o picând.
   `Panou Laborator.dc.html:546` · *mediu*
   Rândul de jos se înfășoară (`flex-wrap:wrap`). Cele două butoane stau într-o cutie a lor, împinsă la dreapta, deci când nu încap trec amândouă pe rândul al doilea, tot la dreapta. Pe tabletă și pe calculator rândul rămâne unul singur, ca înainte.
 
+- [x] **La plafon, cartonul din laborator scria „Predată curierului” și trimitea la șofer și comenzile pe care le ridică chiar clientul: marfa părea plecată, când ea aștepta pe raft**
+  `Panou Laborator.dc.html:2178` · *mediu*
+  Cartonul scrie „Așteaptă șoferul” ori „Așteaptă clientul”, fișa „Gata — o ia șoferul” ori „Gata — o ridică clientul”, iar `notaPlafon(ord)` spune cine pune etapa finală și de unde (la ridicare trimite la birou). Ridicarea se recunoaște după lista din Setări (`gp.pickupFulfillments()`, prin `SE_RIDICA`), nu după vorbă. Păzit de `.claude/check-plafon-laborator.mjs`: „la plafon cartonul unei livrări scrie „Așteaptă șoferul””, „la plafon cartonul unei ridicări scrie „Așteaptă clientul””, „un mod de ridicare botezat din Setări e tot ridicare”, „lămurirea de la o ridicare trimite la birou, nu la șofer” și „„Predată curierului” nu mai e scris nicăieri în pagina laboratorului”.
+
+- [x] **Laboratorul și pagina clientului cereau listele din Setări o singură dată, la deschidere: o cădere de rețea le lăsa pe etapele scrise în cod până la reîncărcare**
+  `Panou Laborator.dc.html:1517` · *mediu*
+  Metoda `cereListele()` în amândouă paginile (Panou Laborator.dc.html:1517, Client.dc.html:581), chemată la deschidere și din fiecare `pull()`: o singură cerere pe drum (`__listePeDrum`), niciuna după ce au venit (`listsReady`), steagul coborât și la cădere — ca în Ruta Sofer.dc.html. Probă: `.claude/check-plafon-laborator.mjs` — „laboratorul cere listele dintr-un singur loc, la deschidere și la fiecare tură”, „pagina clientului cere listele până vin: din nou după o cădere, una singură pe drum, niciuna după sosire” și vecinele lor; `.claude/check-panouri.mjs` — „funcția cereListele, chemată din pull, se poate citi din sursă”.
+
+- [x] **Laboratorul arăta butonul „Administrare comenzi” și angajatului, și tabletei comune, care n-au panoul „Comenzi”**
+  `Panou Laborator.dc.html:674` · *mediu*
+  Legătura stă sub `<sc-if value="{{ areComenzi }}">` (Panou Laborator.dc.html:674); steagul nou din `renderVals()` întreabă meniul casei, `gp.meniu("Laborator", S.auth).some((m) => m.et === "Comenzi")` (:2539), nu o listă de roluri scrisă în pagină. „← Alege panoul” rămâne tuturor. Probă: `.claude/check-vede-poate.mjs` — „panou-laborator · legătura Administrare%20Comenzi.dc.html · se desenează numai cui are panoul”.
+
+- [x] **Cu parola provizorie, sertarul de pe „Parola mea” arăta toate panourile rolului, iar fiecare se deschidea cu refuz**
+  `Parola.dc.html:430` · *mediu*
+  Cât e parola provizorie, sertarul arată numai „Parola mea” și „Ieși”: `meniu: provizorie ? meniuTot.filter((m) => m.activ) : meniuTot` (Parola.dc.html:430), iar rândul de întoarcere stă sub `navInapoi` (:64, :440); clientul păstrează „← Înapoi la magazin”. Păzit de check-vede-poate.mjs, tabelul .claude/vede-poate/parola.mjs („Rândurile sertarului spre alte panouri”, „Rândul de întoarcere din sertar”), văzute roșii întâi în copie, și de check-pontaj-parola-intrare.mjs („sertarul lui n-are nicio legătură spre alt panou”, „în șablon, rândul de întoarcere din sertar stă sub `navInapoi`”).
+
+- [x] **Pe tableta deschisă cu cod, „Parola mea” arăta formularul de parolă și „Cere drept de fondator”, care nu-i pot reuși contului comun**
+  `Parola.dc.html:363` · *mediu*
+  Contului comun i se scrie în loc „Acesta e contul comun al tabletelor: parola lui nu se schimbă de aici.” și „Codul tabletelor îl schimbă un administrator, din Setări.” (`contComun: eSistem`, Parola.dc.html:366, șablonul la :134); formularul (`deFormular … && !eSistem`, :363) și cardul de fondator nu se mai desenează. Păzit de check-vede-poate.mjs, tabelul .claude/vede-poate/parola.mjs (cazurile contului comun pe formular, pe „Păstrez parola actuală”, pe fondator și pe meniu), văzute roșii întâi în copie, și de check-pontaj-parola-intrare.mjs („contul comun: nici formular, nici alegere, nici cerere de fondator”, „în șablon, rândul contului comun stă sub `contComun`”).
+
 - [x] **Numerele de martor scrise în FRAZE nu se mutau cu renumerotarea: două trimiteri din foaia plasturelui arătau, de două runde încoace, spre cu totul alt martor decât cel care are răspunsul**
   `plasture-vps 2.4.2/CITESTE-MA.md:480` · *mediu*
   Cele trei trimiteri îndreptate în `plasture-vps 2.4.2/CITESTE-MA.md` („al douăzecilea", „la martorul 42", „martorii 16, 42, 56 și 70"), plus trei reguli noi în `.claude/test-plasa-rsync.mjs` care le leagă de chiar martorii documentului. Fraza despre martorul care cere zero a fost și rescrisă: spunea „defectul pe care runda asta îl repară" despre o reparație veche de două runde.
@@ -1239,6 +1359,10 @@ reparația la loc și văzând-o picând.
 - [x] **Cinci comenzi din documentul plasturelui trimiteau la folderul rundei trecute: un pachet bun, osândit de propriul lui document cu „No such file or directory”**
   `plasture-vps/CITESTE-MA.md:755` · *mediu*
   Cele cinci căi poartă acum numele folderului de azi. Iar paza s-a mutat de pe fișierul comod pe fapta apărată: regula citește `CITESTE-MA.md`, ia fiecare rând din fiecare bloc de cod și cere ca orice `plasture-vps …` scris acolo să fie folderul de acum. Numele vechi au un singur loc legiuit — mătura care le șterge —, și el se recunoaște după ce FACE rândul, nu după unde stă: un `rm -rf` cu mai multe căi pe el e mătura și e scutit; unul cu o singură cale șterge tocmai folderul care urcă, deci trebuie să fie de azi ca oricare altul. Proza rămâne neatinsă: ea pomenește dinadins nume vechi („dacă ai luat comanda din istorie…”), și acolo tocmai vechimea e vorba.
+
+- [x] **Pontajul îi spunea omului cu parolă provizorie că „nu pontează în laborator”, fără niciun drum spre locul unde își alege parola**
+  `Pontaj.dc.html:614` · *mediu*
+  Pontajul duce omul la „Parola mea” și la deschidere (`user.mustChangePassword === true && !user.isSystem`, Pontaj.dc.html:575), și când parola provizorie apare cu pagina deschisă (`else if (e.code === "must_change_password") this.laParola();`, :614; `laParola()` la :594). Refuzul de rol a rămas refuz, iar tableta comună rămâne la ceas. Păzit de check-pontaj-parola-intrare.mjs — proba de mână a recititorului, mutată în .claude/ și trecută în verifica-tot.mjs —, secțiunea „Pontaj.dc.html · parola provizorie (P-1)”: „la montare, omul cu parola provizorie e dus la „Parola mea””, „nu i se scrie „nu pontează în laborator””, „contul comun al tabletelor rămâne la ceas, oricum i-ar sta steagul”, „403 „must_change_password” la listă nu aprinde refuzul de rol”, „un 403 de rol aprinde mai departe ecranul de refuz”. Pe pagina veche, patru așteptări ale probei de mână au picat întâi. Neprobat în browser, cu un cont adevărat.
 
 - [x] **Butonul × nu șterge niciodată definitiv un produs: ruta DELETE /products/{id} nu e apelată de nicio pagină, deși documentația promite ștergerea**
   `Produse.dc.html:473` · *mediu*
@@ -1260,6 +1384,10 @@ reparația la loc și văzând-o picând.
   `Produse.dc.html:128` · *mediu*
   Sub 1000 px comutatorul e o grilă cu câte o celulă pentru fiecare poziție (`grid-template-columns:repeat(3,minmax(0,1fr))`). Cele trei butoane stau întregi, unul lângă altul, iar când cuvântul nu încape lângă semn și cifră, cifra și semnul urcă deasupra lui. Nimic nu se mai derulează, deci nimic nu mai poate ieși din ecran. Pe calculator rămâne rândul de butoane de dinainte.
 
+- [x] **În Catalog, pozele deja urcate plecau a doua oară când omul apăsa din nou „Salvează” după un pas picat**
+  `Produse.dc.html:1616` · *mediu*
+  `uploadPhoto()` își uită alegerea laturii pe loc, la izbândă (Produse.dc.html:1609-1617, ca `schimbaFisa()`), și pune în formular adresa pozei din răspuns, ca miniatura să nu sară înapoi la cea veche. Ordinea lanțului e neschimbată. Probă: `.claude/check-panouri.mjs` — „a doua apăsare trimite numai ce a rămas: nicio poză nu pleacă a doua oară” și vecinele ei.
+
 - [x] **Contul de cumpărător făcut din „Recomandări" de un admin sau fondator nu se leagă niciodată de codul lui, deși pagina anunță că s-a legat**
   `Recomandari.dc.html:843` · *mediu*
   Contul de cumpărător făcut din „Recomandări" se leagă de codul celui care l-a făcut și când acela e admin sau fondator, nu doar agent — deci pagina nu mai anunță o legare care nu s-a întâmplat. Probă: `.claude/test-defect-cont-legat.mjs`.
@@ -1276,6 +1404,14 @@ reparația la loc și văzând-o picând.
   `Recomandari.dc.html:602` · *mediu*
   Lipsa TACE: `procentRand()` întoarce şir gol pentru `null`, `undefined`, gol şi pentru orice nu e număr finit, iar `socotealaRand()` nu mai scrie nimic fără el. Un zero pus în locul lipsei ar fi fost mai rău decât „undefined": ar fi AFIRMAT că procentul e zero, adică „din comanda asta nu-ţi vine nimic" — ceva ce nimeni nu ştie şi ce omul ar fi crezut, fiindcă e scris cu cifre. Şi ce a venit se scrie CUM a venit: „5.00" de la server rămâne „5,00%", nu devine „5%"; trecerea prin `Number` e numai judecată, nu rescriere.
 
+- [x] **La un conflict de coduri, alegerea unui cod care nu mai ducea la niciun cont activ era un buton viu, iar serverul o refuza**
+  `Recomandari.dc.html:362` · *mediu*
+  Fiecare alegere are o pereche de steaguri, `contViu`/`contOff` și `tastatViu`/`tastatOff` (Recomandari.dc.html:1209–1212): butonul stă sub `c.contViu` (:362) numai când codul are stăpân și conflictul nu e scos (pe un conflict plătit, și când alegerea nu e a celui plătit: fișa coordonatorului „Pe un conflict de comision deja plătit, Recomandări lăsa vie alegerea pe care serverul o refuză mereu…”); altfel se desenează o casetă ștearsă, cu chenar punctat, care nu e buton. Păzit de check-vede-poate.mjs, rândurile „Recomandantul contului” și „Codul tastat în coș” din .claude/vede-poate/recomandari.mjs, cu cazurile „codul contului nu mai are stăpân”, „codul tastat nu mai are stăpân”, „conflict fără codul contului”, „conflict fără cod tastat” și „conflict scos din socoteală”; văzute roșii întâi.
+
+- [x] **Pe un conflict deja plătit, „Scoate din socoteală” se putea apăsa, iar refuzul trimitea omul la o bifă care nu e pe card**
+  `Recomandari.dc.html:395` · *mediu*
+  Butonul stă sub `c.scoateViu` (Recomandari.dc.html:395; `scoateOff: !!r.paid && !r.dismissed` la :1213). Pe conflictul plătit, în locul lui stă fraza cu drumul (`scoateDeCe`): comisionul e deja plătit lui „X”, deci aici se poate alege numai „X”; hotărât, rândul trece în lista de dedesubt, unde i se poate scoate bifa. Păzit de check-vede-poate.mjs, rândul „Scoate din socoteală” al conflictului din .claude/vede-poate/recomandari.mjs, cazul „conflict deja bifat ca plătit”; văzut roșu întâi. Fraza e ținută acum de rândul „Fraza de pe conflictul plătit, din locul lui „Scoate din socoteală””, pus de recititor.
+
 - [x] **Zilele din pagina șoferului se calculează o singură dată: peste noapte tableta arată ruta de ieri**
   `Ruta Sofer.dc.html:169` · *mediu*
   Zilele din pagina șoferului se recalculează, nu se mai îngheață la încărcare. Tableta lăsată deschisă peste noapte arăta ruta de ieri, iar șoferul pleca pe livrările zilei trecute.
@@ -1283,6 +1419,18 @@ reparația la loc și văzând-o picând.
 - [x] **Numărătoarea din meniul șoferului spunea „0 opriri” și când n-o știa: refuzul la `/routes/counts` era tăcut**
   `Ruta Sofer.dc.html:330` · *mediu*
   Steag nou `contorRupt` în starea paginii; când numărătoarea pică, meniul scrie „—” în loc de „0 opriri”. Semnul spune „nu știu”, nu „nimic”.
+
+- [x] **Bifele de încărcare ale șoferului țineau de locul rândului în listă, nu de produs: o poziție scoasă ori mutată din birou lăsa bifa pe alt produs, iar o cantitate mărită rămânea bifată**
+  `Ruta Sofer.dc.html:1188` · *mediu*
+  Cheia bifei e `p<numărul poziției>x<cantitate>` (`cheiaBifei`), cu rezerva `i<loc>x<cantitate>` numai când poziția vine fără număr. Comanda rescrisă din birou (numere de poziție noi) își pierde toate bifele, iar cartonul spune într-un rând că biroul a schimbat comanda; bifele vechi, numere goale, se citesc ca nebifate și ies din sertar la prima bifă nouă; bulina galbenă se socotește din pozițiile nebifate. Păzit de `.claude/check-ruta-bife.mjs`, secțiunea B: „cheia poartă cantitatea: pe același număr de rând, cantitatea schimbată scoate bifa aceea”, „cheia poartă numărul rândului, nu locul din listă: pozițiile rearanjate își țin bifele”, „comanda rescrisă din birou (numere de rând noi) își pierde TOATE bifele, și butonul se stinge”, „fără numărul poziției (server vechi), două poziții cu aceeași cantitate nu se bifează una pe alta” și „iar bulina nu se face galbenă pe trei bife vechi la trei poziții”.
+
+- [x] **Semnul „poate confirma livrarea” pus în „Conturi” nu ajungea pe telefonul șoferului fără reîncărcare**
+  `Ruta Sofer.dc.html:656` · *mediu*
+  În tura de 15 s (`tura()`, Ruta Sofer.dc.html:646-657), cât contul nu e știut ori n-are semnul, se cheamă `cereCine()` (`gp.me()`, :680-689), care atinge starea numai când contul chiar s-a schimbat; la refuzul `delivery_denied` contul se recitește pe loc. Probă: `.claude/check-ruta-bife.mjs`, grupa G — „cât contul n-are semnul, fiecare tură îl mai întreabă o dată”, „bifa pusă în „Conturi" se vede la prima tură, fără reîncărcare: butonul apare, aprins” și vecinele ei; `.claude/check-panouri.mjs`.
+
+- [x] **„Resetează bifele” ștergea dintr-o singură atingere toate bifele de încărcare ale zilei, fără nicio întrebare**
+  `Ruta Sofer.dc.html:1888` · *mediu*
+  Buton armat (Ruta Sofer.dc.html:1888-1930): prima apăsare îl face roșu („Sigur? Apasă iar”), cu un rând de lămurire deasupra; a doua șterge. Primele 750 ms după armare sunt surde, se dezarmează singur după 5 s și la schimbarea zilei, și e armat numai pe ziua lui. Probă: `.claude/check-ruta-bife.mjs`, grupa H — „prima apăsare nu șterge nimic: bifele și butonul de livrare rămân cum erau”, „a doua atingere în prima clipă (0,75 s) nu se ia în seamă: bifele rămân, butonul rămâne armat”, „armat și neapăsat a doua oară, butonul se dezarmează singur după 5 secunde, cu bifele neatinse”.
 
 - [x] **Datele structurate trimit Google prețul de produs copt, pe când pagina arată implicit prețul congelat**
   `seo/index.php:162` · *mediu*
@@ -1335,6 +1483,10 @@ reparația la loc și văzând-o picând.
 - [x] **O casetă fără rând în Setări bloca toată salvarea, iar singura ieșire arunca tot ce se scrisese; refuzul serverului numea pe deasupra doar prima cheie lipsă**
   `Setari.dc.html:907` · *mediu*
   Pagina (Setari.dc.html): metoda nouă faraRand(chei) (:861) întoarce cheile trimise care n-au rând în orig, numai când setările chiar s-au citit. Paza din save() (:907-931) nu trimite nimic când găsește asemenea chei: numește casetele pe eticheta lor și migrarea care lipsește, le scoate din formular (delete s[k]) și lasă restul pe ecran pentru o nouă apăsare. Casetele din „Date despre firmă” fără rând stau închise (readOnly=„{{ f.inchisa }}” la :226, inchisa calculat la :1497), cu un rând galben sub ele care numește migrarea și comanda de actualizare. Fiecare casetă nesemănată de 002 poartă marca migrării: m: 018_adresa_si_program.sql la adresă și program, 017_procent_recomandare.sql la procent. Serverul (api/lib/settings.php:379-399): refuzul pe o singură cheie din bucla care cântărește a ieșit cu totul; o buclă de dinaintea ei strânge TOATE cheile fără rând și refuză întreaga cerere cu 422 unknown_setting, numindu-le pe toate și trimițând la sudo bash actualizeaza-vps.sh. Probele: scena 8 nouă, două reguli noi și una lărgită pe refuz în test-defect-salvari-mute, două reguli în -viu, scena E în test-baza-veche, o regulă pe comentariul și textul ramurii 018 în test-plasa-rsync. Ghidurile docs/02, 07, 08 și 09 spun că casetele stau închise și că refuzul numește toate cheile.
+
+- [x] **Setările numeau etapa finală „gata” („Comanda este gata când ajunge la”, semnul „gata” din listă) și promiteau că butonul laboratorului merge până la capăt, deși el se oprește cu o etapă mai devreme**
+  `Setari.dc.html:585` · *mediu*
+  Titlul e „Comanda este încheiată (livrată) când ajunge la”; ajutorul spune cine pune etapa finală și că etapa dinaintea ei e ultima a laboratorului; lămurirea listei spune unde se oprește butonul laboratorului; semnul din listă scrie „livrată” (tot atâtea litere cât „anulare”, ca rândul să nu se lățească pe telefon). Păzit de `.claude/check-plafon-laborator.mjs`: „Setările numesc etapa finală „încheiată (livrată)”, nu „gata””, „ajutorul de sub ea spune că etapa dinainte e ultima a laboratorului”, „lista de etape din Setări spune unde se oprește butonul laboratorului” și „în lista de etape, semnul etapei finale spune „livrată”, nu „gata””.
 
 - [x] **Bani câștigați și nevăzuți: managerul sau angajatul cu cod de recomandare chiar încasa comision, dar meniul nu-i dădea niciodată „Recomandări"**
   `shared/gp-api.js:799` · *mediu*
@@ -1436,6 +1588,10 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:99` · *mediu*
   Varianta A din foile trimise patronului (a doua, B, pune legăturile sub un buton „Meniu”; patronul alege). Foaia (rândurile 99–128): pe calculator nicio bucată a antetului nu se mai strânge (`flex:none`) și nicio vorbă nu se rupe (`nowrap`), deci un antet care nu încape iese din pastilă și ieșirea se poate măsura. Logica: `potrivesteAntetul` o măsoară (`scrollWidth > clientWidth + 1`) și trece antetul pe „strâns” (`data-antet`, din `antetFel`): legăturile rămân, golurile se micșorează, iar „Intră în cont” și butonul contului rămân numai cu semnul, ca pe telefon; vorba rămâne în buton, ascunsă numai vederii, pentru cititorul de ecran, și în `title`, pentru mouse. Ține minte cât i-ar fi trebuit întreg și se întoarce când pastila are atât, cu același pixel îngăduit, ori când s-a schimbat ce scrie în antet (limba, numele). Se cheamă după fiecare desenare, la `resize` (acolo desenarea vine înainte de cadru), după `document.fonts.ready` și dintr-un `ResizeObserver` pe antet și pe cele trei bucăți, pentru ce se schimbă fără desenare. Rămas dinadins: o schimbare prinsă de pază se desenează în sarcina următoare, deci un cadru poate arăta antetul ieșit câțiva pixeli (la încărcare, 2 px, înăuntrul căptușelii); a-l schimba chiar din pază ar arunca „ResizeObserver loop”.
 
+- [x] **Clientul care recomandă nu vedea „Recomandări” în meniul contului din magazin: codul era căutat într-un câmp pe care `GET /auth/me` nu-l umple**
+  `Site Public.dc.html:3486` · *mediu*
+  Meniul se socotește o singură dată, din contul trecut prin `gp.auth()`: `const meniuCont = A ? gp.meniu('', gp.auth(A)) : [];` (Site Public.dc.html:3486), iar `accRef` (:4934) și `accParola` (:4946) citesc din el. Probă: `.claude/check-site-public.mjs` — „contul cu cod de recomandare are „Recomandări” în meniul contului, cu codul venit ca de la `GET /auth/me`”; `.claude/check-vede-poate.mjs` — cazurile „clientul cu cod de recomandare are legătura” și „managerul cu cod de recomandare are legătura”.
+
 - [x] **Adresa publică și programul aveau casete în Setări, dar niciun rând în tabel: patronul scria, apăsa „Salvează", primea „ok", și nu se schimba nimic. Niciodată**
   `sql/002_seed.sql:89` · *mediu*
   Hotărârea patronului: „Rândurile, ȘI un refuz lămurit". Partea aceasta e rândurile. O migrare nouă, `sql/018_adresa_si_program.sql`, le seamănă cu `INSERT IGNORE`, pornind de la chiar valorile scrise azi în cod (`seo/index.php`), ca site-ul să arate la fel în clipa actualizării — se schimbă doar cine ține valoarea: baza, nu fișierul. `INSERT IGNORE`, nu `REPLACE`: migrările se rulează de câte ori e nevoie, iar adresa pe care patronul a scris-o din Setări nu trebuie să se întoarcă la cea din cod la următoarea actualizare. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază, fiindcă n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Temeiul de rezervă din cod rămâne, dinadins, și e verificat cu `?:`, nu cu `??`: o casetă golită din panou salvează șir gol, deci `??` ar lăsa pagina fără adresă în loc s-o întoarcă pe cea din cod. Cele trei ghiduri (07, 08, 09) spun acum cum se verifică `018`, iar tabelul „Ce se poate reimporta și ce nu" o are pe rândul ei.
@@ -1471,6 +1627,10 @@ reparația la loc și văzând-o picând.
 - [x] **Paza golului se uita la patru pagini din doisprezece: Recomandări, Conturi, Jurnal, Produse, Setări, Client și Pontaj treceau verzi fără să fie atinse**
   `.claude/check-erori-tacute.mjs:72` · *mic*
   Lista e la douăsprezece pagini, cu cheile de gol și cu numele câmpurilor de eroare declarate pentru fiecare — inclusiv cele despărțite în runda asta (`eroareCine`/`eroareSetari` în „Setări”, `eroare`/`cerEroare` în „Comanda mea”). Proba trece acum prin 145 de reguli.
+
+- [x] **Fila „Produse cerute” spunea că „nu există încă un catalog separat de produse” și îl ruga pe cititor să ceară unul, deși pagina „Catalog” există încă din 2.0**
+  `.claude/check-formular-roluri.mjs:613` · *mic*
+  Textul (`Administrare Comenzi.dc.html:858` în 2.6.0) spune acum „Totalurile se socotesc din comenzile din listă: câte comenzi cer produsul și câte bucăți, în total.” Păzit de `.claude/check-formular-roluri.mjs`, regula „D5 fila „Produse cerute” nu mai promite un catalog care există de mult” (rândul acestei fișe).
 
 - [x] **Un octet NUL scris ca despărțitor de cheie făcea `grep` să spună „Binary file matches" în loc de rândul găsit — adică amuțea unealta cu care se caută prin fișierul de probe**
   `.claude/check-meniu.mjs:597` · *mic*
@@ -1596,6 +1756,26 @@ reparația la loc și văzând-o picând.
   `Administrare Comenzi.dc.html:4637` · *mic*
   Opțiunea din formular spune „Congelate” (rândul 4637); valoarea trimisă serverului e tot `congelat`, deci nimic nu se schimbă în comenzi. Comentariul de deasupra (rândurile 4633–4634) spune de ce, pe aceleași două rânduri: pagina are tot 4957. „Congelat” rămâne pe cardurile din Laborator și din Comenzi (`gp.variantLabel`), în capetele de coloană din Statistici și pe fișa produsului din magazin, iar insigna de pe prima pagină spune „Congelat crud”: despre ele nu s-a hotărât nimic, iar docs/10 le numește la „Ce NU e defect aici”.
 
+- [x] **Insigna „Adus de …” era o legătură spre vederile de administrator din „Recomandări” chiar și pentru manager și agent: o apăsare îi ducea pe o pagină care nu le arăta ce căutau**
+  `Administrare Comenzi.dc.html:3108` · *mic*
+  `adusPe(ad)` întoarce perechea `adusLeg` / `adusText`: legătura rămâne numai administratorului, ceilalți văd un `<span data-adm="adustext">` cu aceeași clasă, fără mână și fără aprindere sub maus — în rând, pe cardul de telefon, pe cardul cererii și în formular. Păzit de `.claude/check-formular-roluri.mjs`, regulile D5: „D5 „Adus de” în rândul comenzii: … → legătură / text”, „D5 „Adus de” în formular: …”, „D5 „Adus de” pe cardul cererii: …” și „D5 pastila „Adus de” se aprinde sub maus numai ca legătură, nu și ca text”.
+
+- [x] **Butonul „Vezi ce vede șoferul →” din fila „Rută șofer” îl ducea pe agentul de vânzări la un ecran de refuz**
+  `Administrare Comenzi.dc.html:5567` · *mic*
+  `veziSofer: (gp.PANOURI_ROL[authRole(S.auth)] || []).indexOf("Rută") >= 0`, iar legătura stă sub `<sc-if value="{{ veziSofer }}">`. Păzit de `.claude/check-formular-roluri.mjs`: „D5 „Vezi ce vede șoferul” se arată după matricea de panouri: …”, „D5 scoasă „Rută” din matricea managerului, butonul spre șofer dispare și lui” și „D5 în marcaj, butonul spre ecranul șoferului stă sub steagul lui”.
+
+- [x] **Ecranul de refuz din „Comenzi” îi dădea contului de pontaj trei butoane mari — Laborator, Depozit, Rută —, fiecare spre alt refuz**
+  `Administrare Comenzi.dc.html:5561` · *mic*
+  `deniedPanouri` se face din meniul rolului (`gp.meniu("", S.auth)`) și se desenează cu `<sc-for>`, primul ca buton principal (`prim` / `rest`); contul de pontaj primește „Pontaj” și „Parola mea”. Păzit de `.claude/check-formular-roluri.mjs`: „D5 ecranul de refuz își face lista din meniul rolului: …”, „D5 contul de pontaj nu mai e trimis spre panouri pe care nu le are” și „D5 în marcaj, ecranul de refuz nu mai are legături scrise de mână spre panouri”.
+
+- [x] **Butonul de salvare spunea „Adaugă comanda” și agentului, a cărui hârtie pleacă drept cerere spre aprobare, și la acceptarea unei cereri**
+  `Administrare Comenzi.dc.html:5054` · *mic*
+  `saveLabel` are patru ramuri: „Salvează modificările” la corectare, „Acceptă cererea” la acceptare, „Adaugă comanda” pentru cine scrie comenzi, „Trimite spre aprobare” pentru agent; `formTitle` („Comandă nouă” / „Cerere nouă”) și `newLabel` („+ Comandă nouă” / „+ Cerere nouă”) urmează rolul. Păzit de `.claude/check-formular-roluri.mjs`: „D3 butonul de salvare și ușa pe care pleacă salvarea: …” (pe fiecare rol și pentru agent) și „D3 titlul formularului și butonul de sus: …”.
+
+- [x] **Pastila „Recomandare de lămurit” îi cerea managerului și agentului să aleagă între coduri și să deschidă Recomandări, deși numai administratorul poate**
+  `Administrare Comenzi.dc.html:1889` · *mic*
+  `adusDe()` dă și `adusTitluText` („…până alege un administrator.”, Administrare Comenzi.dc.html:1889-1890), iar `adusSpus(ad)` (:3114) alege între cele două după rol; rândul comenzii și formularul trec amândouă prin el. Probă: `.claude/check-formular-roluri.mjs` — regulile „D5 lămurirea pastilei „de lămurit” din rândul comenzii: …” și „D5 lămurirea pastilei „de lămurit” din formular: …”, câte una pe rol, cu stricăciunile lor.
+
 - [x] **API-ul își anunță versiunea de PHP în fiecare răspuns**
   `api/index.php:62` · *mic*
   header_remove('X-Powered-By') în api/index.php, ca să nu depindă de expose_php din configurarea serverului. Probă: test-api.mjs „răspunsul nu mai anunță versiunea de PHP" (plus „antetele de securitate sunt la locul lor", ca să nu se piardă celelalte).
@@ -1616,6 +1796,14 @@ reparația la loc și văzând-o picând.
   `api/lib/notify.php:87` · *mic*
   Anunțul comenzii noi poartă referința scrisă pe comandă, aceeași pe care o vede omul în toată aplicația. Probă: `.claude/test-defect-anunturi-esuate.mjs`.
 
+- [x] **Bifa de anunț „Cerere nouă de pe site” oprea și vestea cererilor scrise de agenți și de oamenii casei: cine o stingea ca să nu mai afle de site nu mai afla de nicio cerere**
+  `api/lib/notify.php:62` · *mic*
+  Bifa se cheamă „Cerere nouă” în amândouă cataloagele, cu ajutor nou: cererea vine de la un client, de pe site, ori de la un om al casei care nu scrie comenzi de-a dreptul; cheia `request_new`, ordinea și semințele sunt neschimbate. Păzit de `.claude/check-anunturi.mjs` (în verifica-tot): „bifa cererii noi nu mai spune „de pe site”, în niciun catalog” și „fiecare anunț poartă același nume în PHP și în pagina de Setări”.
+
+- [x] **Un anunț de peste 4096 de caractere nu ajungea pe Telegram deloc: o cerere cu multe poziții și mențiuni lungi era refuzată întreagă**
+  `api/lib/notify.php:1319` · *mic*
+  `send_telegram()` trimite `telegram_text_taiat($text)` (api/lib/notify.php:1319, funcția la :1363): peste 4000 de unități taie și pune coada „… (mesaj tăiat — vezi în panou)”; numără în unități UTF-16, ca Telegram, și nu rupe un semn de două unități. Probă: `.claude/check-anunturi.mjs` — „comanda cu nume lungi, client de 160 și adresă de 255 trece de limita lui Telegram”, „tăiată, încape, își păstrează capul și rândurile despre oameni și își spune tăietura pe ultimul rând” și celelalte reguli ale lungimii (scenele lungaGrea, lungaCuSemne, lungaCuSemneDecalata).
+
 - [x] **Tarifarea lipea rândurile aceluiași produs fără să rotunjească: 20,4 + 46,3 + 33,3 bucăți ieșeau 99,99999999999999**
   `api/lib/orders.php:1001` · *mic*
   Suma rândurilor lipite se rotunjește la două zecimale, ca și coloana din bază, deci tarifarea și comanda salvată spun aceeași cantitate.
@@ -1631,6 +1819,10 @@ reparația la loc și văzând-o picând.
 - [x] **Setarea photo_dir mută fișierul, dar adresa scrisă în baza de date rămâne mereu „products/…”**
   `api/routes/catalog.php:375` · *mic*
   Adresa scrisă în baza de date și ștergerea pozei vechi se iau acum din chiar folderul configurat (photo_web_prefix() / is_uploaded_photo()), nu din textul fix „products/". Probe: test-php.php, secțiunea „unde ajung fotografiile produselor" — șapte probe, printre care „adresa web urmează folderul mutat" și „nici o cale care încearcă să iasă din folder".
+
+- [x] **Mesajul serverului despre folderul de poze fără drept de scriere închidea ghilimeaua românească cu una dreaptă: „products"**
+  `api/routes/catalog.php:803` · *mic*
+  „products” cu ghilimeaua casei (api/routes/catalog.php:803); `php -l` curat. Probă: `.claude/check-fise-tehnice.mjs` — „niciun mesaj din api/routes/catalog.php nu rămâne cu ghilimea dreaptă la coadă”.
 
 - [x] **Crearea comenzii așteaptă notificările: cu furnizorul picat, răspunsul întârzie ~30 s sau moare**
   `api/routes/orders.php:203` · *mic*
@@ -1668,6 +1860,10 @@ reparația la loc și văzând-o picând.
   `api/routes/settings.php:316` · *mic*
   `list_usage()` leagă ziua calculată în PHP (`today_local()`), nu `UTC_DATE()` cerut bazei: între 00:00 și 03:00 ora României e înaintea celei din UTC, deci paza număra comenzile de IERI și refuza o ștergere pe care nimic n-o mai ținea. Probă: `.claude/test-defect-paza-zonelor.mjs`.
 
+- [x] **O etapă din mijlocul listei putea fi aleasă drept „încheiată”, iar aceeași etapă putea și încheia, și anula comanda**
+  `api/routes/settings.php:627` · *mic*
+  Paza judecă rolul și după loc, numai când salvarea chiar îl mută (api/routes/settings.php:584-638): 422 `bad_special_status` dacă „încheiată” și „anulată” sunt aceeași etapă (:615), și 422 `bad_special_status` dacă noua „încheiată” nu e ultima din fluxul de după salvare, cu etapa de anulare scoasă (`$loc < count($drum) - 1`, :627). Mesajul numește etapa, ce mai urmează după ea și ce e de făcut. Setari.dc.html arată refuzul în cardul „Etapele cu rol special”, deasupra celor două liste, cu vorbele serverului (`etapeRefuz`). Probă: `.claude/check-etape-setari.mjs` — „o etapă din mijlocul listei nu poate fi aleasă drept încheiată”, „aceeași etapă nu poate și încheia, și anula comanda”, „refuzul serverului se arată lângă etapele cu rol special, cu vorbele lui”; viu, `.claude/test-defect-etapa-anulare.mjs`, secțiunea F (nerulată aici).
+
 - [x] **Socoteala „după ziua în care s-a comandat" tăia zilele pe ceasul UTC, nu pe ceasul patiseriei: comenzile luate între miezul nopții și 3 dimineața cădeau în ziua de ieri**
   `api/routes/stats.php:103` · *mic*
   Ajutorul nou `zi_locala_sql()` (api/lib/http.php) scrie expresia SQL care dă ziua LOCALĂ a unei coloane de clipe UTC: cere fusului, în PHP, schimbările de oră din fereastra cerută și face din ele un `CASE` care mută fiecare clipă cu decalajul valabil ATUNCI — deci e drept și vara, și iarna, și în intervalul care le cuprinde pe amândouă. Nu cheamă `CONVERT_TZ`, din aceeași pricină pentru care nu-l cheamă nici anunțurile din laborator (api/routes/lab.php:463): pe o instalare fără tabelele de fusuri încărcate în MySQL acela întoarce NULL, adică o zi lipsă în tăcere. `stats.php` îl cheamă cu fereastra întreagă, de la perioada de comparat până la sfârșitul celei cerute, fiindcă și aceea se numără cu aceeași coloană. Nimic din expresie nu vine de la om: numele coloanei e scris de noi, iar orele ies din `DateTimeZone`.
@@ -1700,6 +1896,10 @@ reparația la loc și văzând-o picând.
   `api/verifica.php:264` · *mic*
   Lista s-a întregit: toate cinci, pe trei tabele — `orders.route_seq`, `orders.stock_synced`, `orders.variant`, `order_requests.variant`, `users.address` —, fiecare cu o vorbă despre la ce ține, ca omul care citește pagina să știe ce pierde dacă lipsește. Paguba reparată nu e ce nu vedea blocul ieri: trei dintre coloane sunt de mult ȘI în `sql/001_schema.sql`, deci nu pot lipsi de pe o bază importată vreodată, iar blocul n-a scăpat niciodată nimic. Paguba e ce avea să creadă mâine cel care-l citea — „migrarea 003 e acoperită aici” — și nu mai punea măsurătoarea altundeva. Un comentariu care spune „coloanele” deasupra unei liste scrise pe jumătate e o minciună care se citește ca un temei. Lista nu se scrie de mână de două ori: `SHOW COLUMNS` se cere o singură dată pe tabel și se ține minte, iar un tabel care lipsește cu totul se SARE, nu pică — pe o bază oprită înaintea lui, blocul ăsta n-are ce judeca, și nu e treaba lui s-o spună. [21 septembrie 2026]
 
+- [x] **Comentariul din pagina de verificare a instalării număra „celelalte douăzeci și una de intrări” ale hărții de migrări, care avea optsprezece**
+  `api/verifica.php:946` · *mic*
+  Comentariul spune acum „iar celelalte intrări”, fără cifră, deci nu mai are ce să rămână în urmă. Nicio probă nu-l păzește și nici n-are de ce: nu mai e nicio cifră de ținut la zi.
+
 - [x] **Numele celor două sigle erau exact pe dos: `logo-alb.png` era aurie, `logo-auriu.png` era albă — iar toate cele 37 de trimiteri din pagini cereau „alb” ca să capete aur**
   `assets/logo-alb.png:1` · *mic*
   Hotărârea patronului: „doar le schimbăm numele între ele”. Fișierele și-au schimbat locul, deci de-acum `logo-alb.png` ARE cerneală albă (`#FEFEFE`) și `logo-auriu.png` are cerneala aurie (`#BD9749`) — măsurat, nu presupus: `.claude/check-sigle.mjs` desface PNG-ul cu zlib și numără numai pixelii cu totul opaci. Cele 37 de trimiteri din 14 pagini s-au mutat toate pe `logo-auriu.png`: vor aur, și acum îl cer pe nume. S-au ținut în pas `.claude/fa-pictograme.php` și fiecare probă care le pomenește. Nu s-a ales redenumirea după formă (`rozeta-subtire` / `rozeta-groasa`), scrisă aici ca propunere: patronul a cerut schimbul, și schimbul s-a făcut. Paza rămâne, și e acum mai la locul ei decât înainte: cerneala se măsoară la fiecare rulare a suitei, deci o nouă încurcare a fișierelor iese roșie, iar nicio pagină nu poate chema tăcut fișierul alb pe un fundal deschis — pe crem albul dă 1,22:1, adică un pătrat gol. De când numele sunt îndreptate, o pagină care cere „alb” chiar albul vrea; dacă anume asta se dorește, pe ciocolatiul de noapte (19,01:1), se spune în probă, nu tăcut în pagină. Cele două reguli care numărau trimiterile din fișă nu mai rulează: fișa e închisă, textul ei e la trecut, iar cifra din el e înghețată în ziua asta și n-are de ce să mai crească odată cu paginile. Dar nu s-au stins pe tăcute — un martor cere ca fișa să fie în registru, fiindcă o fișă ștearsă cu totul ar stinge blocul fără ca nimeni să afle, și odată cu el regulile care trebuie să se întoarcă singure dacă fișa se redeschide. [21 septembrie 2026]
@@ -1715,6 +1915,10 @@ reparația la loc și văzând-o picând.
 - [x] **Trimiterea „(marcaj :34)” dintr-un comentariu nimerește în mijlocul unei fraze, nu la caseta despre care e vorba**
   `Client.dc.html:819` · *mic*
   Trimiterile pe număr de rând sunt scoase cu totul și înlocuite cu ancore numite („chiar deasupra lui `<sc-if value="{{ locked }}">`”), cu o notă care spune de ce: numerele de rând putrezesc la prima reparație de deasupra lor.
+
+- [x] **Pagina clientului arăta cardul „Recomandă Golden Pastry” și personalului fără panoul „Recomandări”, cu „Fă-ți un cod →” spre o pagină care nu e a lui**
+  `Client.dc.html:1023` · *mic*
+  `hasReferral` urmează întrebarea meniului (Client.dc.html:1023-1024): panoul e în `gp.PANOURI_ROL[rol]` ori contul are deja un cod. Clientul (cu sau fără cod) și agentul îl păstrează; personalul numai cu un cod pe cont; previzualizarea administratorului rămâne fără. Probă: `.claude/check-vede-poate.mjs` — „client · legătura Recomandari.dc.html · se desenează numai cui are panoul”.
 
 - [x] **Caseta cere „minim 6 caractere", serverul refuză sub 8, iar butonul „Propune o parolă" poate genera una de 7**
   `Conturi.dc.html:425` · *mic*
@@ -1740,6 +1944,22 @@ reparația la loc și văzând-o picând.
   `Conturi.dc.html:709` · *mic*
   În `ROLE_OPTS` (rândurile 874–884) fiecare rol are acum numele (`l`) și, separat, drepturile (`d`); lista arată numai numele, iar fiecare fișă primește `roleRights` (rândul 1734) și îl scrie pe un rând mic, chiar după listă, în etichetă (rândul 713). Lista are `flex:1 1 auto;width:auto;min-width:0` (rândul 709), deci e cât cel mai lung nume și se strânge când n-are loc, iar eticheta are `flex-wrap:wrap` (rândul 708): pe telefon rândul drepturilor trece sub listă. „Cont nou” ia aceleași nume din `ROLE_OPTS`, iar ajutorul lung de sub listă (`nRoleHint`) a rămas cum era. Niciun rând nou: pagina are tot 2514.
 
+- [x] **Pe fișa contului tabletelor se desena caseta „E-mail de recuperare”, iar venind din Jurnal cu „Vezi contul” se deschidea și editorul de parolă**
+  `Conturi.dc.html:2202` · *mic*
+  Pe contul tabletelor caseta de e-mail nu se mai desenează (`mailLiber: !acc.sys && …`, Conturi.dc.html:2202, șablonul la :510), numele rămâne singur pe rând, iar editorul se deschide numai unde parola se pune de aici (`editing = S.edit === acc.u && parolaDeAici`, :1823). Păzit de check-vede-poate.mjs, rândurile „„E-mail de recuperare”” și „„Schimbă parola””, cazul „contul tabletelor” din .claude/vede-poate/conturi.mjs.
+
+- [x] **Ecranul de refuz din Conturi trimitea agentul și omul de laborator spre laborator, depozit și rută, iar managerului îi spunea „cont de angajat”**
+  `Conturi.dc.html:2401` · *mic*
+  Butoanele vin din meniul rolului (`deniedPanouri: gp.meniu("", S.auth)…`, Conturi.dc.html:2401, șablonul la :169): agentului Comenzi, Recomandări, Parola mea; omului de laborator Pontaj, Parola mea. Textul numește rolul („e cont de manager”), iar întoarcerea e cea din sertar (`navBack: gp.iesire(S.auth)`, :2371): „← Alege panoul” personalului, „← Înapoi la magazin” clientului. Păzit de check-conturi-vederi.mjs, regula REFUZ_ROL (3 stricăciuni văzute roșii întâi), și de check-vede-poate.mjs, „conturi · nicio legătură scrisă de mână în afara tabelului”.
+
+- [x] **„Poate confirma livrarea” se putea bifa pe contul unui om de laborator, care nu ajunge niciodată la livrare**
+  `Conturi.dc.html:1888` · *mic*
+  La omul de laborator comutatorul nu se mai desenează: `livrareShown: S.livrare && rl !== "client" && rl !== "utilizator_lab"` (Conturi.dc.html:1888). La administrator și fondator rămâne, cu nota că dreptul le vine din rol (hotărârea din 2.3.0). Păzit de check-vede-poate.mjs, rândul „„Poate confirma livrarea””, cazul „omul de laborator” din .claude/vede-poate/conturi.mjs.
+
+- [x] **În Conturi, pe cardul contului tău stătea un buton „Nu poți șterge contul cu care ești conectat”, care nu făcea nimic, iar pe cardul unui administrator ori fondator pe care numai un fondator îl poate atinge, „Șterge contul” apăsat de două ori se termina în refuzul serverului**
+  `Conturi.dc.html:2245` · *mic*
+  Butonul (și „Renunț la ștergere”) stă sub `potSterge` = `alAltuiaSiDeschis` — nu e contul tabletelor, nu e contul tău, nu e o conducere închisă —, aceeași piedică purtată de parolă și de rol. Ramurile `isMe` din `delLabel`, `delFg`, `delArmed` și `delGap` au ieșit; `onDelete` mai păstrează o plasă (`if (!potSterge) return;`). Serverul refuză oricum, ca înainte. Păzit de check-panouri.mjs (butonul de ștergere numai sub `a.potSterge`, care lasă pe dinafară contul tău) și de rândul „Șterge contul” din .claude/vede-poate/conturi.mjs.
+
 - [x] **Butonul de corecție al unei mișcări poate fi apăsat de oricâte ori, generând corecții repetate**
   `Depozit.dc.html:726` · *mic*
   O mișcare deja corectată își spune starea în locul butonului: a doua corecție nu mai poate fi scrisă.
@@ -1747,6 +1967,30 @@ reparația la loc și văzând-o picând.
 - [x] **Pe telefoanele mai înguste de 348px, bara de jos din Depozit nu încăpea: „+ Intrare” și „− Ieșire” nu se mai puteau strânge, iar „+ Articol” ieșea din ecran, cu 14px la 320**
   `Depozit.dc.html:439` · *mic*
   „+ Intrare” și „− Ieșire” au în marcaj 12px pe laturi, nu 20 (rândurile 439 și 440), deci se pot strânge: la 320 nu mai iese nimic din ecran. Mai lat, cele două cresc egal, ca înainte, deci pe telefoanele obișnuite bara arată la fel. Rândul 75, regula care arată bara pe telefon, are un comentariu la capăt care spune de ce; niciun rând nou, fiindcă rândurile din Depozit sunt citate din alte fișiere.
+
+- [x] **Caseta cu numele din Depozit reîncărca Depozitul angajatului și managerului, îi scria managerului „cont de angajat”, iar administratorul era trimis să-și schimbe parola în Conturi**
+  `Depozit.dc.html:160` · *mic*
+  Omul intrat pe numele lui are, oricare i-ar fi rolul, aceeași legătură, „contul tău · schimbă parola”, spre Parola.dc.html (Depozit.dc.html:159–160, sub `contLeg`; :1499–1501). Păzit de check-vede-poate.mjs („depozit · legătura Parola.dc.html · se desenează numai cui are panoul” și rândul casetei de cont din .claude/vede-poate/depozit.mjs) și de test-defect-depozit.mjs („caseta de cont: angajatul / managerul / administratorul / fondatorul are legătura spre „Parola mea”, cu „contul tău · schimbă parola””, „caseta de cont: adresa nu se mai socotește în pagină”); văzute roșii întâi, cu steagul scos.
+
+- [x] **„Șterge filtrele” din Depozit lăsa pastila aprinsă și lista goală, iar pe un depozit fără articole pagina vorbea despre filtre pe care nu le alesese nimeni**
+  `Depozit.dc.html:1663` · *mic*
+  `onClearFilters` stinge și pastila (Depozit.dc.html:1663); butonul stă sub `areFiltre` (:348, :409; steagul la :1414), iar rândul de gol se scrie din logică, `noRowsLine` (:1660): „Nimic pe filtrele alese.” numai cu un filtru aprins, altfel „Niciun articol în depozit încă…” ori „Se citește stocul…”. Păzit de test-defect-depozit.mjs („„Șterge filtrele” stinge și pastila, iar lista se întoarce”, „depozitul fără niciun articol nu vorbește despre filtre și nu desenează butonul”, „șablonul: „Șterge filtrele” stă sub `areFiltre`, pe lat și pe telefon”); văzute roșii întâi.
+
+- [x] **În Registrul din Depozit stăteau butoanele de ordonare a stocului: apăsate, se aprindeau, dar registrul rămânea la fel**
+  `Depozit.dc.html:295` · *mic*
+  Butoanele și titlul lor stau sub `isStock` (Depozit.dc.html:295 pe lat, :493 în foaia de pe telefon). Păzit de test-defect-depozit.mjs („șablonul: butoanele de ordonare se desenează numai în Stoc, pe lat și în foaia de pe telefon”, „șablonul: titlul „Ordonează lista” pleacă odată cu butoanele, nu rămâne singur”); văzute roșii întâi.
+
+- [x] **Caseta roșie „Depozitul nu s-a încărcat” rămânea deasupra listei și după ce rețeaua revenise și lista se umpluse**
+  `Depozit.dc.html:826` · *mic*
+  Orice citire reușită stinge caseta: `eroare: "",` în setState-ul reușit (Depozit.dc.html:826). Păzit de test-defect-depozit.mjs („citirea reușită stinge caseta roșie rămasă de la o citire picată”); văzută roșie întâi.
+
+- [x] **Fila „Registru” din Depozit păstra categoria aleasă înainte: registrul arăta numai o parte din mișcări, fără ca vreo filă să mai fie aprinsă pe ea**
+  `Depozit.dc.html:1588` · *mic*
+  Fila „Registru” (Depozit.dc.html:1588) și „Registru de mișcări” de pe telefon (:1634) pun și `cat: "Toate"`: registrul se deschide întreg. Păzit de test-defect-depozit.mjs („fila „Registru” stinge categoria rămasă aleasă”, „la fel din foaia de pe telefon: „Registru de mișcări” stinge categoria”); văzute roșii întâi.
+
+- [x] **Registrul gol din Depozit spunea „Nicio mișcare înregistrată pe filtrul ales.” și când nu alesese nimeni vreun filtru**
+  `Depozit.dc.html:1688` · *mic*
+  Rândul se scrie din logică, `noLogLine` (Depozit.dc.html:468, :1688), cu trei pricini; „pe filtrul ales” numai când `areFiltreLog` (:1417), socotit din aceleași filtre ca registrul, e aprins. Păzit de test-defect-depozit.mjs („registrul fără nicio mișcare nu vorbește despre un filtru pe care nu l-a ales nimeni”, „registrul golit de căutare ori de pastilă spune că e vorba de filtru, nu că e gol”, „șablonul: rândul registrului gol se scrie din logică, nu fix”). Recititorul a văzut roșie regula despre filtru pe o formă greșită a propriei reparații, nu pe pagina veche.
 
 - [x] **Ghidul Setărilor spunea că „Comandă refăcută” ajunge la CLIENT: anunțul pleacă numai spre echipă, pe canalele bifate la „Comandă anulată”**
   `docs/02-panoul-de-setari.md:153` · *mic*
@@ -1763,6 +2007,10 @@ reparația la loc și văzând-o picând.
 - [x] **Paragraful despre coșul care se golește tăcut arăta spre un `</form>`, spre un rând gol și spre un comentariu, iar proba ghidului era verde: tiparul ei nu citea deloc trimiterile spre fișiere cu spațiu în nume, deci „Site Public.dc.html” n-a fost păzit niciodată**
   `docs/07-actualizari.md:573` · *mic*
   Tiparul lasă numele fișierului să se întindă, cu spații cu tot, până la apostroful invers care închide trimiterea; numai primul caracter tot nu poate fi spațiu. Un martor nou cere ca ghidurile să aibă cel puțin trei trimiteri spre „Site Public.dc.html”, ca o întoarcere a tiparului să se audă, nu să tacă. Ancora `byNo` e înlocuită cu `k.indexOf('trial:') === 0 || byNo`, care stă numai pe rândul filtrului din coș. Salvarea coșului e legată anume de fraza „doar cantitățile”. §6 arată acum spre `:1995`, `:2372` și `:2546`. Tot acolo scrie și excepția nouă: coșul refăcut din „Comandă din nou” spune câte produse n-au mai intrat. `test-doc-actualizari.mjs`: **136 trecute · 0 eșuate**, cu 4 din 43 de trimiteri legate anume.
+
+- [x] **Ghidul de actualizări trimitea la rânduri greșite din `build-deploy.mjs` pentru cele șapte opriri ale construirii: zece trimiteri fără nume de fișier, rămase în urmă dinainte de 2.5.2**
+  `docs/07-actualizari.md:83` · *mic*
+  Toate zece duse la rândurile de azi din `.claude/build-deploy.mjs` (1085, 836, 867, 936, 962, 1009, 1043, 1054, 910 și 941-950), verificate una câte una pe textul rândului. Nicio regulă nouă: trimiterile fără nume de fișier rămân nepăzite de `test-doc-actualizari.mjs`, deci se pot strica iar la prima mutare a lui build-deploy.
 
 - [x] **În ghidul de publicare, paragraful care spune la ce folosește cheia lui 026 stătea sub capitolul lui 027, care n-are nicio cheie**
   `docs/08-publicare-vps-hostinger.md:398` · *mic*
@@ -1784,6 +2032,10 @@ reparația la loc și văzând-o picând.
   `Intrare.dc.html:541` · *mic*
   Filtrul suplimentar din pagină a fost scos: serverul scosese deja modurile de ridicare, pe lista din Setări, iar a doua sită cerea numele scris exact „Livrare". Cardul „Rută" numără acum toate opririle, oricum și-ar boteza patiseria modul. Probă: `.claude/check-panouri.mjs`.
 
+- [x] **Sub grila tabletelor, „Ești client? Vezi comanda ta →” ducea tableta în panoul clientului, care o refuza**
+  `Intrare.dc.html:312` · *mic*
+  Legătura stă sub `veziClient` (Intrare.dc.html:312; :1214 `aleGrilei.indexOf("Comanda mea") >= 0`) și nu se mai desenează pentru contul tabletelor; „Site public ↗” a rămas. Păzit de check-vede-poate.mjs, regula „intrare · legătura Client.dc.html · se desenează numai cui are panoul”, văzută roșie întâi în copie (și cu steagul mereu aprins, și cu legătura scoasă de sub steag), și de check-pontaj-parola-intrare.mjs („fără „Ești client? Vezi comanda ta →””).
+
 - [x] **Subsolul barei laterale scrie „administrator” sub un nume gol, înainte să fi aflat cine se uită la pagină**
   `Jurnal.dc.html:624` · *mic*
   Subsolul e închis într-un `<sc-if value="{{ sideWho }}">`, cu `sideWho: !!auth && isAdmin` — aceeași scriere ca în „Setări”. Nu se mai scrie nimic despre cine se uită la pagină până nu se știe. Probă: `.claude/check-panouri.mjs`.
@@ -1791,6 +2043,18 @@ reparația la loc și văzând-o picând.
 - [x] **Comentariul de deasupra lui `onMore` spune că pagina așteaptă promisiunea întoarsă — React o aruncă**
   `Jurnal.dc.html:751` · *mic*
   Comentariul spune acum exact cine așteaptă valoarea întors: NUMAI `.claude/check-panouri.mjs`. Pagina care rulează nu-l folosește, și scrie de ce.
+
+- [x] **Ecranul de refuz din Jurnal oferea aceleași patru legături oricui: un agent de vânzări era trimis la Conturi și la Depozit, unde era refuzat din nou**
+  `Jurnal.dc.html:78` · *mic*
+  Ecranul de refuz are acum două legături socotite după cine e intrat: „← Înapoi la panoul meu” spre `gp.primaPagina(auth)` (Jurnal.dc.html:78, :925–926) și ieșirea din `navBack` („← Alege panoul” personalului, „← Înapoi la magazin” clientului). Păzit de check-vede-poate.mjs, regula „jurnal · nicio legătură scrisă de mână în afara tabelului”; văzută roșie întâi.
+
+- [x] **Într-un Jurnal gol, fără niciun filtru, cardul oferea „Șterge filtrele”, care apăsat nu schimba nimic**
+  `Jurnal.dc.html:252` · *mic*
+  Butonul stă sub `areCeSterge` (Jurnal.dc.html:252; :1064 `S.who !== "Toate" || S.page !== "Toate" || !!S.q || !!S.search`) și apare numai când e pus un filtru de cont, unul de zonă ori o căutare. Păzit de check-vede-poate.mjs, rândul „Șterge filtrele” din .claude/vede-poate/jurnal.mjs, cazul „jurnalul gol, fără niciun filtru”; văzut roșu întâi.
+
+- [x] **Cu o căutare pusă, subtitlul Jurnalului număra tot ce era încărcat, cu „înregistrate”: „0 acțiuni înregistrate · 0 conturi” stătea chiar deasupra casetei „Nicio acțiune care să conțină „zzzz”, în tot jurnalul.”**
+  `Jurnal.dc.html:939` · *mic*
+  Cu o căutare trimisă (`S.q`), subtitlul spune câte a găsit serverul în tot jurnalul — „N acțiuni găsite în tot jurnalul” (`S.total`), cu aceeași cifră ca subsolul; fără căutare rămâne cum era. Pe o cerere picată ori până la primul răspuns tace, ca înainte. Păzit de check-panouri.mjs (rândul care cere „găsite în tot jurnalul” pe o căutare cu mai multe pagini).
 
 - [x] **Pe telefon, butonul cel mai însemnat din foaia de detaliu a laboratorului era și cel mai mic: „poziția e gata toată" avea 30×30, între două butoane de 44×44 care fac fiecare un pas de o bucată**
   `Panou Laborator.dc.html:366` · *mic*
@@ -1812,6 +2076,22 @@ reparația la loc și văzând-o picând.
   `Panou Laborator.dc.html:105` · *mic*
   Rândul s-a scos, iar lămurirea de sub el („cele două rânduri de aici") a redevenit adevărată. Reparația care ține e însă regula nouă din `.claude/check-pages.mjs`: pentru fiecare pagină se albesc comentariile foii (ele citează selectoare în proză), se strâng toate selectoarele `[data-xx=valoare]`, și fiecare se cere purtat de marcaj — ori scris pe față (`data-xx="valoare"`), ori interpolat (`data-xx="{{ … }}"`) cu valoarea născută în logică. A doua cale e miezul: o regulă care ar fi cerut numai valoarea literală striga 7 cârlige vii din 8 găsite, adică era zgomot, iar un zgomot se învață să fie sărit. Dovedită punând cadavrul la loc și văzând suita roșie — fișa stă în `scratchpad/dovada-pagini.mjs`.
 
+- [x] **Insigna de etapă rămânea gri la „În lucru”, etapa pe care lucrează casa, și la orice etapă rebotezată din Setări — în laborator și în „Comenzi”**
+  `Panou Laborator.dc.html:767` · *mic*
+  În laborator, harta știe „În lucru” (galben) și „Gata de livrare” (verde), iar `ST_CLS(st)` cade pe LOC pentru orice nume necunoscut: etapa finală plină, plafonul verde. În „Comenzi”, `culoareEtapa(s)` face același lucru și e folosită în rând, pe telefon și în fișă. Păzit de `.claude/check-plafon-laborator.mjs` („etapele de azi ale casei au fiecare culoarea ei”, „o etapă rebotezată își ține culoarea după loc”, „într-un flux cu o singură etapă, comanda încheiată e plină, nu verde”) și de `.claude/check-formular-roluri.mjs` („etapele noi ale casei au culoarea lor, în rând și în fișă”, „cu etapele rebotezate, plafonul și capătul își păstrează culoarea după loc”).
+
+- [x] **Laboratorul putea trimite etapa finală de pe o etapă de după ea: „Înapoi” cobora pe „Predată”, iar butonul de înaintare rămânea aprins**
+  `Panou Laborator.dc.html:2207` · *mic*
+  Orice etapă de la cea finală încolo e „încheiată”: `dupaFinala` și `incheiata` (Panou Laborator.dc.html:2207-2208). Butonul e stins și scrie „Finalizată” / „Comandă finalizată”, iar `advance` iese din prima. „Înapoi” se socotește cu `inapoiLa()` (:2213): de după etapa finală duce la plafon; dacă plafonul e chiar etapa finală, lipsește. Eticheta și cererea ies din aceeași funcție. Probă: `.claude/check-plafon-laborator.mjs` — „după etapa finală, butonul de pe carton e stins și scrie „Finalizată””, „după etapa finală, butonul din fișă e stins și scrie „Comandă finalizată””, „apăsat după etapa finală cu un cont de admin, butonul nu trimite nimic”, „de după etapa finală, „Înapoi” duce la plafon, nu pe etapa finală”, „când plafonul e chiar etapa finală, de după ea „Înapoi” lipsește și nu trimite nimic”, cu stricăciunile ei.
+
+- [x] **Comanda încheiată purta lămurirea „Lotul e gata și așteaptă șoferul” când plafonul laboratorului era chiar etapa finală**
+  `Panou Laborator.dc.html:2309` · *mic*
+  Două rânduri: `nextTitle: laPlafon(st) && !incheiata(st) ? notaPlafon(ord) : ""` (Panou Laborator.dc.html:2309) și `nextStop: laPlafon(st) && !incheiata(st)` (:2450). Probă: `.claude/check-plafon-laborator.mjs` — „comanda încheiată nu poartă lămurirea de la plafon, nici când plafonul e chiar etapa finală”, cu două stricăciuni noi; cele două vechi care căutau rândul de dinainte au fost învățate rândul nou, nu șterse.
+
+- [x] **„Cere drept de fondator” apărea pe „Parola mea” înainte ca omul să-și fi ales parola, iar apăsat primea refuz**
+  `Parola.dc.html:414` · *mic*
+  Cardul nu se mai desenează cât parola e provizorie (și nici contului comun): `fondShown: !!(a && a.gata) && !provizorie && !eSistem` (Parola.dc.html:414). Păzit de check-vede-poate.mjs, tabelul .claude/vede-poate/parola.mjs, cele două cazuri „la parola provizorie butonul nu se desenează”, văzute roșii întâi în copie, și de check-pontaj-parola-intrare.mjs („nici „← Alege panoul”, nici cererea de fondator”).
+
 - [x] **Cele două cifre despre PACHET scrise în proză s-au despărțit amândouă de el: una plecase cu `2.4.1` spunând „204" într-un pachet de 205, cealaltă a fost mutată de la 94 la 97 fără s-o numere nimeni**
   `plasture-vps 2.4.2/CITESTE-MA.md:5251` · *mic*
   Cifra trimiterilor pusă pe 94 în `plasture-vps 2.4.2/CITESTE-MA.md` (cea a fișierelor fusese deja îndreptată pe 205 la scrierea rundei), plus cele două reguli noi care le leagă de chiar pachetul din plasture. Măsurătoarea istorică a fost lăsată anume în afara lor, și scris în cod de ce.
@@ -1823,6 +2103,10 @@ reparația la loc și văzând-o picând.
 - [x] **Cifra migrărilor din documentul plasturelui a rămas la 18 vreme de cinci runde: ținută la zi cu mâna de trei ori, apoi niciodată**
   `plasture-vps/CITESTE-MA.md:1357` · *mic*
   Amândouă exemplele s-au rescris pe adevărul de azi: coada unui server rămas la runda trecută (`Bilanț: 1 aplicate acum · 21 erau deja acolo`, cu `024` verde și trei coloane) și, pentru unul la zi, `0 aplicate acum · 22`. Lângă ele, propoziția care lipsea de la început: cele două cifre se adună întotdeauna la 22, nu la 24, fiindcă `001` și `002` se sar — și de ce se sar (`002` ar întoarce în catalog, la fiecare actualizare, produsele de probă șterse). Paza nu numără fișierele: ia din `actualizeaza-vps.sh` chiar rândul care sare migrări (`001_*|002_*) continue ;;`), scoate din el tiparele, și cere ca fiecare `Bilanț: A · B` din document să facă A+B = câte rămân. Deci ziua în care cineva mai sare una, ori adaugă a 25-a migrare, documentul se înroșește singur. Se caută în documentul turtit, nu pe rânduri, ca un `Bilanț:` rupt de reîmpachetarea unui paragraf să nu scape tăcut — adică exact felul în care s-a învechit.
+
+- [x] **Omul care uitase ieri să ponteze plecarea primea tastatura codului, dar orice cod tasta era refuzat**
+  `Pontaj.dc.html:652` · *mic*
+  Pentru omul cu tura uitată, `alege()` deschide pasul „uitata” (Pontaj.dc.html:652; `pasUitata` la :1081, șablonul la :209) în locul tastaturii: „Tură nepontată la plecare”, cu îndemnul să ceară unui administrator încheierea; administratorul și fondatorul primesc pe loc „Scrie plecarea” (:216). Păzit de check-vede-poate.mjs, tabelul .claude/vede-poate/pontaj.mjs (cazurile „… tura uitată nu primește tastatura”, rândul pasului nou și „cine vede e primit” pentru „Scrie plecarea”), văzute roșii întâi în copie, și de check-pontaj-parola-intrare.mjs, secțiunea „Pontaj.dc.html · omul cu tura uitată (S-1)”.
 
 - [x] **Catalogul cere de la server două adrese literale „{{ … }}" la fiecare deschidere**
   `Produse.dc.html:140` · *mic*
@@ -1852,6 +2136,22 @@ reparația la loc și văzând-o picând.
   `Produse.dc.html:155` · *mic*
   Numai în banda de telefon, pe rândul 155: coloana grilei e `minmax(0,1fr)`, nu `1fr`, deci se strânge cât cardul, nu cât rândul pozei. Sub ~342 de puncte coloana fișierului trece sub poză, iar rândul de ajutor se rupe în lățimea cardului. Pe telefoanele obișnuite și pe calculator formularul arată ca înainte. Comentariu la capătul rândului, niciun rând nou.
 
+- [x] **La un produs aflat deja în catalog, o poză refuzată la salvare lăsa numai vorba serverului: omul nu afla nici care dintre cele două poze a căzut, nici că restul schimbărilor fusese deja salvat**
+  `Produse.dc.html:1530` · *mic*
+  Ramura cu `e.latura` (Produse.dc.html:1524-1535) are acum două fețe: la produsul nou, ca înainte; la unul de dinainte, „Produsul a fost salvat, dar fotografia pentru <latura> nu: <vorba serverului> Alege altă fotografie și apasă „Salvează” din nou: fișele și rețeta pleacă abia după poze.” (:1530-1531), iar lista se reîmprospătează în amândouă cazurile (:1533). Probă: `.claude/check-panouri.mjs` — „poza căzută la un produs de dinainte spune că produsul e salvat și CARE poză nu”.
+
+- [x] **Ecranul de refuz al Catalogului trimitea pe oricine la „Comenzi”, și conturile care n-au panoul acela**
+  `Produse.dc.html:222` · *mic*
+  Adrese socotite (Produse.dc.html:221-223): prima ieșire e `gp.primaPagina(S.auth)` („← Înapoi la panoul meu”, `acasaHref`, :2388), a doua e `navBack` — magazinul pentru client, alegerea panoului pentru personal. Probă: `.claude/check-vede-poate.mjs` — „produse · Ieșirea de pe ecranul de refuz spre un panou al omului · cazul „angajatul”” și celelalte șase cazuri, plus „produse · nicio legătură scrisă de mână în afara tabelului”.
+
+- [x] **× se desena pe fiecare grupă din Catalog, deși serverul refuză ștergerea oricărei grupe care mai are produse**
+  `Produse.dc.html:616` · *mic*
+  × se desenează numai la grupa goală: `<sc-if value="{{ c.poateSterge }}">` (Produse.dc.html:616), cu `poateSterge: Math.max(c.productsAll || 0, c.products || 0) === 0` (:2089); la celelalte rămâne un gol de aceeași mărime, ca rândurile să nu se strâmbe. Propoziția cardului o spune. Probă: `.claude/check-vede-poate.mjs` — „produse · × de pe rândul grupei · cazul „grupa cu produse în catalog””, „produse · × de pe rândul grupei · cazul „grupa numai cu produse scoase din catalog”” și „produse · × de pe rândul grupei · cazul „grupa goală se poate șterge””.
+
+- [x] **Rândul „Grupă nouă / Adaugă” din Catalog se desena înainte ca pagina să știe al cui e contul, și sub caseta roșie a unei încărcări picate**
+  `Produse.dc.html:635` · *mic*
+  Rândul stă sub același steag ca „+ Produs nou”: `<sc-if value="{{ potAdauga }}">` (Produse.dc.html:635), cu `potAdauga: S.loaded && !S.eroare` (:2416). Probă: `.claude/check-vede-poate.mjs` — „produse · „Adaugă” o grupă nouă · cazul „contul încă necitit nu poate adăuga grupe”” și „produse · „Adaugă” o grupă nouă · cazul „catalogul neîncărcat stinge și „Adaugă”””.
+
 - [x] **Butonul „Fă un cont de cumpărător" din „Recomandări" se arăta oricui nu era client, dar `POST /users` lasă numai administratorul, fondatorul și agentul de vânzări**
   `Recomandari.dc.html:949` · *mic*
   Steagul cere acum exact ce cere serverul: `!!(a && S.cod && (gp.eAdmin(a) || a.role === "agent_vanzari"))`. Rolul se cere, nu doar „nu e client".
@@ -1863,6 +2163,22 @@ reparația la loc și văzând-o picând.
 - [x] **Titlul casetei spune „Recomandările nu s-au încărcat.” și când picase numai lista de comisioane**
   `Recomandari.dc.html:1146` · *mic*
   Titlul vine din cheia derivată `eroareTitlu`, care alege după care cerere a picat: „Recomandările nu s-au încărcat.” sau „Lista de comisioane nu s-a încărcat.”. Marcajul citește `{{ eroareTitlu }}`. Probă: `.claude/check-erori-tacute.mjs`.
+
+- [x] **La un om cu toate comisioanele plătite, sub listă stătea „Nimic neplătit” ca un buton, iar apăsat nu făcea nimic**
+  `Recomandari.dc.html:547` · *mic*
+  Butonul stă acum sub `o.areNeplatite` (Recomandari.dc.html:547, steagul la :1332) și apare numai când omul are ceva de bifat; altfel, sub `o.nimicNeplatit` (:552), stă un rând de text „Nimic neplătit”, care nu e buton. Păzit de check-vede-poate.mjs, rândul „Bifează tot ce e neplătit” din .claude/vede-poate/recomandari.mjs, cu cazurile „omul are totul plătit”, „singurul rând neplătit e al unei comenzi anulate” și „singurul rând neplătit e scos din socoteală”; văzute roșii întâi.
+
+- [x] **Contul comun al tabletelor era îndemnat să-și facă un cod de recomandare, iar „Fă-mi un cod” primea refuzul serverului**
+  `Recomandari.dc.html:1509` · *mic*
+  `faraCod` cere acum și `!(a && a.isSystem)` (Recomandari.dc.html:1509), iar contului comun i se scrie de la început „Contul comun al tabletelor nu poate avea cod de recomandare.” (:1529). Păzit de check-vede-poate.mjs, rândul „Fă-mi un cod” din .claude/vede-poate/recomandari.mjs, cazul „contul comun al tabletelor”; văzut roșu întâi. Fraza nouă e ținută de rândul „Fraza contului comun, din locul butonului de cod” din același tabel (cazurile „contul comun al tabletelor” și „angajatul fără cod are butonul, nu fraza”).
+
+- [x] **În lista pe oameni din Recomandări, bifa de plată și „Scoate” arătau vii și pe rândurile unde nu se puteau folosi: omul apăsa și nu se întâmpla nimic**
+  `Recomandari.dc.html:520` · *mic*
+  Două perechi de steaguri: bifa stă sub `r.bifaVie` (Recomandari.dc.html:520; :1385 `(activ || !!r.paid) && !r.dismissed`), „Scoate” sub `r.scosViu` (:536; :1366). Unde serverul n-ar primi apăsarea se desenează un pătrat punctat de aceeași mărime, respectiv eticheta punctată „plătit”, care nu sunt butoane; bifa rămâne vie pe rândul anulat dar plătit, ca să se poată scoate. Păzit de check-vede-poate.mjs, rândurile „bifa de plată de pe un rând”, „„Scoate” de pe rândul unui om” și „Chipurile stinse de pe rândul unui om” din .claude/vede-poate/recomandari.mjs; văzute roșii întâi pe pagina veche.
+
+- [x] **Pe un conflict de comision deja plătit, Recomandări lăsa vie alegerea pe care serverul o refuză mereu, iar fraza nouă îl îndemna pe patron spre cealaltă fără să spună că ea mută contul clientului la omul plătit**
+  `Recomandari.dc.html:1233` · *mic*
+  GET /referrals/all trimite acum, pe fiecare conflict, și id-ul stăpânului fiecărui cod (`code_account_owner_id`, `code_typed_owner_id`). Pagina îl compară cu `referrer_id` (`alegereRefuzata`): pe un conflict plătit rămâne buton numai alegerea celui plătit, iar cealaltă stă în caseta punctată, ca la un cod fără stăpân. Fraza spune acum „aici se poate alege numai „X”” și, unde contul e al altcuiva, „Alegerea mută și contul clientului la „X”, pentru comenzile de acum înainte.” Fără id-uri (un server de dinainte), amândouă alegerile rămân, ca înainte. Butonul „Scoate bifa de plată” pe card (ieșirea pe care o arată refuzul serverului) n-a fost adăugat: scoaterea bifei pe un rând în conflict șterge din el urma banilor dați — e o hotărâre a patronului. Păzit de check-panouri.mjs (paza `alegereRefuzata`, rulată pe conflicte cu și fără id-uri), de test-recomandari.mjs (GET /referrals/all trimite `code_account_owner_id` și `code_typed_owner_id`) și de rândurile conflictului din .claude/vede-poate/recomandari.mjs.
 
 - [x] **Ruta șoferului scrie mereu că ordinea opririlor vine din administrare, chiar când nu e stabilită**
   `Ruta Sofer.dc.html:428` · *mic*
@@ -1895,6 +2211,10 @@ reparația la loc și văzând-o picând.
 - [x] **O ramură de text care nu se mai poate desena pe niciun ecran a rămas în fișier**
   `Setari.dc.html:1348` · *mic*
   Ramura moartă e scoasă; `blockedLine` are o singură propoziție, cea care chiar se scrie.
+
+- [x] **Ecranul de refuz din Setări trimitea la „Comenzi” conturi care n-au panoul Comenzi, iar clientului îi oferea „← Alege panoul”**
+  `Setari.dc.html:82` · *mic*
+  Cele două ieșiri sunt calculate, ca în Statistici și în Jurnal (Setari.dc.html:82-83): prima („← Înapoi la panoul meu”) duce la panoul de acasă al rolului (`gp.primaPagina`), a doua e ieșirea obișnuită a contului (`gp.iesire`): „← Alege panoul” pentru personal, „← Înapoi la magazin” pentru client. Chei noi în `renderVals()`: `acasaHref`, `acasaEt` (:1662-1663). Probă: `.claude/check-vede-poate.mjs` — „setari · nicio legătură scrisă de mână în afara tabelului”.
 
 - [x] **Geamănul englezesc al motivului întorcea literal „Eroare 429.” sub un titlu englezesc**
   `shared/gp-api.js:986` · *mic*
@@ -1964,6 +2284,10 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:135` · *mic*
   Un pas mai mic pentru nume, numai sub 336 px: `@media (max-width: 335.98px) { header.h-header .h-logo > span > span:first-child { font-size: 0.90625rem !important; } }` (rândul 135). Mărimea de 17 px e scrisă pe element, de-aia `!important`. Regula ține mărimea legată de o măsurătoare: altă mărime ori altă coloană o înroșește și cere o măsurătoare nouă, în loc să ghicească.
 
+- [x] **Contul comun al tabletelor avea „Parola mea” în meniul contului din magazin, deși n-are o parolă a lui**
+  `Site Public.dc.html:297` · *mic*
+  Steag nou în `renderVals()`, `accParola` (Site Public.dc.html:4946), socotit din același meniu al casei ca „Recomandări” (`meniuCont`, :3486), și `<sc-if value="{{ accParola }}">` în jurul legăturii (:297). Niciun rol scris de mână în pagină. Probă: `.claude/check-site-public.mjs` — „contul comun al tabletelor nu are „Parola mea” în meniul contului; orice alt cont o are”, „fiecare legătură spre „Parola mea” din marcaj stă sub `<sc-if>`-ul lui `accParola`”; `.claude/check-vede-poate.mjs`, rândul „Legătura „Parola mea” din meniul contului”.
+
 - [x] **Coloana `order_requests.decided_via`, adusă de 013 ca să se știe PE UNDE a fost decisă o cerere (panou sau Telegram), nu e scrisă de nicăieri**
   `sql/013_anunturi_pe_canal.sql:102` · *mic*
   Coloana se scrie acum de la amândouă ușile: `api/routes/requests.php` pune „panou” la hotărârea luată din ecran, `api/routes/telegram.php` pune „telegram” la cea luată din butoanele anunțului, iar ocolirea scrisă lângă ele lasă acceptarea să meargă și pe un server care n-a primit încă migrarea 013. Probe: `.claude/test-defect-amanare-oarba.mjs` și `.claude/test-defect-amanare-mincinoasa.mjs` (amândouă verificate stricând reparația la loc).
@@ -1975,6 +2299,64 @@ reparația la loc și văzând-o picând.
 - [x] **Pe telefoanele mai înguste de 366px, în tabelul „Ce s-a vândut, bucată cu bucată” din Statistici, capul „Cât din vârf” călca peste „Gata”, capul de alături: la 320 se citea «CÂT DIN VÂRFGATA»**
   `Statistici.dc.html:446` · *mic*
   Numai în banda de telefon, pe rândul 446: regula care dă capetelor 44px pentru deget le lasă acum să se și rupă (`white-space:normal`). „Cât din vârf” stă pe două rânduri, în aceeași înălțime de 44px, deci tabelul nu se mută. Pe calculator capetele arată ca înainte. Rândul are un comentariu la capăt, nu un rând nou: rândurile din Statistici sunt citate din alte fișiere.
+
+- [x] **Când socoteala din Registru era la zi, fondatorul vedea un buton „Socoteala e la zi” care apăsat nu făcea nimic**
+  `Statistici.dc.html:774` · *mic*
+  „Fă socoteala” stă sub `aplicaNou` (Statistici.dc.html:774, steagul la :2033) și apare numai când e ceva de aplicat; altfel, în același loc și la aceeași înălțime, stă rândul de text „Socoteala e la zi” (:778, clasa `st-lazi`). Păzit de check-vede-poate.mjs, rândul „Fă socoteala” din .claude/vede-poate/statistici.mjs, cazul „fișa e la zi”; văzut roșu întâi.
+
+---
+
+## Mici — 8 rămase
+
+Nepotriviri și texte care mint mărunt.
+
+- [ ] **Până vine primul răspuns al serverului, Depozitul se desenează deschis, cu „+ Mișcare” și „+ Articol”, și pentru cine nu are voie**
+  `Depozit.dc.html:1426`
+  **Ce e greșit:** Depozit.dc.html (2.5.2) n-avea niciun steag de refuz: bara cu „+ Articol” și „+ Mișcare” (:181–182) se desena de la prima clipă oricui. În 2.6.0 refuzul există, dar `depozitDeschis: !S.refuzat` (Depozit.dc.html:1426) e adevărat până sosește primul răspuns, deci butoanele de scris se pot apăsa în clipa aceea; salvarea primește 403.
+  **Ce pățește omul:** Omul de laborator „Vlad” scrie de mână adresa Depozitului pe telefon, pe o rețea înceată. Cât se încarcă, vede „+ Mișcare”, o apasă și începe să completeze caseta. Când sosește răspunsul, pagina trece pe ecranul de refuz și îi închide caseta.
+  **Dovada:** `Depozit.dc.html:182 (2.5.2) <button data-dep="newbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" …>+ Mișcare`
+
+- [ ] **Registrul din Depozit golit de o căutare ori de o pastilă n-are „Șterge filtrele”: omul trebuie să ghicească singur cum se întoarce lista**
+  `Depozit.dc.html:467`
+  **Ce e greșit:** Depozit.dc.html:400–404 (2.5.2): cardul registrului gol are numai textul, fără buton, deși în Stoc lista goală are „Șterge filtrele” (:295). În 2.6.0 cardul (Depozit.dc.html:466–470) e tot fără buton.
+  **Ce pățește omul:** Depozitara caută „drojdie” în Registru, apoi apasă o pastilă de sus. Registrul iese gol. În Stoc ar fi avut un buton care strânge tot; aici scrie doar că nu e nicio mișcare pe filtrul ales, iar ea nu-și mai amintește că pastila a rămas apăsată.
+  **Dovada:** `Depozit.dc.html:401–402 (2.5.2) <div class="h-card" …> <p …>Nicio mișcare înregistrată pe filtrul ales.</p>`
+
+- [ ] **Când accesul cu cod e oprit din Setări, caseta codului tot se desenează, iar orice cod e refuzat**
+  `Intrare.dc.html:260`
+  **Ce e greșit:** Intrare.dc.html:260 (2.5.2, același rând în 2.6.0) desenează caseta codului oricând se alege „Sunt din echipă”. Pagina nu are de unde ști că accesul cu cod e oprit: serverul o spune abia la încercare (api/routes/auth.php:395–396, 403 `panel_disabled`), iar `tryUnlock` (:787–794) pune atunci mesajul în `cerr`.
+  **Ce pățește omul:** Patronul oprește accesul cu cod pe timpul inventarului. A doua zi, cofetarul alege pe tabletă „Sunt din echipă”, scrie codul știut și primește „Accesul cu cod este dezactivat din Setări.” Caseta rămâne pe ecran, gata pentru alt cod, deși niciun cod nu poate trece.
+  **Dovada:** `api/routes/auth.php:395–396 (2.5.2) if (!setting_bool('panel_enabled')) { fail('Accesul cu cod este dezactivat din Setări.', 403, 'panel_disabled');`
+
+- [ ] **„Cere drept de fondator” se desenează și când serverul îl refuză sigur: adresa firmei lipsește din Setări ori a scris-o chiar cel care cere**
+  `Parola.dc.html:420`
+  **Ce e greșit:** Parola.dc.html:384 (2.5.2) aprinde cardul după `founderReady`, care spune numai că serverul știe de fondatori. POST /founder/request (api/routes/founder.php, 2.5.2) are două refuzuri pe care pagina nu le poate ști dinainte: 422 `no_company_email` când adresa firmei lipsește din Setări → General (:104–107) și 403 `mailbox_self_set` când adresa a scris-o chiar cel care cere, iar în casă mai e alt șef pornit (:131–139).
+  **Ce pățește omul:** Administratoarea „Maria” scrie singură adresa firmei în Setări → General, apoi intră pe „Parola mea” și apasă „Cere drept de fondator”. Primește: „Adresa firmei din Setări → General a fost scrisă chiar de tine…”. Butonul rămâne pe ecran, gata de apăsat din nou, cu același rezultat.
+  **Dovada:** `api/routes/founder.php:105–107 (2.5.2) if ($cutia === '') { fail('Nu e trecută nicio adresă de e-mail a firmei în Setări → General. ' … 422, 'no_company_email'); · :139 403, 'mailbox_self_set');`
+
+- [ ] **Doi administratori cu raportul de pontaj deschis: după ce unul încheie tura uitată, celălalt vede mai departe „Scrie plecarea”, iar refuzul îi spune că omul și-a pontat-o singur**
+  `Pontaj.dc.html:302`
+  **Ce e greșit:** Pontaj.dc.html:285 (2.5.2) desenează „Scrie plecarea” pe rândul turei uitate din raport. Raportul nu se împrospătează singur (lista de sus da, la 15 secunde, :553); se recitește numai la schimbarea intervalului ori după o scriere proprie. Dacă altcineva a încheiat tura între timp, `salveazaInchiderea()` (:740–762) primește 409 `already_closed`, cu „Tura are deja ora de plecare pontată de om. …” (api/routes/lab.php:345–349), deși plecarea a scris-o un administrator, nu omul.
+  **Ce pățește omul:** Fondatorul și administratoarea „Maria” au amândoi raportul deschis. Maria scrie plecarea de ieri a lui „Ionuț” la 16:30. Zece minute mai târziu fondatorul vede tot tura ca uitată, apasă „Scrie plecarea”, pune 16:00 și salvează: „Tura are deja ora de plecare pontată de om.” Crede că Ionuț a pontat singur și nu află că ora a pus-o Maria.
+  **Dovada:** `Pontaj.dc.html:285 (2.5.2) <button … onClick="{{ r.onInchide }}" …>Scrie plecarea</button> · api/routes/lab.php:347 'Tura are deja ora de plecare pontată de om. Ora pontată nu se rescrie de aici.',`
+
+- [ ] **La procentul de recomandare 0%, agentul și clientul sunt trimiși la „Setări → General”, un panou pe care nu-l au**
+  `Recomandari.dc.html:1693`
+  **Ce e greșit:** Recomandari.dc.html:1547–1553 (2.5.2): `procentZeroText` are două ramuri după `rataCasei`, niciuna după cine se uită. Agentul, clientul ori angajatul cu cod nu primesc procentul casei (`rataCasei` e null), deci citesc ramura a doua: „… Se pune din Setări → General, la „Procent de recomandare”.” Setările le au numai administratorul și fondatorul. Mai mult, fraza minte și când procentul casei nu e zero: agentul căruia i s-a pus dinadins 0% din „Conturi” citește tot că procentul „e 0% chiar acum” și că se pune din Setări, fiindcă `rataCasei` (:1183–1185) vine numai din lista mare (`S.all`), pe care serverul o dă doar administratorului (`route_referrals_all`, api/routes/referrals.php:132–134, `require_admin()`) — tocmai cazul pe care comentariul de la :1179–1182 spune că l-a despărțit.
+  **Ce pățește omul:** Patronul pune procentul casei pe 0% pentru o lună. Agentul „Dan Mihai” își deschide Recomandările și citește sub plăci că procentul „se pune din Setări → General”. Caută Setări în meniu, nu le găsește și nu află că doar un administrator îl poate schimba.
+  **Dovada:** `Recomandari.dc.html:1552–1553 (2.5.2) + "departe, dar toate cu 0,00 RON. Se pune din Setări → General, la " + "„Procent de recomandare”.",`
+
+- [ ] **Omul cu parolă provizorie care ajunge pe Laborator, Rută, Comenzi ori alt panou primește „cere-i unui administrator să-ți pună rolul potrivit”, nu drumul spre „Parola mea”**
+  `shared/gp-api.js:1305`
+  **Ce e greșit:** Serverul refuză orice cerere cu 403 `must_change_password` cât parola e provizorie. Paginile de mai sus nu pomenesc codul (2.5.2), deci la 403 scriu ce scrie `gp.motiv()` (shared/gp-api.js:1304–1306): „Contul cu care ești intrat nu are voie să vadă X. Cere-i unui administrator să-ți pună rolul potrivit.” — de pildă Panou Laborator.dc.html:1569, `gp.motiv(e, "comenzile zilei")`, ori Ruta Sofer.dc.html:728, `gp.motiv(e, "ruta zilei")`.
+  **Ce pățește omul:** Șoferul „Gelu” primește de la administrator o parolă provizorie. Intră, ajunge pe „Parola mea”, dar în loc să-și aleagă parola deschide Ruta din semnul de carte de pe telefon. Caseta roșie îi spune că nu are voie să vadă ruta zilei și să ceară rolul potrivit; administratorul vede că rolul e bun și nu înțelege ce s-a întâmplat.
+  **Dovada:** `shared/gp-api.js:1304–1306 (2.5.2) if (s === 403) { return 'Contul cu care ești intrat nu are voie să vadă ' + lucrul + '. Cere-i unui administrator să-ți pună rolul potrivit.';`
+
+- [ ] **O etapă pusă în Setări după cea finală (de pildă „Facturată”) e numărată din nou la „Total de făcut”, iar clientul îi citește numele de atelier în loc de „Livrată”**
+  `shared/gp-api.js:2024`
+  **Ce e greșit:** „Adaugă” din Setări → „Liste” → „Etape în laborator” pune etapa nouă la coada listei (Setari.dc.html:1411, `items.concat([t])`), deci după etapa finală. `gp.intraLaProductie()` (shared/gp-api.js:2024–2028) scoate din „de făcut” numai etapa finală și pe cea de anulare, așa că marfa unei comenzi trecute pe etapa de după e numărată iar la „Total de făcut” (Panou Laborator.dc.html:2480, `deFacut`); împărțirea de pe server merge pe aceeași regulă. Pe pagina clientului, `ETAPA_CLIENT` (Client.dc.html:447–453) cunoaște anularea, etapa finală și plafonul laboratorului, iar pe orice altă etapă cade pe `CLIENT_ST[st] || { l: st }`: clientul citește numele de atelier.
+  **Ce pățește omul:** Patronul vrea să știe ce comenzi au fost facturate și adaugă în Setări etapa „Facturată”, care ajunge la coada listei. La prânz, administratorul trece pe „Facturată” cele șase comenzi livrate dimineață. Pe tableta laboratorului, „Total de făcut · azi” crește cu marfa lor, deși e de ore bune la clienți, iar „Bistro Nord” vede pe „Comanda mea”, în locul lui „Livrată”, cuvântul „Facturată”.
+  **Dovada:** `shared/gp-api.js:2024–2027 'intraLaProductie: (st) => { const anulata = gp.__L.cancelled; const finala = gp.__L.done; return !((anulata && st === anulata) || (finala && st === finala));' · Client.dc.html:453 'return CLIENT_ST[st] || { l: st, c: "h-badge" };' · Setari.dc.html:1411 'self.putList(L.k, items.concat([t]));' · Panou Laborator.dc.html:2480 'const deFacut = flat.filter(o => gp.intraLaProductie(o.status));'`
 
 ---
 

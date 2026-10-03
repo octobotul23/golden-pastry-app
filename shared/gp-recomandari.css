@@ -60,7 +60,13 @@
   white-space: nowrap;
 }
 
-.rc-badge:hover { background: rgba(139, 92, 246, .22); color: var(--rc-mov-fg); }
+/* Se aprinde sub maus NUMAI legătura. Scrisă pe clasă (`.rc-badge:hover`),
+   regula prindea și pastila pusă ca text — „Adus de …" pentru manager și agent,
+   „Doar <nume>" din Recomandări — iar o pastilă care răspunde la trecere promite
+   o apăsare pe care n-o are. Pagina de comenzi o stingea la loc cu trei rânduri
+   ale ei; a doua pagină ar fi trebuit să le copieze. La fel mai jos, la cele
+   două culori. */
+a.rc-badge:hover { background: rgba(139, 92, 246, .22); color: var(--rc-mov-fg); }
 
 /* Aceeași etichetă, pe ținte de deget: în cardul de telefon și în fereastra
    comenzii, unde e o legătură pe care omul chiar o apasă. */
@@ -74,7 +80,7 @@
   color: #9A5B06;
   border-color: rgba(217, 119, 6, .32);
 }
-.rc-badge--wait:hover { background: rgba(217, 119, 6, .24); color: #9A5B06; }
+a.rc-badge--wait:hover { background: rgba(217, 119, 6, .24); color: #9A5B06; }
 
 /* Comision stins (comandă anulată) sau cod fără cont în spate. Atribuirea se
    vede mai departe — patronul trebuie să afle CE a scris omul în coș, chiar
@@ -84,4 +90,4 @@
   color: var(--h-fg-subtle);
   border-color: var(--h-line);
 }
-.rc-badge--off:hover { background: var(--h-bg-sunk); color: var(--h-fg-muted); }
+a.rc-badge--off:hover { background: var(--h-bg-sunk); color: var(--h-fg-muted); }

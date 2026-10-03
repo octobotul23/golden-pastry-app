@@ -231,6 +231,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 /* Butonul se aprinde numai când fișa are ceva neaplicat. Un buton mereu
    aprins n-ar mai spune nimic; unul care se aprinde e o întrebare pusă. */
 .st-aplica--nou{background:var(--h-accent)}
+/* Când fișa e la zi, în locul butonului stă un rând de text stins (runda
+   2.6.0): „Socoteala e la zi” scris pe un buton viu se apăsa și nu făcea
+   nimic. Aceeași înălțime și aceeași margine ca butonul, ca fișa să nu sară
+   cu 44 de pixeli la fiecare câmp schimbat. */
+.st-lazi{margin:6px 0 0;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;text-align:center;font-size:13.5px;color:var(--h-fg-subtle);border:1px dashed var(--h-cream-500);border-radius:3px;padding:6px 12px}
 .st-zise{margin:14px 0 0;padding-top:13px;border-top:1px dashed var(--h-cream-500);font-size:12px;color:var(--h-fg-subtle);line-height:1.5}
 
 .st-bcoloana{min-width:0;display:flex;flex-direction:column}
@@ -764,7 +769,14 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <label class="st-bcamp"><span class="st-eticheta">Clientul</span>
 <input type="search" value="{{ cClient }}" onChange="{{ onCClient }}" placeholder="numele sau firma…"></label>
 
+<!-- Butonul se desenează numai când fișa are ceva neaplicat; altfel, un rând
+     de text. Două steaguri pereche, fiindcă `sc-if` primește o valoare. -->
+<sc-if value="{{ aplicaNou }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="{{ aplicaCls }}" onClick="{{ onAplica }}">{{ aplicaEt }}</button>
+</sc-if>
+<sc-if value="{{ aplicaLaZi }}" hint-placeholder-val="{{ true }}">
+<p class="st-lazi">Socoteala e la zi</p>
+</sc-if>
 <p class="st-zise">Comenzile anulate nu intră la bani. Cele neîncheiate se numără aparte, ca să se vadă ce mai e de făcut.</p>
 </aside>
 
@@ -2013,8 +2025,15 @@ class Component extends DCLogic {
       optFel: [{ v: "", l: "toate" }, { v: "copt", l: "coapte" }, { v: "congelat", l: "congelate" }],
       optFelC: [{ v: "", l: "Toată marfa" }, { v: "copt", l: "Coapte" }, { v: "congelat", l: "Congelate" }],
       optCategorii, optZone,
-      aplicaCls: neaplicat ? "st-aplica st-aplica--nou" : "st-aplica",
-      aplicaEt: neaplicat ? "Fă socoteala" : "Socoteala e la zi",
+      // Butonul există numai cât fișa are ceva neaplicat (`aplicaNou`); când e
+      // la zi, în locul lui stă rândul de text „Socoteala e la zi”
+      // (`aplicaLaZi`). Înainte eticheta aceea era scrisă pe butonul însuși,
+      // care se apăsa și ieșea pe prima linie de mai jos. Clasa și eticheta
+      // rămân chei, cu singura valoare pe care o mai pot avea.
+      aplicaNou: neaplicat,
+      aplicaLaZi: !neaplicat,
+      aplicaCls: "st-aplica st-aplica--nou",
+      aplicaEt: "Fă socoteala",
       onAplica: () => {
         if (!neaplicat) return;
         this.setState(Object.assign({}, cio, { ciorna: null }), () => this.cere());

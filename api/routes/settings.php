@@ -580,6 +580,62 @@ function guard_status_list(array $incoming): void
             'bad_special_status'
         );
     }
+
+    // ROLUL MUTAT SE JUDECĂ ȘI DUPĂ LOCUL DIN LISTĂ, NU NUMAI DUPĂ „E ÎN LISTĂ”.
+    //
+    // De la 2.6.0 lista are „Gata de livrare” chiar înaintea etapei finale, iar
+    // în Setări scrie „Comanda este încheiată (livrată) când ajunge la”. Cine
+    // alege aici „Gata de livrare” trecea de paza de mai sus (etapa e în listă)
+    // și strica trei lucruri deodată, fără niciun semn: clientul citea
+    // „Livrată” cu marfa încă în laborator, plafonul laboratorului cobora cu o
+    // etapă (`status_lab_ceiling()` e etapa dinaintea celei finale), iar
+    // comenzile vechi din „Predată” se întorceau pe panou drept cartoane de
+    // lucru.
+    //
+    // Regula e STRÂNSĂ dinadins: se judecă numai salvarea care MUTĂ un rol.
+    //   · „încheiată” și „anulată” nu pot ajunge pe aceeași etapă;
+    //   · etapa nouă de „încheiată” trebuie să fie ultima din drum — lista de
+    //     după salvare, scoasă cea de anulare, care poate sta oriunde.
+    //
+    // O salvare care nu mută niciun rol nu e judecată aici, oricum ar arăta
+    // lista. Regula largă („încheiată e mereu ultima”, la orice salvare a
+    // listei) ar refuza adăugarea unei etape la coadă — adică tocmai drumul pe
+    // care omul îl are ca să-și facă o etapă nouă de anulare — și ar încuia o
+    // casă cu lista deja strâmbă: n-ar mai putea salva nici telefonul.
+    $vineGata = array_key_exists('order_status_done', $incoming);
+    $vineAnul = array_key_exists('order_status_cancelled', $incoming);
+    $acumGata = trim(setting('order_status_done'));
+    $acumAnul = trim(setting('order_status_cancelled'));
+    $gata     = $vineGata ? trim((string) $incoming['order_status_done']) : $acumGata;
+    $anul     = $vineAnul ? trim((string) $incoming['order_status_cancelled']) : $acumAnul;
+    if ($gata === '' || ($gata === $acumGata && $anul === $acumAnul)) {
+        return;
+    }
+
+    if ($gata === $anul) {
+        fail(
+            'Aceeași etapă, „' . $gata . '”, nu poate și încheia, și anula comanda. '
+              . 'Alege două etape diferite la „Etapele cu rol special”.',
+            422,
+            'bad_special_status'
+        );
+    }
+
+    if ($gata !== $acumGata) {
+        $drum = array_values(array_filter($next, static fn ($s) => $s !== $anul));
+        $loc  = array_search($gata, $drum, true);
+        if ($loc !== false && $loc < count($drum) - 1) {
+            fail(
+                '„' . $gata . '” nu poate fi etapa care încheie comanda: după ea mai urmează „'
+                  . implode('”, „', array_slice($drum, $loc + 1)) . '”. '
+                  . 'Comanda se încheie la ultima etapă din listă (cea de anulare nu se numără). '
+                  . 'Dacă marfa ajunge la client chiar la „' . $gata . '”, mut-o întâi la capătul listei '
+                  . '„Etape în laborator”, apoi alege-o la „Etapele cu rol special” și salvează.',
+                422,
+                'bad_special_status'
+            );
+        }
+    }
 }
 
 /**

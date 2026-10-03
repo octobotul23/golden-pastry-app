@@ -407,6 +407,8 @@ if ($hasConfig) {
             '027_poza_fiecarei_laturi.sql',
             '028_preturi_pe_trepte.sql',
             '029_numere_in_catalog.sql',
+            '030_gata_de_livrare.sql',
+            '031_fise_tehnice.sql',
         ];
         $areRegistru = in_array('schema_migrations', $tables, true);
         check(
@@ -861,6 +863,37 @@ if ($hasConfig) {
                     . 'iar caseta „Număr în catalog" din Produse refuză salvarea. Purtarea fără ea '
                     . 'nu e stricată, e cea de dinainte.',
             ],
+            // 030 e de soiul lui 029: nu atinge schema, pune o dată un nume în
+            // lista de etape. Numele NU se cere aici, dinadins — lista e a
+            // patronului, iar o etapă redenumită ori scoasă din Setări ar
+            // înroși pagina pe o instalare cinstită (aceeași pricină pentru
+            // care 017 nu-și judecă cifra). Se cere semnul, care spune „a
+            // trecut pe-aici" oricum ar arăta lista azi.
+            '030_gata_de_livrare.sql' => [
+                'nume'    => 'Etapa „Gata de livrare", înaintea celei finale (migrarea 030)',
+                'coloane' => [],
+                'setari'  => ['migration_030_gata_de_livrare'],
+                'ce'      => 'Pune o dată etapa „Gata de livrare" în lista din Setări, chiar înaintea '
+                    . 'celei finale: laboratorul se oprește la ea, iar curierul ia de acolo. Fără '
+                    . 'ea, laboratorul se oprește tot la ultima etapă de dinaintea celei finale — '
+                    . 'la ambalare —, deci o comandă abia intrată la ambalat arată la fel ca una '
+                    . 'gata de plecare, iar butonul curierului nu are după ce se aprinde. Comenzile '
+                    . 'aflate la ambalare în ziua importului rămân acolo: laboratorul mai apasă o '
+                    . 'dată pe fiecare.',
+            ],
+            // 031 aduce două coloane pe `products` și semnul ei. Se cer toate
+            // trei: coloanele spun că fișa are unde se scrie, semnul spune că
+            // migrarea a mers până la capăt.
+            '031_fise_tehnice.sql' => [
+                'nume'    => 'Fișa tehnică a fiecărei laturi (migrarea 031)',
+                'coloane' => ['products' => ['sheet_frozen', 'sheet_baked']],
+                'setari'  => ['migration_031_fise_tehnice'],
+                'ce'      => 'Țin, pe fiecare produs, calea fișei tehnice a laturii congelate și pe a '
+                    . 'celei coapte, iar migrarea leagă o dată de produse fișele venite cu pachetul. '
+                    . 'Fără ele, magazinul nu arată butonul fișei la niciun produs, iar încărcarea '
+                    . 'unei fișe din Produse e refuzată cu un mesaj care numește migrarea. Purtarea '
+                    . 'fără ele nu e stricată, e cea de dinainte.',
+            ],
         ];
 
         // Coloanele fiecărui tabel se cer o singură dată, nu o dată pe migrare:
@@ -910,10 +943,10 @@ if ($hasConfig) {
                     if (!in_array($c, $are, true)) $lipsa[] = $tabel . '.' . $c;
                 }
             }
-            // `?? []` — numai 026 cere un index până azi, iar celelalte douăzeci
-            // și una de intrări n-au de ce să poarte o cheie goală. 020 aduce și
-            // el un index, dar acela doar grăbește: pierdut, nu se pierde nimic,
-            // deci rămâne numit, nu cerut.
+            // `?? []` — numai 026 cere un index până azi, iar celelalte intrări
+            // n-au de ce să poarte o cheie goală. 020 aduce și el un index, dar
+            // acela doar grăbește: pierdut, nu se pierde nimic, deci rămâne
+            // numit, nu cerut.
             foreach ($m['indexuri'] ?? [] as $tabel => $indexuri) {
                 if (!in_array($tabel, $tables, true)) {
                     $nestiut[] = $tabel;

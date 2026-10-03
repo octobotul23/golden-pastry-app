@@ -119,7 +119,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-ct=body]{padding:14px 14px 26px!important;gap:14px!important}
 [data-ct=g2]{grid-template-columns:1fr!important}
 [data-ct=cardfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
-[data-ct=cardfoot]>button{width:100%!important;white-space:normal!important;padding-left:4px!important;padding-right:4px!important} /* „Nu poți șterge contul cu care ești conectat” are 279px, iar butonul, la 320, 250: scrisul se rupe acum pe două rânduri; laturile mici îl țin pe unul de la ~357 în sus */
+[data-ct=cardfoot]>button{width:100%!important;white-space:normal!important;padding-left:4px!important;padding-right:4px!important} /* scrisul lung al piciorului („Apasă din nou: șterg definitiv contul”) se rupe pe două rânduri când nu încape; până la 2.6.0 îl cerea „Nu poți șterge contul cu care ești conectat” (279px într-un buton de 250 la 320), buton care pe contul tău nu se mai desenează */
 [data-ct=editfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
 [data-ct=editfoot]>button{width:100%!important;margin-left:0!important;min-width:0!important}
 [data-ct=cauta]{flex-basis:170px!important}
@@ -161,14 +161,25 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <a href="Client.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Vezi comanda mea</a>
 </sc-if>
 <sc-if value="{{ deniedStaff }}" hint-placeholder-val="{{ true }}">
+<!-- Lista vine din meniul rolului (`deniedPanouri`), nu mai e scrisă aici. Erau
+     trei legături de mână — laborator, depozit, rută —, iar agentul de vânzări
+     și omul de laborator n-au niciunul din cele trei panouri: apăsau și dădeau
+     de alt refuz. Aceeași formă ca în „Administrare Comenzi". -->
 <div style="display:flex;flex-direction:column;gap:8px">
-<a href="Panou%20Laborator.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">Panoul din laborator</a>
-<a href="Depozit.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Depozit · stoc</a>
-<a href="Ruta%20Sofer.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">Ruta șoferului</a>
+<sc-for list="{{ deniedPanouri }}" as="p" hint-placeholder-count="3">
+<sc-if value="{{ p.prim }}" hint-placeholder-val="{{ false }}">
+<a href="{{ p.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:16px;font-weight:700;text-decoration:none">{{ p.et }}</a>
+</sc-if>
+<sc-if value="{{ p.rest }}" hint-placeholder-val="{{ true }}">
+<a href="{{ p.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 16px;border-radius:14px;background:rgba(255,255,255,.10);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none">{{ p.et }}</a>
+</sc-if>
+</sc-for>
 </div>
 </sc-if>
 <button type="button" onClick="{{ onLogout }}" style="min-height:48px;border:1px solid rgba(255,255,255,.22);border-radius:14px;background:transparent;color:var(--h-cream-100);font-family:var(--h-font-body);font-size:15px;font-weight:600;cursor:pointer">Ieși din cont</button>
-<a href="Intrare.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;color:rgba(255,255,255,.72);text-decoration:none">← Alege panoul</a>
+<!-- Întoarcerea o hotărăște `gp.iesire()`, ca în sertarul de pe telefon:
+     clientul n-are niciun panou de ales, deci citește „← Înapoi la magazin". -->
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;min-height:44px;font-size:14px;color:rgba(255,255,255,.72);text-decoration:none">{{ navBack.et }}</a>
 </div>
 </div>
 </div>
@@ -487,13 +498,25 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 </div>
 
-<div data-ct="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<!-- E-MAILUL DE RECUPERARE (runda 2.6.0). Caseta se desenează numai unde
+     adresa chiar se poate schimba de aici (`a.mailLiber`). Pe contul altui
+     conducător, când serverul ar refuza-o, adresa se citește, fără casetă
+     (`a.mailBlocat`); pe contul tabletelor nu se desenează deloc, iar numele
+     rămâne singur pe rând (`a.g2Cols`). -->
+<div data-ct="g2" style="display:grid;grid-template-columns:{{ a.g2Cols }};gap:12px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Nume afișat
 <input class="h-input" value="{{ a.nameEdit }}" onChange="{{ a.onName }}" onBlur="{{ a.saveName }}" onKeyDown="{{ a.onFieldKey }}" style="height:46px;font-size:15px">
 </label>
+<sc-if value="{{ a.mailLiber }}" hint-placeholder-val="{{ true }}">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">E-mail de recuperare
 <input class="h-input" value="{{ a.mailEdit }}" onChange="{{ a.onMail }}" onBlur="{{ a.saveMail }}" onKeyDown="{{ a.onFieldKey }}" placeholder="nume@exemplu.ro" style="height:46px;font-size:15px">
 </label>
+</sc-if>
+<sc-if value="{{ a.mailBlocat }}" hint-placeholder-val="{{ false }}">
+<div data-ct="mail-citit" style="display:flex;flex-direction:column;gap:6px;min-width:0;font-size:13px;font-weight:600;color:var(--h-fg-muted)">E-mail de recuperare
+<span style="display:flex;align-items:center;min-height:46px;font-size:15px;font-weight:400;color:var(--h-fg);overflow-wrap:anywhere">{{ a.mailText }}</span>
+</div>
+</sc-if>
 </div>
 
 <sc-if value="{{ a.dirty }}" hint-placeholder-val="{{ false }}">
@@ -523,7 +546,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!-- PAROLA (runda 2.6.0). Rândul se desenează numai unde parola chiar se poate
+     pune de aici (`a.parolaDeAici`): nu pe contul tabletelor, nu pe contul unui
+     conducător pe care serverul l-ar refuza, și nu pe PROPRIA fișă — acolo
+     serverul schimbă parola și te scoate pe loc din cont, înainte să apuci s-o
+     vezi. Pe fișa ta stă în loc un rând cu legătura spre „Parola mea". -->
 <sc-if value="{{ a.notSystem }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ a.parolaDeAici }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap">
 <label style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parola
 <input class="h-input h-numeric" type="text" value="{{ a.shown }}" readOnly="{{ true }}" style="height:46px;font-size:15px;background:var(--h-bg-sunk)">
@@ -535,6 +564,16 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-accent);font-size:13px;line-height:1.55;color:var(--h-fg)">
 Notează parola acum: <strong>{{ a.freshPass }}</strong> — nu mai poate fi afișată după ce pleci de pe pagină.
 </div>
+</sc-if>
+</sc-if>
+<sc-if value="{{ a.parolaMea }}" hint-placeholder-val="{{ false }}">
+<div data-ct="parola-mea" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 13px;border-radius:13px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<span style="flex:1 1 200px;min-width:0;font-size:13px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">Parola contului tău nu se schimbă de aici, ci din „Parola mea”: acolo rămâi conectat.</span>
+<a href="Parola.dc.html" class="h-btn h-btn--secondary" style="min-height:46px;font-size:14px;flex:none;text-decoration:none">Parola mea →</a>
+</div>
+</sc-if>
+<sc-if value="{{ a.conducereNota }}" hint-placeholder-val="{{ false }}">
+<div data-ct="conducere" style="padding:11px 13px;border-radius:13px;background:var(--h-bg-sunk);border:1px solid var(--h-line);font-size:13px;line-height:1.55;color:var(--h-fg-muted);text-wrap:pretty">{{ a.conducereNota }}</div>
 </sc-if>
 </sc-if>
 
@@ -677,7 +716,12 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
      telefon, caseta aceea e la un ecran distanță de degetul care a apăsat. -->
 <sc-if value="{{ a.activShown }}" hint-placeholder-val="{{ false }}">
 <div data-ct="activ" style="display:flex;flex-direction:column;gap:4px;padding:3px 13px 11px;border-radius:13px;background:var(--h-bg-sunk);border:1px solid {{ a.activLine }}">
+<sc-if value="{{ a.activLiber }}" hint-placeholder-val="{{ true }}">
 <label class="h-switch"><input type="checkbox" checked="{{ a.activOn }}" disabled="{{ a.activBlocat }}" onChange="{{ a.onActiv }}"><span>Cont pornit</span></label>
+</sc-if>
+<sc-if value="{{ a.activFix }}" hint-placeholder-val="{{ false }}">
+<span data-ct="activ-citit" style="padding-top:8px;font-size:14px;font-weight:600">{{ a.activStare }}</span>
+</sc-if>
 <span style="font-size:12px;line-height:1.5;color:{{ a.activNotaFg }};text-wrap:pretty">{{ a.activNota }}</span>
 <sc-if value="{{ a.activArmat }}" hint-placeholder-val="{{ false }}">
 <div data-ct="editfoot" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
@@ -705,17 +749,33 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
      nume (108px la 14px) și se strânge când n-are loc; eticheta se rupe pe
      două rânduri (`flex-wrap`), iar pe telefon rândul drepturilor trece sub
      listă. Măsurat de la 320 la 1440: nimic tăiat, nimic peste margine. -->
+<!-- VEDE ȘI POATE (runda 2.6.0). Lista se desenează numai unde rolul chiar se
+     poate schimba (`a.rolSchimbabil`) și ține numai rolurile pe care serverul
+     le primește de la cel care privește, plus rolul de acum al contului
+     (`a.roleOpts`). Pe propria fișă și pe contul unui conducător închis
+     administratorului, rolul se citește (`a.rolFix`). „Șterge contul" nu se
+     desenează unde ștergerea ar fi refuzată (`a.potSterge`). -->
+<sc-if value="{{ a.rolSchimbabil }}" hint-placeholder-val="{{ true }}">
 <label style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;min-width:0;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
 <select class="h-input" value="{{ a.role }}" onChange="{{ a.onRole }}" title="{{ a.roleHint }}" style="height:46px;font-size:14px;flex:1 1 auto;width:auto;min-width:0;max-width:100%">
-<sc-for list="{{ roleOpts }}" as="o" hint-placeholder-count="5">
+<sc-for list="{{ a.roleOpts }}" as="o" hint-placeholder-count="5">
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
 </select><span data-ct="drepturi" style="flex:1 1 auto;min-width:0;font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ a.roleRights }}</span>
 </label>
+</sc-if>
+<sc-if value="{{ a.rolFix }}" hint-placeholder-val="{{ false }}">
+<div data-ct="acces-citit" style="display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;min-width:0;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Acces
+<span style="font-size:14px;color:var(--h-fg)">{{ a.rolNume }}</span>
+<span style="flex:1 1 auto;min-width:0;font-size:12px;font-weight:400;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ a.rolFixNota }}</span>
+</div>
+</sc-if>
+<sc-if value="{{ a.potSterge }}" hint-placeholder-val="{{ true }}">
 <sc-if value="{{ a.delArmed }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onDelCancel }}" style="margin-left:auto;min-height:46px;font-size:14px">Renunț la ștergere</button>
 </sc-if>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onDelete }}" style="margin-left:{{ a.delGap }};min-height:46px;font-size:14px;color:{{ a.delFg }}">{{ a.delLabel }}</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onDelete }}" style="margin-left:{{ a.delGap }};min-height:46px;font-size:14px;color:var(--h-danger)">{{ a.delLabel }}</button>
+</sc-if>
 </sc-if>
 </div>
 
@@ -897,7 +957,7 @@ const ROLE_OPTS = [
 // și aici — iar `.claude/check-meniu.mjs` compară matricea cu ea însăși în
 // două exemplare tocmai ca abaterea să se vadă.
 const ROLE_HINT = {
-  fondator: "Fondatorul are tot ce are un administrator, plus două lucruri pe care un administrator nu le are: dă și ia rolurile de administrator și de fondator, și vede „Statistici” — cifrele casei, banii și comenzile pe interval. Rolul ăsta nu se dă de aici — omul îl cere din contul lui, iar linkul de confirmare pleacă pe adresa firmei.",
+  fondator: "Fondatorul are tot ce are un administrator, plus două lucruri pe care un administrator nu le are: dă și ia rolurile de administrator și de fondator, și vede „Statistici” — cifrele casei, banii și comenzile pe interval. Rolul ăsta îl dă numai un alt fondator; cât nu e încă niciunul, omul îl cere din contul lui, iar linkul de confirmare pleacă pe adresa firmei.",
   admin: "Administratorii intră în comenzi, depozit, conturi, catalog, pontaj, jurnal și setări. Statisticile casei nu le sunt deschise: alea sunt numai ale fondatorului.",
   angajat: "Angajații lucrează în laborator, pe rută și în depozit, și își pontează tura. Comenzile, conturile, catalogul, jurnalul și setările nu le sunt deschise.",
   manager: "Managerii văd comenzile, laboratorul, ruta, depozitul și raportul de pontaj — orele tuturor, pe zile și pe oameni. În comenzi mută etapele și pot lua o comandă la telefon, dar formularul de editare rămâne al administratorului. Conturile, catalogul, jurnalul, setările și recomandările nu le sunt deschise.",
@@ -1292,7 +1352,27 @@ class Component extends DCLogic {
     if (!CERUT_CONT || this.cerutFacut) return;
     this.cerutFacut = true;
     const acc = (this.state.users || []).find((x) => x.id === CERUT_CONT);
-    if (acc) this.setState({ edit: acc.u, n1: "", n2: "", err: "" });
+    // `deschis`, nu numai `edit` (runda 2.6.0): în plăci — vederea din pornire —
+    // fișa se desenează numai pentru contul deschis, deci „Vezi contul" din
+    // Jurnal lăsa omul pe grila de plăci, fără nicio fișă. `edit` deschide
+    // editorul de parolă numai unde parola se poate pune de aici (v.
+    // `parolaDeAici`): pe contul tabletelor, pe al tău și pe al unui conducător
+    // închis se deschide fișa, fără editor.
+    if (acc) {
+      this.setState({ edit: acc.u, deschis: acc.u, coloane: coloaneGrila(null) || this.state.coloane, n1: "", n2: "", err: "" },
+        () => this.arataFisa(acc.u));
+    }
+  }
+
+  // Fișa se pune SUB rândul plăcii. Când rândul e jos pe ecran, fișa ar
+  // începe sub marginea lui, iar omul ar crede că apăsarea n-a făcut nimic.
+  arataFisa(u) {
+    try {
+      const f = Array.from(document.querySelectorAll("[data-ct=fisa]")).find(x => x.getAttribute("data-u") === u);
+      if (!f || f.getBoundingClientRect().top <= window.innerHeight - 140) return;
+      const lin = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      f.scrollIntoView({ block: "start", behavior: lin ? "auto" : "smooth" });
+    } catch (e) { /* fără pagină (probele): nimic de arătat */ }
   }
 
   pullUsers(patch) {
@@ -1687,16 +1767,9 @@ class Component extends DCLogic {
         if (p && p.focus) p.focus();
       } catch (e) { /* fără pagină (probele): nimic de mutat */ }
     });
-    // Fișa se pune SUB rândul plăcii. Când rândul e jos pe ecran, fișa ar
-    // începe sub marginea lui, iar omul ar crede că apăsarea n-a făcut nimic.
-    const arataFisa = (u) => {
-      try {
-        const f = Array.from(document.querySelectorAll("[data-ct=fisa]")).find(x => x.getAttribute("data-u") === u);
-        if (!f || f.getBoundingClientRect().top <= window.innerHeight - 140) return;
-        const lin = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        f.scrollIntoView({ block: "start", behavior: lin ? "auto" : "smooth" });
-      } catch (e) { /* fără pagină (probele): nimic de arătat */ }
-    };
+    // Arătarea fișei e metodă a paginii (`arataFisa`, sus), fiindcă o cheamă și
+    // deschiderea din adresă (`deschideCerutul`), nu numai apăsarea pe placă.
+    const arataFisa = (u) => this.arataFisa(u);
 
     // Contul pornit ori oprit (runda 2.5.0). Cine are voie: aceeași socoteală
     // ca `guard_leader_role()` din api/routes/users.php — un cont de conducere
@@ -1704,6 +1777,15 @@ class Component extends DCLogic {
     // cât timp există vreunul pornit. Rândul nu promite ce se termină în refuz.
     const euFondator = authRole(S.auth) === "fondator";
     const suntFondatori = S.users.some(x => roleOf(x) === "fondator" && x.active !== false);
+    // VEDE ȘI POATE (runda 2.6.0, regula patronului: un control pe care omul
+    // nu-l poate folosi nu se desenează). Ce rol primește serverul de la cel
+    // care privește — aceeași socoteală din `guard_leader_role()`: „fondator" îl
+    // dă numai un fondator; „administrator", un fondator ori, cât nu e niciun
+    // fondator pornit, un administrator. Cu lista de conturi neîncărcată nu se
+    // știe dacă e vreun fondator, deci „administrator" nu se oferă pe încredere.
+    const rolDat = (v) => v === "fondator" ? euFondator
+      : v === "admin" ? (euFondator || (S.users.length > 0 && !suntFondatori))
+        : true;
     // Cât lucrează cererea, comutatorul stă stins și arată starea CERUTĂ: pus
     // înapoi pe cea veche, ar fi sărit o clipă îndărăt și apoi iar înainte, iar
     // omul ar fi crezut că n-a mers și ar fi apăsat din nou.
@@ -1718,14 +1800,41 @@ class Component extends DCLogic {
     };
 
     const accounts = potrivite.map(acc => {
-      const editing = S.edit === acc.u;
       const isMe = me === acc.u;
       const rl = roleOf(acc);
+      // Contul de conducere ÎNCHIS celui care privește: un administrator ori un
+      // fondator pe care îl atinge numai un fondator, iar cel care privește nu
+      // e. Serverul îi refuză atunci parola, adresa, rolul și ștergerea
+      // (`guard_leader_role()`, api/routes/users.php), deci fișa nu le
+      // desenează. `|| rl === "fondator"`: un fondator OPRIT, când nu e niciun
+      // fondator pornit, nu mai e ținut de regula de mai sus, dar rolul lui tot
+      // nu-l poate lua un administrator (`guard_last_founder()`).
+      const conducereInchisa = gp.eAdmin(rl) && !euFondator && (suntFondatori || rl === "fondator");
+      // Trei piedici, aceleași pentru parolă, rol și ștergere: contul
+      // tabletelor, contul TĂU și conducerea închisă. Socotite o dată, purtate
+      // pe trei nume, fiindcă sunt trei controale deosebite în fișă.
+      const alAltuiaSiDeschis = !acc.sys && !isMe && !conducereInchisa;
+      // Parola se pune de aici numai pe contul ALTCUIVA. Pe propria fișă
+      // serverul ar șterge toate sesiunile contului, și pe cea de acum: pagina
+      // ar pleca la intrare înainte să arate parola generată. De-aia paza stă
+      // și pe `editing`, nu numai pe butonul care îl deschide: editorul se mai
+      // deschide și din adresă (`deschideCerutul`).
+      const parolaDeAici = alAltuiaSiDeschis;
+      const editing = S.edit === acc.u && parolaDeAici;
+      const rolSchimbabil = alAltuiaSiDeschis;
+      const potSterge = alAltuiaSiDeschis;
       const activ = acc.active !== false;
       const activLucru = S.activLucru === acc.u;
       const activArmat = !activLucru && S.activArm === acc.u;
       const activDoarFondator = gp.eAdmin(rl) && !euFondator && suntFondatori;
       const activBlocat = isMe || activDoarFondator || activLucru;
+      // Unde serverul refuză ORICÂND și oprirea, și pornirea — contul tău, un
+      // cont de conducere când nu ești fondator — comutatorul nu se mai
+      // desenează (runda 2.6.0): starea se citește, cu pricina dedesubt. Stins
+      // rămâne numai cât lucrează cererea (`activLucru`), fiindcă atunci se
+      // aprinde la loc singur.
+      const activFix = isMe || activDoarFondator;
+      const rolulDinLista = ROLE_OPTS.find((o) => o.v === rl) || {};
       return {
         u: acc.u, name: acc.name, mail: acc.mail || "",
         role: rl,
@@ -1768,7 +1877,15 @@ class Component extends DCLogic {
         // din pricina căruia s-a cerut lucrarea, iar un rând nedesenat acolo ar
         // fi ascuns tocmai răspunsul la întrebarea „de ce nu mai pot marca
         // livrat de pe tabletă?".
-        livrareShown: S.livrare && rl !== "client",
+        //
+        // Nici pe omul de laborator (runda 2.6.0): semnul îl citește o singură
+        // poartă, `poarta_etapei_finale()` din `PATCH /orders/#`, iar ruta îl
+        // primește numai pe cine e în `GP_STAFF_ROLES` — `utilizator_lab` nu e,
+        // și n-are decât pontajul. Bifa s-ar fi scris, ar fi lăsat rând în
+        // jurnal și n-ar fi schimbat nimic. Managerul, agentul și angajatul
+        // ajung toți la poartă, deci la ei rândul rămâne; la administrator și
+        // fondator rămâne cu lămurirea de mai jos (hotărâre din 2.3.0).
+        livrareShown: S.livrare && rl !== "client" && rl !== "utilizator_lab",
         livrareOn: acc.livrare,
         // Ce scrie pe cont și ce poate omul sunt două lucruri, și rândul le
         // spune pe amândouă. La administrator și fondator bifa poate fi goală
@@ -1800,14 +1917,18 @@ class Component extends DCLogic {
         // Pornirea merge din prima: nu scoate pe nimeni de nicăieri.
         //
         // Rândul se desenează și unde nu se poate apăsa (contul tău, un cont de
-        // conducere când nu ești fondator), stins și cu motivul scris, ca „Nu
-        // poți șterge contul cu care ești conectat". Pe contul de sistem nu se
+        // conducere când nu ești fondator), cu motivul scris — dar fără
+        // comutator (runda 2.6.0, `activFix`): până atunci era unul stins, pe
+        // care omul îl vedea și nu-l putea folosi. Pe contul de sistem nu se
         // desenează deloc: serverul îl refuză, iar accesul tabletelor se oprește
         // din Setări.
         activShown: !acc.sys,
+        activLiber: !acc.sys && !activFix,
+        activFix: !acc.sys && activFix,
+        activStare: activ ? "Cont pornit" : "Cont oprit",
         activOn: activLucru ? !!S.activSpre : activArmat ? false : activ,
         activBlocat,
-        activArmat,
+        activArmat: activArmat && !activFix,
         activLine: activArmat ? "var(--h-danger)" : "var(--h-line)",
         activNotaFg: activArmat ? "var(--h-fg)" : "var(--h-fg-faint)",
         activNota: isMe
@@ -1875,6 +1996,16 @@ class Component extends DCLogic {
           if (gp.eAdmin(rl) && !gp.eAdmin(nextRole) && admins <= 1) return set({ msg: "Trebuie să rămână cel puțin un administrator.", msgBad: true });
           this.patchUser(acc, { role: nextRole }, { msg: "„" + acc.name + "” e acum " + (ROLE_L[nextRole] || nextRole) + "." });
         },
+        // Lista de pe fișă ține numai ce primește serverul de la cel care
+        // privește (`rolDat`), plus rolul de ACUM al contului — fără el, lista
+        // ar arăta drept ales alt rol decât cel pe care îl are omul. Unde rolul
+        // nu se poate schimba deloc, rândul îl spune în cuvinte (`rolFix`): o
+        // listă vie care se termină în mesaj roșu e o promisiune mincinoasă.
+        roleOpts: ROLE_OPTS.filter((o) => o.v === rl || rolDat(o.v)),
+        rolSchimbabil,
+        rolFix: !acc.sys && !rolSchimbabil,
+        rolNume: rolulDinLista.l || rl,
+        rolFixNota: (rolulDinLista.d || "") + (isMe ? " · propriul acces nu ți-l poți schimba singur" : ""),
         // --- recomandări ---
         // Secțiunea apare doar dacă serverul chiar a trimis ceva: pe o
         // instalare fără migrarea 007 toate câmpurile sunt goale, iar un cont
@@ -2061,6 +2192,17 @@ class Component extends DCLogic {
         mailEdit: draftVal(acc, "mail", acc.mail || ""),
         onMail: onTasta(acc, "mail"),
         saveMail: laIesire(acc, "mail", "email", acc.mail || ""),
+        // Pe adresa de recuperare pleacă linkul de resetare a parolei, deci
+        // cine o mută poate intra în cont. Pe contul ALTUI conducător închis
+        // serverul refuză schimbarea („Adresa unui cont de conducere se schimbă
+        // numai de un fondator", users.php), deci adresa se citește, fără
+        // casetă; pe a ta o primește oricând. Contul tabletelor n-are parolă de
+        // recuperat, iar recuperarea sare peste el: acolo caseta nu se
+        // desenează deloc, și numele rămâne singur pe rând.
+        mailLiber: !acc.sys && (isMe || !conducereInchisa),
+        mailBlocat: !acc.sys && !isMe && conducereInchisa,
+        mailText: acc.mail || "fără adresă",
+        g2Cols: acc.sys ? "1fr" : "1fr 1fr",
         onFieldKey: iesiCuEnter,
         // Se salvează la ieșirea din câmp, nu la fiecare tastă. Cât timp există
         // o ciornă nesalvată, rândul o spune — altfel omul ar pleca de pe
@@ -2071,7 +2213,16 @@ class Component extends DCLogic {
         // Serverul refuză parola pe contul de sistem; butoanele nu trebuie să
         // promită ceva ce se termină cu o eroare.
         isSystem: acc.sys, notSystem: !acc.sys,
-        canEditPass: !editing && !acc.sys,
+        // Nici pe propria fișă, nici pe contul unui conducător închis (runda
+        // 2.6.0; v. `parolaDeAici`, sus). Pe fișa ta stă în loc rândul cu
+        // legătura spre „Parola mea"; pe a conducătorului, o lămurire.
+        parolaDeAici,
+        parolaMea: isMe && !acc.sys,
+        conducereNota: !acc.sys && !isMe && conducereInchisa
+          ? "Parola, e-mailul de recuperare și rolul unui " + (rl === "fondator" ? "fondator" : "administrator")
+            + " le schimbă numai un fondator; tot el îi poate șterge contul."
+          : "",
+        canEditPass: !editing && parolaDeAici,
         n1: editing ? S.n1 : "", n2: editing ? S.n2 : "", err: editing ? S.err : "",
         onEdit: () => set({ edit: acc.u, n1: "", n2: "", err: "" }),
         onCancel: () => set({ edit: null, n1: "", n2: "", err: "" }),
@@ -2086,18 +2237,23 @@ class Component extends DCLogic {
         // unde butonul stă singur pe rândul lui, ștergea contul unui client, iar
         // parola lui nu se poate reface — hash-ul a plecat odată cu rândul.
         // Acum prima apăsare doar pregătește, a doua execută.
-        delArmed: !isMe && S.sterg === acc.u,
+        //
+        // Butonul nu se desenează unde ștergerea ar fi refuzată (runda 2.6.0):
+        // pe contul tău — era un buton stins, cu „Nu poți șterge contul cu care
+        // ești conectat" — și pe contul unui conducător închis, unde apăsat de
+        // două ori se termina în refuzul serverului.
+        potSterge,
+        delArmed: S.sterg === acc.u,
         // Când apare și butonul de renunțare, el e cel împins la dreapta;
         // altfel cele două s-ar bate pe același „margin-left:auto" și ar sări
         // pe rânduri diferite, cu butonul roșu singur dedesubt.
-        delGap: !isMe && S.sterg === acc.u ? "0" : "auto",
-        delLabel: isMe
-          ? "Nu poți șterge contul cu care ești conectat"
-          : S.sterg === acc.u ? "Apasă din nou: șterg definitiv contul" : "Șterge contul",
-        delFg: isMe ? "var(--h-fg-faint)" : "var(--h-danger)",
+        delGap: S.sterg === acc.u ? "0" : "auto",
+        delLabel: S.sterg === acc.u ? "Apasă din nou: șterg definitiv contul" : "Șterge contul",
         onDelCancel: () => set({ sterg: null }),
         onDelete: () => {
-          if (isMe) return;
+          // Plasă: butonul stă sub `potSterge`, deci pe contul tău ori pe al
+          // unui conducător închis nu se ajunge aici; serverul ar refuza oricum.
+          if (!potSterge) return;
           if (S.sterg !== acc.u) {
             return set({
               sterg: acc.u, activArm: null,
@@ -2228,19 +2384,34 @@ class Component extends DCLogic {
       // scrie „conectat" sub un nume gol ar minți. Atunci nu se arată niciunul.
       navWho: !!S.auth,
       navAnon: false,
-      locked: S.loaded && !S.auth,
-      denied: S.loaded && !!S.auth && !isAdmin(S.auth),
+      // TREI ECRANE, DUPĂ CE SE ȘTIE (runda 2.6.0), ca în „Administrare
+      // Comenzi": fără cont aflat, ecranul neutru („Se verifică sesiunea…");
+      // cu un cont care nu e de conducere, refuzul; cu unul de conducere,
+      // pagina. Până acum pagina se desena ORICUI cât nu răspunsese serverul
+      // (`unlocked: !S.loaded || …`): un angajat vedea o clipă „+ Cont nou",
+      // „Jurnal de modificări →" și cardul codului, toate vii.
+      locked: !S.auth,
+      denied: !!S.auth && !isAdmin(S.auth),
       deniedClient: !!S.auth && authRole(S.auth) === "client",
       deniedStaff: !!S.auth && authRole(S.auth) !== "client",
+      // Panourile de pe ecranul de refuz, din meniul rolului — nu trei legături
+      // scrise de mână, din care agentul și omul de laborator n-aveau niciuna.
+      // Primul e butonul plin, restul stau sub el (două steaguri, fiindcă
+      // `sc-if` primește o valoare).
+      deniedPanouri: gp.meniu("", S.auth).map((m, i) => ({ et: m.et, href: m.href, prim: i === 0, rest: i > 0 })),
       // Aceeași propoziție nu se potrivea amândurora. Clientul nu e angajat, iar
       // „panourile de lucru” nu-i sunt nici măcar arătate: sub text îi apare butonul
       // spre „Comanda mea”. Textul se desparte pe aceeași întrebare pe care o pun
       // deja butoanele de dedesubt, ca ecranul să nu se contrazică singur.
+      // Și nici managerului ori agentului nu li se mai spune „angajat": rolul se
+      // ia din `ROLE_L`, aceeași vorbă pe care o poartă insigna de pe fișă.
       deniedLine: !S.auth ? ""
         : authRole(S.auth) === "client"
           ? "Contul „" + S.auth.name + "” e cont de client: conturile și parolele se văd doar dintr-un cont de administrator."
-          : "Contul „" + S.auth.name + "” e cont de angajat: nu poate vedea sau schimba parolele.",
-      unlocked: !S.loaded || (!!S.auth && isAdmin(S.auth)),
+          : "Contul „" + S.auth.name + "” e "
+            + (ROLE_L[authRole(S.auth)] ? "cont de " + ROLE_L[authRole(S.auth)] : "cont de angajat")
+            + ": nu poate vedea sau schimba parolele.",
+      unlocked: !!S.auth && isAdmin(S.auth),
       // Cât ține întrebarea către server nu spunem nici „autentifică-te", nici
       // „n-ai voie": încă nu știm. O clipă de „se verifică" e mai cinstită
       // decât un ecran care apoi se schimbă singur.
@@ -2472,7 +2643,10 @@ class Component extends DCLogic {
         ? "Aici pleacă linkul de la „Ți-ai uitat parola?”."
         : "Fără e-mail, contul nu poate folosi „Ți-ai uitat parola?” — parola i-o schimbi tot tu, de aici.",
       nRole: S.nRole,
-      roleOpts: ROLE_OPTS,
+      // Numai rolurile pe care serverul le primește de la cel care face contul
+      // (`rolDat`): unui administrator nu i se mai oferă „Fondator" și, cât
+      // există un fondator pornit, nici „Administrator".
+      roleOpts: ROLE_OPTS.filter((o) => rolDat(o.v)),
       nRoleHint: ROLE_HINT[S.nRole] || "",
       onNRole: (e) => set({ nRole: e && e.target ? String(e.target.value) : S.nRole, nErr: "" }),
       nIsClient: S.nRole === "client",

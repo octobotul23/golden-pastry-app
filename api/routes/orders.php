@@ -818,6 +818,11 @@ function route_orders_create(): void
     // De aici încolo nimic nu mai ajunge la client. Un anunț care nu pleacă
     // rămâne scris în `notifications` cu status „failed", cu tot cu numărul de
     // încercări și motivul, de unde se vede în Setări ce s-a pierdut.
+    //
+    // Cine a scris comanda și al cui e clientul se agață ABIA AICI, după
+    // răspuns: `anunt` e numai pentru mesaj (`anunt_randuri_oameni()`,
+    // api/lib/notify.php) și n-are ce căuta în ce primește panoul.
+    $order['anunt'] = ['autorId' => (int) $user['id'], 'aducatorId' => $order['commission']['referrer'] ?? null];
     try {
         notify_new_order($order);
     } catch (Throwable $e) {
@@ -941,11 +946,16 @@ function poarta_scrierii_comenzii(array $u, array $b, string $id): void
  *
  * HOTĂRÂREA PATRONULUI, 19 septembrie 2026: „numai șoferul confirmă livrarea".
  *
- * Etapa finală („Predată") înseamnă „ajunsă la client" — lista de etape n-are
- * una separată pentru predarea către curier. Serverul n-avea nicio regulă de
- * trecere și niciun drept pe etapă: orice cont de personal putea pune orice
- * etapă, chiar sărind de la prima la ultima. Laboratorul o apăsa când termina
- * de ambalat, iar comanda apărea livrată înainte să fi urcat în mașină.
+ * Etapa finală („Predată") înseamnă „ajunsă la client". Serverul n-avea nicio
+ * regulă de trecere și niciun drept pe etapă: orice cont de personal putea
+ * pune orice etapă, chiar sărind de la prima la ultima. Laboratorul o apăsa
+ * când termina de ambalat, iar comanda apărea livrată înainte să fi urcat în
+ * mașină.
+ *
+ * Pe atunci lista de etape n-avea una a ei pentru predarea către curier. De la
+ * `sql/030_gata_de_livrare.sql` (2 octombrie 2026) o are: „Gata de livrare",
+ * chiar înaintea celei finale. Poarta judecă și acum tot mutarea SPRE etapa
+ * finală; etapa nouă e una dinaintea ei, ca oricare alta.
  *
  * DE CE NU AJUNGE OPRIREA DIN PAGINĂ. Contul `angajat` are ȘI panoul Laborator,
  * ȘI panoul Rută. Același om, cu același cont, ar fi apăsat pe cealaltă ușă —

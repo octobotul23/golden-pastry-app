@@ -374,7 +374,7 @@
    * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
    * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
    */
-  const VERSIUNE = '2.5.2';
+  const VERSIUNE = '2.6.0';
 
   /**
    * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo
@@ -1561,7 +1561,7 @@
      */
     __lists: null,
     __L: {
-      statuses: ['În așteptare', 'La dospit', 'În cuptor', 'La ambalare', 'Predată', 'Anulată'],
+      statuses: ['În așteptare', 'La dospit', 'În cuptor', 'La ambalare', 'Gata de livrare', 'Predată', 'Anulată'],
       done: 'Predată',
       cancelled: 'Anulată',
       // Se umple din `/lists` (v. `labCeiling()`). Gol la început DINADINS: pe
@@ -2481,6 +2481,62 @@
       pret = vi;
     }
     return scara;
+  };
+
+  /**
+   * Se vinde produsul pe latura asta? Oglinda lui `latura_se_vinde()` din
+   * `api/lib/laturi.php`: e ÎN catalogul laturii (`inFrozen` / `inBaked`) ȘI
+   * are preț acolo. Amândouă, nu una: „în catalog, fără preț" e un import
+   * făcut cu mâna, iar „cu preț, scos din catalog" e chiar produsul pe care
+   * serverul îl refuză cu `bad_variant_side` (`price_items()`).
+   *
+   * Prețul se judecă la fel ca `latura_pret()`: lipsă înseamnă `null` ori gol,
+   * deci un preț de ZERO lei e tot preț. Apartenența vine gata socotită de la
+   * server (`product_public()` trece rândul prin `latura_in()`), ca `true` ori
+   * `false`; numai un `false` spus pe față scoate produsul — un catalog venit
+   * fără câmpul ăsta lasă prețul să hotărască, iar serverul rămâne judecătorul.
+   *
+   * `latura` e „congelat" / „copt", ca pe rândul de comandă; se primesc și
+   * numele magazinului, „frozen" / „baked", ca la `scaraDinCampuri`.
+   *
+   * O LATURĂ NECUNOSCUTĂ SE JUDECĂ PE CONGELATE, DINADINS. Goală, „mixt",
+   * „Copt" cu majusculă, o greșeală de tastare: tot ce nu e întocmai „copt"
+   * (ori „baked") citește coloanele de congelat. Nu e o scăpare de îndreptat
+   * aici, ci chiar purtarea serverului: `latura_coloana_in()` și
+   * `latura_coloana_pret()` întreabă amândouă `$latura === 'copt'` și dau tot
+   * restul pe congelat, deci `latura_se_vinde($r, 'mixt')` răspunde ce
+   * răspunde pentru „congelat". O oglindă care ar spune „nu se vinde" la o
+   * latură necunoscută s-ar despărți de server tocmai acolo — iar fereastra ar
+   * ascunde un produs pe care `price_items()` l-ar fi primit. Cine vrea altă
+   * purtare o schimbă ÎNTÂI în `api/lib/laturi.php`. Rândurile astea stau și
+   * ele în tabelul de adevăr al probei.
+   *
+   * O folosește fereastra „Din catalog" din formularul de comandă, ca să nu
+   * ofere ce serverul nu primește. Paza: `.claude/check-fereastra-catalog.mjs`
+   * — tabelul ei de adevăr e scris de mână din PHP, deci o schimbare făcută
+   * numai aici, ori numai acolo, o înroșește.
+   */
+  gp.seVindePe = (p, latura) => {
+    const r = p || {};
+    const copt = latura === 'copt' || latura === 'baked';
+    return r[copt ? 'inBaked' : 'inFrozen'] !== false && !gol(r[copt ? 'priceBaked' : 'priceFrozen']);
+  };
+
+  /**
+   * Poza de arătat pe latura asta — numai a EI, fără căderea pe cealaltă.
+   * Oglinda lui `latura_poza()`: serverul o trimite gata aleasă în
+   * `photoFor.frozen` / `photoFor.baked`, iar de la 21 septembrie 2026 o latură
+   * fără poză rămâne fără, nu o împrumută pe a vecinei. Gol când lipsește: cine
+   * o desenează își pune singur înlocuitorul (un `src=""` e o cerere spre
+   * pagina însăși, nu „nicio poză").
+   *
+   * O latură necunoscută ia poza de congelat, ca la `gp.seVindePe` și ca
+   * `latura_coloana_poza()` pe server: dinadins, nu din uitare.
+   */
+  gp.pozaPe = (p, latura) => {
+    const pe = (p && p.photoFor) || {};
+    const v = pe[latura === 'copt' || latura === 'baked' ? 'baked' : 'frozen'];
+    return typeof v === 'string' ? v.trim() : '';
   };
 
   /**

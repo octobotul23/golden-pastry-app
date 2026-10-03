@@ -61,7 +61,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
 <button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
 </sc-if>
+<sc-if value="{{ navInapoi }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</sc-if>
 </div>
 </div>
 </sc-if>
@@ -121,6 +123,18 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="h-alert h-alert--success" style="border-radius:16px;padding:14px 16px">
 <p class="h-alert__title" style="margin:0;font-size:15px">Parola a fost schimbată</p>
 <p style="margin:6px 0 0;font-size:14px;line-height:1.55;text-wrap:pretty">Celelalte dispozitive pe care erai conectat au fost deconectate. Data viitoare intri cu parola nouă.</p>
+</div>
+</sc-if>
+
+<!-- CONTUL COMUN AL TABLETELOR. N-are o parolă a lui: se deschide cu codul
+     tabletelor, iar serverul îi refuză și schimbarea parolei (nimeni nu-i știe
+     parola de acum), și cererea de fondator. Formularul și butonul nu se mai
+     desenează pentru el; în locul lor stă rândul de mai jos, care spune de
+     unde se schimbă ce se poate schimba. -->
+<sc-if value="{{ contComun }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:20px;border-radius:22px;display:flex;flex-direction:column;gap:8px">
+<p style="margin:0;font-size:15px;line-height:1.6;text-wrap:pretty">Acesta e contul comun al tabletelor: parola lui nu se schimbă de aici.</p>
+<p style="margin:0;font-size:14px;line-height:1.6;color:var(--h-fg-muted);text-wrap:pretty">Codul tabletelor îl schimbă un administrator, din Setări.</p>
 </div>
 </sc-if>
 
@@ -267,7 +281,18 @@ class Component extends DCLogic {
     const a = S.auth;
     // Se socotește o dată: de ea atârnă acum trei chei — ce se arată, ce scrie
     // în anunț și dacă formularul stă în curgere sau în fereastră.
-    const provizorie = !!(a && a.temp) && !S.gata;
+    //
+    // Contul comun al tabletelor nu intră aici, oricum i-ar sta steagul:
+    // serverul îl scutește de regula parolei provizorii (`require_auth()`),
+    // iar parola lui n-o știe nimeni, deci n-are nici ce schimba, nici ce
+    // păstra.
+    const eSistem = !!(a && a.isSystem);
+    const provizorie = !!(a && a.temp) && !S.gata && !eSistem;
+    // Cât e parola provizorie, serverul refuză tot ce nu e schimbarea ori
+    // păstrarea ei (403 `must_change_password`). Sertarul arată atunci numai
+    // pagina pe care ești; restul rândurilor ar duce în panouri care se
+    // deschid goale ori cu un refuz.
+    const meniuTot = gp.meniu("Parola mea", a);
 
     const salveaza = () => {
       const veche = String(S.veche);
@@ -335,7 +360,10 @@ class Component extends DCLogic {
       // Formularul se arată ori în curgerea paginii (cont obișnuit), ori în
       // fereastră (alegerea de la prima intrare, butonul „schimb"). Pe ecranul
       // alegerii, până la apăsare, nu se arată deloc.
-      deFormular: !S.gata && (!provizorie || S.fereastra),
+      deFormular: !S.gata && (!provizorie || S.fereastra) && !eSistem,
+      // Contul comun al tabletelor: în locul formularului, un rând care spune
+      // de unde se schimbă codul.
+      contComun: eSistem,
       gata: S.gata,
       provizorie,
       provizorieText: provizorie
@@ -381,7 +409,9 @@ class Component extends DCLogic {
       onSave: () => salveaza(),
 
       /* --- contul de fondator --- */
-      fondShown: !!(a && a.gata),
+      // Nu și la parola provizorie (serverul refuză cererea până se stinge
+      // steagul), nici pe contul comun al tabletelor (`system_account`).
+      fondShown: !!(a && a.gata) && !provizorie && !eSistem,
       fondCap: eFondator ? "Ești fondator" : "Contul de fondator",
       fondText: eFondator
         ? "Poți face și desface administratori și alți fondatori, din pagina Conturi. E singurul lucru pe care un administrator nu-l poate face."
@@ -397,13 +427,17 @@ class Component extends DCLogic {
       // întorci — clientul în magazin, restul în administrare. Ghicitul se
       // strica pentru agentul de vânzări și pentru angajat, care n-au ce
       // căuta în administrare; acum fiecare vede exact ce poate deschide.
-      meniu: gp.meniu("Parola mea", a),
+      meniu: provizorie ? meniuTot.filter((m) => m.activ) : meniuTot,
       navHere: "Parola mea",
       // Ieșirea din panou: „← Alege panoul" pentru personal, „← Înapoi la
       // magazin" pentru client, care n-are niciun panou de ales. Hotărăște
       // `gp.iesire()`, nu pagina — altfel unsprezece copii ale aceleiași
       // hotărâri s-ar depărta una de alta, cum s-a întâmplat cu meniul.
       navBack: gp.iesire(a),
+      // La parola provizorie, „← Alege panoul" al personalului nu se
+      // desenează: pagina de intrare l-ar întoarce pe loc aici. „← Înapoi la
+      // magazin" al clientului rămâne — magazinul e deschis oricui.
+      navInapoi: !provizorie || (!!a && a.role === "client"),
       navOpen: S.navOpen,
       onNavOpen: () => set({ navOpen: true }),
       onNavClose: () => set({ navOpen: false }),

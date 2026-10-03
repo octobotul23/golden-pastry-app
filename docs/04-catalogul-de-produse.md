@@ -8,6 +8,40 @@ Google.
 
 ---
 
+## Cine intră
+
+Catalogul se deschide numai pentru **administrator** și **fondator**. Oricare
+alt cont — managerul, agentul de vânzări, angajatul, omul de laborator, tableta
+comună din laborator, clientul — primește în locul paginii un ecran cu o
+singură propoziție, cu numele contului între ghilimele: *„Contul „…” nu are
+acces la catalog. Prețurile și produsele le schimbă doar administratorii.”*
+
+Un astfel de cont nu poate face nimic aici: pagina nici nu-i cere serverului
+catalogul, iar orice scriere — produs, fotografie, fișă tehnică,
+rețetă, grupă — îi e refuzată oricum de server.
+
+Sub propoziție stau două ieșiri, socotite pentru contul care a ajuns acolo:
+
+| Contul | „← Înapoi la panoul meu” duce la | A doua ieșire |
+|---|---|---|
+| managerul | Comenzi | „← Alege panoul” |
+| agentul de vânzări | Recomandări | „← Alege panoul” |
+| angajatul și tableta comună | Laborator | „← Alege panoul” |
+| omul de laborator | Pontaj | „← Alege panoul” |
+| clientul | Comanda mea | „← Înapoi la magazin” |
+
+> Până la 2.6.0 ecranul avea două legături scrise la fel pentru oricine:
+> „Comenzi” și „← Alege panoul”. Pentru angajat, pentru omul de laborator, pentru
+> client și pentru tabletă, „Comenzi” era al doilea refuz la rând — niciunul n-are
+> panoul acela —, iar clientul n-are niciun panou de ales.
+
+Ecranul de refuz se aprinde numai după ce pagina a aflat al cui e contul. Dacă
+sesiunea nu poate fi citită, apare în loc caseta roșie *„Catalogul nu s-a
+încărcat.”*, cu butonul **„Încearcă din nou”** — pagina n-a aflat nimic, deci
+nu dă niciun verdict despre cont.
+
+---
+
 ## De ce a fost nevoie de asta
 
 Catalogul exista în două locuri: o listă de 22 de rânduri scrisă în pagina
@@ -31,6 +65,22 @@ Acum există un singur catalog: baza de date.
 - **descrierea în ambele limbi**;
 - **grupa**;
 - **cel puțin un catalog, cu prețul lui**.
+
+Un produs nou pornește cu **amândouă comutatoarele „În catalog” aprinse** —
+și la „Congelate”, și la „Coapte” —, iar fiecare comutator aprins cere prețul A
+din panoul lui. Dacă produsul se vinde într-o singură parte, stinge comutatorul
+celeilalte înainte să salvezi; altfel salvarea se oprește cu *„Produsul e în
+catalogul „Coapte”, dar n-are prețul de acolo. Scrie prețul A din panoul
+„Coapte”, sau scoate-l din catalogul ăsta.”*
+
+Butonul de jos se cheamă **„Adaugă în catalog”** la un produs nou și
+**„Salvează”** la unul care există deja; cât lucrează, scrie „Se salvează…”.
+Când totul a trecut, formularul se închide singur, iar sus apare un mesaj verde
+care începe cu *„Produsul a fost adăugat în catalog”* ori cu *„Produsul a fost
+salvat”*. **„Renunță”** (sau **×** din colț) închide formularul fără să mai
+trimită nimic.
+Dacă un pas se oprește la jumătate, formularul rămâne deschis — v. „Când
+salvarea se oprește la jumătate”, mai jos.
 
 ### Cele două cataloage
 
@@ -152,6 +202,176 @@ browserele să nu arate poza veche zile în șir.
 Pozele stau în `public_html/products/`. Folderul trebuie să permită scrierea —
 `api/verifica.php` îți spune dacă nu.
 
+### Fișa tehnică
+
+Fișa tehnică e documentul pe care clientul îl descarcă din magazin și îl arată
+la un control: ingredientele, alergenii, valorile nutriționale, cum se
+păstrează produsul și cum se coace. Din 2.6.0 fiecare produs are **două locuri de fișă, câte unul de
+catalog**, ca la fotografii.
+
+În formular, fișele stau sub cele două fotografii, înainte de „Nume (RO)”:
+**„Fișă tehnică (PDF) — congelat”** și **„Fișă tehnică (PDF) — copt”**. Fiecare
+casetă are:
+
+- **„Vezi fișa”** — numai când latura are fișa ei. Deschide PDF-ul într-o filă
+  nouă, ca formularul să rămână cum l-ai lăsat;
+- **„Scoate fișa”** — tot numai când latura are fișa ei și n-ai ales alt PDF în
+  locul ei. Nu scoate nimic pe loc: butonul se face **„Păstrează fișa”**, iar sub
+  casetă scrie ce se va întâmpla la salvare. A doua apăsare te răzgândește;
+- **caseta de fișier**, din care alegi PDF-ul;
+- **un rând de lămurire**, care spune în cuvinte ce oferă magazinul pe latura
+  aceea.
+
+| Ce scrie sub casetă | Când |
+|---|---|
+| *„Magazinul oferă fișa asta la congelate. Alege alt PDF ca s-o înlocuiești (maximum 10 MB).”* | latura are fișa ei (la coapte scrie „la coapte”) |
+| *„Coapte nu are fișa ei: magazinul o oferă pe cea de la congelate. Încarcă una aici ca să o înlocuiești.”* | numai la coapte, când n-are fișă proprie, dar congelatele au |
+| *„Fără fișă, butonul nu apare în magazin. PDF, maximum 10 MB.”* | latura n-are nicio fișă de oferit |
+| *„Se încarcă la salvare: …”*, cu numele fișierului ales | ai ales un PDF |
+| *„Se scoate la salvare. Ca s-o ai înapoi, o încarci din nou de aici.”* | ai apăsat „Scoate fișa” |
+| *„Se scoate la salvare. La coapte, magazinul va oferi apoi fișa de la congelate.”* | ai apăsat „Scoate fișa” la coapte, iar congelatele rămân cu fișă |
+
+Ca la poze, **nimic nu pleacă până la „Salvează”**: nici PDF-ul ales, nici
+scoaterea.
+
+**Ce primește.** Numai PDF, de cel mult 10 MB. Tipul se judecă **după
+conținut**, ca la poze: fișierul trebuie să înceapă chiar cu semnul unui PDF,
+oricum s-ar numi. Altceva e refuzat cu *„Acceptăm doar fișiere PDF.”*, iar un
+fișier prea mare cu *„Fișa depășește 10 MB. Salveaz-o mai mică (fără poze
+scanate la rezoluție mare) și încearcă din nou.”* O fișă obișnuită are sub
+100 KB; marginea de 10 MB e pentru una scanată.
+
+**Unde stă.** O fișă încărcată din Catalog stă lângă poze, în `products/`, și
+primește un nume nou la fiecare încărcare, ca browserul clientului să nu
+păstreze fișa veche. Când o înlocuiești ori o scoți, serverul o șterge de pe
+disc pe cea veche, dacă n-o mai ține cealaltă latură. Fișele venite cu pachetul
+stau în `fise/` și **nu se șterg niciodată de pe disc**: „Scoate fișa” doar le
+dezleagă de produs. Fișele tale nu pot sta în `fise/`, fiindcă actualizarea
+aduce folderul acela exact cum e în pachet și ar șterge orice fișier care nu e
+acolo.
+
+**Coapte împrumută de la congelate.** Cât latura coaptă n-are fișa ei, magazinul
+oferă la Coapte fișa de la congelate. Așa ai cerut pe 2 octombrie 2026: produsul
+copt e același produs, cu aceleași ingrediente și aceiași alergeni. Invers nu:
+o fișă de produs copt nu spune cum se ține și cum se coace unul congelat, deci
+congelatele nu împrumută niciodată de la coapte.
+
+E pe dos față de fotografii, unde împrumutul s-a tăiat pe 21 septembrie 2026
+(v. „Fotografiile”, mai sus). Ca să nu se poată confunda cu o fișă pusă
+dinadins, împrumutul nu se scrie în baza de date — serverul îl face în clipa în
+care trimite catalogul —, iar caseta de la coapte rămâne fără
+„Vezi fișa”, iar rândul de sub ea spune că magazinul o oferă pe cea de la
+congelate. Trei urmări:
+
+- încarci o fișă la coapte — aceea câștigă, iar împrumutul se oprește;
+- o scoți — Coapte se întoarce la fișa de la congelate;
+- scoți fișa de la congelate, iar coaptele n-au a lor — butonul dispare din
+  magazin **de pe amândouă laturile**.
+
+**La salvare**, fișele pleacă după fotografii și înaintea rețetei, cea de la
+congelate întâi, fiindcă pe ea o împrumută și Coapte. Dacă una nu trece,
+mesajul din formular spune care: *„Produsul a fost salvat, dar fișa tehnică
+pentru coapte nu: … Îndreapt-o și apasă „Salvează” din nou: rețeta pleacă abia
+după fișe.”* (v. „Când salvarea se oprește la jumătate”, mai jos).
+
+### Fișa tehnică, în magazin
+
+În fereastra produsului și pe pagina lui, sub rândul cu butonul de adăugat în
+coș și „Cere ofertă”, stă un buton pe rândul lui: **„Descarcă fișa tehnică”**.
+Pe engleză scrie *„Download the data sheet (PDF, in Romanian)”* — fișa e numai
+în română, iar omul trebuie să știe asta înainte s-o descarce.
+
+- **Butonul urmează catalogul în care se arată produsul.** Pe Congelate dă fișa
+  de la congelate; pe Coapte, fișa de la coapte, ori, cât n-are una, pe cea
+  împrumutată de la congelate.
+- **Un produs fără fișă pe latura deschisă n-are rândul deloc.** La fel pe un
+  server pe care n-a intrat încă migrarea 031.
+- **Fișierul se descarcă sub numele produsului**, nu sub cel de pe server:
+  `fisa-tehnica-<slug>-congelat.pdf`, unde în loc de slug stă numele produsului
+  din adresa lui — de pildă `fisa-tehnica-corn-cu-vanilie-congelat.pdf`. Coada
+  „-copt” apare numai când Coapte are o fișă a ei, alta decât cea de la
+  congelate; fișa împrumutată se cheamă tot „congelat”, fiindcă e același
+  fișier. Așa, cine descarcă amândouă fișele aceluiași produs găsește în
+  Descărcări două nume deosebite. Numele îl face `numeFisaTehnica()`, în
+  `Site Public.dc.html`.
+
+Fișele din pachet scriu în capul lor *„FIȘĂ TEHNICĂ PRODUS — PATISERIE
+CONGELATĂ”*. Cât Coapte le împrumută, clientul de pe Coapte descarcă tocmai
+documentul acela.
+
+### Fișele din pachet
+
+Pachetul 2.6.0 aduce în folderul `fise/` fișele pe care le-ai trimis: PDF-ul de
+22 de pagini făcut pe 16 iulie, tăiat câte unul pe produs, fără nicio literă
+schimbată. La urcare, migrarea 031 le leagă **o singură dată** de latura
+congelată a produselor, după numele din adresa fiecăruia:
+
+- **21 de produse** primesc fișă;
+- **„Covrig cu susan / mac / semințe”** are o fișă cu **două pagini**, „Covrig cu
+  susan” și „Covrig cu mac”, fiindcă pe site e un singur produs. Semințele n-au
+  pagină;
+- **„Trigon cu vanilie și fructe”** n-are fișă: n-a venit niciuna pentru el.
+  Butonul nu apare la el până nu-i încarci una din Catalog;
+- un produs căruia i s-a schimbat numele din adresă nu e găsit și rămâne fără
+  fișă; i se încarcă una din Catalog. La fel un produs adăugat de tine din
+  Catalog: în pachet n-are fișă.
+
+La coapte migrarea nu scrie nimic — Coapte împrumută, ca mai sus.
+
+**O fișă din pachet scoasă din Catalog nu se mai întoarce singură.** Migrările
+rulează toate la fiecare actualizare, dar 031 pune în baza de date, la prima
+rulare, un semn (`migration_031_fise_tehnice`) după care nu mai leagă nimic. Ce
+ai scos rămâne scos, ce ai pus rămâne pus, oricâte actualizări ar veni.
+
+Ca s-o ai înapoi: PDF-ul stă mai departe pe server, fiindcă fișele din pachet
+nu se șterg niciodată de pe disc. Îl deschizi în browser la adresa
+goldenpastry.ro/fise/fisa-tehnica-…-congelat.pdf, unde în locul celor trei
+puncte stă numele produsului din adresa lui — ce scrie după goldenpastry.ro/produs/
+pe pagina produsului (de pildă fisa-tehnica-corn-cu-vanilie-congelat.pdf) —, și
+îl salvezi pe calculator. Apoi, în Catalog: **Editează** pe rândul produsului →
+caseta **„Fișă tehnică (PDF) — congelat”** → alegi fișierul salvat →
+**„Salvează”**.
+
+**Migrarea nu atinge gramajul.** Nici prețul, nici descrierea. Fișele tipăresc
+pe alocuri alt gramaj decât site-ul, iar care e cel bun hotărăști tu, din
+Catalog, la **„Gramaj”**. Pe 2 octombrie 2026 erau douăsprezece deosebiri:
+
+| Produsul | Pe site | În fișă |
+|---|---|---|
+| Ștrudel cu brânză dulce | 170 g | 140 g |
+| Ștrudel cu dovleac | 150 g | 140 g |
+| Trigon cu pizza | 140 g | 170 g |
+| Croissant cu ciocolată | 140 g | 150 g |
+| Roll cu cabanos | 140 g | 100 g |
+| Roll cu șuncă și cașcaval | 140 g | 150 g |
+| Covrig cu cașcaval | 160 g | 140 g |
+| Covrig cu măr | 140 g | 130 g |
+| Corn cu ciocolată | 150 g | 140 g |
+| Corn cu vanilie | 130 g | 140 g |
+| Poale-n brâu | 150 g | 160 g |
+| Roll cu pizza | 160 g | 150 g |
+
+Coloana „Pe site” e gramajul cu care au fost puse produsele în catalog la
+început. Dacă ai schimbat vreunul între timp din Catalog, cifra din Catalog e
+cea care contează.
+
+Când fișa are dreptate, schimbi gramajul în Catalog: **Editează** pe rândul
+produsului → caseta **„Gramaj”** → scrii cifra din fișă → **„Salvează”**.
+Formularul se închide, iar site-ul se potrivește pe loc. Dacă ai greșit,
+o întorci la fel, scriind înapoi cifra din coloana „Pe site”. Când site-ul are
+dreptate, fișa trebuie refăcută: încarci la produsul acela PDF-ul îndreptat, în
+caseta **„Fișă tehnică (PDF) — congelat”**.
+
+**Fișele mai poartă alte numere și alte nume decât magazinul.** Sunt paginile
+tale, neatinse:
+
+- numerele 16–19 din fișe sunt produsele 15–18 din magazin („Covrig cu măr”,
+  „Corn cu ciocolată”, „Corn cu vanilie”, „Corn cu fistic”), fiindcă în fișe
+  covrigul cu susan și cel cu mac au câte un număr, 14 și 15;
+- trei nume sunt scrise altfel: „Trigon Pizza” (în magazin, „Trigon cu pizza”),
+  „Merdenea cu brânză” („Merdenea”) și „Poale-n brâu cu brânză dulce”
+  („Poale-n brâu”).
+
 ### Rețeta — din ce e făcut produsul
 
 Jos, în același formular: **Rețetă — pentru o bucată**. Alegi o materie primă
@@ -182,6 +402,50 @@ târziu, pe un articol care există de mult.
 Un produs **fără** rețetă nu e o greșeală: la producție pur și simplu nu se
 scade nimic din depozit pentru el. Se poate lucra așa, cu rețete puse pe rând,
 pe măsură ce le socotești.
+
+### Când salvarea se oprește la jumătate
+
+„Salvează” (la un produs nou, „Adaugă în catalog”) face mai mulți pași, unul
+după altul: întâi produsul, apoi fotografia de la congelate, cea de la coapte,
+fișa de la congelate, cea de la coapte și, la urmă, rețeta. O fotografie ori o
+fișă pleacă numai dacă ai atins caseta ei. Când trec toți, formularul se
+închide și sus apare mesajul verde. Dacă un pas cade, cei de dinainte rămân
+salvați, formularul rămâne deschis, iar mesajul roșu din formular spune care a
+căzut și ce n-a mai plecat după el. Din clipa în care produsul nou a ajuns pe
+server, butonul de jos se cheamă „Salvează”, ca la orice produs care există:
+
+| A căzut | Mesajul |
+|---|---|
+| chiar produsul — primul pas | numai motivul dat de server, întreg; la apăsarea asta nu s-a salvat nimic, nici poze, nici fișe |
+| o fotografie, la un produs nou | *„Produsul a fost adăugat în catalog, dar fără fotografia pentru coapte: … Alege altă fotografie și apasă „Salvează”, ori renunță — produsul rămâne, cu poza lipsă.”* |
+| o fotografie, la un produs de dinainte | *„Produsul a fost salvat, dar fotografia pentru coapte nu: … Alege altă fotografie și apasă „Salvează” din nou: fișele și rețeta pleacă abia după poze.”* |
+| o fișă tehnică | *„Produsul a fost salvat, dar fișa tehnică pentru congelate nu: … Îndreapt-o și apasă „Salvează” din nou: rețeta pleacă abia după fișe.”* |
+| rețeta | *„Produsul a fost salvat, dar rețeta nu: …”* |
+| un pas care nu se poate numi | *„Produsul a fost salvat, dar restul salvării (poze, fișe, rețetă) nu a putut fi dus la capăt. Apasă „Salvează” din nou. Eroarea: …”* — la un produs nou, începutul e „Produsul a fost adăugat în catalog” |
+
+În locul celor trei puncte stă motivul dat de server, întreg. Până la 2.6.0,
+la un produs nou o cădere pe care pagina n-o putea numi se citea „fără
+fotografie” — și omul schimba o fotografie bună —, iar la un produs de dinainte
+o fotografie căzută ori o cădere fără nume lăsa numai vorba serverului, fără să
+spună că produsul fusese totuși salvat. Rețeta și fotografia unui produs nou
+erau numite și atunci.
+
+**A doua apăsare trimite numai ce a rămas.** Produsul se scrie din nou — e doar
+text —, dar o fotografie ori o fișă deja primită de server nu mai pleacă:
+fișierul ales se uită în clipa în care a ajuns, iar caseta lui se golește.
+Miniatura ia atunci poza chiar de la server, deci arată ce e pe site, nu
+fișierul de pe calculatorul tău. Mesajul verde de la capăt spune, după
+„Poze:”, ce s-a întâmplat cu fiecare fotografie urcată la oricare dintre
+apăsări: cât s-a micșorat ori, dacă a rămas mare, de ce. O poză deja mică nu e
+pomenită. O fotografie aleasă din nou la aceeași latură, între două apăsări,
+îi ia locul celei vechi și în mesaj.
+
+Ce a apucat să se salveze nu se desface singur: nici „Renunță”, nici
+închiderea formularului nu-l întorc. Un produs nou rămas pe jumătate e deja pe
+site. Îl repari deschizându-l iar cu **Editează**, ori, dacă nu-l mai vrei
+deloc, îl ștergi cu **×** de pe rândul lui și **„Șterge definitiv”**: cât n-a
+apucat să intre într-o comandă, dispare de tot (v. „Scoaterea unui produs”,
+mai jos).
 
 ---
 
@@ -597,7 +861,8 @@ umple golul — ia numărul de după cel mai mare. Dacă vrei 08 plin, muți aco
 produs.
 
 **Scos din catalog**, rămâne în numărătoare: își ține locul, iar în magazin,
-cât stă scos, locul lui arată ca un gol. Repus cu **↩**, se întoarce acolo.
+cât stă scos, locul lui arată ca un gol. Repus cu **„Repune în catalog”**, se
+întoarce acolo.
 
 ### La urcarea pe server
 
@@ -620,39 +885,73 @@ ceva peste poză. Pe card are zero în față („03"); în coș
 
 ## Scoaterea unui produs
 
-Butonul **×** de pe rând. Se întâmplă unul din două lucruri, în funcție de
-istoric:
+Rândul produsului are două butoane, pentru două fapte deosebite.
 
-**Produs care nu a fost comandat niciodată** — se șterge de tot. Ai adăugat ceva
-din greșeală, dispare complet.
+**„Scoate din catalog”** — produsul nu se mai vinde nici în magazin, nici pe o
+comandă nouă, dar rămâne în listă. Butonul se face atunci **„Repune în
+catalog”**, care îl pune la loc oricând. Nu șterge niciodată nimic.
 
-**Produs care apare în comenzi sau în depozit** — se scoate din catalog, dar
-rândul rămâne. Dispare de pe site și din formulare; comenzile vechi își
-păstrează denumirea și prețul de atunci, iar rapoartele nu rămân cu goluri.
-Îl repui oricând cu **↩**.
+**×** (*„Șterge produsul din catalog”*) — deschide întâi o fereastră care spune
+dinainte ce urmează, în funcție de istoric:
+
+- **produs care nu apare în nicio comandă și n-are articol în depozit** —
+  fereastra întreabă *„Ștergi „…”?”*, cu **„Șterge definitiv”** și
+  **„Renunță”**. Șters, dispare de tot, cu fotografiile și fișele tehnice urcate
+  din Catalog cu tot (fișele din pachet rămân pe disc). Ștergerea nu se poate
+  desface: ca să-l ai înapoi, îl adaugi din nou cu **+ Produs nou**;
+- **produs care apare în comenzi sau în depozit** — fereastra spune *„„…” nu
+  se poate șterge”* și unde apare, iar în locul butonului roșu oferă **„Scoate
+  din catalog”**, lângă „Închide”. Scos, dispare de pe site și din formulare;
+  comenzile vechi își păstrează denumirea și prețul de atunci, iar rapoartele
+  nu rămân cu goluri.
 
 ---
 
 ## Grupele
 
 Fila **Grupe**. Fiecare are nume și subtitlu în ambele limbi, plus o ordine —
-aceeași în care apar pe site.
+aceeași în care apar pe site. Numele și subtitlurile se salvează când ieși din
+câmp; săgețile **↑** și **↓** schimbă locul grupei cu vecina ei.
 
 Două protecții:
 
 - o grupă cu produse în ea **nu poate fi ștearsă** — nici dacă produsele sunt
-  doar scoase din catalog;
+  doar scoase din catalog. Ca s-o ștergi, mută întâi produsele în altă grupă,
+  din formularul fiecărui produs (caseta **„Grupa”**);
 - o grupă cu produse active **nu poate fi ascunsă** — altfel produsele ar
-  dispărea de pe site fără să pară scoase din catalog.
+  dispărea de pe site fără să pară scoase din catalog. Pe fila Grupe nu există
+  buton de ascuns o grupă; protecția e a serverului, care refuză orice cerere de
+  felul ăsta cât grupa mai are produse active.
 
-În ambele cazuri mută întâi produsele în altă grupă.
+**× apare numai la grupele goale.** Butonul se cheamă „Șterge grupa” (așa îl
+citește și un cititor de ecran) și stă numai pe rândul unei grupe fără niciun
+produs, nici scos din catalog. Pe celelalte rânduri, în locul lui, e un gol de
+aceeași mărime, ca rândurile să rămână aliniate. Capul filei o spune și el:
+*„Ordinea de aici e ordinea în care apar pe site. O grupă care are produse în
+ea nu poate fi ștearsă — nici dacă produsele sunt doar scoase din catalog —,
+așa că × apare numai la grupele goale.”* Apăsat, × șterge grupa pe loc, fără
+altă întrebare, iar sus scrie *„Grupa „…” a fost ștearsă.”*
 
-Insigna de pe rând spune de ce: `3 produse` cât timp toate sunt în catalog, și
-`0 în catalog · 3 scoase` când au rămas doar rânduri scoase. Cifra a doua e
-chiar cea pe care o folosește refuzul de la ștergere. Înainte insigna arăta
-doar produsele din catalog, deci o grupă golită scria „0 produse", iar la ×
-răspundea „grupa are 3 produse în ea" — două cifre care se contraziceau pe
-același ecran, fără să ai de unde ști de unde ies cele trei.
+Ștergerea nu are buton de întors. Dacă ai șters o grupă din greșeală, o faci
+la loc din rândul de adăugat de la capătul filei, cu aceleași două nume: apare
+ultima în listă, o urci cu **↑** până la locul ei și îi scrii din nou
+subtitlurile. Fiindcă grupa era goală, niciun produs n-a pierdut nimic.
+
+> Până la 2.6.0, × stătea pe fiecare rând, iar apăsat pe o grupă plină aducea
+> numai refuzul serverului.
+
+Insigna de pe rând spune câte produse are grupa: `3 produse` cât timp toate sunt
+în catalog, și `0 în catalog · 3 scoase` când au rămas doar rânduri scoase.
+Cifra a doua e chiar cea după care se hotărăște dacă apare ×. La început
+insigna arăta doar produsele din catalog, deci o grupă golită scria „0
+produse", iar la × răspundea „grupa are 3 produse în ea" — două cifre care se
+contraziceau pe același ecran, fără să ai de unde ști de unde ies cele trei.
+
+**Rândul de adăugat** — „Grupă nouă (RO)”, „New group (EN)” și **„Adaugă”** —
+apare numai după ce catalogul s-a încărcat. Cât pagina încă întreabă, ori cât
+stă pe ecran caseta roșie *„Catalogul nu s-a încărcat.”*, lipsește, la fel ca
+**„+ Produs nou”**: pagina nu știe atunci nici al cui e contul, nici ce grupe
+sunt deja.
 
 ---
 ## Catalogul, în formularul de comandă
@@ -773,8 +1072,18 @@ date și trimite din prima cerere:
   cu trepte mai primește, alături, câte un `UnitPriceSpecification` pe treaptă,
   cu cantitatea care o primește (`eligibleQuantity`, în bucăți). Treptele se
   scriu pentru catalogul în care se deschide produsul;
-- catalogul ca text, pentru cine nu rulează JavaScript;
+- catalogul ca text, pentru cine nu rulează JavaScript. Pe pagina unui produs
+  cu fișă tehnică, textul acesta are și legătura *„Fișa tehnică (PDF)”*
+  (*„Technical data sheet (PDF, in Romanian)”* pe engleză), spre fișa
+  catalogului în care se deschide produsul: butonul din magazin se desenează
+  în browser, deci fără JavaScript nu s-ar vedea;
 - `sitemap.xml`, construit tot din baza de date.
+
+Fișele tehnice însele **nu intră în rezultatele căutării**: PDF-urile poartă un
+semn care le cere motoarelor de căutare să nu le pună acolo. Fișa e un document
+de dat clientului, nu o pagină de găsit pe Google — acolo ar apărea fără
+magazinul în jurul ei, iar pe alocuri tipărește alt gramaj decât site-ul (v.
+„Fișele din pachet”, mai sus).
 
 Aplicația interactivă rămâne exact cum era — se încarcă peste.
 

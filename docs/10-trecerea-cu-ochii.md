@@ -5,13 +5,13 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **o sută paisprezece minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele șaisprezece plimbări stă singură și își spune la
+Durează **o sută patruzeci de minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele optsprezece plimbări stă singură și își spune la
 început cât ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale
 bucăților care au minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o
 plimbare, se adună și aici.
 
-Cele șaisprezece, în ordinea în care se fac cel mai ușor:
+Cele optsprezece, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -26,8 +26,8 @@ Cele șaisprezece, în ordinea în care se fac cel mai ușor:
    tableta din laborator (7.7) și pe telefonul șoferului (7.8).
 8. **Runda 2.3.0** — comutatorul din magazin (8.1), bara strânsă (8.2),
    harta din Contact (8.3), versiunea la vedere (8.4), și laboratorul pe
-   telefon: produsele (8.5), tragerea (8.6) și oprirea la „Predată
-   curierului" (8.7).
+   telefon: produsele (8.5), tragerea (8.6) și oprirea la „Gata de
+   livrare" (8.7).
 9. **Runda 2.3.1** — caseta de raportat care mișcă cifra (9.1), cele patru
    pastile din Depozit (9.2), capul listei care numără ce se vede (9.3) și
    pastila cu versiunea, mutată în capul sertarului (9.4).
@@ -54,9 +54,18 @@ Cele șaisprezece, în ordinea în care se fac cel mai ușor:
 15. **Runda 2.5.2** — „Patru" mare și „Șase" ca vechiul „Patru", pe
     calculator (15.1), bulele de pe telefon (15.2) și de pe tabletă (15.3),
     antetul pe un calculator mai mic (15.4) și `Tab` prin cantitate (15.5).
-16. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+16. **Runda 2.6.0 în birou** — comanda nouă fără „Stare" și fără
+    „Referință" (16.1), fereastra „Din catalog" cu Congelate și Coapte
+    (16.2), cererea agentului (16.3), anunțul care spune cine a scris și al
+    cui e clientul (16.4), fișa tehnică în magazin și în Catalog (16.5) și
+    refuzul din Setări (16.6).
+17. **Runda 2.6.0 pe drum** — bifele puse cât marfa e încă în lucru (17.1),
+    laboratorul oprit la „Gata de livrare" (17.2), „Marchează livrat",
+    „Resetează bifele" și comanda care se face gri (17.3), livrarea pusă din
+    „Comenzi" și ridicarea închisă de birou (17.4).
+18. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A șaisprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
+A optsprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
 ai deschis mai devreme.
 
 ---
@@ -304,6 +313,18 @@ scrii motivul → **„Închide tura"**.
 **Trebuie să vezi:** tura se închide, cu total, iar motivul rămâne pe ea.
 Motivul e obligatoriu — fără el, butonul refuză.
 
+**Pe ceas, de la runda 2.6.0.** Cât tura e încă deschisă, apasă pe ceas, sus,
+pe numele omului. **Trebuie să vezi** nu tastatura, ci pasul **„Tură nepontată
+la plecare"**, cu numele lui. Ca administrator, dacă raportul de jos cuprinde
+ziua turei, scrie *„Tura rămasă deschisă dintr-o zi trecută se încheie de mână.
+Până atunci, omul nu poate ponta."*, cu butoanele **„Scrie plecarea"** (deschide
+aceeași fereastră ca rândul din raport) și **„Înapoi la listă"**; dacă nu o
+cuprinde, rândul îți spune să muți „De la" mai în urmă ori să alegi „Toată
+lumea", și butonul „Scrie plecarea" lipsește. Cu `testangajat`, același om dă
+*„Ai o tură rămasă deschisă dintr-o zi trecută. Spune-i unui administrator s-o
+încheie; până atunci nu poți ponta."* și numai „Înapoi la listă". Până la
+runda 2.6.0, omul primea tastatura, iar serverul îi refuza orice cod.
+
 ### 2.5 Iei codul înapoi
 
 **Apeși:** `/lab/conturi.html` → placa lui Angajat Test, ca să i se deschidă
@@ -435,7 +456,11 @@ amândouă cazurile — comanda se naște la acceptare, în panou.
 ### 4.3 Comanda de departe, pe foaia de drum
 
 **Apeși:** `testadmin` → `/lab/comenzi.html` → fila **„Cereri de pe site"** →
-pe cererea ta, **„Acceptă și fă comanda"** → apoi `/lab/ruta.html`, pe ziua ei.
+pe cererea ta, **„Acceptă și fă comanda"**. Se deschide formularul, completat
+din cerere (clientul, ziua, intervalul, adresa și zona de departe); nu schimbi
+nimic și apeși, jos, **„Acceptă cererea"**. Comanda se naște abia acum: sus
+scrie *„Cerere acceptată → #… · numele tău."*, iar formularul se închide. Apoi
+`/lab/ruta.html`, pe ziua ei.
 
 **Trebuie să vezi:**
 - opririle din oraș, numerotate **1, 2, 3…**, ca până acum;
@@ -452,6 +477,14 @@ kilometrii, și orele tuturor celorlalte opriri.
 > Semnul e **lipsa punctului**, nu numele zonei. Dacă mâine scurtezi numele din
 > Setări, purtarea rămâne aceeași. Dar dacă îi **dai un punct pe hartă**, intră
 > pe rută ca oricare alta — și ăla e tot un răspuns bun, dacă asta vrei.
+
+**Desfaci:** comanda de probă e una adevărată, în registru și pe rută. În
+`/lab/comenzi.html`, pe rândul ei, **„Vezi produsele"** → la **„Etapa"** alegi
+**„Anulată"** — merge direct, fără casetă (7.1). Iese de pe rută și din
+laborator, dar rămâne în registru, cu „Anulată" pe ea. Contul făcut la 4.1 nu
+mai trebuie nimănui: `/lab/conturi.html` → placa lui → în fișă, **„Șterge
+contul"**, apoi încă o dată, pe **„Apasă din nou: șterg definitiv contul"**.
+Comanda și cererea lui rămân în registru, doar că fără cont legat de ele.
 
 ### 4.4 Coșul în două file, și trimiterea căzută
 
@@ -674,14 +707,22 @@ dospit"**.
 comanda"**. **Trebuie să vezi** același rând galben, pe cealaltă ușă. Apeși
 **„Lasă-o anulată"**.
 
-Ieși, intră cu **`demo-manager`** și alege din nou o etapă din fișa aceleiași
-comenzi. Rândul galben se încheie altfel: *„Ziua se mută dintr-un cont de
-administrator: cere-i s-o mute, apoi refă comanda."* — managerul n-are câmpul
-„Zi". Apeși **„Lasă-o anulată"**.
+Tot cu `testadmin`, alege acum din fișă **„Predată"**: rândul spune *„Ziua
+comenzii e în trecut. Trecută în «Predată», rămâne predată pe ziua aceea: e
+bine numai dacă atunci a fost livrată…"*. Apeși **„Lasă-o anulată"**.
 
-Alege acum **„Predată"**: rândul spune *„Ziua comenzii e în trecut. Trecută în
-«Predată», rămâne predată pe ziua aceea: e bine numai dacă atunci a fost
-livrată…"*. Apeși **„Lasă-o anulată"**.
+Ieși, intră cu **`demo-manager`** și alege din nou o etapă din flux, din fișa
+aceleiași comenzi. Rândul galben **se încheie la fel ca la administrator**:
+din 19 septembrie 2026 managerul corectează comenzi și are câmpul „Zi", deci
+își mută singur ziua. Celălalt sfârșit, *„Ziua se mută dintr-un cont de
+administrator sau de manager: cere-i s-o mute, apoi refă comanda."*, îl citesc
+numai conturile care din fișă schimbă doar etapa și n-au câmpul „Zi". Apeși
+**„Lasă-o anulată"**.
+
+Dacă în lista **„Etapa"** a managerului lipsește **„Predată"**, contul lui n-are
+semnul „Poate confirma livrarea", iar sub listă scrie de ce: *„«Predată» o pune
+un administrator ori un cont cu bifa «Poate confirma livrarea», din
+«Conturi»."* Nu e un defect: e paza de la 8.7.
 
 La capăt, pune comanda înapoi în etapa în care o găsiseși: **„Reface comanda"**
 din casetă. Ziua nu se mută, deci rămâne cum era.
@@ -743,7 +784,8 @@ telefon. Dacă adresa nu răspunde, pornește
 **E-mail** trebuie să fie pornit și să aibă o adresă în „Adresa care primește
 anunțul" (oricare: nu pleacă nimic). Sus, în **„Ce anunțuri primești, și pe
 unde"**, bifezi **E-mail** pe rândul **„Comandă anulată"** și îl lași nebifat pe
-**„Comandă gata"** → **„Salvează"**.
+**„Comandă livrată"** → **„Salvează"**. Notează-ți cum erau bifele când ai
+venit: la capăt le pui la loc.
 
 **Trebuie să vezi:** sub „Comandă anulată", ajutorul spune și *„Pe aceleași
 canale pleacă și «Comandă refăcută», dacă o aduci înapoi."* Un rând **„Comandă
@@ -757,11 +799,11 @@ refăcută"** **nu** există: n-are bifă a lui, dinadins.
 *„Etapă: Anulată → La ambalare"*. Dacă lipsește „Comandă refăcută", pe server a
 rămas API-ul vechi.
 
-**Apeși:** în Setări bifezi **E-mail** și pe **„Comandă gata"**, salvezi, apoi
+**Apeși:** în Setări bifezi **E-mail** și pe **„Comandă livrată"**, salvezi, apoi
 din fișa aceleiași comenzi **„Anulată"** → **„Predată"** → **„Reface comanda"**.
 
 **Trebuie să vezi** trei mesaje noi. Citite de jos în sus, în ordinea în care au
-plecat: **„Comandă anulată"**, **„Comandă refăcută"**, **„Comandă gata"**. Două
+plecat: **„Comandă anulată"**, **„Comandă refăcută"**, **„Comandă livrată"**. Două
 mesaje la aceeași apăsare sunt hotărârea patronului: comanda a fost și adusă
 înapoi, și predată, iar ultimul mesaj rămâne cel adevărat.
 
@@ -931,13 +973,24 @@ văzut nimeni, în niciun browser — de-asta e scrisă bucata de față.
 Amândouă cu același cont, ca la 7.7: sesiunea e a browserului, nu a filei, deci
 un al doilea cont ar intra peste primul în amândouă. Dacă vrei totuși ecranul
 șoferului cu contul lui, deschide fila B într-o fereastră privată, cu
-`testangajat` — rolul „angajat" are panoul „Rută".
+`testangajat` — rolul „angajat" are panoul „Rută". Contului îi pui întâi, din
+Conturi, semnul **„Poate confirma livrarea"** (ca la 8.7): fără el, „Marchează
+livrat" nici nu se desenează. La capăt îl scoți.
 
-Alegi o comandă de azi care **nu e livrată** și are cel puțin două opriri
-înaintea ei, ca ecranul să fie derulat, ca al lui.
+Alegi o comandă de livrare de azi care **nu e livrată** și are cel puțin două
+opriri înaintea ei, ca ecranul să fie derulat, ca al lui. De la runda 2.6.0
+butonul se aprinde numai pe o comandă gata de plecare și încărcată, deci îi mai
+trebuie două lucruri:
 
-**Apeși:** în fila B, pe cartonul ei, ca să se **deschidă** — la butonul
-„Marchează livrat" se ajunge numai prin carton. Deschide-l ACUM, nu după: cele
+- să fie în **„Gata de livrare"**. Dacă nu e, ține minte etapa ei și adu-o
+  acolo din `/lab/laborator.html`, cu butonul mare de pe cardul ei, până scrie
+  pe el **„Așteaptă șoferul"** (8.7);
+- să aibă **totul bifat**. În fila B îi deschizi cartonul și atingi, una câte
+  una, pozițiile de sub **„Bifează ce încarci"**. Butonul se aprinde abia după
+  ultima.
+
+**Apeși:** în fila B, cartonul ei rămâne **deschis**, cu „Marchează livrat"
+aprins — la buton se ajunge numai prin carton. Deschide-l ACUM, nu după: cele
 cincisprezece secunde le vrei întregi pentru apăsare, iar deschiderea unui carton
 șterge și mesajul de pe ecran.
 
@@ -948,39 +1001,44 @@ comenzile vii, deci cât timp cartonul e acolo, lista din telefon e cea veche.
 
 - **e tot acolo, deschis** → ecranul e rămas în urmă, exact ca în buzunar. Apeși.
 - **a pierit** → tura de cincisprezece secunde a apucat să treacă și lista s-a pus
-  la zi. Refaci comanda din fila A — etapa ei → caseta **„Refaci comanda #…?"** →
-  **„Reface comanda"** — și încerci din nou, mai repede. Nu-ți trebuie să apeși pe
-  o listă pusă la zi: acolo nu mai e nimic de probat.
+  la zi. Refaci comanda din fila A — la „Etapa" alegi **„Gata de livrare"** →
+  caseta **„Refaci comanda #…?"** → **„Reface comanda"** — și încerci din nou,
+  mai repede. Bifele nu se pierd: pozițiile comenzii au rămas aceleași, deci
+  cartonul se întoarce tot bifat. Nu-ți trebuie să apeși pe o listă pusă la zi:
+  acolo nu mai e nimic de probat.
 
 **Apeși:** în fila B, **„Marchează livrat"**.
 
 **Trebuie să vezi**, toate cinci:
 
-1. **Mesajul e roșu.** Sus, sub antet: *„Comanda #… a fost schimbată între timp:
-   acum e «Anulată». N-am mutat-o."* E singurul loc din toată reparația unde
-   vestea e roșie, nu neutră. Ca să ai cu ce compara, marchează pe urmă o livrare
-   care merge: aceeași casetă, în același loc, pe verde. Dacă și refuzul iese
+1. **Mesajul e roșu, și stă în antet.** Sus, în antetul care rămâne lipit de
+   marginea ecranului, o casetă roșie cu **×** în dreapta: *„Comanda #… nu mai e
+   pe ruta zilei: a fost anulată ori mutată din birou. N-am marcat-o livrată."*
+   E singurul loc din toată reparația unde vestea e roșie, nu neutră. Ca să ai
+   cu ce compara, marchezi pe urmă o livrare care merge (mai jos): vestea bună
+   e verde, n-are **×** și stă **sub** antet, nu în el. Dacă și refuzul iese
    verde, culoarea nu se mai uită la ce s-a întâmplat.
 2. **Încape pe 390.** Se rupe în rânduri întregi, nu taie niciun cuvânt, nu iese
    din chenar și nu împinge pagina în lateral.
-3. **Îl vezi fără să derulezi?** Mesajul se așază deasupra listei, iar tu ai
-   apăsat la a treia oprire, cu pagina derulată. Dacă a trebuit să urci ca să-l
-   găsești, **scrie-o ca defect**: pe un telefon scos din buzunar, un mesaj pe
-   care nu-l vezi e un mesaj care n-a fost dat.
-4. **Cartonul sare înapoi, apoi piere de tot.** La apăsare se strânge și trece o
-   clipă pe livrat — bulină **✓**, antet verde —, ca și când ar fi mers; așa face
-   și când chiar merge. După refuz, foaia de drum se recitește pe loc, iar
-   oprirea **nu mai e pe listă**: ruta duce comenzile vii, iar una anulată n-are
-   ce căuta în mașină. Dacă era o oprire numerotată, cele de după ea se trag cu
-   una mai sus, iar numărătoarea din capul paginii scade cu o livrare. Clipa de
-   verde poate fi prea scurtă ca s-o prinzi pe local — ce se cere aici e **unde
-   ajunge cartonul**, nu cât a ținut verdele.
+3. **Îl vezi fără să derulezi?** Tu ai apăsat la a treia oprire, cu pagina
+   derulată, iar mesajul stă în antetul lipit sus, deci e pe ecran la orice
+   derulare. Dacă a trebuit să urci ca să-l găsești, **scrie-o ca defect**: pe
+   un telefon scos din buzunar, un mesaj pe care nu-l vezi e un mesaj care n-a
+   fost dat.
+4. **Cartonul nu se face verde: piere.** La apăsare butonul se stinge și scrie
+   **„Se verifică comanda…"**: telefonul recitește ruta înainte să trimită ceva.
+   Comanda nu mai e pe ea, deci nu pleacă nimic la server, iar oprirea **nu mai
+   e pe listă**: ruta duce comenzile vii, iar una anulată n-are ce căuta în
+   mașină. Dacă era o oprire numerotată, cele de după ea se trag cu una mai sus,
+   iar numărătoarea din capul paginii scade cu o livrare. Dacă vezi cartonul
+   trecând, fie și o clipă, pe livrat — bulină **✓**, antet verde —, ăla e un
+   defect: așa făcea până la runda 2.6.0, ca și când livrarea ar fi mers.
 5. **Mesajul rămâne peste dispariție.** Aici e tot rostul bucății: oprirea îi
    piere de sub deget tocmai cât citește, iar dacă ar pleca și mesajul odată cu
    ea, șoferul ar rămâne cu o listă mai scurtă cu una și fără nicio vorbă despre
    ce s-a întâmplat — exact felul în care se nasc telefoanele în laborator. Nu se
    stinge singur, nici după ce trece o tură de cincisprezece secunde peste el:
-   pleacă abia când șoferul atinge un carton sau schimbă ziua.
+   pleacă abia când șoferul apasă **×**, atinge un carton sau schimbă ziua.
 
 **Apeși:** `/lab/jurnal.html`, filtrul de zonă **„Comenzi"**, cauți referința
 comenzii.
@@ -990,10 +1048,25 @@ apăsării de pe telefon. Un `order_update · Comandă #…: Anulată → Predat
 ora aia ar însemna că livrarea a trecut totuși și că mesajul roșu a mințit — iar
 pe deasupra, că din „Anulată" s-a ieșit, deci pe canalele din Setări a plecat un
 „Comandă refăcută" (7.5) pentru o comandă pe care patronul tocmai o oprise.
-Serverul refuză sub lacăt, înainte de orice scriere: de-aia Jurnalul e locul
+De la runda 2.6.0 telefonul nici nu mai trimite cererea, dar paza de pe server
+a rămas: refuză sub lacăt, înainte de orice scriere. De-aia Jurnalul e locul
 unde s-ar vedea minciuna.
 
-La capăt, refaci comanda din fila A și pui fila B înapoi pe lățimea ei.
+**Apeși**, ca să ai cu ce compara: în fila A refaci comanda pe **„Gata de
+livrare"** (la „Etapa" → caseta → **„Reface comanda"**). În fila B, în cel mult
+cincisprezece secunde, cartonul se întoarce, tot bifat. Îl deschizi și apeși
+**„Marchează livrat"**.
+
+**Trebuie să vezi** cartonul strâns, cenușiu, cu antet verde și **✓** în
+bulină, iar sub antet, pe verde: *„<client> · #… marcat livrat. Laboratorul
+vede «Predată»."* Deschizi iar cartonul și apeși **„Anulează livrarea"**: *„<client>
+— livrarea a fost anulată."*, iar comanda e iar în „Gata de livrare".
+
+La capăt, pune comanda înapoi în etapa în care o găsiseși: din fila A, la
+„Etapa", direct dacă era mai devreme în flux. Apoi, în fila B, scoate-i bifele
+atingând încă o dată fiecare poziție, pune fila B înapoi pe lățimea ei și, dacă
+ai lucrat cu `testangajat`, scoate-i din Conturi semnul „Poate confirma
+livrarea".
 
 ---
 
@@ -1003,7 +1076,8 @@ La capăt, refaci comanda din fila A și pui fila B înapoi pe lățimea ei.
 singurele care n-au mai fost plimbate niciodată.*
 
 Primele patru se fac în magazin, fără cont. Ultimele trei se fac cu
-`demo-manager`, pe telefon (390), în panoul de laborator.
+`demo-manager`, pe telefon (390), în panoul de laborator; a șaptea mai cere, la
+capăt, `testangajat` pe rută și `testadmin` în Conturi.
 
 ### 8.1 Comutatorul congelate ↔ coapte
 
@@ -1081,13 +1155,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.5.2 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.6.0 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.5.2` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.6.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1137,32 +1211,53 @@ sub deget și să rămână schimbată când ridici degetul.
 Mai ține degetul pe un card câteva clipe, fără să-l ridici, cât trece o tură de
 împrospătare. Cardul **nu are voie să sară înapoi** de sub deget.
 
-### 8.7 Laboratorul se oprește la „Predată curierului"
+### 8.7 Laboratorul se oprește la „Gata de livrare"
 
-Pe `/lab/laborator.html`, iei o comandă și o muți din etapă în etapă cu butonul
-mare.
+Pe `/lab/laborator.html`, iei o comandă de livrare de azi și o muți din etapă
+în etapă cu butonul mare. Ține minte etapa în care ai găsit-o.
 
-**Trebuie să vezi:** butonul scrie, la penultima etapă, **„Predată curierului"**.
-Îl apeși, și după el **se stinge**, cu lămurirea că șoferul pune ultima etapă de
-pe telefonul lui. Laboratorul **nu mai poate ajunge** la etapa finală, nici din
-card, nici din foaia de detaliu.
+**Trebuie să vezi:** pe etapa dinaintea ei, butonul scrie **„Gata de
+livrare"**. Îl apeși, și după el **se stinge** și scrie **„Așteaptă șoferul"**
+(pe o ridicare: **„Așteaptă clientul"**). Deschizi foaia de detaliu a comenzii:
+butonul stins scrie acolo **„Gata — o ia șoferul"**, iar dedesubt stă
+lămurirea: *„Comanda e gata de plecare. «Predată» o pune șoferul, de pe «Rută»,
+după ce bifează ce a încărcat — ori biroul, din «Comenzi»."* (Pe calculator, a
+doua oară: ținând mausul pe butonul cardului.) Laboratorul **nu mai poate
+ajunge** la etapa finală, nici din card, nici din foaia de detaliu. Până la
+runda 2.6.0, butonul stins scria aici „Predată curierului", deși marfa încă nu
+plecase.
 
-**Capcana care se uită:** pe un card ajuns la etapa finală, butonul **„Înapoi
-la: …"** trebuie să fie tot acolo. Dacă a dispărut, laboratorul a rămas fără
-singura cale de întors tocmai când șoferul apasă din greșeală.
+**Capcana care se uită:** pe un card ajuns la etapa finală, butonul stins scrie
+**„Finalizată"**, iar lângă el săgeata **„←"** trebuie să fie tot acolo; în
+foaia de detaliu, butonul **„Înapoi la: Gata de livrare"**. Dacă a dispărut,
+laboratorul a rămas fără singura cale de întors tocmai când șoferul apasă din
+greșeală. Dacă azi nu e nicio comandă livrată, o vezi la 17.3.
 
 **Apoi partea de pe server**, care e miezul lucrării. Intri cu `testangajat` pe
-`/lab/ruta.html`, pe o comandă de livrat.
+`/lab/ruta.html`, într-o fereastră privată, și deschizi cartonul comenzii pe
+care tocmai ai adus-o la „Gata de livrare".
 
-**Trebuie să vezi** butonul **„Marchează livrat" stins**, cu o lămurire care
-spune ce lipsește, pe ce cont, și cine o pune: semnul „poate confirma livrarea",
-bifat în Conturi.
+**Trebuie să vezi** că butonul **„Marchează livrat" lipsește cu totul** — nu
+stins, ci nedesenat —, iar în locul lui o lămurire care spune ce lipsește, pe ce
+cont, și cine o pune: *„Contul ăsta n-are semnul «poate confirma livrarea»,
+deci nu poate pune etapa «Predată». Se bifează în «Conturi», pe contul
+șoferului; după aceea butonul apare aici singur, fără reîncărcare."*
 
-Intri în `/lab/conturi.html` cu `testadmin`, apeși placa contului acela și, în
-fișa lui, pui bifa **„Poate confirma livrarea"**; te întorci pe rută și
-reîmprospătezi. Butonul
-trebuie să se **aprindă** și livrarea să treacă. Scoți bifa la loc, ca să nu
-lași contul de probă cu drepturi în plus.
+**Apeși:** în fereastra obișnuită ieși din `demo-manager` și intri cu
+`testadmin` (managerul n-are pagina „Conturi") → `/lab/conturi.html`
+→ placa lui `testangajat` → în fișa lui, comutatorul **„Poate confirma
+livrarea"**. Sus
+scrie *„«…» poate confirma livrarea."*, cu numele contului în loc de puncte,
+cum stă pe placă.
+
+**Trebuie să vezi** pe rută, în cel mult cincisprezece secunde și fără
+reîncărcare, butonul **„Marchează livrat"** apărut — stins până bifezi tot ce
+încarci (17.1). Nu-l apăsa aici: livrarea întreagă o faci la 17.3.
+
+**Desfaci:** în Conturi muți comutatorul înapoi — sus scrie *„«…» nu mai poate
+confirma livrarea."* —, ca să nu lași contul de probă cu drepturi în plus. Pe
+`/lab/laborator.html`, cu săgeata **„←"**, aduci comanda înapoi în etapa în care
+o găsiseși.
 
 Oprirea din pagină singură n-ar fi ținut: contul `angajat` are **și** panoul de
 laborator, **și** foaia de drum, deci același om ar fi apăsat pe cealaltă ușă.
@@ -1255,7 +1350,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.5.2 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.6.0 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -1766,6 +1861,11 @@ La capăt golești coșul, cu **„Golește"**.
 ### 13.5 O comandă corectată peste trepte
 
 `/lab/comenzi.html` → **„+ Comandă nouă"**. La client scrii „Plimbare 2.5.0".
+Comanda nouă pornește pe un mod care pleacă cu mașina și **fără zonă**, iar fără
+zonă nu se salvează (*„Alege zona: fără ea, oprirea nu apare corect pe ruta
+șoferului."*); așa că la **„Zonă"** alegi una din oraș, oricare. Jos, caseta
+**„Cod de recomandare"** vine cu codul tău scris în ea, dacă ai unul: o golești,
+ca o comandă de probă să nu scrie comision pe numele nimănui.
 Pe poziție alegi întâi varianta **„Congelate"**, apoi scrii cantitatea
 **150** și, la nume, „plimbare".
 
@@ -1773,7 +1873,8 @@ Pe poziție alegi întâi varianta **„Congelate"**, apoi scrii cantitatea
 *„140 g · 4,20 → 3,60 RON"* — de la prețul A până la cel mai mic. Îl alegi.
 
 **Trebuie să vezi**, sub poziție, rândul de bani: *„150 × 3,90 (preț B, de la
-100 buc.) = 585,00 RON"*. Apeși **„Adaugă comanda"**.
+100 buc.) = 585,00 RON"*. Apeși **„Adaugă comanda"**. Formularul se închide,
+iar sus scrie *„Comandă nouă adăugată: #… · Plimbare 2.5.0."*
 
 Acum schimbi catalogul pe sub comandă: în Catalog, Preț B la congelate devine
 **4,00**, și salvezi. Înapoi în Comenzi, pe comanda nouă: **„Vezi produsele"** →
@@ -1907,10 +2008,13 @@ face roșie și apare întrebarea **„Oprești contul…?"**, cu **„Renunț"*
 **„Oprește contul"**. Apeși **„Renunț"**: comutatorul e iar pornit. Nu opri
 contul: e al probelor de la „După plimbare".
 
-Deschizi apoi fișa ta și pe a fondatorului. **Trebuie să vezi** comutatorul
-stins la amândouă, cu motivul dedesubt: pe a ta, *„nimeni nu-și poate opri
-propriul cont"*; pe a fondatorului, *„îl oprește și îl pornește numai un
-fondator"*.
+Deschizi apoi fișa ta și pe a fondatorului. **Trebuie să vezi** la amândouă
+**niciun comutator**: în locul lui scrie doar **„Cont pornit"**, cu motivul
+dedesubt. Pe a ta: *„E contul cu care ești conectat: nimeni nu-și poate opri
+propriul cont."*; pe a fondatorului: *„Contul unui fondator îl oprește și îl
+pornește numai un fondator."* Până la runda 2.6.0 stătea acolo un comutator
+stins, pe care omul îl vedea și nu-l putea apăsa. Dacă vezi unul, ăla e un
+defect.
 
 Treci și pe **„Plăci: șase pe rând"** și pe **„Listă"**, apoi reîncarci:
 vederea se ține minte.
@@ -2143,7 +2247,374 @@ nu-l vezi.
 
 ---
 
-## 16 · Telefon, tabletă, calculator
+## 16 · Runda 2.6.0 în birou: comanda nouă, fereastra „Din catalog", fișele, Setări
+
+*Paisprezece minute. Tot ce s-a schimbat la masa din birou: formularul de
+comandă, fereastra din care se aleg produsele, anunțul care pleacă la echipă,
+fișa tehnică și o pază nouă în Setări. Două din comenzile scrise aici le
+folosește plimbarea următoare, deci fă-le pe amândouă în aceeași zi.*
+
+Pe 2 octombrie 2026 ai hotărât ca formularul de comandă să-i arate fiecărui rol
+numai ce-i folosește, ca fereastra „Din catalog" să semene cu magazinul, ca
+anunțul să spună cine a scris comanda și al cui e clientul, iar laboratorul să
+se oprească la „Gata de livrare" (17). Tot pe pachetul construit (8101), pe
+calculator (1440).
+
+**Pregătești:** `testadmin` → `/lab/setari.html` → fila **„Notificări"**.
+Cartonașul **E-mail** trebuie să fie pornit și să aibă o adresă, ca la 7.5. Sus,
+în **„Ce anunțuri primești, și pe unde"**, notează-ți întâi cum sunt bifele,
+apoi bifezi **E-mail** pe **„Cerere nouă"**, **„Comandă nouă"** și **„Comandă
+livrată"** → **„Salvează"**. Dacă pe vreunul din cele trei rânduri e bifat și
+**Telegram** ori **WhatsApp**, scoate-i bifa până la capătul plimbării: de pe
+calculatorul tău, amândouă trimit de-adevăratelea — Telegram în grupul
+echipei, WhatsApp pe numărul tău. E-mailul cade în Mailpit
+(`http://127.0.0.1:8025`) și nu pleacă nicăieri; ține-l deschis într-o filă
+alăturată.
+
+### 16.1 Comanda nouă, fără „Stare" și fără „Referință"
+
+**Apeși:** ieși, intri cu `demo-fondator` → `/lab/comenzi.html` → **„+ Comandă
+nouă"**.
+
+**Trebuie să vezi:**
+- titlul **„Comandă nouă"**, cu cursorul deja în caseta **„Client"**;
+- lângă „Client", numai **„Telefon"** — **nu** și „Referință": numărul comenzii
+  îl dă serverul, la salvare;
+- la **„Canal"**, aprins **„Livrare"**; la **„Prioritate"**, **„Normal — după
+  interval"**;
+- **„Zi"** pe azi și **„Interval"**, cu **„Doar ordinea (ora ascunsă)"** sub el —
+  două casete alăturate, **fără** „Stare": serverul pune comanda nouă mereu în
+  prima etapă din listă, deci caseta n-avea ce schimba. Dacă vezi „Stare" ori
+  „Referință" pe o comandă nouă, pe server a rămas pagina veche;
+- la **„Poziții"**, un singur rând gol, cu **1** la cantitate și latura
+  **„Coapte"**;
+- **„Zonă"** pe **„— fără zonă —"**;
+- jos, caseta **„Cod de recomandare"**, cu codul tău scris în ea dacă ai unul,
+  și butonul **„Adaugă comanda"**.
+
+Golește caseta codului, dacă e ceva în ea: comanda de probă n-are voie să scrie
+comision pe numele nimănui.
+
+**Apeși „Adaugă comanda"**, cu formularul gol. **Trebuie să vezi:** *„Scrie
+numele clientului."* Scrii la „Client" `Plimbare 2.6.0 livrare` și apeși iar.
+**Trebuie să vezi:** *„Adaugă cel puțin o poziție cu nume de produs."* Nu s-a
+salvat nimic.
+
+### 16.2 Fereastra „Din catalog": Congelate și Coapte
+
+**Apeși:** tot în formular, **„Din catalog"**, lângă „+ Adaugă poziție".
+
+**Trebuie să vezi:**
+- fereastra **„Din catalog"**, deschisă pe **„Congelate"** — pastila cu fulgul
+  e cea apăsată. Până la 2.6.0 se deschidea pe coapte și din ea nu se putea
+  pune nimic congelat;
+- sub titlu: *„Prețurile și pozele sunt ale laturii deschise. Comanda n-are încă
+  nicio poziție."*;
+- jos, **„Nicio poziție"** și butonul **„Gata"**;
+- căsuța de căutare **fără** cursor în ea: pe telefon, tastatura ar acoperi
+  tocmai cardurile.
+
+**Apeși „+"** pe cardul unui produs.
+
+**Trebuie să vezi:** cardul se face auriu, cu **1** în căsuță; pe pastila
+„Congelate" apare cifra **1**; sus, *„… Pe comandă: 1 la Congelate · 0 la
+Coapte."*; jos, **„1 poziție"**. Încă un „+": **2**. Un „−": înapoi la **1**.
+
+**Apeși** pastila **„Coapte"**, apoi **„+"** pe alt produs.
+
+**Trebuie să vezi** prețurile și pozele laturii coapte, cifra **1** pe pastila
+„Coapte" și tot **1** pe „Congelate": o comandă amestecată nu pare goală de pe
+nicio latură. Jos: **„2 poziții"**.
+
+**Apeși:** în căsuța de căutare scrii `zzz`. **Trebuie să vezi:** *„Nimic la
+Coapte pentru «zzz». Caută și la Congelate, ori șterge căutarea."* Apeși **×**
+din căsuță: cardurile revin.
+
+**Apeși „Gata".** **Trebuie să vezi** fereastra închisă, iar la „Poziții" **două
+rânduri**: unul pe „Congelate", unul pe „Coapte", fiecare cu 1. Rândul gol de la
+deschidere s-a umplut, nu a rămas în urmă. Apeși iar **„Din catalog"**: se
+deschide pe **„Coapte"**, unde ai lăsat-o. O închizi cu **×**.
+
+**Apeși:** la **„Adresă de livrare"** scrii `Strada Probei 1`, lași „Zonă" pe
+„— fără zonă —" și apeși **„Adaugă comanda"**. **Trebuie să vezi:** *„Alege
+zona: fără ea, oprirea nu apare corect pe ruta șoferului."* Alegi o zonă și
+apeși iar.
+
+**Trebuie să vezi:** formularul se închide, iar sus scrie *„Comandă nouă
+adăugată: #… · Plimbare 2.6.0 livrare."* Notează-ți numărul: e **comanda A**.
+
+**Apeși:** pe rândul ei, **„Vezi produsele"** → **„Editează comanda"**.
+**Trebuie să vezi** titlul **„Editează comanda #…"**, iar aici **„Stare"** și
+**„Referință"** sunt la locul lor: la corectare chiar scriu. Închizi cu
+**„Anulează"** de jos, care închide formularul fără să salveze; comanda nu se
+atinge.
+
+**Apeși:** ieși, intri cu `demo-manager` → **„+ Comandă nouă"**. Același titlu,
+același buton, tot fără „Stare" și „Referință". Client `Plimbare 2.6.0
+ridicare`, la „Canal" **„Ridicare"**, o poziție din **„Din catalog"**, de pe
+„Congelate". Golești caseta codului, dacă e ceva în ea, și apeși **„Adaugă
+comanda"**: merge **fără zonă**, fiindcă la ridicare nu pleacă nicio mașină.
+Asta e **comanda B**.
+
+### 16.3 Cererea agentului
+
+**Apeși:** ieși, intri cu `mihai` → `/lab/comenzi.html`. Butonul de sus scrie
+**„+ Cerere nouă"**; îl apeși.
+
+**Trebuie să vezi:**
+- titlul **„Cerere nouă"** și același formular ca la 16.1;
+- **nicio** casetă „Cod de recomandare". Dacă `mihai` are cod pe cont, în locul
+  ei stă un rând pe care nu-l poate schimba: *„Cererea pleacă cu codul tău:
+  …"*;
+- jos, **„Trimite spre aprobare"**, nu „Adaugă comanda";
+- în meniul lui, **nicio** filă „Cereri de pe site": el trimite cereri, nu le
+  aprobă.
+
+**Apeși:** client `Plimbare 2.6.0 agent`, „Livrare", o adresă, o zonă și o
+poziție → **„Trimite spre aprobare"**. **Trebuie să vezi** formularul închis și
+sus: *„Cerere trimisă spre aprobare · Plimbare 2.6.0 agent. Intră în laborator
+după ce o acceptă un administrator."*
+
+**Apeși:** ieși, intri cu `testadmin` → `/lab/comenzi.html` → fila **„Cereri de
+pe site"** → pe cererea lui, **„Acceptă și fă comanda"**.
+
+**Trebuie să vezi** formularul fără „Stare" și fără caseta codului, cu titlul tot
+**„Comandă nouă"** (vezi „Ce NU e defect aici") și cu butonul **„Acceptă
+cererea"**. Îl apeși: *„Cerere acceptată → #… · Plimbare 2.6.0 agent."* Asta e
+**comanda C**.
+
+### 16.4 Anunțul: cine a scris, al cui e clientul, unde merge marfa
+
+În Mailpit sunt patru mesaje noi: trei **„Comandă nouă #…"** — A, B și C — și
+un **„Cerere nouă de la Plimbare 2.6.0 agent"**. Pe Telegram pleacă același
+text, cuvânt cu cuvânt; cererea mai are acolo, dedesubt, două butoane,
+**„Acceptă"** și **„Respinge"**.
+
+**Trebuie să vezi**, în mesajul comenzii **A**:
+- *„Scrisă de: … (fondator)"* și *„Client adus de: nimeni (client al casei)"*;
+- *„Pentru: …"*, cu ziua și intervalul;
+- *„Onorare: Livrare"* și *„Adresă: Strada Probei 1 · …"*, cu zona aleasă;
+- câte un rând pe poziție, cu latura la capăt: unul se termină în
+  *„— congelat"*, celălalt în *„— copt"*;
+- *„Total: … lei"*.
+
+În mesajul comenzii **B**: *„Scrisă de: … (manager)"*, *„Onorare: Ridicare —
+vine clientul după marfă"* și **niciun** rând „Adresă": la o ridicare, adresa
+clientului citită pe telefon ar însemna „du marfa acolo".
+
+În mesajul **cererii**: dacă `mihai` are cod, un singur rând, *„Client adus de:
+… (agent de vânzări) — tot cine a scris cererea"*; fără cod, *„Scrisă de: …
+(agent de vânzări)"* și *„Client adus de: nimeni (client al casei)"*. La
+capăt, *„Total estimat: … lei"* și *„Acceptă sau respinge din pagina
+Administrare Comenzi."*
+
+În mesajul comenzii **C**, în plus: *„Acceptată de: … (administrator)"*.
+
+Rândurile „Client adus de" le citește, pe Telegram, tot grupul echipei, cu
+agentul cu tot. Dacă ți se pare prea mult pentru grup, spune: e de hotărât.
+
+**Desfaci C:** în `/lab/comenzi.html`, din fișa ei, la **„Etapa"** alegi
+**„Anulată"** — merge direct, fără casetă (7.1). Comanda rămâne în registru,
+anulată; dacă s-a scris un comision pe ea, trece și el pe anulat și nu mai
+intră în „Câștigat".
+
+### 16.5 Fișa tehnică: în magazin și în Catalog
+
+**Apeși:** într-o fereastră privată, fără cont, `http://127.0.0.1:8101/catalog`
+→ apeși poza lui **„Croissant cu ciocolată"**. Se deschide fereastra produsului.
+
+**Trebuie să vezi** butonul **„Descarcă fișa tehnică"**. Îl apeși: se descarcă
+un PDF, `fisa-tehnica-croissant-cu-ciocolata-congelat.pdf`. Același buton stă
+și pe pagina produsului, `/produs/croissant-cu-ciocolata`, iar pe **EN** scrie
+*„Download the data sheet (PDF, in Romanian)"*. Pe „Coapte" butonul e tot
+acolo: coaptele împrumută fișa de la congelate cât n-au una a lor. La
+**„Trigon cu vanilie și fructe"** butonul **lipsește**: produsul n-are fișă.
+
+**Apeși:** `testadmin` → `/lab/produse.html` → **„Editează"** pe „Croissant cu
+ciocolată".
+
+**Trebuie să vezi** două casete de fișă, alăturate:
+- **„Fișă tehnică (PDF) — congelat"**, cu **„Vezi fișa"** și **„Scoate fișa"**,
+  iar dedesubt: *„Magazinul oferă fișa asta la congelate. Alege alt PDF ca s-o
+  înlocuiești (maximum 10 MB)."*;
+- **„Fișă tehnică (PDF) — copt"**, **fără** „Vezi fișa", cu: *„Coapte nu are
+  fișa ei: magazinul o oferă pe cea de la congelate. Încarcă una aici ca să o
+  înlocuiești."*
+
+**Apeși „Scoate fișa"** la congelat. **Trebuie să vezi** butonul făcut
+**„Păstrează fișa"**, dedesubt *„Se scoate la salvare. Ca s-o ai înapoi, o
+încarci din nou de aici."*, iar sub caseta de copt: *„Fără fișă, butonul nu
+apare în magazin. PDF, maximum 10 MB."* Nimic n-a plecat încă: scoaterea se
+face numai la salvare.
+
+**Apeși „Păstrează fișa"**, apoi **„Renunță"**. **Nu salva.** Dacă ai salvat
+din greșeală, editezi iar produsul, alegi la congelat fișierul
+`fise/fisa-tehnica-croissant-cu-ciocolata-congelat.pdf` din folderul
+proiectului și salvezi.
+
+### 16.6 Refuzul din Setări
+
+**Apeși:** `testadmin` → `/lab/setari.html` → fila **„Liste"** → cardul
+**„Etapele cu rol special"**. La **„Comanda este încheiată (livrată) când ajunge
+la"** alegi **„Gata de livrare"** → **„Salvează"**, din bara de sus.
+
+**Trebuie să vezi** refuzul, roșu, sus și chiar deasupra celor două liste:
+*„«Gata de livrare» nu poate fi etapa care încheie comanda: după ea mai urmează
+«Predată». Comanda se încheie la ultima etapă din listă (cea de anulare nu se
+numără). Dacă marfa ajunge la client chiar la «Gata de livrare», mut-o întâi la
+capătul listei «Etape în laborator», apoi alege-o la «Etapele cu rol special»
+și salvează."* Nu s-a salvat nimic: clientul ar fi citit „Livrată" cu marfa încă
+în laborator.
+
+**Apeși:** pui lista înapoi pe **„Predată"** — refuzul de lângă liste se stinge
+singur —, apoi la **„Comanda este anulată când ajunge la"** alegi tot
+**„Predată"** → **„Salvează"**.
+
+**Trebuie să vezi:** *„Aceeași etapă, «Predată», nu poate și încheia, și anula
+comanda. Alege două etape diferite la «Etapele cu rol special»."*
+
+**Apeși „Renunță"**, din bara de sus. **Trebuie să vezi** cele două liste cum
+erau și **niciun** „Ai modificări nesalvate". Bifele de anunțuri le pui la loc
+abia la capătul lui 17: plimbarea următoare le mai folosește.
+
+Dacă nu faci 17 în aceeași zi, desfă pe loc ce ai scris: comenzile A și B, din
+fișa lor, la „Etapa" → **„Anulată"**, și bifele din „Notificări" cum le-ai
+găsit.
+
+---
+
+## 17 · Runda 2.6.0 pe drum: de la laborator la client
+
+*Douăsprezece minute. Drumul unei comenzi de la ultima etapă din laborator până
+la client, cu bifele șoferului ca o cheie. Îți trebuie comenzile A și B de la
+16.2, amândouă încă în prima etapă.*
+
+Pe 2 octombrie 2026 ai hotărât ca laboratorul să se oprească la **„Gata de
+livrare"**, ca de acolo comanda să fie a șoferului — el bifează marfa în
+mașină și tot el spune că a ajuns la client —, iar o ridicare s-o închidă
+biroul. Etapa nouă o pune în listă migrarea 030, pe locul dinaintea celei
+finale. Comenzile aflate la „La ambalare" în ziua actualizării rămân acolo:
+laboratorul mai apasă o dată pe fiecare, și abia atunci se aprinde butonul
+șoferului.
+
+Două file, amândouă cu `testadmin`, ca la 7.8: **L**, `/lab/laborator.html`, și
+**R**, `/lab/ruta.html` îngustată la **390**.
+
+### 17.1 Bifele se pun cât marfa e încă în lucru
+
+**Apeși:** în fila R, pe ziua de azi, cartonul comenzii A.
+
+**Trebuie să vezi:**
+- lângă numele clientului, insigna **„În lucru"**;
+- **„Bifează ce încarci · 0 din 2"**, cu cele două poziții dedesubt;
+- **„Navighează"** singur pe rândul lui — butonul care bifa toată comanda
+  dintr-o apăsare nu mai e;
+- **„Marchează livrat"** stins, cu lămurirea: *„Comanda e încă în lucru
+  («…»). «Marchează livrat» se aprinde când laboratorul o trece în «Gata de
+  livrare». Până atunci bifează ce încarci: mai sunt 2 poziții din 2."*
+
+**Apeși** pe cele două poziții, una după alta. **Trebuie să vezi** fiecare
+poziție tăiată, cu bifă verde, sus **„2 din 2"**, iar lămurirea fără coada
+despre bife. Butonul rămâne **stins**: lipsește etapa, nu bifele.
+
+Comanda B nu e pe rută: la o ridicare nu pleacă nicio mașină.
+
+### 17.2 Laboratorul se oprește la „Gata de livrare"
+
+**Apeși:** în fila L, cardul comenzii A → butonul mare, etapă cu etapă, până
+scrie pe el **„Gata de livrare"**, și încă o dată. Mută numai etapa: nu atinge
+cantitățile făcute, ca să nu umbli la depozit.
+
+**Trebuie să vezi** butonul stins, cu **„Așteaptă șoferul"**, iar în foaia de
+detaliu **„Gata — o ia șoferul"**, cu lămurirea de la 8.7 și cu **„Înapoi la:
+La ambalare"** — dacă la tine etapa dinainte se cheamă altfel, numele ei.
+
+**Apeși:** la fel cu comanda B. **Trebuie să vezi** **„Așteaptă clientul"** și,
+în foaie, **„Gata — o ridică clientul"**, cu *„Comanda e gata de ridicat.
+«Predată» o pune biroul, din «Comenzi», când clientul și-a luat marfa."*
+
+O apăsare greșită se desface cu săgeata **„←"** de pe card.
+
+### 17.3 „Marchează livrat", „Resetează bifele", și comanda care se face gri
+
+**Trebuie să vezi** în fila R, în cel mult cincisprezece secunde și fără
+reîncărcare: pe cartonul lui A insigna **„Gata"**, verde, iar **„Marchează
+livrat"** aprins — etapa și bifele sunt amândouă la locul lor.
+
+**Apeși „Resetează bifele"**, jos. **Trebuie să vezi** butonul făcut roșu,
+**„Sigur? Apasă iar"**, și deasupra lui: *„Ștergi bifele de pe toate comenzile
+zilei, iar «Marchează livrat» se stinge până bifezi din nou. Apasă încă o dată
+ca să le ștergi."* Nu apeși nimic: după cinci secunde butonul se dezarmează
+singur și redevine „Resetează bifele".
+
+**Apeși** iar „Resetează bifele", citești rândul și apeși **încă o dată**.
+**Trebuie să vezi:** *„Bifele de încărcare au fost șterse."*, „Marchează
+livrat" stins și lămurirea *„Bifează tot ce încarci: mai sunt 2 poziții din
+2."* O atingere din greșeală nu mai șterge nimic: trebuie două. Bifezi iar
+amândouă pozițiile.
+
+**Apeși:** în fila L treci pe `/lab/comenzi.html` → fișa lui A → **„Editează
+comanda"** → la prima poziție, cantitatea **2** → **„Salvează modificările"**.
+
+**Trebuie să vezi** în fila R, în cel mult cincisprezece secunde, rândul galben
+*„Biroul a schimbat comanda după ce ai bifat-o: bifele se pun din nou."* și
+toate bifele jos — și cea de pe poziția neatinsă: o salvare cu poziții le
+rescrie pe toate. Pui cantitatea la loc pe **1** și salvezi; bifele cad încă o
+dată, iar tu le pui din nou pe amândouă.
+
+**Apeși „Marchează livrat"**.
+
+**Trebuie să vezi:**
+- o clipă, pe buton, **„Se verifică comanda…"**: telefonul recitește comanda
+  înainte să trimită;
+- sub antet, pe verde: *„Plimbare 2.6.0 livrare · #… marcat livrat.
+  Laboratorul vede «Predată»."*;
+- cartonul strâns și **cenușiu**, cu antet verde, **✓** în bulină și fără
+  insignă. Dacă A era singura oprire a zilei, dedesubt: *„Ruta e gata — toate
+  comenzile au fost predate."*;
+- în Mailpit, **„Comandă livrată #…"**, cu *„Etapă: Gata de livrare →
+  Predată"*;
+- în fila L, pe care o aduci înapoi pe `/lab/laborator.html` (la pasul cu
+  „Editează comanda" ai mutat-o în „Comenzi"), cardul lui A pe
+  **„Finalizată"**, cu **„←"** alături (8.7).
+
+Nu apăsa **„Scade din stoc"** în Depozit: marfa de probă n-a ieșit din raft.
+
+**Desfaci:** în fila R deschizi iar cartonul lui A → **„Anulează livrarea"**.
+**Trebuie să vezi:** *„Plimbare 2.6.0 livrare — livrarea a fost anulată."*, iar
+comanda e iar în „Gata de livrare".
+
+### 17.4 Livrarea pusă din „Comenzi", și ridicarea închisă de birou
+
+**Apeși:** `testadmin` → `/lab/comenzi.html` → fișa lui A → la **„Etapa"**,
+**„Predată"**. **Trebuie să vezi** sus *„#… a trecut în «Predată»."*: biroul
+poate închide o livrare și fără bifele șoferului — de pildă când telefonul lui
+a rămas fără baterie.
+
+**Înainte să închizi B**, cât e încă în „Gata de livrare": ieși, intri cu
+`demo-manager` → `/lab/comenzi.html` → fișa lui B. Dacă în lista **„Etapa"**
+**lipsește „Predată"**, contul lui n-are semnul „Poate confirma livrarea", iar
+sub listă scrie de ce: *„«Predată» o pune un administrator ori un cont cu bifa
+«Poate confirma livrarea», din «Conturi»."* Atunci managerul nu poate închide
+nici ridicările; semnul se pune din Conturi, ca la 8.7. Dacă „Predată" e în
+listă, contul are semnul. Nu alegi nimic: ieși și intri iar cu `testadmin`.
+
+**Apeși:** pe B, la fel ca pe A. **Trebuie să vezi** în Mailpit **„Comandă
+livrată #…"** cu *„Onorare: Ridicare — vine clientul după marfă"* și *„Etapă:
+Gata de livrare → Predată"*. Rândul de onorare stă numai pe ridicare: de pe
+telefon deosebești o livrare de o marfă luată de client.
+
+**Desfaci tot:** A și B, din fișa lor, la „Etapa" → **„Anulată"** (direct, ca
+la 7.1). Rămân în registru, anulate. În Setări, la „Notificări", pui bifele cum
+le-ai găsit, cu tot cu Telegram ori WhatsApp, dacă le-ai scos. Bifele din fila
+R nu stau pe server, ci în browserul tău, legate de numărul comenzii A: o comandă anulată
+nu mai apare pe rută, deci bifele ei nu încurcă nicio altă comandă și pot
+rămâne acolo. Nu le șterge cu „Resetează bifele" dacă pe același browser mai
+lucrează cineva pe ruta zilei: ar pierde și bifele lui.
+
+---
+
+## 18 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -2257,6 +2728,19 @@ Ca să nu cauți ce nu s-a stricat:
 - **Pe card numărul are zero în față, în coș nu**: „03" în colțul pozei,
   „3. Plimbare 2.5.1" în coș și în mesajul de WhatsApp. Așa era și înainte de
   2.5.1, cu vechiul număr al produsului.
+- **Bifele de pe „Rută" stau în telefon**, nu pe server. Alt telefon, alt
+  browser ori o fereastră privată pornesc de la zero bife, chiar pe aceeași
+  comandă. Pe același telefon rămân și după o reîncărcare.
+- **„Navighează" stă singur pe rândul lui**, în cartonul de pe „Rută". Butonul
+  care bifa toată comanda dintr-o apăsare a fost scos dinadins în runda 2.6.0:
+  bifele sunt acum cheia livrării, deci se pun poziție cu poziție, cu marfa în
+  mână.
+- **La acceptarea unei cereri, formularul se cheamă tot „Comandă nouă"**, deși
+  butonul de jos scrie „Acceptă cererea". Titlul de acolo așteaptă hotărârea
+  ta; până atunci nu e un defect.
+- **„Comandă livrată" pleacă și pentru o ridicare.** Capul mesajului e numele
+  bifei din Setări; ce deosebește ridicarea e rândul *„Onorare: Ridicare — vine
+  clientul după marfă"* (16.4, 17.4).
 
 ---
 
@@ -2275,7 +2759,7 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele șaisprezece ies, proba automată se mai trece o dată pe
+Când toate cele optsprezece ies, proba automată se mai trece o dată pe
 deasupra:
 
 ```bash
@@ -2283,4 +2767,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.5.2`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.6.0`.

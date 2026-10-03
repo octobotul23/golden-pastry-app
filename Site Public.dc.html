@@ -294,7 +294,9 @@
           <sc-if value="{{ accRef }}" hint-placeholder-val="{{ false }}">
           <a href="Recomandari.dc.html" style="{{ mLink }}">{{ ctaReferral }}</a>
           </sc-if>
+          <sc-if value="{{ accParola }}" hint-placeholder-val="{{ false }}">
           <a href="Parola.dc.html" style="{{ mLink }}">{{ ctaPassword }}</a>
+          </sc-if>
           <button type="button" onClick="{{ doLogout }}" style="{{ mBtn }}">{{ ctaLogout }}</button>
         </div>
       </sc-if>
@@ -1078,6 +1080,24 @@
               </sc-if>
               <button type="button" class="h-btn h-btn--secondary" onClick="{{ goContact }}" style="min-height:2.9rem;padding-inline:1.2rem">{{ ctaQuote }}</button>
             </div>
+
+            <!-- Fișa tehnică a laturii (runda 2.6.0): documentul pe care
+                 clientul îl arată la un control. Stă pe rândul EI, sub rândul
+                 de acțiune: pusă lângă „Adaugă”, pe telefon ar fi împins
+                 stepperul pe rândul al doilea tocmai când apare.
+                 `target="_blank"` nu e de frumusețe: ascultătorul de apăsări
+                 al paginii ia orice legătură fără `target` drept navigare
+                 înăuntrul site-ului și ar fi dus cumpărătorul la „pagina”
+                 `fise/….pdf`, adică nicăieri. Fără `data-spa`, din același
+                 motiv. `download` îi dă fișierului un nume de citit;
+                 browserul îl ascultă fiindcă PDF-ul vine de pe același site.
+                 Produsul fără fișă (și orice server de dinainte de 031) n-are
+                 rândul deloc. -->
+            <sc-if value="{{ pvAreFisaTeh }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0 0 1.1rem">
+                <a class="h-btn h-btn--ghost h-btn--sm" href="{{ pvFisaTehHref }}" target="_blank" rel="noopener" download="{{ pvFisaTehNume }}" style="min-height:2.75rem;border-color:var(--h-line-strong);white-space:normal;text-align:center">{{ pvFisaTehCta }}</a>
+              </p>
+            </sc-if>
 
             <!-- A doua apăsare, scrisă în litere. Poza și numele din antet
                  duc în același loc, dar pe amândouă trebuie să le ghicești;
@@ -2010,6 +2030,20 @@ function afisareaDinBrowser() {
   }
 }
 
+// Numele sub care se descarcă fișa tehnică: al produsului, plus latura
+// FIȘIERULUI care chiar se dă — `fisa-tehnica-<slug>-congelat.pdf` ori
+// `-copt.pdf`. Latura fișierului nu e fila deschisă: Coapte împrumută fișa
+// congelată când n-are una a ei (`latura_fisa()`, api/lib/laturi.php), iar
+// atunci serverul pune ACEEAȘI adresă pe amândouă laturile. Aceeași adresă e
+// același fișier, deci același nume — „congelat”, oricare filă ar fi deschisă.
+// „copt” se spune numai când Coapte are fișa EI, alta decât cea congelată.
+// Fără latură în nume, cine descărca amândouă fișele aceluiași produs găsea în
+// Descărcări două fișiere cu un singur nume, al doilea cu „(1)” la coadă.
+function numeFisaTehnica(slug, fisaCongelat, fisaCopt, latura) {
+  const aCoptei = latura === 'baked' && !!fisaCopt && fisaCopt !== fisaCongelat;
+  return 'fisa-tehnica-' + (slug || 'produs') + (aCoptei ? '-copt' : '-congelat') + '.pdf';
+}
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -2270,7 +2304,16 @@ class Component extends DCLogic {
           // rămâne a coșului, a pozei și a adresei. Un server de dinainte de 029
           // nu-l trimite: atunci numărul e cheia, ca ieri.
           (x.trepte && Array.isArray(x.trepte.frozen)) ? x.trepte.frozen : [],
-          (x.trepte && Array.isArray(x.trepte.baked)) ? x.trepte.baked : [], x.numar > 0 ? x.numar : x.id
+          (x.trepte && Array.isArray(x.trepte.baked)) ? x.trepte.baked : [], x.numar > 0 ? x.numar : x.id,
+          // Fișa tehnică a fiecărei laturi (031), tot la coadă: 18 congelate,
+          // 19 coapte. Se citește NUMAI `sheetFor`, adică fișa pe care serverul
+          // a hotărât deja s-o ofere — Coapte o împrumută pe cea congelată cât
+          // n-are a ei, iar împrumutul se face într-un singur loc
+          // (`latura_fisa()` din api/lib/laturi.php). `x.sheet` și
+          // `x.sheetBaked` sunt ale Catalogului, care trebuie să știe a cui e
+          // fișa; citite aici, ar cere împrumutul făcut a doua oară. Un server
+          // de dinainte de 031 nu trimite nimic: gol, iar butonul nu se arată.
+          (x.sheetFor && x.sheetFor.frozen) || '', (x.sheetFor && x.sheetFor.baked) || ''
         ]);
         const groups = (r.categories || []).map((c) => [
           c.slug, c.name, c.nameEn || c.name, c.note || '', c.noteEn || c.note || ''
@@ -3434,6 +3477,13 @@ class Component extends DCLogic {
     // nu li se desenează. `gp.eAdmin()` ține la un loc administratorul și
     // fondatorul, ca peste tot în casă.
     const cautaClient = staff && gp.eCautaClienti(A);
+    // Ce intrări are contul în meniul casei — de aici își ia meniul din antet
+    // „Recomandări” și „Parola mea”. Contul se dă în forma lui `gp.auth()`, nu
+    // crud, cum stă în stare: `GET /auth/me` trimite codul de recomandare
+    // deoparte (`referral.code`), iar `gp.meniu()` îl caută în `referralCode`.
+    // Dat crud, clientul CU cod nu-și vedea „Recomandări” aici, deși o vedea în
+    // sertarul oricărui panou.
+    const meniuCont = A ? gp.meniu('', gp.auth(A)) : [];
     // 29-b · FORMULARUL CLIENTULUI INTRAT.
     //
     // Până acum trecea prin același formular ca un străin: pe telefon se
@@ -3685,6 +3735,12 @@ class Component extends DCLogic {
     // mereu una și aceeași, fiindcă magazinul se desenează și din tuplu (aici)
     // și din răspunsul serverului (`photoFor`).
     const pozaLat = (r, ti) => (ti === 'baked' ? r[12] : r[10]);
+    // Fișa tehnică a laturii, așa cum a hotărât-o serverul (v. `pullCatalog`).
+    // Spre deosebire de poză, aici NU e nimic de socotit: împrumutul e făcut.
+    // `|| ''` e pentru rândurile scurte — un catalog ținut în memorie de
+    // dinainte de 031 ori un rând construit de mână într-o probă n-au câmpurile
+    // 18 și 19, iar `undefined` ajuns într-un `href` s-ar citi „undefined”.
+    const fisaLat = (r, ti) => (r ? (ti === 'baked' ? r[19] : r[18]) || '' : '');
 
     // [cheie, numeRO, numeEN, subtitluRO, subtitluEN] — tot din baza de date.
     const GROUPS = this.state.groups || [];
@@ -4875,12 +4931,19 @@ class Component extends DCLogic {
       // hotărăște și în sertarul panourilor cine vede intrarea, iar clientul
       // o capătă numai dacă are cod. Două răspunsuri diferite la aceeași
       // întrebare, în două pagini, ar însemna că una din ele minte.
-      accRef: !!A && gp.meniu('', A).some((x) => x.et === 'Recomandări'),
+      accRef: meniuCont.some((x) => x.et === 'Recomandări'),
       ctaReferral: t('Recomandări', 'Referrals'),
       accMenuLabel: t('Contul meu', 'My account'),
       // Meniul contului avea o singură intrare în afară de panou: „Ieși din
       // cont". Clientul primea parola de la administrator, cu mesajul „schimb-o
       // după prima intrare", și nu găsea nicăieri de unde.
+      //
+      // Tot meniul casei hotărăște și cine o vede. Contul comun al tabletelor
+      // (`isSystem`) n-are parolă a lui: schimbarea cere parola de acum, pe
+      // care n-o știe nimeni, iar „Parola mea” nici nu-i arată formularul.
+      // Legătura nu i se mai desenează, ca în sertarul panourilor — un rând
+      // care duce la o pagină fără nimic de făcut nu e o intrare de meniu.
+      accParola: meniuCont.some((x) => x.et === 'Parola mea'),
       ctaPassword: t('Parola mea', 'My password'),
       ctaLogout: t('Ieși din cont', 'Sign out'),
       mBtn: 'display:flex;align-items:center;width:100%;min-height:2.75rem;padding:0 0.85rem;border:0;border-radius:12px;background:transparent;color:var(--h-fg);font-family:var(--h-font-body);font-weight:600;font-size:1rem;cursor:pointer;text-align:left',
@@ -5361,6 +5424,22 @@ class Component extends DCLogic {
       pvFisaHref: caleaCatre('product', this.state.lang, 'product', (randProd && randProd[11]) || ''),
       pvGoFisa: this.nav('product', 'product', (randProd && randProd[11]) || ''),
       pvFisaCta: t('Vezi pagina produsului', 'See the product page'),
+      // Fișa TEHNICĂ — PDF-ul, nu „fișa” de mai sus, care e pagina produsului
+      // (numele `pvFisa*` sunt de dinainte și au rămas ale ei). Latura e cea
+      // pe care se arată produsul (`tierProd`), ca poza: pe Coapte se oferă
+      // fișa pentru coapte, iar când n-are, serverul a pus deja acolo pe cea
+      // congelată. Fișierul e în română oricum; pe engleză butonul o spune,
+      // ca omul să nu descarce un document pe care nu-l poate citi fără să
+      // fi fost prevenit. Numele de descărcare e al produsului, nu al
+      // fișierului de pe server: o fișă încărcată din Catalog se cheamă acolo
+      // `fisa-<id>-<hex>.pdf`, iar pe aceea n-o găsește nimeni în Descărcări.
+      // La coadă poartă latura FIȘIERULUI (`numeFisaTehnica()`, sus), nu pe a
+      // filei: fișa împrumutată de Coapte se cheamă tot „congelat”.
+      pvAreFisaTeh: !!fisaLat(randProd, tierProd),
+      pvFisaTehHref: fisaLat(randProd, tierProd),
+      pvFisaTehNume: numeFisaTehnica(randProd && randProd[11],
+        fisaLat(randProd, 'frozen'), fisaLat(randProd, 'baked'), tierProd),
+      pvFisaTehCta: t('Descarcă fișa tehnică', 'Download the data sheet (PDF, in Romanian)'),
       // Poza se apasă NUMAI în fereastră: acolo e „a doua apăsare". Pe fișa
       // însăși ar fi dus tot la fișă — o navigare către locul în care ești
       // deja, care n-ar fi făcut decât să te zvârle în capul paginii. De-aia

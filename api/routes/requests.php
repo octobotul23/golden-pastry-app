@@ -724,6 +724,13 @@ function route_requests_create(): void
     // fiindcă asta s-a și întâmplat — cererea a fost salvată. Un anunț care nu
     // pleacă rămâne scris în tabelul `notifications` cu status „failed" și în
     // jurnalul de erori al serverului, de unde se poate afla ce s-a pierdut.
+    //
+    // Cine a scris cererea se agață ABIA AICI, după răspuns: `anunt` e numai
+    // pentru mesaj (`anunt_randuri_oameni()`, api/lib/notify.php). Pus mai sus,
+    // ar fi plecat în 201, iar vizitatorul de pe site ar fi citit id-ul unui
+    // om din casă. Al cui e clientul își află mesajul singur, din contul
+    // clientului și din codul cererii: aici nu s-a hotărât încă niciun comision.
+    $req['anunt'] = ['autorId' => $dinCasa ? (int) $user['id'] : null, 'dePeSite' => !$dinCasa];
     try {
         notify_new_request($req);
     } catch (Throwable $e) {
@@ -1231,6 +1238,11 @@ function route_requests_accept(string $id): void
     // De aici încolo nimic nu mai ajunge la client. Un anunț care nu pleacă
     // rămâne scris în `notifications` cu status „failed", cu tot cu motivul,
     // de unde se vede în Setări ce s-a pierdut.
+    //
+    // Oamenii din jurul comenzii se agață ABIA AICI, după răspuns, ca la
+    // nașterea din panou: cine a scris cererea (nimeni, dacă a venit de pe
+    // site — `created_by` gol, nu `channel`), cine a acceptat-o și pe unde.
+    $order['anunt'] = ['autorId' => $autorCerere, 'dePeSite' => $autorCerere === null, 'acceptataDe' => (int) $u['id'], 'prin' => requests_decided_via(), 'aducatorId' => $order['commission']['referrer'] ?? null];
     try {
         notify_new_order($order);
     } catch (Throwable $e) {

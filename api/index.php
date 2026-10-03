@@ -56,6 +56,7 @@ require __DIR__ . '/lib/settings.php';
 require __DIR__ . '/lib/orders.php';
 require __DIR__ . '/lib/laturi.php';
 require __DIR__ . '/lib/poze.php';
+require __DIR__ . '/lib/fise.php';
 require __DIR__ . '/lib/catalog.php';
 require __DIR__ . '/lib/notify.php';
 require __DIR__ . '/lib/referral.php';
@@ -111,6 +112,11 @@ $routes = [
     ['PATCH',  '/products/#',        'catalog',  'route_products_update'],
     ['DELETE', '/products/#',        'catalog',  'route_products_delete'],
     ['POST',   '/products/#/photo',  'catalog',  'route_products_photo'],
+    // Fișa tehnică a unei laturi (migrarea 031). Scoaterea e rută aparte, nu
+    // un câmp gol în PATCH: latura se cere anume, în `?latura=`, ca o cerere
+    // strâmbă să nu scoată tăcut fișa congelată.
+    ['POST',   '/products/#/sheet',  'catalog',  'route_products_sheet'],
+    ['DELETE', '/products/#/sheet',  'catalog',  'route_products_sheet_delete'],
     // Rețeta ține de produs, deci se editează din Produse (admin), nu din
     // Depozit (orice angajat). `PUT` fiindcă înlocuiește lista întreagă.
     ['GET',    '/products/#/recipe', 'catalog',  'route_product_recipe_get'],

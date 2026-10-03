@@ -203,6 +203,23 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!-- OMUL CU TURA UITATĂ. Tastatura nu i se mai desenează: serverul nu-l lasă
+     să ponteze cu niciun cod până nu i se încheie tura rămasă deschisă. I se
+     spune pe loc ce are de făcut; cine poate corecta primește chiar butonul. -->
+<sc-if value="{{ pasUitata }}" hint-placeholder-val="{{ false }}">
+<div style="max-width:420px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:10px 0 4px">
+<span style="font-size:13px;color:var(--h-fg-subtle);text-transform:uppercase;letter-spacing:.06em">Tură nepontată la plecare</span>
+<span style="font-family:var(--h-font-display);font-size:26px;font-weight:600;overflow-wrap:anywhere">{{ codNume }}</span>
+<span style="font-size:16px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">{{ uitataRand }}</span>
+<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:6px">
+<sc-if value="{{ uitataScrie }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ onUitataScrie }}" style="min-height:50px;padding:0 22px;font-size:16px;border-radius:14px">Scrie plecarea</button>
+</sc-if>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onUitataInapoi }}" style="min-height:50px;padding:0 22px;font-size:16px;border-radius:14px">Înapoi la listă</button>
+</div>
+</div>
+</sc-if>
+
 <sc-if value="{{ pasGata }}" hint-placeholder-val="{{ false }}">
 <div style="max-width:420px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;padding:10px 0 4px">
 <span style="font-size:46px;line-height:1">{{ gataSemn }}</span>
@@ -549,6 +566,13 @@ class Component extends DCLogic {
       // mai sus e amânat de React, deci aici starea ar fi încă goală.
       .then((user) => {
         if (!user) gp.toLogin();
+        // Cu parola provizorie, serverul refuză cu 403 ORICE altă cerere decât
+        // schimbarea ori păstrarea ei. Lista de pontaj pica și ea, iar pagina
+        // îi scria omului „nu pontează în laborator" — celui care are voie.
+        // Îl ducem unde poate face singurul lucru care merge: Parola. Contul
+        // comun al tabletelor rămâne aici: pe el serverul îl scutește de
+        // regula asta (`require_auth()`, api/lib/auth.php).
+        else if (user.mustChangePassword === true && !user.isSystem) this.laParola();
         else {
           this.stopPoll = gp.poll(() => this.pull(), 15000);
           if (gp.eRaportPontaj(user)) { this.incarcaRaport(); this.incarcaProductie(); }
@@ -562,6 +586,16 @@ class Component extends DCLogic {
     clearTimeout(this.tGata);
   }
 
+  /**
+   * Spre pagina parolei, cu coada de adresă dusă mai departe (acolo stă
+   * instanța cerută de probe). Sondajul se oprește: pagina pleacă, iar o
+   * cerere în plus ar primi același 403.
+   */
+  laParola() {
+    if (this.stopPoll) this.stopPoll();
+    location.href = "Parola.dc.html" + (location.search || "");
+  }
+
   /* ─────────────────────────────────────────────── ceasul ───────────── */
 
   /** Cine poate ponta, și cine e în tură acum. */
@@ -572,6 +606,12 @@ class Component extends DCLogic {
       }))
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
+        // 403 `must_change_password` NU e un refuz de rol: omul are voie la
+        // ceas, dar întâi are de ales ce face cu parola primită. Fără ramura
+        // asta, ecranul de refuz îi scria că „nu pontează în laborator" —
+        // și steagul i se putea pune și cu pagina deja deschisă (o parolă
+        // resetată de administrator între două împrospătări).
+        else if (e.code === "must_change_password") this.laParola();
         // 403 nu e o defecțiune, e un răspuns: contul ăsta n-are ce căuta la
         // ceas. Ecranul de refuz o spune întreg, iar o casetă roșie deasupra
         // lui ar fi a doua explicație pentru același lucru. Restul refuzurilor
@@ -601,9 +641,30 @@ class Component extends DCLogic {
   }
 
   alege(o) {
+    // OMUL CU TURA UITATĂ nu mai primește tastatura. Serverul nu-l lasă să
+    // ponteze cu niciun cod: cu unul greșit răspunde „Cod greșit.", cu cel
+    // bun „Ai o tură rămasă deschisă… până atunci nu poți ponta." (409
+    // `stale_shift`, api/routes/lab.php). Pagina o știe dinainte, din
+    // `o.stale`, deci îi spune pe loc ce are de făcut, în loc să-l pună să
+    // tasteze patru cifre care nu pot reuși.
+    if (o.stale) {
+      this.setState({
+        pas: "uitata", alesId: o.id, alesNume: o.name, alesOpen: true,
+        alesStale: true, cod: "", codEroare: ""
+      });
+      this.raceste();
+      // Steagul din listă poate fi vechi de până la cincisprezece secunde.
+      // Administratorul care tocmai i-a scris plecarea de la birou îi spune
+      // omului „gata, pontează", iar el apasă pe nume înaintea următoarei
+      // împrospătări. Lista se citește deci încă o dată chiar acum: dacă tura
+      // nu mai e uitată, pasul acesta se dă singur la o parte (`pasAcum`, în
+      // renderVals) — altfel i-am ascunde ceasul tocmai celui primit de server.
+      this.pull();
+      return;
+    }
     this.setState({
       pas: "cod", alesId: o.id, alesNume: o.name, alesOpen: !!o.open,
-      alesStale: !!o.stale, cod: "", codEroare: ""
+      alesStale: false, cod: "", codEroare: ""
     });
     this.raceste();
   }
@@ -793,6 +854,24 @@ class Component extends DCLogic {
       onClick: () => this.alege(o)
     }));
 
+    // PASUL CEASULUI, cum se desenează. `alege()` nu mai deschide tastatura
+    // omului cu tura uitată; dar lista se împrospătează singură la
+    // cincisprezece secunde, iar o tură devine „uitată" și cu tastatura deja
+    // deschisă (la miezul nopții, pe o tabletă lăsată pe numele cuiva). De
+    // aceea pasul desenat se ia din lista de ACUM, nu numai din ce era în
+    // clipa apăsării: tastatura unui om pe care serverul nu-l mai lasă să
+    // ponteze nu se desenează în nicio împrejurare.
+    //
+    // Și în partea cealaltă: pasul „uitata" ține numai cât omul chiar are tura
+    // uitată. Dacă plecarea i-a fost scrisă între timp de pe alt ecran, lista
+    // de acum îl arată liber și serverul îl primește iar la ceas; pagina nu-i
+    // mai ține în față un „nu poți ponta" care nu mai e adevărat, ci se
+    // întoarce la lista de nume, unde butonul lui e iar de apăsat.
+    const ales = S.lume.find((o) => o.id === S.alesId) || null;
+    const pasAcum = (S.pas === "cod" && !!ales && !!ales.stale) ? "uitata"
+      : (S.pas === "uitata" && !!ales && !ales.stale) ? "lista"
+      : S.pas;
+
     const bule = [0, 1, 2, 3].map((i) => ({
       cls: "pt-bula" + (i < S.cod.length ? " pt-bula--plina" : "")
     }));
@@ -850,6 +929,14 @@ class Component extends DCLogic {
         onInchide: () => this.inchide(t)
       };
     });
+
+    // Tura uitată a omului apăsat sus, la ceas — dacă e printre cele încărcate
+    // în raport. De ea atârnă butonul „Scrie plecarea" din pasul „uitata".
+    // Raportul se încarcă numai pentru cine îl vede, deci pentru ceilalți
+    // lista e goală și nu se găsește nimic.
+    const turaUitata = pasAcum === "uitata"
+      ? (ture.find((t) => t.userId === S.alesId && !!t.stale) || null)
+      : null;
 
     const peOm = S.peOm.map((p) => {
       // Turele unui om se despart în trei, fiindcă au trei înțelesuri: una
@@ -983,14 +1070,36 @@ class Component extends DCLogic {
             : " ture nepontate la plecare") : "")
         : ""),
 
-      // Cele trei ecrane ale ceasului, ca steaguri complementare: `<sc-if>`
+      // Cele patru ecrane ale ceasului, ca steaguri complementare: `<sc-if>`
       // primește o valoare, nu o expresie.
-      pasLista: S.pas === "lista",
-      pasCod: S.pas === "cod",
-      pasGata: S.pas === "gata",
+      pasLista: pasAcum === "lista",
+      pasCod: pasAcum === "cod",
+      pasGata: pasAcum === "gata",
+      // Al patrulea: omul apăsat are o tură rămasă deschisă dintr-o zi
+      // trecută. Nu i se mai dă tastatura (serverul îl refuză cu orice cod),
+      // ci i se spune ce are de făcut.
+      pasUitata: pasAcum === "uitata",
+      uitataRand: !poateCorecta
+        ? "Ai o tură rămasă deschisă dintr-o zi trecută. Spune-i unui administrator s-o încheie; până atunci nu poți ponta."
+        : turaUitata
+          ? "Tura rămasă deschisă dintr-o zi trecută se încheie de mână. Până atunci, omul nu poate ponta."
+          // Tura nu s-a găsit în raport. Pricina se spune pe nume, fiindcă
+          // fiecare are alt leac: un raport picat se cere din nou, unul care
+          // încă vine se așteaptă, și numai unul sosit întreg se lărgește.
+          : S.eroareRaport
+            ? "Tura rămasă deschisă se încheie din raportul de mai jos, iar raportul nu s-a încărcat. Apasă „Încearcă din nou” acolo, apoi „Scrie plecarea” pe rândul ei."
+            : !S.raportGata
+              ? "Tura rămasă deschisă se încheie din raportul de mai jos, care încă se încarcă."
+              : "Tura rămasă deschisă nu e printre cele din raportul de mai jos. Mută „De la” mai în urmă ori alege „Toată lumea”, apoi apasă „Scrie plecarea” pe rândul ei.",
+      // Butonul se desenează numai cui îi primește serverul scrierea
+      // (`require_admin` pe PATCH /lab/shifts/#) și numai când tura e printre
+      // cele încărcate — altfel n-ar avea ce închide.
+      uitataScrie: poateCorecta && !!turaUitata,
+      onUitataScrie: () => { const t = turaUitata; this.laLista(); if (t) this.inchide(t); },
+      onUitataInapoi: () => this.laLista(),
 
-      ceasSub: S.pas === "cod" ? "Tastează codul tău de patru cifre."
-        : S.pas === "gata" ? ""
+      ceasSub: pasAcum === "cod" ? "Tastează codul tău de patru cifre."
+        : (pasAcum === "gata" || pasAcum === "uitata") ? ""
         : "Apasă pe numele tău. Același buton pontează și venirea, și plecarea.",
       lume: lume,
       // Cardul „nu e nimeni" e o AFIRMAȚIE despre lume, iar pagina o poate face
@@ -1000,8 +1109,9 @@ class Component extends DCLogic {
         ? "Codurile se pun din Conturi, pe fiecare om în parte."
         : "Cere-i administratorului să pună coduri de pontaj din Conturi.",
 
+      // Omul cu tura uitată nu mai ajunge la tastatură (vezi `alege()`), deci
+      // titlul ei nu mai are a treia formă.
       codTitlu: S.verifica ? "Se verifică…"
-        : S.alesStale ? "Ai o tură nepontată la plecare"
         : S.alesOpen ? "Pontează plecarea" : "Pontează venirea",
       codNume: S.alesNume,
       bule: bule,

@@ -282,7 +282,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <sc-if value="{{ s.open }}" hint-placeholder-val="{{ false }}">
 <div style="padding:0 15px 15px;display:flex;flex-direction:column;gap:12px;animation:rt-in .2s var(--h-ease-out)">
-<span class="h-eyebrow" style="font-size:11px">Bifează ce încarci</span>
+<span class="h-eyebrow" style="font-size:11px">Bifează ce încarci{{ s.bifate }}</span>
+<!-- Bifele căzute nu cad în tăcere. Biroul a rescris pozițiile comenzii după
+     ce curierul le bifase: toate bifele sunt jos, iar fără rândul ăsta omul
+     ar fi găsit lista goală fără să știe că a mai bifat-o o dată. -->
+<sc-if value="{{ s.schimbata }}" hint-placeholder-val="{{ false }}">
+<div role="status" class="h-alert h-alert--warning" style="border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.45">{{ s.schimbata }}</div>
+</sc-if>
 <div style="display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ s.items }}" as="it" hint-placeholder-count="2">
 <button type="button" onClick="{{ it.onToggle }}" style="display:flex;align-items:center;gap:12px;min-height:52px;padding:0 14px;border:1px solid {{ it.border }};border-radius:14px;background:{{ it.bg }};cursor:pointer;font-family:var(--h-font-body);color:var(--h-fg);text-align:left">
@@ -295,13 +301,25 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ s.note }}" hint-placeholder-val="{{ false }}">
 <div class="h-alert h-alert--warning" style="border-radius:12px;padding:10px 12px;font-size:14px">{{ s.note }}</div>
 </sc-if>
-<div style="display:flex;gap:8px">
-<a href="{{ s.nav }}" target="_blank" rel="noopener" class="h-btn h-btn--secondary" style="flex:1;min-height:50px;font-size:15px;text-decoration:none">Navighează</a>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ s.onAll }}" style="flex:1;min-height:50px;font-size:15px">Tot încărcat</button>
-</div>
+<!-- „Navighează" stă singur pe rând de la runda 2.6.0. Lângă el era un buton
+     care bifa toată comanda dintr-o apăsare; bifele sunt acum cheia livrării
+     (v. `piedicaLivrarii`), iar o cheie care se întoarce singură nu păzește
+     nimic. Curierul bifează produs cu produs, cu marfa în mână. -->
+<a href="{{ s.nav }}" target="_blank" rel="noopener" class="h-btn h-btn--secondary h-btn--block" style="min-height:50px;font-size:15px;text-decoration:none">Navighează</a>
+<!-- UN BUTON PE CARE OMUL NU-L POATE FOLOSI NU SE DESENEAZĂ (regula patronului,
+     2 octombrie 2026). Contul fără semnul „poate confirma livrarea" primea
+     butonul stins; serverul îl refuză oricum (403 `delivery_denied`), deci
+     acum butonul lipsește, iar lămurirea de dedesubt spune ce lipsește și
+     unde se pune. „Anulează livrarea" nu cere semnul și rămâne desenat.
+     Celelalte piedici (etapa, bifele, listele care încă vin) le poate ridica
+     omul ori timpul: acolo butonul rămâne, stins, cu pricina sub el. -->
+<sc-if value="{{ s.doneAre }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="{{ s.doneCls }}" onClick="{{ s.onDone }}" disabled="{{ s.doneOff }}" title="{{ s.doneTitlu }}" style="min-height:56px;font-size:17px;font-weight:700">{{ s.doneLabel }}</button>
+</sc-if>
 <!-- Lămurirea stă SUB buton, nu numai în `title`: pe telefon nu există „mouse-ul
-     deasupra", deci un `title` singur ar fi fost scris pentru nimeni. -->
+     deasupra", deci un `title` singur ar fi fost scris pentru nimeni. Spune
+     ce lipsește: semnul de pe cont, etapele care încă se aduc, etapa
+     laboratorului ori bifele rămase. -->
 <sc-if value="{{ s.doneNota }}" hint-placeholder-val="{{ false }}">
 <p style="margin:0;font-size:14px;line-height:1.45;color:var(--h-fg-subtle)">{{ s.doneNota }}</p>
 </sc-if>
@@ -346,12 +364,21 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 </div>
 
-<div style="padding:12px 16px 18px;border-top:1px solid var(--h-line);background:var(--h-bg-sunk);display:flex;align-items:center;gap:10px">
+<div style="padding:12px 16px 18px;border-top:1px solid var(--h-line);background:var(--h-bg-sunk);display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+<!-- „Resetează bifele" e un buton ARMAT: prima apăsare numai îl armează și
+     aprinde rândul ăsta, a doua (în câteva secunde) șterge. Bifele sunt cheia
+     livrării, iar butonul stă la marginea de jos a telefonului, sub deget: o
+     atingere din greșeală nu mai are voie să stingă „Marchează livrat" pe
+     toate comenzile zilei. Fără `confirm()`: fereastra browserului nu se
+     poate citi din mers și se închide cu orice atingere. -->
+<sc-if value="{{ resetNota }}" hint-placeholder-val="{{ false }}">
+<p role="status" style="flex:1 0 100%;margin:0;font-size:14px;line-height:1.45;color:var(--h-fg)">{{ resetNota }}</p>
+</sc-if>
 <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">
 <span style="font-size:13px;color:var(--h-fg-subtle);line-height:1.4">{{ orderNote }}</span>
 <a href="Intrare.dc.html" style="align-self:flex-start;display:flex;align-items:center;min-height:44px;font-size:13px;font-weight:600;text-decoration:none">← Alege panoul</a>
 </div>
-<button type="button" class="h-btn h-btn--ghost" onClick="{{ onReset }}" style="min-height:46px;font-size:14px;flex:none">Resetează bifele</button>
+<button type="button" class="{{ resetCls }}" onClick="{{ onReset }}" style="min-height:46px;font-size:14px;flex:none">{{ resetEt }}</button>
 </div>
 
 </div>
@@ -500,12 +527,29 @@ const SPEED = 22, SERVICE = 6;
 const PANOUL = "Rută";
 const CE_PANOU = "ruta șoferului";
 const vedePanoul = (a) => (gp.PANOURI_ROL[(a && a.role) || ""] || []).indexOf(PANOUL) >= 0;
+// „Resetează bifele": cât rămâne armat după prima apăsare și cât e surd la a
+// doua (milisecunde). Cinci secunde ajung cât să citești rândul de lămurire;
+// trei sferturi de secundă despart o hotărâre de un deget care a atins de
+// două ori.
+const RESET_TINE = 5000;
+const RESET_SURD = 750;
 
 class Component extends DCLogic {
   state = {
     navOpen: false, auth: null, orders: [], counts: {}, day: DAYS[0].iso, loaded: {},
     open: null, toast: "", toastBad: false, menu: false, eroare: "", contorRupt: false,
     orderDay: "", listsReady: false,
+    // `listeRupte`: ultima cerere a listelor a picat (se mai încearcă la
+    // fiecare tură). Deosebește „încă vin" de „n-au venit", ca lămurirea de
+    // sub „Marchează livrat" să nu spună „se aduc" la nesfârșit.
+    listeRupte: false,
+    // Comenzile pe care „Marchează livrat" le recitește chiar acum de pe
+    // server, înainte să trimită ceva (v. `markDone`): { <id>: true }.
+    verific: {},
+    // Ziua (ISO) pe care „Resetează bifele" e ARMAT; "" = nearmat. Ține ziua,
+    // nu un da/nu: armat pe marți și apăsat a doua oară pe miercuri, n-are
+    // voie să șteargă bifele de miercuri.
+    resetArmat: "",
     // Ziua de la care pornește fereastra, oglinda lui `ANCORA` de la nivel de
     // modul. Stă și în stare fiindcă `renderVals()` nu poate citi decât de
     // aici, iar banda „te uiți la o zi trecută" se aprinde după ea.
@@ -522,7 +566,7 @@ class Component extends DCLogic {
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
     // dacă le redenumești din panou, pagina trebuie să afle de la server.
-    gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
+    this.cereListele();
     // Cine a deschis panoul? Până acum scria în cod că nu-i nimeni — adevărat
     // pentru tableta din tură, care intră cu codul comun, și mincinos pentru
     // managerul care deschide aceeași pagină de pe telefonul lui. Din
@@ -531,7 +575,7 @@ class Component extends DCLogic {
     //
     // Fără sesiune, cererea cade cu 401 — nu e o eroare aici: panoul merge
     // mai departe anonim, cum a mers dintotdeauna.
-    gp.me().then((user) => this.setState({ auth: gp.auth(user) })).catch(() => {});
+    this.cereCine();
     document.documentElement.setAttribute("data-theme", "dark");
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
@@ -589,11 +633,59 @@ class Component extends DCLogic {
     this.pullRestante();
     // Tura periodică se uită întâi la dată: dacă s-a schimbat ziua, fereastra
     // se reface și ruta se cere singură pentru ziua nouă.
-    this.timer = setInterval(() => { if (!this.refreshDays()) this.pull(); }, 15000);
+    this.timer = setInterval(() => this.tura(), 15000);
   }
 
   componentWillUnmount() {
     if (this.timer) clearInterval(this.timer);
+    if (this.__resetCeas) clearTimeout(this.__resetCeas);
+    if (this.__resetSurd) clearTimeout(this.__resetSurd);
+  }
+
+  /** Tura de cincisprezece secunde: ziua, ruta și — cât e nevoie — contul. */
+  tura() {
+    if (!this.refreshDays()) this.pull();
+    // CONTUL SE MAI ÎNTREABĂ, cât pagina nu știe cine e ori știe că n-are
+    // semnul de livrare. `/auth/me` se cerea o singură dată, la deschidere:
+    // lămurirea de sub buton trimite omul în „Conturi" să pună bifa, iar după
+    // ce o punea cineva pagina nu afla niciodată — nimic de pe ecran nu spunea
+    // „reîncarcă". Contul cu semnul pus nu mai e întrebat la fiecare tură:
+    // dacă i se scoate între timp, află la prima apăsare (v. `markDone`,
+    // refuzul `delivery_denied`).
+    const a = this.state.auth;
+    if (!a || a.poateConfirmaLivrarea === false) this.cereCine();
+  }
+
+  /**
+   * Etapele și zonele din Setări. `gp.lists()` reține răspunsul reușit, deci
+   * de îndată ce merge o dată nu se mai cere; cât pică, se cheamă din nou la
+   * fiecare tură (v. `pull`).
+   *
+   * Căderea nu mai e tăcută: `listeRupte` o duce pe ecran, în lămurirea de sub
+   * „Marchează livrat", care stă stins până vin etapele (v. `piedicaLivrarii`).
+   */
+  cereListele() {
+    return gp.lists()
+      .then(() => this.setState({ listsReady: true, listeRupte: false }))
+      .catch(() => { if (!this.state.listeRupte) this.setState({ listeRupte: true }); });
+  }
+
+  /**
+   * Cine a deschis panoul și ce semne are contul lui ACUM.
+   *
+   * Starea se atinge numai când răspunsul chiar spune altceva: chemată la
+   * fiecare tură, altfel ar redesena ecranul sub degetul omului o dată la
+   * cincisprezece secunde, pe degeaba.
+   */
+  cereCine() {
+    return gp.me()
+      .then((user) => {
+        const cont = gp.auth(user);
+        if (JSON.stringify(cont) !== JSON.stringify(this.state.auth)) this.setState({ auth: cont });
+      })
+      // Fără sesiune ori fără rețea panoul merge mai departe cum era; ruta
+      // zilei își spune singură refuzul, cu motiv cu tot (v. `pull`).
+      .catch(() => {});
   }
 
   /**
@@ -654,9 +746,7 @@ class Component extends DCLogic {
     //
     // Ieftin: `gp.lists()` reține răspunsul reușit, deci de îndată ce merge o
     // dată nu se mai cere. Rândul ăsta rulează numai cât steagul e stins.
-    if (!this.state.listsReady) {
-      gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
-    }
+    if (!this.state.listsReady) this.cereListele();
 
     // Numărul de opriri al fiecărei zile din meniu vine de la server, pentru
     // toată fereastra deodată. Se număra din comenzile aduse pentru ziua
@@ -696,7 +786,7 @@ class Component extends DCLogic {
         // Se compară cu ziua din stare CITITĂ ACUM, nu cu `iso` de la
         // plecare: între timp șoferul poate să fi ales deja altceva.
         const ziuaAcum = this.state.day || gp.today();
-        if (r && r.day && r.day !== ziuaAcum) return;
+        if (r && r.day && r.day !== ziuaAcum) return false;
         const list = (r.stops || []).map(gp.toPageOrder);
         const next = JSON.stringify(list);
         if (next !== this.__seen) { this.__seen = next; this.setState({ orders: list }); }
@@ -706,6 +796,10 @@ class Component extends DCLogic {
         // cerere încă pe drum.
         if (this.state.orderDay !== ziuaAcum) this.setState({ orderDay: ziuaAcum });
         if (this.state.eroare) this.setState({ eroare: "" });
+        // `true` = ruta zilei DESCHISE e acum în stare, proaspătă. Numai pe
+        // răspunsul ăsta se sprijină „Marchează livrat" (v. `markDone`): un
+        // răspuns aruncat ori un refuz întorc `false`, adică „n-am recitit".
+        return true;
       })
       .catch((e) => {
         // Refuzul se ARATĂ, nu se scrie în consolă.
@@ -723,9 +817,10 @@ class Component extends DCLogic {
         // acum. Fără rândul ăsta, șoferul apasă o zi nouă, ea se încarcă
         // bine, și peste ea se aprinde cartonul roșu al zilei de dinainte —
         // un mesaj adevărat despre o întrebare la care nimeni nu mai ține.
-        if (iso !== (this.state.day || gp.today())) return;
+        if (iso !== (this.state.day || gp.today())) return false;
         if (e.isAuth) gp.toLogin();
         else this.setState({ eroare: gp.motiv(e, "ruta zilei") });
+        return false;
       });
   }
 
@@ -739,7 +834,9 @@ class Component extends DCLogic {
   goDay(day, closeMenu) {
     this.persistDriver({ day });
     this.__seen = null;
-    this.setState({ day, open: null, toast: "", menu: closeMenu ? false : this.state.menu }, () => this.pull());
+    // „Resetează bifele" armat pe o zi nu rămâne armat peste o plimbare prin
+    // calendar: întors pe ziua lui, omul ar fi șters bifele dintr-o apăsare.
+    this.setState({ day, open: null, toast: "", resetArmat: "", menu: closeMenu ? false : this.state.menu }, () => this.pull());
   }
 
   persistDriver(patch) {
@@ -1004,37 +1101,153 @@ class Component extends DCLogic {
     const legs = peRuta.map(o => { const p = this.pos(o), d = this.km(prev, p); prev = p; total += d; return d; });
     let clock = peRuta.length ? minsOr(peRuta[0].slot, 8 * 60) - legs[0] / SPEED * 60 : 0;
 
+    // „În lucru" / „Gata", pentru comenzile care încă n-au fost livrate.
+    //
+    // Șoferul vedea deja toate comenzile zilei — serverul filtrează opririle
+    // după modul de onorare, nu după etapă — dar n-avea cum să știe care sunt
+    // gata de urcat în mașină și care sunt încă în cuptor. Așa că suna în
+    // laborator, la fiecare tură.
+    //
+    // Regula se derivă din lista de etape din Setări, nu dintr-un nume scris
+    // în cod: „Gata" = comanda a ajuns la etapa dinaintea celei care o încheie,
+    // sau mai departe. Dacă patiseria vrea o etapă explicită „Gata de livrare",
+    // o adaugă în Setări și insigna o urmează, fără cod nou.
+    //
+    // NU e „penultima din listă": `guard_status_list` impune doar ca etapele
+    // aflate în uz să nu fie scoase — nu că etapa de încheiere e ultima. Un
+    // administrator poate reordona lista, deci poziția se ia față de `gp.done()`.
+    //
+    // De la runda 2.6.0 regula stă AICI, deasupra lui `markDone`, fiindcă nu
+    // mai hotărăște numai o insignă: hotărăște și dacă „Marchează livrat" se
+    // aprinde (v. `piedicaLivrarii`, mai jos).
+    const flow = gp.flow();
+    const iDone = flow.indexOf(gp.done());
+    // `null` = nu știm: etapă necunoscută, sau o listă fără etapa de încheiere.
+    // O insignă lipsă e o întrebare; una greșită e un drum degeaba.
+    const etapaGata = (status) => {
+      const i = flow.indexOf(status);
+      if (iDone <= 0 || i < 0) return null;
+      return i >= iDone - 1;
+    };
+
     // CINE POATE SPUNE „A AJUNS LA CLIENT" (runda 2.3.0, lucrarea 9).
     //
     // Semnul stă pe CONT, nu pe panou. Contul `angajat` are și panoul
     // Laborator, și pe ăsta: o oprire pusă numai în laborator s-ar fi ocolit
     // dintr-o filă, cu același om și aceeași parolă. Serverul îl cere oricum
-    // (403 `delivery_denied`, v. `poarta_scrierii_comenzii()`); rândul de aici
-    // e ca omul să nu apese ca să afle.
+    // (403 `delivery_denied`, v. `poarta_etapei_finale()`); rândul de aici e
+    // ca omul să nu apese ca să afle.
     //
     // CÂT NU S-A ÎNTORS ÎNCĂ `/auth/me`, ȘI PE UN SERVER FĂRĂ MIGRAREA 023,
     // BUTONUL RĂMÂNE APRINS. O poartă care se închide singură în fereastra de
     // urcare oprește livrările zilei — adică face chiar paguba de care fuge —,
     // iar dacă semnul chiar lipsește, refuzul serverului spune pe față ce e de
     // bifat și unde. Aceeași alegere ca `lab_production_suportata()`.
-    const poateLivra = !S.auth || S.auth.poateConfirmaLivrarea !== false;
+    //
+    // Primește CONTUL, nu citește `S.auth`: `markDone` judecă a doua oară,
+    // după ce a recitit comanda, iar atunci starea de la desen e deja veche.
+    const areSemn = (cont) => !cont || cont.poateConfirmaLivrarea !== false;
     // ANULAREA LIVRĂRII NU CERE SEMNUL. Ea duce comanda ÎNDĂRĂT, la etapa
     // dinaintea celei finale — pe care serverul o primește de la orice cont de
     // personal —, și e singura cale de întors dintr-o apăsare greșită. Stinsă
     // odată cu cealaltă, o livrare marcată din greșeală ar fi rămas așa până
     // se trezea cineva la birou.
-    const toggleItem = (o, i) => {
-      const cur = (S.loaded[o.id] || []).slice();
-      const at = cur.indexOf(i);
-      if (at === -1) cur.push(i); else cur.splice(at, 1);
-      const loaded = Object.assign({}, S.loaded, { [o.id]: cur });
-      this.persistDriver({ loaded });
-      this.setState({ loaded });
+
+    // BIFELE CURIERULUI SUNT CHEIA LIVRĂRII (runda 2.6.0).
+    //
+    // Până acum bifele erau un ajutor de memorie: „Marchează livrat" se
+    // aprindea oricum, pe orice etapă, cu lista nebifată. O comandă încă în
+    // cuptor se putea închide din mașină, iar clientul primea vestea predării
+    // înaintea mărfii; o tavă uitată pe raft se afla la ușa lui.
+    //
+    // CHEIA UNEI BIFE e rândul poziției de pe server (`itemId`) ȘI cantitatea
+    // ei, nu locul din listă: locul din listă se mută, deci bifa de pe „rândul
+    // 2" ajungea pe alt produs.
+    //
+    // CE FACE SERVERUL CÂND BIROUL SCHIMBĂ POZIȚIILE: le rescrie pe TOATE
+    // (`route_orders_update` din api/routes/orders.php: `DELETE FROM
+    // order_items`, apoi `INSERT` pentru fiecare). Fiecare poziție capătă
+    // deci un număr de rând nou — și cea schimbată, și cele neatinse —, iar
+    // la recitire cad TOATE bifele comenzii, nu numai cea de pe poziția
+    // schimbată. Curierul numără din nou toată comanda; cartonul îi spune de
+    // ce (v. `schimbata`, în `carton`). O salvare care nu poartă pozițiile (o
+    // adresă îndreptată, o etapă mutată) nu rescrie nimic și nu atinge bifele.
+    //
+    // Până la runda asta rândurile de aici spuneau altceva: că bifa „merge cu
+    // produsul" și cade numai cea a cantității schimbate. Așa ar fi cu numere
+    // de rând păstrate, și așa o ținea și proba, cu un server închipuit care
+    // le păstra; serverul adevărat nu le păstrează. Cantitatea rămâne în cheie
+    // pentru ziua în care le va păstra, și pentru cheile fără număr.
+    //
+    // Fără `itemId` (un server vechi) se cade pe locul din listă, cu altă
+    // literă în față, ca cele două feluri de chei să nu se întâlnească.
+    //
+    // Bifele rămase pe telefon dinaintea rundei sunt numere (0, 1, 2). Nicio
+    // cheie nouă nu e număr, deci se citesc ca nebifate, fără nicio mutare de
+    // date: curierul bifează o dată în plus, nu livrează pe o bifă veche.
+    const cheiaBifei = (it, k) => (it.itemId != null ? "p" + it.itemId : "i" + k) + "x" + it.q;
+    // Ce e în `localStorage` nu e numai al nostru: l-a putut scrie o versiune
+    // veche a paginii ori l-a putut strica altcineva. Tot ce nu e listă se
+    // citește ca „nimic bifat".
+    //
+    // `St` e starea pe care se judecă: cea de la desen, dacă nu se spune alta.
+    const bifele = (o, St = S) => { const lo = (St.loaded || {})[o.id]; return Array.isArray(lo) ? lo : []; };
+    const nebifate = (o, St = S) => {
+      const lo = bifele(o, St);
+      return (o.items || []).filter((it, k) => lo.indexOf(cheiaBifei(it, k)) === -1).length;
     };
-    const allItems = (o) => {
-      const full = o.items.map((_, i) => i);
-      const cur = S.loaded[o.id] || [];
-      const loaded = Object.assign({}, S.loaded, { [o.id]: cur.length === full.length ? [] : full });
+    // De ce NU se poate livra acum: "" = se poate; altfel pricina, una
+    // singură, în ordinea în care se pot îndrepta. O citesc și desenul
+    // (`carton`), și `markDone` — de două ori: la apăsare, pe ce e desenat, și
+    // încă o dată pe comanda recitită de pe server, cu starea de atunci
+    // (`St`). Scrisă în două locuri, cele două s-ar fi despărțit la prima
+    // reparație, iar butonul ar fi spus una și apăsarea ar fi făcut alta.
+    //
+    //   "semn"  — contul n-are „poate confirma livrarea" (v. mai sus).
+    //   "liste" — etapele din Setări n-au venit încă de la server. Până vin,
+    //             pagina judecă pe lista de rezervă din `gp`, care nu cunoaște
+    //             etapele casei: `etapaGata` ar răspunde „nu știu" pentru o
+    //             comandă încă „În lucru", iar butonul s-ar aprinde tocmai pe
+    //             ea. „Nu știu încă" ține butonul stins și își spune numele.
+    //   "etapa" — laboratorul n-a adus încă marfa la etapa dinaintea celei
+    //             finale. Cu listele venite, `null` de la `etapaGata` NU
+    //             oprește: e o comandă cu o etapă din afara listei (rămasă
+    //             dintr-un import), iar pe aceea serverul o refuză el la
+    //             apăsare (400 `bad_from`), cu vorbele lui.
+    //   "bife"  — mai sunt poziții nebifate. O comandă fără nicio poziție n-are
+    //             ce bifa, deci nu se oprește aici.
+    const piedicaLivrarii = (o, St = S) => {
+      if (!areSemn(St.auth)) return "semn";
+      if (!St.listsReady) return "liste";
+      if (etapaGata(o.status) === false) return "etapa";
+      if (nebifate(o, St) > 0) return "bife";
+      return "";
+    };
+    // „e o poziție", „sunt 3 poziții", „sunt 20 de poziții": același „de" ca
+    // la `gp.opriri()` — numai la 00 și de la 20 în sus (101 poziții, 119
+    // poziții, 120 de poziții).
+    const catePozitii = (k) => {
+      const r = k % 100;
+      return k === 1 ? "e o poziție" : "sunt " + k + (r === 0 || r >= 20 ? " de" : "") + " poziții";
+    };
+    // A doua jumătate a lămuririi despre bife: „mai sunt 3 poziții din 7.".
+    // Comanda cu O SINGURĂ poziție are vorba ei: „mai e o poziție din 1" e
+    // numărătoare unde nu e nimic de numărat.
+    const ceRamane = (lipsa, cate) => cate === 1
+      ? "comanda are o singură poziție."
+      : "mai " + catePozitii(lipsa) + " din " + cate + ".";
+
+    // BIFATUL NU CERE ETAPA: încărcatul se poate pregăti cât marfa e încă la
+    // ambalat, iar butonul se aprinde singur când laboratorul o dă gata.
+    const toggleItem = (o, cheie) => {
+      // Rămân numai bifele care mai au o poziție a lor pe comandă. Altfel
+      // numerele vechi și cheile cantităților schimbate s-ar strânge pe
+      // telefon la nesfârșit, sub o comandă care nu le mai are.
+      const vii = (o.items || []).map(cheiaBifei);
+      const cur = bifele(o).filter((c) => vii.indexOf(c) !== -1);
+      const at = cur.indexOf(cheie);
+      if (at === -1) cur.push(cheie); else cur.splice(at, 1);
+      const loaded = Object.assign({}, S.loaded, { [o.id]: cur });
       this.persistDriver({ loaded });
       this.setState({ loaded });
     };
@@ -1042,16 +1255,24 @@ class Component extends DCLogic {
       const delivered = o.status === gp.done();
       // Cureaua de siguranță a butonului stins: `disabled` e o purtare a
       // ecranului, iar ecranul poate rămâne în urmă (semnul se ia de pe cont
-      // la încărcare, iar patronul îl poate scoate între timp). Aici se
-      // termină drumul, nu la desen.
-      if (!delivered && !poateLivra) return;
+      // la încărcare, iar patronul îl poate scoate între timp; etapa și
+      // bifele se schimbă și ele sub un ecran deschis). Aici se termină
+      // drumul, nu la desen.
+      //
+      // ANULAREA nu trece pe aici: nu cere nici semn, nici etapă, nici bife.
+      if (!delivered && piedicaLivrarii(o) !== "") return;
+      // O livrare care se verifică deja nu pornește a doua oară (v. mai jos).
+      // Se citește starea de ACUM, nu `S`: două apăsări din același desen văd
+      // același `S`, iar a doua ar fi pornit o a doua recitire.
+      if (!delivered && (this.state.verific || {})[o.id]) return;
       // Anularea livrării întoarce comanda la etapa dinaintea celei finale, oricare
       // ar fi ea în Setări. Era scris „La ambalare”, care poate nici să nu existe.
       const cyc = gp.flow();
       const prev = cyc[Math.max(cyc.indexOf(gp.done()) - 1, 0)] || gp.done();
       const next = delivered ? prev : gp.done();
 
-      // Etapa de pe care pleacă apăsarea: exact ce arată cartonul acum.
+      // Etapa de pe care pleacă apăsarea — `from`, mai jos: pentru anulare,
+      // exact ce arată cartonul acum; pentru livrare, etapa comenzii RECITITE.
       //
       // Pleacă la server ca `from` (api/routes/orders.php · route_orders_update),
       // iar serverul refuză cu 409 dacă între timp comanda a ajuns în altă
@@ -1065,14 +1286,15 @@ class Component extends DCLogic {
       // (`notify_email_to` / `notify_whatsapp_to` / `notify_telegram_chat_id`,
       // v. `send_channel()` din api/lib/notify.php); niciun anunț de etapă nu
       // s-a uitat vreodată la e-mailul sau la telefonul scrise pe comandă.
-      const from = o.status;
 
       // Actualizăm întâi local, ca butonul să răspundă instant pe telefon,
       // apoi confirmăm cu serverul. Dacă serverul refuză, reîncărcăm: altfel
       // șoferul ar crede că a marcat o livrare care nu s-a salvat.
       //
       // MUTAREA CARTONULUI e o presupunere despre ECRAN și rămâne aici: e
-      // purtare optimistă cinstită, care se desface singură la `pull()`.
+      // purtare optimistă cinstită, care se desface singură la `pull()`. Se
+      // face pe starea de ACUM (`this.state`), nu pe `S`: la livrare ea vine
+      // după o recitire, deci `S` de la desen e deja vechi.
       //
       // VESTEA nu e la fel. „Laboratorul vede «Gata»" e o afirmație despre ce
       // s-a întâmplat PE SERVER, spusă înainte ca serverul să fi răspuns ceva.
@@ -1084,14 +1306,18 @@ class Component extends DCLogic {
       // încheiate. Pleca mai departe convins că s-a înregistrat, cu marfa
       // întoarsă în depozit. Vestea se scrie acum în `.then()`, singurul loc
       // în care se știe întâia oară că serverul chiar a primit.
-      this.setState({
-        orders: S.orders.map(x => x.id === o.id ? Object.assign({}, x, { status: next }) : x),
-        open: null,
+      const fara = () => { const v = Object.assign({}, this.state.verific); delete v[o.id]; return v; };
+      const muta = () => this.setState({
+        orders: this.state.orders.map(x => x.id === o.id ? Object.assign({}, x, { status: next }) : x),
+        // Se închide cartonul ACESTEI comenzi; dacă între timp omul a deschis
+        // altul, acela rămâne cum l-a lăsat.
+        open: this.state.open === o.id ? null : this.state.open,
         toastBad: false,
-        toast: ""
+        toast: "",
+        verific: fara()
       });
 
-      const trimite = () => gp.patch('/orders/' + o.id, { status: next, from })
+      const trimite = (from) => gp.patch('/orders/' + o.id, { status: next, from })
         .then(() => {
           this.setState({
             toast: delivered ? o.cust + " — livrarea a fost anulată." : o.cust + " · " + o.ref + " marcat livrat. Laboratorul vede „" + gp.done() + "”.",
@@ -1108,6 +1334,10 @@ class Component extends DCLogic {
         .catch((e) => {
           this.__seen = null;
           this.pull();
+          // Semnul scos de pe cont între timp: serverul a refuzat cu vorbele
+          // lui (ele ajung în veste, mai jos), iar pagina își recitește contul,
+          // ca butonul să nu mai stea desenat unui om care nu-l poate folosi.
+          if (e.code === "delivery_denied") this.cereCine();
           // „S-a schimbat între timp" nu e „nu s-a salvat": nimeni n-a greșit
           // nimic, doar foaia de drum rămăsese în urmă. Etapa de acum vine în
           // `error.current` (v. `detalii` din shared/gp-api.js), deci șoferul
@@ -1122,6 +1352,90 @@ class Component extends DCLogic {
           return false;
         });
 
+      // LIVRAREA SE JUDECĂ PE COMANDA RECITITĂ, NU PE CEA DESENATĂ.
+      //
+      // Cureaua de sus citește aceleași `o` și `S` ca desenul, deci nu apără
+      // de ecranul rămas în urmă: foaia de drum se recitește la cincisprezece
+      // secunde, iar telefonul scos din buzunar arată starea de dinainte până
+      // la prima tură. Biroul face din 2 cozonaci 5 după ce curierul i-a
+      // bifat; apăsarea de pe ecranul vechi pleca oricum — cererea poartă
+      // numai etapa, iar serverul compară numai etapa — și abia după aceea
+      // cartonul arăta „0 din 3".
+      //
+      // Deci înainte să plece ceva: ruta zilei se recitește (`pull()`), iar
+      // `piedicaLivrarii` se întreabă a doua oară, pe comanda venită ACUM și
+      // pe starea de ACUM. Pozițiile rescrise au numere de rând noi, deci
+      // bifele vechi nu le mai țin și pricina iese „bife". Dacă e vreo
+      // piedică, nu pleacă nimic și omul citește de ce; cartonul rămâne
+      // deschis, cu lista proaspătă sub ochi.
+      //
+      // Recitirea care nu vine oprește și ea (nu se livrează pe nevăzute). Are
+      // un termen: `gp` n-are niciunul pe cereri, iar un buton rămas pe „Se
+      // verifică…" cât atârnă o legătură de telefon e un buton pierdut.
+      //
+      // ANULAREA nu recitește nimic: nu cere nici etapă, nici bife, iar etapa
+      // de plecare i-o păzește serverul (409).
+      //
+      // Fereastra rămasă e cea dintre recitire și scriere, de ordinul unei
+      // cereri. Se închide de tot numai pe server, cu pozițiile văzute trimise
+      // drept condiție, ca `from` — lucrare de altă rundă.
+      const oprit = (veste) => {
+        this.setState(Object.assign({ verific: fara() }, veste ? { toast: veste, toastBad: true } : {}));
+        return false;
+      };
+      const pozitiile = (x) => (x.items || []).map(cheiaBifei).join(" ");
+      const verificaSiTrimite = () => {
+        let ceas = null;
+        const termen = new Promise((gata) => { ceas = setTimeout(() => gata(false), 10000); });
+        this.__seen = null;
+        return Promise.race([Promise.resolve(this.pull()), termen]).then((recitit) => {
+          clearTimeout(ceas);
+          if (recitit !== true) {
+            return oprit("Nu s-a salvat: comanda " + o.ref + " n-a putut fi recitită de pe server. Încearcă din nou.");
+          }
+          const St = this.state;
+          const acum = (St.orders || []).filter((x) => x.id === o.id)[0];
+          if (!acum) {
+            return oprit("Comanda " + o.ref + " nu mai e pe ruta zilei: a fost anulată ori mutată din birou. N-am marcat-o livrată.");
+          }
+          // A închis-o altcineva între timp (biroul, alt telefon). Nu e o
+          // veste rea și nu mai e nimic de trimis.
+          if (acum.status === gp.done()) {
+            this.setState({
+              verific: fara(), toastBad: false,
+              toast: "Comanda " + o.ref + " e deja „" + gp.done() + "”: a marcat-o altcineva între timp."
+            });
+            return true;
+          }
+          const pricina = piedicaLivrarii(acum, St);
+          if (pricina === "etapa") {
+            // Aceeași vorbă ca la refuzul 409 al serverului: e aceeași veste.
+            return oprit("Comanda " + o.ref + " a fost schimbată între timp: acum e „" + acum.status + "”. N-am mutat-o.");
+          }
+          if (pricina === "bife") {
+            // Bifele lipsesc fiindcă biroul a rescris pozițiile — ori fiindcă
+            // omul însuși a scos una cât ținea recitirea. A doua n-are nevoie
+            // de nicio veste: lămurirea de sub buton o spune deja.
+            return oprit(pozitiile(acum) !== pozitiile(o)
+              ? "Biroul a schimbat comanda " + o.ref + " între timp: bifează din nou ce încarci. N-am marcat-o livrată."
+              : "");
+          }
+          if (pricina === "semn") {
+            return oprit("Contul ăsta nu mai are semnul „poate confirma livrarea”. N-am marcat comanda " + o.ref + " livrată.");
+          }
+          if (pricina !== "") return oprit("");
+          muta();
+          return trimite(acum.status);
+        });
+      };
+
+      if (delivered) muta();
+      // Cât ține recitirea, butonul scrie „Se verifică comanda…" și stă stins
+      // (v. `carton`): omul vede că apăsarea a fost primită, iar a doua nu
+      // mai pornește nimic.
+      else this.setState({ verific: Object.assign({}, this.state.verific, { [o.id]: true }), toastBad: false, toast: "" });
+      const pasul = delivered ? () => trimite(o.status) : verificaSiTrimite;
+
       // Un pas pe rând, pe fiecare comandă — ca la tableta din laborator.
       //
       // „Marchează livrat" și „Anulează livrarea" sunt același buton, deci două
@@ -1131,38 +1445,13 @@ class Component extends DCLogic {
       // n-a ajuns, a doua nu mai pleacă deloc: lista tocmai se recitește.
       const lant = this.__lant || (this.__lant = {});
       const pas = lant[o.id]
-        ? lant[o.id].then((mers) => (mers === false ? false : trimite()))
-        : trimite();
+        ? lant[o.id].then((mers) => (mers === false ? (delivered ? false : oprit("")) : pasul()))
+        : pasul();
       lant[o.id] = pas;
       pas.then((mers) => {
         if (lant[o.id] === pas) delete lant[o.id];
         return mers;
       });
-    };
-
-    // „În lucru" / „Gata", pentru comenzile care încă n-au fost livrate.
-    //
-    // Șoferul vedea deja toate comenzile zilei — serverul filtrează opririle
-    // după modul de onorare, nu după etapă — dar n-avea cum să știe care sunt
-    // gata de urcat în mașină și care sunt încă în cuptor. Așa că suna în
-    // laborator, la fiecare tură.
-    //
-    // Regula se derivă din lista de etape din Setări, nu dintr-un nume scris
-    // în cod: „Gata" = comanda a ajuns la etapa dinaintea celei care o încheie,
-    // sau mai departe. Dacă patiseria vrea o etapă explicită „Gata de livrare",
-    // o adaugă în Setări și insigna o urmează, fără cod nou.
-    //
-    // NU e „penultima din listă": `guard_status_list` impune doar ca etapele
-    // aflate în uz să nu fie scoase — nu că etapa de încheiere e ultima. Un
-    // administrator poate reordona lista, deci poziția se ia față de `gp.done()`.
-    const flow = gp.flow();
-    const iDone = flow.indexOf(gp.done());
-    // `null` = nu știm: etapă necunoscută, sau o listă fără etapa de încheiere.
-    // O insignă lipsă e o întrebare; una greșită e un drum degeaba.
-    const etapaGata = (status) => {
-      const i = flow.indexOf(status);
-      if (iDone <= 0 || i < 0) return null;
-      return i >= iDone - 1;
     };
 
     /**
@@ -1182,8 +1471,24 @@ class Component extends DCLogic {
       let eta = "";
       if (laRuta) { clock += legs[i] / SPEED * 60; eta = hhmm(clock); clock += SERVICE; }
       const done = o.status === gp.done();
-      const lo = S.loaded[o.id] || [];
-      const allLoaded = lo.length === o.items.length && o.items.length > 0;
+      const lo = bifele(o);
+      // Se numără ce LIPSEȘTE, nu ce e în sertar: sertarul poate ține bife
+      // vechi (numere, cantități schimbate), iar „3 bife la 3 poziții" ar fi
+      // ieșit adevărat cu toate trei pe produse care nu mai sunt.
+      const lipsa = nebifate(o);
+      const allLoaded = o.items.length > 0 && lipsa === 0;
+      // Bife care nu mai au nicio poziție a lor: comanda a fost rescrisă din
+      // birou după ce curierul o bifase (v. „CE FACE SERVERUL", mai sus).
+      // Numerele dinaintea rundei nu se numără aici: acelea sunt bifele vechi
+      // ale telefonului, nu o comandă schimbată.
+      const vii = o.items.map(cheiaBifei);
+      const orfane = lo.filter((c) => typeof c === "string" && vii.indexOf(c) === -1).length;
+      // Oprirea livrată n-are piedică: butonul ei e „Anulează livrarea".
+      const piedica = done ? "" : piedicaLivrarii(o);
+      // „Marchează livrat" a fost apăsat și comanda se recitește (v. `markDone`).
+      const verific = !done && !!(S.verific || {})[o.id];
+      // Etapa la care se aprinde butonul, cu numele ei din listă.
+      const plafon = flow[iDone - 1] || "";
       // Pe oprirea deja livrată insigna tace: antetul verde și „✓" din bulină
       // spun deja tot, iar un „Gata" pe lângă ele ar fi al treilea semn pentru
       // aceeași informație.
@@ -1228,8 +1533,19 @@ class Component extends DCLogic {
         open: S.open === o.id,
         chev: S.open === o.id ? "▾" : "▸",
         onToggle: () => this.setState({ open: S.open === o.id ? null : o.id, toast: "" }),
+        // „· 4 din 7" lângă titlul listei: cât marfa e încă în lucru, lămurirea
+        // de sub buton vorbește despre etapă, iar numărătoarea n-ar mai fi
+        // avut unde să se vadă.
+        bifate: o.items.length ? " · " + (o.items.length - lipsa) + " din " + o.items.length : "",
+        // Un rând, numai cât e adevărat: dispare la prima bifă nouă, fiindcă
+        // `toggleItem` aruncă atunci bifele rămase fără poziție. Pe comanda
+        // livrată tace — acolo nu mai e nimic de încărcat.
+        schimbata: !done && orfane > 0
+          ? "Biroul a schimbat comanda după ce ai bifat-o: bifele se pun din nou."
+          : "",
         items: o.items.map((it, k) => {
-          const on = lo.indexOf(k) !== -1;
+          const cheie = cheiaBifei(it, k);
+          const on = lo.indexOf(cheie) !== -1;
           return {
             q: it.q, n: it.n, mark: on ? "✓" : "",
             bg: on ? "var(--h-success-soft)" : "var(--h-bg-sunk)",
@@ -1237,10 +1553,9 @@ class Component extends DCLogic {
             boxBorder: on ? "var(--h-success)" : "var(--h-fg-faint)",
             boxBg: on ? "var(--h-success)" : "transparent",
             deco: on ? "line-through" : "none",
-            onToggle: () => toggleItem(o, k)
+            onToggle: () => toggleItem(o, cheie)
           };
         }),
-        onAll: () => allItems(o),
         // Sufixul „, București" e adevărat numai pentru opririle de pe rută:
         // zonele cu punct pe hartă sunt sectoarele și Ilfovul. Lipit pe o
         // adresă din afara orașului, ar trimite șoferul în alt oraș — Google
@@ -1249,16 +1564,50 @@ class Component extends DCLogic {
         nav: "https://www.google.com/maps/dir/?api=1&destination="
           + encodeURIComponent((o.addr || o.cust) + (laRuta ? ", București" : "")),
         doneCls: done ? "h-btn h-btn--ghost h-btn--block" : "h-btn h-btn--primary h-btn--block",
-        doneLabel: done ? "Anulează livrarea" : "Marchează livrat",
-        doneOff: !done && !poateLivra,
+        doneLabel: done ? "Anulează livrarea" : verific ? "Se verifică comanda…" : "Marchează livrat",
+        // UN BUTON PE CARE OMUL NU-L POATE FOLOSI NU SE DESENEAZĂ. Contul fără
+        // semn n-are ce face cu „Marchează livrat" (serverul îl refuză cu 403
+        // `delivery_denied`), deci butonul lipsește, iar lămurirea rămâne.
+        // Celelalte pricini trec — cu timpul ori cu degetul omului —, deci
+        // acolo butonul stă desenat, stins. „Anulează livrarea" nu cere semn.
+        doneAre: piedica !== "semn",
+        doneOff: piedica !== "" || verific,
         // Lămurirea nu spune „n-ai voie", ci CE LIPSEȘTE, PE CE CONT și CINE o
         // pune. Un refuz care nu-și spune leacul se preface într-un telefon la
         // birou, în mijlocul turei, cu mașina trasă pe dreapta.
-        doneNota: !done && !poateLivra
+        //
+        // La fel pentru etapă și pentru bife: numele etapelor se citesc din
+        // listă (cea de acum a comenzii și cea la care se aprinde butonul),
+        // iar la bife se spune câte au rămas din câte — „mai sunt 3" se
+        // caută pe ecran, „bifează tot" nu.
+        //
+        // La „etapa", cât mai sunt poziții nebifate, lămurirea le spune pe
+        // AMÂNDOUĂ. Spunea numai „se aprinde când laboratorul o trece în…":
+        // laboratorul o trecea, iar butonul rămânea stins, pe bife — o
+        // promisiune pe care pagina n-o ținea.
+        doneNota: piedica === "semn"
           ? "Contul ăsta n-are semnul „poate confirma livrarea”, deci nu poate pune "
-            + "etapa „" + gp.done() + "”. Se bifează în „Conturi”, pe contul șoferului."
+            + "etapa „" + gp.done() + "”. Se bifează în „Conturi”, pe contul șoferului; "
+            + "după aceea butonul apare aici singur, fără reîncărcare."
+          : piedica === "liste"
+          ? (S.listeRupte
+            ? "Etapele din Setări n-au venit de la server; se cer din nou, singure. "
+            : "Se aduc etapele din Setări… ")
+            + "Până vin, livrarea nu se poate marca."
+          : piedica === "etapa"
+          ? "Comanda e încă în lucru („" + o.status + "”). „Marchează livrat” se aprinde "
+            + "când laboratorul o trece în „" + plafon + "”."
+            + (lipsa > 0 ? " Până atunci bifează ce încarci: " + ceRamane(lipsa, o.items.length) : "")
+          : piedica === "bife"
+          ? (o.items.length === 1 ? "Bifează ce încarci: " : "Bifează tot ce încarci: ")
+            + ceRamane(lipsa, o.items.length)
           : "",
-        doneTitlu: !done && !poateLivra ? "Semnul „poate confirma livrarea” lipsește de pe cont." : "",
+        doneTitlu: piedica === "semn" ? "Semnul „poate confirma livrarea” lipsește de pe cont."
+          : piedica === "liste" ? "Se aduc etapele din Setări…"
+          : piedica === "etapa" ? "Comanda nu e încă în „" + plafon + "”."
+          : piedica === "bife"
+          ? (o.items.length === 1 ? "Poziția comenzii nu e bifată." : "Mai " + catePozitii(lipsa) + " de bifat.")
+          : "",
         onDone: () => markDone(o)
       };
     };
@@ -1284,6 +1633,8 @@ class Component extends DCLogic {
     // E cineva anume dincolo de ecran, sau e tura întreagă pe contul comun?
     const omAnume = !!S.auth && !S.auth.isSystem;
     const faraAcces = !!S.auth && !vedePanoul(S.auth);
+    // „Resetează bifele" e armat numai pe ziua pe care a fost apăsat.
+    const resetArmat = !!S.resetArmat && S.resetArmat === ziuaDeschisa;
     const acasa = S.auth ? gp.primaPagina(S.auth) : "Intrare.dc.html";
 
     return {
@@ -1535,11 +1886,48 @@ class Component extends DCLogic {
         ? "Ordinea opririlor e cea stabilită în administrare."
         : "Opriri în ordinea intervalelor promise.",
       onReset: () => {
-        const loaded = Object.assign({}, S.loaded);
+        // BUTON ARMAT, DOUĂ APĂSĂRI. Ștergea totul dintr-o atingere, de la
+        // marginea de jos a telefonului: de când bifele sunt cheia livrării,
+        // o atingere din greșeală stingea „Marchează livrat" pe toate
+        // comenzile zilei și curierul lua marfa de la capăt.
+        //
+        // Prima apăsare armează (și aprinde rândul de lămurire); a doua, în
+        // `RESET_TINE` milisecunde, șterge. Trecut termenul, butonul se
+        // dezarmează singur. O a doua atingere venită în prima clipă
+        // (`RESET_SURD`) nu se ia în seamă: e tot degetul de la prima, nu o
+        // hotărâre. Fără `confirm()`.
+        if (!resetArmat) {
+          // N-are ce șterge: nu se armează pe degeaba.
+          if (!list.some((o) => bifele(o).length > 0)) {
+            this.setState({ toast: "Nu e nicio bifă de șters în ziua asta.", toastBad: false });
+            return;
+          }
+          if (this.__resetCeas) clearTimeout(this.__resetCeas);
+          if (this.__resetSurd) clearTimeout(this.__resetSurd);
+          this.__resetSurd = setTimeout(() => { this.__resetSurd = null; }, RESET_SURD);
+          this.__resetCeas = setTimeout(() => {
+            this.__resetCeas = null;
+            if (this.state.resetArmat) this.setState({ resetArmat: "" });
+          }, RESET_TINE);
+          this.setState({ resetArmat: ziuaDeschisa, toast: "" });
+          return;
+        }
+        if (this.__resetSurd) return;
+        if (this.__resetCeas) { clearTimeout(this.__resetCeas); this.__resetCeas = null; }
+        // Sertarul de ACUM, nu cel de la desen: între armare și a doua apăsare
+        // omul a putut bifa pe alt carton.
+        const loaded = Object.assign({}, this.state.loaded);
         list.forEach(o => { delete loaded[o.id]; });
         this.persistDriver({ loaded });
-        this.setState({ loaded, toast: "Bifele de încărcare au fost șterse." });
-      }
+        this.setState({ loaded, resetArmat: "", toastBad: false, toast: "Bifele de încărcare au fost șterse." });
+      },
+      // Armat numai pe ziua pe care a fost apăsat (v. `resetArmat` în stare).
+      resetEt: resetArmat ? "Sigur? Apasă iar" : "Resetează bifele",
+      resetCls: resetArmat ? "h-btn h-btn--danger" : "h-btn h-btn--ghost",
+      resetNota: resetArmat
+        ? "Ștergi bifele de pe toate comenzile zilei, iar „Marchează livrat” se stinge "
+          + "până bifezi din nou. Apasă încă o dată ca să le ștergi."
+        : ""
     };
   }
 }

@@ -678,6 +678,16 @@ function route_products_delete(string $id): void
                 @unlink(photo_dir() . '/' . basename($poza));
             }
         }
+        // Și fișele tehnice urcate din panou, tot pe laturi. Cele venite cu
+        // pachetul (`fise/…`) nu au forma unei încărcări, deci rămân pe disc:
+        // sunt ale pachetului, nu ale produsului. Pe o bază fără 031 coloana
+        // lipsește din rând și bucla nu găsește nimic.
+        foreach (laturi() as $lat) {
+            $fisa = (string) ($p[latura_coloana_fisa($lat)] ?? '');
+            if ($fisa !== '' && is_uploaded_sheet($fisa)) {
+                @unlink(photo_dir() . '/' . basename($fisa));
+            }
+        }
         q('DELETE FROM products WHERE id = ?', [$id]);
         audit('product_delete', 'product', (string) $id, $p['name']);
         json_out([
@@ -790,7 +800,7 @@ function route_products_photo(string $id): void
         fail('Nu pot crea folderul pentru fotografii pe server.', 500, 'no_dir');
     }
     if (!is_writable($dir)) {
-        fail('Folderul „products" de pe server nu permite scrierea. Pune-i drepturi 755.', 500, 'not_writable');
+        fail('Folderul „products” de pe server nu permite scrierea. Pune-i drepturi 755.', 500, 'not_writable');
     }
 
     // Nume nou la fiecare încărcare: altfel browserele ar arăta poza veche din
@@ -891,6 +901,219 @@ function is_uploaded_photo(string $photo): bool
 {
     $pref = preg_quote(photo_web_prefix(), '#');
     return (bool) preg_match('#^' . $pref . 'prod-\d+-[0-9a-f]{8}\.(jpg|png|webp)$#', $photo);
+}
+
+/* ------------------------------------------------------- fișe tehnice -- */
+
+/**
+ * A fost fișa urcată din panou? Doar acelea se șterg de pe disc.
+ *
+ * O fișă venită cu pachetul (`fise/fisa-tehnica-<slug>-congelat.pdf`) nu se
+ * potrivește nici după folder, nici după nume, deci nicio rută de aici n-o
+ * poate șterge: scoasă de pe un produs, rămâne pe disc, iar actualizarea
+ * următoare o aduce oricum.
+ */
+function is_uploaded_sheet(string $sheet): bool
+{
+    $pref = preg_quote(photo_web_prefix(), '#');
+    return (bool) preg_match('#^' . $pref . FISA_FORMA_URCATA . '$#D', $sheet);
+}
+
+/**
+ * Oprește ruta dacă baza n-are coloanele fișelor (migrarea 031).
+ *
+ * 503 cu numele fișierului de importat, nu 500: fișierele ajung pe server
+ * înaintea importului, iar în fereastra aceea omul trebuie să afle CE lipsește,
+ * nu că „a apărut o eroare". Citirea catalogului nu trece pe aici — merge mai
+ * departe, fără fișe (`catalog_fise_select()`).
+ */
+function fise_cere_baza(): void
+{
+    if (!catalog_fise_supported()) {
+        fail(
+            'Fișele tehnice cer migrarea 031: baza de date nu are încă coloanele.'
+              . ' Importă sql/031_fise_tehnice.sql și încearcă din nou.',
+            503,
+            'fise_unavailable'
+        );
+    }
+}
+
+/**
+ * Șterge de pe disc fișa `$veche`, dacă e una urcată și n-o mai ține nimeni.
+ *
+ * „Nimeni" înseamnă cealaltă latură a aceluiași produs: două coloane pot arăta
+ * spre același fișier (scrise cu mâna în bază, ori de o migrare viitoare), iar
+ * fișierul e unul singur — aceeași pățanie ca la poze, v. `route_products_photo()`.
+ */
+function fisa_sterge_veche(string $veche, string $aCeleilalteLaturi): void
+{
+    if ($veche !== '' && is_uploaded_sheet($veche) && $aCeleilalteLaturi !== $veche) {
+        @unlink(photo_dir() . '/' . basename($veche));
+    }
+}
+
+/** Starea fișelor unui produs, în forma din `product_public()`. */
+function fise_publice(array $p): array
+{
+    return [
+        'sheet'      => latura_fisa_proprie($p, 'congelat'),
+        'sheetBaked' => latura_fisa_proprie($p, 'copt'),
+        'sheetFor'   => [
+            'frozen' => latura_fisa($p, 'congelat'),
+            'baked'  => latura_fisa($p, 'copt'),
+        ],
+    ];
+}
+
+/**
+ * POST /products/{id}/sheet — încarcă fișa tehnică a unei laturi.
+ *
+ * Formular multipart cu două câmpuri: `sheet` (fișierul) și `latura`
+ * („congelat" ori „copt"; lipsă = congelat, ca la poze).
+ *
+ * Oglinda lui `route_products_photo()`, cu trei deosebiri:
+ *   - se primește numai PDF, judecat după conținut (`fisa_e_pdf()`);
+ *   - nimic nu se micșorează: fișa se pune pe disc așa cum a venit;
+ *   - necazurile cu folderul răspund 503 cu nume, nu 500. Un 500 e pentru
+ *     greșelile noastre; un folder fără drepturi e o stare a serverului, pe
+ *     care omul o poate îndrepta dacă i se spune care.
+ *
+ * Fișa veche a laturii se șterge de pe disc numai dacă a fost urcată tot de
+ * aici: cea din pachet rămâne în `fise/`, neatinsă.
+ */
+function route_products_sheet(string $id): void
+{
+    require_admin();
+    $id = (int) $id;
+    $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
+    if (!$p) {
+        fail('Produsul nu există.', 404, 'not_found');
+    }
+    fise_cere_baza();
+
+    $latura = latura_normalizeaza($_POST['latura'] ?? null);
+    $col    = latura_coloana_fisa($latura);
+
+    $f = $_FILES['sheet'] ?? null;
+
+    // Corpul aruncat de PHP peste `post_max_size`: aceeași judecată ca la poze
+    // (`poza_corp_aruncat()`), fiindcă pragul e al serverului, nu al fișierului.
+    $lungime = (int) ($_SERVER['CONTENT_LENGTH'] ?? 0);
+    if (poza_corp_aruncat($f, $_POST, $lungime)) {
+        fail(fisa_mesaj_corp_aruncat($lungime), 422, 'too_large');
+    }
+
+    if (!$f || ($f['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        $eroare = (int) ($f['error'] ?? UPLOAD_ERR_NO_FILE);
+        $why    = match ($eroare) {
+            UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => fisa_mesaj_prea_mare(),
+            UPLOAD_ERR_PARTIAL   => 'Încărcarea s-a întrerupt. Încearcă din nou.',
+            UPLOAD_ERR_NO_FILE   => 'Nu ai ales niciun fișier.',
+            UPLOAD_ERR_NO_TMP_DIR, UPLOAD_ERR_CANT_WRITE => 'Serverul nu poate scrie fișiere temporare.',
+            default              => 'Încărcarea a eșuat.',
+        };
+        $cod = in_array($eroare, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
+            ? 'too_large'
+            : 'upload_failed';
+        fail($why, 422, $cod);
+    }
+
+    if ((int) $f['size'] > FISA_MAX_OCTETI) {
+        fail(fisa_mesaj_prea_mare(), 422, 'too_large');
+    }
+
+    // După conținut, nu după nume: o poză redenumită „fisa.pdf" e tot o poză.
+    if (!fisa_e_pdf((string) $f['tmp_name'])) {
+        fail('Acceptăm doar fișiere PDF.', 422, 'bad_type');
+    }
+
+    $dir = photo_dir();
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true)) {
+        fail('Nu pot crea folderul pentru fișiere pe server. Fișa n-a fost salvată.', 503, 'storage_unavailable');
+    }
+    if (!is_writable($dir)) {
+        fail(
+            'Folderul „' . basename($dir) . '” de pe server nu permite scrierea. Pune-i drepturi 755.'
+              . ' Fișa n-a fost salvată.',
+            503,
+            'storage_unavailable'
+        );
+    }
+
+    $file = fisa_nume_urcat($id);
+    if (!move_uploaded_file($f['tmp_name'], $dir . '/' . $file)) {
+        fail('Nu am putut salva fișierul pe server. Fișa n-a fost salvată.', 503, 'storage_unavailable');
+    }
+
+    $old = (string) ($p[$col] ?? '');
+    $web = photo_web_prefix() . $file;
+    // `$col` nu vine de la client: `latura_coloana_fisa()` întoarce una din
+    // două vorbe scrise în cod, oricare ar fi textul primit.
+    q('UPDATE products SET ' . $col . ' = ? WHERE id = ?', [$web, $id]);
+
+    $cealalta = (string) ($p[latura_coloana_fisa($latura === 'copt' ? 'congelat' : 'copt')] ?? '');
+    fisa_sterge_veche($old, $cealalta);
+
+    audit('product_sheet', 'product', (string) $id, $p['name'] . ' — ' . latura_cuvant($latura));
+
+    $p[$col] = $web;
+    json_out(['ok' => true, 'latura' => $latura, 'fisa' => $web] + fise_publice($p));
+}
+
+/**
+ * DELETE /products/{id}/sheet?latura=congelat|copt — scoate fișa unei laturi.
+ *
+ * LATURA SE CERE ANUME. Peste tot în rest o latură lipsă înseamnă „congelat"
+ * (`latura_normalizeaza()`), și acolo e bine: e latura cu care pornește
+ * magazinul. Aici ar fi o capcană — un panou care uită parametrul ar scoate
+ * tăcut fișa congelată, adică tocmai pe cea pe care o împrumută și Coapte, și
+ * butonul ar dispărea de pe amândouă laturile.
+ *
+ * Coloana se face NULL. Fișierul se șterge de pe disc numai dacă a fost urcat
+ * din panou și nu-l mai ține cealaltă latură; o fișă din pachet rămâne în
+ * `fise/`. Că nu se întoarce singură la actualizarea următoare o ține lacătul
+ * din `sql/031_fise_tehnice.sql`.
+ *
+ * A doua oară răspunde tot „ok", fără să mai scrie nimic: o fișă deja scoasă
+ * e chiar starea cerută.
+ */
+function route_products_sheet_delete(string $id): void
+{
+    require_admin();
+    $id = (int) $id;
+    $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
+    if (!$p) {
+        fail('Produsul nu există.', 404, 'not_found');
+    }
+    fise_cere_baza();
+
+    $ceruta = $_GET['latura'] ?? null;
+    $ceruta = is_string($ceruta) ? strtolower(trim($ceruta)) : '';
+    if (!in_array($ceruta, laturi(), true)) {
+        fail(
+            'Spune de pe ce latură scot fișa: „?latura=congelat” ori „?latura=copt”.',
+            422,
+            'latura_lipsa'
+        );
+    }
+    $latura = $ceruta;
+    $col    = latura_coloana_fisa($latura);
+    $old    = (string) ($p[$col] ?? '');
+
+    if ($old === '') {
+        json_out(['ok' => true, 'latura' => $latura, 'scoasa' => false] + fise_publice($p));
+    }
+
+    q('UPDATE products SET ' . $col . ' = NULL WHERE id = ?', [$id]);
+
+    $cealalta = (string) ($p[latura_coloana_fisa($latura === 'copt' ? 'congelat' : 'copt')] ?? '');
+    fisa_sterge_veche($old, $cealalta);
+
+    audit('product_sheet_remove', 'product', (string) $id, $p['name'] . ' — ' . latura_cuvant($latura));
+
+    $p[$col] = null;
+    json_out(['ok' => true, 'latura' => $latura, 'scoasa' => true] + fise_publice($p));
 }
 
 /* ------------------------------------------------------------- ajutoare -- */

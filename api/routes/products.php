@@ -47,10 +47,16 @@ function route_products_list(): void
     // Prețurile B și C (migrarea 028), cu aceeași poartă și din aceeași pricină.
     // Lăsate afară, scara din `product_public()` ar ieși „numai A" pe fiecare
     // produs — un răspuns credibil, deci unul pe care nu-l prinde nimeni.
+    //
+    // Fișele tehnice (migrarea 031), la fel: lăsate afară, `sheetFor` ar ieși
+    // null pe fiecare produs și butonul „Descarcă fișa tehnică" ar lipsi din tot
+    // magazinul fără nicio eroare. Că bucata e aici o ține
+    // `.claude/check-fise-tehnice.mjs`.
     $rows = all(
         'SELECT id, slug, name, name_en, description, description_en, photo, grams,
                 price_frozen, price_baked, category, is_new, active, sort' . $laturi
         . catalog_trepte_select()
+        . catalog_fise_select()
         . ' FROM products'
         . ($all ? '' : ' WHERE active = 1')
         . ' ORDER BY sort, id'
