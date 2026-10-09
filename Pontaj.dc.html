@@ -70,7 +70,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
 <div data-pt="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
-<div data-pt="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-pt="side" class="gp-meniu-derulat" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
 <div data-pt="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
 <img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
@@ -79,10 +79,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
-<div data-pt="nav" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
+<div data-pt="nav" class="gp-meniu-derulat" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
@@ -115,7 +115,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -154,6 +154,18 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <div data-pt="body" style="flex:1;display:flex;flex-direction:column;gap:16px;padding:20px 28px 30px;min-width:0">
+
+<!-- VESTEA UNEI SALVĂRI RĂMASE FĂRĂ FOAIE (încheierea rundei 2.7.0). Cine iese
+     din „Scrie ora de plecare” cât salvarea încă n-are răspuns (ușa îl lasă
+     după zece secunde) află aici ce s-a ales de ea, cu numele turei: foaia ei
+     nu mai e pe ecran, ori e a altei ture. Stă în corpul paginii, nu lângă
+     banda listei, ca să aibă pe telefon marginile lui. -->
+<sc-if value="{{ inchideVeste }}" hint-placeholder-val="{{ false }}">
+<div class="{{ inchideVesteCls }}" role="status" style="border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:10px">
+<p class="h-alert__title" style="margin:0;font-size:15px;line-height:1.45;min-width:0;overflow-wrap:anywhere">{{ inchideVeste }}</p>
+<button type="button" aria-label="Închide mesajul" class="h-btn h-btn--ghost" onClick="{{ onInchideVesteClose }}" style="margin-left:auto;flex:none;height:44px;width:44px;padding:0;font-size:18px">×</button>
+</div>
+</sc-if>
 
 <!-- ══════════════════════════ ceasul ══════════════════════════ -->
 
@@ -392,16 +404,16 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;gap:10px;flex-wrap:wrap">
 <div style="display:flex;flex-direction:column;gap:6px;flex:1 1 150px">
 <span class="h-eyebrow" style="font-size:12px">Ziua</span>
-<input class="h-input" type="date" value="{{ inchideZi }}" onChange="{{ onInchideZi }}" style="height:48px;font-size:16px">
+<input class="h-input" type="date" value="{{ inchideZi }}" onChange="{{ onInchideZi }}" disabled="{{ inchideLucru }}" style="height:48px;font-size:16px">
 </div>
 <div style="display:flex;flex-direction:column;gap:6px;flex:1 1 130px">
 <span class="h-eyebrow" style="font-size:12px">Ora</span>
-<input class="h-input h-numeric" type="time" value="{{ inchideOra }}" onChange="{{ onInchideOra }}" style="height:48px;font-size:16px">
+<input class="h-input h-numeric" type="time" value="{{ inchideOra }}" onChange="{{ onInchideOra }}" disabled="{{ inchideLucru }}" style="height:48px;font-size:16px">
 </div>
 </div>
 <div style="display:flex;flex-direction:column;gap:6px">
 <span class="h-eyebrow" style="font-size:12px">De ce o scrii de mână</span>
-<input class="h-input" value="{{ inchideNota }}" onChange="{{ onInchideNota }}" placeholder="a uitat să ponteze plecarea" style="height:48px;font-size:16px">
+<input class="h-input" value="{{ inchideNota }}" onChange="{{ onInchideNota }}" disabled="{{ inchideLucru }}" placeholder="a uitat să ponteze plecarea" style="height:48px;font-size:16px">
 <span style="font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Rândul rămâne cu numele tău lângă el, în raport și în jurnal.</span>
 </div>
 <sc-if value="{{ inchideEroare }}" hint-placeholder-val="{{ false }}">
@@ -423,16 +435,19 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 //
 // CELE DOUĂ JUMĂTĂȚI ale paginii au fiecare poarta ei, și nu sunt aceeași:
 //
-//   · CEASUL e al oricui ajunge aici — adică al rolurilor din `GP_CLOCK_ROLES`
-//     (api/lib/auth.php). Pagina nu-și scrie lista aia încă o dată: dacă
-//     serverul răspunde 403 la `/lab/people`, pagina arată ecranul de refuz.
-//     Așa poarta rămâne un singur loc, iar pagina o AFLĂ, nu o ghicește.
+//   · CEASUL e al oricui ajunge aici — adică al cui are dreptul `pontaj`
+//     (`require_drept('pontaj')`, api/routes/lab.php). Pagina nu-și scrie
+//     întrebarea aia încă o dată: dacă serverul răspunde 403 la `/lab/people`,
+//     pagina arată ecranul de refuz. Așa poarta rămâne un singur loc, iar
+//     pagina o AFLĂ, nu o ghicește.
 //
-//   · RAPORTUL e al administratorului, al fondatorului și al managerului
-//     (`GP_SHIFTS_ROLES` / `require_shifts()`). Aici întrebarea trebuie pusă
+//   · RAPORTUL e al cui conduce tura — dreptul `conduce_tura`, din pornire al
+//     administratorului, al fondatorului și al managerului; de la runda 2.7.0
+//     fondatorul îl poate muta din „Acces”. Aici întrebarea trebuie pusă
 //     ÎNAINTE de desenare — altfel raportul ar clipi pe ecranul unui angajat
-//     și abia apoi ar dispărea — deci răspunde `gp.eRaportPontaj()`, geamănul
-//     din pagină al listei de pe server, scris o dată în shared/gp-api.js.
+//     și abia apoi ar dispărea — deci răspunde `gp.eRaportPontaj()`, întrebat
+//     cu CONTUL întreg (cel care poartă drepturile judecate de server), nu cu
+//     numele rolului.
 //
 // ORELE NU TREC PRIN `gp.utc()`. Restul aplicației citește momente scrise de
 // MySQL în UTC, iar `gp.utc()` le lipește „Z" și le trece prin `Date`. Turele
@@ -502,12 +517,6 @@ const buc = (x) => {
   return s.replace(/0+$/, "").replace(/,$/, "");
 };
 
-const ROL_ET = {
-  admin: "administrator", fondator: "fondator", manager: "manager",
-  angajat: "angajat", utilizator_lab: "om de laborator",
-  agent_vanzari: "agent de vânzări", client: "client"
-};
-
 class Component extends DCLogic {
   // „pas" e ce se vede din ceas: lista de nume, tastatura, ori confirmarea.
   // Trei stări, nu două steaguri, fiindcă sunt trei ecrane care se exclud —
@@ -530,12 +539,21 @@ class Component extends DCLogic {
     // vine gol și cu `supported: false`, nu cu o eroare.
     prodZile: [], prodOameni: [], prodTotal: null, prodSuportat: true,
     prodGata: false, prodEroare: "",
+    // Vestea unei salvări a orei de plecare rămase fără foaie (încheierea
+    // rundei 2.7.0, v. `coadaInchiderii()`); „Rea” îi alege culoarea.
+    inchideVeste: "", inchideVesteRea: false,
     inchideId: 0, inchideCine: "", inchideZi: "", inchideOra: "", inchideNota: "",
     inchideEroare: "", inchideLucru: false
   };
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
+    // Paza formularului nesalvat (runda 2.7.0, hotărârea patronului din
+    // 4 octombrie 2026): cât foaia „Scrie ora de plecare” are ceva scris,
+    // legăturile, ieșirea din cont și fila închisă întreabă întâi. Paza citește
+    // starea de fiecare dată, prin `ciornaDeschisa()`. Dacă motorul aprinde
+    // `componentDidMount` din nou, paza nouă o scoate singură pe cea veche.
+    this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
     if (!window.__gpNav) {
       window.__gpNav = 1;
       document.addEventListener("click", (e) => {
@@ -584,6 +602,9 @@ class Component extends DCLogic {
     if (this.stopPoll) this.stopPoll();
     clearTimeout(this.tCod);
     clearTimeout(this.tGata);
+    // Numai curățenie: metoda asta poate să nu ruleze niciodată în paginile
+    // .dc.html, deci paza nu se sprijină pe ea.
+    if (typeof this.__scoatePaza === "function") this.__scoatePaza();
   }
 
   /**
@@ -592,6 +613,24 @@ class Component extends DCLogic {
    * cerere în plus ar primi același 403.
    */
   laParola() {
+    // Runda 2.7.0 (4–5 octombrie 2026): plecarea asta o face CODUL, nu omul,
+    // deci paza de pe legături n-o vede. Cu o plecare scrisă în foaie, omul e
+    // întrebat întâi — și o SINGURĂ dată: lista se împrospătează din
+    // cincisprezece în cincisprezece secunde și primește același 403, iar o
+    // întrebare la fiecare refuz nu l-ar lăsa să copieze nimic. După „Rămân să
+    // copiez” pagina stă pe loc cât e ceva scris; când foaia se închide, primul
+    // refuz îl duce la parolă. Cu foaia curată, nimic nu se schimbă.
+    if (gp.ciornaMurdara()) {
+      if (this.__parolaIntrebat) return;
+      this.__parolaIntrebat = true;
+      Promise.resolve(gp.ciornaLasaIesirea({
+        titlu: "Pleci fără ce ai scris?",
+        text: "Ai primit o parolă nouă, iar până nu alegi ce faci cu ea nu se poate salva nimic. Poți rămâne ca să copiezi ce ai scris.",
+        nu: "Rămân să copiez",
+        da: "Merg la parolă",
+      })).then((ies) => { if (ies) this.laParola(); });
+      return;
+    }
     if (this.stopPoll) this.stopPoll();
     location.href = "Parola.dc.html" + (location.search || "");
   }
@@ -790,25 +829,198 @@ class Component extends DCLogic {
       });
   }
 
-  inchide(t) {
+  /* ─── paza formularului nesalvat (runda 2.7.0, 4–5 octombrie 2026) ─── */
+
+  /**
+   * Ce are foaia „Scrie ora de plecare” scris și nesalvat: `null` când nu e
+   * nimic de pierdut, altfel vorbele întrebării.
+   *
+   * Pe 4 octombrie 2026 patronul a pierdut un formular scris pe jumătate
+   * dintr-un clic alături; de atunci, fiecare formular al casei întreabă
+   * înainte să arunce ce s-a scris în el.
+   *
+   * „Scris” e legat de foaia DESENATĂ, nu de casete: după închidere, ziua, ora
+   * și motivul rămân în stare (așa a fost dintotdeauna), iar o foaie închisă
+   * nu are de ce să țină pagina. Nici una rămasă sub ecranul de refuz: acolo
+   * șablonul nu o desenează, deci omul n-ar ști despre ce e întrebat.
+   *
+   * Comparația se face cu poza luată la deschidere, nu cu „gol”: foaia se
+   * deschide cu ziua turei gata scrisă, iar o foaie doar deschisă și închisă
+   * nu trebuie să întrebe nimic.
+   */
+  ciornaDeschisa() {
+    const S = this.state || {};
+    if (!(S.inchideId > 0) || (S.loaded && S.refuzat)) return null;
+    if (!gp.ciornaDiferita(this.__inchidePoza, { zi: S.inchideZi, ora: S.inchideOra, nota: S.inchideNota })) return null;
+    // CÂT SALVAREA E PE DRUM spre server, întrebarea spune altceva: „nu s-au
+    // salvat și se pierd” ar fi o minciună despre ceva ce tocmai se salvează,
+    // iar omul care o crede ar scrie plecarea a doua oară. Vorbele astea le
+    // vede numai cine pleacă din PAGINĂ (o legătură, ieșirea din cont): ușile
+    // foii își au întrebarea lor, v. `laUsaInchiderii()`.
+    if (S.inchideLucru) return {
+      titlu: "Pleci înainte să afli dacă s-a salvat ora de plecare?", text: "Ora de plecare e pe drum spre server. Dacă pleci acum, nu mai vezi dacă s-a salvat.",
+      nu: "Rămân în formular", da: "Ies fără să salvez",
+    };
+    return {
+      titlu: "Ieși fără să scrii ora de plecare?",
+      text: "Ora de plecare și motivul pe care le-ai scris nu s-au salvat și se pierd dacă ieși.",
+      nu: "Rămân în formular",
+      da: "Ies fără să salvez",
+    };
+  }
+
+  /**
+   * Ce găsește la UȘA foii cine vrea să iasă din ea: fundalul, „Renunță” și
+   * butoanele care deschid foaia altei ture. Trei răspunsuri:
+   *
+   *   `undefined`  ușa tace (salvarea e pe drum de mai puțin de zece secunde);
+   *   `null`       nimic de pierdut, se trece pe loc;
+   *   vorbe        întrebarea de pus: a foii scrise ori, după zece secunde de
+   *                drum, a SUPAPEI.
+   *
+   * SUPAPA (încheierea rundei 2.7.0). Până aici, cât salvarea era pe drum
+   * ușile foii nu făceau nimic, ORICÂT ar fi ținut: pe semnalul slab din
+   * laborator, o cerere înțepenită ținea omul închis în foaie, iar singura
+   * ieșire era reîncărcarea paginii — cu tot ce era scris. Primele zece
+   * secunde rămân mute (răspunsul vine de obicei într-una, iar o întrebare
+   * pusă atunci s-ar stinge sub deget); după ele, ușa întreabă, cu vorbe
+   * care spun adevărul: salvarea A PLECAT și nu se mai oprește de aici.
+   *
+   * Vorbele paginii („Pleci înainte să afli…”, v. `ciornaDeschisa()`) rămân
+   * ale celui care pleacă din PAGINĂ; aici omul rămâne în ea și își vede
+   * răspunsul sus, când vine (v. `coadaInchiderii()`).
+   */
+  laUsaInchiderii() {
+    const S = this.state || {};
+    if (!(S.inchideId > 0) || !S.inchideLucru) return this.ciornaDeschisa();
+    const de = this.__inchideDe;
+    if (typeof de !== "number" || this.ceasulInchiderii() - de < 10000) return undefined;
+    return {
+      titlu: "Ieși fără să aștepți salvarea?",
+      text: "Salvarea a plecat, dar serverul n-a răspuns încă. Dacă ieși, răspunsul apare sus, în pagină, când vine. Înainte să scrii ora de plecare din nou, uită-te la tură, în raport: poate s-a salvat.",
+      nu: "Rămân în formular", da: "Ies fără să aștept"
+    };
+  }
+
+  /**
+   * Trece prin ușa foii și face `treci` numai dacă ușa lasă: pe loc când nu e
+   * nimic de pierdut, după „Ies…” când e, deloc cât ușa tace.
+   *
+   * Al treilea argument îi dă întrebării felul de a-și citi vorbele DIN NOU:
+   * când răspunsul serverului sosește sub întrebarea supapei, vorbele ușii se
+   * schimbă (foaia s-a închis, ori a rămas cu refuzul în ea), iar biblioteca
+   * retrage singură o întrebare rămasă fără rost.
+   *
+   * `dinMers` ține locul acelei retrageri acolo unde pagina nu e pândită (un
+   * browser fără `MutationObserver`, ori clipa dintre răspuns și desen):
+   * „Ies fără să aștept”, apăsat după ce răspunsul a venit, nu mai face
+   * nimic. Altfel ar închide o foaie tocmai refuzată, cu tot ce era scris în
+   * ea, fără întrebarea EI.
+   *
+   * Steagul `inchideLucru` NU se stinge la „Ies fără să aștept”: salvarea e
+   * încă pe drum. Îl stinge coada ei când sosește, iar deschiderea următoare
+   * îl pune oricum la loc (v. `deschideInchiderea()`).
+   */
+  prinUsaInchiderii(treci) {
+    const usa = this.laUsaInchiderii();
+    if (usa === undefined) return undefined;
+    const dinMers = !!(this.state.inchideId > 0 && this.state.inchideLucru);
+    return gp.inchideCiorna(usa, () => {
+      if (dinMers && !this.state.inchideLucru) return;
+      treci();
+    }, usa ? () => this.laUsaInchiderii() : undefined);
+  }
+
+  /**
+   * Ceasul după care se numără cele zece secunde ale supapei. `performance.now()`
+   * nu sare când omul (ori telefonul) își potrivește ora; `Date.now()` rămâne
+   * pentru un browser care nu-l are.
+   */
+  ceasulInchiderii() {
+    return (typeof performance !== "undefined" && performance && typeof performance.now === "function")
+      ? performance.now() : Date.now();
+  }
+
+  /**
+   * Deschide foaia pentru tura `t`. E și o UȘĂ: apăsat peste o foaie deja
+   * scrisă (butonul altui rând, la care se ajunge cu Tab pe sub foaie, ori
+   * „Scrie plecarea” din pasul ceasului), ar înlocui-o cu alta fără un cuvânt.
+   * De aceea trece prin pază: foaia curată se schimbă pe loc, ca până acum,
+   * cea scrisă întreabă întâi.
+   *
+   * Cât salvarea e pe drum spre server, ușa tace zece secunde, apoi întreabă
+   * cu vorbele supapei (v. `laUsaInchiderii()`). Foaia deschisă așa, peste o
+   * salvare încă fără răspuns, nu mai e a acelei salvări: de aceea fiecare
+   * deschidere își ia un număr, iar coada salvării își caută foaia după el
+   * (v. `salveazaInchiderea()`).
+   *
+   * `intai` e ce mai are de făcut butonul ÎNAINTE de deschidere (pasul
+   * ceasului se întoarce la listă, v. `onUitataScrie`). Rulează numai când
+   * foaia chiar se deschide: făcut înaintea întrebării, omul care răspundea
+   * „Rămân în formular” se trezea pe alt ecran decât cel de pe care apăsase.
+   */
+  inchide(t, intai) {
+    this.prinUsaInchiderii(() => { if (intai) intai(); this.deschideInchiderea(t); });
+  }
+
+  /**
+   * Deschiderea propriu-zisă, chemată numai din `inchide(t)`. Poza se ia din
+   * STARE, imediat după ce foaia a fost umplută: e ce vede omul înainte să
+   * atingă ceva, cu ziua turei cu tot.
+   */
+  deschideInchiderea(t) {
     this.setState({
       inchideId: t.id, inchideCine: t.name + " · venit " + ora(t.startedAt)
         + ", " + ziEt(t.day), inchideZi: t.day, inchideOra: "",
       inchideNota: "", inchideEroare: "", inchideLucru: false
     });
+    const S = this.state;
+    this.__inchidePoza = { zi: S.inchideZi, ora: S.inchideOra, nota: S.inchideNota };
+    // Numărul deschiderii (încheierea rundei 2.7.0): după el își recunoaște
+    // coada unei salvări foaia. Nu ajunge `inchideId`: aceeași tură poate fi
+    // deschisă din nou, iar foaia aceea nouă nu e a salvării de dinainte.
+    this.__inchideNr = (this.__inchideNr || 0) + 1;
   }
 
   salveazaInchiderea() {
     const S = this.state;
+    // A DOUA APĂSARE cât prima e pe drum nu trimite nimic (încheierea rundei
+    // 2.7.0). Butonul e stins în șablon (`disabled`), dar un dublu clic ori
+    // Enter ținut apăsat ajung aici înainte de desenul care îl stinge, iar
+    // serverul ar primi aceeași oră de plecare de două ori.
+    if (S.inchideLucru) return;
     if (!S.inchideZi || !S.inchideOra) {
       this.setState({ inchideEroare: "Scrie ziua și ora la care a plecat." });
       return;
     }
+    // COADA ÎȘI ȚINE MINTE FOAIA (încheierea rundei 2.7.0). De când ușa are
+    // supapă, răspunsul poate sosi cu foaia închisă ori cu ALTA deschisă.
+    // „Acasă” e foaia din care a plecat salvarea, încă pe ecran: numai ea se
+    // închide la reușită și numai în ea se scrie refuzul. `zbor` e a câta
+    // plecare e aceasta: steagul îl stinge numai cea din urmă.
+    const nr = this.__inchideNr;
+    this.__inchideZbor = (this.__inchideZbor || 0) + 1;
+    const zbor = this.__inchideZbor;
+    const cine = S.inchideCine;
+    const acasa = () => this.state.inchideId > 0 && this.__inchideNr === nr;
+    // Clipa plecării, pentru supapa ușii. Se ia la FIECARE plecare: moștenită
+    // de la una refuzată mai devreme, ar face ușa să întrebe din prima secundă.
+    this.__inchideDe = this.ceasulInchiderii();
     this.setState({ inchideLucru: true, inchideEroare: "" });
     return gp.patch("/lab/shifts/" + S.inchideId, {
       endedAt: S.inchideZi + " " + S.inchideOra, note: S.inchideNota
     })
       .then(() => {
+        // Foaia salvării nu mai e pe ecran: nu închide nimic (ar închide foaia
+        // ALTEI ture, cu ce s-a scris în ea), își spune vestea sus și
+        // împrospătează ce se vede, ca tura să apară încheiată.
+        if (!acasa()) {
+          this.coadaInchiderii(zbor, cine + ": ora de plecare trimisă mai devreme s-a salvat.", false);
+          this.incarcaRaport(); this.incarcaProductie(); this.pull();
+          return;
+        }
+        // Plecarea salvată închide foaia DE-A DREPTUL, nu prin ușa care
+        // întreabă: nu mai e nimic de pierdut.
         this.setState({ inchideId: 0, inchideLucru: false });
         // Tura care era deschisă până acum acoperea totul până în clipa asta;
         // cu plecarea scrisă, fereastra ei se strânge — deci se schimbă și cine
@@ -818,9 +1030,37 @@ class Component extends DCLogic {
         this.pull();
       })
       .catch((e) => {
-        if (e.isAuth) gp.toLogin();
+        // Refuzul unei salvări rămase fără foaie nu se scrie în foaia de pe
+        // ecran (e a altei ture, ori nu mai e niciuna: nu l-ar citi nimeni).
+        // Se spune sus, cu pricina lui.
+        if (!acasa()) {
+          this.coadaInchiderii(zbor, cine + ": ora de plecare trimisă mai devreme nu s-a salvat. "
+            + (e.isAuth ? "Nu mai ești în cont." : gp.motiv(e, "închiderea turei")), true);
+          if (e.isAuth) gp.toLogin();
+          return;
+        }
+        // Sesiunea pierdută: steagul de salvare se stinge ÎNAINTE de plecarea
+        // spre intrare. Cu foaia scrisă, `gp.toLogin()` întreabă întâi, iar
+        // cine alege „Rămân să copiez” trebuie să găsească foaia vie, nu cu
+        // butonul înțepenit pe „se salvează” și cu ușile care nu fac nimic.
+        //
+        // Și PRICINA rămâne scrisă în foaie (încheierea rundei 2.7.0):
+        // biblioteca întreabă o singură dată, deci a doua apăsare pe „Închide
+        // tura” primea același refuz fără niciun cuvânt — butonul părea stricat.
+        if (e.isAuth) { this.setState({ inchideLucru: false, inchideEroare: "Nu mai ești în cont, iar până nu intri din nou nu se poate salva nimic." }); gp.toLogin(); }
         else this.setState({ inchideLucru: false, inchideEroare: gp.motiv(e, "închiderea turei") });
       });
+  }
+
+  /**
+   * Ce face răspunsul unei salvări care nu-și mai găsește foaia: spune vestea
+   * sus, în pagină (cu numele turei, fiindcă foaia de pe ecran poate fi a
+   * alteia), și stinge steagul numai dacă e al EI — coada unei salvări vechi
+   * nu are voie să dezlege foaia uneia plecate după ea.
+   */
+  coadaInchiderii(zbor, veste, rea) {
+    this.setState(Object.assign({ inchideVeste: veste, inchideVesteRea: !!rea },
+      this.__inchideZbor === zbor ? { inchideLucru: false } : {}));
   }
 
   /* ───────────────────────────────────────────── desenarea ──────────── */
@@ -829,8 +1069,14 @@ class Component extends DCLogic {
     const S = this.state;
     const auth = S.auth;
     const role = auth ? (auth.role || "") : "";
-    const vedeRaport = gp.eRaportPontaj(role);
-    const poateCorecta = gp.eAdmin(role);
+    // Amândouă se întreabă cu CONTUL, nu cu `role`: din numele rolului s-ar
+    // afla numai împărțirea din pornire, nu și ce a mutat fondatorul în „Acces”.
+    const vedeRaport = gp.eRaportPontaj(auth);
+    // Scrierea plecării uitate e dreptul `pontaj.corectura` — aceeași
+    // întrebare pe care o pune serverul la PATCH /lab/shifts/#. Și
+    // `vedeRaport`: tura de închis se găsește NUMAI în raport, deci cui nu-l
+    // vede i s-ar spune la nesfârșit că „raportul încă se încarcă”.
+    const poateCorecta = gp.are("pontaj.corectura", auth) && vedeRaport;
 
     /* ------------------------------------------------------- ceasul -- */
 
@@ -1055,12 +1301,15 @@ class Component extends DCLogic {
       blocked: S.loaded && S.refuzat,
       allowed: !S.loaded || !S.refuzat,
       blockedLine: auth
-        ? "Contul „" + auth.name + "” nu pontează în laborator. Ceasul e al oamenilor de acolo; raportul, al administratorului și al managerului."
+        ? "Contul „" + auth.name + "” nu pontează în laborator. Ceasul e al oamenilor de acolo; raportul, al celor care conduc tura."
         : "Intră cu un cont care are treabă în laborator ca să pontezi.",
       authName: auth ? auth.name : "",
-      authRol: ROL_ET[role] || role,
+      // Numele rolului vine din `gp.numeRol`, ca în celelalte bare. Până în
+      // runda 2.7.0 pagina își ținea propria listă de nume, a treia copie din
+      // casă: un rol nou ar fi apărut aici cu numele lui din bază.
+      authRol: gp.numeRol(role) || role,
       sidefoot: vedeRaport
-        ? "Ceasul e deschis oricui lucrează în laborator; raportul de dedesubt îl vezi tu, ca administrator sau manager."
+        ? "Ceasul e deschis oricui lucrează în laborator; raportul de dedesubt îl vede numai cine conduce tura."
         : "Apeși pe numele tău, tastezi codul, și atât. Același buton pontează venirea și plecarea.",
 
       sub: !S.loaded ? "" : (S.lume.length
@@ -1092,10 +1341,12 @@ class Component extends DCLogic {
               ? "Tura rămasă deschisă se încheie din raportul de mai jos, care încă se încarcă."
               : "Tura rămasă deschisă nu e printre cele din raportul de mai jos. Mută „De la” mai în urmă ori alege „Toată lumea”, apoi apasă „Scrie plecarea” pe rândul ei.",
       // Butonul se desenează numai cui îi primește serverul scrierea
-      // (`require_admin` pe PATCH /lab/shifts/#) și numai când tura e printre
-      // cele încărcate — altfel n-ar avea ce închide.
+      // (`require_drept('pontaj.corectura')` pe PATCH /lab/shifts/#) și numai
+      // când tura e printre cele încărcate — altfel n-ar avea ce închide.
       uitataScrie: poateCorecta && !!turaUitata,
-      onUitataScrie: () => { const t = turaUitata; this.laLista(); if (t) this.inchide(t); },
+      // Întoarcerea la listă se face în ramura în care foaia chiar se deschide
+      // (v. `inchide(t, intai)`), nu înaintea întrebării.
+      onUitataScrie: () => { const t = turaUitata; if (t) this.inchide(t, () => this.laLista()); else this.laLista(); },
       onUitataInapoi: () => this.laLista(),
 
       ceasSub: pasAcum === "cod" ? "Tastează codul tău de patru cifre."
@@ -1105,7 +1356,10 @@ class Component extends DCLogic {
       // Cardul „nu e nimeni" e o AFIRMAȚIE despre lume, iar pagina o poate face
       // doar după ce serverul i-a răspuns. Cât e o eroare pe ecran, tace.
       faraOameni: S.loaded && !S.eroare && S.lume.length === 0,
-      faraOameniLinie: poateCorecta
+      // Codul de pontaj se pune din Conturi, deci întrebarea e dreptul
+      // `conturi` (serverul: `require_drept('conturi')` pe codul omului), nu
+      // cel de a corecta ture.
+      faraOameniLinie: gp.are("conturi", auth)
         ? "Codurile se pun din Conturi, pe fiecare om în parte."
         : "Cere-i administratorului să pună coduri de pontaj din Conturi.",
 
@@ -1174,11 +1428,26 @@ class Component extends DCLogic {
       inchideEroare: S.inchideEroare,
       inchideLucru: S.inchideLucru,
       inchideCls: "h-btn h-btn--primary" + (S.inchideLucru ? " h-btn--loading" : ""),
-      onInchideZi: (e) => this.setState({ inchideZi: e.target.value }),
-      onInchideOra: (e) => this.setState({ inchideOra: e.target.value }),
-      onInchideNota: (e) => this.setState({ inchideNota: e.target.value }),
+      // CÂT SALVAREA E PE DRUM spre server nu se mai scrie nimic în foaie (runda
+      // 2.7.0). Ce s-ar scrie acum n-a plecat cu cererea, iar reușita închide
+      // foaia: omul ar vedea tura încheiată la o oră și cu un motiv pe care
+      // le-a îndreptat degeaba. Casetele sunt și stinse în șablon (`disabled`),
+      // dar mânerele tac și singure, ca paza să nu atârne de un atribut. La
+      // refuz steagul se stinge și se poate scrie din nou.
+      onInchideZi: (e) => { if (!this.state.inchideLucru) this.setState({ inchideZi: e.target.value }); },
+      onInchideOra: (e) => { if (!this.state.inchideLucru) this.setState({ inchideOra: e.target.value }); },
+      onInchideNota: (e) => { if (!this.state.inchideLucru) this.setState({ inchideNota: e.target.value }); },
       onInchideKeep: (e) => e.stopPropagation(),
-      onInchideRenunta: () => this.setState({ inchideId: 0, inchideEroare: "" }),
+      // Fundalul și „Renunță” (runda 2.7.0): foaia neatinsă se închide pe loc,
+      // ca până acum; cea scrisă întreabă întâi. Cât salvarea e pe drum spre
+      // server nu fac nimic zece secunde — întrebarea „ieși fără să salvezi?”
+      // ar fi o minciună despre ceva ce tocmai se salvează —, apoi întreabă cu
+      // vorbele supapei (încheierea rundei 2.7.0, v. `laUsaInchiderii()`).
+      onInchideRenunta: () => this.prinUsaInchiderii(() => this.setState({ inchideId: 0, inchideEroare: "" })),
+      // Vestea unei salvări rămase fără foaie, v. `coadaInchiderii()`.
+      inchideVeste: S.inchideVeste,
+      inchideVesteCls: S.inchideVesteRea ? "h-alert h-alert--danger" : "h-alert h-alert--success",
+      onInchideVesteClose: () => this.setState({ inchideVeste: "" }),
       onInchideSalveaza: () => this.salveazaInchiderea()
     };
   }

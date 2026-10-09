@@ -105,6 +105,19 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-ct=activ] .h-switch{align-self:flex-start;min-height:44px}
 [data-ct=activ] .h-switch input:disabled{opacity:.45;cursor:not-allowed}
 [data-ct=activ] .h-switch:has(input:disabled){cursor:not-allowed;color:var(--h-fg-subtle)}
+/* Pragul de neplătite al unui client (runda 2.7.0): trei feluri, unul ales.
+   44 px din pornire, pe orice ecran, nu abia sub 760: rândul se apasă cu
+   degetul și pe tableta de 820 de la birou. Fără `white-space:nowrap`, dinadins:
+   la 320 px cutia are 226 px, iar „General (fără limită)” trebuie să se poată
+   rupe pe două rânduri în loc să iasă din cutie. Stins (`:disabled`) numai cât
+   cererea CLIENTULUI ĂSTUIA e pe drum, ca o a doua apăsare pe el să nu plece
+   peste prima. Ceilalți clienți rămân apăsabili, fiecare cu cererea lui: în
+   listă toate fișele sunt pe ecran deodată (v. `pragPeDrum`). */
+[data-ct=prag-feluri]{display:flex;flex-wrap:wrap;gap:8px}
+[data-ct=prag-fel]{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;padding:6px 14px;border-radius:12px;border:1px solid var(--h-line);background:var(--h-bg-surface);color:var(--h-fg-muted);font-family:inherit;font-size:14px;line-height:1.25;text-align:center;cursor:pointer}
+[data-ct=prag-fel]:hover{border-color:var(--h-accent);color:var(--h-fg)}
+[data-ct=prag-fel][aria-pressed=true]{background:var(--h-accent-soft);border-color:var(--h-accent);color:var(--h-accent-fg);font-weight:700}
+[data-ct=prag-fel]:disabled{cursor:default;opacity:.62}
 @media (max-width:760px){
 [data-ct=shell]{flex-direction:column!important}
 [data-ct=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
@@ -188,7 +201,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ unlocked }}" hint-placeholder-val="{{ true }}">
 <div data-ct="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
-<div data-ct="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-ct="side" class="gp-meniu-derulat" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
 <div data-ct="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
 <img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
@@ -197,10 +210,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
-<div data-ct="nav" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
+<div data-ct="nav" class="gp-meniu-derulat" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
@@ -234,7 +247,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -263,7 +276,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
 </div>
 <div style="margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+<!-- Legătura duce în alt panou, cu dreptul lui („jurnal"), deci se desenează
+     numai cui îl are — altfel ar deschide un ecran de refuz. Din pornire îl au
+     toți cei care ajung aici; se desparte numai dacă fondatorul le desparte. -->
+<sc-if value="{{ jurnalVede }}" hint-placeholder-val="{{ true }}">
 <a href="Jurnal.dc.html" class="h-btn h-btn--ghost h-btn--sm" style="height:40px;font-size:13px;text-decoration:none;white-space:nowrap">Jurnal de modificări →</a>
+</sc-if>
 <button data-ct="newbtn" type="button" class="h-btn h-btn--primary" onClick="{{ onNew }}" style="height:44px;font-size:15px">+ Cont nou</button>
 </div>
 </div>
@@ -339,6 +357,11 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!-- Cardul ăsta e al Setărilor, găzduit aici: citește și scrie `/settings`,
+     iar ruta aceea cere dreptul „setari", nu „conturi". Se desenează numai cui
+     le are pe amândouă (`pCard`) — altfel ar fi un câmp și un buton „Salvează"
+     care se termină în refuz. -->
+<sc-if value="{{ pCard }}" hint-placeholder-val="{{ true }}">
 <div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px">
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <h2 class="h-h4" style="margin:0;font-size:18px">Cod pentru panourile de lucru</h2>
@@ -361,6 +384,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div class="h-alert h-alert--danger" style="border-radius:12px;padding:11px 13px;font-size:14px">{{ pErr }}</div>
 </sc-if>
 </div>
+</sc-if>
 
 <sc-if value="{{ refShowPanel }}" hint-placeholder-val="{{ false }}">
 <div class="h-card" style="max-width:760px;padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px">
@@ -467,6 +491,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ a.isMe }}" hint-placeholder-val="{{ false }}"><span class="h-badge h-badge--success">{{ a.semnEu }}</span></sc-if>
 <sc-if value="{{ a.tempPass }}" hint-placeholder-val="{{ false }}"><span class="h-badge h-badge--honey" title="Parolă provizorie"><span data-ct="semn-lung">parolă </span>provizorie</span></sc-if>
 <sc-if value="{{ a.oprit }}" hint-placeholder-val="{{ false }}"><span class="h-badge h-badge--danger" title="Contul e oprit: nu mai poate intra în aplicație">{{ a.semnOprit }}</span></sc-if>
+<sc-if value="{{ a.pragSemn }}" hint-placeholder-val="{{ false }}"><span data-ct="semn-prag" class="{{ a.pragSemnCls }}" title="{{ a.pragSemnTitlu }}">{{ a.pragSemn }}</span></sc-if>
 </span>
 </sc-if>
 <span data-ct="placa-vazut" class="h-numeric">{{ a.seen }}</span>
@@ -489,6 +514,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ a.oprit }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge h-badge--danger" style="font-size:11px" title="Contul e oprit: nu mai poate intra în aplicație">cont oprit</span>
 </sc-if>
+<sc-if value="{{ a.pragSemn }}" hint-placeholder-val="{{ false }}">
+<span data-ct="semn-prag" class="{{ a.pragSemnCls }}" style="font-size:11px" title="{{ a.pragSemnTitlu }}">{{ a.pragSemn }}</span>
+</sc-if>
 </div>
 <span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">utilizator: {{ a.u }} · {{ a.changed }}</span>
 <span class="h-numeric" style="font-size:13px;color:var(--h-fg-faint)">{{ a.seen }}</span>
@@ -504,9 +532,19 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      (`a.mailBlocat`); pe contul tabletelor nu se desenează deloc, iar numele
      rămâne singur pe rând (`a.g2Cols`). -->
 <div data-ct="g2" style="display:grid;grid-template-columns:{{ a.g2Cols }};gap:12px">
+<!-- Numele se citește, fără casetă, pe contul unui om din conducere când cel
+     care privește ține panoul din bife, fără rang (`a.numeBlocat`, runda 2.7.0):
+     serverul i-ar refuza schimbarea. -->
+<sc-if value="{{ a.numeLiber }}" hint-placeholder-val="{{ true }}">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Nume afișat
 <input class="h-input" value="{{ a.nameEdit }}" onChange="{{ a.onName }}" onBlur="{{ a.saveName }}" onKeyDown="{{ a.onFieldKey }}" style="height:46px;font-size:15px">
 </label>
+</sc-if>
+<sc-if value="{{ a.numeBlocat }}" hint-placeholder-val="{{ false }}">
+<div data-ct="nume-citit" style="display:flex;flex-direction:column;gap:6px;min-width:0;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Nume afișat
+<span style="display:flex;align-items:center;min-height:46px;font-size:15px;font-weight:400;color:var(--h-fg);overflow-wrap:anywhere">{{ a.name }}</span>
+</div>
+</sc-if>
 <sc-if value="{{ a.mailLiber }}" hint-placeholder-val="{{ true }}">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">E-mail de recuperare
 <input class="h-input" value="{{ a.mailEdit }}" onChange="{{ a.onMail }}" onBlur="{{ a.saveMail }}" onKeyDown="{{ a.onFieldKey }}" placeholder="nume@exemplu.ro" style="height:46px;font-size:15px">
@@ -546,6 +584,60 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!-- PRAGUL DE NEPLĂTITE AL CLIENTULUI (runda 2.7.0). Hotărârea patronului din
+     4 oct. 2026: pragul e 2 pentru toți și se schimbă din Setări; excepția
+     unui singur client se pune de aici — un număr al lui ori „fără limită”.
+
+     Cutia se desenează numai sub `a.pragShown`: cont de CLIENT, cel care
+     privește are dreptul „plati.prag” (din pornire, numai fondatorul), ȘI
+     serverul a trimis cheia `pragNeplatite` pe rândul contului. Fără cheie —
+     bază fără migrarea 032, ori un server care n-o dă celui fără drept — nu
+     rămâne nici titlul: un control pe care omul nu-l poate folosi nu se
+     desenează (regula patronului din 2.6.0). `null` e o VALOARE („urmează
+     pragul general”), nu lipsa cheii.
+
+     Stă aici, sub casetele clientului, și numai aici: e tot o însușire a
+     firmei, ca adresa și zona de deasupra, nu a intrării în cont.
+
+     Trei feluri, unul apăsat. „General” și „Fără limită” pleacă pe loc, ca
+     zona și rolul: alegerea e gata în clipa în care s-a făcut. „Al lui”
+     deschide caseta de număr și nu trimite nimic până la „Salvează pragul”,
+     fiindcă un număr se tastează. Caseta cere focusul: a apărut la apăsarea
+     unui buton și e primul lucru din ce a apărut (v. `check-focus.mjs`).
+
+     Refuzul serverului se scrie AICI, pe rând, nu în bara de sus: în vederea
+     „listă”, fișa clientului poate fi la zece ecrane de capul paginii. Înainte
+     de a-l scrie, pagina recitește lista de conturi, deci controlul arată ce
+     e pe server ACUM, nu rândul de dinaintea apăsării. Două abateri, amândouă
+     în bara de sus, cu numele clientului: când lista proaspătă arată că pragul
+     cerut e deja cel de pe server (atunci nu e un refuz de arătat cu roșu) și
+     când controlul nu mai e pe ecran ca să poarte refuzul — lista nu-l mai dă,
+     fișa a fost strânsă, ori rândul a fost scos de pastila unui rol sau de
+     căutare cât cererea era pe drum (v. `asazaRefuzul`). -->
+<sc-if value="{{ a.pragShown }}" hint-placeholder-val="{{ false }}">
+<div data-ct="prag" style="display:flex;flex-direction:column;gap:10px;padding:11px 13px;border-radius:13px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Prag de neplătite</span>
+<div data-ct="prag-feluri" role="group" aria-label="Prag de neplătite pentru {{ a.name }}">
+<sc-for list="{{ a.pragFeluri }}" as="p" hint-placeholder-count="3">
+<button type="button" data-ct="prag-fel" aria-pressed="{{ p.apasat }}" disabled="{{ p.blocat }}" onClick="{{ p.alege }}">{{ p.et }}</button>
+</sc-for>
+</div>
+<sc-if value="{{ a.pragEditing }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap;animation:ct-pop .18s var(--h-ease-out)">
+<label style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Al lui: câte comenzi neplătite
+<input autoFocus="{{ true }}" class="h-input h-numeric" type="text" inputMode="numeric" value="{{ a.pragDraft }}" onChange="{{ a.onPragDraft }}" onKeyDown="{{ a.onPragKey }}" placeholder="1–99" style="height:46px;font-size:16px">
+</label>
+<button type="button" class="h-btn h-btn--primary" onClick="{{ a.onPragSave }}" style="min-height:46px;font-size:14px;flex:none">Salvează pragul</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onPragCancel }}" style="min-height:46px;font-size:14px;flex:none">Renunț</button>
+</div>
+</sc-if>
+<sc-if value="{{ a.pragErr }}" hint-placeholder-val="{{ false }}">
+<p class="h-alert h-alert--danger" role="alert" data-ct="prag-refuz" style="margin:0;border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.4">{{ a.pragErr }}</p>
+</sc-if>
+<span data-ct="prag-nota" style="font-size:12px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">{{ a.pragNota }}</span>
+</div>
+</sc-if>
+
 <!-- PAROLA (runda 2.6.0). Rândul se desenează numai unde parola chiar se poate
      pune de aici (`a.parolaDeAici`): nu pe contul tabletelor, nu pe contul unui
      conducător pe care serverul l-ar refuza, și nu pe PROPRIA fișă — acolo
@@ -581,7 +673,9 @@ Notează parola acum: <strong>{{ a.freshPass }}</strong> — nu mai poate fi afi
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
 <span style="font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cod de pontaj</span>
 <span class="{{ a.pinCls }}">{{ a.pinEt }}</span>
+<sc-if value="{{ a.pinLiber }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onPinEdit }}" style="min-height:40px;font-size:14px;margin-left:auto">{{ a.pinBtn }}</button>
+</sc-if>
 <sc-if value="{{ a.pinHas }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onPinClear }}" style="min-height:40px;font-size:14px;color:{{ a.pinClearFg }}">{{ a.pinClearLabel }}</button>
 </sc-if>
@@ -605,7 +699,7 @@ Notează parola acum: <strong>{{ a.freshPass }}</strong> — nu mai poate fi afi
 
 <sc-if value="{{ a.isSystem }}" hint-placeholder-val="{{ false }}">
 <div style="padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line);font-size:13px;line-height:1.55;color:var(--h-fg-muted)">
-Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, comun întregii echipe. Codul se schimbă din <strong>Setări → Acces</strong>.
+Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, comun întregii echipe. Codul se schimbă din <strong>Setări → Tableta</strong>.
 </div>
 </sc-if>
 
@@ -692,7 +786,9 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 <span class="{{ a.vouchBadge }}" style="font-size:12px">{{ a.vouchEt }}</span>
 </div>
 <span style="font-size:13px;line-height:1.55;color:var(--h-fg-subtle);text-wrap:pretty">{{ a.vouchNota }}</span>
+<sc-if value="{{ a.vouchLiber }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="{{ a.vouchCls }}" onClick="{{ a.onVouch }}" style="min-height:46px;font-size:14px;align-self:flex-start">{{ a.vouchBtn }}</button>
+</sc-if>
 </div>
 </sc-if>
 
@@ -778,6 +874,15 @@ Contul tabletelor din laborator nu are parolă: se deschide cu codul de acces, c
 </sc-if>
 </sc-if>
 </div>
+<!-- Numai fondatorului (`a.accesNota`), și numai unde lista de roluri chiar e
+     desenată: eticheta listei e „Acces", iar pagina cu același nume hotărăște
+     ce înseamnă fiecare rol. Stă SUB piciorul fișei, pe rândul ei, nu în el:
+     piciorul e măsurat de la 320 la 1440 și un rând în plus înăuntru i-ar fi
+     mutat butoanele. `margin-top` negativ o lipește de picior (fișa are 14px
+     între rânduri). -->
+<sc-if value="{{ a.accesNota }}" hint-placeholder-val="{{ false }}">
+<p data-ct="acces-nota" style="margin:-6px 0 0;font-size:12px;line-height:1.5;color:var(--h-fg-faint);text-wrap:pretty">Ce panouri vede fiecare rol se hotărăște în pagina <a href="Acces.dc.html">Acces</a>.</p>
+</sc-if>
 
 </div>
 </sc-if>
@@ -911,9 +1016,80 @@ const fromApi = (x) => ({
   // codul e păstrat ca hash, deci nici el nu-l mai știe. `null` înseamnă „n-am
   // de unde ști" (bază fără migrarea 014) și e fals la fel ca `false`, deci
   // butonul nu se desenează pe o instalare neactualizată.
-  labPin: x.hasLabPin === true
+  labPin: x.hasLabPin === true,
+  // Pragul de comenzi neplătite al clientului (runda 2.7.0, migrarea 032).
+  // TREI stări, ținute pe DOUĂ câmpuri, fiindcă unul singur le-ar fi topit:
+  //   · cheia LIPSEȘTE din rând → `arePrag: false`. Serverul o trimite numai
+  //     pe conturile de client, numai celui cu dreptul „plati.prag” și numai
+  //     pe o bază cu migrarea 032; lipsa ei spune „nu e de arătat”, iar
+  //     controlul din fișă nu se desenează deloc (v. `pragShown`).
+  //   · `null` → clientul urmează pragul general. E o VALOARE, nu o lipsă.
+  //   · un număr → pragul lui, cu `0` = fără limită.
+  // Nu se topesc într-un `|| 0`, ca la `refRate` mai sus: ar face din fiecare
+  // client lăsat pe pragul general un client care nu se oprește niciodată —
+  // iar semnul „fără limită” ar apărea pe toate plăcile deodată.
+  arePrag: Object.prototype.hasOwnProperty.call(x, "pragNeplatite"),
+  prag: (x.pragNeplatite === null || x.pragNeplatite === undefined) ? null : Number(x.pragNeplatite)
 });
-const roleOf = (x) => x.role || (x.u === "admin" ? "admin" : "angajat");
+
+/**
+ * Pragul GENERAL de neplătite, pentru paranteza „General (2)” din fișa unui
+ * client — citit din răspunsul lui `GET /settings`, pe care pagina îl cere
+ * oricum pentru cardul codului de tablete (`pullPanelCode()`).
+ *
+ * `null` înseamnă „pagina nu-l știe”, NU zero: atunci butonul scrie numai
+ * „General”, fără număr. Nu-l știe când cheia `plati_prag_implicit` n-a venit
+ * (serverul o dă numai celui cu „plati.prag”), când cel care privește n-are
+ * dreptul „setari” (atunci `GET /settings` nici nu se cere — o cerere în plus
+ * numai pentru o paranteză ar fi un drum degeaba și un refuz de scris undeva),
+ * ori când în bază stă altceva decât un număr. În cazul din urmă serverul
+ * socotește 2 (`plati_prag_general()`), dar regula aceea e a lui: copiată
+ * aici, cele două s-ar putea depărta, și paranteza ar minți cu o cifră.
+ */
+const pragGeneralDin = (setari) => {
+  if (!setari || !Object.prototype.hasOwnProperty.call(setari, "plati_prag_implicit")) return null;
+  const brut = setari.plati_prag_implicit;
+  const t = String(brut === null || brut === undefined ? "" : brut).trim();
+  return /^[0-9]{1,2}$/.test(t) ? Number(t) : null;
+};
+
+// Refuzul `503 prag_unavailable` (baza fără migrarea 032), cu vorba paginii.
+// Serverul îl spune tehnic; omul din fața fișei are nevoie să afle că nu e
+// greșeala lui și că se rezolvă cu actualizarea, nu cu o a doua apăsare.
+const PRAG_FARA_MIGRARE = "Pragul nu se poate salva încă: baza de date n-a primit actualizarea rundei 2.7.0.";
+
+// Hărțile pragului, ținute pe CONT: `pragPeDrum` și `pragRefuz` (v. starea).
+// Cheia e numele de utilizator. `areCheia`, nu `harta[u]`: în `pragPeDrum`
+// valoarea poate fi `null` („urmează pragul general”), deci numai PREZENȚA
+// cheii spune că o cerere e pe drum. Celelalte două întorc o hartă NOUĂ —
+// starea nu se scrie pe loc — și fără prototip: numele de utilizator îl alege
+// omul, iar „__proto__” trece de regula lui (`[a-z0-9._-]{3,64}`); pe un obiect
+// obișnuit, scrierea lui ar schimba prototipul în loc să pună cheia, iar
+// controlul acelui client n-ar mai afla niciodată că are o cerere pe drum.
+const areCheia = (harta, k) => Object.prototype.hasOwnProperty.call(harta, k);
+const cuCheia = (harta, k, val) => { const x = Object.assign(Object.create(null), harta); x[k] = val; return x; };
+const faraCheia = (harta, k) => { const x = Object.assign(Object.create(null), harta); delete x[k]; return x; };
+
+/** „o comandă”, „5 comenzi”, „20 de comenzi” — numai pentru 1…99. */
+const cateComenzi = (n) => n === 1 ? "o comandă" : n + (n >= 20 ? " de comenzi" : " comenzi");
+
+/**
+ * Fraza de sub control: ce înseamnă pragul care se APLICĂ acestui client.
+ *
+ * `efectiv` e numărul care hotărăște: al lui, ori cel general când îl urmează;
+ * `null` când pagina nu-l știe (clientul urmează pragul general, iar pagina
+ * n-a primit cifra) — atunci rămâne fraza de bază, adevărată pentru orice
+ * prag de la 2 în sus.
+ *
+ * Pragul 1 are fraza lui, fiindcă cea de bază ar minți: serverul oprește de la
+ * `n ≥ prag` (`plati_situatie()`), deci cu pragul 1 a doua comandă nu trece cu
+ * avertizare — nu trece deloc.
+ */
+const pragNotaDin = (efectiv) =>
+  efectiv === 0 ? "Nu e oprit niciodată."
+    : efectiv === 1 ? "Cu pragul 1 nu există avertizare: cât are o comandă neplătită, nu mai poate trimite alta până la plată."
+      : "A doua comandă neplătită trece cu avertizare; de la prag în sus comenzile se opresc până la plată.";
+const roleOf =(x) => x.role || (x.u === "admin" ? "admin" : "angajat");
 // Etichetele rolurilor. Ordinea din ROLE_OPTS e cea din ENUM-ul coloanei
 // `users.role` (sql/007): valorile noi stau la coadă, fiindcă MySQL ține în rând
 // poziția, nu textul, iar una strecurată la mijloc ar schimba în tăcere rolul
@@ -931,12 +1107,13 @@ const ROLE_L = {
 // mergea, cu cinci ar fi însemnat patru apăsări ca să ajungi de la „client" la
 // „administrator", fără să vezi vreodată lista întreagă.
 const ROLE_OPTS = [
-  { v: "fondator",       l: "Fondator",         d: "Tot, plus statistici și rolurile celorlalți" },
+  { v: "fondator",       l: "Fondator",         d: "Tot: și statisticile, încasările și rolurile celorlalți" },
   // „Tot, fără statistici", nu „tot": de când există pagina Statistici,
   // administratorul nu mai are chiar tot. Rândul `d`, de lângă listă, e primul
   // loc în care omul care împarte rolurile citește deosebirea — dacă el minte,
   // o alege pe cea greșită și află abia peste o lună, când fondatorul întreabă.
-  { v: "admin",          l: "Administrator",    d: "Tot, fără statistici" },
+  // De la runda 2.7.0 îi lipsesc din pornire și încasările (banii casei).
+  { v: "admin",          l: "Administrator",    d: "Tot, fără statistici și încasări" },
   { v: "manager",        l: "Manager",          d: "Comenzi, laborator, rută, depozit, pontaj" },
   { v: "agent_vanzari",  l: "Agent de vânzări", d: "Recomandări și comenzi" },
   { v: "angajat",        l: "Angajat",          d: "Laborator, rută, depozit, pontaj" },
@@ -952,18 +1129,67 @@ const ROLE_OPTS = [
 // nici depozit; managerul nu primește recomandări. Cine citea aici își făcea o
 // idee greșită despre contul pe care tocmai îl crea.
 //
-// Sursa adevărului e `gp.PANOURI_ROL` (shared/gp-api.js). Textul de aici e o
-// repovestire pentru om, nu a doua matrice: dacă se schimbă acolo, se schimbă
-// și aici — iar `.claude/check-meniu.mjs` compară matricea cu ea însăși în
-// două exemplare tocmai ca abaterea să se vadă.
+// Sursa adevărului e matricea din pagina „Acces” (migrarea 033), pe care
+// paginile o întreabă cu `gp.are()`; cât n-a bifat fondatorul nimic, răspunde
+// `gp.DREPT_IMPLICIT` (shared/gp-api.js), oglinda lui `GP_DREPT_IMPLICIT` din
+// api/lib/auth.php. Textul de aici e o repovestire pentru om a drepturilor
+// DIN PORNIRE, nu a doua matrice: dacă se schimbă pornirea, se schimbă și
+// aici. Ce a mutat fondatorul din „Acces” NU se citește din rândurile astea:
+// pentru un rol atins de el, rândul și lămurirea se scriu din ce trimite
+// serverul lângă lista de conturi (`rolDinAcces`, mai jos).
 const ROLE_HINT = {
-  fondator: "Fondatorul are tot ce are un administrator, plus două lucruri pe care un administrator nu le are: dă și ia rolurile de administrator și de fondator, și vede „Statistici” — cifrele casei, banii și comenzile pe interval. Rolul ăsta îl dă numai un alt fondator; cât nu e încă niciunul, omul îl cere din contul lui, iar linkul de confirmare pleacă pe adresa firmei.",
-  admin: "Administratorii intră în comenzi, depozit, conturi, catalog, pontaj, jurnal și setări. Statisticile casei nu le sunt deschise: alea sunt numai ale fondatorului.",
+  fondator: "Fondatorul are tot ce are un administrator, plus ce administratorul nu are din pornire: dă și ia rolurile de administrator și de fondator, vede „Statistici” și „Încasări” — cifrele și banii casei —, pune prețurile ingredientelor și hotărăște, din pagina „Acces”, ce vede fiecare rol. Rolul ăsta îl dă numai un alt fondator; cât nu e încă niciunul, omul îl cere din contul lui, iar linkul de confirmare pleacă pe adresa firmei.",
+  admin: "Administratorii intră în comenzi, laborator, rută, depozit, pontaj, catalog, conturi, recomandări, jurnal și setări. Statisticile și încasările casei nu le sunt deschise din pornire: alea sunt ale fondatorului.",
   angajat: "Angajații lucrează în laborator, pe rută și în depozit, și își pontează tura. Comenzile, conturile, catalogul, jurnalul și setările nu le sunt deschise.",
-  manager: "Managerii văd comenzile, laboratorul, ruta, depozitul și raportul de pontaj — orele tuturor, pe zile și pe oameni. În comenzi mută etapele și pot lua o comandă la telefon, dar formularul de editare rămâne al administratorului. Conturile, catalogul, jurnalul, setările și recomandările nu le sunt deschise.",
+  manager: "Managerii văd comenzile, laboratorul, ruta, depozitul și raportul de pontaj — orele tuturor, pe zile și pe oameni. În comenzi mută etapele, iau comenzi la telefon și le corectează, și acceptă cererile de pe site. Conturile, catalogul, jurnalul, setările și recomandările nu le sunt deschise.",
   utilizator_lab: "Omul de laborator are o singură ușă: pontajul. Apasă pe numele lui de pe tabletă, tastează codul de patru cifre, și atât — nici comenzile, nici laboratorul, nici depozitul nu-i sunt deschise. Rolul ăsta e pentru cine vine la lucru fără să aibă nevoie de altceva din aplicație. Codul i-l pui tot de aici, de pe cardul lui.",
   agent_vanzari: "Agenții de vânzări văd recomandările — codul lor, cine au adus și cât au câștigat — și comenzile, ca să știe ce se întâmplă cu ele. Tot din „Recomandări” fac conturi de cumpărători, legate de codul lor. Laboratorul, ruta, depozitul, conturile, catalogul, jurnalul și setările nu le sunt deschise.",
   client: "Clientul își vede doar comenzile lui și comandă din magazin."
+};
+
+/**
+ * Ce are rolul ACUM, când fondatorul i-a mutat vreo bifă în „Acces” (runda
+ * 2.7.0). `acces` e ce trimite `GET /users` lângă conturi: `roluri` (rol →
+ * cheie → da/nu, gata judecat pe server), `etichete` și `panouri`.
+ *
+ * Întoarce `null` când nu e nimic de repovestit: fondatorul și clientul nu sunt
+ * coloane ale matricei, un server mai vechi nu trimite nimic, iar un rol NEATINS
+ * își păstrează vorba scrisă de mână (`ROLE_OPTS.d`, `ROLE_HINT`), mai scurtă
+ * și mai caldă decât o listă. „Neatins” se află punând răspunsul serverului
+ * lângă pornirea din pagină (`gp.are(cheie, rol)`), cheie cu cheie.
+ */
+const rolDinAcces = (rl, acces) => {
+  const al = acces && acces.roluri && acces.roluri[rl];
+  if (!al) return null;
+  const chei = Object.keys(al);
+  if (!chei.some((k) => al[k] !== gp.are(k, rl))) return null;
+  const et = acces.etichete || {};
+  const panouri = acces.panouri || [];
+  // „Recomandări (toate codurile)” → „Recomandări”: paranteza e lămurirea din
+  // pagina „Acces”, nu numele panoului.
+  const nume = (k) => String(et[k] || k).replace(/\s*\(.*\)$/, "");
+  const mic = (x) => x.charAt(0).toLowerCase() + x.slice(1);
+  const sir = (l) => l.map((x, i) => i ? mic(x) : x).join(", ");
+  const vede = chei.filter((k) => al[k] && panouri.indexOf(k) !== -1).map(nume);
+  // Pagina „Recomandări” e a agentului oricum — codul și comisioanele lui —,
+  // cu ori fără dreptul „toate codurile” (`siRol`, shared/gp-api.js).
+  if (rl === "agent_vanzari" && !al.recomandari) vede.push("Recomandările lui");
+  const poate = chei.filter((k) => al[k] && panouri.indexOf(k) === -1).map(nume);
+  return { vede: sir(vede), poate: sir(poate), mic };
+};
+/** Rândul mic de lângă lista de roluri. */
+const drepturiScurt = (rl, acces) => {
+  const a = rolDinAcces(rl, acces);
+  if (!a) return (ROLE_OPTS.find((o) => o.v === rl) || {}).d || "";
+  return (a.vede || "Niciun panou") + " · schimbat din „Acces”";
+};
+/** Lămurirea lungă: sub lista din „Cont nou” și ca titlu al listei de pe fișă. */
+const hintRol = (rl, acces) => {
+  const a = rolDinAcces(rl, acces);
+  if (!a) return ROLE_HINT[rl] || "";
+  return "Vede: " + (a.vede ? a.mic(a.vede) : "niciun panou") + "."
+    + (a.poate ? " Poate: " + a.mic(a.poate) + "." : "")
+    + " Rolul a fost schimbat din pagina „Acces”: aici scrie ce are acum, nu ce avea din pornire.";
 };
 
 /**
@@ -1109,7 +1335,12 @@ const refPreviewOf = (nume) => {
 // locală de conturi, sau din numele de utilizator — deci putea fi falsificat
 // din consola browserului.
 const authRole = (a) => (a && a.role) || "";
-const isAdmin = (a) => gp.eAdmin(authRole(a));
+// Pagina se deschide cu DREPTUL „conturi” din matrice, nu cu rangul: e
+// întrebarea pe care o pune și serverul pe fiecare rută din
+// api/routes/users.php (`require_drept('conturi')`). I se dă contul ÎNTREG, cel
+// din `gp.auth()`, fiindcă drepturile stau pe el: rolul singur ar răspunde cu
+// cele din pornire, nu cu ce a bifat fondatorul în „Acces”.
+const areConturi = (a) => !!a && gp.are("conturi", a);
 const WORDS = ["croissant", "vanilie", "migdale", "caramel", "foietaj", "brioșă", "zmeură", "unt", "cuptor", "tavă"];
 const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
@@ -1132,7 +1363,7 @@ const dataOra = (ms) => {
  */
 const desprePar = (acc) => {
   if (acc.sys) return "fără parolă — se deschide cu codul tabletelor";
-  if (acc.temp) return "parolă provizorie, pusă de administrator";
+  if (acc.temp) return "parolă provizorie, de schimbat la prima intrare";
   if (acc.pwAt) return "parolă proprie, schimbată " + dataOra(acc.pwAt);
   return "parolă proprie";
 };
@@ -1164,6 +1395,25 @@ class Component extends DCLogic {
     // Comutatorul „Cont pornit" (runda 2.5.0): pe ce cont așteaptă oprirea a
     // doua apăsare, și pe ce cont a plecat cererea, spre ce stare.
     activArm: null, activLucru: null, activSpre: false,
+    // Pragul de comenzi neplătite al unui client (runda 2.7.0).
+    // `pragGeneral` e pragul general din Setări, pentru paranteza „General
+    // (2)”: `null` înseamnă „pagina nu-l știe”, nu zero (v. `pragGeneralDin`).
+    // `pragEdit` e contul pe care e deschisă caseta „Al lui”, iar `pragVal`
+    // ce s-a tastat în ea: o singură ciornă pe pagină, ca la parolă și la cod.
+    //
+    // `pragPeDrum` și `pragRefuz` sunt HĂRȚI pe cont (numele de utilizator →
+    // valoarea cerută, cu `null` = general; numele de utilizator → vorba
+    // refuzului, al paginii ori al serverului), NU câte o pereche pe pagină,
+    // cum are comutatorul „Cont pornit”. Cu perechea, a doua apăsare — pe ALT
+    // client, cât prima cerere era încă pe drum — îi lua locul celei dintâi:
+    // primul control se aprindea la loc pe valoarea veche și se putea apăsa
+    // din nou (două cereri pentru același client, două rânduri în Jurnal), iar
+    // răspunsul unuia stingea „se salvează” al celuilalt și, odată cu el,
+    // ciorna și refuzul de pe orice altă fișă. În listă toate fișele sunt pe
+    // ecran deodată: doi clienți puși la rând pe „Fără limită” e un drum de
+    // două secunde. Refuzul stă separat de `pragEdit`, fiindcă la refuzul
+    // serverului caseta e deja închisă, iar el trebuie să rămână pe rând.
+    pragGeneral: null, pragEdit: null, pragVal: "", pragPeDrum: {}, pragRefuz: {},
     // Adresa firmei și zona ei, la contul nou. Lipseau amândouă din formular:
     // un cont de client se năștea fără loc de livrare, iar adresa se scria abia
     // la prima comandă, de mână, în panoul de comenzi. `zoneReady` spune dacă
@@ -1179,10 +1429,20 @@ class Component extends DCLogic {
     document.documentElement.setAttribute("data-theme", "light");
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
+      // Cardul „Cont nou” SCRIS nu se mai închide la „Înapoi” fără un cuvânt
+      // (runda 2.7.0, cererea patronului din 4 oct. 2026): treapta de istoric
+      // se pune la loc și omul e întrebat (v. `inapoiPesteNou`). Cardul
+      // neatins, fișa și editorul de parolă se închid mai jos, ca până acum.
+      if (this.inapoiPesteNou()) return;
       const st = this.state || {};
       if (st.form || st.edit || st.deschis) this.setState({ form: false, edit: null, deschis: null });
     };
     window.addEventListener("popstate", this.__gpBack);
+    // Paza formularului nesalvat (runda 2.7.0): cât cardul „Cont nou” are ceva
+    // scris, o legătură apăsată, ieșirea din cont ori fila închisă întreabă
+    // întâi. Biblioteca scoate singură paza de dinainte, deci cârligul ăsta,
+    // care se poate aprinde de mai multe ori, lasă mereu una singură.
+    this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
     // Grila plăcilor își schimbă numărul de coloane când se rotește tableta
     // ori se trage de fereastră. Fișa deschisă stă după ULTIMA placă din
     // rândul ei, deci numărul se citește din nou; altfel ar rămâne găuri în
@@ -1232,6 +1492,9 @@ class Component extends DCLogic {
   componentWillUnmount() {
     window.removeEventListener("popstate", this.__gpBack);
     window.removeEventListener("resize", this.__ctColoane);
+    // Paza formularului nesalvat pleacă odată cu pagina. Cârligul ăsta poate
+    // să nu ruleze niciodată în paginile casei; nu se sprijină nimic pe el.
+    if (typeof this.__scoatePaza === "function") this.__scoatePaza();
     try {
       if (document.fonts && document.fonts.removeEventListener) document.fonts.removeEventListener("loadingdone", this.__ctFonturi);
     } catch (e) { /* fără `document.fonts` n-a fost nici ascultătorul */ }
@@ -1304,15 +1567,19 @@ class Component extends DCLogic {
    */
   intra() {
     this.setState({ offline: "" });
-    // Lista de conturi se cere doar dacă suntem administratori: API-ul o
-    // refuză altfel, cu 403.
+    // Lista de conturi se cere doar cu dreptul „conturi” (matricea din
+    // „Acces”): API-ul o refuză altfel, cu 403.
     return gp.requireUser()
       .then((user) => {
         // Fără sesiune, requireUser a plecat deja spre pagina de intrare.
         if (!user) return null;
-        this.setState({ auth: gp.auth(user) });
-        if (!gp.eAdmin(user)) return null;
-        this.pullPanelCode();
+        const cont = gp.auth(user);
+        this.setState({ auth: cont });
+        if (!areConturi(cont)) return null;
+        // Codul tabletelor e al Setărilor: `GET /settings` cere dreptul
+        // „setari”, nu „conturi”. Se întreabă numai cine îl are — altfel
+        // cardul ar scrie un refuz pentru o cerere făcută degeaba.
+        if (gp.are("setari", cont)) this.pullPanelCode();
         return this.pullUsers().then(() => this.deschideCerutul());
       })
       .catch((e) => {
@@ -1395,6 +1662,9 @@ class Component extends DCLogic {
         // încă semnul" — starea firească în ziua dintâi, fiindcă semnul se
         // naște închis pentru toți — de „coloana nici nu există".
         livrare: r.livrare === true,
+        // Ce are fiecare rol acum (runda 2.7.0), pentru rândul de lângă lista
+        // de roluri. Un server mai vechi nu-l trimite: rămâne vorba din pornire.
+        acces: r.acces && r.acces.roluri ? r.acces : null,
         // Răspunsul bun stinge caseta. Fără rândul ăsta singurul loc care o
         // stingea era „Încearcă din nou”, iar drumul până la ecranul care se
         // contrazice singur e scurt: cererea dintâi pică, caseta roșie se
@@ -1463,7 +1733,12 @@ class Component extends DCLogic {
     return gp.get('/settings')
       .then((r) => this.setState({
         pCode: r.settings && r.settings.panel_code_set ? "•" : "",
-        pCodeErr: ""
+        pCodeErr: "",
+        // Același răspuns poartă și pragul general de neplătite, celui cu
+        // dreptul „plati.prag” (runda 2.7.0). Se citește de aici, din cererea
+        // care se face oricum — nu cu una a lui. Când cheia lipsește rămâne
+        // `null`, iar fișa clientului scrie „General”, fără cifră.
+        pragGeneral: pragGeneralDin(r.settings)
       }))
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
@@ -1528,7 +1803,200 @@ class Component extends DCLogic {
     const url = "mailto:" + encodeURIComponent(to)
       + "?subject=" + encodeURIComponent("Golden Pastry · parolă nouă pentru " + acc.u)
       + "&body=" + encodeURIComponent(body);
-    try { window.location.href = url; } catch (e) {}
+    // Printr-o clipă fără paza de plecare (runda 2.7.0): cu un cont nou scris
+    // pe jumătate, browserul ar ridica „Părăsești site-ul?” și la un `mailto:`
+    // pornit din cod, deși programul de e-mail nu scoate pe nimeni din pagină
+    // (văzut în Chromium, 5 oct. 2026).
+    try { gp.ciornaOClipa(() => { window.location.href = url; }); } catch (e) {}
+    return true;
+  }
+
+  /* ------------------------------------------------------------------
+   * Paza formularului nesalvat: cardul „Cont nou” (runda 2.7.0).
+   *
+   * Pe 4 octombrie 2026 patronul a pierdut un produs scris pe jumătate
+   * dintr-un clic alături de formular; de atunci, înainte să arunce ce a scris
+   * omul, site-ul întreabă. În pagina asta formularul e cardul „Cont nou”.
+   * Editoarele mici din fișe (parola unui cont, codul de pontaj, recomandarea,
+   * pragul de neplătite) și codul tabletelor NU se păzesc, dinadins: sunt câte
+   * o casetă, iar o întrebare la fiecare ar supăra mai mult decât paguba.
+   * ------------------------------------------------------------------ */
+
+  /**
+   * Casetele cardului, CUM SUNT DESENATE acum: numele de pe ecran al fiecăreia
+   * și ce e în ea. Cele trei ale clientului se desenează numai la accesul
+   * „client”: ce a rămas în stare sub alt acces nu se vede, deci nu e „scris”
+   * (și nici nu pleacă spre server, v. `addUser`).
+   */
+  caseteNou() {
+    const st = this.state || {};
+    const client = st.nRole === "client";
+    return [
+      ["Nume afișat", st.nName], ["Utilizator", st.nUser], ["Parolă", st.nPass],
+      ["E-mail de recuperare", st.nMail], ["Acces", st.nRole],
+      ["Numele clientului din comenzi", client ? st.nCust : ""],
+      ["Adresa firmei", client ? st.nAddr : ""], ["Zona", client ? st.nZone : ""]
+    ];
+  }
+
+  /** Cardul gol: de aici pornește la „+ Cont nou” și aici se întoarce la închidere. */
+  nouGol() {
+    return { nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nAddr: "", nZone: "", nErr: "", nBusy: false };
+  }
+
+  /**
+   * Are cardul „Cont nou” ceva scris care s-ar pierde? `null` dacă nu; altfel
+   * vorbele întrebării. O întreabă TOATE ușile (Renunță, Înapoi, plecarea din
+   * pagină), ca să nu ajungă una să întrebe și alta nu.
+   *
+   * „Scris” = cardul DESENAT are în casete altceva decât la deschidere
+   * (`__nouPoza`, comparat cu `gp.ciornaDiferita`: spațiile de la capete și o
+   * casetă golită la loc nu se numără). Parola propusă la deschidere e în
+   * poză, deci cardul abia deschis nu întreabă nimic. Sub ecranul de refuz
+   * (dreptul „Conturi” luat între timp) cardul nu se mai desenează, deci nu
+   * mai ține pe nimeni în pagină: omul n-ar vedea despre ce e întrebat.
+   *
+   * Întrebarea numește casetele completate, cu numele lor de pe ecran: „ce ai
+   * scris” e altceva la un nume tastat decât la un cont de client întreg.
+   */
+  ciornaDeschisa() {
+    const st = this.state || {};
+    if (!st.form || !areConturi(st.auth)) return null;
+    const poza = this.__nouPoza || [];
+    const scrise = this.caseteNou().filter((c, i) => gp.ciornaDiferita(poza[i], c[1])).map((c) => "„" + c[0] + "”");
+    if (!scrise.length) return null;
+    const insirate = scrise.length > 1 ? scrise.slice(0, -1).join(", ") + " și " + scrise[scrise.length - 1] : scrise[0];
+    return {
+      titlu: "Ieși fără să salvezi contul nou?",
+      // Cât cererea e pe drum, „nu e salvat” n-ar fi cinstit, dar nici „contul
+      // tot se creează”: serverul îl poate și refuza (un utilizator luat între
+      // timp), iar pagina nu știe încă. Textul spune numai ce se știe; vestea,
+      // bună ori rea, vine în banda de sus și după ce cardul e părăsit
+      // (v. cozile din `addUser`). Dacă răspunsul sosește cât întrebarea e
+      // încă pe ecran, vorbele astea nu mai sunt adevărate: de aceea ușile le
+      // dau bibliotecii ca FUNCȚIE (v. `onFormCancel`, `inapoiPesteNou`), iar
+      // întrebarea se retrage singură și lasă la vedere ce a răspuns serverul.
+      text: this.__saving
+        ? "Contul e pe drum spre server și nu se știe încă dacă a fost creat. Ce ai completat aici se pierde dacă ieși."
+        : "Ce ai completat la " + insirate + " nu e salvat și se pierde dacă ieși.",
+      nu: "Rămân în formular", da: "Ies fără să salvez"
+    };
+  }
+
+  /**
+   * Poza cardului, luată din STARE imediat după `set`-ul care îl deschide, și
+   * numărul deschiderii. Numărul crește la fiecare deschidere ȘI la fiecare
+   * închidere: coada unei salvări își ține minte numărul și, dacă nu mai e al
+   * ei, nu închide și nu scrie nimic în card (v. `addUser`).
+   */
+  pozaNou() {
+    this.__nouNr = (this.__nouNr || 0) + 1;
+    this.__nouPoza = this.caseteNou().map((c) => c[1]);
+  }
+
+  /**
+   * „+ Cont nou” apăsat cu cardul DEJA deschis. Până la runda 2.7.0 apăsarea
+   * punea altă parolă propusă peste cea din casetă, și peste una scrisă de om.
+   * Acum nu mai schimbă nimic din ce se vede și nu reface poza (altfel ce e
+   * scris ar trece drept „neatins” și s-ar pierde fără întrebare). Îi rămâne
+   * rostul vechi: dezleagă butonul unei salvări rămase fără răspuns
+   * (biblioteca nu are termen pe cereri). Numărul crește: din clipa asta omul
+   * poate scrie din nou și poate apăsa a doua oară, deci răspunsul salvării
+   * dezlegate, dacă mai vine, nu mai are voie să scrie în card și nici să-i
+   * stingă semaforul. Contul creat închide totuși cardul dacă e încă întocmai
+   * cum a plecat (v. `nouCumAPlecat`).
+   */
+  nouDejaDeschis() {
+    if (!(this.state || {}).form) return false;
+    this.__saving = false;
+    this.__nouNr = (this.__nouNr || 0) + 1;
+    this.setState({ nErr: "", nBusy: false });
+    return true;
+  }
+
+  /**
+   * Are cardul în casete ÎNTOCMAI ce a plecat cu o cerere (`trimis` = casetele
+   * de la apăsare, ținute de coada ei)? Numărul deschiderii singur nu ajunge:
+   * după o dezlegare cu „+ Cont nou” numărul e altul, dar cardul poate fi tot
+   * contul care tocmai a fost creat. Lăsat deschis și plin sub vestea „a fost
+   * creat”, „Renunță” întreba despre un cont salvat, iar a doua apăsare pe
+   * „Adaugă contul” se lovea de „Există deja un cont cu acest utilizator.”
+   * (văzut la a doua citire a rundei 2.7.0). Aceeași măsură ca la „scris”
+   * (`gp.ciornaDiferita`): o literă schimbată după dezlegare ține cardul.
+   */
+  nouCumAPlecat(trimis) {
+    return !this.caseteNou().some((c, i) => gp.ciornaDiferita(trimis[i], c[1]));
+  }
+
+  /**
+   * Refuzul unei salvări al cărei card nu mai e al ei (părăsit cu „Ies fără să
+   * salvez”, ori dezlegat cu „+ Cont nou”). În card nu mai are unde să fie
+   * scris, iar până la a doua citire a rundei 2.7.0 se pierdea fără un cuvânt:
+   * omul ieșise sub vorbele „nu se știe încă dacă a fost creat” și nu mai afla
+   * că n-a fost. Acum îl spune banda de sus, cu numele contului.
+   *
+   * Două feluri de refuz, spuse deosebit: serverul a răspuns „nu” (`e.status`),
+   * deci contul sigur nu s-a creat; ori cererea s-a pierdut pe drum (fără
+   * stare), când pagina chiar nu știe. Și o tăcere dinadins: a doua apăsare pe
+   * ACELAȘI cont (după o dezlegare) e refuzată tocmai fiindcă prima l-a creat;
+   * „n-a fost creat” pus peste „a fost creat” ar fi o minciună. Geamăna se
+   * cunoaște după casete (`__nouCreate` = casetele conturilor create de aici,
+   * ținute de coada reușitei), nu după utilizator: alt cont încercat mai
+   * târziu pe același utilizator își primește refuzul întreg.
+   */
+  refuzParasit(trimis, n, e) {
+    if ((this.__nouCreate || []).some((t) => !t.some((v, i) => gp.ciornaDiferita(v, trimis[i])))) return;
+    this.setState({
+      msg: e.status
+        ? "Contul „" + n + "” n-a fost creat: " + e.message
+        : "Nu se știe dacă s-a creat contul „" + n + "”: " + e.message,
+      msgBad: true
+    });
+  }
+
+  /**
+   * Închide cardul și îl golește, DIRECT, fără întrebare: aici ajung „Renunță”
+   * și „Înapoi” (după ce omul a spus „Ies fără să salvez”, dacă era ceva
+   * scris) și contul creat. Golirea e hotărârea rundei 2.7.0: până acum ce
+   * rămânea în casete la „Renunță” se întorcea la următorul „+ Cont nou”, deci
+   * e-mailul scris pentru un om putea ajunge pe contul altuia. `peste` = ce se
+   * mai schimbă în aceeași scriere.
+   */
+  inchideNou(peste) {
+    this.__saving = false;
+    this.__nouNr = (this.__nouNr || 0) + 1;
+    this.__nouPoza = null;
+    this.setState(Object.assign({ form: false }, this.nouGol(), peste || {}));
+  }
+
+  /**
+   * „Înapoi” al browserului peste cardul scris (chemată din `__gpBack`).
+   * Browserul a scos deja treapta `{ gpOv: 1 }` pe care o pusese `__gpSync`
+   * la deschidere; ca omul să rămână pe card, treapta se pune la loc
+   * (`__gpOvWas` rămâne adevărat, deci `__gpSync` nu mai pune a doua), apoi
+   * vine întrebarea. La „Ies fără să salvez” se închide tot ce închide
+   * „Înapoi” dintotdeauna (cardul, fișa, editorul de parolă), iar `__gpSync`
+   * scoate singur treapta la desenul următor.
+   *
+   * Cu o întrebare DEJA pe ecran (omul a apăsat întâi „Renunță”), treapta se
+   * pune la loc și atât: întrebarea rămâne, nu apare a doua. Paza pe
+   * `history.state` ține treapta una singură și când `componentDidMount` s-a
+   * aprins de două ori și au rămas doi ascultători de `popstate`.
+   *
+   * Întoarce `false` când nu e nimic de păzit: cardul neatins, fișa și
+   * editorul se închid atunci pe rândul vechi din `__gpBack`.
+   *
+   * Vorbele se dau și ca FUNCȚIE (al treilea), din aceeași pricină ca la
+   * „Renunță” (v. `onFormCancel`): întrebarea pusă cât contul e pe drum se
+   * retrage când serverul răspunde sub ea.
+   */
+  inapoiPesteNou() {
+    const murdar = this.ciornaDeschisa();
+    if (!murdar && !gp.intrebareDeschisa()) return false;
+    try {
+      if (this.__gpOvWas && !(history.state && history.state.gpOv)) history.pushState({ gpOv: 1 }, "");
+    } catch (e) {}
+    if (murdar) gp.inchideCiorna(murdar, () => this.inchideNou({ edit: null, deschis: null }), () => this.ciornaDeschisa());
     return true;
   }
 
@@ -1727,17 +2195,38 @@ class Component extends DCLogic {
     // ar fi fost mai rea decât nimic, fiindcă ar fi mers într-un sens și nu în
     // celălalt, iar omul n-ar fi avut cum ghici în care.
     const faraSemne = (x) => (x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-    const cautat = faraSemne(S.cauta.trim());
-    // PASTILA DE ROL (runda 2.5.0) vine ÎNAINTEA căutării: se caută în rolul
-    // ales. Un rol rămas fără conturi (tocmai s-a șters ultimul) nu mai are
-    // pastilă, deci nici nu mai poate fi ales: pagina cade pe „Toate", altfel
-    // ar fi arătat o listă goală sub o pastilă care nu se mai vede.
-    const rolAles = S.rol && S.users.some(acc => roleOf(acc) === S.rol) ? S.rol : "";
-    const inRol = rolAles ? S.users.filter(acc => roleOf(acc) === rolAles) : S.users;
-    const seCauta = (acc) =>
-      [acc.name, acc.u, acc.mail, acc.cust, acc.zona, ROLE_L[roleOf(acc)]]
-        .some(camp => faraSemne(camp).indexOf(cautat) >= 0);
-    const potrivite = (!cautat ? inRol : inRol.filter(seCauta)).slice().sort(dupaRang);
+    /**
+     * Ce rămâne din lista de conturi după pastila de rol și după căutare,
+     * pentru o STARE dată.
+     *
+     * E funcție (runda 2.7.0), nu câteva rânduri în curgerea desenului,
+     * fiindcă aceeași întrebare o mai pune cineva, pe ALTĂ stare: refuzul unui
+     * prag, sosit de la server, trebuie să știe dacă rândul clientului mai e
+     * în listă ACUM, nu la desenul din care a plecat cererea (v.
+     * `asazaRefuzul`). O a doua socoteală scrisă acolo ar fi fost o copie a
+     * filtrului, de ținut în pas cu mâna: un câmp adăugat la căutare numai
+     * într-un loc, și refuzul ajunge iar pe un rând nedesenat.
+     *
+     * Parametrul se numește `S` dinadins: rândurile dinăuntru sunt cele pe
+     * care dovada din `check-conturi-vederi.mjs` le strică literă cu literă,
+     * deci textul lor a rămas neatins. Aici `S` e starea PRIMITĂ, care o
+     * umbrește pe a desenului.
+     */
+    const listaFiltrata = (S) => {
+      const cautat = faraSemne(S.cauta.trim());
+      // PASTILA DE ROL (runda 2.5.0) vine ÎNAINTEA căutării: se caută în rolul
+      // ales. Un rol rămas fără conturi (tocmai s-a șters ultimul) nu mai are
+      // pastilă, deci nici nu mai poate fi ales: pagina cade pe „Toate", altfel
+      // ar fi arătat o listă goală sub o pastilă care nu se mai vede.
+      const rolAles = S.rol && S.users.some(acc => roleOf(acc) === S.rol) ? S.rol : "";
+      const inRol = rolAles ? S.users.filter(acc => roleOf(acc) === rolAles) : S.users;
+      const seCauta = (acc) =>
+        [acc.name, acc.u, acc.mail, acc.cust, acc.zona, ROLE_L[roleOf(acc)]]
+          .some(camp => faraSemne(camp).indexOf(cautat) >= 0);
+      const potrivite = (!cautat ? inRol : inRol.filter(seCauta)).slice().sort(dupaRang);
+      return { cautat, rolAles, inRol, seCauta, potrivite };
+    };
+    const { cautat, rolAles, inRol, seCauta, potrivite } = listaFiltrata(S);
 
     // Vederea (v. VEDERI_CONTURI) și ce ține de plăci.
     const vedere = VEDERI_CONTURI.indexOf(S.vedere) >= 0 ? S.vedere : "patru";
@@ -1757,6 +2246,16 @@ class Component extends DCLogic {
       if (S.refArm && S.refArm !== u) x.refArm = null;
       if (S.sterg && S.sterg !== u) x.sterg = null;
       if (S.activArm && S.activArm !== u) x.activArm = null;
+      // Caseta „Al lui” a pragului de neplătite și refuzul de lângă ea (runda
+      // 2.7.0): un număr pe jumătate scris pe fișa unui client nu are voie să
+      // aștepte, nevăzut, până se redeschide fișa — iar un refuz vechi, citit
+      // la întoarcere, ar părea al apăsării de acum.
+      if (S.pragEdit && S.pragEdit !== u) Object.assign(x, { pragEdit: null, pragVal: "" });
+      // Din refuzuri rămâne numai al contului care rămâne deschis. Cererile de
+      // pe drum (`pragPeDrum`) NU se ating de aici: răspunsul lor vine oricum,
+      // iar controlul trebuie să-l aștepte stins, oriunde ar fi fișa.
+      const alLui = u && areCheia(S.pragRefuz, u) ? cuCheia({}, u, S.pragRefuz[u]) : {};
+      if (Object.keys(S.pragRefuz).length > Object.keys(alLui).length) x.pragRefuz = alLui;
       return x;
     };
     // Butonul „Strânge" dispare odată cu fișa, iar focusul ar fi căzut în
@@ -1776,6 +2275,15 @@ class Component extends DCLogic {
     // (administrator ori fondator) îl oprește și îl pornește numai un fondator,
     // cât timp există vreunul pornit. Rândul nu promite ce se termină în refuz.
     const euFondator = authRole(S.auth) === "fondator";
+    // RANGUL celui care privește (runda 2.7.0). Până la „Acces” în pagina asta
+    // intra numai conducerea, deci „nu sunt fondator” însemna „sunt
+    // administrator”. De când panoul „Conturi” se poate da din bife și cuiva
+    // fără rang, serverul îi închide aceluia conturile de conducere cu totul:
+    // `guard_cont_de_conducere()` și a treia regulă din `guard_leader_role()`
+    // (api/routes/users.php). E întrebare de rang, nu de matrice — de-aia
+    // `gp.eAdmin`, nu `gp.are`. La matricea din pornire e adevărat pentru
+    // oricine ajunge aici.
+    const euRang = gp.eAdmin(authRole(S.auth));
     const suntFondatori = S.users.some(x => roleOf(x) === "fondator" && x.active !== false);
     // VEDE ȘI POATE (runda 2.6.0, regula patronului: un control pe care omul
     // nu-l poate folosi nu se desenează). Ce rol primește serverul de la cel
@@ -1783,8 +2291,10 @@ class Component extends DCLogic {
     // dă numai un fondator; „administrator", un fondator ori, cât nu e niciun
     // fondator pornit, un administrator. Cu lista de conturi neîncărcată nu se
     // știe dacă e vreun fondator, deci „administrator" nu se oferă pe încredere.
+    // Portița „nu e niciun fondator” e a administratorului, nu a oricui ține
+    // panoul (`euRang`): cuiva fără rang serverul îi refuză rolul oricum.
     const rolDat = (v) => v === "fondator" ? euFondator
-      : v === "admin" ? (euFondator || (S.users.length > 0 && !suntFondatori))
+      : v === "admin" ? (euFondator || (euRang && S.users.length > 0 && !suntFondatori))
         : true;
     // Cât lucrează cererea, comutatorul stă stins și arată starea CERUTĂ: pus
     // înapoi pe cea veche, ar fi sărit o clipă îndărăt și apoi iar înainte, iar
@@ -1799,6 +2309,172 @@ class Component extends DCLogic {
         .finally(() => this.setState({ activLucru: null }));
     };
 
+    // --- pragul de neplătite al unui client (runda 2.7.0) ---
+    //
+    // Dreptul e „plati.prag” din matricea „Acces” (din pornire numai
+    // fondatorul; cere panoul „Conturi”), același pe care îl întreabă serverul
+    // la `PATCH /users/#` — nu rangul: fondatorul îl poate da și altui rol.
+    const dreptPrag = !!S.auth && gp.are("plati.prag", S.auth);
+    // Cine are controlul pe fișă. Trei condiții, toate trei: cont de CLIENT
+    // (serverul refuză restul cu `prag_only_clients`), dreptul „plati.prag” la
+    // cel care privește, și cheia venită de la server pe rândul contului
+    // (`arePrag` — v. `fromApi`). E funcție, nu o socoteală din bucla
+    // rândurilor, fiindcă aceeași întrebare se pune de două ori: la desen, și
+    // după un refuz, pe rândul proaspăt recitit (v. `asazaRefuzul`).
+    const pragSeVede = (cont) => roleOf(cont) === "client" && cont.arePrag === true && dreptPrag;
+    // „Renunț” și apăsarea pe felul deja ales: se închide ciorna — numai dacă e
+    // a contului ăstuia — și se stinge refuzul LUI. Ciorna și refuzul altui
+    // client nu se ating de pe fișa asta.
+    const inchidePrag = (u) => {
+      const st = this.state;
+      return Object.assign({ pragRefuz: faraCheia(st.pragRefuz, u) }, st.pragEdit === u ? { pragEdit: null, pragVal: "" } : {});
+    };
+    /**
+     * Unde se scrie refuzul unui prag, DUPĂ ce lista de conturi s-a recitit.
+     * Primește starea de ACUM (`st`), nu pe cea de la plecarea cererii: între
+     * timp omul a putut strânge fișa ori filtra lista, iar lista proaspătă a
+     * putut scoate controlul cu totul. Întoarce peticul de stare; atinge numai
+     * ce e al contului `acc.u` (și bara paginii, care e a tuturor).
+     *
+     *  1. Pe server pragul e DEJA cel cerut → nu e un refuz de arătat cu roșu:
+     *     omul a cerut ce era făcut — de altcineva, din altă filă, ori chiar
+     *     de cererea lui, cu răspunsul pierdut pe drum. Bara o spune, verde.
+     *     Se judecă după rândul RECITIT, nu după codul refuzului: contractul
+     *     rundei nu spune cum răspunde `PATCH /users/#` la un prag neschimbat
+     *     (ruta are azi un `422 nothing_to_update` pentru cererea fără nimic
+     *     de scris), iar rândul recitit e adevărul oricum ar răspunde. Numai
+     *     cu lista chiar recitită (`!st.eroare`): altfel „e deja” ar fi o
+     *     vorbă despre server spusă de pe rândul vechi.
+     *  2. Controlul e pe ecran → refuzul se scrie pe rândul lui.
+     *  3. Controlul NU mai e pe ecran → refuzul urcă în bara de sus, cu numele
+     *     clientului. Lăsat pe un rând nedesenat, nu l-ar citi nimeni, iar
+     *     omul ar rămâne cu impresia că s-a salvat. Pricinile, toate ivite cât
+     *     cererea era pe drum: lista proaspătă nu mai dă controlul (dreptul
+     *     luat între timp, contul șters ori trecut pe alt rol); în plăci, fișa
+     *     a fost strânsă; în orice vedere, rândul a ieșit din listă — pastila
+     *     altui rol apăsată, ori o căutare care nu-l mai potrivește.
+     *
+     * „În listă” NU se socotește aici a doua oară: e același `listaFiltrata`
+     * din care se face desenul, întrebat pe starea de acum. Pastila e cazul
+     * cel mai rău — refuzul lăsat pe rândul scos de ea îl șterge, necitit,
+     * următoarea pastilă apăsată (`curataAltele(null)`), deci n-ar mai ajunge
+     * niciodată pe ecran; după o căutare ar aștepta, nevăzut, până se golește
+     * caseta.
+     *
+     * De ce nu se întreabă desenul însuși (`this.renderVals().accounts`), deși
+     * ar fi fost răspunsul întreg dintr-o chemare: `check-vede-poate.mjs`
+     * citește drumurile de la mânere la scrieri PE NUME și larg — tot ce
+     * pomenește corpul unei funcții se socotește chemat. Cu `renderVals`
+     * pomenit aici, fiecare mâner al paginii „ajunge” la toate scrierile ei,
+     * iar regula „fiecare mâner care scrie e în rândul scrierii lui” nu mai
+     * poate spune nimic despre Conturi.
+     */
+    const asazaRefuzul = (st, acc, v, vorba) => {
+      const acum = st.users.find((x) => x.u === acc.u);
+      const control = !!acum && pragSeVede(acum);
+      if (control && !st.eroare && acum.prag === v) {
+        return {
+          msgBad: false,
+          msg: "„" + acum.name + "” " + (v === null ? "urmează deja pragul general de neplătite"
+            : v === 0 ? "e deja fără limită de comenzi neplătite"
+              : "are deja pragul lui de neplătite, " + cateComenzi(v))
+            + ": așa e scris pe server. Lista de pe ecran e acum la zi."
+        };
+      }
+      // Rândul lui a rămas în listă, după pastila și căutarea de ACUM?
+      const inLista = control && listaFiltrata(st).potrivite.some((x) => x.u === acc.u);
+      // Aceeași socoteală ca `eGrila` de mai sus, pe starea de acum: în plăci,
+      // fișa e pe ecran numai pentru contul deschis.
+      const inPlaci = (VEDERI_CONTURI.indexOf(st.vedere) >= 0 ? st.vedere : "patru") !== "lista";
+      if (inLista && !(inPlaci && st.deschis !== acc.u)) return { pragRefuz: cuCheia(st.pragRefuz, acc.u, vorba) };
+      return { msgBad: true, msg: "Pragul lui „" + acc.name + "”: " + vorba };
+    };
+    /**
+     * Trimite pragul unui client: `null` (urmează pragul general), un număr
+     * de la 1 la 99 (al lui) ori `0` (fără limită).
+     *
+     * Nu trece prin `patchUser()`: acela scrie refuzul în bara de sus a
+     * paginii, iar refuzul ăsta trebuie să rămână pe rândul contului — în
+     * vederea „listă” fișa poate fi la zece ecrane de bară.
+     *
+     * TOT ce ține de cererea asta e al contului EI, de la plecare până la
+     * răspuns: intrarea din `pragPeDrum`, refuzul din `pragRefuz`, ciorna —
+     * numai dacă e a lui. Alt client poate fi apăsat cât cererea asta e pe
+     * drum, iar răspunsul ei nu are voie să-i stingă aceluia nici „se
+     * salvează”, nici ciorna deschisă între timp, nici refuzul. De-aia niciun
+     * răspuns nu mai poartă un petic de stare hotărât la PLECARE: fiecare
+     * citește starea când SOSEȘTE și atinge numai cheia lui.
+     *
+     * Cât cererea e pe drum, controlul arată valoarea CERUTĂ, ca la „Cont
+     * pornit”: întors o clipă pe cea veche, omul ar crede că n-a mers și ar
+     * apăsa din nou. Rămâne așa până s-a recitit și lista — și la reușită, și
+     * la refuz —, ca să nu sară o clipă pe rândul vechi.
+     *
+     * ȘI REFUZUL RECITEȘTE LISTA. Până acum o recitea numai reușita, iar după
+     * un refuz controlul „se întorcea” la rândul de pe ecran — care putea fi
+     * tocmai pricina refuzului: pragul schimbat între timp de altcineva. Apăsat
+     * din nou, pleca aceeași cerere și venea același refuz, fără altă ieșire
+     * decât reîncărcarea paginii. Unde ajunge refuzul: v. `asazaRefuzul`.
+     */
+    const salveazaPrag = (acc, v) => {
+      // Paza stă AICI, pe `this.state`, nu pe steagul din desen: două apăsări
+      // sosite înaintea desenului următor (dublu-clic, deget tremurat) poartă
+      // mânerele ACELUIAȘI desen, în care cererea încă nu plecase. `this.state`
+      // e scris pe loc de `setState` (`__setLogicState`, support.js), deci a
+      // doua apăsare o vede pe prima, oricare fel ar fi apăsat.
+      if (areCheia(this.state.pragPeDrum, acc.u)) return;
+      this.setState((st) => Object.assign(
+        { pragPeDrum: cuCheia(st.pragPeDrum, acc.u, v), pragRefuz: faraCheia(st.pragRefuz, acc.u) },
+        st.pragEdit === acc.u ? { pragEdit: null, pragVal: "" } : {}));
+      gp.patch("/users/" + acc.id, { pragNeplatite: v })
+        .then(() => this.pullUsers({
+          msgBad: false,
+          msg: v === null
+            ? "„" + acc.name + "” urmează de acum pragul general de neplătite."
+            : v === 0
+              ? "„" + acc.name + "” nu mai are limită de comenzi neplătite: nu e oprit niciodată."
+              : "„" + acc.name + "” are de acum pragul lui de neplătite: " + cateComenzi(v) + "."
+        }))
+        .catch((e) => {
+          // Sesiunea expirată are drumul ei, ca la lista de conturi.
+          if (e && e.isAuth) { gp.toLogin(); return; }
+          // `prag_unavailable` are vorba paginii; celelalte refuzuri
+          // (`prag_only_clients`, `bad_prag`, `forbidden`) vin cu vorba
+          // serverului, care le știe pricina. Se alege după COD, nu după text
+          // și nu după starea HTTP: o frază schimbată pe server ori alt refuz
+          // cu 503 nu au voie să mute nimic din loc.
+          const vorba = e && e.code === "prag_unavailable"
+            ? PRAG_FARA_MIGRARE
+            : String((e && e.message) || "Pragul nu s-a putut salva.");
+          // Fără petic: dacă lista nu se poate reciti, `pullUsers` o spune în
+          // caseta ei („ce se vede în listă e starea de dinainte”), iar
+          // refuzul se așază tot aici, pe rândul vechi.
+          return this.pullUsers().then(() => this.setState((st) => asazaRefuzul(st, acc, v, vorba)));
+        })
+        .finally(() => this.setState((st) => ({ pragPeDrum: faraCheia(st.pragPeDrum, acc.u) })));
+    };
+    // Caseta „Al lui”: aceleași margini ca pe server (întreg, cel mult 99),
+    // puse și aici ca omul să nu aștepte un drum pentru o greșeală care se
+    // vede din pagină. Zero NU se primește în casetă, deși serverul l-ar lua:
+    // zero înseamnă „fără limită”, iar pentru asta există butonul cu numele
+    // lui — un zero tastat din greșeală ar scoate limita unui client.
+    const salveazaPragScris = (acc) => {
+      const t = String(S.pragVal || "").trim();
+      if (!/^[0-9]{1,2}$/.test(t) || Number(t) < 1) {
+        return set({
+          pragRefuz: cuCheia(this.state.pragRefuz, acc.u,
+            "Scrie un număr de la 1 la 99. Pentru un client care nu se oprește niciodată, alege „Fără limită”.")
+        });
+      }
+      const n = Number(t);
+      // Același număr ca pe rândul de pe ecran: nimic de trimis, caseta doar se
+      // închide. Pagina nu se sprijină aici pe ce ar răspunde serverul la o
+      // cerere fără schimbare; un rând rămas în urmă se află la prima cerere
+      // care chiar pleacă, fiindcă orice răspuns al ei recitește lista.
+      if (acc.prag === n) return set(inchidePrag(acc.u));
+      salveazaPrag(acc, n);
+    };
+
     const accounts = potrivite.map(acc => {
       const isMe = me === acc.u;
       const rl = roleOf(acc);
@@ -1809,7 +2485,16 @@ class Component extends DCLogic {
       // desenează. `|| rl === "fondator"`: un fondator OPRIT, când nu e niciun
       // fondator pornit, nu mai e ținut de regula de mai sus, dar rolul lui tot
       // nu-l poate lua un administrator (`guard_last_founder()`).
-      const conducereInchisa = gp.eAdmin(rl) && !euFondator && (suntFondatori || rl === "fondator");
+      // `|| !euRang` (runda 2.7.0): cuiva fără rang contul de conducere îi e
+      // închis și când nu e niciun fondator pornit.
+      const conducereInchisa = gp.eAdmin(rl) && !euFondator && (suntFondatori || rl === "fondator" || !euRang);
+      // ÎNCHIS DE RANG (runda 2.7.0): cel care privește ține panoul „Conturi”
+      // din bife, fără să fie din conducere, iar contul e al unui administrator
+      // ori al unui fondator. Serverul îi refuză atunci ORICE scriere în el, nu
+      // numai cele patru de mai sus: numele, codul de pontaj, codul de
+      // recomandare, recunoașterea, bifa de livrare (`guard_cont_de_conducere()`,
+      // 403 `leader_only`). Fișa se citește, cu o singură lămurire.
+      const inchisDeRang = !acc.sys && !isMe && gp.eAdmin(rl) && !euRang;
       // Trei piedici, aceleași pentru parolă, rol și ștergere: contul
       // tabletelor, contul TĂU și conducerea închisă. Socotite o dată, purtate
       // pe trei nume, fiindcă sunt trei controale deosebite în fișă.
@@ -1826,7 +2511,7 @@ class Component extends DCLogic {
       const activ = acc.active !== false;
       const activLucru = S.activLucru === acc.u;
       const activArmat = !activLucru && S.activArm === acc.u;
-      const activDoarFondator = gp.eAdmin(rl) && !euFondator && suntFondatori;
+      const activDoarFondator = gp.eAdmin(rl) && !euFondator && (suntFondatori || !euRang);
       const activBlocat = isMe || activDoarFondator || activLucru;
       // Unde serverul refuză ORICÂND și oprirea, și pornirea — contul tău, un
       // cont de conducere când nu ești fondator — comutatorul nu se mai
@@ -1835,12 +2520,35 @@ class Component extends DCLogic {
       // aprinde la loc singur.
       const activFix = isMe || activDoarFondator;
       const rolulDinLista = ROLE_OPTS.find((o) => o.v === rl) || {};
+      // --- pragul de neplătite (runda 2.7.0) ---
+      // Cine are controlul: v. `pragSeVede`, mai sus.
+      const pragShown = pragSeVede(acc);
+      // Pe drum e cererea contului ĂSTUIA, nu „o cerere a paginii”: alt client
+      // apăsat între timp își are intrarea lui în hartă. Se întreabă prezența
+      // cheii, fiindcă valoarea cerută poate fi `null` („General”).
+      const pragLucru = pragShown && areCheia(S.pragPeDrum, acc.u);
+      const pragDeschis = pragShown && !pragLucru && S.pragEdit === acc.u;
+      // Ce arată controlul: valoarea cerută cât lucrează cererea, altfel cea
+      // de pe server. Ciorna din caseta „Al lui” NU e o valoare — până la
+      // „Salvează pragul” pe server e tot ce era.
+      const pragArat = pragLucru ? S.pragPeDrum[acc.u] : acc.prag;
+      const pragFel = pragDeschis ? "lui" : pragArat === null ? "general" : pragArat === 0 ? "liber" : "lui";
+      // Numărul care hotărăște pentru clientul ăsta, pentru fraza de dedesubt:
+      // cu ciorna deschisă, cel tastat (dacă e un număr întreg de la 1 în sus);
+      // pe „General”, pragul general — `null` când pagina nu-l știe.
+      const pragTastat = /^[0-9]{1,2}$/.test(String(S.pragVal || "").trim()) ? Number(String(S.pragVal).trim()) : null;
+      const pragEfectiv = pragDeschis ? (pragTastat !== null && pragTastat >= 1 ? pragTastat : null)
+        : pragArat === null ? S.pragGeneral : pragArat;
+      // Semnul de pe placă și din capul fișei: numai excepția SCRISĂ pe server
+      // (nu ciorna, nu cererea de pe drum), și numai celui care vede controlul.
+      const pragSemn = pragShown && acc.prag !== null
+        ? (acc.prag === 0 ? "fără limită" : "prag " + acc.prag) : "";
       return {
         u: acc.u, name: acc.name, mail: acc.mail || "",
         role: rl,
         roleLabel: ROLE_L[rl] || rl,
         roleCls: INSIGNA[rl] || "h-badge",
-        roleHint: ROLE_HINT[rl] || "", roleRights: (ROLE_OPTS.find((o) => o.v === rl) || {}).d || "",
+        roleHint: hintRol(rl, S.acces), roleRights: drepturiScurt(rl, S.acces),
         isClient: rl === "client",
         // --- placa (runda 2.5.0) ---
         // În plăci fiecare cont e o placă; fișa lui întreagă se desenează numai
@@ -1885,7 +2593,9 @@ class Component extends DCLogic {
         // jurnal și n-ar fi schimbat nimic. Managerul, agentul și angajatul
         // ajung toți la poartă, deci la ei rândul rămâne; la administrator și
         // fondator rămâne cu lămurirea de mai jos (hotărâre din 2.3.0).
-        livrareShown: S.livrare && rl !== "client" && rl !== "utilizator_lab",
+        // Nici pe contul de conducere închis de rang (runda 2.7.0): acolo bifa
+        // n-ar hotărî nimic (dreptul îi vine din rol), iar serverul ar refuza-o.
+        livrareShown: S.livrare && rl !== "client" && rl !== "utilizator_lab" && !inchisDeRang,
         livrareOn: acc.livrare,
         // Ce scrie pe cont și ce poate omul sunt două lucruri, și rândul le
         // spune pe amândouă. La administrator și fondator bifa poate fi goală
@@ -1934,7 +2644,8 @@ class Component extends DCLogic {
         activNota: isMe
           ? "E contul cu care ești conectat: nimeni nu-și poate opri propriul cont."
           : activDoarFondator
-            ? "Contul unui " + (rl === "fondator" ? "fondator" : "administrator") + " îl oprește și îl pornește numai un fondator."
+            ? "Contul unui " + (rl === "fondator" ? "fondator" : "administrator") + " îl oprește și îl pornește numai "
+              + (suntFondatori || rl === "fondator" ? "un fondator." : "un administrator.")
             : activLucru
               ? (S.activSpre ? "Pornesc contul…" : "Opresc contul…")
               : activArmat
@@ -1983,6 +2694,99 @@ class Component extends DCLogic {
         zonaHint: gp.zoneFaraPunct(acc.zona || "")
           ? "Zonă din afara orașului: nu intră pe ruta șoferului, iar ora livrării se confirmă la telefon."
           : "",
+        // --- pragul de neplătite al clientului (runda 2.7.0) ---
+        //
+        // Hotărârea patronului din 4 oct. 2026: pragul e 2 pentru toți (se
+        // schimbă din Setări), iar excepția unui client se pune de aici — un
+        // număr al lui ori „fără limită”. Cine vede controlul: v. `pragShown`.
+        pragShown,
+        // Semnul excepției, pe placă și în capul fișei. Două culori, fiindcă
+        // sunt două vești: „prag 5” e o regulă schimbată, „fără limită” e o
+        // regulă scoasă — iar pe aceea patronul vrea s-o vadă dintr-o privire.
+        pragSemn,
+        pragSemnCls: acc.prag === 0 ? "h-badge h-badge--warning" : "h-badge h-badge--jam",
+        pragSemnTitlu: acc.prag === 0
+          ? "Excepție: clientul ăsta nu e oprit niciodată, oricâte comenzi neplătite are"
+          : "Excepție: clientul ăsta are pragul lui de comenzi neplătite, altul decât cel general",
+        // Cele trei feluri. Paranteza de la „General” spune pragul general
+        // numai când pagina îl știe (`S.pragGeneral`, din `GET /settings`);
+        // altfel butonul scrie doar „General” — o cifră ghicită acolo ar fi
+        // citită ca regula casei. „Al lui” își arată numărul când clientul are
+        // unul; apăsat din nou, deschide caseta ca să-l schimbe.
+        //
+        // Cu o cerere a clientului pe drum, butoanele sunt stinse (`blocat`),
+        // dar o apăsare sosită înaintea desenului următor tot ajunge la mâner.
+        // „General” și „Fără limită” n-au pază a lor: amândouă se termină în
+        // `salveazaPrag`, care întreabă `this.state` (un singur loc de păzit,
+        // nu trei de ținut la fel). „Al lui” nu trimite nimic, deci întreabă
+        // el — tot `this.state`, nu steagul din desen.
+        pragFeluri: !pragShown ? [] : [
+          {
+            k: "general",
+            et: S.pragGeneral === null ? "General"
+              : S.pragGeneral === 0 ? "General (fără limită)"
+                : "General (" + S.pragGeneral + ")",
+            apasat: pragFel === "general",
+            blocat: pragLucru,
+            alege: () => {
+              // Deja pe general: nimic de trimis, se închide doar ciorna.
+              if (acc.prag === null) return set(inchidePrag(acc.u));
+              salveazaPrag(acc, null);
+            }
+          },
+          {
+            k: "lui",
+            et: !pragDeschis && pragArat !== null && pragArat > 0 ? "Al lui: " + pragArat : "Al lui",
+            apasat: pragFel === "lui",
+            blocat: pragLucru,
+            alege: () => {
+              // Cu cererea lui pe drum, caseta nu se deschide: s-ar deschide
+              // peste un control stins, iar ce s-ar tasta în ea ar aștepta un
+              // răspuns care îi schimbă numărul de la care pornește.
+              if (areCheia(this.state.pragPeDrum, acc.u) || this.state.pragEdit === acc.u) return;
+              // Deschiderea casetei închide ce rămăsese pe jumătate în alte
+              // fișe (v. `curataAltele`, care din refuzuri îl lasă numai pe al
+              // lui) și îi stinge și lui refuzul vechi: de aici începe altă
+              // încercare. Pornește de la numărul lui de acum, dacă are unul:
+              // de cele mai multe ori omul vine să-l schimbe.
+              set(Object.assign(curataAltele(acc.u), {
+                pragEdit: acc.u, pragVal: acc.prag !== null && acc.prag > 0 ? String(acc.prag) : "",
+                pragRefuz: {}
+              }));
+            }
+          },
+          {
+            k: "liber",
+            et: "Fără limită",
+            apasat: pragFel === "liber",
+            blocat: pragLucru,
+            alege: () => {
+              if (acc.prag === 0) return set(inchidePrag(acc.u));
+              salveazaPrag(acc, 0);
+            }
+          }
+        ],
+        pragEditing: pragDeschis,
+        pragDraft: pragDeschis ? S.pragVal : "",
+        // Se curăță la tastare, ca la codul de pontaj: pe tastatura telefonului
+        // degetul prinde și litere. Două cifre, cât primește serverul. Tastarea
+        // stinge refuzul LUI — al altui client rămâne pe rândul aceluia.
+        onPragDraft: (e) => set({
+          pragVal: String(e.target.value).replace(/[^0-9]/g, "").slice(0, 2), pragRefuz: faraCheia(this.state.pragRefuz, acc.u)
+        }),
+        onPragKey: (e) => { if (e.key === "Enter") { e.preventDefault(); salveazaPragScris(acc); } },
+        onPragSave: () => salveazaPragScris(acc),
+        onPragCancel: () => set(inchidePrag(acc.u)),
+        // Refuzul e al contului lui, nu al paginii — aceeași pază ca la
+        // `pinErr`: altfel s-ar arăta pe fișa oricărui alt client.
+        pragErr: pragShown && areCheia(S.pragRefuz, acc.u) ? S.pragRefuz[acc.u] : "",
+        // Fraza de sub control. Când clientul urmează pragul general, iar acela
+        // e zero, o spune pe nume: „Nu e oprit niciodată.” singură, sub un
+        // buton „General” apăsat, ar părea o greșeală a paginii.
+        pragNota: pragLucru ? "Se salvează pragul…"
+          : pragFel === "general" && S.pragGeneral === 0
+            ? "Pragul general e acum „fără limită”: nu e oprit niciodată."
+            : pragNotaDin(pragEfectiv),
         // Lista înlocuiește butonul care ciclează. Pazele rămân exact aceleași —
         // nu-ți schimbi propriul acces, iar ultimul administrator nu poate fi
         // retrogradat — plus una nouă, cerută de listă: alegerea aceleiași
@@ -2004,8 +2808,13 @@ class Component extends DCLogic {
         roleOpts: ROLE_OPTS.filter((o) => o.v === rl || rolDat(o.v)),
         rolSchimbabil,
         rolFix: !acc.sys && !rolSchimbabil,
+        // Rândul mic de sub lista de roluri, numai pentru FONDATOR: pagina
+        // „Acces” e a lui singur (`require_acces()`, api/lib/auth.php), iar
+        // oricui altcuiva legătura i-ar deschide un refuz. E întrebare de rang,
+        // nu de matrice — dreptul de a pune bife nu se dă din bife.
+        accesNota: euFondator && rolSchimbabil,
         rolNume: rolulDinLista.l || rl,
-        rolFixNota: (rolulDinLista.d || "") + (isMe ? " · propriul acces nu ți-l poți schimba singur" : ""),
+        rolFixNota: drepturiScurt(rl, S.acces) + (isMe ? " · propriul acces nu ți-l poți schimba singur" : ""),
         // --- recomandări ---
         // Secțiunea apare doar dacă serverul chiar a trimis ceva: pe o
         // instalare fără migrarea 007 toate câmpurile sunt goale, iar un cont
@@ -2013,7 +2822,10 @@ class Component extends DCLogic {
         refShown: !acc.sys && (!!acc.refCode || !!acc.refFrom || S.refReady),
         refCode: acc.refCode,
         refLink: acc.refLink,
-        refMissing: !acc.sys && S.refReady && !acc.refCode,
+        // „Dă-i un cod” și „Schimbă codul” scriu în cont: pe contul de conducere
+        // închis de rang nu se desenează (`inchisDeRang`). Codul și linkul, câte
+        // sunt, rămân de citit și de copiat.
+        refMissing: !acc.sys && S.refReady && !acc.refCode && !inchisDeRang,
         refPreview: refPreviewOf(acc.name) || acc.u,
         refFrom: acc.refFrom,
         refWhen: acc.refAt ? " pe " + dataOra(acc.refAt) : "",
@@ -2028,6 +2840,9 @@ class Component extends DCLogic {
         // Blocul apare numai pe conturile de pe site: pe restul n-ar avea ce
         // spune, iar un buton fără rost e un buton apăsat din greșeală.
         selfShown: S.origine && acc.self,
+        // Recunoașterea se citește oricând; butonul ei scrie în cont, deci nu
+        // se desenează pe contul de conducere închis de rang.
+        vouchLiber: !inchisDeRang,
         vouchEt: acc.vouchAt ? "Recunoscut" : "Nerecunoscut",
         vouchBadge: acc.vouchAt ? "h-badge h-badge--honey" : "h-badge h-badge--warning",
         vouchLine: acc.vouchAt ? "var(--h-line)" : "var(--h-accent)",
@@ -2064,12 +2879,12 @@ class Component extends DCLogic {
         // Altă rută decât „Dă-i un cod": aceea DĂ unul contului care n-are,
         // asta SUPRASCRIE. Urmarea o poartă avertismentul de sub casete:
         // linkurile deja trimise cu codul vechi nu mai recomandă pe nimeni.
-        refCanEdit: !acc.sys && S.refReady,
+        refCanEdit: !acc.sys && S.refReady && !inchisDeRang,
         refMoneyOn: S.refMoney,
         refCols: S.refMoney ? "1fr 1fr" : "1fr",
         refEditLabel: (acc.refCode ? "Schimbă codul" : "Alege codul")
           + (S.refMoney ? " și procentul" : ""),
-        refEditing: S.refEdit === acc.u,
+        refEditing: S.refEdit === acc.u && !inchisDeRang,
         refCodDraft: S.refCod,
         refRateDraft: S.refRate,
         refRatePh: "implicit " + procent(S.refDefault),
@@ -2114,11 +2929,15 @@ class Component extends DCLogic {
         // nu-l OFERĂ acolo — însă îl arată dacă un cod există deja, ca unul dat
         // din greșeală să se poată lua înapoi de unde a fost dat.
         pinShown: S.pontaj && !acc.sys && (rl !== "client" || acc.labPin),
-        pinHas: acc.labPin,
+        // Pe contul de conducere închis de rang, rândul spune numai dacă omul
+        // are cod: „Pune un cod” și „Ia-i codul” ar fi refuzate de server — cu
+        // codul altuia se pontează în locul lui.
+        pinLiber: !inchisDeRang,
+        pinHas: acc.labPin && !inchisDeRang,
         pinEt: acc.labPin ? "pus" : "nepus",
         pinCls: acc.labPin ? "h-badge h-badge--success" : "h-badge h-badge--warning",
         pinBtn: acc.labPin ? "Schimbă codul" : "Pune un cod",
-        pinEditing: S.pinEdit === acc.u,
+        pinEditing: S.pinEdit === acc.u && !inchisDeRang,
         pinDraft: S.pinEdit === acc.u ? S.pinVal : "",
         // Eroarea e a contului deschis, nu a paginii — aceeași pază ca la
         // `refErr`: fără ea, un refuz rămas de la un card s-ar arăta în
@@ -2202,6 +3021,11 @@ class Component extends DCLogic {
         mailLiber: !acc.sys && (isMe || !conducereInchisa),
         mailBlocat: !acc.sys && !isMe && conducereInchisa,
         mailText: acc.mail || "fără adresă",
+        // Numele (runda 2.7.0): caseta lui era singura care se desena oricui,
+        // pe orice cont. Pe contul de conducere închis de rang se citește, ca
+        // adresa de lângă el — sub numele ăsta apare omul în Jurnal.
+        numeLiber: !inchisDeRang,
+        numeBlocat: inchisDeRang,
         g2Cols: acc.sys ? "1fr" : "1fr 1fr",
         onFieldKey: iesiCuEnter,
         // Se salvează la ieșirea din câmp, nu la fiecare tastă. Cât timp există
@@ -2218,10 +3042,16 @@ class Component extends DCLogic {
         // legătura spre „Parola mea"; pe a conducătorului, o lămurire.
         parolaDeAici,
         parolaMea: isMe && !acc.sys,
-        conducereNota: !acc.sys && !isMe && conducereInchisa
-          ? "Parola, e-mailul de recuperare și rolul unui " + (rl === "fondator" ? "fondator" : "administrator")
-            + " le schimbă numai un fondator; tot el îi poate șterge contul."
-          : "",
+        // Două lămuriri, după cine privește. Celui fără rang i se spune vorba
+        // serverului (`guard_cont_de_conducere()`): nu „numai un fondator”, care
+        // l-ar lăsa să creadă că restul fișei e al lui.
+        conducereNota: inchisDeRang
+          ? "Contul unui administrator ori al unui fondator îl poate schimba numai cineva din conducere. "
+            + "Panoul „Conturi” îți dă conturile celorlalți: clienți, agenți, angajați."
+          : !acc.sys && !isMe && conducereInchisa
+            ? "Parola, e-mailul de recuperare și rolul unui " + (rl === "fondator" ? "fondator" : "administrator")
+              + " le schimbă numai un fondator; tot el îi poate șterge contul."
+            : "",
         canEditPass: !editing && parolaDeAici,
         n1: editing ? S.n1 : "", n2: editing ? S.n2 : "", err: editing ? S.err : "",
         onEdit: () => set({ edit: acc.u, n1: "", n2: "", err: "" }),
@@ -2267,6 +3097,17 @@ class Component extends DCLogic {
         }
       };
     });
+
+    // Semnul pragului de neplătite aprinde și el rândul de semne al plăcii
+    // (runda 2.7.0): un client cu prag propriu, dar fără parolă provizorie și
+    // fără cont oprit, și-ar fi avut semnul închis sub un `placaSemne` fals.
+    // Se adaugă AICI, peste rândul gata făcut, nu în socoteala lui
+    // `placaSemne` de mai sus: rândul acela e cel pe care dovada din
+    // `check-conturi-vederi.mjs` îl strică literă cu literă ca să arate că
+    // semnul contului oprit e păzit, iar o condiție adăugată în el ar fi lăsat
+    // dovada fără text de găsit. Înaintea lui `randuri`, ca fișa deschisă din
+    // placă (o copie a rândului) să-l moștenească.
+    accounts.forEach((a) => { if (a.pragSemn) a.placaSemne = true; });
 
     // În plăci, contul deschis apare de DOUĂ ori: placa lui, aprinsă, rămâne
     // la locul ei, iar fișa întreagă se pune după ULTIMA placă din rândul lui
@@ -2319,10 +3160,21 @@ class Component extends DCLogic {
 
       this.__saving = true;
       set({ nBusy: true, nErr: "" });
+      // Numărul deschiderii din care pleacă cererea (runda 2.7.0). Dacă până
+      // sosește răspunsul cardul a fost părăsit, ori părăsit și deschis din
+      // nou, numărul nu mai e al ei: coada de mai jos nu mai închide, nu mai
+      // golește și nu mai scrie nimic într-un card care nu e al ei.
+      const nr = this.__nouNr;
+      // Și casetele, cum au plecat: după o dezlegare numărul nu mai e al
+      // cererii, dar cardul poate fi tot contul ei (v. `nouCumAPlecat`).
+      const trimis = this.caseteNou().map((c) => c[1]);
 
       gp.post("/users", {
         username: u, password: p, name: n, role: S.nRole,
-        customerName: String(S.nCust || "").trim(),
+        // Numai pentru un client, ca adresa și zona de mai jos (runda 2.7.0):
+        // numele scris la „client” și rămas sub un acces schimbat la loc nu se
+        // mai vede în card, dar pleca și ajungea pe contul unui angajat.
+        customerName: S.nRole === "client" ? String(S.nCust || "").trim() : "",
         email: String(S.nMail).trim(),
         // Adresa și zona pleacă numai pentru un client: un angajat n-are
         // adresă de livrare, iar o zonă pe contul lui n-ar însemna nimic.
@@ -2332,19 +3184,43 @@ class Component extends DCLogic {
         zone: S.nRole === "client" ? String(S.nZone || "").trim() : ""
       })
         .then(() => {
-          this.__saving = false;
+          // Contul e creat: cardul se închide ACUM, direct (o închidere făcută
+          // de cod nu întreabă nimic), fără să aștepte lista. Până la runda
+          // 2.7.0 închiderea călătorea în lista împrospătată: o listă refuzată
+          // cu 401 lăsa cardul pe „Se salvează…”, iar una întârziată închidea
+          // și golea cardul deschis între timp pentru ALT cont. Dacă numărul
+          // nu mai e al cererii, cardul de pe ecran e altul și rămâne neatins;
+          // vestea și lista vin oricum. Un singur caz îl închide și cu alt
+          // număr: cardul dezlegat cu „+ Cont nou” și rămas întocmai cum a
+          // plecat, adică tocmai contul creat acum.
+          (this.__nouCreate = this.__nouCreate || []).push(trimis);
+          if (nr === this.__nouNr || this.nouCumAPlecat(trimis)) this.inchideNou();
           return this.pullUsers({
-            form: false, nName: "", nUser: "", nPass: "", nMail: "", nRole: "angajat", nCust: "", nErr: "",
-            nAddr: "", nZone: "",
-            pNew: "", pErr: "", nBusy: false,
-            msg: "Contul „" + n + "” a fost creat ca " + (ROLE_L[S.nRole] || S.nRole) + "."
+            pNew: "", pErr: "",
+            msg: "Contul „" + n + "” a fost creat ca " + (ROLE_L[S.nRole] || S.nRole) + ".",
+            // Spus pe față: `pullUsers` scrie de-a dreptul în stare, nu prin
+            // `set`, deci după o veste roșie (refuzul unei salvări părăsite,
+            // mai jos) vestea asta bună ar fi rămas desenată tot roșie.
+            msgBad: false
           });
         })
         // Serverul are ultimul cuvânt: respinge utilizatori duplicați sau
         // parole slabe chiar dacă verificarea din pagină ar fi trecut.
         // La refuz semaforul se stinge, ca omul să poată corecta și reîncerca.
-        .catch((e) => { this.__saving = false; set({ nErr: e.message, nBusy: false }); });
+        // Refuzul unei cereri VECHI (`nr`) nu se scrie în cardul altui cont și
+        // nu-i stinge semaforul: salvarea aceluia poate fi încă pe drum. Dar
+        // nici nu se mai pierde: îl spune banda de sus (`refuzParasit`).
+        .catch((e) => {
+          if (nr !== this.__nouNr) return this.refuzParasit(trimis, n, e);
+          this.__saving = false; set({ nErr: e.message, nBusy: false });
+        });
     };
+
+    // Cât contul e pe drum spre server, ce se tastează nu mai intră în card
+    // (runda 2.7.0): la răspuns cardul se închide, iar literele scrise între
+    // timp s-ar fi pierdut fără ca omul să afle că n-au plecat. Butonul arată
+    // „Se salvează…”; o cerere agățată se dezleagă cu „+ Cont nou”.
+    const scrieNou = (x) => { if (this.__saving) return; set(x); };
 
     // Rezumatul din capul paginii spunea „ultima schimbare <dată>", tot din
     // `lastLogin`. Numărul care ajută cu adevărat e altul: câte conturi mai
@@ -2386,12 +3262,16 @@ class Component extends DCLogic {
       navAnon: false,
       // TREI ECRANE, DUPĂ CE SE ȘTIE (runda 2.6.0), ca în „Administrare
       // Comenzi": fără cont aflat, ecranul neutru („Se verifică sesiunea…");
-      // cu un cont care nu e de conducere, refuzul; cu unul de conducere,
+      // cu un cont fără dreptul „conturi”, refuzul; cu unul care îl are,
       // pagina. Până acum pagina se desena ORICUI cât nu răspunsese serverul
       // (`unlocked: !S.loaded || …`): un angajat vedea o clipă „+ Cont nou",
       // „Jurnal de modificări →" și cardul codului, toate vii.
+      //
+      // Întrebarea e dreptul din matrice (`areConturi`), nu rangul: din
+      // pornire îl au numai administratorii și fondatorul, dar fondatorul îl
+      // poate da ori lua din „Acces”, iar serverul după el se ia.
       locked: !S.auth,
-      denied: !!S.auth && !isAdmin(S.auth),
+      denied: !!S.auth && !areConturi(S.auth),
       deniedClient: !!S.auth && authRole(S.auth) === "client",
       deniedStaff: !!S.auth && authRole(S.auth) !== "client",
       // Panourile de pe ecranul de refuz, din meniul rolului — nu trei legături
@@ -2407,11 +3287,20 @@ class Component extends DCLogic {
       // ia din `ROLE_L`, aceeași vorbă pe care o poartă insigna de pe fișă.
       deniedLine: !S.auth ? ""
         : authRole(S.auth) === "client"
-          ? "Contul „" + S.auth.name + "” e cont de client: conturile și parolele se văd doar dintr-un cont de administrator."
+          ? "Contul „" + S.auth.name + "” e cont de client: aici lucrează doar personalul. Comenzile tale le vezi în „Comanda mea”."
           : "Contul „" + S.auth.name + "” e "
             + (ROLE_L[authRole(S.auth)] ? "cont de " + ROLE_L[authRole(S.auth)] : "cont de angajat")
             + ": nu poate vedea sau schimba parolele.",
-      unlocked: !!S.auth && isAdmin(S.auth),
+      unlocked: !!S.auth && areConturi(S.auth),
+      // Două lucruri de pe pagina asta țin de ALT drept decât „conturi”, deci
+      // au fiecare steagul lui. Cu drepturile din pornire sunt aprinse oricui
+      // intră aici; se sting numai dacă fondatorul desparte panourile.
+      //
+      // · cardul „Cod pentru panourile de lucru” citește și scrie `/settings`,
+      //   iar ruta aceea cere dreptul „setari” (api/routes/settings.php);
+      // · „Jurnal de modificări →” duce într-o pagină care cere „jurnal”.
+      pCard: !!S.auth && gp.are("setari", S.auth),
+      jurnalVede: !!S.auth && gp.are("jurnal", S.auth),
       // Cât ține întrebarea către server nu spunem nici „autentifică-te", nici
       // „n-ai voie": încă nu știm. O clipă de „se verifică" e mai cinstită
       // decât un ecran care apoi se schimbă singur.
@@ -2535,8 +3424,11 @@ class Component extends DCLogic {
         // panourile de lucru". Butonul cheamă și cererea ei, dar nu-i golea
         // motivul, deci cardul spunea la trecut „nu s-a putut verifica" chiar
         // în clipa în care pagina verifica din nou.
+        //
+        // Codul se recere numai cu dreptul „setari”, ca la intrare (`intra()`):
+        // fără el cardul nu e desenat, deci n-are cine să-i citească răspunsul.
         this.setState({ eroare: "", pCodeErr: "", loaded: false },
-          () => { this.pullUsers(); this.pullPanelCode(); });
+          () => { this.pullUsers(); if (gp.are("setari", S.auth)) this.pullPanelCode(); });
       },
       accounts: randuri,
       cauta: S.cauta,
@@ -2629,8 +3521,24 @@ class Component extends DCLogic {
       // Semaforul se stinge la deschiderea și la închiderea formularului: o
       // cerere rămasă fără răspuns (internet căzut) n-are voie să blocheze
       // pentru totdeauna butonul.
-      onNew: () => { this.__saving = false; set({ form: true, nErr: "", nBusy: false, nPass: this.suggest() }); },
-      onFormCancel: () => { this.__saving = false; set({ form: false, nErr: "", nBusy: false }); },
+      //
+      // Runda 2.7.0 (paza formularului nesalvat): cardul pornește GOL, cu o
+      // parolă propusă, iar poza lui se ia din stare imediat după `set`-ul
+      // care îl deschide. Apăsat peste cardul deja deschis, „+ Cont nou” numai
+      // dezleagă o salvare agățată (`nouDejaDeschis`). „Renunță” întreabă
+      // înainte să arunce ce e scris; cardul neatins se închide pe loc, ca
+      // până acum. „Adaugă contul” nu întreabă niciodată.
+      //
+      // Vorbele se dau ușii și ca FUNCȚIE (al treilea), ca biblioteca să le
+      // poată citi din nou cât stă întrebarea pe ecran. Apăsat cât contul e pe
+      // drum, „Renunță” întreabă cu „nu se știe încă dacă a fost creat”; dacă
+      // serverul REFUZĂ contul sub întrebare, vorba aceea nu mai e adevărată
+      // (se știe: n-a fost creat), iar refuzul e scris în cardul de dedesubt.
+      // Cu vorbele gata citite, întrebarea rămânea pe ecran, „Ies fără să
+      // salvez” închidea cardul și refuzul nu mai era spus nicăieri (găsit la
+      // încheierea rundei 2.7.0). Acum se retrage singură, ca a legăturilor.
+      onNew: () => { if (this.nouDejaDeschis()) return; this.__saving = false; set(Object.assign(this.nouGol(), { form: true, nPass: this.suggest() })); this.pozaNou(); },
+      onFormCancel: () => gp.inchideCiorna(this.ciornaDeschisa(), () => this.inchideNou(), () => this.ciornaDeschisa()),
       onFormSave: () => addUser(),
       nBusy: !!S.nBusy,
       nSaveLabel: S.nBusy ? "Se salvează…" : "Adaugă contul",
@@ -2647,17 +3555,19 @@ class Component extends DCLogic {
       // (`rolDat`): unui administrator nu i se mai oferă „Fondator" și, cât
       // există un fondator pornit, nici „Administrator".
       roleOpts: ROLE_OPTS.filter((o) => rolDat(o.v)),
-      nRoleHint: ROLE_HINT[S.nRole] || "",
-      onNRole: (e) => set({ nRole: e && e.target ? String(e.target.value) : S.nRole, nErr: "" }),
+      nRoleHint: hintRol(S.nRole, S.acces),
+      // Casetele cardului scriu prin `scrieNou`, nu prin `set` (runda 2.7.0):
+      // cât contul e pe drum spre server nu mai primesc nimic (v. `scrieNou`).
+      onNRole: (e) => scrieNou({ nRole: e && e.target ? String(e.target.value) : S.nRole, nErr: "" }),
       nIsClient: S.nRole === "client",
       nCust: S.nCust,
-      onNCust: (e) => set({ nCust: e.target.value, nErr: "" }),
+      onNCust: (e) => scrieNou({ nCust: e.target.value, nErr: "" }),
       // Adresa firmei și zona ei. Numele casetelor e același ca la înscrierea
       // din „Intrare": omul care le-a văzut o dată nu le mai caută a doua oară.
       nAddr: S.nAddr,
-      onNAddr: (e) => set({ nAddr: e.target.value, nErr: "" }),
+      onNAddr: (e) => scrieNou({ nAddr: e.target.value, nErr: "" }),
       nZone: S.nZone,
-      onNZone: (e) => set({ nZone: e.target.value, nErr: "" }),
+      onNZone: (e) => scrieNou({ nZone: e.target.value, nErr: "" }),
       // Caseta de zonă se desenează numai după ce lista chiar a sosit. Una
       // goală ar spune „patiseria n-are nicio zonă", ceea ce e altceva decât
       // „încă n-am aflat" — și l-ar pune pe administrator să salveze un cont
@@ -2668,10 +3578,10 @@ class Component extends DCLogic {
       nZoneHint: gp.zoneFaraPunct(S.nZone)
         ? "Zonă din afara orașului: nu intră pe ruta șoferului, iar ora livrării se confirmă la telefon."
         : "Sectorul sau zona în care livrăm. Se alege singură la fiecare comandă a clientului.",
-      onNName: (e) => set({ nName: e.target.value, nErr: "" }),
-      onNUser: (e) => set({ nUser: e.target.value, nErr: "" }),
-      onNPass: (e) => set({ nPass: e.target.value, nErr: "" }),
-      onNMail: (e) => set({ nMail: e.target.value, nErr: "" }),
+      onNName: (e) => scrieNou({ nName: e.target.value, nErr: "" }),
+      onNUser: (e) => scrieNou({ nUser: e.target.value, nErr: "" }),
+      onNPass: (e) => scrieNou({ nPass: e.target.value, nErr: "" }),
+      onNMail: (e) => scrieNou({ nMail: e.target.value, nErr: "" }),
 
       hasResets: S.resets.length > 0,
       resets: S.resets.slice().reverse().map(r => ({

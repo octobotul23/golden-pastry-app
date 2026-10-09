@@ -385,7 +385,11 @@ class Component extends DCLogic {
   //   comun al tabletelor). Cheie A LUI, nu `auth`: `auth` e omul intrat cu
   //   parola lui, iar pus aici ar aprinde „conectat” și cardul de sesiune
   //   pentru o tabletă pe care nu s-a conectat nimeni.
-  state = { stats: null, auth: null, loaded: false, next: "", open: false, rolGrila: "", view: "client", code: "", cerr: "", cshow: false, shakes: 0, lu: "", lp: "", lshow: false, lerr: "", lshakes: 0, lbusy: false,
+  // contGrila — același cont, întreg, în forma dată de `gp.auth()`: poartă
+  //   `drepturi`. Din el se face grila, fiindcă panourile tabletei sunt bife
+  //   din „Acces", nu rolul ei; `rolGrila` rămâne căderea pe implicitul
+  //   rolului, pentru când contul întreg nu e la îndemână.
+  state = { stats: null, auth: null, loaded: false, next: "", open: false, rolGrila: "", contGrila: null, view: "client", code: "", cerr: "", cshow: false, shakes: 0, lu: "", lp: "", lshow: false, lerr: "", lshakes: 0, lbusy: false,
     forgot: false, fu: "", fmsg: "", ferr: "", fbusy: false,
     rtoken: "", rp: "", rshow: false, rerr: "", rbusy: false, rdone: false,
     // ftoken — tokenul de fondator, tot din e-mail. Stări proprii, nu
@@ -615,7 +619,7 @@ class Component extends DCLogic {
         if (!user) return;
         // Contul de sistem „panou" înseamnă tabletă deschisă cu cod.
         if (user.username === "panou") {
-          this.setState({ open: true, rolGrila: user.role || "" });
+          this.setState({ open: true, rolGrila: user.role || "", contGrila: gp.auth(user) });
         } else if (user.mustChangePassword === true) {
           // Sesiune veche, cu parola provizorie încă pe cont: cardul „Ești
           // deja autentificat" l-ar fi trimis în magazin sau în panou, unde
@@ -624,7 +628,10 @@ class Component extends DCLogic {
           location.href = "Parola.dc.html";
           return;
         } else {
-          this.setState({ auth: { u: user.username, name: user.name, role: user.role } });
+          // Contul întreg, cum îl face `gp.auth()`, nu trei câmpuri scrise de
+          // mână: cardul „conectat" întreabă mai jos ce pagini are omul, iar
+          // răspunsul stă în `drepturi`, pe care forma scurtă le pierdea.
+          this.setState({ auth: gp.auth(user) });
         }
         if (user.role !== "client") this.pullStats();
       })
@@ -707,24 +714,45 @@ class Component extends DCLogic {
     const st = S.stats;
 
     /**
-     * Întoarcerea cerută de un panou, dacă rolul chiar poate deschide
+     * Întoarcerea cerută de un panou, dacă CONTUL chiar poate deschide
      * pagina aceea.
      *
      * `paginaAplicatiei()` de la montare se uită la FORMA adresei — să nu
      * fie o cale spre alt sit, cu „..", „/" sau „http". Aici se pune
      * cealaltă întrebare, care abia acum are răspuns: al cui e panoul
-     * cerut. Rolul nu se știe la încărcare, ci după autentificare.
+     * cerut. Contul nu se știe la încărcare, ci după autentificare.
      *
      * Fără asta, un agent de vânzări trimis aici de pe „Depozit" s-ar
      * întoarce pe „Depozit" — o pagină care nu-i e în meniu și care i-ar
-     * răspunde cu un ecran gol. Răspunsul se citește din matricea
-     * meniului, ca să nu existe două liste care se ceartă.
+     * răspunde cu un ecran gol.
+     *
+     * SE ÎNTREABĂ CONTUL, NU ROLUL (runda 2.7.0). Aici se citea matricea
+     * rolului, scrisă de mână; de când panourile se dau și se iau din
+     * „Acces", ea spune numai ce are rolul DIN PORNIRE. Managerul căruia
+     * fondatorul i-a luat „Depozit" ar fi fost întors tocmai pe ecranul de
+     * refuz, iar angajatul căruia i-a dat „Comenzi" ar fi fost oprit din
+     * drum. `cont` e contul în forma lui `gp.auth()`, cu `drepturi` pe el.
+     *
+     * Două feluri de pagini, după rândul lor din `gp.MENIU`:
+     *   · cu cheie de drept — se întreabă chiar dreptul (`gp.are`), plus
+     *     rolurile care au pagina oricum (`siRol`: „Recomandări" e și a
+     *     agentului, și a clientului). Nu sertarul: `gp.meniu()` mai cere
+     *     pentru „Recomandări" și un cod pe cont, iar codul nu vine odată cu
+     *     intrarea — clientul întors din pagina banilor lui ar fi fost oprit;
+     *   · fără cheie („Comanda mea", „Parola mea", „Acces") — sertarul
+     *     ROLULUI, care știe al cui e fiecare. Paginile acestea nu atârnă de
+     *     nicio bifă, deci sertarul se întreabă numai cu rolul, nu cu contul
+     *     întreg: sertarul contului îi ascunde tabletei comune „Parola mea",
+     *     o regulă a desenului de care poarta asta n-a ținut seama niciodată.
      */
-    const inapoiPermis = (cerut, rol) => {
-      if (!cerut) return "";
-      const permise = gp.PANOURI_ROL[rol] || [];
+    const inapoiPermis = (cerut, cont) => {
+      if (!cerut || !cont) return "";
       const intrare = gp.MENIU.find((x) => decodeURIComponent(x.href) === cerut);
-      return intrare && permise.indexOf(intrare.et) >= 0 ? cerut : "";
+      if (!intrare) return "";
+      const are = intrare.cheie
+        ? gp.are(intrare.cheie, cont) || (intrare.siRol || []).indexOf(cont.role) >= 0
+        : gp.meniu("", { role: cont.role }).some((m) => m.et === intrare.et);
+      return are ? cerut : "";
     };
 
     // Ordinea opririlor vine deja aranjată de server (routeSeq), deci aici se
@@ -770,16 +798,25 @@ class Component extends DCLogic {
     const areMiscari = !!st && typeof st.moves === "number";
     const n = (are, v) => (are ? String(v) : "—");
     // CE CARDURI SE DESENEAZĂ ÎN GRILĂ: numai panourile pe care contul grilei
-    // le are în `gp.PANOURI_ROL` — aceeași matrice din care se face meniul.
-    // Contul comun al tabletelor e „angajat": are Laborator, Rută și Depozit,
-    // nu și Comenzi, deci cardul „Administrare" nu i se mai desenează (pagina
-    // aceea îi răspundea cu un ecran de refuz). Fără rol aflat, niciun card.
+    // le are în meniul LUI — `gp.meniu()`, același din care se face sertarul.
+    // Contul comun al tabletelor are din pornire Laborator, Rută și Depozit,
+    // nu și Comenzi, deci cardul „Administrare" nu i se desenează (pagina
+    // aceea îi răspundea cu un ecran de refuz). Fără cont aflat, niciun card.
+    //
+    // Meniul contului, nu matricea rolului (runda 2.7.0): panourile sunt
+    // drepturi date din „Acces", iar serverul le trimite pe cont, gata
+    // judecate — cu tot cu plafonul tabletei. O grilă citită din rol ar fi
+    // arătat mai departe cardul unui panou luat și ar fi tăcut despre unul dat.
+    // Unde contul întreg lipsește și se știe numai rolul grilei, răspunde
+    // implicitul rolului: un cont fără `drepturi` e citit de `gp.are()` exact
+    // așa.
     //
     // Stă aici, lângă celelalte socoteli ale cardurilor, și întreabă întâi de
-    // rol: `.claude/check-panouri.mjs` taie bucata dintre `const stops` și
-    // `const lbl` și o rulează singură, cu un `S` fără `rolGrila` și un `gp`
-    // fără matrice.
-    const aleGrilei = S.rolGrila ? (gp.PANOURI_ROL[S.rolGrila] || []) : [];
+    // cont: `.claude/check-panouri.mjs` taie bucata dintre `const stops` și
+    // `const lbl` și o rulează singură, cu un `S` fără contul grilei și un
+    // `gp` fără meniu.
+    const cineGrila = S.contGrila || (S.rolGrila ? { role: S.rolGrila } : null);
+    const aleGrilei = cineGrila ? gp.meniu("", cineGrila).map((m) => m.et) : [];
     // Fără sesiune omul trebuie să se autentifice; cu sesiune, dar cu o cerere
     // picată, „cere autentificare" ar fi o minciună care îl trimite să se
     // reconecteze degeaba. Sunt două cauze, deci două texte.
@@ -796,10 +833,12 @@ class Component extends DCLogic {
 
       try {
         // `gp.panelUnlock()` întoarce chiar contul cu care s-a deschis sesiunea
-        // (serverul îl trimite în răspuns). Rolul lui hotărăște ce carduri se
-        // desenează în grilă; nu mai e nevoie de o a doua cerere.
+        // (serverul îl trimite în răspuns, cu drepturile lipite pe el). El
+        // hotărăște ce carduri se desenează în grilă; nu mai e nevoie de o a
+        // doua cerere. Se ține întreg, prin `gp.auth()`, nu numai rolul:
+        // drepturile sunt răspunsul, rolul e doar căderea.
         const contGrila = await gp.panelUnlock(code);
-        this.setState({ open: true, rolGrila: (contGrila && contGrila.role) || "", code: "", cerr: "" });
+        this.setState({ open: true, rolGrila: (contGrila && contGrila.role) || "", contGrila: gp.auth(contGrila), code: "", cerr: "" });
         // Cifrele se cereau o singură dată, la încărcarea paginii, și numai dacă
         // exista deja o sesiune. Pe tabletă nu există: omul tocmai a scris
         // codul corect, iar pe toate cele patru carduri scria „—" și „cere
@@ -907,7 +946,7 @@ class Component extends DCLogic {
         // Jetonul se stinge din stare odată cu codul de recomandare de
         // deasupra, și din aceeași pricină: dacă omul se întoarce pe pagină,
         // n-are ce comandă să mai lege — serverul l-a stins deja și el.
-        this.setState({ auth: r.user, reg: false, gbusy: false, gpw: "", gref: "", gref2: "", cerJeton: "", cerNota: "" });
+        this.setState({ auth: gp.auth(r.user), reg: false, gbusy: false, gpw: "", gref: "", gref2: "", cerJeton: "", cerNota: "" });
         goAfterLogin(r.user);
       } catch (e) {
         this.__reg = false;
@@ -1015,7 +1054,11 @@ class Component extends DCLogic {
      * departe. Cu parola corectă în față, arăta ca și cum n-ar fi mers.
      */
     const goAfterLogin = (user) => {
-      const role = user.role;
+      // Contul întreg, nu rolul lui: amândouă întrebările de mai jos — „poate
+      // deschide pagina cerută?" și „care e prima lui pagină?" — au, din runda
+      // 2.7.0, răspunsul în drepturile contului (`gp.login()` le lipește pe
+      // utilizator, iar `gp.auth()` le poartă mai departe).
+      const cont = gp.auth(user);
       // Contul are încă parola pusă de administrator. Steagul se scria în baza
       // de date la fiecare cont creat sau resetat, dar nu-l citea nicio pagină:
       // omul primea parola pe telefon, cu îndemnul scris „schimb-o după prima
@@ -1025,23 +1068,27 @@ class Component extends DCLogic {
         return;
       }
       // Unde a vrut omul să ajungă, dacă l-a trimis aici un panou — și dacă
-      // rolul lui poate deschide pagina aceea. Cerute și refuzate, ajungea
+      // contul lui poate deschide pagina aceea. Cerute și refuzate, ajungea
       // pe un panou care i se închidea în față.
-      const cerut = inapoiPermis(this.state.next, role);
+      const cerut = inapoiPermis(this.state.next, cont);
       if (cerut) {
         location.href = encodeURI(cerut) + (location.search || "");
         return;
       }
-      // Altfel, prima pagină a rolului: clientul în magazin — acolo comandă,
-      // iar „Comanda mea" rămâne la un clic, în sertar — agentul în
-      // Recomandări, angajatul în laborator, restul în administrare.
+      // Altfel, prima pagină a contului: clientul în „Comanda mea" — magazinul
+      // rămâne la un clic, în sertar — agentul în Recomandări, angajatul în
+      // laborator, restul în administrare.
       //
       // Până acum aici scria „client → magazin, oricine altcineva →
       // administrare", iar administrarea îi refuza pe manager și pe agent:
       // singurul lucru pe care îl puteau face cu contul lor era să vadă un
       // ecran care le spune că n-au voie. Lista stă acum în `gp.ACASA_ROL`,
       // lângă meniu, ca să nu se depărteze de el.
-      location.href = gp.primaPagina(role) + (location.search || "");
+      //
+      // I se dă contul, nu rolul, ca `gp.primaPagina()` să poată ocoli un
+      // „acasă" pe care fondatorul l-a luat din „Acces": managerul rămas fără
+      // „Comenzi" merge pe primul panou pe care îl are, nu pe ecranul de refuz.
+      location.href = gp.primaPagina(cont) + (location.search || "");
     };
     // Parola se verifică pe server. Pagina nu o vede niciodată comparată cu
     // ceva local, iar sesiunea vine ca un cookie HttpOnly — nu se poate
@@ -1062,10 +1109,12 @@ class Component extends DCLogic {
         //
         // Aici scria până acum `user.role === "angajat"`, deci refuzul cădea pe
         // TOȚI angajații, nu doar pe tabletă. Era un rest de pe vremea când
-        // angajatul n-avea panouri pe numele lui. Azi are patru
-        // (`gp.PANOURI_ROL.angajat`), serverul i le deschide (măsurat: intrare
-        // 200, comenzile laboratorului 200, ruta 200), iar `gp.ACASA_ROL` îi
-        // promite laboratorul ca primă pagină. Refuzul contrazicea și butonul
+        // angajatul n-avea panouri pe numele lui. Azi are patru din pornire
+        // (drepturile `laborator`, `ruta`, `depozit` și `pontaj` — date din
+        // „Acces", deci citite de pe cont, nu dintr-o listă a rolului),
+        // serverul i le deschide (măsurat: intrare 200, comenzile
+        // laboratorului 200, ruta 200), iar `gp.ACASA_ROL` îi promite
+        // laboratorul ca primă pagină. Refuzul contrazicea și butonul
         // de deasupra lui — „Intră în panouri" — și exemplul de utilizator,
         // „ex. ana.popescu", care e un om, nu o tură.
         //
@@ -1081,7 +1130,7 @@ class Component extends DCLogic {
         }
 
         this.setState({
-          auth: { u: user.username, name: user.name, role: user.role },
+          auth: gp.auth(user),
           lu: "", lp: "", lerr: "", lbusy: false
         });
         goAfterLogin(user);
@@ -1163,7 +1212,7 @@ class Component extends DCLogic {
         // administrare”, deși pe server nu mai există nicio sesiune — omul l-ar
         // apăsa și ar ajunge într-un ecran blocat, fără să înțeleagă de ce.
         gp.logout().catch(() => {});
-        this.setState({ auth: null, open: false, rolGrila: "", view: "client", code: "", cerr: "" });
+        this.setState({ auth: null, open: false, rolGrila: "", contGrila: null, view: "client", code: "", cerr: "" });
       },
       sub: S.loaded ? TODAY_LABEL + " · alege panoul pentru tura ta" : "Se încarcă comenzile…",
       // `arata` e steagul de desenare al fiecărui card: panoul lui, cu numele
@@ -1368,13 +1417,15 @@ class Component extends DCLogic {
       // Se întâmplă când s-a autentificat între timp în alt tab.
       //
       // Aceeași poartă ca după autentificare: dacă pagina cerută nu e a
-      // rolului, butonul nu promite ce nu se poate. Înainte promitea — și
+      // contului, butonul nu promite ce nu se poate. Înainte promitea — și
       // asta era chiar cazul pentru care fusese scris rândul: „sesiunea e a
       // unui cont fără drepturi pe pagina cerută și tot vrea să încerce".
-      sessionHref: S.auth && inapoiPermis(S.next, S.auth.role)
+      // Amândouă întrebările primesc contul (`S.auth`, cu `drepturi`), nu
+      // rolul: ce pagini are omul e hotărât în „Acces", pe cont.
+      sessionHref: S.auth && inapoiPermis(S.next, S.auth)
         ? encodeURI(S.next)
-        : (S.auth ? gp.primaPagina(S.auth.role) : "Administrare%20Comenzi.dc.html"),
-      sessionCta: S.auth && inapoiPermis(S.next, S.auth.role)
+        : (S.auth ? gp.primaPagina(S.auth) : "Administrare%20Comenzi.dc.html"),
+      sessionCta: S.auth && inapoiPermis(S.next, S.auth)
         ? "Înapoi la pagina cerută"
         : (S.auth && S.auth.role === "client"
             ? "Vezi comanda mea" : "Mergi la panoul tău"),
@@ -1397,7 +1448,7 @@ class Component extends DCLogic {
         // Închidem și grila de panouri, de unde se vede butonul acesta: fără
         // sesiune, cardurile duc în pagini goale, iar omul ar apăsa în ele
         // crezând că panoul e încă deschis, până la o reîncărcare.
-        gp.logout().finally(() => this.setState({ auth: null, open: false, rolGrila: "", view: "client" }));
+        gp.logout().finally(() => this.setState({ auth: null, open: false, rolGrila: "", contGrila: null, view: "client" }));
       }
     };
   }

@@ -89,7 +89,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
 <div data-st="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
-<div data-st="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-st="side" class="gp-meniu-derulat" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
 <div data-st="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
 <img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
@@ -98,10 +98,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
-<div data-st="nav" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
+<div data-st="nav" class="gp-meniu-derulat" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
@@ -119,7 +119,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
 <div style="display:flex;flex-direction:column;min-width:0;flex:1">
 <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
-<span style="font-size:12px;opacity:.6">administrator</span>
+<span style="font-size:12px;opacity:.6">{{ sideRol }}</span>
 </div>
 </div>
 </sc-if>
@@ -142,7 +142,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -285,6 +285,50 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 </div>
 </div>
+
+<!-- Pragul GENERAL de comenzi neplătite (runda 2.7.0, hotărârea patronului
+     din 4 oct. 2026: prag 2 pentru toți, schimbabil de aici, cu excepție pe
+     client din Conturi).
+
+     Stă în „General”, în cardul lui, fiindcă fila „Comenzi” nu există, iar
+     celelalte trei ar fi mințit despre ce e: „Notificări” ține canalele —
+     pragul nu e un anunț, și lângă Telegram s-ar fi citit ca setare a
+     raportului de bani; „Liste” ține liste; „Tableta” ține codul tabletelor.
+
+     Cardul ÎNTREG stă sub `pragCard`, adică apare numai când serverul a
+     trimis cheia `plati_prag_implicit` (drept „plati.prag” + migrarea 032).
+     Fără cheie nu rămâne nici titlul: un card gol ar fi spus că există o
+     setare pe care omul n-o poate vedea.
+
+     Refuzul stă DEASUPRA casetei, în card, nu numai în bara roșie de sus:
+     „Salvează” se apasă din bara lipită de marginea ecranului, iar cardul ăsta
+     e al treilea din filă — pe telefon, bara de sus a ieșit de mult din ecran.
+     N-are ×: se stinge singur de cum se umblă la casetă.
+
+     Grila e aceeași `grid2` ca în cardurile de mai sus, cu o singură casetă:
+     pe calculator caseta ține jumătate din lățime (un număr de două cifre
+     într-o casetă de 1100 px arăta a greșeală), sub 760 trece pe toată. -->
+<sc-if value="{{ pragCard }}" hint-placeholder-val="{{ false }}">
+<div data-st="pragcard" class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Comenzi neplătite</span>
+<span style="font-size:13px;color:var(--h-fg-subtle);text-wrap:pretty">De la câte comenzi neplătite se oprește un client din a mai trimite alta.</span>
+</div>
+<sc-if value="{{ pragRefuz }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" role="alert" data-st="prag-refuz" style="border-radius:14px;padding:12px 16px">
+<p style="margin:0;font-size:14px;line-height:1.5;text-wrap:pretty">{{ pragRefuz }}</p>
+</div>
+</sc-if>
+<div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label data-st="{{ pragSt }}" class="h-field">
+<span class="h-label">Prag de comenzi neplătite</span>
+<input class="h-input h-numeric" inputMode="numeric" value="{{ pragVal }}" onChange="{{ onPrag }}" placeholder="0–99" style="height:46px;font-size:15px">
+<span class="h-help" style="color:{{ pragAjutorFg }}">{{ pragAjutor }}</span>
+</label>
+</div>
+<p style="margin:0;font-size:13px;line-height:1.55;color:var(--h-fg-subtle);text-wrap:pretty">Un client cu atâtea comenzi neplătite ori în așteptare nu mai poate trimite alta până plătește. Excepțiile pe client se pun din Conturi.</p>
+</div>
+</sc-if>
 </sc-if>
 
 <!-- ──────────────────────────────────────────── notificări ── -->
@@ -457,12 +501,22 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <label class="h-switch"><input type="checkbox" checked="{{ tgButoane }}" onChange="{{ onTgButoane }}"><span>{{ tgButoaneLabel }}</span></label>
 </div>
+<!-- Legatul botului e de RANG (`require_admin()` pe server), nu de dreptul
+     „Setări”: botul poartă cuvântul casei, și acela nu se dă cu o bifă. Cui
+     ține pagina numai din „Acces” nu i se desenează deci butoanele — stinse,
+     tot butoane ar fi fost, pe care nu le-ar fi putut apăsa niciodată —, ci
+     i se spune cine le are. -->
+<sc-if value="{{ tgLegRang }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onTgLeaga }}" disabled="{{ tgLegOff }}" title="{{ tgLegHint }}" style="height:46px;font-size:14px">{{ tgLegLabel }}</button>
 <sc-if value="{{ tgLegat }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onTgDezleaga }}" disabled="{{ tgLegOff }}" style="height:46px;font-size:14px;color:var(--h-danger)">Dezleagă botul</button>
 </sc-if>
 </div>
+</sc-if>
+<sc-if value="{{ tgLegFaraRang }}" hint-placeholder-val="{{ false }}">
+<span data-set="tg-rang" style="font-size:13px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ tgLegRangNota }}</span>
+</sc-if>
 <span class="h-help">{{ tgLegHelp }}</span>
 </div>
 
@@ -722,7 +776,10 @@ const TABS = [
   { k: "general", l: "General" },
   { k: "notify", l: "Notificări" },
   { k: "lists", l: "Liste" },
-  { k: "access", l: "Acces" }
+  // Eticheta e „Tableta”, nu „Acces”: de la runda 2.7.0 „Acces” e numele
+  // paginii fondatorului, cea cu bifele pe roluri, iar fila asta ține numai
+  // codul tabletelor din laborator. Cheia rămâne „access”.
+  { k: "access", l: "Tableta" }
 ];
 
 // Marca `m` numește migrarea care seamănă rândul unei chei pe care
@@ -781,7 +838,12 @@ const GENERAL = [
   // „Telefon și tabletă" nu e o vorbă aleasă la întâmplare: magazinul are un
   // singur hotar, 1080 de puncte (`mob` din Site Public.dc.html), și tot el
   // hotărăște care din cele două vederi se aplică.
-  { k: "catalog_vedere_telefon", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "vedere", implicit: "unu", l: "Cum se deschide magazinul pe telefon și tabletă", help: "Ce vede un client care intră prima dată. Fiecare își poate schimba vederea din magazin, iar alegerea lui se ține minte — până când schimbi tu vederea de aici." },
+  //
+  // `implicit` e ce arată caseta când baza n-are (încă) rândul: aceeași
+  // valoare de rezervă ca `catalog_implicite()` din api/lib/catalog.php și ca
+  // `gp.catalogImplicit()`. Pe telefon e „patru" de la 2.7.0 (hotărârea
+  // patronului din 9 octombrie 2026); până atunci a fost „unu".
+  { k: "catalog_vedere_telefon", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "vedere", implicit: "patru", l: "Cum se deschide magazinul pe telefon și tabletă", help: "Ce vede un client care intră prima dată. Fiecare își poate schimba vederea din magazin, iar alegerea lui se ține minte — până când schimbi tu vederea de aici." },
   { k: "catalog_vedere_calculator", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "vedere", implicit: "patru", l: "Cum se deschide magazinul pe calculator", help: "La fel, pentru ecranele late, de la 1080 de puncte în sus." },
   { k: "pret_prag_b_implicit", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "prag", l: "Prețul B începe de la (buc.)", hint: "100", help: "Pragul cu care pornește un produs nou în Produse. Fiecare produs își poate schimba pragul lui; golul înseamnă că nu se precompletează nimic." },
   { k: "pret_prag_c_implicit", m: "028_preturi_pe_trepte.sql", card: "catalog", tip: "prag", l: "Prețul C începe de la (buc.)", hint: "300", help: "Mai mare decât pragul lui B. Bucățile se socotesc pe tot coșul, pe fiecare latură: 60 de congelate plus încă 60 din același produs fac 120." }
@@ -796,10 +858,125 @@ const VEDERI = [
 
 const isMasked = (v) => typeof v === "string" && v.indexOf("•") === 0;
 
+/**
+ * O listă ori harta punctelor, DESFĂCUTĂ din textul ei JSON într-o formă pe
+ * care `gp.ciornaDiferita` o poate compara (runda 2.7.0, paza formularelor
+ * nesalvate; v. `aceeasiLista`, mai jos).
+ *
+ * Biblioteca e îngăduitoare dinadins, pentru formulare: „2,5” e tot „2.50”,
+ * un rând gol la coada unei liste nu se pune, cheile care încep cu „_” sunt
+ * ale paginii. Aici îngăduința asta ar PIERDE schimbări: ce hotărăște bara
+ * hotărăște și ce pleacă spre server (`changes()`), iar unitatea „1” mutată
+ * peste „1.0”, rândul gol șters de la coadă și punctul zonei „_Probă” sunt
+ * schimbări adevărate. De aceea:
+ *   · numele (rândurile listelor și cheile hărții) se învelesc în „…”, ca
+ *     biblioteca să le citească literă cu literă, nu ca numere ori ca gol;
+ *   · harta se face listă de perechi SORTATE după nume: o zonă redenumită și
+ *     numită la loc își mută punctul la coada hărții (`incheieZona`), iar
+ *     ordinea cheilor nu e o schimbare;
+ *   · numai valorile de sub o cheie (`lat`, `lng`) rămân goale de înveliș:
+ *     serverul le dă ca NUMERE, caseta le scrie ca text, și „44.45” rescris
+ *     la fel trebuie să fie tot 44.45.
+ */
+const desfacut = (x, inPunct) => {
+  if (Array.isArray(x)) return x.map((y) => desfacut(y, false));
+  if (x && typeof x === "object") return Object.keys(x).sort().map((k) => ["„" + k + "”", desfacut(x[k], true)]);
+  return typeof x === "string" && !inPunct ? "„" + x + "”" : x;
+};
+
+/**
+ * Două setări ținute ca text JSON spun același lucru?
+ *
+ * `changes()` le compara ca șiruri, iar aceeași listă are mai multe scrieri:
+ * migrarea 030 pune „Gata de livrare” cu `JSON_ARRAY_INSERT`, care rescrie tot
+ * șirul cu spații după virgule, pe când pagina scrie cu `JSON.stringify`, fără
+ * ele. Un rând mutat în jos și adus la loc lăsa deci bara „Ai modificări
+ * nesalvate” aprinsă pentru nimic; la fel o coordonată rescrisă cu același
+ * număr și o zonă redenumită și numită la loc. Cu paza plecării (hotărârea
+ * patronului din 4 oct. 2026: site-ul întreabă înainte să arunce ce nu e
+ * salvat), o bară aprinsă pentru nimic ar fi însemnat și o întrebare pentru
+ * nimic, la fiecare ieșire din pagină.
+ *
+ * Numai pentru ce e listă ori hartă pe AMÂNDOUĂ părțile; orice altceva (text
+ * obișnuit, JSON stricat) rămâne la comparația literă cu literă de dinainte.
+ */
+const aceeasiLista = (a, b) => {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  let da, db;
+  try { da = JSON.parse(a); db = JSON.parse(b); } catch (e) { return false; }
+  if (!da || !db || typeof da !== "object" || typeof db !== "object") return false;
+  return !gp.ciornaDiferita(desfacut(da), desfacut(db));
+};
+
+/**
+ * O setare „alcătuită”: text JSON care ține o listă ori o hartă — listele din
+ * fila „Liste”, zonele cu harta punctelor lor, bifele de anunțuri.
+ *
+ * De casetele obișnuite le desparte un singur lucru, cel de care au nevoie
+ * `pull()` și `save()`: ce e pe ecran nu e „ce a scris omul”, e ce era
+ * dinainte PLUS ce a schimbat el. Un rând adăugat peste o listă care încă n-a
+ * sosit de la server face din ea „lista întreagă e rândul ăsta”.
+ *
+ * Aceeași măsură ca la `aceeasiLista`, nu un pomelnic de chei: o listă pusă
+ * mâine în pagină n-are de trecut pe la nimeni ca să fie socotită.
+ */
+const alcatuita = (a) => {
+  if (typeof a !== "string") return false;
+  let d;
+  try { d = JSON.parse(a); } catch (e) { return false; }
+  return !!d && typeof d === "object";
+};
+
 // Cele trei setări care țin de etape: lista și cele două roluri speciale.
 // Serverul le judecă împreună (`guard_status_list`), deci și refuzul lui de
 // lângă ele se stinge la umblatul prin oricare dintre cele trei.
 const ETAPE_CHEI = ["order_statuses", "order_status_done", "order_status_cancelled"];
+
+// Pragul GENERAL de comenzi neplătite (runda 2.7.0). Hotărârea patronului din
+// 4 oct. 2026: pragul e 2 pentru toți, se schimbă de aici, iar excepția unui
+// singur client se pune din Conturi. Cheia vine în `GET /settings` NUMAI celui
+// cu dreptul „plati.prag” și numai pe o bază cu migrarea 032 intrată; de-aia
+// cardul ei se desenează după cheie, nu după rang (v. `pragCard`).
+const PRAG_CHEIE = "plati_prag_implicit";
+
+/**
+ * Celelalte chei ale plăților, pe care pagina asta nu le scrie NICIODATĂ.
+ *
+ * Chatul raportului de bani, orele raportului, amintirile și adresa panoului
+ * (`plati_telegram_chat_id`, `plati_raport_ore`, `plati_amintiri`,
+ * `panel_base_url`) au casa lor, în pagina plăților, cu ruta ei
+ * (`/plati/setari`), cu alt drept („plati.telegram”) și cu alte verificări.
+ * `plati_raport_trimis_*` și `migration_*` nu le scrie nimeni din afară: sunt
+ * însemnările serverului. `GET /settings` le poate totuși aduce pe cele dintâi
+ * în `S.s`, lângă restul, celui care are dreptul lor — iar `changes()` trimite
+ * orice cheie din `S.s` care nu mai e ca în `orig`. O singură scriere rătăcită
+ * acolo (un `put()` cu cheia greșită, o extensie de browser care umple casete)
+ * ar fi plecat cu „Salvează” ca o setare obișnuită, iar serverul refuză atunci
+ * TOATĂ cererea (`403 plati_setting_denied`) celui fără drept. Paza stă în
+ * `changes()`, singura poartă spre `PUT /settings`.
+ */
+const cheieDePlatiStraina = (k) =>
+  k !== PRAG_CHEIE &&
+  (k.indexOf("plati_") === 0 || k === "panel_base_url" || k.indexOf("migration_") === 0);
+
+/**
+ * Ce a scris omul în caseta pragului, citit o singură dată pentru toți.
+ *
+ * `gol` și `bun` sunt două întrebări, nu una: caseta GOALĂ nu e zero. Zero
+ * înseamnă „fără limită” pentru toți clienții lăsați pe pragul general — cea
+ * mai largă alegere din toată pagina — iar `Number("")` e tot 0, deci o
+ * casetă ștearsă din greșeală le-ar fi scos oprirea tuturor acelora, cu mesaj
+ * verde. De-aia golul se oprește aici, cu vorbe (`save()`), și nu ajunge
+ * niciodată la server.
+ *
+ * Aceleași margini ca pe server (`plati_setari_valideaza()`: întreg 0…99).
+ */
+const pragScris = (brut) => {
+  const t = String(brut === null || brut === undefined ? "" : brut).trim();
+  if (t === "") return { gol: true, bun: false, n: null };
+  if (!/^[0-9]{1,2}$/.test(t)) return { gol: false, bun: false, n: null };
+  return { gol: false, bun: true, n: Number(t) };
+};
 
 class Component extends DCLogic {
   state = {
@@ -816,6 +993,14 @@ class Component extends DCLogic {
     // la codul `bad_special_status`; îl sting `put()` (la orice umblat prin
     // etape), salvarea următoare și „Renunță”.
     etapeRefuz: "",
+    // Refuzul pentru pragul de comenzi neplătite, scris lângă caseta lui
+    // (runda 2.7.0). Două izvoare, aceeași casetă roșie: pagina, când caseta e
+    // goală ori nu e un număr de la 0 la 99 (atunci nu pleacă nimic), și
+    // serverul, la `bad_prag` ori `plati_setting_denied`, cu vorbele lui.
+    // Caseta de scris NU se atinge la refuz: omul își vede greșeala lângă
+    // explicația ei. Îl sting `put()` (de cum se umblă la prag), salvarea
+    // următoare și „Renunță”.
+    pragRefuz: "",
     // De ce n-au venit datele, spus omului care se uită la ecran. Gol
     // înseamnă „nu s-a întâmplat nimic rău”, niciodată „nu e nimic de
     // arătat”: a doua e o afirmație despre lume, și se face din altă parte.
@@ -867,6 +1052,16 @@ class Component extends DCLogic {
     gp.lists().catch(() => {});
 
     this.pullTot();
+
+    // Paza plecării (runda 2.7.0; hotărârea patronului din 4 oct. 2026):
+    // o legătură din meniu, ieșirea din cont, fila închisă ori „Înapoi” al
+    // browserului întreabă întâi dacă e ceva scris și nesalvat. Pagina n-are
+    // foi cu istoric, deci din ale browserului ține numai `beforeunload`, pe
+    // care biblioteca îl pune cât e ceva scris. `componentDidMount` se poate
+    // aprinde a doua oară: paza nouă o scoate singură pe cea veche. Nu se
+    // scoate de aici niciodată — pagina nu pleacă de pe ecran decât odată cu
+    // documentul.
+    this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
   }
 
   /**
@@ -881,12 +1076,20 @@ class Component extends DCLogic {
     return gp.me()
       .then((user) => {
         if (!user) { gp.toLogin(); return; }
-        this.setState({ auth: gp.auth(user) });
-        if (!gp.eAdmin(user)) { this.setState({ loaded: true }); return; }
+        const cont = gp.auth(user);
+        this.setState({ auth: cont });
+        // Poarta paginii e dreptul „setari” din matrice, cel pe care îl cere
+        // și serverul (`require_drept('setari')`, api/routes/settings.php), nu
+        // rangul: fondatorul poate da Setările și altui rol, din „Acces”.
+        if (!gp.are("setari", cont)) { this.setState({ loaded: true }); return; }
         // Aici, nu în `pull()`: „Trimite test" și „Leagă botul" cheamă
         // `pull()`, iar legătura pe om nu se schimbă de la niciuna din ele.
         // O cerere în plus la fiecare apăsare ar fi fost un drum degeaba.
-        this.euCitesc();
+        //
+        // Legătura pe om a rămas o întrebare de RANG: `/telegram/me` e
+        // `require_admin()` (api/routes/telegram.php), neatins de matrice.
+        // Un rol primit la Setări fără să fie de conducere nu o mai cere.
+        if (gp.eAdmin(cont)) this.euCitesc();
         return this.pull();
       })
       .catch((e) => {
@@ -906,8 +1109,40 @@ class Component extends DCLogic {
     return gp.get("/settings")
       .then((r) => {
         const s = r.settings || {};
+        // Ce a scris omul CÂT cererea era pe drum rămâne în casete (runda
+        // 2.7.0, paza formularelor nesalvate). Răspunsul rescria tot
+        // formularul: după „Leagă botul”, după „Încearcă din nou” și la a doua
+        // aprindere a lui `componentDidMount`, textul scris între timp dispărea
+        // fără niciun semn — aceeași pierdere pe care `save()` o ocolește de
+        // mult cu `pastrate`. `changes()` se socotește ACUM, față de `orig`-ul
+        // vechi: e exact ce nu apucase să plece. La prima încărcare e gol,
+        // afară de cazul de mai jos.
+        const scrise = this.changes();
+        // Setările NESOSITE (reparația din 9 oct. 2026 a pazei de mai sus).
+        // Când prima încărcare pică, banda roșie stă peste un formular GOL în
+        // care se poate scrie, iar `orig` e gol și el: `changes()` întoarce
+        // atunci tot ce e pe ecran. La o casetă obișnuită e bine — e textul
+        // omului, întreg. La o listă nu: un rând adăugat atunci face din ea
+        // „lista e numai rândul ăsta”, iar păstrată peste răspuns stătea, cu
+        // bara aprinsă, deasupra listei de pe server, pe care „Salvează” o
+        // înlocuia — toate intervalele de livrare șterse pentru unul adăugat.
+        // La fel zonele cu harta lor și bifele de anunțuri (`alcatuita`).
+        //
+        // Pe acestea le lăsăm, și spunem mai jos că le-am lăsat. De contopit
+        // cu ce a venit nu se pot contopi: pagina goală nu arăta ce era de
+        // scos ori de mutat, iar bifele porneau de la cele două din oficiu
+        // (`evLista`), nu de la gol — „adaugă-le pe ale omului” ar fi pornit
+        // anunțuri pe care el nu le-a bifat niciodată. Numai fără linie de
+        // bază: peste setări SOSITE, o listă schimbată e o schimbare ca
+        // oricare alta și rămâne.
+        const lasate = Object.keys(this.state.orig || {}).length ? []
+          : Object.keys(scrise).filter((k) => alcatuita(scrise[k]));
+        // De veste se dă numai dacă s-a pierdut ceva: o listă alcătuită care
+        // se dovedește chiar cea de pe server n-are despre ce.
+        const pierdute = lasate.filter((k) => !aceeasiLista(scrise[k], s[k]));
+        lasate.forEach((k) => { delete scrise[k]; });
         this.setState({
-          s: Object.assign({}, s), orig: Object.assign({}, s),
+          s: Object.assign({}, s, scrise), orig: Object.assign({}, s),
           failed: r.failed || [], failedTotal: r.failedTotal || 0, loaded: true,
           // Răspunsul bun stinge caseta, altfel pagina ar minți întoarsă pe
           // dos: „Setările nu s-au încărcat” scris deasupra formularului abia
@@ -924,6 +1159,16 @@ class Component extends DCLogic {
           // cererii ăsteia și rămâne pe ecran până întreabă cineva din nou.
           eroareSetari: ""
         });
+        // Pe rândul ei, nu în apelul de sus: altfel `pull()` nu atinge nici
+        // `msg`, nici `err` (v. `legare()`), iar o cheie `err` pusă acolo ar fi
+        // stins la fiecare reîncărcare refuzul pe care omul tocmai îl citea.
+        // Coada frazei se scrie numai când chiar a rămas ceva de salvat.
+        if (pierdute.length) {
+          this.setState({
+            err: "Setările au sosit abia acum. Ce ai schimbat până atunci în liste, în zone ori la bifele de anunțuri nu s-a păstrat: era făcut peste o pagină goală și ar fi înlocuit ce e pe server. Acum pe ecran e ce e pe server — fă schimbările din nou." +
+              (Object.keys(scrise).some((k) => scrise[k] !== s[k]) ? " Ce ai scris în celelalte casete a rămas și e încă nesalvat." : "")
+          });
+        }
       })
       .catch((e) => {
         if (e.isAuth) gp.toLogin();
@@ -944,6 +1189,10 @@ class Component extends DCLogic {
     // alegeri, nu mai e despre ce se vede, deci se stinge; serverul îl spune
     // din nou la salvarea următoare, dacă mai e cazul.
     if (ETAPE_CHEI.indexOf(key) >= 0) x.etapeRefuz = "";
+    // La fel refuzul de lângă pragul de neplătite: vorbea despre numărul de
+    // dinainte. Numai la cheia lui — o literă scrisă în numele firmei nu are
+    // de ce să stingă un refuz pe care omul încă îl citește.
+    if (key === PRAG_CHEIE) x.pragRefuz = "";
     this.setState(x);
   }
 
@@ -974,7 +1223,28 @@ class Component extends DCLogic {
     const S = this.state, out = {};
     Object.keys(S.s).forEach((k) => {
       if (k.slice(-4) === "_set") return;              // indicatori, nu valori
+      // Cheile plăților care nu sunt ale paginii ăsteia nu pleacă de aici pe
+      // niciun drum, nici neschimbate, nici schimbate (v. `cheieDePlatiStraina`).
+      if (cheieDePlatiStraina(k)) return;
       if (S.s[k] === S.orig[k]) return;
+      // Listele și harta punctelor se compară DESFĂCUTE, nu ca șiruri (runda
+      // 2.7.0): aceeași listă scrisă altfel nu e o schimbare (`aceeasiLista`).
+      if (aceeasiLista(S.s[k], S.orig[k])) return;
+      // Pragul de neplătite se compară ca NUMĂR și pleacă scris curat.
+      //
+      // „02” și „2 ” sunt tot 2: comparate ca șiruri, ar fi aprins bara de
+      // „modificări nesalvate” pentru o schimbare care nu există și ar fi
+      // lăsat în Jurnal un „2 → 02”. Ce nu e număr (și caseta goală) rămâne în
+      // diferență așa cum e scris — dinadins: bara trebuie să se aprindă, ca
+      // omul să aibă de unde apăsa „Salvează” și să afle de la `save()`, cu
+      // vorbe, de ce nu pleacă. Scos de aici, golul ar fi fost o ștergere
+      // mută: caseta goală pe ecran, „Nu e nimic de salvat.” dedesubt.
+      if (k === PRAG_CHEIE) {
+        const scris = pragScris(S.s[k]), venit = pragScris(S.orig[k]);
+        if (scris.bun && venit.bun && scris.n === venit.n) return;
+        out[k] = scris.bun ? String(scris.n) : S.s[k];
+        return;
+      }
       // „Mascat" înseamnă „token neatins" NUMAI la un secret.
       //
       // Fără prima jumătate a condiției, regula se aplica tuturor cheilor:
@@ -991,9 +1261,91 @@ class Component extends DCLogic {
       // deci condiția de aici e acum aceeași cu cea de pe server
       // (api/lib/settings.php:326-327).
       if (S.s[k + "_set"] !== undefined && isMasked(S.s[k])) return;
+      // Un secret GOLIT e tot „token neatins" (runda 2.7.0).
+      //
+      // Cine începe să scrie un token și îl șterge la loc lasă în `S.s` un
+      // șir gol în locul măștii. Serverul sare peste un secret gol întocmai
+      // ca peste unul mascat (`settings_save()`: golul îl păstrează pe cel
+      // salvat; de șters se șterge numai cu „__clear__”), deci cheia nu apărea
+      // printre cele scrise, iar `save()` o numea în mesajul roșu și dădea
+      // vina pe cheia de criptare — pentru un token pe care nu-l atinsese
+      // nimeni. Și bara rămânea aprinsă, deci și paza plecării ar fi întrebat
+      // de o schimbare care nu există. Golul se judecă precum serverul, după
+      // ce se taie spațiile; la o casetă obișnuită golul rămâne o schimbare.
+      if (S.s[k + "_set"] !== undefined && String(S.s[k]).trim() === "") return;
       out[k] = S.s[k];
     });
     return out;
+  }
+
+  /**
+   * Paza formularelor nesalvate (runda 2.7.0): e ceva scris și nesalvat în
+   * pagină? Întoarce `null` ori vorbele întrebării, `{ titlu, text, da, nu }`.
+   *
+   * Pe 4 oct. 2026 patronul a pierdut un produs scris pe jumătate dintr-un
+   * clic alături și a hotărât ca site-ul să întrebe înainte să arunce ce nu e
+   * salvat. Aici „formularul” e pagina întreagă, cu toate cele patru file.
+   *
+   * E SINGURUL loc care știe ce înseamnă „scris”; îl întreabă și „Renunță”,
+   * și paza plecării (`gp.pazaCiornei`, din `componentDidMount`). Citește
+   * `this.state` pe viu, la fiecare întrebare: o stare prinsă la un desen ar
+   * fi a formularului de acum două litere.
+   *
+   * „Scris” înseamnă două lucruri:
+   *   · `changes()` are ceva, adică exact ce ar pleca la „Salvează”;
+   *   · un rând ÎNCEPUT într-o listă (`drafts`) și neadăugat încă. El nu
+   *     aprinde bara, fiindcă „Salvează” n-are ce trimite din el, dar se
+   *     pierde la plecare la fel ca restul. Schița numelui unei zone
+   *     (`"__zn:" + i`, cheia lui `cheiaZona` din `renderVals()`) se pune
+   *     numai dacă ar redenumi ceva: goală ori la fel cu numele de acum,
+   *     `incheieZona` o aruncă oricum.
+   *
+   * Vorbele spun CÂT se pierde, nu doar că se pierde: „Renunță” stă lipit de
+   * „Salvează” și dă înapoi toate filele, nu numai pe cea de pe ecran.
+   * Butoanele sunt „Rămân” / „Le arunc”: la „Renunță” omul nu pleacă nicăieri,
+   * deci „Ies” n-ar fi avut despre ce vorbi.
+   *
+   * CÂT „SALVEAZĂ” E PE DRUM, vorbele sunt altele (încheierea rundei 2.7.0).
+   * Cererea a plecat și nu mai poate fi oprită de aici: „Le arunc” n-ar arunca
+   * nimic din ea, iar „Se pierde tot ce ai schimbat” ar fi o minciună dacă
+   * cererea ajunge — omul pleca încredințat că n-a schimbat nimic. Întrebarea
+   * spune atunci numai ce se știe: salvarea e pe drum, cine pleacă nu-i mai
+   * vede răspunsul, iar ce a mai scris între timp (pagina primește scris și
+   * cât se salvează) se pierde. Al doilea buton e „Plec oricum”. Când sosește
+   * răspunsul sub ea, biblioteca o retrage singură (vorbele de aici nu mai
+   * sunt aceleași). „Renunță” nu ajunge la vorbele astea: cât merge salvarea
+   * nu face nimic.
+   */
+  ciornaDeschisa() {
+    const S = this.state;
+    // Legată de formularul DESENAT: sub ecranul de refuz (oglinda lui
+    // `blocked` din `renderVals()`) nu e nicio casetă pe ecran, deci ce a
+    // rămas în stare de dinainte nu are voie să țină pe nimeni în pagină.
+    if (S.loaded && !!S.auth && !gp.are("setari", S.auth) && !S.eroareCine) return null;
+    const schimbat = Object.keys(this.changes()).length > 0;
+    const zone = this.list("delivery_zones");
+    const schita = Object.keys(S.drafts || {}).some((k) => {
+      const t = String(S.drafts[k] === null || S.drafts[k] === undefined ? "" : S.drafts[k]).trim();
+      if (t === "") return false;
+      return k.indexOf("__zn:") === 0 ? t !== zone[Number(k.slice(5))] : true;
+    });
+    if (!schimbat && !schita) return null;
+    if (S.saving) {
+      return {
+        titlu: "Pleci înainte să afli dacă s-au salvat setările?",
+        text: "Salvarea e pe drum spre server și nu mai poate fi oprită de aici. Dacă pleci acum, nu vezi dacă setările s-au salvat ori au fost refuzate, iar ce ai mai scris între timp se pierde.",
+        nu: "Rămân",
+        da: "Plec oricum"
+      };
+    }
+    return {
+      titlu: "Arunci schimbările nesalvate?",
+      text: !schita ? "Se pierde tot ce ai schimbat în Setări de la ultima salvare, în toate filele."
+        : !schimbat ? "Se pierde ce ai început să scrii la „Liste” și n-a intrat încă în nicio listă."
+        : "Se pierde tot ce ai schimbat în Setări de la ultima salvare, în toate filele, cu tot cu ce ai început să scrii la „Liste”.",
+      nu: "Rămân",
+      da: "Le arunc"
+    };
   }
 
   /**
@@ -1037,6 +1389,16 @@ class Component extends DCLogic {
    * trimis și numim pe nume ce n-a ținut.
    */
   save() {
+    // O salvare pe drum nu se dublează (reparația din 9 oct. 2026 a pazei
+    // formularelor nesalvate). Cât merge cererea, butonul nu mai primește
+    // șoarecele (`h-btn--loading` are `pointer-events: none`), dar focusul
+    // rămâne pe el, iar Enter ori spațiul îl apasă din nou. A doua cerere
+    // pleca atunci cu ce se mai scrisese între timp; prima, sosind, stingea
+    // „Se salvează…” și făcea din „Renunță” iar o ușă, cu o salvare încă pe
+    // drum — iar ce arunca omul atunci se întorcea salvat la sosirea celei
+    // de-a doua. Ce s-a scris între timp nu se pierde: rămâne în casete
+    // (`pastrate`, mai jos), pentru apăsarea de după răspuns.
+    if (this.state.saving) return;
     const diff = this.changes();
     const trimise = Object.keys(diff);
     if (!trimise.length) {
@@ -1082,7 +1444,69 @@ class Component extends DCLogic {
       });
       return;
     }
+    // A doua pază de dinainte de drum (runda 2.7.0): pragul de comenzi
+    // neplătite pleacă numai ca număr de la 0 la 99.
+    //
+    // Caseta goală e cazul pentru care există paza: pe server golul s-ar citi
+    // ca zero, iar zero înseamnă „fără limită” pentru toți clienții lăsați pe
+    // pragul general — o casetă ștearsă din greșeală le-ar fi scos oprirea
+    // tuturor deodată (rămân numai cei cu prag al lor). Nu se ghicește nici
+    // „omul voia 2”: se spune ce lipsește și se așteaptă. Nu pleacă NIMIC,
+    // nici restul modificărilor, din aceeași pricină ca mai sus — serverul
+    // scrie setările întreg sau deloc, iar o salvare pe jumătate făcută de
+    // pagină ar arăta mesaj verde peste o casetă încă greșită. Caseta rămâne
+    // cum a scris-o omul; refuzul se scrie și sus, și lângă ea.
+    if (Object.prototype.hasOwnProperty.call(diff, PRAG_CHEIE)) {
+      const scris = pragScris(diff[PRAG_CHEIE]);
+      if (!scris.bun) {
+        const fraza = (scris.gol
+          ? "Pragul de comenzi neplătite a rămas gol, iar caseta goală nu se salvează: golul nu înseamnă zero. "
+          : "Pragul de comenzi neplătite nu e un număr. ") +
+          "Scrie un număr întreg de la 0 la 99 (zero înseamnă „fără limită”) ori apasă „Renunță”.";
+        this.setState({
+          msg: "", etapeRefuz: "", pragRefuz: fraza,
+          err: "N-am trimis nimic spre server. " + fraza +
+            (trimise.length > 1 ? " Restul modificărilor au rămas pe ecran." : "")
+        });
+        return;
+      }
+    }
+    // A treia pază de dinainte de drum (reparația din 9 oct. 2026): cât
+    // setările de pe server n-au sosit, nicio listă alcătuită nu pleacă.
+    //
+    // E cealaltă ușă a pagubei de la `pull()` (v. „Setările NESOSITE”), mai
+    // veche decât paza formularelor nesalvate: sub banda „Setările nu s-au
+    // încărcat” formularul e gol și se poate scrie în el, iar un rând adăugat
+    // atunci la intervale face din listă „numai rândul ăsta”. „Salvează” o
+    // trimitea așa, serverul o punea peste cea adevărată, iar mesajul era cel
+    // verde. Serverul n-are cum s-o oprească: o listă de un rând e o listă
+    // bună ca oricare alta.
+    //
+    // Nu pleacă NIMIC, din aceeași pricină ca la cele două paze de sus, și nu
+    // se scoate nimic din formular: ce a alcătuit omul îi rămâne în față până
+    // sosesc setările, când `pull()` îl lasă și spune că l-a lăsat. Casetele
+    // obișnuite singure nu sunt oprite — un token rescris ori un nume
+    // îndreptat sunt textul omului, întreg, și pleacă și fără linie de bază:
+    // cu `GET /settings` căzut, salvarea lor e tocmai ce mai merge.
+    const oprite = Object.keys(this.state.orig || {}).length ? [] : trimise.filter((k) => alcatuita(diff[k]));
+    if (oprite.length) {
+      this.setState({
+        msg: "", etapeRefuz: "", pragRefuz: "",
+        err: "N-am trimis nimic spre server. Setările de pe server n-au ajuns încă în pagină, iar ce ai schimbat în liste, în zone ori la bifele de anunțuri e făcut peste o pagină goală: salvat așa, ar înlocui ce e pe server. Apasă „Încearcă din nou” ori reîncarcă pagina, apoi fă schimbările din nou." +
+          (trimise.length > oprite.length ? " Restul modificărilor au rămas pe ecran." : "")
+      });
+      return;
+    }
+    // Pe rândul lui, nu în apelul de mai jos: refuzul vechi de lângă prag se
+    // stinge la plecare, ca și cel de lângă etape, iar serverul îl spune din
+    // nou dacă mai e cazul.
+    this.setState({ pragRefuz: "" });
     this.setState({ saving: true, err: "", msg: "", etapeRefuz: "" });
+    // Poza ecranului la plecare. `s` nu se scrie niciodată pe loc — fiecare
+    // literă îi face o copie (`put()`) — deci obiectul ținut aici rămâne cum
+    // era când a plecat cererea. La sosire, după el se vede ce a fost atins
+    // între timp și adus ÎNAPOI (v. `intoarse`, mai jos).
+    const laPlecare = this.state.s;
     gp.put("/settings", { settings: diff })
       .then((r) => {
         const s = r.settings || {};
@@ -1118,7 +1542,20 @@ class Component extends DCLogic {
         // atinsă între timp și se păstrează peste ce vine de la server.
         const acum = this.changes();
         const ecran = this.state.s;
-        const restante = Object.keys(acum).filter((k) => acum[k] !== diff[k]);
+        // Și ce a fost adus ÎNAPOI cât cererea era pe drum (reparația din
+        // 9 oct. 2026): numele scris la loc cum era, rândul mutat înapoi.
+        // Față de `orig`-ul vechi nu mai e o schimbare, deci `changes()` nu-l
+        // mai vede, iar răspunsul îi punea omului în casetă tocmai ce se
+        // salvase, sub mesajul verde — pleca din pagină cu altceva pe server
+        // decât avea în față. Se vede numai din poza de la plecare: o cheie
+        // TRIMISĂ, care nu mai e în `acum` și nu mai arată ca atunci, a fost
+        // atinsă între timp. Rămâne cum a lăsat-o omul, iar față de răspuns e
+        // iar o schimbare de salvat. Secretele n-au drum de întoarcere:
+        // golite ori mascate înseamnă „neatinse” (v. `changes()`), deci n-ar
+        // avea ce rămâne nesalvat, iar mesajul ar trimite omul la un
+        // „Salvează” care nu mai e pe ecran.
+        const intoarse = trimise.filter((k) => acum[k] === undefined && ecran[k] !== laPlecare[k] && s[k + "_set"] === undefined);
+        const restante = Object.keys(acum).filter((k) => acum[k] !== diff[k]).concat(intoarse);
         const pastrate = {};
         restante.forEach((k) => { pastrate[k] = ecran[k]; });
 
@@ -1148,8 +1585,19 @@ class Component extends DCLogic {
       // care s-a ales, tot cu vorbele lui: ele spun omului ce are de făcut.
       // Se alege după COD, nu după text, ca o frază schimbată pe server să nu
       // mute mesajul din loc.
+      //
+      // Tot după cod se scrie și refuzul de lângă pragul de neplătite (runda
+      // 2.7.0): `bad_prag` (numărul n-a trecut de `plati_setari_valideaza()`)
+      // și `plati_setting_denied` (dreptul „plati.prag” a fost luat între
+      // citire și salvare). Numai când pragul chiar a plecat în cererea asta:
+      // pagina nu trimite nicio altă cheie de plăți (`cheieDePlatiStraina`),
+      // deci un `plati_setting_denied` fără prag în `diff` n-ar avea despre ce
+      // vorbi lângă caseta lui. Caseta rămâne cum a scris-o omul — `s` nu se
+      // atinge aici.
       .catch((e) => this.setState({
         saving: false, err: e.message,
+        pragRefuz: e && (e.code === "bad_prag" || e.code === "plati_setting_denied") &&
+          Object.prototype.hasOwnProperty.call(diff, PRAG_CHEIE) ? String(e.message || "") : "",
         etapeRefuz: e && e.code === "bad_special_status" ? String(e.message || "") : ""
       }));
   }
@@ -1342,7 +1790,13 @@ class Component extends DCLogic {
       this.put("notify_" + canal + "_events", JSON.stringify(nou));
     };
 
-    const isAdmin = !!S.auth && gp.eAdmin(S.auth);
+    // Două întrebări, ținute despărțit. Pagina se deschide cu DREPTUL „setari”
+    // din matrice — aceeași întrebare ca în `pullTot()` și, pe server, ca
+    // `require_drept('setari')`. Rangul mai răspunde numai unde serverul
+    // întreabă tot de rang: pastila care scrie „administrator” sub nume și
+    // legarea botului (`require_admin()`, api/routes/telegram.php).
+    const areSetari = !!S.auth && gp.are("setari", S.auth);
+    const eConducere = !!S.auth && gp.eAdmin(S.auth);
     const dirty = Object.keys(this.changes()).length > 0;
 
     const provider = v("notify_whatsapp_provider", "meta");
@@ -1468,6 +1922,24 @@ class Component extends DCLogic {
       });
     };
 
+    /**
+     * Zona asta a venit de la server FĂRĂ punct pe hartă? (reparația din
+     * 9 oct. 2026 a pazei formularelor nesalvate)
+     *
+     * O întreabă `setPoint`, mai jos, când amândouă casetele de coordonate au
+     * ajuns goale. „A venit” înseamnă și numele: o zonă redenumită își duce
+     * punctul pe numele nou, pe care harta venită nu-l are, deci judecată
+     * numai după hartă ar fi trecut drept „fără punct” — și golul i-ar fi
+     * scos punctul pe tăcute. De aceea se cere ca numele să fie în LISTA
+     * venită. Harta stricată pe server e hartă fără niciun punct.
+     */
+    const venitaFaraPunct = (name) => {
+      let lista = [], harta = {};
+      try { lista = JSON.parse(S.orig.delivery_zones || "[]"); } catch (e) { /* listă stricată: nicio zonă n-a venit */ }
+      try { harta = JSON.parse(S.orig.delivery_zone_coords || "{}"); } catch (e) { /* hartă stricată: niciun punct n-a venit */ }
+      return Array.isArray(lista) && lista.indexOf(name) >= 0 && !(harta && typeof harta === "object" && Object.prototype.hasOwnProperty.call(harta, name));
+    };
+
     const addZone = () => {
       const t = (S.drafts.__zone || "").trim();
       if (!t) return;
@@ -1525,14 +1997,31 @@ class Component extends DCLogic {
     // ordinea în care le verifică și serverul (api/routes/telegram.php ·
     // `route_telegram_link()`) — ca refuzul să vină de aici, în românește, nu
     // de acolo, după un drum degeaba.
+    //
+    // Prima piedică e rangul, fiindcă și acolo e prima: ruta e
+    // `require_admin()`, nu `require_drept('setari')`. Cu drepturile din
+    // pornire nu se aprinde niciodată — Setările le au numai administratorii.
+    // Se aprinde abia când fondatorul dă panoul altui rol, din „Acces”. Și
+    // numai peste un cont ȘTIUT: cu sesiunea nesosită, fraza ar fi spus ceva
+    // despre un om pe care pagina încă nu-l cunoaște.
+    //
+    // Din 2.7.0 piedica rangului nu mai stinge butoanele, le SCOATE
+    // (`tgLegRang`, mai jos): un buton stins cu „numai un administrator” pe
+    // el era tot un buton desenat cuiva care nu-l poate apăsa niciodată, și
+    // proba „ce vede e ce poate” îl numără ca atare. Ramura rămâne aici ca
+    // plasă: dacă șablonul pierde vreodată `sc-if`-ul, butonul iese stins, nu
+    // viu.
     const tgStare = v("notify_telegram_webhook_status", "nelegat");
-    const tgLegPiedica = dirty
-      ? "Ai modificări nesalvate. Legarea folosește datele salvate pe server — apasă „Salvează” din bara de sus, apoi leagă botul."
-      : (!tgSet
-        ? "Salvează întâi tokenul botului, apoi leagă-l."
-        : (v("notify_telegram_chat_id") === ""
-          ? "Salvează întâi Chat ID-ul, altfel botul n-are cui răspunde."
-          : ""));
+    const tgLegFaraRang = !!S.auth && !eConducere;
+    const tgLegPiedica = tgLegFaraRang
+      ? "Botul îl leagă și îl dezleagă numai cineva din conducere."
+      : (dirty
+        ? "Ai modificări nesalvate. Legarea folosește datele salvate pe server — apasă „Salvează” din bara de sus, apoi leagă botul."
+        : (!tgSet
+          ? "Salvează întâi tokenul botului, apoi leagă-l."
+          : (v("notify_telegram_chat_id") === ""
+            ? "Salvează întâi Chat ID-ul, altfel botul n-are cui răspunde."
+            : "")));
     const testHint = dirty ? "Testul folosește datele salvate pe server, nu pe cele de pe ecran. Apasă „Salvează” din bara de sus, apoi testează." : "";
 
     // --- contul MEU de Telegram, altceva decât botul casei ----------------
@@ -1576,6 +2065,15 @@ class Component extends DCLogic {
           : " Comenzile sunt salvate, dar nu au fost anunțate.")
         : "");
 
+    // Pragul de comenzi neplătite, cum stă ACUM în casetă (runda 2.7.0).
+    // Citit cu același `pragScris()` ca în `changes()` și în `save()`, ca
+    // rândul de sub casetă și refuzul de la „Salvează” să nu poată spune două
+    // lucruri despre același număr.
+    const pragPeEcran = pragScris(v(PRAG_CHEIE));
+    const pragRau = pragPeEcran.bun ? ""
+      : pragPeEcran.gol ? "Caseta goală nu se salvează: golul nu înseamnă zero. Scrie un număr de la 0 la 99."
+      : "Scrie un număr întreg de la 0 la 99.";
+
     return {
       // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
       // date, un singur loc. Copiile scrise de mână în fiecare pagină nu mai
@@ -1617,7 +2115,13 @@ class Component extends DCLogic {
       // „administrator” dedesubt, lângă caseta care tocmai spunea că nu știe
       // nimic — iar pe telefon nimeni n-ar fi văzut-o, subsolul fiind ascuns
       // de bandă (`[data-st=sidefoot]{display:none}`).
-      sideWho: !!S.auth && isAdmin,
+      //
+      // De la runda 2.7.0 cuvântul de sub nume e rolul omului (`gp.numeRol`),
+      // nu „administrator” scris fix: Setările se pot da din „Acces” și altui
+      // rol, iar fondatorului pastila îi spunea „administrator”. Lacătul e
+      // dreptul paginii (`areSetari`).
+      sideWho: areSetari,
+      sideRol: gp.numeRol(S.auth),
       // „Ieși din cont" lipsea cu totul din pagina asta — și de pe monitor,
       // nu doar de pe telefon. Sertarul îl arată în toate panourile, deci
       // trebuie să existe în toate. Sesiunea se închide pe SERVER, apoi
@@ -1645,8 +2149,8 @@ class Component extends DCLogic {
       // Lacătul se uită la motivul SESIUNII, nu la amândouă: un `GET /settings`
       // picat nu spune nimic despre contul omului, iar ecranul de refuz nu e
       // despre setări, e despre el.
-      blocked: S.loaded && !!S.auth && !isAdmin && !S.eroareCine,
-      allowed: !S.loaded || !S.auth || isAdmin || !!S.eroareCine,
+      blocked: S.loaded && !!S.auth && !areSetari && !S.eroareCine,
+      allowed: !S.loaded || !S.auth || areSetari || !!S.eroareCine,
       // O singură frază, nu două pe ramuri: de când `blocked` cere `!!S.auth`,
       // ecranul ăsta se aprinde NUMAI peste un cont știut, iar ramura „intră cu
       // un cont de administrator" devenise cod la care nu se mai putea ajunge
@@ -1654,7 +2158,7 @@ class Component extends DCLogic {
       // unul lipsă: cine îl caută mâine îl găsește în fișier și nu-l poate
       // scoate pe ecran. Cine n-are sesiune nu ajunge aici — îl duce
       // `gp.toLogin()`, din `pullTot()`.
-      blockedLine: "Contul „" + (S.auth ? S.auth.name : "") + "” nu are acces la setări. Doar administratorii pot schimba configurarea aplicației.",
+      blockedLine: "Contul „" + (S.auth ? S.auth.name : "") + "” nu are acces la setări. Configurarea aplicației o schimbă numai cine a primit pagina asta.",
       // Prima ieșire de pe ecranul de refuz: panoul de acasă al ROLULUI, din
       // aceeași tabelă din care îl ia și intrarea (`gp.primaPagina`). A doua e
       // `navBack`, de mai sus. Aceleași două chei ca în `Statistici.dc.html` și
@@ -1669,7 +2173,13 @@ class Component extends DCLogic {
       saveLabel: S.saving ? "Se salvează…" : "Salvează",
       onSave: () => this.save(),
       resetCls: dirty ? "h-btn h-btn--ghost" : "h-btn h-btn--ghost",
-      onReset: () => set({ s: Object.assign({}, S.orig), drafts: {}, msg: "", err: "", etapeRefuz: "" }),
+      // „Renunță” e ușa formularului (runda 2.7.0): cu ceva scris ÎNTREABĂ
+      // întâi, fiindcă stă lipit de „Salvează” și aruncă toate cele patru file
+      // deodată; pe pagina neatinsă lucrează pe loc, ca până acum. Cât merge
+      // salvarea nu face nimic: schimbările aruncate atunci se întorceau
+      // salvate la sosirea răspunsului, deci butonul mințea. Starea se citește
+      // pe viu (`this.state`), la răspunsul omului, nu de la desenul ăsta.
+      onReset: () => { if (!this.state.saving) gp.inchideCiorna(this.ciornaDeschisa(), () => this.setState({ s: Object.assign({}, this.state.orig), pragRefuz: "", drafts: {}, msg: "", err: "", etapeRefuz: "" })); },
 
       msg: S.msg, onMsgClose: () => set({ msg: "" }),
       err: S.err, onErrClose: () => set({ err: "" }),
@@ -1785,6 +2295,39 @@ class Component extends DCLogic {
           };
         });
       })(),
+
+      /* --- pragul general de comenzi neplătite (runda 2.7.0) --- */
+      // Cardul există NUMAI când cheia a venit de la server. `GET /settings` o
+      // trimite doar celui cu dreptul „plati.prag” și doar pe o bază cu
+      // migrarea 032, deci lipsa ei spune „nu e treaba ta” ori „serverul nu
+      // știe încă de prag” — iar în amândouă o casetă desenată ar fi fost o
+      // minciună: omul scrie, apasă „Salvează” și primește un refuz pentru un
+      // lucru pe care pagina i l-a pus singură în față. Se întreabă `orig`
+      // (ce a venit), nu `s` (ce e pe ecran), ca nimic scris în pagină să nu
+      // poată naște cardul.
+      pragCard: S.orig[PRAG_CHEIE] !== undefined,
+      pragVal: v(PRAG_CHEIE),
+      onPrag: field(PRAG_CHEIE),
+      // Aceleași margini ca la salvare, spuse lângă casetă înainte de drum
+      // (ca pragurile B și C din „Catalogul”): omul vede de ce nu va pleca,
+      // nu află abia din refuz. Zero își spune urmarea pe față cât e scris în
+      // casetă: scoate oprirea tuturor clienților lăsați pe pragul general.
+      //
+      // NU „pentru toți”, cum scria aici: un client cu pragul LUI, pus din
+      // Conturi, rămâne pe al lui și cu zero aici — serverul întreabă întâi
+      // rândul clientului și abia la `NULL` pragul general (`plati_prag()`).
+      // Cu „niciun client nu mai e oprit” pe ecran, patronul ar fi lăsat în
+      // pace tocmai excepțiile strânse (pragul 1 al unui rău-platnic), sigur
+      // că le-a scos și pe ele. Amândouă frazele spun deci PE CINE atinge
+      // zero, iar cea de la zero spune și cine rămâne neatins, și de unde.
+      pragAjutor: pragRau || (pragPeEcran.n === 0
+        ? "Zero: fără limită. Clienții care urmează pragul general nu mai sunt opriți, oricâte comenzi neplătite au. Cei cu prag al lor, pus din Conturi, rămân pe al lor."
+        : "Un număr întreg de la 0 la 99. Zero înseamnă „fără limită” pentru clienții care urmează pragul general."),
+      pragAjutorFg: pragRau ? "var(--h-warning)" : "var(--h-fg-subtle)",
+      pragSt: pragRau ? "prag-neplatite-gresit" : "prag-neplatite",
+      // Refuzul paginii ori al serverului, lângă casetă; gol când nu e niciunul
+      // (v. `pragRefuz`, în stare).
+      pragRefuz: S.pragRefuz || "",
 
       /* --- WhatsApp --- */
       waOn: on("notify_whatsapp_enabled"),
@@ -1945,6 +2488,15 @@ class Component extends DCLogic {
         + "apăsarea din panou, și se scrie la fel în Jurnal. Anunțul de comandă nouă pleacă fără butoane: "
         + "hotărârea unei comenzi se ia în panou sau pe ecranul din laborator, unde se vede ziua întreagă.",
       tgLegLabel: S.linking === "link" ? "Se leagă…" : (tgStare === "legat" ? "Leagă din nou" : "Leagă botul"),
+      // Cine are rangul vede butoanele; cine ține Setările numai din „Acces”
+      // vede, în locul lor, propoziția care spune cine le are. Cât sesiunea
+      // n-a sosit se desenează butoanele (stinse oricum de celelalte piedici
+      // din `tgLegOff`): pagina nu spune „n-ai voie” despre un om pe care încă
+      // nu-l cunoaște.
+      tgLegRang: !tgLegFaraRang,
+      tgLegFaraRang: tgLegFaraRang,
+      tgLegRangNota: "Botul îl leagă și îl dezleagă numai cineva din conducere — un administrator ori un fondator. "
+        + "Restul paginii lucrează și fără asta.",
       onTgLeaga: () => this.legare("link"),
       onTgDezleaga: () => this.legare("unlink"),
       tgLegOff: tgLegPiedica !== "" || S.linking !== "",
@@ -2018,7 +2570,23 @@ class Component extends DCLogic {
           const map = Object.assign({}, zoneMap);
           const cur = Object.assign({ lat: '', lng: '' }, map[name] || {});
           cur[key] = e.target.value;
-          map[name] = cur;
+          // Prima literă scrisă la o zonă fără punct îi naște punctul în
+          // hartă. Ștearsă la loc, lăsa în urmă o pereche GOALĂ pe care harta
+          // venită n-o avea: bara rămânea aprinsă pe veci, paza plecării
+          // întreba pentru nimic, iar la „Salvează” serverul refuza toată
+          // cererea (`bad_zone_point`, api/routes/settings.php) din pricina
+          // unei zone pe care omul o lăsase cum era, cu singura ieșire
+          // „Renunță”. Perechea goală a unei zone VENITE fără punct iese deci
+          // din hartă, adică zona se întoarce întocmai la ce a venit.
+          //
+          // Numai a ei. La o zonă care are punct pe server golul e o schimbare
+          // și pleacă întocmai: serverul o refuză spunând ce lipsește („are
+          // nevoie de amândouă coordonatele”); scoasă din hartă, ar fi primit
+          // refuzul despre redenumiri (`zone_point_lost`), care nu e despre ce
+          // a făcut omul. Iar o zonă nouă ori redenumită n-are la ce se
+          // întoarce.
+          if (String(cur.lat).trim() === "" && String(cur.lng).trim() === "" && venitaFaraPunct(name)) delete map[name];
+          else map[name] = cur;
           saveZones(zoneList, map);
         };
         return {

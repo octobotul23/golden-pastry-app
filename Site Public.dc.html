@@ -61,6 +61,43 @@
        trece peste ele. Măsurat la 390: cartonaș de 82x29, sus la 139, pastila
        se termina la 136. De aici „dreptunghiul care trece peste semne". */
     @keyframes gp-tier-spus { from { opacity: 0; transform: translateY(4px) scale(0.96); } to { opacity: 1; transform: none; } }
+    /* FEREASTRA DE LA MIJLOC (produsul și finalizarea, pe un ecran lat și
+       înalt — `eLaMijloc()`, în logică). Apare cu o mișcare scurtă, de jos în
+       sus cu zece pixeli: destul cât să se vadă că s-a deschis ceva peste
+       catalog, nu că s-a schimbat pagina. Mișcarea stă AICI, nu în stilul
+       casetei, din două pricini: stilul casetei nu are voie să poarte
+       `transform` (o casetă așezată cu `translate(-50%,-50%)` cade pe jumătăți
+       de pixel și își încețoșează scrisul — aici `transform` trăiește 180 ms și
+       se stinge), și numai de aici o poate opri cine a cerut mai puțină
+       mișcare. Foaia de jos, de pe telefon, nu poartă semnul și nu se mișcă. */
+    @keyframes gp-fereastra { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+    main[data-fereastra="mijloc"] { animation: gp-fereastra 180ms var(--h-ease-out); }
+    @media (prefers-reduced-motion: reduce) { main[data-fereastra="mijloc"] { animation: none; } }
+    /* BARA DE DERULARE A FERESTREI DE LA MIJLOC NU ARE VOIE ÎN COLȚURI.
+       Fereastra se derulează în ea (finalizarea are mereu de derulat) și are
+       colțuri rotunjite, iar bara browserului e un dreptunghi cu săgeți la
+       capete, pe care colțul nu-l taie: ieșea din amândouă colțurile din
+       dreapta, cu tot cu săgeți. `scrollbar-width:thin` o subțiază, dar
+       săgețile rămân în colț. Singurul lucru care o scoate de acolo e șina
+       trasă cu `margin-block` cât raza colțului, și asta se poate cere numai
+       prin `::-webkit-scrollbar` (Chrome, Edge, Safari).
+
+       Două capcane, amândouă mute:
+       · cele două căi NU se pot scrie împreună. Unde vede `scrollbar-width`
+         sau `scrollbar-color` pe casetă, Chrome nu mai ascultă deloc de
+         `::-webkit-scrollbar` și bara se întoarce în colț. De aceea calea
+         standard stă sub `@supports not selector(…)`: o primesc numai
+         browserele care n-o au pe cealaltă.
+       · cine cere `::-webkit-scrollbar` își desenează singur cursorul. Fără
+         culoarea de mai jos bara ar fi acolo, lată de 12 pixeli, și nu s-ar
+         vedea nimic din ea.
+       Foaia de jos, de pe telefon, nu poartă semnul și rămâne cum era: acolo
+       bara plutește peste conținut și piere singură. */
+    main[data-fereastra="mijloc"]::-webkit-scrollbar { width: 12px; }
+    main[data-fereastra="mijloc"]::-webkit-scrollbar-track { background: transparent; margin-block: 18px; }
+    main[data-fereastra="mijloc"]::-webkit-scrollbar-thumb { border: 3px solid transparent; border-radius: 999px; background-color: color-mix(in srgb, var(--h-fg) 30%, transparent); background-clip: padding-box; }
+    main[data-fereastra="mijloc"]::-webkit-scrollbar-thumb:hover { background-color: color-mix(in srgb, var(--h-fg) 48%, transparent); }
+    @supports not selector(::-webkit-scrollbar) { main[data-fereastra="mijloc"] { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--h-fg) 30%, transparent) transparent; } }
     [data-fapt="nu"] { display: none; } /* căsuța unei laturi pe care produsul nu se vinde piere cu totul din grila faptelor — hotărârea patronului. Scrisă aici, în foaie, nu în stilul căsuței: stilul ăla e unul singur pentru toate trei, iar `pvFapte` numără coloanele rămase. */
     /* BARA DE FINALIZARE, MĂSURATĂ ÎNTR-UN SINGUR LOC.
 
@@ -152,6 +189,85 @@
     [data-unelte] [data-cauta]:focus-within { border-color: var(--h-accent) !important; box-shadow: 0 0 0 3px var(--h-accent-soft); }
     [data-unelte] input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; display: none; }
     [data-unelte] input::placeholder { color: var(--h-fg-subtle); } .h-stepper > .h-stepper__btn:focus-visible { outline-offset: -4px; border-radius: 50%; } .h-stepper > .h-stepper__value:focus-visible { outline: 2px solid var(--h-accent) !important; outline-offset: -4px; border-radius: var(--h-radius-sm); } /* Inelul de focus al steperului de cantitate (card, coș, fereastra rapidă, pagina produsului, finalizare). Hearth îl desenează pe buton cu `outline-offset: 2px`, adică în afara butonului, iar `.h-stepper { overflow: hidden }` îl taie pe marginea pastilei: la Tab se vedeau 66 din 252 de pixeli ai inelului la 1280 și 348 din 1334 la 390, 26%, numărați în poză față de aceeași pastilă netăiată. Tras 4px înăuntru și rotund, încape întreg în capătul rotunjit al pastilei: butonul are 36px (44 pe telefon, strâns până la 36x44 în cardul îngust), iar capătul are raza 18 (22). Căsuța cantității avea `outline: none` scris pe element (`qtyInput`) și niciun alt semn decât selecția; de-aia `!important` la ea, ca la căutare. Căsuța din bara bulei (`micCasuta`) nu stă într-o pastilă și are inelul ei: regulile de aici nu o ating. Scris la capătul rândului, nu sub el, ca să nu mute numerele de rând ale paginii. Regula: test-defect-inel-steper. */
+    /* RÂNDUL UNUI PRODUS DIN „PRODUSE SELECTATE”, AȘEZAT DUPĂ LĂȚIMEA LISTEI.
+
+       E lista din formular (fereastra de finalizare și pagina Contact), nu
+       foaia coșului. Până la 2.7.0 rândul era un singur `flex`: pasul, numele
+       cu rândul mic, prețul. Pasul și prețul nu se strâng, deci tot ce lipsea
+       se lua din nume. Măsurat pe 9 oct. 2026 (lățimea ferestrei → coloana
+       numelui · rânduri de nume + rânduri mici · înălțimea rândului):
+          320 → 0–2 px · 4 + 7 · 262 px, cu prețul căzut PESTE scris
+          360 → 40 px · 4 + 5 · 221 px
+          390 → 72 px · 2–4 + 3 · 131–179 px
+          430 → 110 px · 2 + 3          480 → 156 px · 1–2 + 2
+          600 → 266 px · 1 + 1 · 65 px (bun)
+          700 → 25 px · 4 + 6 · 241 px
+          767 → 59 px        768 → 52 px · 4 + 5
+          820 → 78 px        900 → 118 px
+         1024 → 180 px · 1 + 2
+         1100–1440 → 199 px · 1 + 1 · 65 px (bun)
+       Stricat în DOUĂ intervale, cu unul bun între ele: la 700 formularul
+       trece pe două coloane și lista se îngustează la loc. Deci nu atârnă de
+       fereastră, ci de lățimea LISTEI — de-asta `@container`, nu `@media`
+       (ca plăcile din Conturi și din Încasări). Un `@media` ar fi cerut două
+       praguri, amândouă legate de pragul coloanelor, care e scris în alt loc.
+
+       AȘEZAREA DE BAZĂ e pe două rânduri, ca în foaia coșului, cu golurile de
+       acolo: sus numele (cu rândul mic și cu îndemnul), pe toată lățimea; jos
+       pasul ori insigna „fix” în stânga și prețul în dreapta. E și singura pe
+       care o primește un browser fără `@container`: mai înaltă, dar niciodată
+       ruptă. `@container` o ridică la rândul dinainte (pas, nume, preț, cu
+       golurile lui) numai unde numele are loc.
+
+       PRAGUL: 26rem (416 px de listă). Partea fără nume a rândului ridicat e
+       pasul, două goluri de 0,6rem (19,2 px) și prețul (~93 px, „148,80 RON”
+       aldin de 15 px). Pasul are 130 px pe telefon și pe tabletă (2,75 + 2,5
+       + 2,75rem și rama de 2 px) și 118 px pe calculator (2,25 + 2,75 +
+       2,25rem): deci ~242 px, respectiv ~230 px. La prag numele primește
+       ~174 px (aproape 11rem) cu pasul de telefon și ~186 px cu cel de
+       calculator. În rem, nu în px, fiindcă pasul, golurile și litera cresc
+       toate odată cu litera paginii.
+
+       Întâi a fost 27rem (432 px), socotit cu „numele + ~255 px”. 255 era
+       prea mult, iar greșeala ascundea tocmai locul cel mai umblat: lista
+       FERESTREI DE FINALIZARE de pe calculator are numai 429 px (fereastra de
+       64rem, fără rame, margini și golul dintre cele două coloane, împărțită
+       la doi, fără marginile cartonașului) și 423 px când fereastra își
+       desenează bara de derulare de 12 px. Sub 432 amândouă: acolo rândul nu
+       urca niciodată, deși în pagina Contact, cu aceeași listă mai lată
+       (444 px la 1100, 530 la 1280), urca. Același rând, două înfățișări pe
+       același calculator. 416 lasă 7 px sub lista cu bară.
+
+       Urmarea, socotită din lățimile listei: la 480 (397,6 px) rămâne pe
+       două rânduri, cum s-a cerut, fiindcă numele ar avea iar 156 px; de la
+       500 până pe la 673 (686 în Contact), cu formularul pe o coloană, urcă
+       (416–573 px); de acolo, cu formularul pe două coloane, până pe la 1046
+       (1058 cu bara ferestrei; în Contact pe la 1055, măsurat în browser pe
+       9 oct. 2026, nu 1040 cât dădea socoteala) coboară la loc pe două
+       rânduri (254–415 px; la 1024 lista are 405 px în fereastră și 409 în
+       Contact); mai sus urcă. Socoteala e din cifrele foii, nu de pe ecran:
+       se măsoară în browser. Regula care ține pragul între cele două capete:
+       check-site-public, „pragul ridicării”.
+
+       Se măsoară LISTA (`data-alese="lista"`), nu rândul: un `@container`
+       nu-și poate măsura chiar elementul pe care îl așază. Locurile din grilă
+       sunt numite, fiindcă ordinea din marcaj rămâne cea dinainte — pas, nume,
+       preț —, deci focusul și cititorul de ecran merg tot așa; numai ochiul
+       vede numele mutat sus.
+
+       STILURILE DE AȘEZARE STAU AICI, NU PE ELEMENTE. Un `style="…"` bate
+       orice regulă din foaie: cu `display:flex` rămas pe rând, pragul n-ar mai
+       fi mutat nimic, fără nicio eroare. Pe elemente au rămas culorile și
+       dunga de sub rând. Foaia coșului nu poartă semnele astea și rămâne cum
+       era. Regula: check-site-public, „rândul din «Produse selectate»”. */
+    [data-alese="lista"] { container-type: inline-size; }
+    [data-alese="rand"] { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "nume nume" "pas pret"; align-items: center; gap: 0.5rem; padding: 0.7rem 0; }
+    [data-alese="nume"] { grid-area: nume; min-width: 0; }
+    [data-alese="pas"] { grid-area: pas; justify-self: start; }
+    [data-alese="pret"] { grid-area: pret; justify-self: end; display: flex; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; justify-content: flex-end; }
+    @container (min-width: 26rem) {
+      [data-alese="rand"] { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "pas nume pret"; gap: 0.6rem; padding: 0.55rem 0; }
+    }
   </style>
 </helmet>
 
@@ -361,9 +477,11 @@
     </sc-if>
   </div>
 
+  <!-- `eroareCasetaRef` stă, ca `reiaCasetaRef` mai jos, pe caseta VĂZUTĂ:
+       `masoaraPastila()` dă pastila la o parte cât stă peste ea (cazul 4). -->
   <sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
   <div style="max-width:1740px;margin:1.1rem auto 0;padding:0 clamp(1.25rem,4vw,3rem)">
-  <div class="h-alert h-alert--danger" role="alert" style="border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+  <div ref="{{ eroareCasetaRef }}" class="h-alert h-alert--danger" role="alert" style="border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
   <p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
   <p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
   <button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ eroareCta }}</button>
@@ -371,16 +489,18 @@
   </div>
   </sc-if>
 
+  <!-- `reiaCasetaRef` stă pe caseta VĂZUTĂ (cea cu fundal și chenar), nu pe
+       învelișul care îi ține lățimea paginii: `masoaraPastila()` are de aflat
+       dacă pastila stă peste ce se vede, nu peste locul lăsat pentru el. -->
   <sc-if value="{{ reiaVizibil }}" hint-placeholder-val="{{ false }}">
   <div style="max-width:1740px;margin:1.1rem auto 0;padding:0 clamp(1.25rem,4vw,3rem)">
-  <div class="h-alert h-alert--accent" role="status" style="border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+  <div ref="{{ reiaCasetaRef }}" class="h-alert h-alert--accent" role="status" style="border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
   <p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ reiaTitlu }}</p>
   <p style="margin:0;font-size:15px;line-height:1.45">{{ reiaText }}</p>
   <sc-if value="{{ reiaAreLipsa }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;line-height:1.45">{{ reiaLipsaText }}</p></sc-if>
-  <sc-if value="{{ reiaAreVechi }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:15px;line-height:1.45">{{ reiaVechiText }}</p></sc-if>
   <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
   <sc-if value="{{ reiaCosBtn }}" hint-placeholder-val="{{ false }}"><button type="button" class="h-btn h-btn--primary" onClick="{{ arataCos }}" aria-expanded="{{ cosJosStr }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaVeziCos }}</button></sc-if>
-  <sc-if value="{{ reiaAreVechi }}" hint-placeholder-val="{{ false }}"><button type="button" class="h-btn h-btn--secondary" onClick="{{ reiaPuneLaLoc }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaReiaLaLoc }}</button></sc-if>
+  <sc-if value="{{ reiaAreAdaos }}" hint-placeholder-val="{{ false }}"><button type="button" class="h-btn h-btn--secondary" onClick="{{ reiaScoate }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaReiaScoate }}</button></sc-if>
   <button type="button" class="h-btn h-btn--ghost" onClick="{{ reiaInchide }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaReiaInchide }}</button>
   </div>
   </div>
@@ -959,7 +1079,7 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
                 {{ ctaWaOrder }}
               </a>
-              <button type="button" class="h-btn h-btn--secondary h-btn--block" style="margin-top:0.5rem;min-height:2.75rem" onClick="{{ deschideFinal }}">{{ ctaContinue }}</button>
+              <button type="button" ref="{{ finalColoanaRef }}" class="h-btn h-btn--secondary h-btn--block" style="margin-top:0.5rem;min-height:2.75rem" onClick="{{ deschideFinal }}">{{ ctaContinue }}</button>
             </sc-if>
           </div>
           <sc-if value="{{ desk }}" hint-placeholder-val="{{ true }}">
@@ -986,11 +1106,15 @@
   <sc-if value="{{ areVedere }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ inchideVedere }}" aria-hidden="true" style="position:fixed;left:0;right:0;top:0;bottom:0;z-index:139;background:rgba(0,0,0,0.55)"></div>
   </sc-if>
-  <main style="{{ pvMainStyle }}">
+  <!-- Cele patru atribute de după `style` sunt ale FERESTREI și lipsesc de pe
+       pagină: logica le dă `null`, iar un atribut `null` nu se mai scrie. Un
+       `<main role="dialog">` lăsat și pe pagina produsului i-ar fi spus
+       cititorului de ecran că toată pagina e o casetă de dialog. -->
+  <main style="{{ pvMainStyle }}" role="{{ pvRol }}" aria-modal="{{ pvModal }}" aria-label="{{ pvEticheta }}" data-fereastra="{{ pvFel }}">
     <sc-if value="{{ areVedere }}" hint-placeholder-val="{{ false }}">
       <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem clamp(1rem,4vw,1.5rem);background:var(--h-bg-page);border-bottom:1px solid var(--h-line)">
         <p class="h-h4" style="margin:0;min-width:0;font-family:var(--h-font-display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="{{ pvFisaHref }}" data-spa="1" onClick="{{ pvGoFisa }}" style="color:inherit;text-decoration:none" style-hover="text-decoration:underline">{{ pvName }}</a></p>
-        <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideVedere }}" style="flex:none;min-height:2.75rem">{{ ctaInchide }}</button>
+        <button type="button" ref="{{ pvInchideRef }}" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideVedere }}" style="flex:none;min-height:2.75rem">{{ ctaInchide }}</button>
       </div>
     </sc-if>
     <section style="{{ pvSectionStyle }}">
@@ -1225,7 +1349,7 @@
       <a class="h-btn" href="{{ waOrderHref }}" target="_blank" rel="noopener" aria-label="{{ ctaWaOrder }}" style="margin-left:auto;flex:none;width:2.75rem;height:2.75rem;padding:0;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-1);text-decoration:none">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
       </a>
-      <button type="button" class="h-btn h-btn--primary" style="flex:none;min-height:2.75rem;padding-inline:1rem" onClick="{{ deschideFinal }}">{{ ctaBarGo }}</button>
+      <button type="button" ref="{{ finalBaraRef }}" class="h-btn h-btn--primary" style="flex:none;min-height:2.75rem;padding-inline:1rem" onClick="{{ deschideFinal }}">{{ ctaBarGo }}</button>
       <!-- Cuvintele pragului stau pe un rând al lor, întins cât toată bara
            (`flex:1 0 100%`), nu în coloana sumei. NU se mută înapoi lângă
            sumă ca să se strângă bara: s-a încercat, și e o poză, nu o
@@ -1421,11 +1545,31 @@
     <div onClick="{{ inchideFinal }}" aria-hidden="true" style="position:fixed;left:0;right:0;top:0;bottom:0;z-index:159;background:rgba(0,0,0,0.6)"></div>
   </sc-if>
   <sc-if value="{{ contactVizibil }}">
-  <main style="{{ contactMainStyle }}">
+  <main style="{{ contactMainStyle }}" role="{{ finalRol }}" aria-modal="{{ finalModal }}" aria-label="{{ finalEticheta }}" data-fereastra="{{ finalFel }}">
     <sc-if value="{{ finalizare }}" hint-placeholder-val="{{ false }}">
       <div style="position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.7rem clamp(1rem,4vw,1.5rem);background:var(--h-bg-page);border-bottom:1px solid var(--h-line)">
         <p class="h-h4" style="margin:0;font-family:var(--h-font-display)">{{ finalTitlu }}</p>
-        <button type="button" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideFinal }}" style="flex:none;min-height:2.75rem">{{ ctaInchide }}</button>
+        <button type="button" ref="{{ finalInchideRef }}" class="h-btn h-btn--ghost h-btn--sm" onClick="{{ inchideFinal }}" style="flex:none;min-height:2.75rem">{{ ctaInchide }}</button>
+      </div>
+    </sc-if>
+    <!-- „Comandă din nou” deschide fereastra asta SINGURĂ (runda 2.7.0), deci
+         omul ajunge în fața unui coș pe care nu l-a umplut el acum. Caseta de
+         pe catalog e sub perdea; fără rândurile astea n-ar afla de ce e coșul
+         plin și nici că poate desface adunarea. Aceleași vorbe și aceleași
+         butoane ca acolo (`reiaText`, `reiaScoate`, `reiaInchide`), strânse:
+         fără titlu, fiindcă fereastra are deja unul. Cât stă asta pe ecran,
+         cea de pe catalog nu se desenează (`reiaVizibil`) — altfel pagina ar
+         avea două casete de stare cu același text, citite de două ori de un
+         cititor de ecran, și două butoane de desfăcut la rând pentru cine
+         umblă cu Tab. -->
+    <sc-if value="{{ reiaInFinal }}" hint-placeholder-val="{{ false }}">
+      <div class="h-alert h-alert--accent" role="status" style="margin:0.9rem clamp(1rem,4vw,1.5rem) 0;border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+        <p style="margin:0;font-size:14px;line-height:1.45">{{ reiaText }}</p>
+        <sc-if value="{{ reiaAreLipsa }}" hint-placeholder-val="{{ false }}"><p style="margin:0;font-size:14px;line-height:1.45">{{ reiaLipsaText }}</p></sc-if>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:2px">
+          <sc-if value="{{ reiaAreAdaos }}" hint-placeholder-val="{{ false }}"><button type="button" class="h-btn h-btn--secondary" onClick="{{ reiaScoate }}" style="min-height:44px;padding:0 16px;font-size:14px;border-radius:14px">{{ ctaReiaScoate }}</button></sc-if>
+          <button type="button" class="h-btn h-btn--ghost" onClick="{{ reiaInchide }}" style="min-height:44px;padding:0 16px;font-size:14px;border-radius:14px">{{ ctaReiaInchide }}</button>
+        </div>
       </div>
     </sc-if>
     <sc-if value="{{ onContact }}">
@@ -1519,25 +1663,37 @@
           <sc-if value="{{ hasPicks }}">
             <div class="h-card h-card--flat">
               <p class="h-eyebrow" style="margin-bottom:0.75rem">{{ interestLabel }}</p>
-              <div style="display:flex;flex-direction:column">
+              <!-- RÂNDUL SE AȘAZĂ DIN FOAIE, NU DE AICI (v. „RÂNDUL UNUI PRODUS
+                   DIN «PRODUSE SELECTATE»”, în stiluri). Semnele `data-alese`
+                   sunt tot ce leagă marcajul de foaie: `lista` e cutia a cărei
+                   lățime se măsoară, `rand` e grila, iar `pas`, `nume` și
+                   `pret` sunt locurile ei. Insigna „fix” și pasul poartă
+                   același semn fiindcă nu se desenează niciodată amândouă
+                   (`row.fixed` / `row.steppable`) și stau în același loc.
+                   Niciun stil de așezare pe rând ori pe copiii lui: ar bate
+                   foaia, iar rândul ar rămâne într-un singur fel la orice
+                   lățime — de aici au plecat numele rupte pe patru rânduri.
+                   Un copil nou al rândului are nevoie de semnul și de locul
+                   lui; fără ele grila îl pune singură unde apucă. -->
+              <div data-alese="lista" style="display:flex;flex-direction:column">
                 <sc-for list="{{ picks }}" as="row" hint-placeholder-count="2">
-                  <div style="display:flex;align-items:center;gap:0.6rem;padding:0.55rem 0;border-bottom:1px solid var(--h-line)">
+                  <div data-alese="rand" style="border-bottom:1px solid var(--h-line)">
                     <sc-if value="{{ row.fixed }}">
-                      <span class="h-badge" style="flex:none;background:var(--h-success-soft);color:var(--h-success);text-transform:none;letter-spacing:0;font-weight:700">{{ row.fixedLabel }}</span>
+                      <span class="h-badge" data-alese="pas" style="background:var(--h-success-soft);color:var(--h-success);text-transform:none;letter-spacing:0;font-weight:700">{{ row.fixedLabel }}</span>
                     </sc-if>
                     <sc-if value="{{ row.steppable }}" hint-placeholder-val="{{ true }}">
-                      <div class="h-stepper" style="flex:none;background:var(--h-bg-raised)">
+                      <div class="h-stepper" data-alese="pas" style="background:var(--h-bg-raised)">
                         <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ lessLabel }}" onClick="{{ row.dec }}">−</button>
                         <input class="h-stepper__value" type="text" inputmode="numeric" value="{{ row.qty }}" onChange="{{ row.set }}" onBlur="{{ row.blur }}" onFocus="{{ row.pick }}" aria-label="{{ qtyLabel }}" style="{{ qtyInput }}">
                         <button type="button" class="h-stepper__btn" style="{{ stepBtn }}" aria-label="{{ moreLabel }}" onClick="{{ row.inc }}">+</button>
                       </div>
                     </sc-if>
-                    <div style="flex:1;min-width:0">
+                    <div data-alese="nume">
                       <p class="h-list__title" style="margin:0;text-wrap:pretty">{{ row.name }}</p>
                       <p class="h-list__meta" style="margin:2px 0 0">{{ row.meta }}</p>
                       <sc-if value="{{ row.areIndemn }}"><p class="h-caption" style="{{ cosIndemn }}">{{ row.indemn }}</p></sc-if>
                     </div>
-                    <div style="display:flex;align-items:baseline;gap:0.4rem;flex-wrap:wrap;justify-content:flex-end">
+                    <div data-alese="pret">
                       <span style="{{ lineTotalStyle }}">{{ row.lineTotal }}</span>
                       <sc-if value="{{ row.hasWas }}">
                         <span class="h-small" style="color:var(--h-fg-subtle);text-decoration:line-through">{{ row.lineWas }}</span>
@@ -1555,7 +1711,7 @@
                   </sc-if>
                 </span>
               </div>
-              <button type="button" class="h-btn h-btn--ghost h-btn--sm" style="margin-top:0.75rem;padding-inline:0" onClick="{{ goCat }}">{{ ctaEditPicks }} →</button>
+              <button type="button" class="h-btn h-btn--ghost h-btn--sm" style="margin-top:0.75rem;padding-inline:0;min-height:2.75rem" onClick="{{ goCat }}">{{ ctaEditPicks }} →</button>
             </div>
           </sc-if>
         </div>
@@ -1626,6 +1782,16 @@
               </sc-if>
             </div>
           </sc-if>
+          <!-- CUTIA CASETELOR DE COMANDĂ (runda 2.7.0), de două ori: aici, în
+               jurul livrării, și mai jos, în jurul zilei, mențiunilor, codului
+               și bifei de catalog. În felul „numai mesaj” („Contactează-ne”)
+               casetele comenzii se ASCUND cu `display:none`, nu se scot cu un
+               „sc-if”: acela desființează copiii (`walkIf`, support.js), iar
+               mențiunile scrise pentru comandă — casetă neținută în stare —
+               s-ar fi pierdut până la întoarcerea la comandă. Cât nu e nimic
+               de arătat înăuntru, cutia e tot `display:none` (`livrareStil`,
+               `josStil`), ca să nu lase un gol de un rând în formular. -->
+          <div style="{{ livrareStil }}">
           <sc-if value="{{ campuriLivrare }}" hint-placeholder-val="{{ false }}">
             <div class="h-field"><label class="h-label" for="q-addr">{{ lblAddr }}</label>
               <input class="h-input" id="q-addr" name="Adresa" value="{{ addr }}" onChange="{{ onAddr }}" placeholder="{{ phAddr }}">
@@ -1640,6 +1806,7 @@
               <p class="h-caption" style="margin:0.4rem 0 0">{{ zoneNote }}</p>
             </div>
           </sc-if>
+          </div>
           <sc-if value="{{ asGuest }}" hint-placeholder-val="{{ true }}">
           <div style="{{ fieldPair }}">
             <div class="h-field"><label class="h-label" for="q-company">{{ lblCompany }}</label><input class="h-input" id="q-company" name="Companie" required="{{ true }}" placeholder="{{ phCompany }}"></div>
@@ -1667,6 +1834,7 @@
               <option>{{ vol4 }}</option>
             </select>
           </div>          </sc-if>
+          <div style="{{ josStil }}">
           <sc-if value="{{ campuriJos }}" hint-placeholder-val="{{ true }}">
           <div class="h-field"><label class="h-label">{{ lblWhen }}</label>
             <div style="display:flex;flex-wrap:wrap;gap:0.5rem">
@@ -1711,16 +1879,103 @@
           <sc-if value="{{ asGuest }}" hint-placeholder-val="{{ true }}">
           <label class="h-check"><input type="checkbox" name="Vreau catalogul PDF" checked="{{ wantCatalog }}" onChange="{{ toggleCatalog }}"><span>{{ lblWantCatalog }}</span></label>
           </sc-if>
+          </div>
+          <!-- PLĂȚILE: PRAGUL COMENZILOR NEPLĂTITE (runda 2.7.0, hotărârile
+               patronului din 4–5 oct. 2026). Trei fețe, toate DEASUPRA locului
+               în care apare refuzul trimiterii, ca omul să le citească înainte
+               de buton, nu după:
+
+                 · rândul galben — clientul e prevenit (mai are loc de comenzi);
+                 · caseta roșie  — clientul e oprit; vorbele sunt ale patronului;
+                 · caseta de mesaj — ce rămâne după „Contactează-ne”: același
+                   formular, care trimite acum numai un mesaj, fără produse.
+
+               Nu se desenează nimic cât pagina nu ȘTIE (`GET /plati/mine`
+               picat, server vechi, `activ: false`, cont care nu e de client):
+               tăcerea nu oprește pe nimeni. Caseta de mesaj stă exact în locul
+               casetei roșii, ca ochiul să nu aibă de căutat ce s-a schimbat
+               după apăsare. Caseta NU cere focusul la naștere, dinadins:
+               textul e pus gata, iar tastatura sărită peste el pe telefon ar
+               ascunde tocmai butonul de trimis. -->
+          <sc-if value="{{ mesajMod }}" hint-placeholder-val="{{ false }}">
+            <div class="h-field"><label class="h-label" for="q-msg-plati">{{ lblMesajPlati }}</label>
+              <textarea class="h-textarea" id="q-msg-plati" required="{{ true }}" value="{{ mesajText }}" onChange="{{ onMesajText }}"></textarea>
+              <p class="h-caption" style="margin:0.4rem 0 0;line-height:1.5;text-wrap:pretty">{{ mesajNota }}</p>
+            </div>
+          </sc-if>
+          <sc-if value="{{ platiAvert }}" hint-placeholder-val="{{ false }}">
+            <div class="h-alert h-alert--warning" role="status" style="border-radius:16px"><div style="min-width:0"><p style="margin:0;line-height:1.5;text-wrap:pretty">{{ platiAvertText }}</p></div></div>
+          </sc-if>
+          <sc-if value="{{ platiBlocat }}" hint-placeholder-val="{{ false }}">
+            <div class="h-alert h-alert--danger" role="alert" style="border-radius:20px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:stretch">
+              <p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700;text-wrap:pretty">{{ platiTitlu }}</p>
+              <p style="margin:0;font-size:15px;line-height:1.45;text-wrap:pretty">{{ platiCorp }}</p>
+              <sc-if value="{{ platiAreLista }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;border-top:1px solid var(--h-line)">
+                  <sc-for list="{{ platiLista }}" as="o" hint-placeholder-count="2">
+                    <div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 12px;padding:8px 0;border-bottom:1px solid var(--h-line);font-size:14px;line-height:1.4">
+                      <span style="min-width:0;overflow-wrap:anywhere"><strong>{{ o.ref }}</strong> · {{ o.zi }}</span>
+                      <span style="font-weight:700;white-space:nowrap;margin-left:auto">{{ o.suma }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ platiRest }}" hint-placeholder-val="{{ false }}">
+                <p style="margin:0;font-size:14px;line-height:1.45;text-wrap:pretty">{{ platiRest }}</p>
+              </sc-if>
+              <p style="margin:0;font-size:15px;font-weight:700;text-wrap:pretty">{{ platiSold }}</p>
+              <sc-if value="{{ platiCereri }}" hint-placeholder-val="{{ false }}">
+                <p style="margin:0;font-size:14px;line-height:1.45;text-wrap:pretty">{{ platiCereri }}</p>
+              </sc-if>
+              <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start;margin-top:2px">
+                <button type="button" class="h-btn h-btn--secondary" onClick="{{ onContactPlati }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaContactPlati }}</button>
+                <p class="h-caption" style="margin:0;line-height:1.5;text-wrap:pretty">{{ contactPlatiNota }}</p>
+              </div>
+            </div>
+          </sc-if>
           <sc-if value="{{ sendErr }}">
             <div class="h-alert h-alert--danger"><div><p class="h-alert__body">{{ sendErr }}</p></div></div>
+          </sc-if>
+          <!-- TRECEREA PESTE PRAG, pentru omul biroului. Stă SUB refuzul
+               serverului (rândul de deasupra poartă vorbele lui: „Cutare are
+               2 comenzi neplătite…”), fiindcă e întrebarea care urmează din
+               el. Se desenează numai când serverul a spus `poateOcoli: true`.
+               „Da” e un buton obișnuit, NU unul de trimitere: pus deasupra
+               butonului mare, un buton de trimitere ar fi devenit cel implicit
+               al formularului, iar un Enter în orice casetă ar fi trecut peste
+               prag fără ca cineva să fi răspuns. „Nu” e primul, ca degetul
+               grăbit să nimerească refuzul, nu îngăduința. -->
+          <sc-if value="{{ pragIntreb }}" hint-placeholder-val="{{ false }}">
+            <div role="alertdialog" aria-label="{{ pragIntrebText }}" class="h-card" style="padding:16px 18px;border-radius:18px;border:1px solid var(--h-danger);display:flex;flex-direction:column;gap:10px">
+              <p style="margin:0;font-size:16px;font-weight:700;line-height:1.35;text-wrap:pretty;overflow-wrap:anywhere">{{ pragIntrebText }}</p>
+              <p class="h-caption" style="margin:0;line-height:1.5;text-wrap:pretty">{{ pragIntrebNota }}</p>
+              <div style="display:flex;flex-wrap:wrap;gap:8px">
+                <button type="button" class="h-btn h-btn--secondary" onClick="{{ onPragNu }}" style="flex:1 1 7rem;min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaPragNu }}</button>
+                <button type="button" class="h-btn h-btn--primary" onClick="{{ onPragDa }}" disabled="{{ sending }}" style="flex:1 1 12rem;min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">{{ ctaPragDa }}</button>
+              </div>
+            </div>
           </sc-if>
           <sc-if value="{{ sent }}">
             <div class="h-alert h-alert--success"><span class="h-alert__icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"></path></svg></span><div><p class="h-alert__title">{{ sentTitle }}</p><p class="h-alert__body">{{ sentBody }}</p></div></div>
           </sc-if>
-          <button type="submit" onClick="{{ doarTrimite }}" class="h-btn h-btn--primary h-btn--block" disabled="{{ sending }}" style="min-height:2.75rem">{{ sendLabel }}</button>
+          <!-- `disabled` nu mai ascultă numai de `sending`: `trimiteStins` e
+               „se trimite acum ORI clientul e oprit de prag cu produse în coș”
+               (v. `trimiteOprit`, în renderVals). Butonul stins își spune
+               singur pricina, pe etichetă, iar rândul de sub el o spune
+               întreagă; `aria-describedby` le leagă pentru cine ascultă
+               pagina în loc s-o vadă. -->
+          <button type="submit" onClick="{{ doarTrimite }}" class="h-btn h-btn--primary h-btn--block" disabled="{{ trimiteStins }}" aria-describedby="q-oprit-nota" style="min-height:2.75rem">{{ sendLabel }}</button>
+          <sc-if value="{{ comandaOprita }}" hint-placeholder-val="{{ false }}">
+            <p class="h-caption" id="q-oprit-nota" style="text-align:center;margin:0;line-height:1.5;text-wrap:pretty">{{ trimiteOpritNota }}</p>
+          </sc-if>
+          <sc-if value="{{ mesajMod }}" hint-placeholder-val="{{ false }}">
+            <button type="button" class="h-btn h-btn--secondary h-btn--block" onClick="{{ onInapoiComanda }}" style="min-height:2.75rem">{{ ctaInapoiComanda }}</button>
+          </sc-if>
+          <sc-if value="{{ comandaMod }}" hint-placeholder-val="{{ true }}">
           <sc-if value="{{ potCont }}" hint-placeholder-val="{{ false }}">
             <button type="submit" onClick="{{ trimiteSiCont }}" class="h-btn h-btn--secondary h-btn--block" disabled="{{ sending }}" style="min-height:2.75rem">{{ sendContLabel }}</button>
             <p class="h-caption" style="text-align:center;margin:0;line-height:1.5">{{ sendContNote }}</p>
+          </sc-if>
           </sc-if>
           <button type="button" class="h-btn h-btn--block" onClick="{{ sendWa }}" style="min-height:2.75rem;background:#1EA855;color:#FFFFFF;border:0;box-shadow:var(--h-shadow-2);gap:0.5rem" style-hover="filter:brightness(1.08)">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M20.8 11.7a8.4 8.4 0 0 1-12.4 7.4L3.6 20.4l1.3-4.9A8.4 8.4 0 1 1 20.8 11.7z"></path><path d="M9.4 8.7c.2-.3.6-.4.9-.3l.8.3c.3.1.5.5.4.8l-.3.9c0 .2 0 .5.2.6l1.2 1.2c.2.2.4.2.6.2l.9-.3c.3-.1.7 0 .8.4l.3.8c.1.3 0 .7-.3.9-.9.5-2 .3-3.1-.4a8.3 8.3 0 0 1-2.2-2.2c-.7-1.1-.9-2.2-.2-2.9z" fill="currentColor" stroke="none"></path></svg>
@@ -1894,6 +2149,60 @@ const altundeva = (e) => {
 };
 
 /**
+ * Unde stă o fereastră deschisă peste catalog: la mijloc, ori lipită de jos.
+ *
+ * Fereastra produsului și cea de finalizare veneau de jos pe ORICE ecran. Pe
+ * telefon acolo e degetul. Pe calculator însă, măsurat pe site la 1920×1080,
+ * fereastra produsului începea la 375 de pixeli de sus și se termina lipită de
+ * marginea de jos, cu colțurile de jos drepte: o foaie de telefon, întinsă pe
+ * un monitor, cu trei sute de pixeli goi deasupra și niciunul dedesubt.
+ *
+ * Pragul are DOUĂ jumătăți. Lățimea singură nu ajunge: un telefon ținut pe
+ * lat are 844×390, e destul de lat și mult prea scund — o fereastră la mijloc
+ * ar avea acolo 340 de pixeli pentru poză, preț și cantitate. Pe el rămâne
+ * foaia de jos, care are toată înălțimea ecranului.
+ *
+ * A doua întrebare e a ferestrei PRODUSULUI: încap poza și textul alături?
+ * Pagina le ține una sub alta sub 1080 px (`mob`), fiindcă acolo ea are toată
+ * lățimea ecranului. Fereastra de la mijloc însă are cel mult 52rem (832 px)
+ * și îi atinge de la 880 px de ecran în sus (832 + dunga de 3rem) — adică de
+ * acolo e exact cât pe calculator. Lăsată pe `mob`, la 1024×768 poza se
+ * întindea pe toți cei 832 de pixeli, iar prețul și cantitatea — lucrul
+ * pentru care s-a deschis fereastra — cădeau 283 de pixeli sub marginea ei.
+ * Sub 880 px (o tabletă în picioare) rămân una sub alta: acolo e înălțime.
+ *
+ * Întrebate din `constructor` și din `_onResize`, niciodată din desenare: o
+ * desenare care ar citi fereastra browserului ar răspunde altfel decât starea
+ * din care s-a născut.
+ */
+const FEREASTRA_LA_MIJLOC = '(min-width:768px) and (min-height:500px)';
+const FEREASTRA_CU_DOUA_COLOANE = '(min-width:880px)';
+const intreabaEcranul = (ce) => typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+  && !!window.matchMedia(ce).matches;
+const eLaMijloc = () => intreabaEcranul(FEREASTRA_LA_MIJLOC);
+const incapAlaturi = () => intreabaEcranul(FEREASTRA_CU_DOUA_COLOANE);
+
+/**
+ * Hainele ferestrei de la mijloc, aceleași pentru produs și pentru finalizare.
+ *
+ * `left/right/top/bottom:0` cu `margin:auto` și `height:fit-content` o pun la
+ * mijloc pe amândouă axele FĂRĂ `transform`: cu `translate(-50%,-50%)` o
+ * casetă de înălțime impară cade pe jumătate de pixel și tot scrisul din ea se
+ * încețoșează. Marginea de 3rem (1,5 de fiecare parte) e dunga de catalog care
+ * rămâne la vedere — semnul că e o fereastră, nu o pagină nouă —, și e aceeași
+ * sus și jos, ceea ce foaia de jos nu putea avea.
+ *
+ * `100vh`, nu `100dvh`, deși sertarul de meniu îl folosește pe al doilea:
+ * stilul trece prin `cssToObj()` (support.js), care ține o singură valoare de
+ * fiecare însușire, deci aici nu se poate scrie una de rezervă. Un browser care
+ * nu știe `dvh` ar fi rămas fără nicio înălțime maximă, adică fără derulare.
+ */
+const fereastraLaMijloc = (strat, lata) => 'position:fixed;left:0;right:0;top:0;bottom:0;margin:auto;z-index:' + strat
+  + ';width:min(' + lata + ',calc(100vw - 3rem));height:fit-content;max-height:calc(100vh - 3rem)'
+  + ';overflow-y:auto;overscroll-behavior:contain;background:var(--h-bg-page)'
+  + ';border:1px solid var(--h-line);border-radius:18px;box-shadow:0 18px 48px rgba(0,0,0,0.38)';
+
+/**
  * De unde pornește pagina.
  *
  * Răspunsul serverului (`GP_RUTA`) bate citirea adresei: serverul a verificat
@@ -2056,6 +2365,12 @@ class Component extends DCLogic {
     this.pastilaRef = React.createRef();
     this.baraRef = React.createRef();
     this.waSusRef = React.createRef();
+    // Și caseta „Comandă din nou” de pe catalog: cât stă sub pastilă, pastila
+    // se dă la o parte (v. `masoaraPastila()`, cazul 3).
+    this.reiaCasetaRef = React.createRef();
+    // Și caseta roșie „Produsele nu s-au încărcat.”, care stă în același loc
+    // când catalogul n-a sosit (v. `masoaraPastila()`, cazul 4).
+    this.eroareCasetaRef = React.createRef();
     // Nu mai e un `React.createRef()`, ci o pereche: cutia pe care o citește
     // `sendWa` a rămas, dar în marcaj pleacă FUNCȚIA, fiindcă numai ea e
     // chemată de React și la montare, și la desprindere. Legată o singură dată
@@ -2063,6 +2378,34 @@ class Component extends DCLogic {
     // o prindere la fiecare literă scrisă în pagină.
     this.formRef = { current: null };
     this.legaForm = this.legaForm.bind(this);
+    // Aceeași unealtă, pe alte două noduri: butoanele „Închide" din capul
+    // ferestrei de produs și al celei de finalizare. Funcția de `ref` e
+    // singurul semnal pentru „fereastra tocmai s-a deschis" și „tocmai s-a
+    // închis"; pe el stă focusul (`tineFocusul`, mai jos). Făcute o singură
+    // dată, din aceeași pricină ca `legaForm`.
+    this.__focusInapoi = {};
+    this.legaVederea = this.tineFocusul('vedere');
+    this.legaFinalul = this.tineFocusul('final');
+    // Cele două butoane „Finalizare comandă” ale coșului — cel din coloana lui
+    // și cel din bara de jos a telefonului. Pe ele cade focusul când fereastra
+    // de finalizare se închide și n-are cui să-l dea înapoi (`asazaFocusul`).
+    // Tot funcții de `ref`, făcute o singură dată; aici numai țin minte nodul.
+    this.__butonFinal = { coloana: null, bara: null };
+    this.legaFinalColoana = (nod) => { this.__butonFinal.coloana = nod || null; };
+    this.legaFinalBara = (nod) => { this.__butonFinal.bara = nod || null; };
+    // Fereastra de finalizare tocmai s-a închis, ori un buton al casetei
+    // reluării a pierit sub deget cu fereastra încă deschisă (`dinCaseta`): la
+    // desenarea care urmează se vede dacă focusul a rămas pe ceva
+    // (`asazaFocusul`).
+    this.__focusDeAsezat = false;
+    // Butonul „Închide” al ferestrei de finalizare, cât e ea pe ecran. Îl ține
+    // minte `tineFocusul`; pe el cade focusul rămas nicăieri ÎN fereastră.
+    this.__inchideFinal = null;
+    // Ce fereastră e DESENATĂ acum — scris de `renderVals()`, citit de Escape.
+    // Nu `this.state`: fereastra de finalizare și foaia coșului au fiecare o
+    // pază în plus la desenare (coșul gol le stinge), iar Escape trebuie să
+    // închidă ce vede omul, nu un steag rămas aprins în spatele unui ecran gol.
+    this.__peEcran = { final: false, vedere: false, cos: false };
     // Ciorna: ce a scris omul, ținut cât ține fila.
     this.__ciorna = {};
     // Adevărat cât timp foaia coșului sau fereastra de finalizare are o intrare
@@ -2070,6 +2413,10 @@ class Component extends DCLogic {
     // trebuie citit SINCRON: la două apăsări iuți pe „înapoi", `this.state` n-a
     // apucat încă să se schimbe, iar a doua apăsare ar fi înghițită degeaba.
     this.__foaieInIstoric = false;
+    // `nav()` a dus pagina la început, dar intrarea foii abia urmează să fie
+    // scoasă din istoric cu o întoarcere — iar întoarcerea aduce cu ea
+    // derularea de dinainte. `_onPop` urcă pagina încă o dată (v. `duLa`).
+    this.__susDupaIntoarcere = false;
     // Adevărat între apăsarea butonului „…și fă-ți cont” și plecarea cererii.
     // Stă pe instanță, ca `__trimit` și din aceeași pricină: butonul e
     // `type="submit"`, deci apăsarea lui aprinde întâi `onClick` și abia apoi
@@ -2082,10 +2429,31 @@ class Component extends DCLogic {
     // Plecarea nu se face din `then`-ul trimiterii, ci din `componentDidUpdate`
     // — pricina e scrisă acolo.
     this.__spreCont = '';
+    // PLĂȚILE (runda 2.7.0, hotărârile patronului din 4–5 oct. 2026).
+    // `__platiNr` numără întrebările puse lui `GET /plati/mine`: scrie numai
+    // răspunsul celei din urmă (v. `citestePlatile`). `__formLaVedere` ține
+    // minte dacă formularul de trimitere era pe ecran la desenarea trecută —
+    // din trecerea lui de la „nu” la „da” se află că fereastra tocmai s-a
+    // deschis (v. `urmaresteFormularul`).
+    this.__platiNr = 0;
+    this.__formLaVedere = false;
+    // La ce întrebare a răspuns omul biroului „Da, scrie comanda”: contul
+    // (`pentru`) și, când contul a fost găsit de server după NUME, numele cu
+    // care plecase cererea refuzată (`scris`).
+    // Stă pe instanță, ca `__vreauCont` și din aceeași pricină (se citește în
+    // aceeași bătaie de ceas în care s-a scris), și se CONSUMĂ la prima
+    // trimitere, orice cale ar apuca ea: o trecere peste prag e un „da” spus
+    // o dată, pentru o cerere — nu o setare care se lipește de următoarea.
+    this.__ocolesc = null;
     this.state = {
       asap: true,
       whenDate: '',
       mob: typeof window !== 'undefined' && window.innerWidth < 1080,
+      // Ferestrele stau la mijloc ori vin de jos (`eLaMijloc`, sus). Alt prag
+      // decât `mob`: acela desparte antetul de telefon de cel de calculator.
+      centrat: eLaMijloc(),
+      // Poza și textul alături în fereastra produsului (`incapAlaturi`, sus).
+      alaturi: incapAlaturi(),
       menuOpen: false,
       // Pagina și limba vin din adresă, nu din cod. Cine deschide
       // „/en/catalogue" trebuie să vadă catalogul în engleză din prima
@@ -2206,6 +2574,11 @@ class Component extends DCLogic {
       // departe. Se stinge singură la orice schimbare de pagină (`nav()`) și
       // la golirea coșului (`clearPicks`).
       finalizare: false,
+      // Fereastra de pe ecran a deschis-o „Comandă din nou”, nu butonul
+      // „Finalizare comandă” (runda 2.7.0). Atunci coșul stă ÎNAINTEA
+      // formularului, nu sub el (`contactLateralStyle`). Aprins de
+      // `cerneReluarea`, stins la închiderea ferestrei (`potrivesteReluarea`).
+      finalDinReluare: false,
       sent: false,
       sending: false,
       sendErr: '',
@@ -2236,17 +2609,42 @@ class Component extends DCLogic {
       editKey: '',
       editText: '',
       // „Comandă din nou”, adusă din „Comanda mea” prin `?reia=`. Cât timp e
-      // plină, deasupra paginii stă caseta care spune ce a intrat în coș, ce a
-      // rămas pe dinafară și unde e coșul de dinainte. Forma:
-      //   chei      — cheile coșului puse de reluare (după cernere: numai cele
-      //               din catalog);
+      // plină, caseta (pe catalog și sus în fereastra de finalizare) spune ce
+      // s-a adăugat în coș și ce a rămas pe dinafară. Forma:
+      //   chei      — cheile coșului atinse de reluare (după cernere: numai
+      //               cele din catalog);
       //   lipsa     — câte au căzut la cernere;
       //   cernut    — catalogul a sosit și cheile au fost verificate în el;
       //   stricata  — adresa avea `?reia=`, dar nimic de citit în ea;
-      //   vechi     — coșul de dinainte, pus deoparte (sau null), și fila lui.
-      // Se ține în `gp-cart-v1` odată cu coșul: o reîncărcare nu are voie să
-      // piardă un coș despre care caseta a promis că l-a pus deoparte.
+      //   adaos     — câte bucăți a ADĂUGAT reluarea pe fiecare cheie, după
+      //               plafonul de 9999 (ce scade „Scoate-le înapoi”);
+      //   taiat     — plafonul a tăiat ceva din ce venea;
+      //   avea      — în coș era ceva înainte de reluare;
+      //   din       — numărul comenzii refăcute, cât îl poartă adresa;
+      //   fila      — fila catalogului de dinainte (congelate / coapte);
+      //   repetat   — comanda asta mai fusese adusă în coșul ăsta (v. `aduse`):
+      //               sosirea de acum n-a adunat, a completat;
+      //   completat — câte bucăți a pus pe fiecare cheie sosirea REPETATĂ,
+      //               ca să ajungă iar la cantitatea comenzii. La o sosire
+      //               repetată `adaos` poate ține și ce adusese prima (v.
+      //               `primesteReluarea`), deci nu mai spune singur dacă acum
+      //               s-a completat ceva — iar caseta are de spus tocmai asta.
+      // Se ține în `gp-cart-v1` odată cu coșul: după o reîncărcare „Scoate-le
+      // înapoi” trebuie să știe tot ce are de scos. Un browser poate ține încă
+      // forma de dinainte de 2.7.0 (`vechi`, fără `adaos`): caseta merge și cu
+      // ea, numai butonul de desfăcut lipsește.
       reia: null,
+      // URMA COMENZILOR ADUSE ÎN COȘUL ĂSTA: numerele lor (`din`), cel mult 20,
+      // cea mai nouă la urmă. Fără ea, „Comandă din nou” apăsat a doua oară pe
+      // aceeași comandă o aduna încă o dată: #1047 punea 120 + 40, a doua
+      // apăsare făcea 240 + 80 — iar omul care se întorsese în „Comanda mea”
+      // doar ca să se uite la ceva trimitea marfă dublă.
+      //
+      // Stă LÂNGĂ `reia`, nu în ea: „Am înțeles” stinge caseta (`reia: null`),
+      // dar comanda rămâne în coș, deci și în urmă. Se ține în `gp-cart-v1`
+      // odată cu coșul și se golește odată cu el (`potrivesteUrma`). O reluare
+      // fără număr nu lasă urmă: n-are după ce fi recunoscută a doua oară.
+      aduse: [],
       // Cum se vede catalogul (v. `CHEIE_AFISARE`, sus). `listeSosite` spune
       // dacă vederea implicită din Setări a venit de la server: până atunci
       // se folosește cea ținută minte de la deschiderea trecută.
@@ -2263,7 +2661,28 @@ class Component extends DCLogic {
       filtreDeschise: false,
       // Pastila ascunsă (peste unelte, ori comutatorul lor întreg) și butonul
       // verde de sus pe ecran — amândouă măsurate în `masoaraPastila()`.
-      pastilaAscunsa: false, waSus: false
+      pastilaAscunsa: false, waSus: false,
+      // PLĂȚILE (runda 2.7.0). `plati` e ultimul răspuns de la
+      // `GET /plati/mine`, ținut numai cât serverul spune `activ: true` și
+      // numai pentru un client. `null` înseamnă „nu știu” — iar „nu știu” nu
+      // oprește pe nimeni și nu desenează nimic: paza adevărată e pe server,
+      // pagina doar spune din vreme ce urmează. Un refuz `409 prag_neplatite`
+      // SUPRASCRIE cheia asta cu ce a spus serverul în refuz (`dinRefuz`):
+      // o singură cheie, ca „serverul bate ce știa pagina” să fie o scriere,
+      // nu o împăcare între două izvoare.
+      plati: null,
+      // Întrebarea pusă omului biroului după refuzul pentru clientul ales:
+      // `{ pentru, nume }`, numai când serverul a spus `poateOcoli: true`.
+      pragIntreb: null,
+      // „Contactează-ne”: formularul trimite NUMAI un mesaj, fără produse
+      // (serverul nu oprește niciodată un mesaj), iar coșul rămâne neatins.
+      // `mesajPlatiText` e `null` cât omul n-a atins caseta — atunci textul
+      // pus gata se scrie în limba de pe ecran; după prima literă e al lui.
+      mesajPlati: false,
+      mesajPlatiText: null,
+      // Ultima trimitere reușită a fost un mesaj, nu o comandă: caseta verde
+      // nu are voie să spună „am primit comanda” peste un coș rămas plin.
+      trimisMesaj: false
     };
   }
 
@@ -2500,7 +2919,7 @@ class Component extends DCLogic {
   }
 
   /**
-   * Pastila plutitoare se dă la o parte în două cazuri, amândouă de geometrie
+   * Pastila plutitoare se dă la o parte în trei cazuri, toate de geometrie
    * curată — ascunderea ei nu mută nimic din pagină (e `fixed`), deci nu se
    * poate învârti de la sine:
    *
@@ -2509,7 +2928,26 @@ class Component extends DCLogic {
    *      sub pastilă — o atingere acolo schimba varianta în loc să pornească o
    *      căutare;
    *   2. comutatorul din unelte se vede întreg. Atunci pastila ar fi al doilea
-   *      comutator de pe ecran.
+   *      comutator de pe ecran;
+   *   3. ar sta peste caseta „Comandă din nou” de pe catalog (9 oct. 2026).
+   *      Caseta începe la y 96 și e înaltă — 241 px la 390×844, 293 px la
+   *      320×640, măsurat —, deci împinge uneltele cu comutatorul lor sub
+   *      marginea de jos a ecranului: niciunul din cazurile de sus nu se mai
+   *      aprinde, iar pastila (y 84–136) rămânea peste titlul casetei. Cât
+   *      dreptunghiul ei îl atinge pe al casetei, stă ascunsă; caseta închisă
+   *      ori derulată în sus, pastila se întoarce după regulile 1 și 2. Nu se
+   *      mută nici pastila, nici caseta;
+   *   4. ar sta peste caseta roșie „Produsele nu s-au încărcat.” (9 oct.
+   *      2026). Cu catalogul căzut, caseta de eroare stă exact în locul
+   *      casetei de la 3 (y 96–284 la 390×844), iar unelte nu sunt deloc:
+   *      pastila rămânea peste titlul erorii la 320, 360, 390 și 430 —
+   *      defect vechi, se vedea și pe 2.6.0. Aceeași hotărâre ca la 3.
+   *
+   * Cazurile 3 și 4 NU atârnă de unelte: se judecă în afara ramurii lor, ca
+   * să nu piară odată cu ele (uneltele stau sub `unelteVizibile`, casetele sub
+   * `reiaVizibil` și `eroare` — întrebări deosebite). Caseta fără înălțime nu se
+   * socotește, ca la comutatorul din unelte: un dreptunghi turtit la o linie
+   * ar „atinge” pastila fără să fie nimic de văzut sub ea.
    *
    * Comutatorul din unelte stă ULTIMUL, chiar deasupra produselor: când iese
    * pe sus, au ieșit toate uneltele, iar pastila vine fără să calce nimic.
@@ -2521,8 +2959,9 @@ class Component extends DCLogic {
    * intra în socoteală, o apăsare pe pastilă, cu uneltele chiar dedesubt, ar
    * face-o să dispară sub deget.
    *
-   * Fără unelte (catalogul n-a sosit, ori e gol), pastila se vede. Tot aici se
-   * măsoară butonul verde de sus: cât se vede el, cel plutitor stă ascuns (`showFab`).
+   * Fără unelte (catalogul n-a sosit, ori e gol), pastila se vede — afară de
+   * cazurile 3 și 4, care nu întreabă de ele. Tot aici se măsoară butonul verde de
+   * sus: cât se vede el, cel plutitor stă ascuns (`showFab`).
    */
   masoaraPastila() {
     const p = this.pastilaRef && this.pastilaRef.current;
@@ -2540,6 +2979,16 @@ class Component extends DCLogic {
         intreg = rl.height > 0 && rl.top >= rp.top && rl.bottom <= jos;
       }
       ascunsa = peste || intreg;
+    }
+    // Cazurile 3 și 4, cu aceeași întrebare pusă pe rând celor două casete.
+    // Cea care a spus deja „da” nu mai e întrebată a doua oară de cealaltă:
+    // un „nu” venit după n-are voie să-l șteargă.
+    for (const cutie of [this.reiaCasetaRef, this.eroareCasetaRef]) {
+      const k = cutie && cutie.current;
+      if (ascunsa || !p || !k || !p.getBoundingClientRect || !k.getBoundingClientRect) continue;
+      const rp = p.getBoundingClientRect();
+      const rk = k.getBoundingClientRect();
+      ascunsa = rk.height > 0 && rk.bottom > rp.top && rk.top < rp.bottom && rk.right > rp.left && rk.left < rp.right;
     }
     const w = this.waSusRef && this.waSusRef.current, rw = w && w.getBoundingClientRect ? w.getBoundingClientRect() : null;
     const waSus = !!rw && rw.height > 0 && rw.bottom > 0 && rw.top < window.innerHeight;
@@ -2600,21 +3049,75 @@ class Component extends DCLogic {
       };
     };
     gp.me()
-      .then((u) => this.setState((st) => Object.assign({
-        auth: u,
-        authReady: true,
-        // Semănate de pe cont NUMAI la client. Un administrator care are
-        // adresa patiseriei scrisă pe contul lui ar fi găsit-o gata pusă în
-        // caseta de livrare a clientului — și, cum caseta e plină, n-ar fi
-        // avut de ce s-o citească. Comanda clientului ar fi plecat spre
-        // laborator. Gol e mai bine decât greșit pe tăcute.
-        addr: st.addrTouched ? st.addr
-          : ((u && u.role === 'client' && u.address) || ''),
-        zone: st.zoneTouched ? st.zone
-          : ((u && u.role === 'client' && u.zone) || '')
-      }, aseaza(st, u))))
-      .catch(() => this.setState((st) => Object.assign(
-        { auth: null, authReady: true }, aseaza(st, null))));
+      .then((u) => {
+        this.setState((st) => Object.assign({
+          auth: u,
+          authReady: true,
+          // Semănate de pe cont NUMAI la client. Un administrator care are
+          // adresa patiseriei scrisă pe contul lui ar fi găsit-o gata pusă în
+          // caseta de livrare a clientului — și, cum caseta e plină, n-ar fi
+          // avut de ce s-o citească. Comanda clientului ar fi plecat spre
+          // laborator. Gol e mai bine decât greșit pe tăcute.
+          addr: st.addrTouched ? st.addr
+            : ((u && u.role === 'client' && u.address) || ''),
+          zone: st.zoneTouched ? st.zone
+            : ((u && u.role === 'client' && u.zone) || '')
+        }, aseaza(st, u)));
+        // Abia acum se știe al cui e coșul, deci abia acum se poate întreba
+        // de plăți. Contul se dă CU MÂNA: `setState` de deasupra e doar cerut,
+        // iar `this.state.auth` e încă cel vechi în clipa asta.
+        this.citestePlatile(u);
+      })
+      .catch(() => {
+        this.setState((st) => Object.assign(
+          { auth: null, authReady: true }, aseaza(st, null)));
+        this.citestePlatile(null);
+      });
+  }
+
+  /**
+   * Starea plăților clientului intrat: `GET /plati/mine` (runda 2.7.0).
+   *
+   * Patronul a hotărât pe 4 oct. 2026 că un client cu două comenzi neplătite
+   * nu mai poate trimite a treia. Paza e pe server (`409 prag_neplatite`);
+   * pagina întreabă din vreme numai ca omul să afle ÎNAINTE să-și umple
+   * formularul, nu după. De-aia se întreabă de două ori: când se află contul
+   * (`pullAuth`) și încă o dată când se deschide fereastra de trimitere
+   * (`urmaresteFormularul`) — între cele două poate trece o după-amiază, iar
+   * biroul poate să fi încasat între timp.
+   *
+   * CE NU FACE, dinadins: nu oprește și nu desenează nimic când nu știe.
+   * Rețea căzută, server vechi fără rută (404), `activ: false`, cont care nu
+   * e de client — toate lasă `plati: null`, adică formularul de dinainte.
+   * O citire picată care ar fi stins butonul ar fi oprit comenzile tuturor
+   * clienților la prima sughițare a rețelei.
+   *
+   * Numai clientul întreabă: pentru oricine altcineva serverul răspunde
+   * `activ: false`, deci cererea ar fi drum degeaba la fiecare deschidere.
+   *
+   * Scrie numai răspunsul ULTIMEI întrebări (`__platiNr`): două citiri pornite
+   * una după alta pot sosi pe dos, iar cea veche ar fi așezat pe ecran o
+   * stare depășită. Tot numărul acesta îl urcă și refuzul trimiterii, ca un
+   * răspuns pornit înaintea lui să nu-i calce vorba.
+   *
+   * Întoarce făgăduința, ca proba s-o poată aștepta. Nu aruncă niciodată.
+   */
+  citestePlatile(cont) {
+    const A = cont === undefined ? this.state.auth : cont;
+    const nr = this.__platiNr = (this.__platiNr || 0) + 1;
+    const stinge = () => {
+      if (nr === this.__platiNr && this.state.plati) this.setState({ plati: null });
+      return null;
+    };
+    if (!A || A.role !== 'client') return Promise.resolve(stinge());
+    return gp.get('/plati/mine')
+      .then((r) => {
+        if (nr !== this.__platiNr) return null;
+        if (!r || r.activ !== true) return stinge();
+        this.setState({ plati: r });
+        return r;
+      })
+      .catch(() => stinge());
   }
 
   /**
@@ -2696,8 +3199,16 @@ class Component extends DCLogic {
     // rămână acolo chiar dacă restul pornirii s-ar poticni. Coșul însă se
     // umple abia după citirea coșului vechi din browser, mai jos: pus înainte,
     // coșul vechi l-ar fi călcat.
+    //
+    // `reiaDinAdresaTot()`, nu `reiaDinAdresa()` (runda 2.7.0): aduce și
+    // numărul comenzii (`&din=`), ca să-l poată spune caseta, și îi scoate pe
+    // amândoi din adresă. Întoarce `{ chei, din }` ori `null`.
     let reia = null;
-    try { reia = gp.reiaDinAdresa(); } catch (e) { /* adresă de neînțeles: coșul rămâne cum era */ }
+    try { reia = gp.reiaDinAdresaTot(); } catch (e) { /* adresă de neînțeles: coșul rămâne cum era */ }
+    // „Contactează-ne”, apăsat în „Comanda mea” de un client oprit de pragul
+    // comenzilor neplătite: vine tot prin adresă (`?subiect=neplatite`), din
+    // aceeași pricină — altă gazdă. Citit și curățat tot ACUM, lângă `?reia=`.
+    const subiect = this.subiectDinAdresa();
 
     this.pullCatalog();
     this.pullAuth();
@@ -2753,6 +3264,13 @@ class Component extends DCLogic {
       // ajung amândouă înainte ca React să fi redesenat, iar pe stare a doua ar
       // vedea tot o fereastră deschisă și s-ar pierde. A DOUA apăsare schimbă
       // pagina, ca până acum.
+      //
+      // Întâi însă: dacă întoarcerea asta e cea care scoate intrarea foii după
+      // o navigare pe aceeași adresă (v. `duLa`), pagina mai trebuie urcată o
+      // dată la început. Steagul se consumă oricare ar fi ramura de mai jos.
+      const sus = this.__susDupaIntoarcere;
+      this.__susDupaIntoarcere = false;
+      if (sus) this.urcaDupaIntoarcere();
       if (this.__foaieInIstoric) {
         this.__foaieInIstoric = false;
         this.setState({ cosJos: false, finalizare: false, vedere: null, menuOpen: false });
@@ -2773,15 +3291,31 @@ class Component extends DCLogic {
     // NUMAI cu `persisted`: la prima arătare a paginii coșul abia a fost citit,
     // iar o citire în plus ar călca reluarea din adresă înainte ca ea să fi
     // apucat să fie scrisă în browser.
-    this._onIntoarcere = (e) => { if (e && e.persisted) this.recitesteCosul(); };
+    //
+    // Tot atunci se mai întreabă o dată de plăți (`intoarsInFila`, runda
+    // 2.7.0): fila pusă la loc din memorie vine și cu „Oprit până la plată”
+    // din clipa plecării, deși omul poate să fi plătit între timp.
+    this._onIntoarcere = (e) => { if (e && e.persisted) { this.recitesteCosul(); this.intoarsInFila(); } };
     window.addEventListener('pageshow', this._onIntoarcere);
+    // FILA REDEVENITĂ VIZIBILĂ (reparație din 5 oct. 2026, runda 2.7.0).
+    // Omul oprit de prag lasă fila pe formular, plătește ori sună la birou,
+    // și se întoarce: pagina se mai întreabă o dată ce știe despre plăți (v.
+    // `intoarsInFila`). Pe `document`, nu pe fereastră — acolo se aprinde
+    // `visibilitychange` — și numai la întoarcere, nu și la plecare
+    // (`document.hidden`).
+    this._onFilaVazuta = () => { if (!document.hidden) this.intoarsInFila(); };
+    document.addEventListener('visibilitychange', this._onFilaVazuta);
     // A DOUA FILĂ A MAGAZINULUI. Browserul anunță celelalte file, niciodată pe
     // cea care a scris, iar fila care primește coșul nu i-l mai scrie înapoi
     // (`__cosScris`, în `componentDidUpdate`) — deci două file nu se pot
     // învârti una pe alta. `key` gol înseamnă browser golit cu totul.
     this._onAltaFila = (e) => { if (!e || !e.key || e.key === 'gp-cart-v1') this.recitesteCosul(); };
     window.addEventListener('storage', this._onAltaFila);
-    if (reia) this.primesteReluarea(reia);
+    if (reia) this.primesteReluarea(reia.chei, reia.din);
+    // După reluare, nu înainte: dacă adresa le-ar purta pe amândouă, coșul se
+    // reface întâi, iar pagina rămâne pe formularul de mesaj — omul a cerut
+    // să vorbească cu cineva, nu să se plimbe prin catalog.
+    if (subiect) this.primesteSubiectul(subiect);
     this.asideRef = this.asideRef || React.createRef();
     this._off = 0;
     this._floatTick = () => {
@@ -2835,7 +3369,12 @@ class Component extends DCLogic {
     // antetul (din `componentDidUpdate`); până atunci `mob` din stare e vechi.
     this._onResize = () => {
       const m = window.innerWidth < 1080;
-      if (m !== this.state.mob) this.setState({ mob: m, menuOpen: false });
+      // Telefonul întors pe lat, ori fereastra browserului trasă mai mică: o
+      // fereastră deschisă își schimbă pe loc hainele, nu rămâne cum s-a născut.
+      const c = eLaMijloc();
+      const a = incapAlaturi();
+      if (m !== this.state.mob) this.setState({ mob: m, menuOpen: false, centrat: c, alaturi: a });
+      else if (c !== this.state.centrat || a !== this.state.alaturi) this.setState({ centrat: c, alaturi: a });
       else this.potrivesteAntetul();
     };
     // Literele din siglă și din legături vin după prima desenare: măsurat cu
@@ -2844,11 +3383,22 @@ class Component extends DCLogic {
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(() => { this.__antetCheie = null; this.potrivesteAntetul(); });
     }
-    // Escape închide sertarul. Nu și celelalte ferestre: ele n-au avut
-    // niciodată Escape, iar a le da acum unul e altă lucrare — fișă în docs/06.
+    // Escape închide CE E DEASUPRA, câte una la o apăsare: sertarul, apoi
+    // fereastra de finalizare, apoi a produsului, apoi foaia coșului — ordinea
+    // straturilor lor (130, 160, 140, 150 — sertarul întâi, fiindcă numai el
+    // se poate deschide peste oricare). Până la runda 2.7.0 îl asculta numai
+    // sertarul: pe calculator, cu fereastra unui produs deschisă, tasta pe
+    // care o apasă oricine ca să iasă dintr-o fereastră nu făcea nimic.
+    //
+    // Se stinge numai steagul. Intrarea din istoric o scoate, ca la orice altă
+    // închidere, `potrivesteIstoricul()`, la desenarea care urmează.
     this._onEsc = (ev) => {
       if (ev.key !== 'Escape') return;
+      const e = this.__peEcran;
       if (this.state.menuOpen) this.setState({ menuOpen: false });
+      else if (e.final) this.setState({ finalizare: false });
+      else if (e.vedere) this.setState({ vedere: null });
+      else if (e.cos) this.setState({ cosJos: false });
     };
     window.addEventListener('keydown', this._onEsc);
     window.addEventListener('resize', this._onResize);
@@ -2876,6 +3426,116 @@ class Component extends DCLogic {
     }
     this.iaCiorna(this.formRef.current);
     this.formRef.current = null;
+  }
+
+  /**
+   * Focusul intră în fereastră la deschidere și se întoarce de unde a plecat.
+   *
+   * Fără asta, cine deschide un produs cu Enter rămâne cu focusul pe cardul
+   * de SUB perdea: următorul Tab îl plimbă prin catalogul pe care nu-l mai
+   * vede, iar după închidere o ia de la capătul paginii. Butonul „Închide"
+   * e primul lucru din fereastră, deci de la el Tab merge firesc mai departe
+   * prin ea.
+   *
+   * Întoarce o funcție de `ref` (aceeași unealtă ca `legaForm`): React o
+   * cheamă cu nodul când butonul apare — adică exact când s-a deschis
+   * fereastra — și cu `null` când dispare. `care` desparte cele două ferestre,
+   * ca închiderea uneia să nu ducă focusul unde l-a ținut minte cealaltă.
+   *
+   * `preventScroll`: focusul nu are voie să miște pagina de sub perdea. Iar
+   * întoarcerea se face numai dacă nodul mai e în pagină — „Finalizare
+   * comandă" apăsat din foaia coșului o stinge pe aceea odată cu deschiderea,
+   * deci butonul de unde s-a plecat nu mai există la închidere.
+   */
+  tineFocusul(care) {
+    return (nod) => {
+      if (typeof document === 'undefined') return;
+      if (nod) {
+        const a = document.activeElement;
+        this.__focusInapoi[care] = a && a !== document.body && a !== nod ? a : null;
+        if (care === 'final') this.__inchideFinal = nod;
+        try { nod.focus({ preventScroll: true }); } catch (err) { /* fără focus, fereastra se închide tot din Escape și din buton */ }
+        return;
+      }
+      const inapoi = this.__focusInapoi[care];
+      this.__focusInapoi[care] = null;
+      // Fereastra de finalizare poate rămâne fără „cine a deschis-o” (v.
+      // `asazaFocusul`): se notează numai că s-a închis, iar unde a ajuns
+      // focusul se vede după desenare, când pagina de dedesubt e la locul ei.
+      if (care === 'final') { this.__focusDeAsezat = true; this.__inchideFinal = null; }
+      if (!inapoi || !inapoi.isConnected || typeof inapoi.focus !== 'function') return;
+      try { inapoi.focus({ preventScroll: true }); } catch (err) { /* noop */ }
+    };
+  }
+
+  /**
+   * Focusul rămas NICĂIERI după închiderea ferestrei de finalizare (reparație
+   * din 5 oct. 2026, runda 2.7.0, după a doua citire).
+   *
+   * De când „Comandă din nou” deschide fereastra singură, ea n-are un buton
+   * de la care să fi plecat focusul: `tineFocusul` n-are pe cine ține minte.
+   * La închidere butonul „Închide” piere cu focusul pe el, browserul îl lasă
+   * pe `<body>`, iar cine umblă cu tastatura ori cu un cititor de ecran o ia
+   * de la capătul paginii, fără să știe unde e. La fel pățea, de mai demult,
+   * cine apăsa „Finalizare comandă” din foaia coșului de pe telefon: foaia se
+   * ascunde la deschidere, iar un buton ascuns nu primește focusul înapoi.
+   *
+   * Atunci focusul cade pe butonul care AR FI deschis fereastra: „Finalizare
+   * comandă” din coș. Sunt două, după ecran — cel din coloana coșului și cel
+   * din bara de jos a telefonului —, și numai unul e la vedere; se încearcă
+   * pe rând și se întreabă browserul dacă l-a primit (un buton ascuns nu-l
+   * primește, și nici nu aruncă). Cu coșul gol nu e niciunul: fereastra s-a
+   * închis fiindcă n-a mai rămas nimic de trimis, iar focusul rămâne unde l-a
+   * lăsat browserul.
+   *
+   * Se judecă pe ce E, nu pe ce s-a crezut la închidere: dacă focusul stă pe
+   * ceva din pagină (întors de `tineFocusul` ori mutat de om), nu se atinge.
+   * Niciodată pe `<body>`. De aici, din `componentDidUpdate`, nu din funcția
+   * de `ref`: aceea e chemată cât butonul „Închide” e încă în pagină, iar
+   * bara de jos poate să nu fie încă.
+   *
+   * CU FEREASTRA ÎNCĂ PE ECRAN ținta e alta: butonul ei „Închide”. Acolo
+   * ajunge cine apasă „Am înțeles” ori „Scoate-le înapoi” în caseta din
+   * fereastră (`dinCaseta`): butonul apăsat piere odată cu caseta, iar
+   * focusul unei ferestre n-are voie să cadă sub perdeaua ei. „Închide” e
+   * primul lucru din fereastră și stă chiar deasupra locului unde era caseta,
+   * deci Tab merge de acolo mai departe ca și cum caseta n-ar fi fost.
+   */
+  asazaFocusul() {
+    if (!this.__focusDeAsezat) return;
+    this.__focusDeAsezat = false;
+    if (typeof document === 'undefined') return;
+    const a = document.activeElement;
+    if (a && a !== document.body && a.isConnected !== false) return;
+    const B = this.__butonFinal;
+    for (const nod of (this.__inchideFinal ? [this.__inchideFinal] : [B.coloana, B.bara])) {
+      if (!nod || !nod.isConnected || typeof nod.focus !== 'function') continue;
+      try { nod.focus({ preventScroll: true }); } catch (err) { continue; }
+      if (document.activeElement === nod) return;
+    }
+  }
+
+  /**
+   * Un mâner al casetei reluării, învelit: înainte să facă ce are de făcut,
+   * notează că focusul va trebui așezat (reparație din runda 2.7.0, după a
+   * doua citire din 5 oct. 2026).
+   *
+   * „Am înțeles” și „Scoate-le înapoi” sting caseta, deci și butonul pe care
+   * tocmai a stat degetul. Cu fereastra de finalizare deschisă, focusul cădea
+   * atunci pe `<body>`: următorul Tab pornea de la capul paginii de SUB
+   * perdea. Numai cât fereastra e pe ecran. Caseta de pe catalog se poartă ca
+   * până acum: acolo nu e nicio perdea sub care să se piardă focusul, iar
+   * singura țintă la îndemână, butonul coșului, l-ar arunca peste tot
+   * catalogul.
+   *
+   * Unde cade se hotărăște după desenare (`asazaFocusul`), pe ce a rămas: dacă
+   * „Scoate-le înapoi” a golit coșul, fereastra s-a închis și ea.
+   */
+  dinCaseta(fa) {
+    return () => {
+      if (this.__peEcran && this.__peEcran.final) this.__focusDeAsezat = true;
+      fa();
+    };
   }
 
   /** Ce a scris omul, cules din nodul care tocmai se desprinde. */
@@ -2929,9 +3589,10 @@ class Component extends DCLogic {
    * program ajunge tot în `_onPop`, care găsește steagul deja stins și trece la
    * ramura de pagină: adresa e aceeași, deci nu se mișcă nimic.
    *
-   * Drumul prin `duLa()` nu ajunge aici: acolo intrarea foii e ÎNLOCUITĂ de
-   * pagina nouă, nu scoasă, ca să nu se ceară o întoarcere peste o navigare
-   * tocmai împinsă în istoric.
+   * Drumul prin `duLa()` spre ALTĂ adresă nu ajunge aici: acolo intrarea foii
+   * e ÎNLOCUITĂ de pagina nouă, nu scoasă, ca să nu se ceară o întoarcere
+   * peste o navigare tocmai împinsă în istoric. Spre ACEEAȘI adresă ajunge:
+   * n-a fost nimic de împins, deci intrarea se scoate ca la buton (v. `duLa`).
    *
    * O SINGURĂ intrare pentru toate trei, nu câte una de fiecare. Cele trei nu
    * pot sta pe ecran deodată: perdeaua fiecăreia acoperă tot ecranul, deci și
@@ -3053,12 +3714,24 @@ class Component extends DCLogic {
     this.potrivesteIstoricul();
     this.legDerularea(!!this.state.menuOpen);
     if (this._onScroll) this._onScroll();
+    this.urmaresteFormularul();
+    this.potrivesteReluarea();
+    this.potrivesteUrma();
+    this.asazaFocusul();
     // Coșul se scrie numai când diferă de ce știe fila că e deja în browser.
     // Scris la fiecare desenare, cum era, o filă cu coșul vechi în memorie — a
     // doua filă, sau una întoarsă cu „înapoi” — îl punea peste cel nou la prima
     // atingere, chiar fără să fi umblat la coș.
     try {
-      const cos = JSON.stringify({ qty: this.state.qty, tier: this.state.tier, reia: this.state.reia || null });
+      const deScris = { qty: this.state.qty, tier: this.state.tier, reia: this.state.reia || null };
+      // Urma comenzilor aduse (`aduse`) pleacă pe același drum, deci intră și
+      // în comparația de mai jos. Cheia se scrie NUMAI cât are ceva în ea: un
+      // coș fără urmă trebuie să iasă literă cu literă cum îl scria pagina de
+      // dinainte. Altfel o filă rămasă deschisă pe versiunea veche și una
+      // nouă s-ar fi văzut mereu „altfel” una pe alta și și-ar fi rescris
+      // coșul la nesfârșit, din `storage` în `storage`.
+      if (Array.isArray(this.state.aduse) && this.state.aduse.length) deScris.aduse = this.state.aduse;
+      const cos = JSON.stringify(deScris);
       if (cos !== this.__cosScris) {
         window.localStorage.setItem('gp-cart-v1', cos);
         this.__cosScris = cos;
@@ -3098,6 +3771,7 @@ class Component extends DCLogic {
     if (this._onPop) window.removeEventListener('popstate', this._onPop);
     if (this.__peDeget) window.removeEventListener('pointerdown', this.__peDeget, true);
     if (this._onIntoarcere) window.removeEventListener('pageshow', this._onIntoarcere);
+    if (this._onFilaVazuta) document.removeEventListener('visibilitychange', this._onFilaVazuta);
     if (this._onAltaFila) window.removeEventListener('storage', this._onAltaFila);
   }
 
@@ -3110,7 +3784,7 @@ class Component extends DCLogic {
    * memorie nu mai e cel adevărat. Pățania pe care o opresc: omul refăcea o
    * comandă cu „Comandă din nou”, se întorcea cu „înapoi” pe magazinul de
    * dinainte și atingea ceva — iar coșul vechi se scria peste cel refăcut, cu
-   * tot cu coșul pus deoparte de casetă. Și una mai scumpă: trimisă dintr-o
+   * tot cu ce ținea minte caseta despre el. Și una mai scumpă: trimisă dintr-o
    * filă, comanda rămânea întreagă în coșul celeilalte, gata să plece a doua
    * oară.
    *
@@ -3122,6 +3796,11 @@ class Component extends DCLogic {
    *
    * Ce s-a citit se ține minte în `__cosScris`: fila știe atunci că browserul
    * are deja coșul ăsta și nu i-l mai scrie înapoi (`componentDidUpdate`).
+   *
+   * Urma comenzilor aduse (`aduse`) vine odată cu coșul, din același loc: a
+   * doua apăsare pe „Comandă din nou” e întotdeauna o pagină NOUĂ, care nu
+   * are de unde ști ce s-a adus în coș decât de aici. Un coș scris de pagina
+   * de dinainte n-are cheia — urmă goală, deci prima lui reluare se adună.
    */
   recitesteCosul() {
     let raw = null;
@@ -3134,8 +3813,57 @@ class Component extends DCLogic {
     this.__cosScris = raw;
     this.setState((s) => Object.assign({
       tier: !raw ? s.tier : d.tier === 'baked' ? 'baked' : 'frozen',
-      reia: d.reia && typeof d.reia === 'object' && Array.isArray(d.reia.chei) ? d.reia : null
+      reia: d.reia && typeof d.reia === 'object' && Array.isArray(d.reia.chei) ? d.reia : null,
+      aduse: this.urmaCurata(d.aduse)
     }, this.dezarmeaza(s, d.qty && typeof d.qty === 'object' ? d.qty : {})));
+  }
+
+  /**
+   * Urma comenzilor aduse, cum are voie să fie: numere trecute prin sita din
+   * gp-api.js (`reiaRef`, aceeași prin care trece `&din=`), fiecare o dată,
+   * cel mult 20, cea mai nouă la urmă.
+   *
+   * Vine din browser, deci poate fi orice — scrisă de altă versiune a paginii
+   * ori de mână. De ce 20: urma trăiește cât coșul, iar un coș în care s-au
+   * adus peste douăzeci de comenzi fără să fi fost golit ori trimis nu e unul
+   * de păzit; fără plafon, cheia ar fi crescut cât ține coșul. De ce „fiecare
+   * o dată”: o comandă adusă din nou se mută la capăt (`primesteReluarea`),
+   * altfel aceeași comandă apăsată de douăzeci de ori le-ar fi împins afară
+   * pe toate celelalte.
+   */
+  urmaCurata(u) {
+    const out = [];
+    (Array.isArray(u) ? u : []).forEach((x) => {
+      const r = typeof x === 'string' ? gp.reiaRef(x) : '';
+      if (r && out.indexOf(r) < 0) out.push(r);
+    });
+    return out.slice(-20);
+  }
+
+  /**
+   * Coșul gol nu mai ține minte ce comenzi fuseseră aduse în el.
+   *
+   * Urma spune „comanda asta e deja în coș”. Odată coșul golit, nu mai e
+   * adevărat pentru niciuna — iar rămasă, ar fi făcut din următoarea apăsare
+   * pe „Comandă din nou” o COMPLETARE peste ce a mai pus omul între timp, în
+   * loc de adunarea pe care o așteaptă de la un coș luat de la capăt.
+   *
+   * Aici, o dată după fiecare desenare, și nu la fiecare golire în parte:
+   * coșul se golește pe cel puțin cinci drumuri („Golește coșul”, ultima
+   * bucată scoasă de mână, „Scoate-le înapoi”, comanda trimisă, golirea
+   * venită din altă filă) și numai trei dintre ele trec prin `dezarmeaza`.
+   * Scrisă în fiecare, golirea de mâine ar fi uitat-o — ca la
+   * `potrivesteReluarea`, un singur loc de greșit.
+   *
+   * Se cheamă ÎNAINTEA scrierii coșului (`componentDidUpdate`): cu un
+   * `setState` pe loc, golirea și urma goală ajung în browser cu aceeași
+   * scriere; cu unul amânat, urma goală vine la desenarea următoare. Până
+   * atunci nu strică nimic: urma se ia în seamă numai peste un coș în care
+   * e ceva (`primesteReluarea`).
+   */
+  potrivesteUrma() {
+    const u = this.state.aduse;
+    if (Array.isArray(u) && u.length && !Object.keys(this.state.qty || {}).length) this.setState({ aduse: [] });
   }
 
   /**
@@ -3161,6 +3889,17 @@ class Component extends DCLogic {
     });
     if (!GP_HARTA || typeof history === 'undefined' || !history.pushState) return;
     const cale = caleaCatre(page, lang, fel, cheie) + (location.search || '');
+    // FOAIA ÎN ISTORIC ȘI ACEEAȘI ADRESĂ: nu e nimic de scris (reparație din
+    // 5 oct. 2026, runda 2.7.0, după a doua citire). „Adaugă alte produse” din
+    // fereastra de finalizare duce pe catalog, adică pe pagina de SUB
+    // fereastră; la fel legătura din sertar spre pagina pe care ești deja.
+    // Înlocuită ca mai jos, intrarea foii rămânea pe stivă cu adresa paginii:
+    // prima apăsare pe „înapoi” de după era una moartă — omul apăsa și nu se
+    // întâmpla nimic. Aici nu s-a împins nicio pagină nouă peste care să nu se
+    // poată cere o întoarcere, deci intrarea se SCOATE, ca la închiderea din
+    // buton: steagul rămâne aprins, iar `potrivesteIstoricul()` cere
+    // întoarcerea la desenarea care urmează.
+    if (this.__foaieInIstoric && location.pathname + location.search === cale) return;
     try {
       // `replaceState` când adresa e aceeași: altfel un clic pe pagina în care
       // ești deja umple istoricul cu aceeași intrare, și „înapoi" nu mai iese
@@ -3187,7 +3926,7 @@ class Component extends DCLogic {
       if (altundeva(e)) return;
       if (e && e.preventDefault) e.preventDefault();
       // Foaia coșului nu trece dintr-o pagină în alta: e legată de catalog.
-      // Nici fereastra de finalizare — altfel „Modifică selecția" din ea ar
+      // Nici fereastra de finalizare — altfel „Adaugă alte produse" din ea ar
       // duce la catalog CU fereastra încă deasupra, adică omul ar apăsa pe
       // produse printr-un geam. Nici fereastra de previzualizare: chiar ea e
       // cea care cheamă navigarea, la a doua apăsare, și ar rămâne deschisă
@@ -3195,7 +3934,33 @@ class Component extends DCLogic {
       this.setState({ cosJos: false, finalizare: false, vedere: null });
       this.duLa(page, this.state.lang, fel || 'pagina', cheie || '');
       try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (err) { /* noop */ }
+      // Dacă intrarea foii e încă pe stivă, `duLa()` a lăsat-o să fie scoasă cu
+      // o întoarcere — iar întoarcerea aduce cu ea derularea de dinainte, peste
+      // cea de mai sus (v. `urcaDupaIntoarcere`).
+      this.__susDupaIntoarcere = this.__foaieInIstoric;
     };
+  }
+
+  /**
+   * Pagina, dusă la început încă o dată, DUPĂ întoarcerea care scoate intrarea
+   * foii din istoric (reparație din 5 oct. 2026, runda 2.7.0).
+   *
+   * Browserul ține minte derularea fiecărei intrări din istoric și o pune la
+   * loc când se întoarce pe ea. `nav()` urcă pagina pe loc, dar întoarcerea
+   * cerută de `potrivesteIstoricul()` vine o clipă mai târziu și ar coborî-o
+   * înapoi unde era când s-a deschis foaia: omul apasă „Adaugă alte produse”
+   * și vede catalogul sărind la început, apoi la loc.
+   *
+   * La cadrul următor, nu chiar în `popstate`: unele browsere pun derularea la
+   * loc înainte de eveniment, altele după el. După un cadru au terminat
+   * amândouă. Fără `requestAnimationFrame` (pagina desenată fără browser) se
+   * urcă pe loc — acolo nu e nicio derulare de pus la loc.
+   *
+   * NEVĂZUT ÎN BROWSER la scrierea lui: de verificat acolo.
+   */
+  urcaDupaIntoarcere() {
+    const sus = () => { try { window.scrollTo({ top: 0, behavior: 'auto' }); } catch (err) { /* noop */ } };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(sus); else sus();
   }
 
   /**
@@ -3293,25 +4058,81 @@ class Component extends DCLogic {
   }
 
   /**
+   * Starea cu care se deschide fereastra de finalizare — UNA pentru amândouă
+   * drumurile: apăsarea pe „Finalizare comandă” (`deschideFinal`, în
+   * renderVals) și „Comandă din nou”, care o deschide singură după cernere
+   * (`cerneReluarea`, runda 2.7.0). Scrisă de două ori, a doua ar fi rămas în
+   * urmă la prima schimbare a celei dintâi — iar fereastra deschisă singură
+   * ar fi apărut peste foaia coșului ori cu „Mulțumim” de la comanda
+   * dinainte. De ce fiecare câmp, scrie lângă `deschideFinal`.
+   *
+   * Tot ce urmează deschiderii atârnă de steagul ăsta și nu deosebește cine
+   * l-a aprins: Escape (`_onEsc`), „înapoi” (`potrivesteIstoricul`), focusul
+   * (`legaFinalul`) și întrebarea despre plăți (`urmaresteFormularul`).
+   */
+  deschidereaFinalului() {
+    return { finalizare: true, cosJos: false, sent: false, sendErr: '' };
+  }
+
+  /**
    * „Comandă din nou”: comanda veche intră în coș.
    *
-   * ÎNLOCUIEȘTE coșul, nu se adună la el. Adunată, o comandă refăcută peste un
-   * coș uitat de săptămâna trecută ar fi plecat cu marfă în plus, iar omul ar
-   * fi citit pe ecran exact comanda pe care a vrut s-o repete — plus ceva.
-   * Coșul de dinainte nu se pierde: stă în `reia.vechi`, iar caseta de sus îl
-   * poate pune la loc dintr-un clic.
+   * SE ADUNĂ la coș, nu-l înlocuiește (runda 2.7.0). Până acum îl înlocuia,
+   * cu coșul de dinainte pus deoparte: paza era pentru comanda refăcută peste
+   * un coș uitat, care ar fi plecat cu marfă în plus. Patronul a cerut
+   * altceva (4 oct. 2026): butonul adaugă în coș toate produsele comenzii și
+   * duce la finalizare, unde omul mai pune ce vrea ori trimite — planul
+   * aprobat pe 5 oct. 2026. Paza cea veche n-a pierit, s-a mutat: fereastra
+   * de finalizare se deschide singură (v. `cerneReluarea`), cu o casetă care
+   * spune ce s-a adăugat și că ce era acolo a rămas și cu tot coșul ÎNAINTEA
+   * formularului — pe telefon, deasupra lui —, iar „Scoate-le înapoi”
+   * desface adunarea. (Până la a doua citire, din 5 oct. 2026, coșul stătea
+   * SUB butonul de trimitere, ca în fereastra deschisă din buton: omul putea
+   * trimite un coș pe care nu-l umpluse el acum fără să-l fi văzut. Ordinea
+   * o ține `contactLateralStyle`.)
    *
-   * „De dinainte” înseamnă din CLIPA apăsării — și atunci când în coș stă o
-   * reluare mai veche, nelămurită. Coșul de dinaintea ACELEIA ar fi fost o
-   * stare pe care omul a lăsat-o de mult în urmă: după o reluare fără niciun
-   * produs în catalog, caseta ar fi scris „coșul a rămas cum era” deasupra
-   * unui coș pe care el nu-l mai avea.
+   * Pe fiecare cheie: `min(9999, cât era + cât vine)` — plafonul coșului
+   * (`setQty`). Se ține minte ce s-a adăugat DE FAPT (`adaos`), nu ce s-a
+   * cerut: peste un coș cu 9990 de bucăți, din 20 intră 9, iar „Scoate-le
+   * înapoi” are de scos 9, nu 20. `taiat` spune că plafonul a tăiat ceva,
+   * `avea` că în coș era ceva dinainte — caseta le spune pe amândouă.
+   *
+   * A doua reluare peste prima, a ALTEI comenzi, se adună și ea, iar `adaos`
+   * e numai al ei: „înapoi” înseamnă până în CLIPA apăsării, nu până la coșul
+   * de dinaintea celei dintâi, pe care omul l-a lăsat de mult în urmă.
+   *
+   * ACEEAȘI COMANDĂ, ADUSĂ A DOUA OARĂ, NU SE MAI ADUNĂ — SE COMPLETEAZĂ.
+   * Pățania: omul apăsa „Comandă din nou” pe #1047 (120 + 40 de bucăți), se
+   * întorcea în „Comanda mea” și apăsa iar pe aceeași comandă; coșul ajungea
+   * la 240 + 80 și pleca așa. O comandă e „deja adusă” dacă numărul ei e în
+   * urma coșului (`aduse`) și coșul mai are în el măcar un produs al ei (de
+   * ce nu ajunge „ceva”, scrie lângă `repetat`). Atunci, pe fiecare
+   * cheie, `max(cât e acum, cât cere comanda)`: coșul are CEL PUȚIN comanda,
+   * oricâte apăsări ar fi. Ce a pus omul peste ea rămâne, ce a scos din ea
+   * se pune la loc — a apăsat „Comandă din nou”, deci comanda o vrea.
+   * Plafonul de 9999 nu mai are ce tăia aici: cât cere comanda pe o cheie e
+   * deja sub el (`reiaCitire`).
+   *
+   * Fără număr în adresă (legătură veche) nu e nimic de recunoscut: reluarea
+   * se adună ca până acum și nu lasă urmă.
+   *
+   * CE SCOATE „SCOATE-LE ÎNAPOI” DUPĂ O SOSIRE REPETATĂ. Dacă pagina mai ține
+   * minte ce a adus prima sosire (`s.reia` e încă al aceleiași comenzi și are
+   * `adaos`), cele două se adună: butonul scoate tot ce a adus comanda asta.
+   * Pe fiecare cheie cel mult cât e în coș în clipa sosirii — cât a adus o
+   * comandă nu poate trece de cât e acolo, iar fără plafonul ăsta butonul ar
+   * fi luat și din ce mai pune omul de mână DUPĂ. Dacă nu mai ține minte
+   * (omul a apăsat „Am înțeles”), rămâne numai completarea; fără completare,
+   * `adaos` e gol și butonul lipsește — nu i se născocește unul. Care din
+   * două s-a întâmplat se ține minte (`intreaga`): numai butonul care scoate
+   * comanda întreagă îi scoate și numărul din urmă, și tot numai el duce
+   * fila înapoi la cea de dinaintea primei sosiri (v. `fila`, mai jos).
    *
    * Pagina se mută pe catalog, unde e coșul. Fără `duLa()`: aceea ar împinge
    * o intrare nouă în istoric, iar primul „înapoi” l-ar fi dus pe „/”, pe care
    * n-a fost niciodată. Adresa se ÎNLOCUIEȘTE.
    */
-  primesteReluarea(chei) {
+  primesteReluarea(chei, din) {
     const lista = Object.keys(chei || {});
     this.setState((s) => {
       const pagina = { page: 'catalog', fel: 'pagina', cheie: '', menuOpen: false, cosJos: false, finalizare: false };
@@ -3320,22 +4141,102 @@ class Component extends DCLogic {
         // tăiată de un program de mesagerie, sau scrisă de mână. Coșul rămâne
         // neatins, iar caseta spune de ce nu s-a întâmplat nimic.
         return Object.assign(pagina, {
-          reia: { chei: [], lipsa: 0, cernut: true, stricata: true, vechi: null, vechiTier: '' }
+          reia: { chei: [], lipsa: 0, cernut: true, stricata: true, adaos: null, taiat: false, avea: false, din: '' }
         });
       }
       const inainte = s.qty || {};
-      const inainteTier = s.tier;
+      const q = Object.assign({}, inainte);
+      const aveaCeva = Object.keys(inainte).some((k) => inainte[k] > 0);
+      const numar = typeof din === 'string' ? din : '';
+      // Urma se ia în seamă numai peste un coș în care e ceva: golit, coșul
+      // nu mai are în el nicio comandă, orice ar mai scrie în urmă (v.
+      // `potrivesteUrma`, care o și șterge la desenarea următoare).
+      const urma = aveaCeva ? this.urmaCurata(s.aduse) : [];
+      // Fără număr nu se potrivește nimic: sita urmei nu lasă să intre în ea
+      // un număr gol (`urmaCurata`), deci nici n-are ce găsi aici.
+      //
+      // „Deja adusă” cere și MĂCAR UN PRODUS AL EI ÎNCĂ ÎN COȘ. Urma ține
+      // numărul cât coșul are ceva în el, orice ar fi acel ceva: omul aducea
+      // #1047, scotea de mână tot ce adusese ea, rămânea cu alt produs și
+      // apăsa iar. Cantitățile ieșeau bune (de la zero, a aduna și a completa
+      // dau la fel), dar caseta spunea „Comanda #1047 era deja în coș. Am
+      // completat cantitățile…” deasupra unei comenzi puse toată atunci
+      // (a doua citire, 9 oct. 2026). Unul, nu toate: omul care a scos numai
+      // un produs din comandă o are încă în coș, iar a aduna i-ar dubla restul.
+      const repetat = urma.indexOf(numar) >= 0 && lista.some((k) => Math.round(Number(inainte[k]) || 0) > 0);
+      const adaos = {};
+      let taiat = false;
+      lista.forEach((k) => {
+        // Ce era vine din browser (`recitesteCosul` îl ia cum îl găsește), deci
+        // se curăță ca în `setQty`: un „5” scris ca text s-ar fi LIPIT de
+        // cantitatea nouă în loc să se adune cu ea.
+        const era = Math.max(0, Math.min(9999, Math.round(Number(inainte[k]) || 0)));
+        const tinta = repetat ? Math.max(era, chei[k]) : era + chei[k];
+        const nou = Math.min(9999, tinta);
+        if (nou < tinta) taiat = true;
+        if (nou > era) adaos[k] = nou - era;
+        q[k] = nou;
+      });
+      // Până aici `adaos` e ce a pus sosirea ASTA. La una repetată se ține
+      // deoparte ca `completat` (caseta are de spus dacă s-a completat ceva),
+      // apoi i se adaugă ce adusese prima, cât pagina mai știe de ea.
+      let completat = null;
+      // Caseta dinainte, dacă e a ACELEIAȘI comenzi și pagina o mai ține
+      // minte. De la ea se moștenesc trei lucruri, toate pe același lanț: ce
+      // adusese (`adaos`), fila de dinaintea ei și dacă butonul ei scotea
+      // comanda întreagă.
+      let dinainte = null;
+      if (repetat) {
+        completat = Object.assign({}, adaos);
+        const P = s.reia;
+        dinainte = P && !P.stricata && P.din === numar && P.adaos && typeof P.adaos === 'object' ? P : null;
+        const prima = dinainte ? dinainte.adaos : null;
+        Object.keys(prima || {}).forEach((k) => {
+          // `prima` vine din browser, ca și coșul: trecută prin `Number`, ca
+          // un „5” ținut ca text să se adune cu completarea, nu să se lipească.
+          const adus = Math.max(0, Math.round(Number(prima[k]) || 0)) + (completat[k] || 0);
+          const inCos = Math.max(0, Math.min(9999, Math.round(Number(q[k]) || 0)));
+          if (Math.min(adus, inCos) > 0) adaos[k] = Math.min(adus, inCos);
+        });
+      }
       const variante = lista.map((k) => k.split(':')[0]);
       return Object.assign(pagina, {
-        qty: Object.assign({}, chei),
+        qty: q,
         // Fila deschisă urmează comanda când comanda e toată într-o variantă;
         // amestecată, rămâne cum era — coșul le ține pe amândouă oricum.
         tier: variante.every((v) => v === variante[0]) ? variante[0] : s.tier,
         reia: {
           chei: lista, lipsa: 0, cernut: false, stricata: false,
-          vechi: Object.keys(inainte).some((k) => inainte[k] > 0) ? Object.assign({}, inainte) : null,
-          vechiTier: inainteTier === 'baked' ? 'baked' : 'frozen'
-        }
+          adaos: adaos, taiat: taiat,
+          avea: aveaCeva,
+          din: numar,
+          // Fila de dinainte: dacă la cernere nu intră nimic, catalogul se
+          // întoarce pe ea (v. `cerneReluarea`), iar „Scoate-le înapoi” la
+          // fel. La o sosire repetată care moștenește caseta primei, „de
+          // dinainte” e dinaintea PRIMEI: butonul scoate atunci tot ce a adus
+          // comanda, deci omul ajunge unde era când a venit ea întâi (iar
+          // cernerea din care nu mai intră nimic îi scoate din coș produsele
+          // puse de prima sosire, deci tot acolo îl întoarce). Luată din
+          // clipa sosirii a doua, era fila pe care prima îl mutase deja:
+          // omul cu trei cornuri coapte, peste care venise de două ori o
+          // comandă de congelate, rămânea după „Scoate-le înapoi” pe
+          // „Congelate”, fără niciun produs de acolo în coș.
+          fila: dinainte && (dinainte.fila === 'baked' || dinainte.fila === 'frozen') ? dinainte.fila : (s.tier === 'baked' ? 'baked' : 'frozen'),
+          repetat: repetat, completat: completat,
+          // `adaos` ține TOT ce a adus comanda asta în coș? Da la prima
+          // sosire; la una repetată, numai dacă a moștenit o casetă care îl
+          // ținea. După „Am înțeles” moștenirea se rupe: `adaos` e doar
+          // completarea, iar restul comenzii rămâne în coș și după „Scoate-le
+          // înapoi” — care de aceea nu mai are voie să scoată numărul din
+          // urmă (v. `reiaScoate`). `!== false`, nu `=== true`: o casetă
+          // scrisă înainte să existe semnul e a unei prime sosiri.
+          intreaga: !repetat || (!!dinainte && dinainte.intreaga !== false)
+        },
+        // Comanda adusă trece la capătul urmei, o singură dată; plafonul și
+        // sita sunt ale lui `urmaCurata`, deci o reluare fără număr nu lasă
+        // nimic. Dacă la cernere nu intră nimic din comandă, numărul iese la
+        // loc (v. `cerneReluarea`).
+        aduse: this.urmaCurata(urma.filter((x) => x !== numar).concat(numar))
       });
     });
     if (!GP_HARTA || typeof history === 'undefined' || !history.replaceState || typeof location === 'undefined') return;
@@ -3345,18 +4246,182 @@ class Component extends DCLogic {
   }
 
   /**
+   * `?subiect=…` din adresă: codul scurt cu care „Comanda mea” îl trimite pe
+   * client la formularul de mesaj (runda 2.7.0).
+   *
+   * E un COD dintr-o listă închisă, nu un text: mesajul pus gata în casetă e
+   * scris aici, în pagină. Un text purtat prin adresă ar fi rămas în istoricul
+   * browserului și în jurnalele serverului, iar oricine ar fi putut trimite
+   * cuiva o legătură cu vorbele lui puse în gura magazinului. Orice alt cod
+   * decât cele știute se aruncă fără urmă.
+   *
+   * Parametrul se șterge din adresă pe loc, ca `?reia=` (`gp.reiaDinAdresa`):
+   * o reîncărcare a paginii nu are voie să redeschidă formularul de mesaj
+   * peste o comandă pe care omul s-a apucat între timp s-o scrie.
+   *
+   * Nu aruncă niciodată: fără `URLSearchParams` ori cu istoricul nescriibil
+   * se pierde scurtătura, nu magazinul.
+   */
+  subiectDinAdresa() {
+    try {
+      const loc = window.location;
+      const q = new URLSearchParams((loc && loc.search) || '');
+      if (!q.has('subiect')) return '';
+      const cod = String(q.get('subiect') || '');
+      q.delete('subiect');
+      const coada = q.toString();
+      const ist = window.history;
+      if (ist && ist.replaceState) {
+        ist.replaceState(ist.state, '', loc.pathname + (coada ? '?' + coada : '') + (loc.hash || ''));
+      }
+      return cod === 'neplatite' ? cod : '';
+    } catch (e) { return ''; }
+  }
+
+  /**
+   * Clientul a venit din „Comanda mea” ca să vorbească despre comenzile
+   * neplătite: pagina se mută pe Contact, cu formularul în felul „numai
+   * mesaj” (`mesajPlati`) și cu textul pus gata.
+   *
+   * Coșul NU se atinge — nici aici, nici la trimitere. Un om oprit de prag are
+   * de obicei coșul plin (de-aia a și aflat de prag); dacă drumul până la
+   * „vorbesc cu cineva” i l-ar fi golit, ar fi plătit de două ori pentru
+   * aceeași oprire.
+   *
+   * Adresa se ÎNLOCUIEȘTE, ca în `primesteReluarea` și din aceeași pricină:
+   * `duLa()` ar fi împins o intrare nouă, iar primul „înapoi” l-ar fi dus pe
+   * „/”, unde n-a fost niciodată.
+   */
+  primesteSubiectul(cod) {
+    if (cod !== 'neplatite') return;
+    this.setState({
+      page: 'contact', fel: 'pagina', cheie: '', menuOpen: false, cosJos: false, finalizare: false,
+      mesajPlati: true, mesajPlatiText: null, sent: false, sendErr: '', pragIntreb: null
+    });
+    if (!GP_HARTA || typeof history === 'undefined' || !history.replaceState || typeof location === 'undefined') return;
+    try {
+      history.replaceState(history.state, '', caleaCatre('contact', this.state.lang, 'pagina', '') + (location.search || ''));
+    } catch (err) { /* istoric nescriibil: pagina e oricum pe Contact */ }
+  }
+
+  /**
+   * Fereastra de trimitere tocmai s-a deschis ori tocmai s-a închis.
+   *
+   * Formularul e scris o singură dată și se arată în două locuri: pagina
+   * Contact și fereastra de finalizare. Niciuna nu are un „s-a deschis” al ei
+   * de care să te agăți — pe Contact se ajunge din meniu, din legături, din
+   * „înapoi”; fereastra se deschide din trei butoane. Deci se compară ce e pe
+   * ecran acum cu ce era la desenarea trecută, din `componentDidUpdate`: un
+   * singur loc, pe care niciun drum nou nu-l poate ocoli.
+   *
+   * La deschidere: plățile se mai întreabă o dată (v. `citestePlatile`).
+   * La închidere: felul „numai mesaj” și întrebarea de prag se sting. Rămase
+   * aprinse, omul care deschide a doua zi fereastra de finalizare ar fi găsit
+   * un formular de mesaj în locul comenzii, fără să fi cerut asta.
+   */
+  urmaresteFormularul() {
+    const laVedere = this.state.page === 'contact' || !!(this.__peEcran && this.__peEcran.final);
+    if (laVedere === this.__formLaVedere) return;
+    this.__formLaVedere = laVedere;
+    if (laVedere) { this.citestePlatile(); return; }
+    if (this.state.mesajPlati || this.state.pragIntreb) {
+      this.setState({ mesajPlati: false, pragIntreb: null });
+    }
+  }
+
+  /**
+   * „Fereastra a deschis-o reluarea” ține cât ține fereastra.
+   *
+   * Steagul `finalDinReluare` îl aprinde `cerneReluarea`, odată cu fereastra.
+   * De stins nu-l poate stinge deschiderea din buton: aceea trece prin
+   * `deschidereaFinalului()`, starea comună a celor două drumuri, care nu
+   * deosebește cine a deschis. Și nici fiecare închidere în parte — sunt
+   * șase (✕, fundalul, Escape, „înapoi”, „Adaugă alte produse”, coșul golit).
+   * Se stinge aici, o dată după fiecare desenare, ca intrarea din istoric
+   * (`potrivesteIstoricul`): un singur loc de greșit.
+   *
+   * Rămas aprins, fereastra deschisă apoi din butonul „Finalizare comandă”
+   * ar fi arătat coșul înaintea formularului — așezarea reluării, pentru un
+   * om care tocmai și-a ales produsele și vrea căsuțele.
+   *
+   * Pe STEAG (`this.state.finalizare`), nu pe ce e desenat: steagul e cel pe
+   * care îl sting toate închiderile, iar fereastra cu „Mulțumim” (coș gol,
+   * steag aprins) e tot fereastra reluării.
+   */
+  potrivesteReluarea() {
+    if (this.state.finalDinReluare && !this.state.finalizare) this.setState({ finalDinReluare: false });
+  }
+
+  /**
+   * Omul s-a întors în filă: ce știa pagina despre plăți s-a putut învechi
+   * (reparație din 5 oct. 2026, runda 2.7.0).
+   *
+   * `urmaresteFormularul` întreabă numai la DESCHIDEREA formularului. Clientul
+   * oprit care lăsa fila pe formular, plătea (ori suna la birou, iar biroul
+   * încasa) și se întorcea găsea tot „Oprit până la plată”: formularul nu se
+   * închisese și nu se redeschisese, deci nimeni nu mai întrebase nimic — iar
+   * a doua pază a paginii (`comandaOprita`, în `submitQuote`) îi oprea
+   * trimiterea înainte să ajungă la server, singurul care știa că s-a
+   * plătit. Rămânea oprit de un răspuns vechi până la o reîncărcare pe care
+   * n-avea de unde s-o ghicească.
+   *
+   * Două clipe înseamnă „s-a întors”: fila redevine vizibilă
+   * (`visibilitychange`) și pagina e pusă la loc din memoria browserului
+   * (`pageshow` cu `persisted`) — a doua n-o aprinde pe prima în orice
+   * browser. Când vin amândouă pleacă două întrebări, iar pe ecran ajunge
+   * numai răspunsul celei din urmă (`__platiNr`, în `citestePlatile`).
+   *
+   * Se întreabă numai cât formularul e pe ecran ȘI pagina ține o stare a
+   * plăților. Fără formular, întrebarea se pune oricum la deschiderea lui.
+   * Iar fără stare pagina TACE dinadins: ori citirea a picat (și tăcerea nu
+   * oprește pe nimeni), ori tocmai a plecat o comandă și starea s-a șters ca
+   * să nu aprindă caseta roșie sub „Mulțumim” (v. `submitQuote`). O
+   * întoarcere în filă n-are voie să aprindă ce s-a stins acolo cu bună
+   * știință.
+   *
+   * Întoarce făgăduința lui `citestePlatile` (ori `null`), ca proba s-o
+   * poată aștepta.
+   */
+  intoarsInFila() {
+    if (!this.__formLaVedere || !this.state.plati) return null;
+    return this.citestePlatile();
+  }
+
+  /**
    * Reluarea, cernută prin catalogul abia sosit.
    *
    * Un produs scos din catalog, sau care nu se mai vinde pe latura aceea, nu
    * se vede în magazin (`PROD`, în renderVals), iar coșul îl ascunde tăcut. Lăsat
    * acolo, ar fi fost o cheie-fantomă: nevăzută, dar scrisă în browser. Aici
    * cheile acelea ies din coș și se numără, ca omul să afle câte au rămas pe
-   * dinafară. Dacă n-a intrat nimic, coșul de dinainte se pune singur la loc:
-   * altfel omul ar fi rămas cu un coș gol, pentru o comandă care nu s-a
-   * putut reface.
+   * dinafară. Ies și din `adaos`: „Scoate-le înapoi” n-are ce scoate de pe o
+   * cheie care nu mai e în coș. Dacă n-a intrat nimic, nu e nimic de pus la
+   * loc — de când reluarea se adună (runda 2.7.0), coșul de dinainte n-a
+   * plecat nicăieri — și caseta de pe catalog spune că a rămas cum era.
+   *
+   * Dacă a intrat măcar un produs, FEREASTRA DE FINALIZARE SE DESCHIDE
+   * SINGURĂ (cererea patronului din 4 oct. 2026, cu vorbele lui: produsele
+   * intră în coș „and it goes on the checkout page”). Pe drumul butonului
+   * „Finalizare comandă” (`deschidereaFinalului`), nu pe unul al ei. Nimic nu
+   * pleacă singur: ziua, adresa și trimiterea rămân ale omului.
+   *
+   * RĂMAS DE VĂZUT ÎNTR-UN BROWSER (a doua citire, 5 oct. 2026). Intrarea din
+   * istoric a ferestrei ăsteia se împinge fără nicio atingere a omului
+   * (`potrivesteIstoricul`, după desenare). Chrome sare, la „înapoi”, peste
+   * intrările adăugate fără gest: omul care apasă „înapoi” fără să fi atins
+   * nimic ar ieși atunci din magazin, cu produsele rămase în coș, în loc să
+   * închidă fereastra. Împinsă abia la primul gest, intrarea ar fi dus aceeași
+   * purtare în toate browserele — de aceea a rămas cum e, până se vede pe viu.
+   *
+   * Numai cât pagina e încă pe catalog. O adresă care poartă și `?subiect=`
+   * mută omul pe formularul de mesaj (`primesteSubiectul`); acolo același
+   * `<main>` e chiar pagina, iar îmbrăcat în fereastră ar fi acoperit-o cu
+   * perdeaua lui. La fel dacă omul a apucat să plece din catalog până a sosit
+   * răspunsul: caseta îl așteaptă acolo.
    *
    * O singură dată pe reluare (`cernut`): catalogul se mai cere și la
-   * „Încearcă din nou”, iar a doua cernere n-ar mai avea ce număra.
+   * „Încearcă din nou”, iar a doua cernere n-ar mai avea ce număra. De aceea
+   * nici fereastra nu se deschide a doua oară, la o reîncărcare a paginii.
    */
   cerneReluarea(s, produse) {
     const R = s.reia;
@@ -3379,12 +4444,61 @@ class Component extends DCLogic {
     });
     const intra = R.chei.filter((k) => deVanzare[k]);
     const q = Object.assign({}, s.qty);
-    R.chei.forEach((k) => { if (!deVanzare[k]) delete q[k]; });
-    const reia = Object.assign({}, R, { chei: intra, lipsa: R.chei.length - intra.length, cernut: true });
-    if (!intra.length && R.vechi) {
-      return { qty: Object.assign({}, R.vechi), tier: R.vechiTier === 'baked' ? 'baked' : 'frozen', reia: Object.assign(reia, { vechi: null }) };
+    // O reluare ținută minte de versiunea de dinainte de 2.7.0 n-are `adaos`;
+    // rămâne fără, deci fără „Scoate-le înapoi” — nu i se născocește unul.
+    const adaos = R.adaos && typeof R.adaos === 'object' ? Object.assign({}, R.adaos) : null;
+    // La fel și ce a completat o sosire repetată: produsul scos din vânzare
+    // între cele două apăsări n-a fost în coș nici după prima, deci a doua l-a
+    // „completat” de la zero — iar rămas aici, caseta ar spune „am completat
+    // cantitățile” deasupra unui coș în care n-a intrat nimic.
+    const completat = R.completat && typeof R.completat === 'object' ? Object.assign({}, R.completat) : null;
+    R.chei.forEach((k) => {
+      if (deVanzare[k]) return;
+      delete q[k];
+      if (adaos) delete adaos[k];
+      if (completat) delete completat[k];
+    });
+    const reia = Object.assign({}, R, {
+      chei: intra, lipsa: R.chei.length - intra.length, cernut: true, adaos: adaos, completat: completat,
+      // Vorba despre plafon rămâne numai dacă mai e în coș o cheie ajunsă la
+      // el: altfel caseta ar vorbi de 9999 de bucăți deasupra unui coș în care
+      // produsul tăiat nici nu mai e.
+      taiat: !!R.taiat && intra.some((k) => q[k] >= 9999)
+    });
+    if (!intra.length) {
+      // „Coșul a rămas cum era” — și fila la fel. La sosire fila s-a mutat pe
+      // varianta comenzii (`primesteReluarea`); pentru o comandă din care n-a
+      // intrat nimic, omul ar fi rămas pe „Congelate” fără să fi cerut-o. Până
+      // la 2.7.0 fila se întorcea odată cu coșul pus la loc; coșul nu mai
+      // pleacă nicăieri, fila tot trebuie adusă înapoi.
+      //
+      // Și URMA: comanda din care n-a intrat nimic nu e „adusă în coș”, deci
+      // numărul ei iese la loc (`primesteReluarea` îl pusese la sosire,
+      // înainte să se știe ce intră). Rămas, ziua în care produsele ei se
+      // vând iar ar fi găsit-o „deja adusă”: peste cele 5 bucăți puse de om
+      // între timp, comanda de 10 ar fi dat 10, nu 15.
+      const aduse = this.urmaCurata(s.aduse).filter((x) => x !== R.din);
+      return R.fila === 'baked' || R.fila === 'frozen' ? { qty: q, tier: R.fila, reia, aduse } : { qty: q, reia, aduse };
     }
-    return { qty: q, reia };
+    if (s.page !== 'catalog') return { qty: q, reia };
+    // DOUĂ LUCRURI PE CARE NUMAI DESCHIDEREA ASTA LE ARE DE FĂCUT (reparație
+    // din 5 oct. 2026, runda 2.7.0, după a doua citire) — de aceea stau aici,
+    // nu în `deschidereaFinalului()`, care e și a butonului:
+    //
+    // `menuOpen: false`. Butonul „Finalizare comandă” nu se poate apăsa cu
+    // sertarul de meniu deschis: perdeaua sertarului (129) stă peste bara de
+    // jos (120). Fereastra asta însă se deschide singură, când sosește
+    // catalogul — iar omul a putut deschide sertarul cât l-a așteptat. Rămânea
+    // atunci cu fereastra (160) PESTE sertar, cu derularea paginii legată de
+    // el (`legDerularea`), iar primul Escape închidea sertarul de dedesubt, pe
+    // care nu-l vedea, în loc de fereastra din față.
+    //
+    // `finalDinReluare: true`. Fereastra deschisă singură arată întâi coșul,
+    // apoi formularul (v. `contactLateralStyle`). E un steag al DESCHIDERII,
+    // nu al casetei: „Am înțeles” și „Scoate-le înapoi” nu-l ating, ca ecranul
+    // să nu se mute sub degetul omului. Îl stinge închiderea ferestrei
+    // (`potrivesteReluarea`).
+    return Object.assign({ qty: q, reia, menuOpen: false, finalDinReluare: true }, this.deschidereaFinalului());
   }
 
   setQty(key, n) {
@@ -3473,9 +4587,10 @@ class Component extends DCLogic {
     // NUMĂR de cont, nu de un nume care s-ar putea potrivi cu altcineva.
     const cl = this.state.clientAles;
     // Cine are voie să caute: oglinda lui `client_scope_for()` de pe server.
-    // Managerul și angajatul sunt personal, dar n-au ogradă — lor caseta nici
-    // nu li se desenează. `gp.eAdmin()` ține la un loc administratorul și
-    // fondatorul, ca peste tot în casă.
+    // Două ogrăzi: cine scrie comenzi (dreptul `comenzi.scrie`, din „Acces”)
+    // caută printre toți clienții casei, agentul numai printre ai lui.
+    // Angajatul e personal, dar n-are ogradă — lui caseta nici nu i se
+    // desenează.
     const cautaClient = staff && gp.eCautaClienti(A);
     // Ce intrări are contul în meniul casei — de aici își ia meniul din antet
     // „Recomandări” și „Parola mea”. Contul se dă în forma lui `gp.auth()`, nu
@@ -4538,6 +5653,108 @@ class Component extends DCLogic {
     // afle dacă a plecat ceva. Prins la proba de pe 8100, nu la citire.
     const finalizare = !!this.state.finalizare && (picks.length > 0 || !!this.state.sent);
 
+    // Fereastra produsului și cea de finalizare stau la mijloc pe un ecran lat
+    // și înalt și vin de jos pe telefon (`eLaMijloc`, sus). Foaia coșului nu
+    // intră aici: ea există numai pe telefon (`cosJos` cere `mob`).
+    const centrat = !!this.state.centrat;
+    // Poza și textul produsului, alături ori una sub alta. Pagina produsului
+    // (fără fereastră) ascultă numai de `mob`, ca până acum; fereastra de la
+    // mijloc le ține alături și sub 1080 px, cât are toată lățimea ei.
+    const pvAlaturi = !mob || (randVedere !== null && centrat && !!this.state.alaturi);
+    // Ce e DESENAT acum, pentru Escape (`_onEsc`): cele trei de mai sus, cu
+    // pazele lor cu tot.
+    this.__peEcran = { final: finalizare, vedere: randVedere !== null, cos: cosJos };
+
+    // PLĂȚILE (runda 2.7.0, hotărârile patronului din 4–5 oct. 2026).
+    //
+    // `P` e răspunsul de la `GET /plati/mine`, ținut numai cât pagina chiar
+    // ȘTIE: client intrat, `activ: true`. Orice altceva e `null`, iar `null`
+    // nu desenează și nu oprește nimic — formularul rămâne cel de dinainte.
+    // Numerele se trec prin `parseInt`: un server care ar trimite „2” în loc
+    // de 2 n-are voie să scrie „Mai poți trimite NaN”.
+    const P = (mine && this.state.plati && this.state.plati.activ === true) ? this.state.plati : null;
+    const numarNat = (v) => Math.max(0, parseInt(v, 10) || 0);
+    const pN = P ? numarNat(P.n) : 0;
+    const pPrag = P ? numarNat(P.prag) : 0;
+    const pCereri = P ? numarNat(P.cereri) : 0;
+    const pSold = P ? (Number(P.sold) || 0) : 0;
+    // Felul „numai mesaj” („Contactează-ne”): formularul trimite o întrebare,
+    // fără produse. Cât e aprins, nici rândul galben, nici caseta roșie nu se
+    // mai arată — omul tocmai a apăsat pe ieșirea din ele.
+    const mesajMod = !!this.state.mesajPlati;
+    const platiBlocat = !!P && P.stare === 'blocat';
+    const platiAvert = !!P && P.stare === 'avertizare' && pN > 0 && !mesajMod;
+    // STEAGUL PAGINII: clientul e oprit ȘI are produse în coș. Fără produse
+    // pleacă un mesaj, iar un mesaj nu-l oprește nimeni — nici serverul
+    // (poarta lui se uită numai la cererile CU produse), nici pagina.
+    //
+    // Stă de sine stătător — nu știe de `sending`, nici de felul formularului —
+    // ca să poată fi legat mâine și de butonul din coș („Finalizare comandă”)
+    // fără să-i fie desfăcută socoteala: un `disabled` legat de `trimiteOprit`
+    // și motivul din `trimiteOpritNota` ajung.
+    const trimiteOprit = platiBlocat && picks.length > 0;
+    // Ce stinge butonul de trimitere al FORMULARULUI: trimiterea în curs, ori
+    // steagul de mai sus — dar nu în felul „numai mesaj”, unde formularul nu
+    // mai trimite coșul.
+    const comandaOprita = trimiteOprit && !mesajMod;
+    const trimiteStins = !!this.state.sending || comandaOprita;
+    // „1 comandă neplătită · 2 comenzi neplătite · 20 de comenzi neplătite”.
+    // Când `n` cuprinde și cereri trimise, încă neacceptate, serverul le
+    // numără la prag, dar ele nu sunt datorii: de-aia vorba se lărgește
+    // („ori în așteptare”), iar suma din paranteză rămâne numai soldul.
+    const comenziNeplatite = (n, cuCereri) => (n === 1
+      ? t('1 comandă neplătită' + (cuCereri ? ' ori în așteptare' : ''),
+          '1 unpaid' + (cuCereri ? ' or pending' : '') + ' order')
+      : n + t(deNumar(n) + ' comenzi neplătite' + (cuCereri ? ' ori în așteptare' : ''),
+              ' unpaid' + (cuCereri ? ' or pending' : '') + ' orders'));
+    const platiRamase = Math.max(0, pPrag - pN);
+    const platiAvertText = !platiAvert ? '' : (
+      t('Ai ', 'You have ') + comenziNeplatite(pN, pCereri > 0)
+      + (pSold > 0 ? ' (' + money(pSold) + ')' : '') + '.'
+      + (platiRamase === 1
+          ? t(' Poți trimite încă una; după aceea comenzile se opresc până la plată.',
+              ' You can send one more; after that, orders are on hold until payment.')
+          : (platiRamase > 1
+              ? t(' Mai poți trimite ' + platiRamase + '; după aceea comenzile se opresc până la plată.',
+                  ' You can send ' + platiRamase + ' more; after that, orders are on hold until payment.')
+              : '')));
+    // Lista din caseta roșie: ref · zi · sumă, din `comenzi` (ori din
+    // `neplatite`, când starea vine dintr-un refuz). Numai cele trei: pagina
+    // nu citește și nu arată altceva despre o comandă neplătită — nici
+    // amânări, nici note ale biroului.
+    const platiLista = (platiBlocat && !mesajMod && Array.isArray(P.comenzi) ? P.comenzi : [])
+      .filter((o) => o && typeof o === 'object')
+      .map((o) => ({
+        ref: String(o.ref || ''),
+        zi: o.zi ? ziScrisa(o.zi) : '',
+        suma: money(o.total)
+      }));
+    // Serverul trimite cel mult douăzeci de rânduri (cele mai vechi); câte au
+    // rămas pe dinafară se spune sub listă, ca suma rândurilor să nu pară
+    // alta decât soldul scris sub ele. `n` le numără și pe cele trimise și
+    // încă neacceptate, care nu sunt în listă — de-aia se scad.
+    const platiRestN = platiLista.length > 0 ? Math.max(0, (pN - pCereri) - platiLista.length) : 0;
+    // Întrebarea de trecere peste prag, pentru omul biroului. Se arată numai
+    // cât pe ecran e chiar clientul pentru care a venit refuzul: schimbat
+    // clientul, întrebarea nu mai are despre cine să întrebe.
+    //
+    // „Același client” se judecă în două feluri (reparație din 5 oct. 2026).
+    // Cu un client ALES din căutare, e cel cu numărul din întrebare. Fără
+    // niciunul ales, întrebarea rămâne numai dacă s-a născut dintr-un cont
+    // găsit de server după NUMELE scris în formular (`scris`, pus de refuz) —
+    // una rămasă de la un client ales și apoi dezlegat nu mai e despre nimeni.
+    // Că numele scris s-a schimbat între timp pagina n-are de unde ști la
+    // desenare (caseta „Companie” nu e ținută în stare); de-aia îngăduința se
+    // mai judecă o dată la plecare, în `submitQuote`, pe numele care pleacă.
+    const Q = this.state.pragIntreb;
+    const pragIntreb = (staff && !!Q && (cl ? String(cl.id) === String(Q.pentru) : typeof Q.scris === 'string')) ? Q : null;
+    // Textul din caseta de mesaj. `null` înseamnă „neatins”: atunci se scrie
+    // cel pus gata, în limba de pe ecran — și se schimbă odată cu ea.
+    const mesajGata = t('Vreau să vorbesc cu cineva despre comenzile neplătite.',
+                        'I would like to talk to someone about my unpaid orders.');
+    const mesajText = (this.state.mesajPlatiText === null || this.state.mesajPlatiText === undefined)
+      ? mesajGata : String(this.state.mesajPlatiText);
+
     // „Comandă din nou”: caseta de deasupra paginii. Se arată numai pe catalog,
     // unde e coșul, și numai după ce catalogul a răspuns: până atunci pagina nu
     // știe ce a intrat și ce nu, deci n-are ce afirma. Pe o eroare de catalog
@@ -4550,7 +5767,23 @@ class Component extends DCLogic {
     const reiaInCos = reiaGata && !R.stricata
       ? R.chei.filter((k) => QTY[k] > 0 && byNo[k.split(':')[1]]).length : 0;
     const reiaNimic = reiaGata && !R.stricata && R.chei.length === 0;
-    const reiaVechi = reiaInCos > 0 && !!R.vechi && Object.keys(R.vechi).some((k) => R.vechi[k] > 0);
+    // „Scoate-le înapoi” se arată numai cât are ce scoate: măcar o cheie pe
+    // care reluarea a adăugat ceva și care mai e în coș. O reluare ținută
+    // minte de versiunea de dinainte de 2.7.0 n-are `adaos` deloc.
+    const reiaAdaos = reiaInCos > 0 && !!R.adaos && typeof R.adaos === 'object'
+      && Object.keys(R.adaos).some((k) => R.adaos[k] > 0 && QTY[k] > 0);
+    // Aceeași casetă, strânsă, sus în fereastra de finalizare — cât fereastra
+    // e pe ecran și reluarea mai are produse în coș (v. marcajul ferestrei).
+    const reiaInFinal = finalizare && reiaInCos > 0;
+    const reiaDin = reiaInCos > 0 && typeof R.din === 'string' ? R.din : '';
+    // Sosirea repetată a aceleiași comenzi (v. `primesteReluarea`): caseta nu
+    // mai are voie să spună „Am pus în coș…”, fiindcă n-a pus — ori n-a intrat
+    // nimic, ori s-a completat ce scăzuse omul. Numai cu numărul comenzii pe
+    // ecran: fără el, „erau deja în coș” n-ar spune despre CE comandă e vorba
+    // (și fără număr nici nu se poate ajunge aici — nu lasă urmă).
+    const reiaRepetat = !!reiaDin && R.repetat === true;
+    const reiaCompletat = reiaRepetat && !!R.completat && typeof R.completat === 'object'
+      && Object.keys(R.completat).some((k) => R.completat[k] > 0);
 
     const piecesText = totPieces + ' ' + t('buc', 'pcs');
     const orderText = (extra) => {
@@ -4576,6 +5809,34 @@ class Component extends DCLogic {
             'Below the ' + MIN_ORDER + ' RON minimum — ' + money(minLeft) + ' short. Elsewhere in Romania we deliver on request.'));
       if (extra && extra.length) { L.push(''); extra.forEach((x) => { L.push(x); }); }
       return L.join('\n');
+    };
+    // PE WHATSAPP NU PLEACĂ O COMANDĂ OPRITĂ (reparație din 5 oct. 2026,
+    // runda 2.7.0).
+    //
+    // Clientul oprit de prag vedea butonul stins „Oprit până la plată” și,
+    // chiar sub el, butonul verde „Trimite pe WhatsApp”, viu — care trimitea
+    // coșul întreg, sub nota „împreună cu produsele și cantitățile selectate”.
+    // La fel legătura verde din coș. Oprirea stătea deci numai pe UNUL din
+    // drumurile comenzii; celălalt o ducea la aceeași patiserie, pe alt canal,
+    // iar „nu putem primi o comandă nouă” era adevărat numai pentru cine nu
+    // apăsa pe verde.
+    //
+    // Steagul e unul singur pentru TOATE textele de WhatsApp care ar purta
+    // coșul: butonul din formular (`sendWa`), legătura din coș și butonul
+    // plutitor (`waOrderHref`). Cât e aprins, pe WhatsApp pleacă ce pleacă și
+    // din „Contactează-ne”: mesajul și datele de contact, fără niciun produs
+    // (`mesajWa`). Butonul RĂMÂNE pe ecran — ieșirea din oprire e un om, iar
+    // WhatsApp e tot un drum până la el. Dacă trebuie ascuns cu totul pentru
+    // cel oprit, asta e hotărârea patronului, nu a paginii.
+    //
+    // `trimiteOprit`, nu `comandaOprita`: legătura din coș nu ține de felul
+    // în care se află formularul, iar în felul „numai mesaj” `mesajMod` e
+    // oricum aprins.
+    const waFaraCos = mesajMod || trimiteOprit;
+    const mesajWa = (extra) => {
+      const rand = [t('Mesaj — Golden Pastry', 'Message — Golden Pastry'), '', mesajText.trim()];
+      if (extra && extra.length) { rand.push(''); extra.forEach((x) => { rand.push(x); }); }
+      return rand.join('\n');
     };
 
     return {
@@ -4832,6 +6093,7 @@ class Component extends DCLogic {
       asideRef: this.asideRef, colsRef: this.colsRef,
       unelteRef: this.unelteRef, laturaRandRef: this.laturaRandRef,
       pastilaRef: this.pastilaRef, baraRef: this.baraRef, waSusRef: this.waSusRef,
+      reiaCasetaRef: this.reiaCasetaRef, eroareCasetaRef: this.eroareCasetaRef,
       // Coșul: aceeași casetă, trei așezări.
       //
       // MARCAJUL NU SE DUBLEAZĂ. Rândurile, butoanele „+" și „−", totalul,
@@ -4855,13 +6117,29 @@ class Component extends DCLogic {
       contactVizibil: p === 'contact' || finalizare,
       finalizare: finalizare,
       finalTitlu: t('Finalizare comandă', 'Checkout'),
-      // Fereastra vine de jos, ca foaia coșului: pe telefon degetul e acolo,
-      // iar pe calculator ochiul a rămas pe butonul de jos al coșului.
+      // Pe telefon fereastra vine de jos, ca foaia coșului: degetul e acolo.
       // `max-height:92vh` lasă o dungă din pagina de dedesubt vizibilă —
       // semnul că e o fereastră, nu o pagină nouă.
-      contactMainStyle: finalizare
-        ? 'position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:160;width:min(64rem,100%);max-height:92vh;overflow-y:auto;overscroll-behavior:contain;background:var(--h-bg-page);border:1px solid var(--h-line);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,0.38)'
-        : '',
+      //
+      // Pe un ecran lat și înalt stă la mijloc (`fereastraLaMijloc`, sus). Până
+      // la runda 2.7.0 venea de jos și acolo, „fiindcă ochiul a rămas pe
+      // butonul de jos al coșului" — dar pe calculator coșul e coloana din
+      // dreapta, nu o bară de jos, iar fereastra ieșea lipită de marginea de
+      // jos a monitorului, cu tot golul deasupra.
+      contactMainStyle: !finalizare ? ''
+        : centrat ? fereastraLaMijloc(160, '64rem')
+        : 'position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:160;width:min(64rem,100%);max-height:92vh;overflow-y:auto;overscroll-behavior:contain;background:var(--h-bg-page);border:1px solid var(--h-line);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,0.38)',
+      // Atributele ferestrei; pe pagina de contact lipsesc (`null` nu se scrie).
+      finalRol: finalizare ? 'dialog' : null,
+      finalModal: finalizare ? 'true' : null,
+      finalEticheta: finalizare ? t('Finalizare comandă', 'Checkout') : null,
+      finalFel: !finalizare ? null : (centrat ? 'mijloc' : 'jos'),
+      finalInchideRef: this.legaFinalul,
+      // Cele două butoane „Finalizare comandă” ale coșului, ținute minte ca
+      // focusul să aibă unde cădea la închiderea ferestrei (`asazaFocusul`).
+      // Aceleași două funcții la fiecare desenare, făcute în constructor.
+      finalColoanaRef: this.legaFinalColoana,
+      finalBaraRef: this.legaFinalBara,
       contactSectionStyle: finalizare
         ? 'max-width:none;margin:0;padding:1rem clamp(1rem,4vw,1.5rem) calc(1.5rem + env(safe-area-inset-bottom))'
         : 'max-width:1740px;margin:0 auto;padding:2.5rem clamp(1.25rem,4vw,3rem) clamp(3rem,7vw,5rem)',
@@ -4870,13 +6148,29 @@ class Component extends DCLogic {
         : 'display:grid;grid-template-columns:repeat(auto-fit,minmax(min(19rem,100%),1fr));gap:1.5rem;align-items:start',
       // În pagina de contact coloana cu produsele stă întâi, fiindcă omul a
       // venit din meniu și trebuie să afle ÎNTÂI că site-ul îi ține minte
-      // coșul. În fereastră a apăsat chiar „Finalizare comandă": știe ce a
-      // ales, vrea căsuțele. Pe 390 px grila are o singură coloană, deci
-      // `order:2` înseamnă „lista trece sub formular" — altfel formularul
-      // începea la al patrulea ecran de derulare.
-      contactLateralStyle: finalizare
-        ? 'display:flex;flex-direction:column;gap:1rem;order:2'
-        : 'display:flex;flex-direction:column;gap:1.5rem',
+      // coșul. În fereastra deschisă din buton a apăsat chiar „Finalizare
+      // comandă": știe ce a ales, vrea căsuțele. Pe 390 px grila are o singură
+      // coloană, deci `order:2` înseamnă „lista trece sub formular" — altfel
+      // formularul începea la al patrulea ecran de derulare.
+      //
+      // FEREASTRA DESCHISĂ DE „COMANDĂ DIN NOU” E ALTCEVA (reparație din
+      // 5 oct. 2026, runda 2.7.0, după a doua citire): omul n-a ales acum
+      // nimic, coșul i l-a umplut reluarea — poate peste ce avea deja. Cu
+      // `order:2`, pe telefon vedea întâi căsuțele și „Finalizează comanda”,
+      // iar lista, totalul și „Adaugă alte produse” abia SUB butonul de
+      // trimitere: putea trimite un coș pe care nu-l văzuse. Acolo coloana
+      // rămâne întâi, ca pe pagina de contact și din aceeași pricină. Pe un
+      // ecran lat cele două coloane stau oricum alături; se schimbă numai
+      // care e în stânga.
+      //
+      // După steagul DESCHIDERII (`finalDinReluare`), nu după caseta reluării:
+      // „Am înțeles” stinge caseta cu fereastra încă deschisă, iar lista n-are
+      // voie să sară atunci sub formular, de sub degetul omului.
+      contactLateralStyle: !finalizare
+        ? 'display:flex;flex-direction:column;gap:1.5rem'
+        : this.state.finalDinReluare
+          ? 'display:flex;flex-direction:column;gap:1rem'
+          : 'display:flex;flex-direction:column;gap:1rem;order:2',
       // Deschiderea nu duce nicăieri: nu schimbă `page`, deci nici adresa.
       // Închide foaia coșului, fiindcă altfel pe telefon ar fi rămas una
       // peste alta — două foi venite de jos, una ascunzând-o pe cealaltă.
@@ -4884,8 +6178,11 @@ class Component extends DCLogic {
       // comandă din aceeași vizită s-ar fi deschis cu „Mulțumim, cererea ta a
       // intrat" scris deasupra casetelor goale — răspunsul de la comanda
       // dinainte, citit ca răspuns la asta.
-      deschideFinal: () => this.setState({
-        finalizare: true, cosJos: false, sent: false, sendErr: '' }),
+      //
+      // Starea stă în `deschidereaFinalului()`, nu aici: de la runda 2.7.0
+      // fereastra o mai deschide și „Comandă din nou” (`cerneReluarea`), iar
+      // cele două deschideri n-au voie să se despartă.
+      deschideFinal: () => this.setState(this.deschidereaFinalului()),
       inchideFinal: () => this.setState({ finalizare: false }),
 
       goHome: this.nav('home'), goCat: this.nav('catalog'), goDist: this.nav('distribution'),
@@ -4965,7 +6262,11 @@ class Component extends DCLogic {
           // magazin ar lăsa legat, pentru următorul venit, un cont pe care
           // acela n-are dreptul nici măcar să-l vadă în listă — iar caseta de
           // căutare nici nu i se mai desenează, ca să-l poată schimba.
-          clientAles: null, cautQ: '', cautLista: [], cautStare: '', cautEroare: ''
+          clientAles: null, cautQ: '', cautLista: [], cautStare: '', cautEroare: '',
+          // Și starea plăților: era a contului care tocmai a ieșit. Rămasă în
+          // urmă, următorul client intrat de pe același telefon ar fi citit,
+          // până la răspunsul lui, soldul și comenzile celuilalt.
+          plati: null, pragIntreb: null, mesajPlati: false, mesajPlatiText: null
         }, (() => {
           const r = this.codRecomandare(null, st.refDinCookie);
           return { refCod: r.cod, refSursa: r.sursa };
@@ -4996,17 +6297,24 @@ class Component extends DCLogic {
       lblCauta: t('Pentru ce client e comanda', 'Which customer is this order for'),
       phCauta: t('nume, firmă, telefon sau e-mail', 'name, company, phone or e-mail'),
       // Nota de sub casetă spune, de fiecare dată, exact ce s-a întâmplat.
-      // „Niciun client" e scris altfel pentru agent decât pentru administrator,
-      // fiindcă ograda lor e altfel: agentul caută numai printre cei aduși de
-      // codul lui, deci „nu se potrivește nimeni" înseamnă la el „nu e clientul
-      // tău", iar drumul mai departe e să-i facă un cont din Recomandări.
+      // „Niciun client" e scris altfel pentru agent decât pentru cine scrie
+      // comenzi, fiindcă ograda lor e altfel: agentul caută numai printre cei
+      // aduși de codul lui, deci „nu se potrivește nimeni" înseamnă la el „nu e
+      // clientul tău", iar drumul mai departe e să-i facă un cont din
+      // Recomandări.
+      //
+      // Întrebarea e a lui `client_scope_for()` (api/lib/orders.php): „scrie
+      // comenzi?", nu „e administrator?". Până la runda 2.7.0 aici stătea
+      // `gp.eAdmin(A)`, iar managerul — care din 19 septembrie 2026 caută
+      // printre TOȚI clienții casei — citea „niciun client adus de tine” și
+      // era trimis în Recomandări, pagină pe care nici n-o are.
       cautNota: this.state.cautStare === 'scurt'
         ? t('Încă o literă: căutarea pornește de la două.',
             'One more letter: the search starts at two.')
         : this.state.cautStare === 'caut'
         ? t('Caut…', 'Searching…')
         : this.state.cautStare === 'gol'
-        ? (gp.eAdmin(A)
+        ? (gp.eScrieComenzi(A)
             ? t('Niciun client nu se potrivește. Scrie altfel, sau lasă caseta goală și completează datele de mai jos.',
                 'No customer matches. Try another spelling, or leave this empty and fill in the details below.')
             : t('Niciun client adus de tine nu se potrivește. Fă-i cont din Recomandări, apoi întoarce-te aici.',
@@ -5099,11 +6407,14 @@ class Component extends DCLogic {
         : '',
       // Același rând, două locuri: în rezumat cât timp e strâns, sub „Când
       // vrei comanda" după ce s-a deschis. Nu în amândouă odată.
-      zoneSfatSus: rezumatStrans && gp.zoneFaraPunct(this.state.zone),
+      zoneSfatSus: rezumatStrans && !mesajMod && gp.zoneFaraPunct(this.state.zone),
       zoneSfatJos: !rezumatStrans && gp.zoneFaraPunct(this.state.zone),
 
       // --- 29-b · rezumatul strâns --------------------------------------
-      rezumatStrans,
+      // În felul „numai mesaj” rândurile de livrare și butonul „Modifică” nu
+      // se arată: nu pleacă nicio comandă, deci n-au despre ce vorbi. Numele
+      // și contactul contului rămân — omul trebuie să vadă cine semnează.
+      rezumatStrans: rezumatStrans && !mesajMod,
       // Casetele de livrare — adresa și zona. Pentru client se deschid odată
       // cu „Modifică" (sau singure, când contul n-are încă adresă). Pentru
       // personal sunt mereu pe ecran: el n-are ce „modifica", fiindcă adresa
@@ -5177,21 +6488,49 @@ class Component extends DCLogic {
       // și pentru vizitator, deși ce pleacă spre patiserie e o comandă la
       // unul și o cerere de ofertă la celălalt: omul care a umplut un coș
       // vrea să-l TERMINE, iar deosebirea o face butonul de trimitere din
-      // fereastră („Trimite comanda" / „Trimite cererea", `sendLabel`).
+      // fereastră („Finalizează comanda" / „Trimite cererea", `sendLabel`).
       ctaContinue: t('Finalizare comandă', 'Checkout'),
-      ctaEditPicks: t('Modifică selecția', 'Edit selection'),
+      // Butonul de sub produsele alese, cel care duce înapoi la catalog
+      // (`goCat`: închide fereastra, lasă coșul neatins). În FEREASTRA de
+      // finalizare se numește „Adaugă alte produse” (runda 2.7.0) — e a doua
+      // jumătate a cererii patronului din 4 oct. 2026: după „Comandă din nou”
+      // omul ajunge la finalizare, iar de acolo ori mai adaugă, ori trimite.
+      // Nu s-a pus un al doilea buton lângă el: ar fi făcut același lucru sub
+      // alt nume. Pe pagina de contact rămâne „Modifică selecția”: acolo omul
+      // a venit din meniu și n-are la ce „alte” produse să se gândească.
+      ctaEditPicks: finalizare
+        ? t('Adaugă alte produse', 'Add other products')
+        : t('Modifică selecția', 'Edit selection'),
       // TREI ETICHETE, NU DOUĂ. Până azi butonul deosebea numai CINE trimite:
       // clientul cu cont trimite o comandă, vizitatorul o cerere. De când
       // coșul gol nu mai e un refuz (hotărârea din 14 septembrie 2026, vezi
       // `POST /requests`), mai hotărăște ceva și COȘUL: fără produse pleacă o
       // întrebare — un mesaj — oricine ar fi cel care apasă. Butonul e primul
       // loc în care omul poate citi ce se întâmplă când îl apasă.
+      //
+      // A patra, din runda 2.7.0: butonul STINS de pragul comenzilor neplătite
+      // spune el însuși de ce e stins. Scurt, fiindcă `.h-btn` nu-și rupe
+      // textul pe două rânduri, iar la 320 px intră cam douăzeci de litere;
+      // motivul întreg stă în rândul de sub el (`trimiteOpritNota`). Iar în
+      // felul „numai mesaj” pleacă un mesaj și cu coșul plin.
+      //
+      // „Finalizează comanda”, nu „Trimite comanda” (runda 2.7.0): e butonul
+      // pe care patronul l-a numit, pe 4 oct. 2026, „finish order” — cel cu
+      // care se încheie drumul început la „Comandă din nou”. Numai pentru
+      // clientul cu cont și cu produse în coș; vizitatorul trimite tot o
+      // cerere, iar coșul gol tot un mesaj. Are 19 semne, cât „Oprit până la
+      // plată”, dar litere mai late. SOCOTIT, nu măsurat în browser: la 320 px
+      // butonul lat lasă textului 194 px în fereastră și 188 pe pagina de
+      // contact (320 fără marginile secțiunii, ale cartonașului și ale
+      // butonului), iar vorba cere cam 152 la 15 px, îngroșat.
       sendLabel: this.state.sending
         ? t('Se trimite…', 'Sending…')
-        : (!picks.length
-            ? t('Trimite mesajul', 'Send the message')
-            : (mine ? t('Trimite comanda', 'Send the order')
-                    : t('Trimite cererea', 'Send the request'))),
+        : (comandaOprita
+            ? t('Oprit până la plată', 'On hold until payment')
+            : ((!picks.length || mesajMod)
+                ? t('Trimite mesajul', 'Send the message')
+                : (mine ? t('Finalizează comanda', 'Complete the order')
+                        : t('Trimite cererea', 'Send the request')))),
 
       // AL DOILEA BUTON: cererea pleacă acum, contul se face imediat după.
       //
@@ -5235,6 +6574,119 @@ class Component extends DCLogic {
       // de pe ecran spre pagina de cont, fără ca nimeni să fi cerut asta.
       doarTrimite: () => { this.__vreauCont = false; },
       trimiteSiCont: () => { this.__vreauCont = true; },
+
+      // --- PLĂȚILE: pragul comenzilor neplătite (runda 2.7.0) --------------
+      //
+      // Hotărârile patronului din 4–5 oct. 2026: la o comandă neplătită
+      // clientul e PREVENIT, la prag e OPRIT, iar ieșirea din oprire e un om,
+      // nu un formular de plată — de-aia singurul buton al casetei roșii e
+      // „Contactează-ne”. Vorbele casetei sunt ale patronului, cuvânt cu
+      // cuvânt; nu se „îmbunătățesc”.
+      trimiteOprit,
+      trimiteStins,
+      // Rândul de sub butonul stins. Se arată numai cât butonul formularului
+      // e chiar stins de prag (nu și în felul „numai mesaj”).
+      comandaOprita,
+      trimiteOpritNota: t('Comanda nu poate pleca până la plata soldului de mai sus. Coșul tău rămâne salvat.',
+                          'The order cannot be sent until the balance above is paid. Your cart stays saved.'),
+      platiAvert,
+      platiAvertText,
+      platiBlocat: platiBlocat && !mesajMod,
+      platiTitlu: t('Numărul maxim de comenzi a fost atins.', 'The maximum number of orders has been reached.'),
+      platiCorp: t('Până plătești soldul comenzilor precedente nu putem primi o comandă nouă.',
+                   'Until the balance of your previous orders is paid we cannot take a new order.'),
+      platiLista,
+      platiAreLista: platiLista.length > 0,
+      platiRest: platiRestN > 0
+        ? t('… și încă ' + (platiRestN === 1 ? '1 comandă' : platiRestN + deNumar(platiRestN) + ' comenzi') + '.',
+            '… and ' + platiRestN + ' more ' + (platiRestN === 1 ? 'order' : 'orders') + '.')
+        : '',
+      platiSold: t('Sold de plată: ', 'Balance due: ') + money(pSold),
+      // Pragul numără și cererile trimise, încă neacceptate. Fără rândul ăsta,
+      // omul cu o comandă neplătită și o cerere în așteptare ar fi citit o
+      // listă cu UN rând sub „numărul maxim a fost atins” și n-ar fi înțeles
+      // de ce. Gol când nu e nicio cerere — atunci rândul nu se desenează.
+      platiCereri: (platiBlocat && pCereri > 0)
+        ? (pCereri === 1
+            ? t('Se numără și o cerere trimisă, încă neacceptată.',
+                'One request already sent, not yet accepted, counts as well.')
+            : t('Se numără și ' + pCereri + deNumar(pCereri) + ' cereri trimise, încă neacceptate.',
+                pCereri + ' requests already sent, not yet accepted, count as well.'))
+        : '',
+      ctaContactPlati: t('Contactează-ne', 'Contact us'),
+      contactPlatiNota: t('pentru mai multe detalii despre situația actuală',
+                          'for more details about the current situation'),
+      // „Contactează-ne”: același formular, alt fel. Nu `duLa('contact')`:
+      // fereastra de finalizare ESTE formularul de contact, iar o plimbare
+      // până pe altă pagină ar fi închis-o peste coșul omului. `sent` se
+      // stinge, ca un „Mulțumim” rămas de la o trimitere mai veche să nu stea
+      // deasupra unui mesaj nescris încă.
+      onContactPlati: () => this.setState({
+        mesajPlati: true, sent: false, trimisMesaj: false, sendErr: '', pragIntreb: null
+      }),
+      mesajMod,
+      // Complementul, fiindcă `<sc-if>` primește o valoare, nu o expresie.
+      comandaMod: !mesajMod,
+      // Casetele comenzii (livrarea; ziua, mențiunile, codul, bifa de catalog)
+      // se ASCUND în felul „numai mesaj”, nu se desființează: cele mai multe
+      // nu-s ținute în stare, iar desființate ar fi pierdut mențiunile scrise
+      // de om pentru comanda la care se întoarce. Când n-au oricum nimic de
+      // arătat, cutia lor nu ocupă loc — altfel ar fi lăsat un gol de un rând
+      // în formularul strâns al clientului.
+      livrareStil: (((mine && detaliiDeschise) || staff) && !mesajMod)
+        ? 'display:flex;flex-direction:column;gap:1rem' : 'display:none',
+      josStil: ((!mine || detaliiDeschise) && !mesajMod)
+        ? 'display:flex;flex-direction:column;gap:1rem' : 'display:none',
+      lblMesajPlati: t('Mesajul tău', 'Your message'),
+      mesajText,
+      onMesajText: (e) => this.setState({ mesajPlatiText: e.target.value }),
+      mesajNota: t('Poți schimba textul. Pleacă numai mesajul — produsele din coș rămân la locul lor.',
+                   'You can edit the text. Only the message is sent — the products in your cart stay where they are.'),
+      ctaInapoiComanda: picks.length
+        ? t('Înapoi la comandă', 'Back to the order')
+        : t('Înapoi la formular', 'Back to the form'),
+      onInapoiComanda: () => this.setState({ mesajPlati: false, sendErr: '' }),
+      // Întrebarea pentru omul biroului, după refuzul serverului pentru
+      // clientul cererii — ales din căutare ori găsit de server după numele
+      // scris. Există numai când serverul a spus `poateOcoli: true`,
+      // adică numai pentru cine are dreptul `plati.ocoleste` — pagina nu
+      // ghicește drepturi, le citește din refuz.
+      pragIntreb: !!pragIntreb,
+      pragIntrebText: pragIntreb
+        ? t('Treci peste prag pentru ' + pragIntreb.nume + '?',
+            'Go over the limit for ' + pragIntreb.nume + '?')
+        : '',
+      pragIntrebNota: t('Cererea pleacă o singură dată peste prag. Următoarea se oprește din nou.',
+                        'The request goes over the limit this once. The next one is stopped again.'),
+      // Vorbele butoanelor sunt cele hotărâte de patron (contractul rundei,
+      // §5): „Nu” / „Da, scrie comanda” — aceleași ca în Comenzi, ca omul
+      // casei să recunoască întrebarea oriunde o întâlnește. Până pe 5 oct.
+      // 2026 aici scria „Da, trimite cererea”, după eticheta butonului mare;
+      // o vorbă hotărâtă nu se „potrivește” din pagină.
+      ctaPragNu: t('Nu', 'No'),
+      ctaPragDa: t('Da, scrie comanda', 'Yes, write the order'),
+      onPragNu: () => this.setState({ pragIntreb: null }),
+      // „Da” NU e un buton de trimitere, dinadins. Un `type="submit"` așezat
+      // deasupra butonului mare ar fi devenit butonul implicit al formularului,
+      // iar un Enter apăsat în orice casetă ar fi trecut peste prag fără ca
+      // nimeni să fi răspuns „Da”. Aici se trimite cu mâna: steagul se pune pe
+      // instanță (se citește în aceeași bătaie de ceas), iar cererea se reface
+      // din ce e ACUM pe ecran, prin aceeași `submitQuote` — deci cu aceeași
+      // cheie de cerere, cât timp omul n-a schimbat nimic între refuz și „Da”.
+      //
+      // Steagul duce ÎNTREBAREA, nu numai numărul contului: pentru contul
+      // găsit de server după nume, `submitQuote` are nevoie și de numele cu
+      // care plecase cererea refuzată (`scris`), ca să nu dea îngăduința unei
+      // cereri pe alt nume.
+      onPragDa: () => {
+        const q = pragIntreb;
+        const f = this.formRef.current;
+        if (!q || !f) return;
+        if (typeof f.reportValidity === 'function' && !f.reportValidity()) return;
+        this.__ocolesc = { pentru: String(q.pentru), scris: q.scris };
+        this.__vreauCont = false;
+        this.renderVals().submitQuote({ preventDefault() {}, target: f });
+      },
 
       heroBadgeCe: t('Producător\u00a0și\u00a0distribuitor', 'Producer\u00a0and\u00a0distributor'), heroBadgeUnde: t('București', 'Bucharest'),
       heroLead: this.props.audienceFocus === 'horeca'
@@ -5402,18 +6854,25 @@ class Component extends DCLogic {
       // pentru ce e numai al paginii — firimiturile — exact cum `onContact`
       // stă lângă `contactVizibil` la fereastra de finalizare.
       pvVizibil: p === 'product' || randVedere !== null,
-      // Vine de jos, ca celelalte două: pe telefon degetul e acolo, iar
+      // Pe telefon vine de jos, ca celelalte două: degetul e acolo, iar
       // `max-height:88vh` lasă o dungă din catalog vizibilă deasupra — semnul
-      // că e o fereastră, nu o pagină nouă.
+      // că e o fereastră, nu o pagină nouă. Pe un ecran lat și înalt stă la
+      // mijloc (`fereastraLaMijloc`, sus), cu aceeași dungă sus și jos.
       //
       // Stratul 140: peste bara de jos (120) și peste comutatorul plutitor
       // (101), sub foaia coșului (149/150) și sub finalizare (159/160). Cele
       // trei nu pot sta pe ecran deodată — perdeaua fiecăreia acoperă
       // butoanele celorlalte —, dar ordinea e scrisă ca, în ziua în care
       // cineva va lega una de alta, fereastra produsului să fie cea de dedesubt.
-      pvMainStyle: randVedere
-        ? 'position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:140;width:min(52rem,100%);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;background:var(--h-bg-page);border:1px solid var(--h-line);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,0.38)'
-        : '',
+      pvMainStyle: !randVedere ? ''
+        : centrat ? fereastraLaMijloc(140, '52rem')
+        : 'position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:140;width:min(52rem,100%);max-height:88vh;overflow-y:auto;overscroll-behavior:contain;background:var(--h-bg-page);border:1px solid var(--h-line);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -14px 40px rgba(0,0,0,0.38)',
+      // Atributele ferestrei; pe pagina produsului lipsesc (`null` nu se scrie).
+      pvRol: randVedere ? 'dialog' : null,
+      pvModal: randVedere ? 'true' : null,
+      pvEticheta: randVedere ? t(randVedere[2], randVedere[3]) : null,
+      pvFel: !randVedere ? null : (centrat ? 'mijloc' : 'jos'),
+      pvInchideRef: this.legaVederea,
       pvSectionStyle: randVedere
         ? 'max-width:none;margin:0;padding:0.9rem clamp(1rem,4vw,1.5rem) calc(1.5rem + env(safe-area-inset-bottom))'
         : 'max-width:1180px;margin:0 auto;padding:clamp(1.5rem,4vw,2.5rem) clamp(1.25rem,4vw,3rem) clamp(3rem,6vw,5rem)',
@@ -5482,7 +6941,7 @@ class Component extends DCLogic {
         : t('Vezi grupa', 'See the group'),
       pvTotCta: t('Vezi tot catalogul', 'See the full catalogue'),
       pvWrap: 'display:grid;gap:clamp(1.5rem,4vw,3rem);align-items:start;'
-        + (mob ? 'grid-template-columns:1fr' : 'grid-template-columns:minmax(0,5fr) minmax(0,6fr)'),
+        + (pvAlaturi ? 'grid-template-columns:minmax(0,5fr) minmax(0,6fr)' : 'grid-template-columns:1fr'),
       // În fereastră poza e mai scundă și se poate apăsa. 4/3 pe toată lățimea
       // unui telefon de 390 px înseamnă 268 de pixeli din cei ~740 ai
       // ferestrei, și atunci steperul — lucrul pentru care s-a deschis
@@ -5626,22 +7085,56 @@ class Component extends DCLogic {
       ctaInchide: t('Închide', 'Close'),
       ctaVeziCos: t('Vezi coșul', 'View cart'),
 
-      reiaVizibil: p === 'catalog' && reiaGata && (!!R.stricata || reiaNimic || reiaInCos > 0),
+      // CASETA STĂ ÎN DOUĂ LOCURI, CU ACELEAȘI VORBE (runda 2.7.0): deasupra
+      // catalogului și, strânsă, sus în fereastra de finalizare pe care
+      // reluarea o deschide singură. Pe ecran e una singură o dată: cât se
+      // vede cea din fereastră (`reiaInFinal`), cea de pe catalog — aflată
+      // sub perdea — nu se desenează. Legătura stricată și „niciun produs”
+      // nu deschid fereastra, deci rămân numai pe catalog, ca până acum.
+      reiaVizibil: p === 'catalog' && reiaGata && (!!R.stricata || reiaNimic || reiaInCos > 0) && !reiaInFinal,
+      reiaInFinal: reiaInFinal,
+      // Titlul numește butonul pe care omul tocmai l-a apăsat în „Comanda
+      // mea”; ce s-a întâmplat spune propoziția întâi, o singură dată.
       reiaTitlu: reiaGata && R.stricata
         ? t('Legătura aceasta nu a putut fi citită', 'This link could not be read')
         : reiaNimic
           ? t('Comanda aceea nu mai poate fi refăcută', 'That order can no longer be repeated')
-          : t('Comanda ta de data trecută e în coș', 'Your previous order is in the cart'),
+          : t('Comandă din nou', 'Order again'),
+      // Vorbele reluării reușite sunt ale planului aprobat pe 5 oct. 2026,
+      // cuvânt cu cuvânt. Numărul comenzii se scrie cu „#”, ca peste tot; fără
+      // număr (cerere refuzată, legătură veche) se spune „de data trecută”.
+      // „Ce aveai deja a rămas” numai dacă avea ceva: e răspunsul la frica
+      // pentru care reluarea ÎNLOCUIA coșul până la 2.7.0. Vorba despre 9999
+      // numai dacă plafonul a tăiat ceva, altfel n-are despre ce vorbi.
+      //
+      // A DOUA SOSIRE A ACELEIAȘI COMENZI ÎȘI ARE VORBELE EI (9 oct. 2026):
+      // „Am pus în coș…” ar fi fost atunci o minciună — nu s-a pus nimic, ori
+      // s-a pus numai cât scăzuse omul. Două propoziții, fără „Ce aveai deja
+      // a rămas” și fără „Prețurile sunt cele de azi”: pe amândouă omul le-a
+      // citit la prima sosire, iar caseta e deja înaltă pe telefon (241 px la
+      // 390 de lățime, 293 px la 320 — măsurat). Vorba despre 9999 n-are când
+      // să apară: completarea nu trece de cât cere comanda. Amândouă sunt mai
+      // scurte decât cea mai lungă înfățișare de până acum a casetei.
       reiaText: reiaGata && R.stricata
         ? t('Coșul a rămas cum era. Poți alege din produsele de azi sau te întorci la „Comanda mea” și apeși din nou pe „Comandă din nou”.',
           'Your cart was left as it was. Choose from today\'s products, or go back to your orders and press "Order again" once more.')
         : reiaNimic
           ? t('Niciun produs de pe ea nu mai e în catalog, așa că coșul a rămas cum era. Alege din produsele de azi.',
             'None of its products are in the catalogue anymore, so your cart was left as it was. Choose from today\'s products.')
-          : t((reiaInCos === 1 ? 'Un produs a intrat' : reiaInCos + deNumar(reiaInCos) + ' produse au intrat')
-              + ' în coș, la prețurile de azi. Verifică cantitățile, alege ziua și trimite comanda când ești gata.',
-            (reiaInCos === 1 ? 'One product was' : reiaInCos + ' products were')
-              + ' added to the cart at today\'s prices. Check the quantities, pick the day and send the order when you are ready.'),
+          : reiaCompletat
+            ? t('Comanda #' + reiaDin + ' era deja în coș. Am completat cantitățile până la cele din comandă.',
+              'Order #' + reiaDin + ' was already in your cart. We brought the quantities back up to those in the order.')
+            : reiaRepetat
+              ? t('Produsele din comanda #' + reiaDin + ' erau deja în coș. Nu am mai adăugat nimic.',
+                'The products from order #' + reiaDin + ' were already in your cart. We did not add anything more.')
+              : t((reiaDin ? 'Am pus în coș produsele din comanda #' + reiaDin + '.' : 'Am pus în coș produsele de data trecută.')
+                  + (reiaInCos > 0 && R.avea ? ' Ce aveai deja a rămas.' : '')
+                  + ' Prețurile sunt cele de azi.'
+                  + (reiaInCos > 0 && R.taiat ? ' Dintr-un produs intră în coș cel mult 9999 de bucăți.' : ''),
+                (reiaDin ? 'We added the products from order #' + reiaDin + ' to your cart.' : 'We added the products from last time to your cart.')
+                  + (reiaInCos > 0 && R.avea ? ' What you already had is still there.' : '')
+                  + ' Prices are today\'s.'
+                  + (reiaInCos > 0 && R.taiat ? ' At most 9999 pieces of one product fit in the cart.' : '')),
       reiaAreLipsa: reiaInCos > 0 && R.lipsa > 0,
       reiaLipsaText: reiaInCos > 0 && R.lipsa > 0
         ? (R.lipsa === 1
@@ -5649,17 +7142,64 @@ class Component extends DCLogic {
           : t(R.lipsa + deNumar(R.lipsa) + ' produse nu mai sunt în catalog și au rămas pe dinafară.',
             R.lipsa + ' products are no longer in the catalogue and were left out.'))
         : '',
-      reiaAreVechi: reiaVechi,
-      reiaVechiText: t('Coșul pe care îl aveai l-am pus deoparte.', 'We set aside the cart you had before.'),
+      reiaAreAdaos: reiaAdaos,
       reiaCosBtn: mob && reiaInCos > 0 && picks.length > 0,
-      ctaReiaLaLoc: t('Pune la loc coșul de dinainte', 'Restore my previous cart'),
+      ctaReiaScoate: t('Scoate-le înapoi', 'Take them back out'),
       ctaReiaInchide: t('Am înțeles', 'Got it'),
-      reiaInchide: () => this.setState({ reia: null }),
-      reiaPuneLaLoc: () => this.setState((s) => (s.reia && s.reia.vechi
-        ? Object.assign(
-          { reia: null, tier: s.reia.vechiTier === 'baked' ? 'baked' : 'frozen', cosJos: false },
-          this.dezarmeaza(s, Object.assign({}, s.reia.vechi)))
-        : { reia: null })),
+      // Amândouă mânerele casetei trec prin `dinCaseta`: butonul apăsat piere
+      // odată cu ea, iar în fereastră focusul trebuie prins (v. acolo).
+      reiaInchide: this.dinCaseta(() => this.setState({ reia: null })),
+      // „Scoate-le înapoi” SCADE ce a adăugat reluarea; nu pune la loc o poză
+      // a coșului de dinainte, cum făcea „Pune la loc coșul de dinainte” până
+      // la 2.7.0. Deosebirea se vede când omul a mai umblat la coș între
+      // timp: produsul adăugat după reluare rămâne, iar unul la care a mai pus
+      // cinci bucăți rămâne cu cele cinci. Pe fiecare cheie `max(0, cât e acum
+      // − cât s-a adăugat)`; cheia ajunsă la zero iese din coș.
+      //
+      // Prin `dezarmeaza`, ca orice golire: dacă n-a mai rămas nimic, fereastra
+      // de finalizare se stinge pe drumul ei obișnuit. Caseta dispare — nu mai
+      // are ce desface a doua oară.
+      //
+      // FILA SE ÎNTOARCE ȘI EA (reparație din 5 oct. 2026, după a doua
+      // citire). La sosire reluarea a mutat fila catalogului pe varianta
+      // comenzii (`primesteReluarea`) și a ținut minte unde era (`fila`).
+      // „Pune la loc coșul de dinainte” o aducea înapoi; la rescrierea lui în
+      // „Scoate-le înapoi” rândul s-a pierdut, iar omul cu un coș de coapte
+      // rămânea pe „Congelate”, în fața unor produse din care nu mai avea
+      // niciunul. Contractul rundei lasă fila cu regula de până acum. O
+      // reluare ținută minte fără `fila` lasă fila unde e.
+      //
+      // ȘI NUMĂRUL COMENZII IESE DIN URMĂ (`aduse`): omul a spus că nu vrea
+      // comanda asta în coș, deci coșul nu mai are de ce s-o țină drept
+      // „deja adusă”. Rămas acolo, a doua apăsare pe „Comandă din nou” — a
+      // omului care s-a răzgândit — ar fi găsit comanda „deja în coș” și n-ar
+      // mai fi pus decât ce lipsea peste ce are el acum. „Am înțeles” NU
+      // umblă la urmă: închide caseta, comanda rămâne în coș.
+      //
+      // …DAR NUMAI CÂND BUTONUL A SCOS COMANDA ÎNTREAGĂ (`intreaga`, pus de
+      // `primesteReluarea`). Pățania, găsită la a doua citire (9 oct. 2026):
+      // #1047 adusă (120 + 40), „Am înțeles”, omul scade de mână la 100,
+      // apasă iar „Comandă din nou” — se completează 20 — și apoi „Scoate-le
+      // înapoi”. Butonul scoate cele 20, cum trebuie: după „Am înțeles”
+      // pagina nu mai știe ce adusese prima sosire. Scotea însă și numărul
+      // din urmă, cu 100 + 40 din comandă rămase în coș, iar a treia apăsare
+      // o aduna întreagă peste ele: 220 + 80, chiar dublarea pentru care s-a
+      // făcut urma. Cât din comandă mai rămâne ceva în coș după buton,
+      // numărul rămâne și el. (Hotărârea spunea „numărul iese când omul apasă
+      // «Scoate-le înapoi» pentru ea”; s-a ținut de rostul ei — coșul nu se
+      // dublează —, nu de literă, acolo unde cele două se bat cap în cap.)
+      reiaScoate: this.dinCaseta(() => this.setState((s) => {
+        const A = s.reia && s.reia.adaos;
+        if (!A || typeof A !== 'object') return { reia: null };
+        const q = Object.assign({}, s.qty);
+        Object.keys(A).forEach((k) => {
+          const ramas = Math.max(0, Math.round(Number(q[k]) || 0) - (A[k] > 0 ? A[k] : 0));
+          if (ramas > 0) q[k] = ramas; else delete q[k];
+        });
+        const fila = s.reia.fila === 'baked' || s.reia.fila === 'frozen' ? { tier: s.reia.fila } : null;
+        const aduse = this.urmaCurata(s.aduse).filter((x) => x !== s.reia.din || s.reia.intreaga === false);
+        return Object.assign({ reia: null, cosJos: false, aduse: aduse }, fila, this.dezarmeaza(s, q));
+      })),
       totalPieces: piecesText,
       // Totalul e cifra de plată; prețul de catalog stă lângă ea, tăiat, și
       // numai când chiar diferă. Până acum totalul arăta lista, adică exact
@@ -5822,18 +7362,62 @@ class Component extends DCLogic {
       rmLabel: t('Șterge produsul', 'Remove product'),
       ctaWa: t('Scrie pe WhatsApp', 'Chat on WhatsApp'),
       ctaWaOpen: t('Deschide', 'Open'),
-      ctaWaOrder: t('Trimite comanda pe WhatsApp', 'Send the order on WhatsApp'),
+      // Butonul verde din coș. Pentru cel oprit de prag legătura lui nu mai
+      // duce coșul (v. `waFaraCos`), deci nici eticheta n-are voie să spună
+      // „Trimite comanda”: ia vorba butonului de WhatsApp din restul paginii.
+      ctaWaOrder: trimiteOprit
+        ? t('Scrie pe WhatsApp', 'Chat on WhatsApp')
+        : t('Trimite comanda pe WhatsApp', 'Send the order on WhatsApp'),
       ctaWaSend: t('Trimite pe WhatsApp', 'Send on WhatsApp'),
       waMeta: t('Comandă sau întrebări, direct pe telefon', 'Orders or questions, straight to the phone'),
-      waFormNote: t('WhatsApp trimite datele din formular împreună cu produsele și cantitățile selectate.', 'WhatsApp sends the form details together with the selected products and quantities.'),
+      // Nota de sub butonul verde spune ÎNAINTE de apăsare ce pleacă. Trei
+      // feluri: mesajul scris în casetă („numai mesaj”); mesajul pus gata, cât
+      // comanda e oprită de prag și caseta lui nu e pe ecran; comanda întreagă.
+      waFormNote: mesajMod
+        ? t('WhatsApp trimite numai mesajul și datele tale de contact, fără produsele din coș.',
+            'WhatsApp sends only the message and your contact details, without the products in your cart.')
+        : (trimiteOprit
+            ? t('Cât comanda e oprită, WhatsApp trimite numai un mesaj cu datele tale de contact, fără produsele din coș.',
+                'While the order is on hold, WhatsApp sends only a message with your contact details, without the products in your cart.')
+            : t('WhatsApp trimite datele din formular împreună cu produsele și cantitățile selectate.', 'WhatsApp sends the form details together with the selected products and quantities.')),
       waHelloHref: waLink(helloText),
-      waOrderHref: waLink(picks.length ? orderText() : helloText),
+      // Legătura din coș (și butonul plutitor). Oprit de prag, clientul scrie
+      // pe WhatsApp același mesaj ca din „Contactează-ne”, cu numele contului —
+      // nu coșul. Formularul nu e neapărat pe ecran aici, deci nu se citește
+      // nimic din el.
+      waOrderHref: waLink(trimiteOprit
+        ? mesajWa((mine && accName) ? [accName] : [])
+        : (picks.length ? orderText() : helloText)),
       // Pleacă funcția, nu cutia: `ref="{{ formRef }}"` din marcaj rămâne
       // neschimbat, dar React are acum pe cine chema la desprindere.
       formRef: this.legaForm,
       sendWa: () => {
         const extra = [];
         const f = this.formRef && this.formRef.current;
+        // Felul „numai mesaj”: pe WhatsApp pleacă tot numai mesajul. Casetele
+        // comenzii sunt ascunse, dar montate — luate cu grămada din formular,
+        // ar fi plecat adresa, ziua și mențiunile unei comenzi pe care omul
+        // n-a trimis-o, iar `orderText` ar fi pus deasupra tot coșul. Se iau
+        // cu numele numai datele de contact.
+        //
+        // La fel și cât comanda e OPRITĂ de prag, cu formularul rămas pe
+        // comandă (`waFaraCos`, sus): butonul verde stă chiar sub „Oprit până
+        // la plată”, iar un coș plecat pe aici ar fi fost comanda pe care
+        // butonul de deasupra tocmai a refuzat-o.
+        if (waFaraCos) {
+          if (mine && accName) extra.push(accName);
+          if (f) {
+            try {
+              const fd = new FormData(f);
+              ['Companie', 'Persoana de contact', 'Email', 'Telefon'].forEach((k) => {
+                const v = String(fd.get(k) || '').trim();
+                if (v) extra.push(k + ': ' + v);
+              });
+            } catch (err) { /* noop */ }
+          }
+          try { window.open(waLink(mesajWa(extra)), '_blank'); } catch (err) { /* noop */ }
+          return;
+        }
         if (f) {
           try {
             Array.from(new FormData(f).entries()).forEach((kv) => {
@@ -5993,7 +7577,12 @@ class Component extends DCLogic {
       ctaAsap: t('Cât de repede se poate', 'As soon as possible'),
       ctaPickDate: t('Aleg data', 'Pick a date'),
       isAsap: this.state.asap,
-      wantsDate: !this.state.asap,
+      // `&& !mesajMod`: caseta zilei e singura dintre cele ASCUNSE în felul
+      // „numai mesaj” care are margini (`min`/`max`). O zi ieșită din ele ar fi
+      // oprit trimiterea mesajului prin validarea browserului, pe o casetă
+      // nevăzută — adică fără niciun semn pe ecran. Ziua e ținută în stare,
+      // deci caseta se poate desființa fără să se piardă nimic.
+      wantsDate: !this.state.asap && !mesajMod,
       whenDate: this.state.whenDate,
       asapText: t('Cât de repede se poate', 'As soon as possible'),
       asapCls: this.state.asap ? 'h-btn h-btn--primary' : 'h-btn h-btn--secondary',
@@ -6009,13 +7598,22 @@ class Component extends DCLogic {
       whenNote: this.state.asap
         ? t('Îți confirmăm prima zi liberă de producție.', 'We confirm the first available production day.')
         : t('Scrie ziua în care vrei comanda — o confirmăm sau te sunăm dacă e plină.', 'Set the day you want — we confirm it or call you if it is full.'),
-      formTitle: mine
-        ? t('Trimite comanda', 'Place your order')
-        : t('Cerere de ofertă', 'Quote request'),
-      formSub: mine
-        ? t('Datele sunt din contul tău. Verifică adresa și trimite — o confirmăm noi.',
-            'The details come from your account. Check the address and send — we confirm it.')
-        : t('Completează o dată — revenim cu catalogul și prețurile pentru volumul tău.', 'Fill this in once — we come back with the catalogue and pricing for your volume.'),
+      // În felul „numai mesaj” titlul și rândul de sub el spun ce pleacă și ce
+      // NU pleacă: cartonașul cu produsele alese rămâne lângă formular (omul
+      // trebuie să-și vadă coșul întreg), iar fără vorbele astea ar fi crezut
+      // că trimite comanda.
+      formTitle: mesajMod
+        ? t('Scrie-ne un mesaj', 'Send us a message')
+        : (mine
+          ? t('Trimite comanda', 'Place your order')
+          : t('Cerere de ofertă', 'Quote request')),
+      formSub: mesajMod
+        ? t('Pleacă numai mesajul de mai jos, fără produse. Coșul tău rămâne salvat, neatins.',
+            'Only the message below is sent, without products. Your cart stays saved, untouched.')
+        : (mine
+          ? t('Datele sunt din contul tău. Verifică adresa și trimite — o confirmăm noi.',
+              'The details come from your account. Check the address and send — we confirm it.')
+          : t('Completează o dată — revenim cu catalogul și prețurile pentru volumul tău.', 'Fill this in once — we come back with the catalogue and pricing for your volume.')),
       lblCompany: t('Companie', 'Company'),
       lblName: t('Persoana de contact', 'Contact person'),
       lblEmail: 'Email',
@@ -6106,10 +7704,17 @@ class Component extends DCLogic {
       sending: this.state.sending,
       sendErr: this.state.sendErr,
       sentTitle: t('Mulțumim!', 'Thank you!'),
-      sentBody: mine
-        ? t('Comanda a ajuns la noi. Intră în producție după ce o confirmăm — o vezi în „Comanda mea", din meniul contului.',
-            'Your order has reached us. It enters production once we confirm it — follow it under “My order”, in the account menu.')
-        : t('Cererea ta a intrat la noi în platformă. O confirmăm sau te sunăm pentru detalii în aceeași zi lucrătoare.', 'Your request has arrived in our platform. We confirm it or call you for details the same working day.'),
+      // `trimisMesaj`: a plecat un mesaj din felul „numai mesaj”, cu coșul
+      // rămas plin. „Comanda a ajuns la noi” deasupra unui coș neatins ar fi
+      // fost o minciună — și una scumpă: omul oprit de prag ar fi crezut că
+      // i-a plecat comanda.
+      sentBody: this.state.trimisMesaj
+        ? t('Mesajul tău a ajuns la noi. Te sunăm sau îți scriem în aceeași zi lucrătoare. Coșul a rămas neatins.',
+            'Your message has reached us. We call or write back the same working day. Your cart is untouched.')
+        : (mine
+          ? t('Comanda a ajuns la noi. Intră în producție după ce o confirmăm — o vezi în „Comanda mea", din meniul contului.',
+              'Your order has reached us. It enters production once we confirm it — follow it under “My order”, in the account menu.')
+          : t('Cererea ta a intrat la noi în platformă. O confirmăm sau te sunăm pentru detalii în aceeași zi lucrătoare.', 'Your request has arrived in our platform. We confirm it or call you for details the same working day.')),
       // Nota de sub buton spune ACELAȘI lucru ca eticheta lui, cu alte cuvinte
       // — și, la coș gol, spune și cum se ajunge la cealaltă variantă. Fără
       // rândul dintâi, un om care a intrat pe „Cere catalogul PDF” ar trimite
@@ -6117,24 +7722,37 @@ class Component extends DCLogic {
       formNote: !picks.length
         ? t('Coșul e gol, deci pleacă o întrebare, nu o comandă. Pune produse în coș dacă vrei o ofertă pentru o zi anume.',
             'Your basket is empty, so this sends a question, not an order. Add products to the basket if you want a quote for a specific day.')
-        : (mine
-          ? t('Comanda intră în producție numai după ce o confirmăm.',
-              'The order enters production only after we confirm it.')
-          : t('Datele tale se folosesc doar pentru a răspunde acestei cereri.', 'Your details are used only to answer this request.')),
+        : (mesajMod
+          ? t('Pleacă o întrebare, nu o comandă. Produsele din coș rămân la locul lor.',
+              'This sends a question, not an order. The products in your cart stay where they are.')
+          : (mine
+            ? t('Comanda intră în producție numai după ce o confirmăm.',
+                'The order enters production only after we confirm it.')
+            : t('Datele tale se folosesc doar pentru a răspunde acestei cereri.', 'Your details are used only to answer this request.'))),
 
       submitQuote: (e) => {
         e.preventDefault();
+        // TRECEREA PESTE PRAG SE CONSUMĂ AICI, înaintea oricărei ieșiri.
+        //
+        // `__ocolesc` e pus numai de „Da, scrie comanda” (`onPragDa`), cu o
+        // clipă înainte de a chema funcția asta. Se ia și se stinge pe loc,
+        // deasupra tuturor `return`-urilor de mai jos: dacă trimiterea aceea
+        // s-ar opri la o validare, steagul rămas aprins ar fi plecat cu
+        // cererea URMĂTOARE — poate pentru alt client, poate peste o lună —
+        // fără ca cineva să mai fi spus „Da”.
+        const ocolesc = this.__ocolesc;
+        this.__ocolesc = null;
         // O cerere se trimite o singură dată.
         //
-        // Butonul se stinge (`disabled="{{ sending }}"`), dar `sending` e stare
-        // React, iar `setState` nu schimbă starea pe loc: între apăsare și
-        // randare butonul e încă activ. Pe telefon, unde nu se vede nimic
-        // schimbat în prima zecime de secundă, omul mai apasă — și formularul
-        // e un `<form>` real, deci și Enter apăsat de două ori îl trimite de
-        // două ori. Ieșeau două cereri identice, de la același client, la
-        // aceeași oră: administratorul le accepta pe amândouă, fiindcă exact
-        // așa arată două comenzi reale. Semaforul stă pe instanță, ca să se
-        // aprindă sincron.
+        // Butonul se stinge (`disabled="{{ trimiteStins }}"`, care cuprinde
+        // `sending`), dar `sending` e stare React, iar `setState` nu schimbă
+        // starea pe loc: între apăsare și randare butonul e încă activ. Pe
+        // telefon, unde nu se vede nimic schimbat în prima zecime de secundă,
+        // omul mai apasă — și formularul e un `<form>` real, deci și Enter
+        // apăsat de două ori îl trimite de două ori. Ieșeau două cereri
+        // identice, de la același client, la aceeași oră: administratorul le
+        // accepta pe amândouă, fiindcă exact așa arată două comenzi reale.
+        // Semaforul stă pe instanță, ca să se aprindă sincron.
         if (this.__trimit) return;
         const fd = new FormData(e.target);
         const get = (k) => String(fd.get(k) || '').trim();
@@ -6169,6 +7787,25 @@ class Component extends DCLogic {
           status: 'nou',
           source: 'site'
         };
+        // FELUL „NUMAI MESAJ” („Contactează-ne”, runda 2.7.0).
+        //
+        // Pleacă textul din caseta de mesaj și datele de contact — atât.
+        // Casetele comenzii sunt ascunse, dar montate (ca mențiunile scrise
+        // pentru comandă să nu se piardă), deci `FormData` le citește în
+        // continuare: de-aia se calcă aici cu mâna tot ce ține de comandă.
+        // Ce nu se vede pe ecran n-are voie să plece.
+        if (mesajMod) {
+          this.__vreauCont = false;
+          req.wantWhen = 'asap';
+          req.wantDate = '';
+          req.msg = mesajText.trim();
+          req.catalog = false;
+          req.items = [];
+          if (!req.msg) {
+            return this.setState({ sendErr: t('Scrie mesajul înainte să-l trimiți.',
+                                              'Write the message before sending it.') });
+          }
+        }
         // Cererea pleacă spre server. Diferența față de varianta veche: ea
         // ajunge în platformă și o vede administratorul pe orice dispozitiv.
         // Înainte rămânea în browserul clientului și nu o citea nimeni.
@@ -6203,6 +7840,17 @@ class Component extends DCLogic {
             });
           }
         });
+        // În felul „numai mesaj” NU PLEACĂ NICIUN PRODUS, oricâte ar fi în
+        // coș. E chiar rostul lui: serverul oprește la prag numai cererile CU
+        // produse, deci un mesaj plecat cu coșul după el ar fi fost refuzat
+        // cu același `409` de la care omul tocmai încerca să ajungă la un om.
+        // Golit AICI, după buclă, nu printr-o condiție pe fiecare ramură a ei:
+        // o ramură nouă de mâine (alt fel de rând în coș) n-are cum să scape.
+        if (mesajMod) {
+          linii.length = 0;
+          cuTest = null;
+          cuTestN = 0;
+        }
         // OPRITORUL A RĂMAS NUMAI PE DRUMUL DE FINALIZARE.
         //
         // Pe formularul obișnuit — pagina de Contact, sau cel de sub catalog —
@@ -6220,10 +7868,30 @@ class Component extends DCLogic {
         // pentru care e pusă paza. Steagul rămâne aprins — de-aia ajunge
         // fereastra să se redeschidă peste catalog la produsul următor, ceea
         // ce e o altă hotărâre, [H], care încă își așteaptă rândul.
+        //
+        // O singură ieșire, din runda 2.7.0: felul „numai mesaj”.
+        // „Contactează-ne” se apasă de cele mai multe ori chiar din fereastra
+        // de finalizare, iar acolo mesajul pleacă DINADINS fără produse — nu e
+        // coșul golit din greșeală pe care îl păzește opritorul.
         if (!linii.length && this.state.finalizare) {
+          if (!mesajMod) {
+            return this.setState({ sendErr: t(
+              'Alege cel puțin un produs din catalog înainte de a trimite comanda.',
+              'Pick at least one product from the catalogue before sending the order.'
+            ) });
+          }
+        }
+        // PRAGUL COMENZILOR NEPLĂTITE, a doua pază a paginii (runda 2.7.0).
+        //
+        // Prima e butonul stins (`trimiteStins`). Asta e pentru drumurile care
+        // nu trec prin buton: Enter într-o casetă, pe un browser care trimite
+        // formularul și cu butonul lui implicit stins. Caseta roșie e deja pe
+        // ecran, deasupra — aici se spune numai de ce n-a plecat nimic. Paza
+        // adevărată rămâne a serverului; asta scutește un drum dus-întors.
+        if (comandaOprita && linii.length) {
           return this.setState({ sendErr: t(
-            'Alege cel puțin un produs din catalog înainte de a trimite comanda.',
-            'Pick at least one product from the catalogue before sending the order.'
+            'Comanda nu poate pleca până la plata soldului comenzilor precedente.',
+            'The order cannot be sent until the balance of your previous orders is paid.'
           ) });
         }
 
@@ -6242,6 +7910,11 @@ class Component extends DCLogic {
 
         this.__trimit = true;
         this.setState({ sending: true, sendErr: '' });
+        // Întrebarea de prag se stinge la orice plecare: răspunsul la ea e
+        // chiar plecarea asta (ori omul a trimis altceva, și atunci întrebarea
+        // nu mai e despre cererea de pe ecran). Dacă serverul refuză din nou,
+        // refuzul cel nou o aprinde la loc, cu datele lui.
+        if (this.state.pragIntreb) this.setState({ pragIntreb: null });
         const trup = {
           // Cu cont, numele îl pune serverul, de pe cont: o comandă nu poate
           // intra pe numele altui client fiindcă a fost scris în formular.
@@ -6343,6 +8016,16 @@ class Component extends DCLogic {
           vreauCont: this.__vreauCont,
           items: linii
         };
+        // Felul „numai mesaj”: ziua, livrarea, codul de recomandare și
+        // reducerea sunt ale COMENZII, iar casetele lor nu-s pe ecran. Pleacă
+        // goale — un mesaj nu are zi de livrare și nu aduce comision nimănui.
+        if (mesajMod) {
+          trup.day = '';
+          trup.address = '';
+          trup.zone = '';
+          trup.referralCode = '';
+          trup.promo = '';
+        }
         // CHEIA SE BATE PE CE TRIMITEM, NU PE APĂSARE.
         //
         // O cheie ținută prea mult minte: omul cade din rețea, se răzgândește,
@@ -6372,6 +8055,38 @@ class Component extends DCLogic {
         // Goală pe un browser fără `crypto`, și atunci nici nu pleacă: serverul
         // citește `$b['cheie'] ?? ''` și se poartă ca înainte de migrare.
         if (this.__cheie) trup.cheie = this.__cheie;
+        // PESTE PRAG, NUMAI DUPĂ „DA” (runda 2.7.0).
+        //
+        // `ocolesteprag` se pune DUPĂ ce s-a bătut cheia, dinadins: nu spune
+        // CARE e cererea, ci cu ce îngăduință pleacă — la fel ca `vreauCont`.
+        // Pusă înainte, cererea retrimisă după „Da” ar fi avut altă față, deci
+        // altă cheie, deși e aceeași cerere pe care serverul tocmai a
+        // refuzat-o. Așa pleacă a doua oară cu cheia dintâi.
+        //
+        // Și numai pentru clientul despre care s-a întrebat: dacă între „Da”
+        // și plecare pe ecran a ajuns alt client, îngăduința nu e a lui.
+        // Dreptul îl judecă oricum serverul (`plati.ocoleste`); câmpul trimis
+        // de cine n-are dreptul nu deschide nimic.
+        //
+        // „Clientul despre care s-a întrebat”, în cele două feluri de legare
+        // (reparație din 5 oct. 2026):
+        //   - ALES din căutare: numărul lui e cel din întrebare;
+        //   - găsit de server după NUMELE scris (niciun client ales): pleacă
+        //     chiar numele cu care plecase cererea refuzată. Serverul îl leagă
+        //     a doua oară la fel ca prima, deci de același cont. Un nume
+        //     schimbat între timp e altă cerere, pentru altcineva: pleacă fără
+        //     îngăduință, iar serverul o judecă de la capăt.
+        // Numărul contului găsit după nume NU se trimite drept `customerId`,
+        // dinadins: alegerea cu numărul trece prin ograda de clienți
+        // (`client_in_scope()`), pe care omul fără căutare n-o are — cererea
+        // lui legată bine după nume ar fi fost refuzată cu 403 tocmai după
+        // „Da”. Aceeași cerere, cu aceeași cheie, plus îngăduința: atât.
+        const pentruCelIntrebat = !!ocolesc && (cl
+          ? String(cl.id) === String(ocolesc.pentru)
+          : (staff && typeof ocolesc.scris === 'string' && ocolesc.scris === trup.customerName));
+        if (pentruCelIntrebat && linii.length) {
+          trup.ocolesteprag = true;
+        }
         // Un singur semn de „am mai încercat o dată", ținut în închidere, nu pe
         // instanță: e al trimiterii ăsteia și moare odată cu ea. Pe instanță ar
         // fi rămas aprins peste apăsarea următoare din aceeași filă, iar aceea
@@ -6417,6 +8132,24 @@ class Component extends DCLogic {
               this.__spreCont = 'Intrare.dc.html'
                 + (jeton ? '?cerere=' + encodeURIComponent(jeton) : '?cont=1');
             }
+            // FELUL „NUMAI MESAJ”: A PLECAT UN MESAJ, COȘUL RĂMÂNE.
+            //
+            // Ieșire deosebită, deasupra golirii de mai jos, fiindcă tot ce
+            // face aceea e despre o COMANDĂ plecată: golește coșul, dezleagă
+            // clientul ales, stinge codul de recomandare. Aici n-a plecat
+            // nicio comandă. Omul oprit de prag și-a umplut coșul degeaba o
+            // dată; dacă drumul până la „vorbesc cu cineva” i l-ar fi golit,
+            // l-ar fi umplut degeaba de două ori.
+            //
+            // Felul se stinge (formularul se întoarce la comandă), iar
+            // `trimisMesaj` schimbă vorba casetei verzi: „mesajul a ajuns”,
+            // nu „comanda a ajuns”.
+            if (mesajMod) {
+              return this.setState({
+                sent: true, sending: false, sendErr: '',
+                mesajPlati: false, mesajPlatiText: null, trimisMesaj: true
+              });
+            }
             // Coșul se golește pentru oricine a trimis, nu doar pentru clientul
             // cu cont: cererea e la noi, iar un coș plin sub „Mulțumim" cu
             // butonul aprins la loc însemna aceeași cerere trimisă a doua oară
@@ -6461,6 +8194,14 @@ class Component extends DCLogic {
             if (stingeCookie) {
               try { gp.forgetReferral(); } catch (e) { /* cookie-uri blocate */ }
             }
+            // Ce știa pagina despre plăți s-a învechit chiar acum: cererea
+            // abia plecată se numără și ea la prag. Starea se ȘTERGE, nu se
+            // recitește pe loc — recitită, ar fi aprins caseta roșie („nu
+            // putem primi o comandă nouă”) chiar sub „Mulțumim”, iar omul ar
+            // fi înțeles că tocmai comanda trimisă n-a fost primită. Fără
+            // stare pagina nu spune nimic; întreabă din nou la următoarea
+            // deschidere a formularului, iar serverul păzește oricum.
+            this.__platiNr = (this.__platiNr || 0) + 1;
             return this.setState(Object.assign(
               { sent: true, sending: false, sendErr: '', qty: {}, reia: null,
                 // Clientul ales se dezleagă odată cu coșul. Coșul se golește,
@@ -6478,7 +8219,10 @@ class Component extends DCLogic {
               stingeCookie ? { refDinCookie: '' } : {},
               golesteCaseta
                 ? { refCod: '', refSursa: '', refDeschis: false, refAtins: false }
-                : {}
+                : {},
+              // Plățile (v. mai sus) și semnul de „a plecat un mesaj”: de data
+              // asta a plecat o comandă, deci caseta verde vorbește de comandă.
+              { plati: null, pragIntreb: null, trimisMesaj: false }
             ));
           })
           .catch((e) => {
@@ -6570,6 +8314,73 @@ class Component extends DCLogic {
                           'The connection dropped while we were sending the request, so we cannot tell whether it reached us. Before sending it again, look in the Comenzi panel, under “Cereri de pe site”: if it is there, it arrived, and a second one would be one too many.')
                       : t('Legătura la internet s-a întrerupt chiar în timp ce trimiteam cererea, așa că nu știm dacă a ajuns la noi. Dacă o trimiți din nou, s-ar putea să plece a doua oară — sună-ne întâi la ' + phoneText + ' și îți spunem pe loc dacă am primit-o. Dacă ai cont, o vezi și singur în „Comanda mea”, după ce intri în cont.',
                           'The connection dropped while we were sending your request, so we cannot tell whether it reached us. If you send it again, it may go out a second time — call us first on ' + phoneText + ' and we will tell you straight away whether we got it. If you have an account, you can also see it yourself under “My order”, once you log in.')
+              });
+            }
+            // PRAGUL COMENZILOR NEPLĂTITE: REFUZUL SERVERULUI BATE CE ȘTIA PAGINA
+            // (runda 2.7.0, hotărârea patronului din 4 oct. 2026).
+            //
+            // Pagina poate să nu fi știut nimic (citirea picase), ori să fi
+            // știut altceva (o comandă s-a livrat între timp și a devenit
+            // datorie). Refuzul poartă tot ce trebuie pentru caseta roșie —
+            // lista, soldul, pragul — deci ea se aprinde din EL, fără încă un
+            // drum: `plati` se suprascrie, iar `__platiNr` urcă, ca un răspuns
+            // de la `GET /plati/mine` pornit înaintea refuzului să nu-l calce.
+            //
+            // CE NU SE ATINGE: coșul, clientul ales, casetele. Nu se golește
+            // nimic din ce a scris omul — refuzul e despre bani, nu despre
+            // comandă, iar comanda trebuie să fie tot acolo după plată.
+            //
+            // Cheia cererii (`__cheie`) rămâne și ea: retrimisă peste prag,
+            // e aceeași cerere.
+            if (e && e.status === 409 && e.code === 'prag_neplatite') {
+              const d = e.detalii || {};
+              if (mine) {
+                this.__platiNr = (this.__platiNr || 0) + 1;
+                return this.setState({
+                  sending: false,
+                  // Fără rând roșu deasupra casetei roșii: caseta spune tot.
+                  sendErr: '',
+                  pragIntreb: null,
+                  plati: {
+                    activ: true, stare: 'blocat', dinRefuz: true,
+                    prag: d.prag, n: d.n, sold: d.sold, cereri: d.cereri,
+                    comenzi: Array.isArray(d.neplatite) ? d.neplatite : []
+                  }
+                });
+              }
+              // Omul biroului, trimițând pentru un client: vorbele
+              // serverului („Cutare are 2 comenzi neplătite…”), neatinse. Iar
+              // întrebarea de trecere peste prag se pune NUMAI dacă serverul a
+              // spus `poateOcoli: true` — pagina nu ghicește cine are dreptul
+              // `plati.ocoleste`, și nu arată un „Da” pe care serverul l-ar
+              // refuza a doua oară.
+              //
+              // DESPRE CINE SE ÎNTREABĂ (reparație din 5 oct. 2026). Până azi
+              // întrebarea se punea numai cu un client ALES din căutare. Dar
+              // serverul leagă cererea și după numele scris în „Companie”
+              // (`client_by_name_in_scope()`), o oprește la fel și răspunde
+              // tot cu `poateOcoli: true` — iar fondatorul care scrisese
+              // numele citea numai rândul roșu, fără nicio cale de a trece
+              // peste prag, deși are dreptul. Contul vine atunci din refuz
+              // (`client.id`, `client.nume`), iar lângă el se ține minte
+              // numele cu care a plecat cererea (`scris`): îngăduința e pentru
+              // cererea ASTA, nu pentru orice s-ar scrie după aceea în casetă.
+              // Fără `client.id` în refuz nu se întreabă nimic: pagina n-ar
+              // ști despre cine.
+              const contRefuzat = (d.client && d.client.id !== undefined && d.client.id !== null)
+                ? String(d.client.id) : '';
+              const peCine = cl ? String(cl.id) : contRefuzat;
+              return this.setState({
+                sending: false,
+                sendErr: e.message || t('Clientul a atins numărul maxim de comenzi neplătite.',
+                                        'This client has reached the maximum number of unpaid orders.'),
+                pragIntreb: (staff && d.poateOcoli === true && peCine)
+                  ? {
+                      pentru: peCine,
+                      nume: String((d.client && d.client.nume) || (cl && (cl.company || cl.name)) || trup.customerName || '').trim(),
+                      scris: cl ? null : trup.customerName
+                    }
+                  : null
               });
             }
             return this.setState({

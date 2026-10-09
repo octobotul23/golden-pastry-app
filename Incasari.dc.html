@@ -1,0 +1,2435 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Încasări · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
+<link rel="stylesheet" href="shared/gp-bara.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+
+/* ---- PLĂCILE DE SUS ----
+   Fiecare placă e un buton: apăsată, duce la vederea despre care vorbește
+   cifra ei.
+
+   PRIMA E MARE și ține un rând întreg (`data-mare=da`): „De încasat acum” e
+   cifra pentru care se deschide pagina. Până la 5 oct. 2026 cifra asta stătea
+   de DOUĂ ori — într-un cartonaș de sus și, cu aceleași cuvinte, pe prima
+   placă de sub el; pe telefon cele două umpleau singure o treime din primul
+   ecran.
+
+   CELELALTE SE AȘAZĂ PE RÂNDURI PLINE. Numărul lor nu e fix — „De restituit”
+   și „Diferențe” apar numai când au ce spune —, iar grila de dinainte
+   (`auto-fit`) le punea cum cădeau: cinci și una, patru și două, cu ultima
+   singură lângă un rând de goluri. Aici `--pe` spune câte stau pe un rând, iar
+   `data-n` (câte plăci mici sunt, scris de logică) îl alege astfel încât
+   rândurile să iasă pline: 3 → un rând; 4 → două și două, ori patru; 5 → trei
+   și două, ori cinci. Rândul de la urmă, dacă rămâne mai scurt, se lățește
+   până la margine (`flex-grow`), deci nu rămâne nicăieri o gaură.
+
+   PRAGURILE vin din lățimea de care are nevoie o placă: 190px țin pe un singur
+   rând o sumă de șase cifre (`white-space:nowrap` pe sumă). Trei plăci cer un
+   rând de 597px, patru de 800px, cinci de 1003px; sub 597px stau câte două.
+   Se măsoară RÂNDUL plăcilor, nu fereastra (`@container`, ca în Conturi și în
+   Catalog): din fereastră se scad meniul din stânga, marginile paginii și bara
+   de derulare, care nu e la fel de lată pe orice calculator. Un browser fără
+   `@container` rămâne la câte două pe rând.
+   `- 1px` din socoteală e pentru rotunjire: fără el, la o lățime care nu se
+   împarte întreg, ultima placă a rândului ar cădea pe rândul următor. */
+[data-inc=placiloc]{container-type:inline-size;min-width:0}
+[data-inc=placi]{--pe:2;--gol:12px;display:flex;flex-wrap:wrap;gap:var(--gol)}
+[data-inc=placa]{flex:1 1 calc((100% - (var(--pe) - 1)*var(--gol))/var(--pe) - 1px);box-sizing:border-box;display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;min-height:44px;margin:0;padding:14px 16px;border:1px solid var(--h-line);border-radius:16px;background:var(--h-bg-surface);font:inherit;color:inherit;text-align:left;cursor:pointer}
+[data-inc=placa]:hover{border-color:var(--h-line-strong)}
+[data-inc=placa]:focus-visible{outline:2px solid var(--h-accent);outline-offset:2px}
+[data-inc=placa][data-on=da]{border-color:var(--h-accent);box-shadow:inset 0 0 0 1px var(--h-accent)}
+[data-inc=placa][data-ton=pericol]{border-color:var(--h-danger)}
+[data-inc=placasuma]{font-family:var(--h-font-display);font-size:22px;font-weight:600;line-height:1.15;white-space:nowrap}
+[data-inc=placasub]{font-size:13px;line-height:1.35;color:var(--h-fg-subtle);overflow-wrap:anywhere}
+/* „din care 2 depășite” — singurul rând de pe plăci scris în culoarea
+   pericolului: e cifra pentru care se deschide de fapt pagina dimineața. */
+[data-inc=placasub][data-fel=pericol]{color:var(--h-danger);font-weight:600}
+/* Placa mare: numele pe rândul lui, apoi suma și, lângă ea pe aceeași linie de
+   bază, câte comenzi și câți clienți — cum stătea cartonașul de dinainte. */
+[data-inc=placa][data-mare=da]{flex:1 0 100%;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 16px;padding:18px 20px;border-radius:18px}
+[data-inc=placa][data-mare=da] [data-inc=placaet]{flex:1 0 100%}
+[data-inc=placa][data-mare=da] [data-inc=placasuma]{font-size:34px;line-height:1.1}
+[data-inc=placa][data-mare=da] [data-inc=placasub]{font-size:15px;color:var(--h-fg-muted)}
+/* Lista adusă în vedere (v. `listaInVedere`, în logică) se oprește cu puțin aer
+   deasupra, nu lipită de marginea ferestrei. */
+[data-inc=zona]{scroll-margin-top:12px}
+@container (min-width:597px){
+[data-inc=placi]{--pe:3}
+[data-inc=placi][data-n="4"]{--pe:2}
+}
+@container (min-width:800px){
+[data-inc=placi][data-n="4"]{--pe:4}
+}
+@container (min-width:1003px){
+[data-inc=placi][data-n="5"]{--pe:5}
+}
+
+/* ---- COMUTATORUL CU PATRU STĂRI ----
+   Patru butoane într-o albie. Cel apăsat își ia culoarea după ce ÎNSEAMNĂ
+   starea, nu după care buton e: amânarea e a mierii, banii intrați sunt verzi
+   (și „Plătită”, și „Bancă”), iar „Neplătită” rămâne neutră — e starea din
+   pornire a oricărei comenzi, iar o listă întreagă de roșu n-ar mai lăsa să se
+   vadă roșul adevărat, cel al termenului depășit.
+   `min-width:0` pe coloane: fără el, cel mai lung cuvânt ar împinge albia peste
+   marginea rândului pe un telefon de 320px. */
+[data-inc=comutator]{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:4px;border-radius:14px;background:var(--h-bg-sunk)}
+[data-inc=stare]{display:flex;align-items:center;justify-content:center;min-width:0;min-height:44px;margin:0;padding:0 6px;border:0;border-radius:10px;background:none;font:inherit;font-size:14px;font-weight:600;line-height:1.15;color:var(--h-fg-muted);text-align:center;overflow-wrap:anywhere;cursor:pointer}
+[data-inc=stare]:hover{background:var(--h-bg-surface)}
+[data-inc=stare]:focus-visible{outline:2px solid var(--h-accent);outline-offset:-2px}
+[data-inc=stare][data-on=da]{background:var(--h-bg-surface);color:var(--h-fg);font-weight:700;box-shadow:inset 0 0 0 1.5px var(--h-line-strong)}
+[data-inc=stare][data-on=da][data-fel=amanare]{background:var(--h-warning-soft);box-shadow:inset 0 0 0 1.5px var(--h-warning)}
+[data-inc=stare][data-on=da][data-fel=incasat]{background:var(--h-success-soft);color:var(--h-success);box-shadow:inset 0 0 0 1.5px var(--h-success)}
+[data-inc=stare]:disabled{opacity:.55;cursor:default}
+/* Aceeași stare, pentru cine o vede fără s-o poată schimba: o pastilă, nu
+   patru butoane stinse — un buton stins tot pare că s-ar putea apăsa. */
+[data-inc=staretext]{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;background:var(--h-bg-sunk);font-size:14px;font-weight:700;color:var(--h-fg)}
+[data-inc=staretext][data-fel=amanare]{background:var(--h-warning-soft)}
+[data-inc=staretext][data-fel=incasat]{background:var(--h-success-soft);color:var(--h-success)}
+
+/* ---- UN RÂND DE COMANDĂ ----
+   Același marcaj, așezat în trei feluri numai din foaia asta:
+     · din pornire (și pe tabletă): un cartonaș — numărul și ziua, totalul în
+       dreapta, apoi clientul, apoi comutatorul pe un singur rând;
+     · sub 760px: la fel, cu comutatorul pe două rânduri de câte două (v. jos);
+     · de la 1100px: un rând de tabel pe patru coloane, cu notele dedesubt.
+   Rândurile nu au `gap` pe verticală, ci `margin-top` pe bucăți: bucata de jos
+   (notele, formularul amânării) lipsește la cele mai multe rânduri, iar un
+   `gap` ar lăsa sub ele un gol pentru nimic. */
+.h-card[data-inc=rand]{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"ref total" "cine cine" "plata plata" "jos jos";column-gap:14px;align-items:start;min-width:0;padding:14px 16px;border-radius:16px}
+/* Dunga din stânga a rândului cu termen depășit e o umbră dinăuntru, nu o
+   margine: marginea ar muta cu 3px tot ce e în rând față de rândurile vecine. */
+[data-inc=rand][data-ton=pericol]{box-shadow:inset 4px 0 0 var(--h-danger),var(--h-shadow-1)}
+[data-inc=rref]{grid-area:ref;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;min-width:0}
+[data-inc=rtotal]{grid-area:total;font-size:17px;font-weight:700;white-space:nowrap;text-align:right}
+[data-inc=rcine]{grid-area:cine;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;margin-top:8px}
+[data-inc=rplata]{grid-area:plata;min-width:0;margin-top:10px}
+[data-inc=rjos]{grid-area:jos;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;margin-top:10px}
+
+[data-inc=nota]{font-size:13px;line-height:1.45;color:var(--h-fg-subtle);overflow-wrap:anywhere}
+[data-inc=nota][data-fel=pericol]{color:var(--h-danger);font-weight:600}
+[data-inc=nota][data-fel=atentie]{padding:6px 10px;border-radius:8px;background:var(--h-warning-soft);color:var(--h-fg)}
+[data-inc=nota][data-fel=bine]{color:var(--h-success);font-weight:600}
+
+/* ---- CARTONAȘUL UNUI CLIENT ---- */
+[data-inc=carduri]{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+[data-inc=client][data-ton=pericol]{box-shadow:inset 4px 0 0 var(--h-danger),var(--h-shadow-1)}
+[data-inc=clientcap]{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;width:100%;min-height:44px;margin:0;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+[data-inc=clientcap]:focus-visible{outline:2px solid var(--h-accent);outline-offset:4px;border-radius:8px}
+[data-inc=pragstare]{display:inline-flex;align-items:center;min-height:28px;padding:0 10px;border-radius:999px;background:var(--h-bg-sunk);font-size:13px;font-weight:700}
+[data-inc=pragstare][data-fel=pericol]{background:var(--h-danger-soft);color:var(--h-danger)}
+[data-inc=pragstare][data-fel=atentie]{background:var(--h-warning-soft);color:var(--h-fg)}
+[data-inc=rz]{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px;width:100%;min-height:44px;margin:0;padding:8px 10px;border:0;border-radius:10px;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
+[data-inc=rz]:hover{background:var(--h-bg-sunk)}
+[data-inc=rz]:focus-visible{outline:2px solid var(--h-accent);outline-offset:-2px}
+
+/* De la 1100px rândul devine rând de tabel. Lângă meniul din stânga (252px)
+   lista are atunci cel puțin 790px: 96 + 108 + 300 pentru număr, total și
+   comutator, iar ce rămâne — peste 200px — e al numelui de client. Mai jos de
+   atât numele s-ar frânge literă cu literă, deci rămâne cartonașul. */
+@media (min-width:1100px){
+[data-inc=cap]{display:grid!important}
+.h-card[data-inc=rand]{grid-template-columns:96px minmax(0,1fr) 108px 300px;grid-template-areas:"ref cine total plata" "jos jos jos jos";align-items:center;padding:10px 16px}
+[data-inc=rref]{flex-direction:column;align-items:flex-start;gap:0}
+[data-inc=rcine],[data-inc=rplata]{margin-top:0}
+/* În tabel comutatorul are numai cei 300px ai coloanei: scăzând albia și
+   golurile, fiecărui buton îi rămân 70px, iar cu 6px margine de fiecare parte,
+   58px pentru cuvânt. „Neplătită”, la 14px îngroșat, cere cam 60px (SOCOTIT din
+   lățimile literelor, nu măsurat într-un browser) și s-ar frânge în două, de la
+   `overflow-wrap:anywhere`. Aici marginea dinăuntru coboară la 2px — butoanele
+   sunt oricum despărțite de golul albiei — și cuvântului îi rămân 66px. Scrisul
+   nu se micșorează: e același în toate cele trei așezări ale rândului. Regula
+   prinde numai butoanele dintr-un rând de comandă, nu și „Pe comenzi / Pe
+   clienți”, care poartă același `data-inc`. */
+.h-card[data-inc=rand] [data-inc=stare]{padding:0 2px}
+}
+/* Rezumatul din dreapta („cine are de plătit”) încape abia de la 1360px: îi
+   trebuie 268px cu tot cu golul de lângă el, iar la 1280 numelui de client
+   din tabel i-ar mai rămâne 124px — „Cofetăria Trandafirul” pe trei rânduri.
+   De la 1360 îi rămân aproape 200. Sub pragul ăsta, același lucru se vede din
+   „Pe clienți”. */
+@media (min-width:1360px){
+[data-inc=rail]{display:flex!important}
+}
+@media (max-width:760px){
+[data-inc=shell]{flex-direction:column!important}
+[data-inc=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-inc=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-inc=nav]{display:none!important}
+[data-inc=sidefoot]{display:none!important}
+[data-inc=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-inc=topbar] h1{font-size:20px!important}
+[data-inc=topbar]>div:last-child{width:100%!important;margin-left:0!important}
+[data-inc=topbar]>div:last-child>.h-btn{flex:1 1 auto!important}
+[data-inc=body]{padding:14px 14px 26px!important;gap:12px!important}
+[data-inc=placi]{--gol:10px!important}
+[data-inc=placa]{padding:12px 14px!important}
+[data-inc=placasuma]{font-size:19px!important}
+/* Rândul de mai sus prinde și suma plăcii mari (un `!important` trece peste
+   orice selector mai precis), deci ea își spune aici mărimea. */
+[data-inc=placa][data-mare=da]{padding:14px 16px!important}
+[data-inc=placa][data-mare=da] [data-inc=placasuma]{font-size:30px!important}
+[data-inc=carduri]{grid-template-columns:minmax(0,1fr)!important}
+/* Pe telefon comutatorul stă pe două rânduri de câte două, cu butoane de 46px:
+   patru într-un rând ar lăsa fiecăruia sub 62px lățime la 320px — prea puțin
+   pentru un deget pe un buton care mută bani. */
+[data-inc=comutator]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+[data-inc=stare]{min-height:46px!important;font-size:15px!important}
+}
+/* Sub 420px două plăci alăturate nu mai țin o sumă de șase cifre întreagă pe
+   un rând (măsurat din socoteală: 117px de literă la 320px). Trec una sub alta
+   și se culcă: numele în stânga, suma în dreapta, restul dedesubt — altfel
+   plăcile înalte ar împinge lista cu un ecran întreg mai jos.
+   Placa mare rămâne cum e și aici: numele pe rândul lui, suma dedesubt. Numai
+   rândul cu „N comenzi · M clienți” nu mai e ținut pe tot latul: stă lângă
+   sumă cât încape și coboară singur când nu mai încape. */
+@media (max-width:420px){
+[data-inc=placi]{--pe:1!important}
+[data-inc=placa]{flex-direction:row!important;flex-wrap:wrap!important;align-items:baseline!important;gap:2px 10px!important}
+[data-inc=placaet]{flex:1 1 auto!important}
+[data-inc=placasub]{flex:1 0 100%!important}
+[data-inc=placa][data-mare=da] [data-inc=placaet]{flex:1 0 100%!important}
+[data-inc=placa][data-mare=da] [data-inc=placasuma]{font-size:28px!important}
+[data-inc=placa][data-mare=da] [data-inc=placasub]{flex:0 1 auto!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
+<div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Încasări</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
+</div>
+<!-- Cele două ieșiri ale casei, amândouă socotite, niciuna scrisă de mână:
+     panoul de acasă al contului (`gp.primaPagina`) și ieșirea lui obișnuită
+     (`gp.iesire`). Tiparul e cel din Acces, din Statistici și din Jurnal. -->
+<div style="width:100%;display:grid;grid-template-columns:1fr;gap:8px">
+<a href="{{ acasaHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">{{ acasaEt }}</a>
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">{{ navBack.et }}</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
+<div data-inc="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-inc="side" class="gp-meniu-derulat" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-inc="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Încasări</span>
+</div>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
+</div>
+<div data-inc="nav" class="gp-meniu-derulat" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+</div>
+<div data-inc="sidefoot" style="flex:none;margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<!-- Pastila cu numele se arată numai când se știe al cui e numele; cuvântul
+     de sub el e rolul omului (`gp.numeRol`), fiindcă pagina se poate da din
+     „Acces” și altcuiva decât fondatorului. -->
+<sc-if value="{{ sideWho }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">{{ sideRol }}</span>
+</div>
+</div>
+</sc-if>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Plata se ține pe comanda întreagă. O bifă pusă aici nu schimbă etapa comenzii, totalul ori stocul și nu trimite niciun anunț.</p>
+<gp-versiune></gp-versiune>
+</div>
+</div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+<gp-versiune></gp-versiune>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
+
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-inc="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">Încasări</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+</div>
+<!-- Lista NU se reîmprospătează singură: un rând care se mută sub deget
+     tocmai când omul apasă „Plătită” ar bifa banii altei comenzi. Deci butonul
+     ăsta e singurul drum spre cifre proaspete, afară de o schimbare făcută
+     chiar aici. Toată jumătatea din dreapta stă sub condiție, nu numai
+     butonul: pe telefon ea se așază pe rândul ei, iar goală ar lăsa sub
+     titlu un rând de nimic. -->
+<sc-if value="{{ areLista }}" hint-placeholder-val="{{ true }}">
+<div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+<button type="button" class="{{ reincarcaCls }}" onClick="{{ onReincarca }}" style="min-height:44px;font-size:14px">Reîncarcă</button>
+</div>
+</sc-if>
+</div>
+
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">{{ eroareTitlu }}</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<div data-inc="body" style="flex:1;display:flex;flex-direction:column;gap:16px;padding:20px 28px 40px;min-width:0">
+
+<sc-if value="{{ asteapta }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:15px;color:var(--h-fg-faint)">Se încarcă…</p>
+</sc-if>
+
+<!-- BAZA FĂRĂ MIGRAREA 032. Pagina spune ce lipsește, cu numele fișierului, și
+     nu arată niciun buton: fără coloanele de plată n-are unde să se scrie o
+     bifă, iar un comutator care primește apăsarea și întoarce „eroarea 503” ar
+     arăta ca un registru stricat, nu ca o actualizare nefăcută. -->
+<sc-if value="{{ faraBaza }}" hint-placeholder-val="{{ false }}">
+<div data-inc="farabaza" class="h-alert h-alert--warning" style="border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Încasările nu sunt pornite încă.</p>
+<p style="margin:0;font-size:15px;line-height:1.5;text-wrap:pretty">Bazei de date îi lipsește actualizarea pentru plăți. Rulează migrarea <b>sql/032_plati_si_prag.sql</b>, apoi deschide pagina din nou. Până atunci de aici nu se poate bifa nicio plată; comenzile merg ca înainte.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ areLista }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+<!-- Vestea care nu mai are un rând lângă care să stea: comanda schimbată de
+     altcineva a ieșit din vederea asta odată cu reîncărcarea, ori o bifă n-a
+     prins după ce omul plecase deja la altă vedere. Poartă numărul comenzii
+     și rămâne până la „Am înțeles” ori până la altă alegere făcută de aici,
+     de sus. -->
+<sc-if value="{{ areAnunt }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" role="status" style="border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center">
+<p style="margin:0;flex:1 1 220px;font-size:15px;line-height:1.45">{{ anunt }}</p>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onAnuntGata }}" style="min-height:44px;font-size:14px">Am înțeles</button>
+</div>
+</sc-if>
+
+<!-- PLĂCILE. Cifrele de pe ele vin din `cifre`, socotite de server pe TOATĂ
+     baza; nu se adună din rândurile de pe ecran, care sunt numai o pagină
+     dintr-o vedere.
+     Prima placă e rândul mare („De încasat acum”) și e singurul loc în care
+     stă suma aceea. `data-n` spune câte plăci MICI urmează după ea: după el
+     își alege foaia de stil câte încap pe un rând, ca rândurile să iasă pline
+     (v. „PLĂCILE DE SUS”, în stiluri). Învelișul `placiloc` e cel a cărui
+     lățime se măsoară: un `@container` nu-și poate măsura chiar elementul pe
+     care îl așază. -->
+<div data-inc="placiloc">
+<div data-inc="placi" data-n="{{ placiN }}">
+<sc-for list="{{ placi }}" as="p" hint-placeholder-count="4">
+<button type="button" data-inc="placa" data-mare="{{ p.mare }}" data-on="{{ p.on }}" data-ton="{{ p.ton }}" aria-pressed="{{ p.apasat }}" onClick="{{ p.onClick }}">
+<span data-inc="placaet" class="h-eyebrow" style="font-size:12px">{{ p.et }}</span>
+<span data-inc="placasuma" class="h-numeric">{{ p.suma }}</span>
+<span data-inc="placasub">{{ p.sub }}</span>
+<sc-if value="{{ p.areSub2 }}" hint-placeholder-val="{{ false }}">
+<span data-inc="placasub" data-fel="{{ p.sub2Fel }}">{{ p.sub2 }}</span>
+</sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+
+<!-- ─────────────────────────────────────────────────────────── filtrele ── -->
+<div data-inc="filtre" class="h-card" style="padding:14px 16px;border-radius:18px;display:flex;flex-direction:column;gap:12px;min-width:0">
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ pastile }}" as="p" hint-placeholder-count="6">
+<button type="button" class="{{ p.cls }}" aria-pressed="{{ p.apasat }}" onClick="{{ p.onClick }}" style="min-height:44px;font-size:14px;border-radius:999px;padding:0 16px">{{ p.et }}</button>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:6px;flex:1 1 240px;min-width:0">
+<span class="h-eyebrow" style="font-size:12px">Caută</span>
+<input class="h-input" type="search" value="{{ cauta }}" onChange="{{ onCauta }}" placeholder="{{ cautaLoc }}" aria-label="{{ cautaLoc }}" style="height:46px;font-size:16px">
+</div>
+<!-- Perioada taie numai lista de comenzi. Pe clienți nu se arată: soldul unui
+     client e tot ce are de plătit, iar o perioadă pusă deasupra lui ar face
+     cifra să pară mai mică decât e. -->
+<sc-if value="{{ arePerioada }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:6px;flex:1 1 150px;min-width:0">
+<span class="h-eyebrow" style="font-size:12px">De la</span>
+<input class="h-input" type="date" value="{{ from }}" onChange="{{ onFrom }}" aria-label="De la ziua" style="height:46px;font-size:16px">
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;flex:1 1 150px;min-width:0">
+<span class="h-eyebrow" style="font-size:12px">Până la</span>
+<input class="h-input" type="date" value="{{ to }}" onChange="{{ onTo }}" aria-label="Până la ziua" style="height:46px;font-size:16px">
+</div>
+</sc-if>
+<div role="group" aria-label="Cum se arată lista" style="display:flex;gap:4px;padding:4px;border-radius:14px;background:var(--h-bg-sunk);flex:1 1 220px;min-width:0">
+<sc-for list="{{ vederi }}" as="v" hint-placeholder-count="2">
+<button type="button" data-inc="stare" data-on="{{ v.on }}" aria-pressed="{{ v.apasat }}" onClick="{{ v.onClick }}" style="flex:1 1 0;padding:0 12px">{{ v.et }}</button>
+</sc-for>
+</div>
+</div>
+
+<sc-if value="{{ arePerioadaLinie }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center">
+<span style="flex:1 1 220px;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ perioadaLinie }}</span>
+<sc-if value="{{ perioadaPusa }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onFaraPerioada }}" style="min-height:44px;font-size:14px">Fără perioadă</button>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- Clientul ales — de pe un cartonaș, din rezumat ori din butonul raportului
+     de pe Telegram. Numele se ia din răspuns, niciodată din adresă. -->
+<sc-if value="{{ areClientAles }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center">
+<span style="flex:1 1 200px;font-size:15px;font-weight:600;overflow-wrap:anywhere">{{ clientAlesLinie }}</span>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onFaraClient }}" style="min-height:44px;font-size:14px">Toți clienții</button>
+</div>
+</sc-if>
+</div>
+
+<!-- Pragul unui client, tocmai schimbat. Rămâne scris până la următoarea
+     schimbare: e singura dovadă că apăsarea a ajuns pe server. -->
+<sc-if value="{{ arePragSpus }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" role="status" style="border-radius:14px;padding:12px 16px">
+<p style="margin:0;font-size:15px;line-height:1.45">{{ pragSpus }}</p>
+</div>
+</sc-if>
+
+<!-- ──────────────────────────────────────────────────────── pe clienți ── -->
+<sc-if value="{{ peClienti }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+<sc-if value="{{ golClienti }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:28px 20px;border-radius:18px;text-align:center">
+<p style="margin:0;font-size:16px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ golClientiLinie }}</p>
+</div>
+</sc-if>
+<div data-inc="carduri">
+<sc-for list="{{ carduri }}" as="c" hint-placeholder-count="4">
+<div data-inc="client" data-ton="{{ c.ton }}" class="h-card" style="padding:14px 16px;border-radius:16px;display:flex;flex-direction:column;gap:8px;min-width:0">
+<!-- Capul cartonașului e butonul: o apăsare arată comenzile omului. Telefonul
+     și scurtătura pragului stau dedesubt, în afara lui — un buton într-un
+     buton nu primește apăsarea pe niciun telefon la fel. -->
+<button type="button" data-inc="clientcap" title="Arată comenzile lui" onClick="{{ c.onDeschide }}">
+<span style="flex:1 1 120px;min-width:0;font-size:16px;font-weight:700;overflow-wrap:anywhere">{{ c.nume }}</span>
+<span class="h-numeric" style="font-size:17px;font-weight:700;white-space:nowrap">{{ c.sold }}</span>
+<span style="flex:1 0 100%;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ c.linie }}</span>
+</button>
+<div style="display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center">
+<sc-if value="{{ c.areStare }}" hint-placeholder-val="{{ true }}">
+<span data-inc="pragstare" data-fel="{{ c.stareFel }}">{{ c.stareEt }}</span>
+</sc-if>
+<sc-if value="{{ c.areTel }}" hint-placeholder-val="{{ true }}">
+<a href="{{ c.telHref }}" style="display:inline-flex;align-items:center;min-height:44px;font-size:15px;font-weight:600">{{ c.tel }}</a>
+</sc-if>
+<!-- Butonul rămâne aici și cât căsuța de dedesubt e deschisă (`aria-expanded`
+     spune care din două): scos la deschidere, ar lua cu el focusul. `data-c`
+     e cheia clientului — după ea e găsit când căsuța se închide și focusul
+     trebuie adus înapoi (v. `butonPrag`). -->
+<sc-if value="{{ c.poatePrag }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" data-inc="pragbuton" data-c="{{ c.cheie }}" aria-expanded="{{ c.pragApasat }}" onClick="{{ c.onPrag }}" style="min-height:44px;font-size:14px;margin-left:auto;white-space:normal;text-align:center">{{ c.pragEt }}</button>
+</sc-if>
+</div>
+<sc-if value="{{ c.pragDeschis }}" hint-placeholder-val="{{ false }}">
+<div data-inc="prag" role="group" aria-label="Pragul de neplătite al clientului" style="display:flex;flex-direction:column;gap:10px;padding-top:10px;border-top:1px solid var(--h-line)">
+<span style="font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Câte comenzi neplătite poate avea până când comenzile noi i se opresc.</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button type="button" class="{{ c.pgGeneralCls }}" disabled="{{ c.pragZbor }}" onClick="{{ c.onPragGeneral }}" style="min-height:44px;font-size:14px;flex:1 1 110px;white-space:normal;text-align:center">{{ c.pgGeneralEt }}</button>
+<button type="button" class="{{ c.pgFaraCls }}" disabled="{{ c.pragZbor }}" onClick="{{ c.onPragFara }}" style="min-height:44px;font-size:14px;flex:1 1 110px">Fără limită</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+<input class="h-input h-numeric" type="text" inputMode="numeric" value="{{ c.pragNumar }}" onChange="{{ c.onPragNumar }}" placeholder="1–99" aria-label="Pragul lui, de la 1 la 99" style="flex:0 1 96px;min-width:0;height:46px;font-size:16px">
+<button type="button" class="{{ c.pgPuneCls }}" disabled="{{ c.pragZbor }}" onClick="{{ c.onPragPune }}" style="min-height:44px;font-size:14px;flex:1 1 110px">Pune pragul</button>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ c.onPragRenunta }}" style="min-height:44px;font-size:14px">Renunță</button>
+</div>
+<sc-if value="{{ c.pragAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="pericol" role="alert">{{ c.pragEroare }}</span>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<!-- ──────────────────────────────────────────────────────── pe comenzi ── -->
+<sc-if value="{{ peComenzi }}" hint-placeholder-val="{{ true }}">
+<div data-inc="zona" style="display:flex;gap:20px;align-items:flex-start;min-width:0">
+
+<div data-inc="lista" style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:10px">
+<sc-if value="{{ golComenzi }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:28px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center">
+<p style="margin:0;font-size:16px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ golComenziLinie }}</p>
+<sc-if value="{{ golAreSterge }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onStergeFiltre }}" style="min-height:44px;font-size:14px">Șterge filtrele</button>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ areRanduri }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ listaLinie }}</span>
+<div data-inc="cap" style="display:none;grid-template-columns:96px minmax(0,1fr) 108px 300px;column-gap:14px;padding:0 17px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">
+<span>Comanda</span>
+<span>Clientul</span>
+<span style="text-align:right">Total</span>
+<span>Plata</span>
+</div>
+<!-- `data-ref` e numărul comenzii: după el se găsește rândul când foaia
+     amânării se închide și focusul trebuie adus înapoi pe „Amânată”
+     (v. `butonAmanare`). -->
+<sc-for list="{{ randuri }}" as="r" hint-placeholder-count="6">
+<div data-inc="rand" data-ton="{{ r.ton }}" data-ref="{{ r.ref }}" class="h-card">
+<div data-inc="rref">
+<span class="h-numeric" style="font-size:16px;font-weight:700">{{ r.ref }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ r.zi }}</span>
+</div>
+<div data-inc="rtotal" class="h-numeric">{{ r.total }}</div>
+<div data-inc="rcine">
+<span style="font-size:15px;font-weight:600;line-height:1.3;overflow-wrap:anywhere">{{ r.client }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ r.etapa }}</span>
+</div>
+<div data-inc="rplata">
+<!-- Comutatorul se desenează NUMAI cui poate schimba starea (`poate.stare`,
+     de la server). Celuilalt i se scrie starea în cuvinte, pe larg. -->
+<sc-if value="{{ r.areComutator }}" hint-placeholder-val="{{ true }}">
+<div data-inc="comutator" role="group" aria-label="{{ r.comutatorSpus }}">
+<sc-for list="{{ r.stari }}" as="b" hint-placeholder-count="4">
+<button type="button" data-inc="stare" data-on="{{ b.on }}" data-fel="{{ b.fel }}" aria-pressed="{{ b.apasat }}" title="{{ b.spus }}" disabled="{{ b.oprit }}" onClick="{{ b.onStare }}">{{ b.et }}</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ r.areText }}" hint-placeholder-val="{{ false }}">
+<span data-inc="staretext" data-fel="{{ r.plataFel }}">{{ r.plataNume }}</span>
+</sc-if>
+</div>
+<sc-if value="{{ r.areJos }}" hint-placeholder-val="{{ false }}">
+<div data-inc="rjos">
+<sc-for list="{{ r.note }}" as="n" hint-placeholder-count="1">
+<span data-inc="nota" data-fel="{{ n.fel }}">{{ n.text }}</span>
+</sc-for>
+<!-- AMÂNAREA. „Amânată” nu se salvează la apăsare: fără zi n-are înțeles, iar
+     ziua o alege omul. Foaia începe cu ziua, nu cu o casetă de scris, deci nu
+     ia singură focusul — pe telefon ar ridica tastatura peste calendar. -->
+<sc-if value="{{ r.areForma }}" hint-placeholder-val="{{ false }}">
+<div data-inc="amanare" role="group" aria-label="Amânarea plății" style="width:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:10px;padding:12px 14px;border-radius:12px;background:var(--h-bg-sunk)">
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<div style="display:flex;flex-direction:column;gap:6px;flex:1 1 150px;min-width:0">
+<span class="h-eyebrow" style="font-size:12px">Plătește până pe</span>
+<input class="h-input" type="date" value="{{ r.fZi }}" min="{{ r.fMin }}" disabled="{{ r.fStins }}" onChange="{{ r.onFZi }}" aria-label="Plătește până pe" style="height:46px;font-size:16px">
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;flex:2 1 200px;min-width:0">
+<span class="h-eyebrow" style="font-size:12px">Notă (nu e obligatorie)</span>
+<input class="h-input" type="text" value="{{ r.fNota }}" disabled="{{ r.fStins }}" onChange="{{ r.onFNota }}" aria-label="Notă pentru amânare" style="height:46px;font-size:16px">
+</div>
+</div>
+<sc-if value="{{ r.fAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="pericol" role="alert">{{ r.fEroare }}</span>
+</sc-if>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ r.onFRenunta }}" style="min-height:44px;font-size:15px;flex:1 1 100px">Renunță</button>
+<button type="button" class="{{ r.fSalvCls }}" onClick="{{ r.onFSalveaza }}" style="min-height:44px;font-size:15px;font-weight:700;flex:1 1 100px">Salvează</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+
+<sc-if value="{{ arePagini }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;justify-content:center;padding-top:6px">
+<button type="button" class="h-btn h-btn--secondary" disabled="{{ inapoiOprit }}" onClick="{{ onInapoi }}" style="min-height:44px;font-size:14px">← Înapoi</button>
+<span style="font-size:14px;color:var(--h-fg-muted)">{{ paginaLinie }}</span>
+<button type="button" class="h-btn h-btn--secondary" disabled="{{ inainteOprit }}" onClick="{{ onInainte }}" style="min-height:44px;font-size:14px">Înainte →</button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+
+<!-- REZUMATUL DIN DREAPTA, numai pe monitor lat (foaia îl aprinde de la
+     1360px). Aceiași clienți ca în „Pe clienți”, cu cel mai mare sold întâi,
+     cum îi trimite serverul; o apăsare arată comenzile omului. -->
+<div data-inc="rail" class="h-card" style="display:none;flex:0 0 248px;box-sizing:border-box;flex-direction:column;gap:4px;padding:14px 10px;border-radius:18px;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto">
+<span class="h-eyebrow" style="font-size:12px;padding:0 10px 6px">Cine are de plătit</span>
+<sc-if value="{{ rezumatGol }}" hint-placeholder-val="{{ false }}">
+<span style="padding:0 10px;font-size:14px;line-height:1.45;color:var(--h-fg-subtle)">Nimeni. Toate comenzile sunt plătite.</span>
+</sc-if>
+<sc-for list="{{ rezumat }}" as="z" hint-placeholder-count="5">
+<button type="button" data-inc="rz" onClick="{{ z.onClick }}">
+<span style="flex:1 1 110px;min-width:0;font-size:14px;font-weight:600;overflow-wrap:anywhere">{{ z.nume }}</span>
+<span class="h-numeric" style="font-size:14px;font-weight:700;white-space:nowrap">{{ z.sold }}</span>
+<span data-inc="nota" data-fel="{{ z.fel }}" style="flex:1 0 100%;font-size:12px">{{ z.linie }}</span>
+</button>
+</sc-for>
+<sc-if value="{{ rezumatAreRest }}" hint-placeholder-val="{{ false }}">
+<span style="padding:6px 10px 0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ rezumatRest }}</span>
+</sc-if>
+</div>
+
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
+<!-- ────────────────────────────────────────── raportul și pragul general ── -->
+<sc-if value="{{ setariEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:15px;font-weight:700">Setările raportului nu s-au încărcat. Lista de mai sus e întreagă.</p>
+<p style="margin:0;font-size:14px;line-height:1.45">{{ setariEroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onSetariIar }}" style="min-height:44px;font-size:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<!-- CARTONAȘUL „RAPORT PE TELEGRAM”, numai cui are `plati.telegram` (răspunsul
+     lui GET /plati/setari o spune în `poate.telegram`). Fiecare refuz al
+     serverului se scrie lângă câmpul lui, nu într-o casetă de sus. -->
+<sc-if value="{{ areTelegram }}" hint-placeholder-val="{{ false }}">
+<div data-inc="telegram" class="h-card" style="padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:14px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600">Raport pe Telegram</span>
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">De două ori pe zi, în grupul ales: cât e de încasat, cât s-a încasat și ce amânări au trecut de termen.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px;max-width:420px">
+<span class="h-eyebrow" style="font-size:12px">Chat ID</span>
+<!-- Fără tastatură numerică: id-ul unui grup începe cu minus, iar tastatura
+     de cifre a iPhone-ului nu are semnul. -->
+<input class="h-input h-numeric" type="text" value="{{ tChat }}" disabled="{{ tPeDrum }}" onChange="{{ onTChat }}" aria-label="Chat ID al grupului pentru raport" style="height:46px;font-size:16px">
+<span style="font-size:12px;line-height:1.45;color:var(--h-fg-subtle)">alt grup decât cel al comenzilor</span>
+<sc-if value="{{ tChatAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="pericol" role="alert">{{ tChatEroare }}</span>
+</sc-if>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<sc-for list="{{ tOre }}" as="h" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:6px;flex:0 1 240px;min-width:0">
+<span class="h-eyebrow" style="font-size:12px">{{ h.et }}</span>
+<div style="display:flex;gap:6px;align-items:center">
+<!-- `min-width`: pe un telefon ținut pe ceasul de 12 ore caseta scrie
+     „09:00 AM”, iar lângă butonul „Oprește” îi rămâneau 99px — „AM” ieșea
+     tăiat. 7,5rem țin ora întreagă în amândouă felurile de ceas. -->
+<input class="h-input h-numeric" type="time" value="{{ h.val }}" disabled="{{ h.stinsa }}" onChange="{{ h.onChange }}" aria-label="{{ h.et }}" style="flex:1 1 0;min-width:7.5rem;height:46px;font-size:16px">
+<!-- Golirea unei ore nu e la fel pe niciun telefon (unele ceasuri n-au
+     „șterge” deloc), deci are butonul ei. -->
+<sc-if value="{{ h.pusa }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--ghost" disabled="{{ h.stinsa }}" onClick="{{ h.onOpreste }}" style="min-height:44px;font-size:14px">Oprește</button>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+<span style="font-size:12px;line-height:1.45;color:var(--h-fg-subtle)">O oră lăsată goală e oprită.</span>
+<sc-if value="{{ tOreAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="pericol" role="alert">{{ tOreEroare }}</span>
+</sc-if>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:2px">
+<label class="h-switch" style="min-height:44px;font-size:15px"><input type="checkbox" checked="{{ tAmintiri }}" disabled="{{ tPeDrum }}" onChange="{{ onTAmintiri }}"><span>Amintiri la Amânate</span></label>
+<span style="font-size:12px;line-height:1.45;color:var(--h-fg-subtle)">La primul raport al zilei, un mesaj cu amânările ajunse la termen.</span>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px;max-width:420px">
+<span class="h-eyebrow" style="font-size:12px">Adresa panoului</span>
+<input class="h-input" type="text" inputMode="url" value="{{ tUrl }}" disabled="{{ tPeDrum }}" onChange="{{ onTUrl }}" aria-label="Adresa panoului" style="height:46px;font-size:16px">
+<span style="font-size:12px;line-height:1.45;color:var(--h-fg-subtle)">Pe ea se sprijină butonul din raport, care deschide pagina asta gata filtrată.</span>
+<sc-if value="{{ tUrlAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="pericol" role="alert">{{ tUrlEroare }}</span>
+</sc-if>
+</div>
+
+<sc-if value="{{ tAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="pericol" role="alert">{{ tEroare }}</span>
+</sc-if>
+<sc-if value="{{ tAreSpus }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="bine" role="status">{{ tSpus }}</span>
+</sc-if>
+
+<!-- Butonul de probă cere 280px, cât îi ține textul pe un rând: unde nu-i are
+     lângă „Salvează”, coboară singur pe rândul lui. Cu 220px rămânea alături
+     și își rupea textul în două, iar amândouă butoanele ieșeau înalte de 62px. -->
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button type="button" class="{{ tSalvCls }}" disabled="{{ tNeschimbat }}" onClick="{{ onTSalveaza }}" style="min-height:44px;font-size:15px;font-weight:700;flex:0 1 160px">Salvează</button>
+<button type="button" class="{{ probaCls }}" onClick="{{ onProba }}" style="min-height:44px;font-size:15px;flex:1 1 280px;white-space:normal;text-align:center">Trimite acum un raport de probă</button>
+</div>
+<sc-if value="{{ areProbaSpus }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="{{ probaFel }}" role="status">{{ probaSpus }}</span>
+</sc-if>
+
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--h-line)">
+<span class="h-eyebrow" style="font-size:12px">Ultimele trimiteri</span>
+<sc-if value="{{ ultimeleGol }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:14px;color:var(--h-fg-subtle)">Încă nu a plecat niciun raport.</span>
+</sc-if>
+<sc-for list="{{ ultimele }}" as="u" hint-placeholder-count="3">
+<div style="display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;font-size:14px;line-height:1.45">
+<span class="h-numeric" style="color:var(--h-fg-muted)">{{ u.cand }}</span>
+<span style="font-weight:600">{{ u.fel }}</span>
+<span data-inc="nota" data-fel="{{ u.ton }}" style="font-size:14px">{{ u.stare }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<!-- PRAGUL GENERAL, cui are `plati.prag`. Cine are numai dreptul ăsta vede
+     din toată zona de setări doar cartonașul de aici. -->
+<sc-if value="{{ arePragGeneral }}" hint-placeholder-val="{{ false }}">
+<div data-inc="praggeneral" class="h-card" style="padding:18px 20px;border-radius:18px;display:flex;flex-direction:column;gap:12px;min-width:0">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600">Pragul pentru toți clienții</span>
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">Câte comenzi neplătite poate avea un client până când comenzile noi i se opresc. 0 înseamnă fără limită. Clientul care are pragul lui rămâne cu al lui.</p>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+<input class="h-input h-numeric" type="text" inputMode="numeric" value="{{ pgVal }}" onChange="{{ onPg }}" aria-label="Pragul pentru toți clienții, de la 0 la 99" style="flex:0 1 96px;min-width:0;height:46px;font-size:16px">
+<button type="button" class="{{ pgCls }}" disabled="{{ pgNeschimbat }}" onClick="{{ onPgSalveaza }}" style="min-height:44px;font-size:15px;font-weight:700">Salvează pragul</button>
+</div>
+<sc-if value="{{ pgAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="pericol" role="alert">{{ pgEroare }}</span>
+</sc-if>
+<sc-if value="{{ pgAreSpus }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota" data-fel="bine" role="status">{{ pgSpus }}</span>
+</sc-if>
+</div>
+</sc-if>
+
+</div>
+</div>
+
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+// PAGINA „ÎNCASĂRI” (runda 2.7.0) — registrul de plăți. Hotărârile patronului
+// din 4–5 octombrie 2026: plata se ține pe comanda întreagă, în patru stări
+// (Neplătită · Amânată · Plătită · Bancă); „Amânată” cere o zi; clientul cu
+// prea multe comenzi neplătite nu mai poate comanda până plătește (pragul, din
+// pornire 2); de două ori pe zi pleacă pe Telegram un raport de bani.
+//
+// Pagina NU hotărăște nimic. Cine are voie, ce intră într-o vedere, cât e de
+// încasat, dacă o zi de amânare e bună — toate stau pe server
+// (api/routes/plati.php, api/lib/plati.php) și vin gata judecate. Aici se
+// desenează ce a venit și se trimite înapoi o apăsare. Cifrele de sus se
+// citesc din `cifre`, niciodată din adunarea rândurilor de pe ecran: rândurile
+// sunt o pagină dintr-o vedere, cifrele sunt toată baza.
+//
+// Pagina nu atinge nimic din comandă afară de plată (PATCH /orders/#/plata) și
+// de pragul unui client (PATCH /users/#): nici etapa, nici totalul.
+
+/**
+ * Cele șase vederi ale registrului, în ordinea pastilelor. Cheile sunt ale
+ * serverului (parametrul `f`); ce intră în fiecare hotărăște numai el.
+ */
+const VEDERI = [
+  { cheie: "deincasat", et: "De încasat" },
+  { cheie: "amanate", et: "Amânate" },
+  { cheie: "platite", et: "Plătite" },
+  { cheie: "restituit", et: "De restituit" },
+  { cheie: "diferente", et: "Diferențe" },
+  { cheie: "toate", et: "Toate" }
+];
+const etVedere = (f) => { const v = VEDERI.find((x) => x.cheie === f); return v ? v.et : ""; };
+
+/**
+ * Cele patru stări, cum le citește omul. Cheia din bază nu ajunge niciodată pe
+ * ecran: pe comutator stă numele scurt („Bancă”), oriunde altundeva cel pe
+ * larg („Plătită prin bancă”) — vorbele patronului, aceleași ca în
+ * `GP_PLATI_NUME` de pe server.
+ *
+ * `fel` e culoarea: amânarea, banii intrați, datoria. „Plătită” și „Bancă” au
+ * același fel fiindcă amândouă înseamnă bani în casă.
+ */
+const STARI = [
+  { cheie: "neplatita", scurt: "Neplătită", lung: "Neplătită", fel: "datorie" },
+  { cheie: "amanata", scurt: "Amânată", lung: "Amânată", fel: "amanare" },
+  { cheie: "platita", scurt: "Plătită", lung: "Plătită", fel: "incasat" },
+  { cheie: "banca", scurt: "Bancă", lung: "Plătită prin bancă", fel: "incasat" }
+];
+const stareaCuCheia = (k) => STARI.find((s) => s.cheie === k) || null;
+// O stare pe care pagina n-o cunoaște (un server mai nou decât ea) nu-și arată
+// cheia: omul ar citi un cuvânt din baza de date în mijlocul unei fraze.
+const numeLung = (k) => { const s = stareaCuCheia(k); return s ? s.lung : "altă stare"; };
+const eIncasata = (o) => o.plata === "platita" || o.plata === "banca";
+
+/**
+ * Mai ține rândul ăsta de vederea aleasă?
+ *
+ * Se întreabă NUMAI despre un rând tocmai schimbat de aici, ca să i se poată
+ * scrie dedesubt „nu mai ține de vederea asta”. Rândul nu dispare la apăsare:
+ * o bifă pusă din greșeală trebuie să se poată lua înapoi din același loc, iar
+ * un rând care fuge de sub deget nu mai lasă asta. Lista adevărată o face tot
+ * serverul, la următoarea încărcare — împărțirea de mai jos e tabelul lui `f`
+ * din contract, copiat pentru o singură propoziție, nu pentru filtrare.
+ */
+const tineDe = (o, f) => {
+  const anulata = !!o.anulata, incasata = eIncasata(o);
+  if (f === "deincasat") return !anulata && !incasata;
+  if (f === "amanate") return !anulata && o.plata === "amanata";
+  if (f === "platite") return !anulata && incasata;
+  if (f === "restituit") return anulata && incasata;
+  if (f === "diferente") return !anulata && incasata && o.diferenta != null;
+  return !anulata || incasata;
+};
+
+/** În ce câmp al cartonașului de Telegram se scrie fiecare refuz al serverului. */
+const CAMP_REFUZ = { bad_chat: "chat", plati_chat_same: "chat", plati_chat_missing: "chat", bad_ore: "ore", bad_url: "url" };
+/** Felurile de trimitere din `ultimele`, pe numele lor. */
+const FEL_TRIMITERE = { raport: "Raport", amintire: "Amintire la amânate", proba: "Raport de probă" };
+/**
+ * Câți pixeli din listă trebuie să fie pe ecran ca ea să treacă drept „la
+ * vedere” (v. `listaInVedere`): rândul cu „N comenzi în …” și începutul primei
+ * comenzi. Sub atât, omul nu are de unde ști că lista s-a schimbat.
+ */
+const LISTA_LA_VEDERE = 120;
+
+/**
+ * Banii, scriși ca în raportul serverului: „2.340,00 lei” — virgulă la
+ * zecimale, punct la mii (`number_format($x, 2, ',', '.')`, api/lib/notify.php).
+ * Două locuri care scriu aceeași sumă în două feluri par două sume.
+ */
+const lei = (v) => {
+  const n = Math.round(Number(v) * 100) / 100;
+  if (!isFinite(n)) return "—";
+  const bucati = Math.abs(n).toFixed(2).split(".");
+  return (n < 0 ? "−" : "") + bucati[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + bucati[1] + " lei";
+};
+
+/**
+ * „1 comandă”, „3 comenzi”, „20 de comenzi”.
+ *
+ * „De” se pune când ultimele două cifre sunt 00 ori de la 20 în sus — regula
+ * limbii, nu a casei. Aceeași funcție ca în „Acces”.
+ */
+const cate = (n, unu, multe) => {
+  if (n === 1) return "1 " + unu;
+  const r = n % 100;
+  return n + (n >= 20 && (r === 0 || r >= 20) ? " de " : " ") + multe;
+};
+
+const doua = (x) => (x < 10 ? "0" : "") + x;
+const eZi = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s == null ? "" : s));
+
+/**
+ * Ziua, scrisă pentru om, din forma serverului (an-lună-zi): ziua săptămânii,
+ * ziua și luna, cum le scrie toată casa (`gp.days`). Anul se adaugă numai când
+ * e altul decât cel de azi — o comandă neplătită de anul trecut trebuie să se
+ * vadă că e de anul trecut.
+ */
+const ziOm = (iso, azi) => {
+  if (!eZi(iso)) return "";
+  const eticheta = gp.days(1, String(iso))[0].label;
+  return !eZi(azi) || String(iso).slice(0, 4) === String(azi).slice(0, 4) ? eticheta : eticheta + " " + String(iso).slice(0, 4);
+};
+/** La fel, cu literă mică, pentru mijlocul unei propoziții. */
+const ziMic = (iso, azi) => { const s = ziOm(iso, azi); return s.charAt(0).toLowerCase() + s.slice(1); };
+
+/**
+ * Câte zile sunt de la `a` până la `b`. Se socotește pe zile de calendar, în
+ * UTC: scăzute ca două clipe locale, două zile de o parte și de alta a
+ * schimbării orei ar ieși la 23 ori 25 de ore, adică „0 zile” ori „2 zile”.
+ */
+const zileIntre = (a, b) => {
+  const nr = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s == null ? "" : s)); return m ? Math.round(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86400000) : null; };
+  const x = nr(a), y = nr(b);
+  return x === null || y === null ? null : y - x;
+};
+const pesteCat = (n) => (n === 0 ? "azi" : n === 1 ? "mâine" : "peste " + cate(n, "zi", "zile"));
+const deCat = (n) => (!(n > 0) ? "de azi" : n === 1 ? "de ieri" : "de " + cate(n, "zi", "zile"));
+
+/**
+ * O clipă din bază (UTC), scrisă după ceasul patiseriei: ziua și ora. Gol când
+ * clipa lipsește — plățile marcate de migrare n-au oră, iar „1 ianuarie 1970”
+ * nu e un răspuns.
+ */
+const clipaOm = (s, azi) => {
+  const ms = gp.utc(s);
+  if (!ms) return "";
+  const d = gp.laPatiserie(new Date(ms));
+  const iso = d.getFullYear() + "-" + doua(d.getMonth() + 1) + "-" + doua(d.getDate());
+  return ziMic(iso, azi) + ", " + doua(d.getHours()) + ":" + doua(d.getMinutes());
+};
+const ceasAcum = () => { const d = gp.acumLaPatiserie(); return doua(d.getHours()) + ":" + doua(d.getMinutes()); };
+
+const telHref = (p) => { const t = String(p == null ? "" : p).replace(/[^\d+]/g, ""); return t ? "tel:" + t : ""; };
+/** Fără semne și fără majuscule, pentru căutarea după nume: „stefan” îl găsește pe „Ștefan”. */
+const simplu = (s) => String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/\p{M}/gu, "");
+/** Copia unui obiect, fără o cheie. */
+const fara = (o, k) => { const c = Object.assign({}, o); delete c[k]; return c; };
+/**
+ * Numărul comenzii, cum se scrie pe rând („#1001”). Un singur loc îl face:
+ * după el se caută rândul în pagină când focusul trebuie dus înapoi, și tot el
+ * stă în vestea de sus — două feluri de a-l scrie ar fi două comenzi.
+ */
+const refDe = (o) => o.ref || ("#" + (o.seq || o.id));
+
+/**
+ * Refuzul, în cuvintele serverului când le-a scris — el știe de ce a refuzat,
+ * pagina doar ghicește după cod. Fără ele (rețea căzută, pagină de eroare a
+ * găzduirii) rămâne fraza casei pentru felul refuzului.
+ */
+const spusDeServer = (e, ce) => (e && e.detalii && e.detalii.message ? String(e.detalii.message) : gp.motiv(e, ce));
+
+/**
+ * Ce se scrie lângă o salvare căreia serverul i-a răspuns 401 (încheierea
+ * rundei 2.7.0). De când plecarea spre intrare întreabă (`gp.toLogin()` învelit
+ * de paza formularelor nesalvate), omul poate rămâne în pagină, „să copieze”.
+ * Biblioteca întreabă O SINGURĂ dată: la a doua apăsare pe „Salvează” nu mai
+ * întreabă și nici nu mai pleacă, deci fără vorbele astea butonul ar clipi și
+ * atât, fără ca cineva să spună de ce nu s-a salvat nimic. Se scriu în locul
+ * în care fiecare formular își scrie și refuzurile obișnuite.
+ */
+const FARA_CONT = "Nu mai ești în cont, iar până nu intri din nou nu se poate salva nimic.";
+const FARA_CONT_PROBA = "Nu mai ești în cont, iar până nu intri din nou raportul de probă nu poate pleca.";
+
+/** Cartonașul de Telegram, cum e pe server, în forma în care îl ține pagina cât se scrie în el. */
+const ciornaTelegram = (s) => {
+  const ore = s && Array.isArray(s.ore) ? s.ore : [];
+  return {
+    chatId: s && s.chatId != null ? String(s.chatId) : "",
+    ora1: ore[0] ? String(ore[0]).slice(0, 5) : "",
+    ora2: ore[1] ? String(ore[1]).slice(0, 5) : "",
+    amintiri: !!(s && s.amintiri),
+    panelBaseUrl: s && s.panelBaseUrl != null ? String(s.panelBaseUrl) : ""
+  };
+};
+
+class Component extends DCLogic {
+  // `d` e răspunsul întreg al lui GET /plati, așa cum a venit. `inZbor`,
+  // `spuse` și `atinse` sunt pe numărul comenzii: ce rând are o schimbare pe
+  // drum, ce i s-a răspuns ultima dată, și care rânduri au fost schimbate de
+  // aici de la ultima încărcare.
+  state = { navOpen: false, auth: null, loaded: false, eroare: "",
+    d: null, faraBaza: false, incarca: false, adusLa: "",
+    // Filtrele. `f` și `client` pot veni din adresă (butonul din raportul de pe
+    // Telegram); `cauta` e ce scrie în casetă, `q` e ce a plecat la server.
+    f: "deincasat", client: "", q: "", cauta: "", from: "", to: "", page: 1, vedere: "comenzi",
+    // `true` cât perioada de pe ecran e cea pusă de placa „Încasat azi”, nu una
+    // aleasă de om din cele două casete (v. `alege`).
+    aziDePlaca: false,
+    inZbor: {}, spuse: {}, atinse: {}, anunt: "",
+    // Formularul amânării, deschis pe cel mult un rând: { id, zi, nota, eroare }.
+    amanare: null,
+    // Scurtătura pragului, deschisă pe cel mult un cartonaș (cheia clientului).
+    pragDeschis: "", pragNumar: "", pragZbor: false, pragEroare: "", pragSpus: "",
+    // Setările (GET /plati/setari) și ce se scrie în ele până la „Salvează”.
+    s: null, setariEroare: "", t: null, tSalv: false, tErori: {}, tSpus: "",
+    probaZbor: false, probaSpus: "", probaFel: "",
+    pg: "", pgSalv: false, pgEroare: "", pgSpus: "" };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+    // Runda 2.7.0 (4–5 octombrie 2026): paza formularelor nesalvate. Cât e ceva
+    // scris în foaia amânării ori în cartonașul de Telegram, plecarea din
+    // pagină (o legătură, ieșirea din cont, sesiunea pierdută, fila închisă)
+    // întreabă întâi. Paza citește starea de ACUM la fiecare întrebare, iar una
+    // pusă a doua oară o scoate singură pe cea veche (`componentDidMount` se
+    // poate aprinde din nou).
+    this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    const dinAdresa = this.citesteAdresa();
+    // Cine vine cu o vedere cerută în adresă (butonul din raportul de pe
+    // Telegram) vine pentru LISTĂ: prima care sosește e adusă în vedere
+    // (v. `listaInVedere`). Cine deschide pagina din meniu rămâne sus, la cifre.
+    this.cuLista = dinAdresa.venit ? "sosit" : false;
+    this.setState({ f: dinAdresa.f, client: dinAdresa.client }, () => this.porneste());
+  }
+
+  componentWillUnmount() {
+    clearTimeout(this.tCauta);
+    // Paza nu se sprijină pe rândul ăsta (metoda poate să nu ruleze niciodată);
+    // e aici numai ca o pagină scoasă curat să nu lase nimic în urmă.
+    if (typeof this.__scoatePaza === "function") this.__scoatePaza();
+  }
+
+  /**
+   * Citește `f` și `client` din adresă — o singură dată, la pornire — și le
+   * SCOATE de acolo.
+   *
+   * De ce se scot: ascultătorul de mai sus lipește tot ce e după „?” pe orice
+   * legătură spre altă pagină a casei (așa călătoresc parametrii dintre
+   * panouri). Lăsate în adresă, `f=amanate&client=31` ar ajunge în Comenzi, în
+   * Jurnal, în Setări — unde `client` chiar înseamnă altceva. Precedentul e
+   * `gp.reiaDinAdresa()`: citit o dată, apoi șters cu `replaceState`, fără
+   * intrare nouă în istoric.
+   *
+   * Urmarea, știută: o reîncărcare a paginii se întoarce la „De încasat”.
+   * Adresa nu mai poate minți însă — nu rămâne pe „Amânate” cât omul se uită
+   * la „Plătite”.
+   *
+   * Ce nu e una din cele șase vederi cade pe „De încasat”; un `client` care nu
+   * e număr se aruncă. În adresă nu stă niciodată un nume ori un telefon, deci
+   * nici pagina nu citește de acolo altceva decât un număr de cont.
+   *
+   * `venit` spune dacă adresa chiar a cerut ceva ce pagina a înțeles: o vedere
+   * din cele șase (și „De încasat”, scrisă anume — butonul raportului de
+   * dimineață o scrie) ori un client. Un `f` necunoscut nu e o cerere: omul
+   * ajunge pe „De încasat” ca din meniu, fără ca pagina să-i fugă de sub ochi.
+   */
+  citesteAdresa() {
+    let q;
+    try { q = new URLSearchParams(location.search || ""); }
+    catch (e) { return { f: "deincasat", client: "", venit: false }; }
+    const f = q.get("f") || "", client = q.get("client") || "";
+    const fStiut = VEDERI.some((v) => v.cheie === f), clientBun = /^\d{1,10}$/.test(client);
+    const citit = {
+      f: fStiut ? f : "deincasat",
+      client: clientBun ? client : "",
+      venit: fStiut || clientBun
+    };
+    if (q.has("f") || q.has("client")) {
+      q.delete("f");
+      q.delete("client");
+      const coada = q.toString();
+      try { history.replaceState(history.state, "", location.pathname + (coada ? "?" + coada : "") + (location.hash || "")); }
+      catch (e) { /* un browser care nu lasă adresa schimbată: vederea s-a citit oricum */ }
+    }
+    return citit;
+  }
+
+  /**
+   * Pune vederea ÎNAPOI în adresă, chiar înainte de drumul spre intrare.
+   *
+   * Butonul din raportul de pe Telegram se apasă de obicei pe un telefon fără
+   * sesiune. `gp.loginHref()` duce mai departe ce e în adresă, iar pagina de
+   * intrare îl aduce înapoi după parolă — dar numai dacă mai e acolo. Fără
+   * rândurile astea, omul care a apăsat „Amânate” ar ajunge, după ce se
+   * conectează, pe „De încasat”.
+   */
+  vedereaInAdresa() {
+    const S = this.state;
+    if (S.f === "deincasat" && !S.client) return;
+    try {
+      const q = new URLSearchParams(location.search || "");
+      if (S.f !== "deincasat") q.set("f", S.f);
+      if (S.client) q.set("client", S.client);
+      history.replaceState(history.state, "", location.pathname + "?" + q.toString() + (location.hash || ""));
+    } catch (e) { /* fără istoric: după intrare se vede „De încasat”, nimic mai rău */ }
+  }
+
+  /**
+   * Află cine e intrat, apoi — numai cui are pagina — cere registrul.
+   *
+   * `gp.me()` are DOUĂ feluri de „fără cont”: serverul care răspunde lămurit
+   * „nu ești conectat” (`null`) și serverul la care nu s-a ajuns (aruncă).
+   * `NEAFLAT` le desparte, ca o rețea căzută să nu trimită omul la intrare și
+   * nici să nu-i ridice în față un refuz despre un cont pe care pagina nu l-a
+   * aflat. Tiparul e cel din Jurnal și din Acces.
+   */
+  porneste() {
+    const NEAFLAT = {};
+    return gp.me()
+      .then((user) => {
+        if (user) this.setState({ auth: gp.auth(user) });
+        return user;
+      })
+      .catch((e) => {
+        this.setState({ eroare: gp.motiv(e, "pagina „Încasări”"), loaded: true });
+        return NEAFLAT;
+      })
+      .then((user) => {
+        if (user === NEAFLAT) return null;
+        if (!user) { this.vedereaInAdresa(); gp.toLogin(); return null; }
+        // O bifă din „Acces”, nu un rang: din pornire pagina e numai a
+        // fondatorului, dar el o poate da și altcuiva. Cui n-o are, serverul îi
+        // răspunde 403 — deci nici nu se mai întreabă.
+        if (!gp.are("incasari", user)) { this.setState({ loaded: true }); return null; }
+        return this.incarca();
+      });
+  }
+
+  /**
+   * Adresa cererii de listă, din filtrele de acum.
+   *
+   * Pe clienți pleacă numai vederea: cartonașele sunt „toți cei cu ceva de
+   * încasat”, iar o perioadă ori un nume trimise pe lângă ar putea tăia din ei
+   * pe nevăzute. Numele scris în casetă se caută atunci aici, printre
+   * cartonașe.
+   */
+  cerere() {
+    const S = this.state;
+    const q = new URLSearchParams();
+    q.set("f", S.f);
+    if (S.vedere !== "clienti") {
+      if (S.from) q.set("from", S.from);
+      if (S.to) q.set("to", S.to);
+      if (S.client) q.set("client", S.client);
+      if (S.q) q.set("q", S.q);
+      if (S.page > 1) q.set("page", String(S.page));
+    }
+    return "/plati?" + q.toString();
+  }
+
+  /**
+   * Cere lista. Întoarce o făgăduială care se împlinește ORICUM — și la refuz —,
+   * ca cine o așteaptă (reîncărcarea de după un 409) să poată scrie după ea.
+   *
+   * `semn` numără cererile: un răspuns care sosește după ce a plecat alta mai
+   * nouă se aruncă. Fără el, „Plătite” apăsat repede după „Amânate” ar putea
+   * arăta amânatele sub pastila „Plătite” — iar aici sub fiecare rând stă un
+   * buton care mută bani.
+   */
+  incarca() {
+    const semn = this.semn = (this.semn || 0) + 1;
+    this.setState({ incarca: true });
+    return gp.get(this.cerere())
+      .then((r) => {
+        if (semn !== this.semn) return;
+        this.primeste(r);
+      })
+      .catch((e) => {
+        if (semn !== this.semn) return;
+        // Steagul se stinge ÎNAINTE de plecarea spre intrare (runda 2.7.0): cu
+        // ceva scris în pagină, `gp.toLogin()` întreabă, iar cine rămâne să
+        // copieze nu are voie să rămână cu „Se reîncarcă…” și cu „Reîncarcă” mort.
+        if (e.isAuth) { this.setState({ incarca: false }); gp.toLogin(); }
+        // Baza fără migrarea 032 nu e o eroare de arătat cu „Încearcă din
+        // nou”: reîncercarea ar da același răspuns până rulează cineva
+        // actualizarea. Pagina spune ce lipsește (v. caseta din marcaj).
+        else if (e.code === "plati_unavailable") this.setState({ faraBaza: true, d: null, loaded: true, incarca: false, eroare: "" });
+        else this.setState({ eroare: gp.motiv(e, "încasările"), loaded: true, incarca: false });
+      });
+  }
+
+  /**
+   * Așază pe ecran o listă proaspătă. Tot ce ținea de rândurile vechi se
+   * stinge — afară de vorbele scrise CÂT LISTA ASTA ERA PE DRUM.
+   *
+   * O bifă poate pica după ce omul a apăsat deja altă pastilă: refuzul sosește
+   * peste lista veche, se scrie lângă rând, iar o clipă mai târziu vine lista
+   * nouă și l-ar șterge odată cu restul — înainte ca omul să-l fi putut citi.
+   * Comanda ar rămâne neplătită în registru, iar el ar pleca încredințat că a
+   * bifat-o. De aceea vorbele însemnate `peDrum` (v. `spuneLa`) trec peste
+   * sosire: lângă rândul lor, dacă e și în lista nouă; sus, cu numărul
+   * comenzii, dacă nu mai e. Trec o singură dată — la lista următoare sunt
+   * vorbe pe care omul le-a avut în față, ca oricare alta.
+   */
+  primeste(r) {
+    // Semnul „adu lista în vedere” se stinge la PRIMA listă sosită, oricare ar
+    // fi ea: o listă cerută mai târziu de altcineva (o pastilă, „Reîncarcă”,
+    // reîncărcarea de după un 409) nu are voie să miște pagina. La o cerere
+    // PICATĂ rămâne aprins — acolo nu se ajunge aici —, deci „Încearcă din
+    // nou” duce totuși omul la lista pentru care apăsase.
+    const adu = this.cuLista;
+    this.cuLista = false;
+    if (!r || r.activ === false) {
+      this.setState({ faraBaza: true, d: null, loaded: true, incarca: false, eroare: "" });
+      return;
+    }
+    const S = this.state;
+    const noi = r.comenzi || [];
+    const spuse = {}, sus = [];
+    Object.keys(S.spuse).forEach((k) => {
+      const v = S.spuse[k];
+      if (!v || !v.peDrum) return;
+      if (noi.some((x) => String(x.id) === k)) spuse[k] = Object.assign({}, v, { peDrum: false });
+      else if (v.sus) sus.push(v.sus);
+    });
+    // FOAIA AMÂNĂRII SCRISĂ TRECE ȘI EA PESTE SOSIRE (runda 2.7.0, 4–5 octombrie
+    // 2026). Până acum orice listă sosită închidea foaia, iar trei drumuri
+    // aduc o listă fără ca omul să fi fost întrebat: 409-ul ori „nimic de
+    // schimbat” primite pentru o stare aleasă pe ALT rând (v. `schimba`) și
+    // lista cerută ÎNAINTE ca foaia să fie deschisă, sosită după ce s-a scris
+    // în ea. De aceea aici nu se mai aruncă nimic scris: foaia rămâne cât
+    // rândul ei e și în lista nouă (`from` se ia oricum de pe rând în clipa
+    // trimiterii). Ușile omului o lasă ELE, la „Ies fără să salvez”, înainte
+    // să ceară lista (v. `alege`, `lasaAmanarea`). Foaia NEATINSĂ se închide ca
+    // până acum: n-are ce pierde, iar rămasă deschisă peste un rând schimbat de
+    // altcineva ar trimite la „Salvează” o zi veche pe care n-a ales-o nimeni.
+    // Când rândul a ieșit din listă, foaia n-are pe ce să mai stea: se închide,
+    // dar se spune sus, cu numărul comenzii și cu ce era scris. Amânarea aflată
+    // pe drum spre server nu e „nesalvată”: despre ea vorbește răspunsul ei.
+    const a = S.amanare;
+    const scrisa = !!a && !!this.amanareScrisa(true);
+    const ramane = scrisa && noi.some((x) => x.id === a.id);
+    if (scrisa && !ramane && !(this.zbor && this.zbor[a.id])) {
+      const scrisNota = String(a.nota || "").trim();
+      const ce = [eZi(a.zi) ? "până " + ziMic(a.zi, String(r.azi || "")) : "", scrisNota ? "nota „" + scrisNota + "”" : ""].filter(Boolean).join(", ");
+      sus.push("Comanda " + refDe(this.comanda(a.id)) + ": amânarea pe care o scriai nu s-a salvat. Rândul ei nu mai e în lista de pe ecran, iar foaia s-a închis odată cu el." + (ce ? " Scriseseși: " + ce + "." : ""));
+    }
+    // Lista se aduce în vedere DUPĂ redesenare (al doilea argument al lui
+    // `setState`): până atunci pe ecran sunt rândurile vechi, iar la sosirea
+    // de pe Telegram ori din „Pe clienți” lista nici nu e încă în pagină.
+    this.setState({ d: r, faraBaza: false, loaded: true, incarca: false, eroare: "", adusLa: ceasAcum(),
+      page: Number(r.page) || 1, spuse, atinse: {}, amanare: ramane ? a : null,
+      anunt: sus.length ? (S.anunt ? [S.anunt] : []).concat(sus).join(" ") : S.anunt },
+      () => { if (adu) this.listaInVedere(adu); });
+    // Setările se cer o singură dată, și numai cui are ce vedea în ele: pentru
+    // ceilalți serverul răspunde 403, iar un refuz stârnit de pagină însăși ar
+    // umple jurnalul serverului degeaba.
+    const p = r.poate || {};
+    if ((p.telegram || p.prag) && !this.state.s && !this.setariCerute) {
+      this.setariCerute = true;
+      this.cereSetari("tot");
+    }
+  }
+
+  /**
+   * După o schimbare făcută de aici: cifrele și clienții se cer din nou, dar
+   * RÂNDURILE rămân cele de pe ecran.
+   *
+   * O plată bifată mută și „De încasat”, și „Încasat azi”, și soldul
+   * clientului — numere pe care pagina nu le socotește singură. Rândul însă nu
+   * are voie să plece de sub deget (v. `tineDe`), deci din răspunsul proaspăt
+   * se ia tot afară de `comenzi`.
+   */
+  improspateaza() {
+    const lista = this.semn;
+    const semn = this.semnCifre = (this.semnCifre || 0) + 1;
+    return gp.get(this.cerere())
+      .then((r) => {
+        // Între timp s-a cerut altă listă ori altă împrospătare: răspunsul ăsta
+        // vorbește despre un ecran care nu mai e.
+        if (lista !== this.semn || semn !== this.semnCifre) return;
+        const d = this.state.d;
+        if (!r || r.activ === false || !d) return;
+        this.setState({ d: Object.assign({}, r, { comenzi: d.comenzi }), adusLa: ceasAcum() });
+      })
+      .catch((e) => {
+        if (lista !== this.semn || semn !== this.semnCifre) return;
+        if (e.isAuth) gp.toLogin();
+        // Schimbarea e salvată; numai cifrele de sus au rămas de dinainte. Se
+        // spune, cu butonul de reîncercare, în loc să se tacă peste un total
+        // care nu mai e adevărat.
+        else this.setState({ eroare: gp.motiv(e, "cifrele încasărilor") });
+      });
+  }
+
+  /**
+   * Schimbă filtrele și cere lista. Orice schimbare de filtru întoarce la
+   * pagina 1.
+   *
+   * Pe aici trece ORICE alegere — pastilă, placă, cartonaș, perioadă, pagină —,
+   * deci aici se țin trei lucruri pe care niciun buton nu le-ar ține singur:
+   *
+   * 1. CE SCRIE ÎN CASETA DE CĂUTARE PLEACĂ ODATĂ CU ALEGEREA. Căutarea
+   *    așteaptă 300 ms după ultima literă. O pastilă apăsată în răstimpul ăsta
+   *    oprește ceasul; fără rândul de mai jos, numele ar rămâne scris în casetă
+   *    fără să fi plecat vreodată, iar dedesubt ar sta toată vederea — pe un
+   *    registru de bani, o listă care pare filtrată și nu e. Nu se întreabă
+   *    ceasul, ci starea: cât `cauta` și `q` nu spun același lucru, ce e în
+   *    casetă n-a plecat încă. Un nume nou e alt filtru, deci și el întoarce
+   *    la pagina 1 — chiar dacă apăsarea a fost tocmai pe „Înainte →”: pagina
+   *    a doua a unei căutări pe care omul n-a văzut-o încă nu e ce a cerut.
+   *
+   * 2. PERIOADA PUSĂ DE PLACA „ÎNCASAT AZI” E A PLĂCII, NU A OMULUI. Placa
+   *    scrie „azi – azi” în cele două casete ale perioadei, pe care nu le-a
+   *    atins nimeni. Lăsată acolo, perioada asta ar tăia pe tăcute și „De
+   *    încasat”, și „Amânate”, și tot ce se alege după — omul ar vedea două
+   *    comenzi sub o placă pe care scrie nouă. De aceea placa își însemnează
+   *    perioada (`aziDePlaca`), iar la prima vedere aleasă după ea perioada
+   *    pleacă. O perioadă aleasă de om din casete nu e însemnată și nu pleacă
+   *    decât când o scoate el.
+   *
+   * 3. VESTEA DE SUS (`anunt`) SE STINGE NUMAI LA O ALEGERE FĂCUTĂ SUS, LÂNGĂ
+   *    EA. Pastilele, plăcile, căutarea și perioada stau lângă vestea de sus;
+   *    butoanele de pagină stau la capătul listei, unde ea nu se vede. O veste
+   *    despre o bifă care n-a prins nu are voie să dispară la o apăsare făcută
+   *    de acolo.
+   *
+   * 4. LISTA ADUSĂ ÎN VEDERE E A ALEGERII ĂSTEIA, NU A CELEI DE DINAINTE. `adu`
+   *    („apasat”) îl dau numai apăsările după care omul are de citit lista de
+   *    la început: o placă, un cartonaș de client, o pagină nouă. Orice altă
+   *    alegere STINGE semnul rămas de la una mai veche, a cărei listă n-a
+   *    apucat să sosească: o pastilă apăsată îndată după o placă nu are voie
+   *    să miște pagina în locul ei.
+   */
+  alege(schimbari, adu) {
+    clearTimeout(this.tCauta);
+    // PAZA FOII AMÂNĂRII (runda 2.7.0, 4–5 octombrie 2026). Orice alegere de
+    // aici aduce o listă nouă, în care rândul foii poate să nu mai fie
+    // (v. `primeste`). Cu ziua ori nota scrise și nesalvate, omul e întrebat
+    // întâi; la „Ies fără să salvez” foaia se închide pe loc, iar alegerea
+    // merge mai departe abia după aceea (a doua trecere nu mai găsește nimic
+    // scris). Cu foaia neatinsă ori închisă nu se schimbă nimic față de până
+    // acum. Tot aici ajunge și căutarea, după cele 300 ms ale ei.
+    const scris = this.amanareScrisa();
+    if (scris) {
+      const raspuns = gp.inchideCiorna(scris, () => this.setState({ amanare: null }, () => this.alege(schimbari, adu)));
+      // „Rămân în formular”: alegerea n-a plecat, iar ceasul căutării e oprit
+      // (rândul de sus). Ce a rămas scris în caseta de căutare fără să fi
+      // plecat ar sta deasupra unei liste nefiltrate — pe un registru de bani,
+      // o listă care pare filtrată și nu e (v. punctul 1 de mai sus). Caseta
+      // se întoarce la ce e trimis cu adevărat.
+      if (raspuns && typeof raspuns.then === "function") {
+        raspuns.then((iesit) => { if (!iesit && this.state.cauta.trim() !== this.state.q) this.setState({ cauta: this.state.q }); });
+      }
+      return;
+    }
+    this.cuLista = adu || false;
+    const S = this.state;
+    const x = Object.assign({ page: 1, pragSpus: "" }, schimbari);
+    if (!("q" in schimbari) && S.cauta.trim() !== S.q) { x.q = S.cauta.trim(); x.page = 1; }
+    if ("from" in schimbari || "to" in schimbari) { if (!("aziDePlaca" in schimbari)) x.aziDePlaca = false; }
+    else if (S.aziDePlaca && "f" in schimbari) { x.from = ""; x.to = ""; x.aziDePlaca = false; }
+    if (!("page" in schimbari)) x.anunt = "";
+    this.setState(x, () => this.incarca());
+  }
+
+  /** O apăsare pe o placă: alege vederea ei și cere ca lista să fie adusă în vedere. */
+  dinPlaca(schimbari) {
+    this.alege(schimbari, "apasat");
+  }
+
+  /**
+   * Aduce începutul listei în vedere, dacă nu e deja acolo.
+   *
+   * DE CE. Pe un telefon, plăcile și filtrele umplu singure primul ecran, iar
+   * lista începe sub el. O placă apăsată schimba lista fără ca pe ecran să se
+   * miște ceva — părea un buton mort. La fel butonul din raportul de pe
+   * Telegram: deschidea pagina pe „Amânate”, dar amânatele erau cu un ecran
+   * mai jos. Și invers: un cartonaș de client ori „Înainte →” se apasă de jos,
+   * iar lista nouă începe mult deasupra.
+   *
+   * CÂND NU SE MIȘCĂ NIMIC. Dacă începutul listei e deja pe ecran, cu cel
+   * puțin `LISTA_LA_VEDERE` pixeli din ea sub el, pagina rămâne pe loc: pe un
+   * calculator, unde plăcile și lista încap împreună, o apăsare pe placă nu are
+   * de ce să tragă pagina.
+   *
+   * CUM. La sosirea din adresă pagina sare (`auto`): omul n-a văzut încă nimic
+   * din ea, deci n-are ce urmări. După o apăsare alunecă (`smooth`), ca el să
+   * vadă că aceeași pagină a coborât — afară de cazul în care a cerut
+   * sistemului mai puțină mișcare.
+   *
+   * Se cheamă NUMAI din urma lui `setState` (v. `primeste`): înainte de
+   * redesenare lista de pe ecran e cea veche ori nu e deloc.
+   */
+  listaInVedere(fel) {
+    try {
+      const nod = document.querySelectorAll("[data-inc=zona]")[0];
+      if (!nod || !nod.scrollIntoView) return;
+      const sus = nod.getBoundingClientRect().top;
+      if (sus >= 0 && sus <= window.innerHeight - LISTA_LA_VEDERE) return;
+      const lin = fel === "apasat" && !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+      nod.scrollIntoView({ block: "start", behavior: lin ? "smooth" : "auto" });
+    } catch (e) { /* fără pagină (probele) ori un browser fără derulare cu opțiuni: lista rămâne unde e */ }
+  }
+
+  /**
+   * Spune ceva despre o comandă ACOLO UNDE OMUL MAI POATE CITI.
+   *
+   * `vorba` se scrie lângă rând. Dacă rândul nu mai e pe ecran — omul a
+   * schimbat vederea cât cererea era pe drum — se scrie `sus`, care poartă
+   * numărul comenzii: o vorbă pusă lângă un rând nedesenat nu o citește nimeni.
+   *
+   * `peDrum` ține minte că vorba s-a scris cât o listă nouă era cerută și
+   * nesosită: `primeste` o trece atunci peste sosirea ei, în loc s-o șteargă.
+   */
+  spuneLa(id, vorba, sus) {
+    const S = this.state;
+    if (this.comanda(id)) {
+      this.setState({ spuse: Object.assign({}, S.spuse, { [id]: Object.assign({ sus, peDrum: !!S.incarca }, vorba) }) });
+    } else if (sus) {
+      this.setState({ anunt: (S.anunt ? S.anunt + " " : "") + sus });
+    }
+  }
+
+  /**
+   * Sesiunea pierdută la schimbarea stării unei comenzi (încheierea rundei
+   * 2.7.0, v. `FARA_CONT`). Cu foaia amânării deschisă pe rândul ăsta, pricina
+   * se scrie ÎN FOAIE, lângă zi, unde stă și refuzul zilei: acolo e ce a scris
+   * omul și tot acolo e „Salvează”, pe care îl va apăsa din nou. Altfel se
+   * scrie lângă rând, ca orice alt refuz (v. `spuneLa`).
+   */
+  spuneFaraCont(id, ref, ramane) {
+    const a = this.state.amanare;
+    if (a && a.id === id) this.setState({ amanare: Object.assign({}, a, { eroare: FARA_CONT }) });
+    else this.spuneLa(id, { fel: "pericol", text: FARA_CONT }, "Comanda " + ref + " a rămas „" + ramane + "”. " + FARA_CONT);
+  }
+
+  /**
+   * Duce focusul înapoi la butonul care a DESCHIS o foaie, după ce foaia s-a
+   * închis.
+   *
+   * „Renunță” și „Salvează” dispar odată cu foaia lor. Fără rândurile astea,
+   * focusul celui care lucrează din tastatură ar cădea pe pagină: următorul Tab
+   * ar porni iar de la meniu, iar un cititor de ecran ar tăcea. `<sc-if>` nu
+   * are niciun cârlig la închidere, deci nodul se caută în pagină.
+   *
+   * SE CAUTĂ ABIA DUPĂ CE PAGINA S-A REDESENAT, și de asta mutarea stă în urma
+   * unui `setState` gol. Casa rulează pe React 18 (`support.js`): un `setState`
+   * se întoarce ÎNAINTE ca pagina să fie redesenată, iar redesenarea vine o
+   * clipă mai târziu; numai urma lui `setState` e chemată sigur după ea.
+   * Căutat mai devreme, butonul se caută în pagina VECHE, cu două pagube:
+   *   · în aceeași clipă cu închiderea foii, focusul e încă pe „Salvează”, care
+   *     n-a apucat să piară: pare că are stăpân, nu se mută nimic, iar la
+   *     redesenare foaia piere cu focus cu tot;
+   *   · îndată ce s-a întors lista cerută din nou (după un 409 ori după un
+   *     răspuns „nimic de schimbat”), butonul găsit e al listei vechi. Casa
+   *     ține rândurile unei liste după LOC, nu după comandă (`walkFor` le dă
+   *     drept cheie numărul de ordine): nodul rămâne în pagină și, dacă lista
+   *     nouă a venit cu un rând în plus deasupra, poartă de acum „Amânată” a
+   *     ALTEI comenzi — de unde un Enter ar deschide foaia greșită.
+   * Așa, cine cheamă de aici nu are de ținut minte de unde are voie să cheme.
+   *
+   * Focusul se mută NUMAI dacă a rămas al nimănui. Cât o cerere era pe drum,
+   * omul a putut apăsa altceva; de acolo nu i se ia.
+   */
+  focusInapoi(gaseste) {
+    const muta = () => {
+      try {
+        const acum = document.activeElement;
+        if (acum && acum !== document.body) return;
+        const nod = gaseste();
+        if (nod && nod.focus) nod.focus({ preventScroll: true });
+      } catch (e) { /* fără pagină (probele): nimic de mutat */ }
+    };
+    this.setState({}, muta);
+  }
+
+  /** Butonul „Amânată” de pe rândul unei comenzi — cel care îi deschide foaia amânării. */
+  butonAmanare(ref) {
+    const rand = Array.from(document.querySelectorAll("[data-inc=rand]")).find((x) => x.getAttribute("data-ref") === ref);
+    return rand ? rand.querySelector("[data-inc=stare][data-fel=amanare]") : null;
+  }
+
+  /** Butonul „Prag: …” de pe cartonașul unui client — cel care îi deschide căsuța pragului. */
+  butonPrag(cheie) {
+    return Array.from(document.querySelectorAll("[data-inc=pragbuton]")).find((x) => x.getAttribute("data-c") === cheie) || null;
+  }
+
+  /** Alege o vedere din pastile. „Pe clienți” are înțeles numai la „De încasat”: cartonașele sunt cei cu ceva de plătit. */
+  alegeFiltrul(f) {
+    this.alege({ f, vedere: f === "deincasat" ? this.state.vedere : "comenzi" });
+  }
+
+  /**
+   * „Are voie omul ăsta la…?” — cum a răspuns SERVERUL în lista de pe ecran
+   * (`poate.stare`, `poate.prag`). Marcajul nu desenează butonul fără drept;
+   * întrebarea se mai pune o dată chiar înainte de trimitere, ca niciun drum
+   * ocolit prin cod să nu poată trimite ce ecranul n-a arătat.
+   */
+  poate(ce) {
+    const d = this.state.d;
+    return !!(d && d.poate && d.poate[ce]);
+  }
+
+  /** Rândul unei comenzi, din lista de pe ecran. */
+  comanda(id) {
+    const d = this.state.d;
+    return d ? (d.comenzi || []).find((x) => x.id === id) || null : null;
+  }
+
+  /**
+   * O apăsare pe comutator.
+   *
+   * „Amânată” NU pleacă la server: deschide ziua și nota, iar de trimis trimite
+   * „Salvează” — o amânare fără zi n-are înțeles, și serverul ar refuza-o
+   * oricum. Celelalte trei pleacă pe loc. Starea pe care rândul o are deja nu
+   * se mai trimite: n-ar schimba nimic, iar serverul ar răspunde cu un refuz
+   * scris sub un rând pe care omul doar l-a atins.
+   */
+  apasa(id, cheie) {
+    const o = this.comanda(id);
+    if (!o || !this.poate("stare")) return null;
+    // Runda 2.7.0: „Amânată” apăsat peste o foaie SCRISĂ (pe alt rând, ori din
+    // nou pe al ei, unde ar goli-o) întreabă întâi. Peste una neatinsă ori fără
+    // nicio foaie deschisă, `gp.inchideCiorna` o deschide pe loc, ca până acum.
+    if (cheie === "amanata") { gp.inchideCiorna(this.amanareScrisa(), () => this.deschideAmanare(id)); return null; }
+    if (cheie === o.plata) return null;
+    // La fel altă stare aleasă pe RÂNDUL CU FOAIA: reușita ei închide foaia cu
+    // ce era scris în ea. Pe alt rând nu e ușa foii, deci nu întreabă nimeni.
+    const a = this.state.amanare;
+    const scris = a && a.id === id ? this.amanareScrisa() : null;
+    if (scris) { gp.inchideCiorna(scris, () => { this.schimba(id, cheie); }); return null; }
+    return this.schimba(id, cheie);
+  }
+
+  /**
+   * Trimite schimbarea stării unei comenzi.
+   *
+   * `from` e starea pe care o ARATĂ rândul în clipa apăsării — nu una ținută
+   * minte de la încărcare și nici cea nouă. Serverul o pune lângă ce are în
+   * bază, sub lacăt: dacă între timp altcineva a bifat aceeași comandă,
+   * răspunde 409 în loc să scrie peste. Fără `from`, două telefoane ar bifa pe
+   * rând aceeași plată și al doilea ar șterge fără să știe ce a pus primul.
+   *
+   * Cât cererea e pe drum, rândul nu primește alta: `zbor` se pune ÎNAINTE de
+   * orice redesenare (`setState` poate întârzia), deci două apăsări una după
+   * alta nu pot trimite două schimbări cu același `from`.
+   */
+  schimba(id, plata, extra) {
+    const o = this.comanda(id);
+    const zbor = this.zbor || (this.zbor = {});
+    if (!o || !this.poate("stare") || zbor[id]) return null;
+    const corp = Object.assign({ plata, from: o.plata }, extra || {});
+    const ref = refDe(o);
+    // Starea în care RĂMÂNE comanda dacă schimbarea nu prinde: cea de pe rând
+    // în clipa apăsării. Se ține minte de acum, fiindcă la refuz rândul poate
+    // să nu mai fie pe ecran.
+    const ramane = numeLung(o.plata);
+    zbor[id] = true;
+    // Vestea de sus NU se stinge aici: o bifă se apasă oriunde în listă, departe
+    // de ea, iar vestea poate fi tocmai despre o altă bifă care n-a prins.
+    this.setState({ inZbor: Object.assign({}, this.state.inZbor, { [id]: true }), spuse: fara(this.state.spuse, id) });
+    const aterizat = () => { delete zbor[id]; return fara(this.state.inZbor, id); };
+    const laButon = () => this.focusInapoi(() => this.butonAmanare(ref));
+    return gp.patch("/orders/" + id + "/plata", corp)
+      .then((r) => {
+        const nou = r && r.order ? r.order : null;
+        const S = this.state, d = S.d;
+        const aveaForma = !!(S.amanare && S.amanare.id === id);
+        this.setState({
+          // Rândul se schimbă PE LOC, cu ce a întors serverul: rămâne unde era,
+          // cu starea nouă apăsată, ca o greșeală să se poată îndrepta de aici.
+          d: d && nou ? Object.assign({}, d, { comenzi: (d.comenzi || []).map((x) => (x.id === id ? nou : x)) }) : d,
+          inZbor: aterizat(),
+          atinse: Object.assign({}, S.atinse, { [id]: true }),
+          amanare: aveaForma ? null : S.amanare,
+          spuse: Object.assign({}, S.spuse, { [id]: { fel: "bine", text: "Salvat: " + numeLung(nou ? nou.plata : plata) + "." } })
+        }, () => { if (aveaForma) laButon(); });
+        return this.improspateaza();
+      })
+      .catch((e) => {
+        // Rândul aterizează ÎNAINTE de plecarea spre intrare (runda 2.7.0): cu
+        // amânarea scrisă, `gp.toLogin()` întreabă, iar cine rămâne să copieze
+        // nu are voie să rămână cu rândul stins și cu „Renunță” mort. Și nici
+        // fără un cuvânt despre ce s-a întâmplat (încheierea rundei 2.7.0):
+        // pricina se scrie întâi, în foaie ori lângă rând.
+        if (e.isAuth) this.spuneFaraCont(id, ref, ramane);
+        if (e.isAuth) { this.setState({ inZbor: aterizat() }); gp.toLogin(); return null; }
+        const S = this.state;
+        const aveaForma = !!(S.amanare && S.amanare.id === id);
+        // ALTCINEVA A SCHIMBAT-O ÎNTRE TIMP. Rândul de pe ecran e vechi, deci
+        // lista se cere din nou, iar vorba se scrie DUPĂ ce vine — lângă rând
+        // dacă mai e în vederea asta, sus dacă a ieșit din ea.
+        if (e.code === "plata_schimbata") {
+          const acum = e.detalii ? e.detalii.current : "";
+          const urmare = acum ? " Acum e „" + numeLung(acum) + "”." : "";
+          this.setState({ inZbor: aterizat(), amanare: aveaForma ? null : S.amanare });
+          return this.incarca().then(() => this.spuneLa(id,
+            { fel: "atentie", text: "Altcineva a schimbat-o între timp." + urmare },
+            "Comanda " + ref + ": altcineva a schimbat-o între timp." + urmare + " Nu mai ține de vederea asta, de aceea n-o mai vezi în listă."))
+            // Foaia amânării s-a închis și aici, cu „Salvează” cu tot.
+            .then(() => { if (aveaForma) laButon(); });
+        }
+        // NIMIC DE SCHIMBAT (422 «nothing_to_update»). Nu e un refuz de scris cu
+        // roșu: serverul spune că are deja întocmai ce i s-a trimis — aceeași
+        // stare, aceeași zi, aceeași notă. Omul are ce a vrut. Pagina nu trimite
+        // de la sine ce vede că e la fel (v. `salveazaAmanare`, `apasa`), deci
+        // răspunsul ăsta sosește numai când ECRANUL e cel rămas în urmă (altcineva
+        // a pus între timp aceeași zi și aceeași notă). Atunci lista se cere din
+        // nou, ca la 409, dar fără nicio vorbă.
+        if (e.code === "nothing_to_update") {
+          this.setState({ inZbor: aterizat(), amanare: aveaForma ? null : S.amanare });
+          return this.incarca().then(laButon);
+        }
+        // Ziua amânării, refuzată: vorba stă lângă zi, iar foaia rămâne
+        // deschisă cu ce a scris omul în ea. NUMAI cât foaia chiar rămâne: cu o
+        // listă nouă pe drum, sosirea ei poate închide foaia cu refuz cu tot
+        // (când rândul nu mai e în ea, v. `primeste`), deci
+        // atunci refuzul ia drumul de mai jos, cel care trece peste sosire.
+        if (e.code === "bad_scadenta" && aveaForma && !S.incarca) {
+          this.setState({ inZbor: aterizat(), amanare: Object.assign({}, S.amanare, { eroare: spusDeServer(e, "amânarea") }) });
+          return null;
+        }
+        // ORICE ALT REFUZ, ȘI REȚEAUA CĂZUTĂ. Comanda a rămas cum era, iar omul
+        // trebuie să afle asta oriunde s-ar fi dus între timp: lângă rând cât
+        // rândul e pe ecran, sus — cu numărul comenzii și cu starea în care a
+        // rămas — când nu mai e (v. `spuneLa`, `primeste`).
+        const motiv = spusDeServer(e, "plata comenzii");
+        this.setState({ inZbor: aterizat() });
+        this.spuneLa(id, { fel: "pericol", text: motiv }, "Comanda " + ref + " a rămas „" + ramane + "”. " + motiv);
+        return null;
+      });
+  }
+
+  /* ─── paza formularelor nesalvate (runda 2.7.0, 4–5 octombrie 2026) ───
+     Pe 4 octombrie patronul a pierdut un produs scris pe jumătate dintr-un clic
+     alături de formular; de atunci, orice formular al casei întreabă înainte să
+     arunce ce e scris în el. Pagina asta are două: foaia amânării de pe rândul
+     unei comenzi și cartonașul „Raport pe Telegram” (v. `telegramScris`). */
+
+  /**
+   * Ce e scris și nesalvat ÎN PAGINĂ, pentru paza plecării: `null` când nu e
+   * nimic, altfel vorbele întrebării. Citește starea de acum, la fiecare
+   * chemare. Aici intră și amânarea aflată pe drum spre server: până nu
+   * răspunde, nu se știe dacă a prins.
+   */
+  ciornaDeschisa() {
+    const rand = this.amanareScrisa(true), raport = this.telegramScris();
+    if (rand && raport) {
+      return {
+        titlu: "Ieși fără să salvezi ce ai scris?",
+        text: "Amânarea scrisă pe rândul unei comenzi și ce ai schimbat la raportul de pe Telegram nu s-au salvat și se pierd dacă ieși.",
+        nu: "Rămân în formular",
+        da: "Ies fără să salvez",
+      };
+    }
+    return rand || raport;
+  }
+
+  /**
+   * Foaia amânării, dacă e SCRISĂ: ziua ori nota sunt altele decât la
+   * deschidere (v. poza din `deschideAmanare`). O foaie deschisă pe o comandă
+   * deja amânată are de la început ziua și nota ei, deci „scris” nu înseamnă
+   * „casetele nu-s goale”.
+   *
+   * Se judecă foaia DESENATĂ, cu aceleași condiții ca în `renderVals`: rândul
+   * ei e în lista de pe ecran, lista e cea pe comenzi, iar omul are voie să
+   * schimbe starea. O foaie rămasă în stare fără să mai fie pe ecran n-are de
+   * ce să țină pe nimeni.
+   *
+   * Ușile din pagină o cheamă fără argument: cât amânarea e pe drum spre
+   * server ele merg ca până acum, fără întrebare — ce era scris e deja trimis.
+   */
+  amanareScrisa(siPeDrum) {
+    const S = this.state || {}, a = S.amanare;
+    if (!a || S.vedere === "clienti" || !this.poate("stare")) return null;
+    const o = this.comanda(a.id);
+    if (!o) return null;
+    if (!siPeDrum && this.zbor && this.zbor[a.id]) return null;
+    if (!gp.ciornaDiferita(this.__amanarePoza, { zi: a.zi, nota: a.nota })) return null;
+    return {
+      titlu: "Ieși fără să salvezi amânarea?",
+      text: "Ziua și nota pe care le-ai scris pentru amânarea comenzii " + refDe(o) + " nu s-au salvat și se pierd dacă ieși.",
+      nu: "Rămân în formular",
+      da: "Ies fără să salvez",
+    };
+  }
+
+  /** Deschide foaia amânării pe un rând. Pe o comandă deja amânată pornește cu ziua și nota ei, ca să se poată muta termenul. */
+  deschideAmanare(id) {
+    const o = this.comanda(id);
+    if (!o) return;
+    this.setState({
+      amanare: { id, zi: o.plata === "amanata" && eZi(o.scadenta) ? String(o.scadenta) : "", nota: o.nota ? String(o.nota) : "", eroare: "" },
+      spuse: fara(this.state.spuse, id)
+    });
+    // Poza de la deschidere, luată din STARE imediat după ce foaia a fost
+    // umplută: față de ea se judecă „scris” (v. `amanareScrisa`).
+    const a = this.state.amanare;
+    this.__amanarePoza = a && a.id === id ? { zi: a.zi, nota: a.nota } : null;
+  }
+
+  /**
+   * Scrie în foaia amânării. Cât rândul ei are o schimbare pe drum spre server
+   * (amânarea trimisă cu „Salvează”, ori altă stare aleasă peste foaia
+   * neatinsă) NU se mai scrie nimic: reușita închide foaia (v. `schimba`), deci
+   * ce s-ar scrie în răstimp s-ar pierde fără un cuvânt (runda 2.7.0). Casetele
+   * sunt și stinse în marcaj (`r.fStins`); rândul de aici ține și fără el.
+   */
+  scrieAmanare(x) {
+    const a = this.state.amanare;
+    if (a && !(this.zbor && this.zbor[a.id])) this.setState({ amanare: Object.assign({}, a, x) });
+  }
+
+  /** Închide foaia amânării fără să trimită nimic și duce focusul înapoi pe „Amânată”, butonul care a deschis-o. */
+  inchideAmanare() {
+    const a = this.state.amanare;
+    if (!a) return;
+    const o = this.comanda(a.id);
+    this.setState({ amanare: null }, () => { if (o) this.focusInapoi(() => this.butonAmanare(refDe(o))); });
+  }
+
+  /**
+   * Lasă foaia amânării SCRISĂ, înaintea unei liste cerute din nou de om
+   * („Reîncarcă”, „Încearcă din nou”), după ce a răspuns „Ies fără să salvez”.
+   * O listă sosită nu mai închide o foaie scrisă (v. `primeste`), deci ușa care
+   * a întrebat o închide ea. Foaia neatinsă rămâne până la sosirea listei, ca
+   * până acum, iar cea aflată pe drum spre server nu e a ușilor (v.
+   * `amanareScrisa`).
+   */
+  lasaAmanarea() {
+    if (this.amanareScrisa()) this.setState({ amanare: null });
+  }
+
+  /**
+   * „Salvează” din foaia amânării. Fără zi nu pleacă nimic: marginile zilei le
+   * hotărăște serverul (`422 bad_scadenta`), dar lipsa ei se vede de aici, și
+   * o cerere trimisă ca să primească un refuz știut e o cerere degeaba.
+   *
+   * La fel o amânare în care nu s-a schimbat nimic. Foaia unei comenzi deja
+   * amânate se deschide cu ziua și nota ei; „Salvează” apăsat așa ar primi
+   * `422 nothing_to_update`, adică un refuz scris cu roșu sub o foaie care nu
+   * se mai închide, pentru un om care n-a greșit nimic. Foaia se închide pur
+   * și simplu: ce voia el salvat e deja salvat.
+   */
+  salveazaAmanare() {
+    const a = this.state.amanare;
+    if (!a) return null;
+    if (!eZi(a.zi)) {
+      this.setState({ amanare: Object.assign({}, a, { eroare: "Alege ziua până la care plătește. Fără zi, amânarea nu se poate salva." }) });
+      return null;
+    }
+    const o = this.comanda(a.id);
+    const nota = String(a.nota || "").trim();
+    if (o && o.plata === "amanata" && String(o.scadenta || "") === a.zi && String(o.nota || "").trim() === nota) {
+      this.inchideAmanare();
+      return null;
+    }
+    return this.schimba(a.id, "amanata", { scadenta: a.zi, nota });
+  }
+
+  /**
+   * Pune pragul unui client: `null` = cel general, 0 = fără limită, 1…99 = al
+   * lui. Comenzile fără cont n-au prag — n-are cine să-l poarte —, deci pentru
+   * ele scurtătura nici nu se desenează, iar de aici nu pleacă nimic.
+   */
+  punePrag(c, valoare) {
+    if (!c || c.customerId == null || !this.poate("prag") || this.state.pragZbor) return null;
+    this.setState({ pragZbor: true, pragEroare: "", pragSpus: "" });
+    return gp.patch("/users/" + c.customerId, { pragNeplatite: valoare })
+      .then(() => {
+        // Căsuța se închide cu butoanele ei cu tot; focusul se întoarce pe
+        // „Prag: …”, care tocmai și-a schimbat scrisul.
+        this.setState({ pragZbor: false, pragDeschis: "", pragNumar: "",
+          pragSpus: "Pragul pentru „" + c.nume + "” e acum " + (valoare === null ? "cel general" : valoare === 0 ? "fără limită" : cate(valoare, "comandă neplătită", "comenzi neplătite")) + "." },
+          () => this.focusInapoi(() => this.butonPrag(c.cheie)));
+        // Starea lui față de prag („Blocat 2/2”) o socotește serverul.
+        return this.improspateaza();
+      })
+      .catch((e) => {
+        // Steagul se stinge înaintea plecării spre intrare (v. `schimba`), iar
+        // pricina se scrie în căsuță (încheierea rundei 2.7.0, v. `FARA_CONT`).
+        if (e.isAuth) { this.setState({ pragZbor: false, pragEroare: FARA_CONT }); gp.toLogin(); return null; }
+        this.setState({ pragZbor: false, pragEroare: spusDeServer(e, "pragul clientului") });
+        return null;
+      });
+  }
+
+  /** Pragul scris în căsuța scurtăturii. Aici intră numai 1…99: „fără limită” și „cel general” au butoanele lor. */
+  pragDinCasuta(c) {
+    const t = String(this.state.pragNumar).trim();
+    if (!/^\d{1,2}$/.test(t) || Number(t) < 1) {
+      this.setState({ pragEroare: "Scrie un număr de la 1 la 99. Pentru niciun prag, apasă „Fără limită”." });
+      return null;
+    }
+    return this.punePrag(c, Number(t));
+  }
+
+  /**
+   * Cere setările raportului. `ce` spune ce ciorne se pun la loc din răspuns:
+   * „tot” la prima încărcare, „nimic” când se vrea numai lista ultimelor
+   * trimiteri — atunci ce a scris omul și n-a salvat rămâne neatins.
+   */
+  cereSetari(ce) {
+    this.setState({ setariEroare: "" });
+    return gp.get("/plati/setari")
+      .then((r) => { this.primesteSetari(r, ce); })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ setariEroare: gp.motiv(e, "setările raportului") });
+      });
+  }
+
+  /**
+   * Așază setările sosite. `ce` spune ce ciornă se pune la loc ORICUM (cea
+   * tocmai salvată, ori amândouă la „tot”).
+   *
+   * CIORNA NEATINSĂ MERGE DUPĂ SERVER (runda 2.7.0, 4–5 octombrie 2026).
+   * Setările sosesc și fără ca omul să fi atins cartonașul lor: după raportul
+   * de probă („nimic”) și după salvarea celuilalt cartonaș. Dacă altcineva a
+   * schimbat între timp chatul ori pragul, `s` cel nou n-ar mai semăna cu
+   * ciorna rămasă de dinainte, iar cartonașul pe care omul nu l-a atins ar
+   * trece drept „scris”: plecarea ar întreba degeaba, iar „Salvează” s-ar
+   * aprinde gata să pună la loc valoarea veche peste a celuilalt. De aceea se
+   * judecă ÎNAINTE de `setState`, față de `s` cel VECHI: ciorna care îi era
+   * întocmai se ia din răspuns; cea în care s-a scris rămâne cum e.
+   */
+  primesteSetari(r, ce) {
+    const S = this.state, vechi = S.s;
+    const x = { s: r || null, setariEroare: "" };
+    const tNeatins = !vechi || !S.t || !gp.ciornaDiferita(ciornaTelegram(vechi), S.t);
+    const pgNeatins = !vechi || String(S.pg).trim() === (vechi.pragImplicit != null ? String(vechi.pragImplicit) : "");
+    if (ce === "tot" || ce === "telegram" || tNeatins) x.t = ciornaTelegram(r);
+    if (ce === "tot" || ce === "prag" || pgNeatins) x.pg = r && r.pragImplicit != null ? String(r.pragImplicit) : "";
+    this.setState(x);
+  }
+
+  /**
+   * Ce s-a schimbat în cartonașul de Telegram față de server — și numai atât.
+   *
+   * Se trimite doar ce s-a mișcat: `PUT /plati/setari` refuză cu 403 o cheie
+   * pentru care n-ai dreptul, iar o salvare care ar trimite tot ar cădea
+   * întreagă din pricina unui câmp pe care omul nici nu l-a atins. Orele pleacă
+   * mereu amândouă, fiindcă serverul le ține ca pe o pereche („exact două
+   * locuri”).
+   */
+  telegramDeTrimis() {
+    const S = this.state, t = S.t, corp = {};
+    if (!t || !S.s) return corp;
+    const baza = ciornaTelegram(S.s);
+    if (t.chatId.trim() !== baza.chatId) corp.chatId = t.chatId.trim();
+    if (t.ora1 !== baza.ora1 || t.ora2 !== baza.ora2) corp.ore = [t.ora1, t.ora2];
+    if (t.amintiri !== baza.amintiri) corp.amintiri = t.amintiri;
+    if (t.panelBaseUrl.trim() !== baza.panelBaseUrl) corp.panelBaseUrl = t.panelBaseUrl.trim();
+    return corp;
+  }
+
+  /**
+   * Cartonașul de Telegram, dacă e SCRIS (runda 2.7.0, paza formularelor
+   * nesalvate): în casete e altceva decât are serverul. Poza e chiar ce a
+   * trimis serverul ultima oară, refăcută la fiecare întrebare — din ea se
+   * umple cartonașul la încărcare și după fiecare salvare. Se judecă numai
+   * cartonașul DESENAT, cu aceleași condiții ca `areTelegram` din `renderVals`.
+   */
+  telegramScris() {
+    const S = this.state || {};
+    if (!S.d || !S.s || !S.t || !(S.s.poate && S.s.poate.telegram)) return null;
+    if (!gp.ciornaDiferita(ciornaTelegram(S.s), S.t)) return null;
+    return {
+      titlu: "Ieși fără să salvezi raportul de pe Telegram?",
+      text: "Ce ai schimbat la raportul de pe Telegram nu s-a salvat și se pierde dacă ieși.",
+      nu: "Rămân în formular",
+      da: "Ies fără să salvez",
+    };
+  }
+
+  /**
+   * Scrie în cartonașul de Telegram. Cât „Salvează” e pe drum spre server NU se
+   * mai scrie nimic (runda 2.7.0): reușita pune în cartonaș răspunsul
+   * serverului (v. `salveazaTelegram`), deci ce s-ar scrie în răstimp ar pieri
+   * sub „Setările raportului sunt salvate.”. Casetele sunt și stinse în marcaj
+   * (`tPeDrum`); rândul de aici ține și fără el.
+   */
+  scrieTelegram(x) {
+    const t = this.state.t;
+    if (t && !this.state.tSalv) this.setState({ t: Object.assign({}, t, x), tSpus: "", probaSpus: "", probaFel: "" });
+  }
+
+  salveazaTelegram() {
+    const S = this.state;
+    if (S.tSalv) return null;
+    const corp = this.telegramDeTrimis();
+    if (!Object.keys(corp).length) return null;
+    this.setState({ tSalv: true, tErori: {}, tSpus: "", probaSpus: "", probaFel: "" });
+    return gp.put("/plati/setari", corp)
+      .then((r) => {
+        this.primesteSetari(r, "telegram");
+        this.setState({ tSalv: false, tSpus: "Setările raportului sunt salvate." });
+      })
+      .catch((e) => {
+        // Steagul se stinge ÎNAINTE de plecarea spre intrare (runda 2.7.0): cu
+        // cartonașul scris, `gp.toLogin()` întreabă, iar cine rămâne să copieze
+        // nu are voie să rămână cu „Salvează” mort. Pricina se scrie sub
+        // casete, unde stă orice refuz fără câmp al lui (încheierea rundei
+        // 2.7.0, v. `FARA_CONT`).
+        if (e.isAuth) { this.setState({ tSalv: false, tErori: { general: FARA_CONT } }); gp.toLogin(); return; }
+        // Refuzul se scrie lângă câmpul lui; ce a scris omul rămâne în casete.
+        this.setState({ tSalv: false, tErori: { [CAMP_REFUZ[e.code] || "general"]: spusDeServer(e, "setările raportului") } });
+      });
+  }
+
+  /**
+   * „Trimite acum un raport de probă.”
+   *
+   * Pleacă după ce e pe SERVER, nu după ce scrie în casete: cu schimbări
+   * nesalvate, proba ar merge în grupul vechi și omul ar crede că a încercat
+   * grupul nou. De aceea întâi se cere salvarea.
+   *
+   * Când Telegram refuză, serverul răspunde 502 cu motivul într-un câmp pe care
+   * `gp.post` nu-l citește (el ia de la un refuz numai `error`). Motivul nu se
+   * pierde însă: serverul îl scrie și în lista ultimelor trimiteri, care se
+   * cere din nou imediat după.
+   */
+  trimiteProba() {
+    const S = this.state;
+    if (S.probaZbor) return null;
+    if (Object.keys(this.telegramDeTrimis()).length) {
+      this.setState({ probaFel: "atentie", probaSpus: "Salvează întâi schimbările de mai sus. Raportul de probă pleacă după ce e salvat pe server, nu după ce scrie aici." });
+      return null;
+    }
+    this.setState({ probaZbor: true, probaSpus: "", probaFel: "", tErori: {}, tSpus: "" });
+    return gp.post("/plati/raport-proba")
+      .then((r) => {
+        if (r && r.ok) this.setState({ probaZbor: false, probaFel: "bine", probaSpus: "Raportul de probă a plecat. Uită-te în grupul de pe Telegram." });
+        else this.setState({ probaZbor: false, probaFel: "pericol", probaSpus: "Raportul de probă n-a plecat." + (r && r.motiv ? " " + String(r.motiv) : "") });
+        return this.cereSetari("nimic");
+      })
+      .catch((e) => {
+        // Steagul se stinge înaintea plecării spre intrare (v. `schimba`), iar
+        // pricina se scrie sub buton (încheierea rundei 2.7.0, v. `FARA_CONT`).
+        if (e.isAuth) { this.setState({ probaZbor: false, probaFel: "pericol", probaSpus: FARA_CONT_PROBA }); gp.toLogin(); return null; }
+        if (e.code === "plati_chat_missing") {
+          this.setState({ probaZbor: false, tErori: { chat: spusDeServer(e, "raportul de probă") } });
+          return null;
+        }
+        if (e.status === 502) {
+          this.setState({ probaZbor: false, probaFel: "pericol", probaSpus: "Telegram a refuzat raportul de probă. De ce, scrie mai jos, la ultimele trimiteri." });
+          return this.cereSetari("nimic");
+        }
+        if (e.status === 404) {
+          this.setState({ probaZbor: false, probaFel: "pericol", probaSpus: "Serverul nu are încă trimiterea de probă. Cel mai probabil actualizarea s-a oprit la jumătate — spune-i administratorului." });
+          return null;
+        }
+        this.setState({ probaZbor: false, probaFel: "pericol", probaSpus: spusDeServer(e, "raportul de probă") });
+        return null;
+      });
+  }
+
+  /** Salvează pragul general. Se trimite numai el: e singura cheie pe care o poate scrie cine are doar `plati.prag`. */
+  salveazaPragGeneral() {
+    const S = this.state;
+    if (S.pgSalv) return null;
+    const t = String(S.pg).trim();
+    if (!/^\d{1,2}$/.test(t)) {
+      this.setState({ pgEroare: "Scrie un număr de la 0 la 99. 0 înseamnă fără limită.", pgSpus: "" });
+      return null;
+    }
+    this.setState({ pgSalv: true, pgEroare: "", pgSpus: "" });
+    return gp.put("/plati/setari", { pragImplicit: Number(t) })
+      .then((r) => {
+        this.primesteSetari(r, "prag");
+        this.setState({ pgSalv: false, pgSpus: Number(t) === 0 ? "Salvat: niciun prag, pentru cine nu are unul al lui." : "Salvat: " + cate(Number(t), "comandă neplătită", "comenzi neplătite") + "." });
+        // Pragul general mută starea fiecărui client care nu are unul al lui.
+        return this.state.d ? this.improspateaza() : null;
+      })
+      .catch((e) => {
+        // Steagul se stinge înaintea plecării spre intrare (v. `schimba`), iar
+        // pricina se scrie sub casetă (încheierea rundei 2.7.0, v. `FARA_CONT`).
+        if (e.isAuth) { this.setState({ pgSalv: false, pgEroare: FARA_CONT }); gp.toLogin(); return null; }
+        this.setState({ pgSalv: false, pgEroare: spusDeServer(e, "pragul general") });
+        return null;
+      });
+  }
+
+  renderVals() {
+    const S = this.state, auth = S.auth;
+    const areVoie = gp.are("incasari", auth);
+    const D = S.d;
+    const cifre = D ? (D.cifre || {}) : {};
+    const poate = D ? (D.poate || {}) : {};
+    const azi = D ? String(D.azi || "") : "";
+    const comenzi = D ? (D.comenzi || []) : [];
+    const clienti = D ? (D.clienti || []) : [];
+    const pragGeneral = D && D.prag ? Number(D.prag.implicit) : NaN;
+    const peClienti = S.vedere === "clienti";
+    const cif = (k) => cifre[k] || {};
+    const nr = (v) => Number(v) || 0;
+
+    /* ---- rândul mare și plăcile: numai din `cifre` ---- */
+    const deIncasat = cif("deIncasat"), amanate = cif("amanate"), incasatAzi = cif("incasatAzi");
+    const perioada = cif("incasatPerioada"), deRestituit = cif("deRestituit"), diferente = cif("diferente");
+    const directBanca = (x) => "direct " + lei(x.direct) + " | bancă " + lei(x.banca);
+    const aziAles = S.f === "platite" && !!azi && S.from === azi && S.to === azi;
+    // Toate plăcile cheamă `dinPlaca`, nu `alege`: lista pe care o schimbă e
+    // adusă în vedere (v. `listaInVedere`).
+    const placa = (et, suma, sub, sub2, sub2Fel, aprinsa, ton, onClick) => ({
+      et, suma, sub, sub2, sub2Fel, areSub2: !!sub2, ton, mare: "nu",
+      on: aprinsa && !peClienti ? "da" : "nu", apasat: aprinsa && !peClienti ? "true" : "false", onClick
+    });
+    // PLACA MARE. E singurul loc în care stă „De încasat acum”: suma, apoi câte
+    // comenzi și câți clienți — ori, când nu mai e nimic, vestea bună în cuvinte
+    // („0 comenzi · 0 clienți” s-ar citi ca o cifră de urmărit).
+    const placaMare = Object.assign(placa("De încasat acum", lei(deIncasat.suma),
+      nr(deIncasat.comenzi) > 0
+        ? cate(nr(deIncasat.comenzi), "comandă", "comenzi") + " · " + cate(nr(deIncasat.clienti), "client", "clienți")
+        : "Toate comenzile sunt plătite.",
+      "", "", S.f === "deincasat", "", () => this.dinPlaca({ f: "deincasat", vedere: "comenzi" })), { mare: "da" });
+    const placi = [
+      placaMare,
+      placa("Amânate", lei(amanate.suma), cate(nr(amanate.comenzi), "comandă", "comenzi"),
+        nr(amanate.depasite) > 0 ? "din care " + (nr(amanate.depasite) === 1 ? "1 depășită" : nr(amanate.depasite) + " depășite")
+          : nr(amanate.comenzi) > 0 ? "niciuna depășită" : "",
+        nr(amanate.depasite) > 0 ? "pericol" : "", S.f === "amanate", nr(amanate.depasite) > 0 ? "pericol" : "",
+        () => this.dinPlaca({ f: "amanate", vedere: "comenzi" })),
+      // Placa asta pune ea perioada („azi – azi”) și o însemnează ca fiind a
+      // ei: la prima vedere aleasă după ea, perioada pleacă (v. `alege`).
+      placa("Încasat azi", lei(incasatAzi.suma), cate(nr(incasatAzi.comenzi), "comandă", "comenzi"), directBanca(incasatAzi), "",
+        aziAles, "", () => this.dinPlaca({ f: "platite", vedere: "comenzi", from: azi, to: azi, aziDePlaca: true })),
+      // Cele două plăci de „încasat” se deosebesc NUMAI prin perioadă. Apăsată
+      // cât e aprinsă vecina ei, placa asta nu poate însemna decât „nu numai
+      // azi”: scoate perioada, oricine ar fi pus-o. Altfel ar trimite aceeași
+      // cerere și ar lăsa aprinsă tot „Încasat azi” — un buton mort.
+      placa("Încasat în perioadă", lei(perioada.suma),
+        cate(nr(perioada.comenzi), "comandă", "comenzi") + (eZi(perioada.from) && eZi(perioada.to) ? " · " + ziMic(perioada.from, azi) + " – " + ziMic(perioada.to, azi) : ""),
+        directBanca(perioada), "", S.f === "platite" && !aziAles, "",
+        () => this.dinPlaca(Object.assign({ f: "platite", vedere: "comenzi" }, aziAles ? { from: "", to: "" } : {})))
+    ];
+    // „De restituit” și „Diferențe” sunt abateri, nu stări obișnuite: plăcile
+    // lor apar numai când au ce spune. Un „0” pus lângă celelalte ar părea o
+    // cifră de urmărit zilnic.
+    if (nr(deRestituit.comenzi) > 0) {
+      placi.push(placa("De restituit", lei(deRestituit.suma), cate(nr(deRestituit.comenzi), "comandă anulată", "comenzi anulate") + ", cu banii încasați",
+        "", "", S.f === "restituit", "pericol", () => this.dinPlaca({ f: "restituit", vedere: "comenzi" })));
+    }
+    if (nr(diferente.comenzi) > 0) {
+      placi.push(placa("Diferențe", cate(nr(diferente.comenzi), "comandă", "comenzi"), "schimbate după ce au fost plătite",
+        "", "", S.f === "diferente", "", () => this.dinPlaca({ f: "diferente", vedere: "comenzi" })));
+    }
+
+    /* ---- pastilele celor șase vederi ---- */
+    const cateIn = { deincasat: deIncasat.comenzi, amanate: amanate.comenzi, restituit: deRestituit.comenzi, diferente: diferente.comenzi };
+    const pastile = VEDERI.map((v) => {
+      const n = nr(cateIn[v.cheie]);
+      const aleasa = S.f === v.cheie;
+      return {
+        et: v.et + (n > 0 ? " · " + n : ""),
+        cls: aleasa ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        apasat: aleasa ? "true" : "false",
+        onClick: () => this.alegeFiltrul(v.cheie)
+      };
+    });
+    const vederi = [
+      { et: "Pe comenzi", on: peClienti ? "nu" : "da", apasat: peClienti ? "false" : "true", onClick: () => this.alege({ vedere: "comenzi" }) },
+      // Cartonașele sunt „cei cu ceva de încasat”, deci vederea pe clienți
+      // trage după ea pastila „De încasat” și lasă deoparte clientul ales.
+      { et: "Pe clienți", on: peClienti ? "da" : "nu", apasat: peClienti ? "true" : "false", onClick: () => this.alege({ vedere: "clienti", f: "deincasat", client: "" }) }
+    ];
+
+    /* ---- perioada, în cuvinte ---- */
+    const perioadaPusa = !!(S.from || S.to);
+    const perioadaLinie = peClienti ? ""
+      : S.f === "platite" && !perioadaPusa
+        ? "Fără perioadă aleasă, se arată plățile din ultimele 30 de zile"
+          + (eZi(perioada.from) && eZi(perioada.to) ? " (" + ziMic(perioada.from, azi) + " – " + ziMic(perioada.to, azi) + ")." : ".")
+      : !perioadaPusa ? ""
+      : S.f === "platite" ? "Perioada se judecă după ziua în care s-au încasat banii."
+      : "Perioada se judecă după ziua comenzii.";
+
+    /* ---- un rând de comandă ---- */
+    const rand = (o) => {
+      const id = o.id;
+      const st = stareaCuCheia(o.plata);
+      const zboara = !!S.inZbor[id];
+      const forma = S.amanare && S.amanare.id === id ? S.amanare : null;
+      const incasata = eIncasata(o);
+      const ref = refDe(o);
+      const note = [];
+      if (o.plata === "amanata") {
+        if (o.depasita) {
+          const n = zileIntre(o.scadenta, azi);
+          note.push({ fel: "pericol", text: "termen depășit" + (n === 1 ? " de o zi" : n > 1 ? " de " + cate(n, "zi", "zile") : "")
+            + (eZi(o.scadenta) ? " (era până " + ziMic(o.scadenta, azi) + ")" : "") });
+        } else if (eZi(o.scadenta)) {
+          const n = zileIntre(azi, o.scadenta);
+          note.push({ fel: "calm", text: "până " + ziMic(o.scadenta, azi) + (n !== null && n >= 0 ? " · " + pesteCat(n) : "") });
+        }
+      }
+      if (o.nota) note.push({ fel: "calm", text: "Notă: " + o.nota });
+      if (incasata) {
+        const cand = clipaOm(o.plataLa, azi);
+        if (cand) note.push({ fel: "calm", text: "încasată " + cand + (o.plataDe ? " · bifată de " + o.plataDe : "") });
+        else if (o.plataDe) note.push({ fel: "calm", text: "bifată de " + o.plataDe });
+      } else if (o.plataDe) {
+        note.push({ fel: "calm", text: "ultima schimbare: " + o.plataDe });
+      }
+      // Comanda schimbată după ce a fost plătită: cele două sume, una lângă
+      // alta, ca omul să vadă cât mai e de luat ori de dat fără să scadă el.
+      if (incasata && o.diferenta != null) note.push({ fel: "atentie", text: "plătită " + lei(o.plataSuma) + " · acum " + lei(o.total) });
+      // Anulată, dar cu banii luați: singurul rând care cere o faptă din afara
+      // paginii. Se spune ce e de făcut și în ce ordine.
+      if (o.anulata && incasata) {
+        note.push({ fel: "pericol", text: poate.stare
+          ? "Comanda e anulată, dar banii sunt încasați. Dă banii înapoi, apoi pune aici „Neplătită”."
+          : "Comanda e anulată, dar banii sunt încasați. Trebuie dați înapoi; după aceea, cine ține încasările o trece pe „Neplătită”." });
+      }
+      if (S.spuse[id]) note.push({ fel: S.spuse[id].fel, text: S.spuse[id].text });
+      if (S.atinse[id] && !tineDe(o, S.f)) note.push({ fel: "calm", text: "Nu mai ține de vederea „" + etVedere(S.f) + "”. Rămâne aici până reîncarci lista." });
+      return {
+        ref,
+        zi: ziOm(o.zi, azi),
+        client: o.customerName || "fără nume",
+        // Numele etapei vine de la server, cum e scris în Setări; pagina nu
+        // ține nicio listă de etape.
+        etapa: String(o.status || ""),
+        total: lei(o.total),
+        ton: o.depasita || (o.anulata && incasata) ? "pericol" : "",
+        areComutator: !!poate.stare,
+        areText: !poate.stare,
+        plataNume: numeLung(o.plata),
+        plataFel: st ? st.fel : "",
+        comutatorSpus: "Plata comenzii " + ref,
+        stari: !poate.stare ? [] : STARI.map((x) => ({
+          et: x.scurt,
+          spus: x.lung,
+          fel: x.fel,
+          on: x.cheie === o.plata ? "da" : "nu",
+          apasat: x.cheie === o.plata ? "true" : "false",
+          oprit: zboara,
+          // Nume deosebit dinadins, nu `onClick`: e singurul mâner dintr-o
+          // listă care scrie pe server. `check-vede-poate` leagă mânerele de
+          // scrieri după nume, iar plăcile și pastilele (care numai schimbă
+          // vederea) au `onClick`; cu același nume aici, ar fi părut că și
+          // ele schimbă plata.
+          onStare: () => this.apasa(id, x.cheie)
+        })),
+        note,
+        areJos: note.length > 0 || !!forma,
+        areForma: !!forma && !!poate.stare,
+        fZi: forma ? forma.zi : "",
+        // Numai ajutor pentru calendar (zilele trecute apar șterse). Marginile
+        // adevărate le ține serverul; pagina nu refuză ea nicio zi.
+        fMin: azi,
+        fNota: forma ? forma.nota : "",
+        fEroare: forma ? forma.eroare : "",
+        fAreEroare: !!(forma && forma.eroare),
+        fSalvCls: zboara ? "h-btn h-btn--primary h-btn--loading" : "h-btn h-btn--primary",
+        // Runda 2.7.0: cât rândul are o schimbare pe drum, casetele foii sunt
+        // stinse (v. `scrieAmanare`): reușita închide foaia cu ce e în ea.
+        fStins: zboara,
+        onFZi: (e) => this.scrieAmanare({ zi: e.target.value, eroare: "" }),
+        onFNota: (e) => this.scrieAmanare({ nota: e.target.value }),
+        // Runda 2.7.0: peste o amânare scrisă, „Renunță” întreabă întâi; peste
+        // una neatinsă închide pe loc, ca până acum.
+        onFRenunta: () => { if (!zboara) gp.inchideCiorna(this.amanareScrisa(), () => this.inchideAmanare()); },
+        onFSalveaza: () => this.salveazaAmanare()
+      };
+    };
+    const randuri = peClienti ? [] : comenzi.map(rand);
+
+    /* ---- clienții: cartonașele și rezumatul din dreapta ---- */
+    // Comenzile unui client. Cel cu cont se alege după numărul contului; cel
+    // fără cont n-are decât numele, deci se caută după el.
+    // Cartonașul apăsat poate fi al zecelea de pe ecran, iar lista care îi ia
+    // locul începe mult mai sus: e adusă în vedere, ca omul să nu rămână cu
+    // ochii pe capătul ei ori pe ce e sub ea (v. `listaInVedere`).
+    const deschide = (c) => (c.customerId != null
+      ? this.alege({ vedere: "comenzi", f: "deincasat", client: String(c.customerId), q: "", cauta: "", from: "", to: "" }, "apasat")
+      : this.alege({ vedere: "comenzi", f: "deincasat", client: "", q: String(c.nume || ""), cauta: String(c.nume || ""), from: "", to: "" }, "apasat"));
+    // Starea față de prag, cum o socotește serverul. Fără cont nu există prag,
+    // deci nu se scrie nimic — nici „fără limită”, care ar fi o hotărâre pe
+    // care n-a luat-o nimeni.
+    const stareClient = (c) => {
+      if (c.customerId == null || c.stare == null) return null;
+      const n = nr(c.comenzi) + nr(c.cereri);
+      if (Number(c.prag) === 0) return { et: "Fără limită", fel: "calm" };
+      if (c.stare === "blocat") return { et: "Blocat " + n + "/" + c.prag, fel: "pericol" };
+      if (c.stare === "avertizare") return { et: "Avertizare " + n + "/" + c.prag, fel: "atentie" };
+      return null;
+    };
+    const linieClient = (c) => cate(nr(c.comenzi), "comandă", "comenzi")
+      + (c.ceaMaiVeche ? " · cea mai veche " + deCat(nr(c.zile)) : "")
+      + (nr(c.cereri) > 0 ? " · " + cate(nr(c.cereri), "cerere în așteptare", "cereri în așteptare") : "");
+    const etGeneral = isFinite(pragGeneral) ? (pragGeneral === 0 ? "General (fără limită)" : "General (" + pragGeneral + ")") : "General";
+    const cautat = simplu(S.cauta).trim();
+    const card = (c) => {
+      const st = stareClient(c);
+      const deschis = S.pragDeschis === c.cheie;
+      const propriu = c.pragPropriu == null ? null : Number(c.pragPropriu);
+      const ales = "h-btn h-btn--primary", neales = "h-btn h-btn--secondary";
+      return {
+        nume: c.nume || "fără nume",
+        sold: lei(c.sold),
+        linie: linieClient(c),
+        ton: st && st.fel === "pericol" ? "pericol" : "",
+        areTel: !!telHref(c.phone), tel: String(c.phone || ""), telHref: telHref(c.phone),
+        areStare: !!st, stareEt: st ? st.et : "", stareFel: st ? st.fel : "",
+        onDeschide: () => deschide(c),
+        // Cheia clientului, pusă pe butonul pragului: după ea îl găsește
+        // `butonPrag` când focusul trebuie dus înapoi.
+        cheie: String(c.cheie || ""),
+        // Scurtătura pragului: numai cu `poate.prag` și numai pe un cont.
+        // Butonul RĂMÂNE în pagină și cât căsuța lui e deschisă: scos odată cu
+        // deschiderea, ar fi luat cu el focusul celui care l-a apăsat din
+        // tastatură — tocmai când ar fi avut de mers mai departe, în căsuță.
+        // Apăsat a doua oară, o închide.
+        poatePrag: !!poate.prag && c.customerId != null,
+        pragApasat: deschis ? "true" : "false",
+        pragEt: propriu === null ? "Prag: " + etGeneral.charAt(0).toLowerCase() + etGeneral.slice(1)
+          : propriu === 0 ? "Prag: fără limită" : "Prag: al lui, " + propriu,
+        onPrag: () => {
+          if (deschis) { if (!S.pragZbor) this.setState({ pragDeschis: "", pragNumar: "", pragEroare: "" }); return; }
+          this.setState({ pragDeschis: c.cheie, pragNumar: propriu ? String(propriu) : "", pragEroare: "", pragSpus: "" });
+        },
+        pragDeschis: !!poate.prag && c.customerId != null && deschis,
+        pragZbor: S.pragZbor,
+        pgGeneralEt: etGeneral,
+        pgGeneralCls: propriu === null ? ales : neales,
+        pgFaraCls: propriu === 0 ? ales : neales,
+        pgPuneCls: S.pragZbor ? "h-btn h-btn--secondary h-btn--loading" : (propriu ? ales : neales),
+        pragNumar: S.pragNumar,
+        onPragNumar: (e) => this.setState({ pragNumar: e.target.value, pragEroare: "" }),
+        onPragGeneral: () => this.punePrag(c, null),
+        onPragFara: () => this.punePrag(c, 0),
+        onPragPune: () => this.pragDinCasuta(c),
+        onPragRenunta: () => {
+          if (!S.pragZbor) this.setState({ pragDeschis: "", pragNumar: "", pragEroare: "" }, () => this.focusInapoi(() => this.butonPrag(c.cheie)));
+        },
+        pragEroare: deschis ? S.pragEroare : "",
+        pragAreEroare: deschis && !!S.pragEroare
+      };
+    };
+    const carduri = peClienti ? clienti.filter((c) => !cautat || simplu(c.nume).indexOf(cautat) !== -1).map(card) : [];
+    // Rezumatul ține primii doisprezece: e o coloană lipită de marginea
+    // ecranului, nu o a doua listă. Restul se numără și se trimit la „Pe
+    // clienți”.
+    const inRezumat = peClienti ? [] : clienti.slice(0, 12);
+    const rezumat = inRezumat.map((c) => {
+      const st = stareClient(c);
+      return { nume: c.nume || "fără nume", sold: lei(c.sold),
+        linie: (st ? st.et + " · " : "") + cate(nr(c.comenzi), "comandă", "comenzi") + (c.ceaMaiVeche ? ", " + deCat(nr(c.zile)) : ""),
+        fel: st && st.fel === "pericol" ? "pericol" : "calm",
+        onClick: () => deschide(c) };
+    });
+
+    /* ---- clientul ales și golurile ---- */
+    const alClientului = S.client ? clienti.find((c) => String(c.customerId) === S.client) || null : null;
+    const numeClient = alClientului ? alClientului.nume : (comenzi[0] && String(comenzi[0].customerId) === S.client ? comenzi[0].customerName : "");
+    const areFiltre = !!(S.q || S.client || S.from || S.to);
+    const GOL = {
+      deincasat: "Nimic de încasat. Toate comenzile sunt plătite.",
+      amanate: "Nicio comandă amânată. Nimeni nu are un termen de plată în față.",
+      platite: "Nicio plată în ultimele 30 de zile.",
+      restituit: "Nimic de dat înapoi. Nicio comandă anulată nu are banii încasați.",
+      diferente: "Nicio diferență. Nicio comandă nu s-a schimbat după ce a fost plătită.",
+      toate: "Nicio comandă în registru."
+    };
+    const total = D ? nr(D.total) : 0;
+    const pagini = D ? Math.max(1, nr(D.pages)) : 1;
+    const pagina = D ? Math.max(1, nr(D.page)) : 1;
+
+    /* ---- setările ---- */
+    const s = S.s, t = S.t || ciornaTelegram(null);
+    const sPoate = s ? (s.poate || {}) : {};
+    const tNeschimbat = Object.keys(this.telegramDeTrimis()).length === 0;
+    const ora = (cheie, et) => ({ et, val: t[cheie], pusa: !!t[cheie], stinsa: S.tSalv,
+      onChange: (e) => this.scrieTelegram({ [cheie]: String(e.target.value || "").slice(0, 5) }),
+      onOpreste: () => this.scrieTelegram({ [cheie]: "" }) });
+    const ultimele = s && Array.isArray(s.ultimele) ? s.ultimele.slice(0, 5).map((u) => ({
+      cand: clipaOm(u.la, azi) || String(u.la || ""),
+      fel: FEL_TRIMITERE[u.fel] || "Trimitere",
+      stare: u.stare === "sent" ? "a plecat" : "n-a plecat" + (u.motiv ? ": " + u.motiv : ""),
+      ton: u.stare === "sent" ? "bine" : "pericol"
+    })) : [];
+    const pgPeServer = s && s.pragImplicit != null ? String(s.pragImplicit) : "";
+
+    return {
+      meniu: gp.meniu("Încasări", S.auth),
+      navHere: "Încasări",
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      onNavKeep: (e) => e.stopPropagation(),
+      navWho: !!auth,
+      navAnon: false,
+      sideWho: !!auth && areVoie,
+      sideRol: gp.numeRol(auth),
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+      authName: auth ? auth.name : "",
+
+      // Ecranul de refuz vorbește despre CONTUL omului, deci nu se aprinde până
+      // nu se știe al cui e. Cele patru lacăte sunt ale casei (v. Setări).
+      blocked: S.loaded && !!auth && !areVoie && !S.eroare,
+      allowed: !S.loaded || !auth || areVoie || !!S.eroare,
+      blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces la încasări. Banii casei îi vede numai cine a primit pagina asta.",
+      acasaHref: gp.primaPagina(auth),
+      acasaEt: "← Înapoi la panoul meu",
+
+      // Subtitlul spune de când sunt cifrele: lista nu se împrospătează
+      // singură, deci omul trebuie să poată vedea cât de veche e.
+      sub: (!D || S.eroare) ? "" : S.incarca ? "Se reîncarcă…" : S.adusLa ? "Adus la " + S.adusLa : "",
+      asteapta: !S.loaded && !S.eroare,
+      eroare: S.eroare,
+      eroareTitlu: D ? "Lista nu s-a reîmprospătat. Ce vezi mai jos e de dinainte." : "Încasările nu s-au încărcat.",
+      // Caseta se poate aprinde și înainte să se fi aflat cine e intrat; atunci
+      // drumul se ia de la capăt. Altfel se cere din nou numai lista.
+      // Runda 2.7.0: sub casetă pot sta rândurile de dinainte, cu foaia amânării
+      // deschisă pe unul din ele; în lista nouă rândul ei poate să nu mai fie,
+      // deci întâi se întreabă, iar la „Ies fără să salvez” foaia scrisă e
+      // lăsată înainte de cerere (v. `lasaAmanarea`).
+      onReincearca: () => gp.inchideCiorna(this.amanareScrisa(), () => { this.lasaAmanarea(); this.setState({ eroare: "", loaded: !!this.state.auth }, () => (this.state.auth ? this.incarca() : this.porneste())); }),
+      faraBaza: S.faraBaza && !S.eroare,
+      areLista: !!D,
+      reincarcaCls: S.incarca ? "h-btn h-btn--secondary h-btn--loading" : "h-btn h-btn--secondary",
+      // Runda 2.7.0: în lista nouă rândul foii amânării poate să nu mai fie
+      // (v. `primeste`); cu ceva scris în ea, „Reîncarcă” întreabă întâi, iar
+      // la „Ies fără să salvez” foaia scrisă e lăsată înainte de cerere.
+      onReincarca: () => { if (!S.incarca) gp.inchideCiorna(this.amanareScrisa(), () => { this.lasaAmanarea(); this.incarca(); }); },
+      areAnunt: !!S.anunt,
+      anunt: S.anunt,
+      onAnuntGata: () => this.setState({ anunt: "" }),
+
+      placi,
+      // Câte plăci MICI sunt (fără cea mare): 3, 4 ori 5. După numărul ăsta
+      // își alege foaia de stil câte stau pe un rând (v. „PLĂCILE DE SUS”).
+      placiN: String(placi.length - 1),
+      pastile,
+      vederi,
+
+      cauta: S.cauta,
+      cautaLoc: peClienti ? "numele clientului" : "numele clientului ori numărul comenzii",
+      onCauta: (e) => {
+        const text = e.target.value;
+        // Pe clienți se caută printre cartonașele de pe ecran, fără drum la
+        // server. Pe comenzi căutarea pleacă, dar nu la fiecare literă: un
+        // nume de opt litere ar fi opt cereri, iar lista ar clipi la fiecare.
+        if (peClienti) { this.setState({ cauta: text, q: text.trim() }); return; }
+        this.setState({ cauta: text });
+        clearTimeout(this.tCauta);
+        this.tCauta = setTimeout(() => this.alege({ q: text.trim() }), 300);
+      },
+      arePerioada: !peClienti,
+      from: S.from,
+      to: S.to,
+      // Capetele perioadei nu se pot încrucișa: cel mutat îl trage pe celălalt.
+      onFrom: (e) => { const v = eZi(e.target.value) ? e.target.value : ""; this.alege({ from: v, to: v && S.to && S.to < v ? v : S.to }); },
+      onTo: (e) => { const v = eZi(e.target.value) ? e.target.value : ""; this.alege({ to: v, from: v && S.from && S.from > v ? v : S.from }); },
+      perioadaPusa: perioadaPusa && !peClienti,
+      perioadaLinie,
+      arePerioadaLinie: !!perioadaLinie,
+      onFaraPerioada: () => this.alege({ from: "", to: "" }),
+      areClientAles: !!S.client && !peClienti,
+      clientAlesLinie: numeClient ? "Numai comenzile lui „" + numeClient + "”" : "Numai comenzile clientului ales",
+      onFaraClient: () => this.alege({ client: "" }),
+      arePragSpus: !!S.pragSpus,
+      pragSpus: S.pragSpus,
+
+      peClienti: peClienti,
+      carduri,
+      golClienti: peClienti && !!D && !S.eroare && carduri.length === 0,
+      golClientiLinie: cautat && clienti.length ? "Niciun client cu numele ăsta nu are ceva de plătit." : "Nimic de încasat. Toate comenzile sunt plătite.",
+
+      peComenzi: !peClienti,
+      randuri,
+      areRanduri: randuri.length > 0,
+      golComenzi: !peClienti && !!D && !S.eroare && randuri.length === 0,
+      golComenziLinie: areFiltre || (S.f === "platite" && perioadaPusa) ? "Nicio comandă pentru ce ai ales." : GOL[S.f] || GOL.toate,
+      golAreSterge: areFiltre,
+      onStergeFiltre: () => this.alege({ cauta: "", q: "", client: "", from: "", to: "" }),
+      listaLinie: cate(total, "comandă", "comenzi") + " în „" + etVedere(S.f) + "”" + (pagini > 1 ? " · câte " + (D ? nr(D.perPage) || 200 : 200) + " pe pagină" : ""),
+      arePagini: pagini > 1,
+      paginaLinie: "Pagina " + pagina + " din " + pagini,
+      inapoiOprit: pagina <= 1 || S.incarca,
+      inainteOprit: pagina >= pagini || S.incarca,
+      // Butoanele de pagină stau la CAPĂTUL listei: pagina nouă se citește de
+      // la primul ei rând, deci lista e adusă în vedere de la început.
+      onInapoi: () => { if (pagina > 1) this.alege({ page: pagina - 1 }, "apasat"); },
+      onInainte: () => { if (pagina < pagini) this.alege({ page: pagina + 1 }, "apasat"); },
+
+      rezumat,
+      // „Nimeni. Toate comenzile sunt plătite.” e o veste, nu o lipsă: sub o
+      // casetă care spune că lista nu s-a reîmprospătat ar fi citită ca fiind
+      // de acum. Același lacăt ca la `golClienti` și `golComenzi`.
+      rezumatGol: !peClienti && !S.eroare && clienti.length === 0,
+      rezumatAreRest: clienti.length > inRezumat.length && !peClienti,
+      rezumatRest: "și încă " + cate(clienti.length - inRezumat.length, "client", "clienți") + " — vezi „Pe clienți”.",
+
+      // Tot ce ține de setări cere și lista (`D`): dacă baza rămâne fără
+      // migrarea 032 cât pagina e deschisă, lista se stinge, iar setările
+      // încărcate mai devreme ar rămâne pe ecran — două cartonașe cu butoane
+      // sub o casetă care spune că încasările nu sunt pornite.
+      setariEroare: D ? S.setariEroare : "",
+      // Runda 2.7.0: „tot” umple iar cartonașul de pe server, peste ce e scris
+      // în el; cu ceva scris, se întreabă întâi.
+      onSetariIar: () => gp.inchideCiorna(this.telegramScris(), () => this.cereSetari("tot")),
+      // Cartonașul se desenează după ce spune răspunsul SETĂRILOR că poate
+      // omul, nu după rol: dreptul se dă din „Acces”, iar serverul e cel care
+      // știe cui.
+      areTelegram: !!D && !!s && !!sPoate.telegram && !!S.t,
+      // Runda 2.7.0: cât „Salvează” e pe drum, casetele cartonașului sunt
+      // stinse (v. `scrieTelegram`): reușita le umple cu răspunsul serverului.
+      tPeDrum: S.tSalv,
+      tChat: t.chatId,
+      onTChat: (e) => this.scrieTelegram({ chatId: e.target.value }),
+      tChatEroare: S.tErori.chat || "",
+      tChatAreEroare: !!S.tErori.chat,
+      tOre: [ora("ora1", "Ora 1"), ora("ora2", "Ora 2")],
+      tOreEroare: S.tErori.ore || "",
+      tOreAreEroare: !!S.tErori.ore,
+      tAmintiri: t.amintiri,
+      onTAmintiri: (e) => this.scrieTelegram({ amintiri: !!e.target.checked }),
+      tUrl: t.panelBaseUrl,
+      onTUrl: (e) => this.scrieTelegram({ panelBaseUrl: e.target.value }),
+      tUrlEroare: S.tErori.url || "",
+      tUrlAreEroare: !!S.tErori.url,
+      tEroare: S.tErori.general || "",
+      tAreEroare: !!S.tErori.general,
+      tSpus: S.tSpus,
+      tAreSpus: !!S.tSpus,
+      tNeschimbat: tNeschimbat || S.tSalv,
+      tSalvCls: S.tSalv ? "h-btn h-btn--primary h-btn--loading" : "h-btn h-btn--primary",
+      onTSalveaza: () => this.salveazaTelegram(),
+      probaCls: S.probaZbor ? "h-btn h-btn--secondary h-btn--loading" : "h-btn h-btn--secondary",
+      onProba: () => this.trimiteProba(),
+      areProbaSpus: !!S.probaSpus,
+      probaSpus: S.probaSpus,
+      probaFel: S.probaFel,
+      ultimele,
+      // Lista trimiterilor vine cu SETĂRILE, deci lacătul e pe refuzul lor:
+      // cu setările de dinainte pe ecran, „Încă nu a plecat niciun raport”
+      // n-ar mai fi adevărat după primul raport plecat între timp.
+      ultimeleGol: !S.setariEroare && ultimele.length === 0,
+
+      arePragGeneral: !!D && !!s && !!sPoate.prag,
+      pgVal: S.pg,
+      onPg: (e) => this.setState({ pg: e.target.value, pgEroare: "", pgSpus: "" }),
+      pgNeschimbat: String(S.pg).trim() === pgPeServer || S.pgSalv,
+      pgCls: S.pgSalv ? "h-btn h-btn--primary h-btn--loading" : "h-btn h-btn--primary",
+      onPgSalveaza: () => this.salveazaPragGeneral(),
+      pgEroare: S.pgEroare,
+      pgAreEroare: !!S.pgEroare,
+      pgSpus: S.pgSpus,
+      pgAreSpus: !!S.pgSpus
+    };
+  }
+}
+
+</script>
+</body>
+</html>

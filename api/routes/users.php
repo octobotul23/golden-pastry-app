@@ -1,5 +1,5 @@
 <?php
-/** Conturi și parole. Doar `admin`. */
+/** Conturi și parole. Cine are panoul „Conturi" în „Acces" — din pornire, administratorul și fondatorul. */
 
 declare(strict_types=1);
 
@@ -11,13 +11,15 @@ declare(strict_types=1);
  * o valoare strecurată la mijloc ar schimba în tăcere rolul conturilor de după.
  *
  * `manager` și `agent_vanzari` intră în GP_STAFF_ROLES (api/lib/auth.php), deci
- * ajung la panourile de lucru ca angajatul — dar NU la conturi, catalog, setări,
- * jurnal, acceptarea cererilor sau ordinea opririlor: acelea cer în continuare
- * require_admin().
+ * ajung la panourile de lucru ca angajatul — dar, din pornire, NU la conturi,
+ * catalog, setări, jurnal sau ordinea opririlor: acelea sunt, în matricea din
+ * „Acces" (migrarea 033), numai ale administratorului, până le dă fondatorul
+ * și altcuiva.
  *
- * `fondator` e singurul care trece de require_admin() fără să fie `admin`, și
+ * `fondator` e singurul care are tot fără să fie trecut în matrice, și
  * singurul care poate face și desface roluri de conducere — vezi
- * guard_leader_role() mai jos.
+ * guard_leader_role() mai jos. Paza aceea e de RANG și nu se mută din „Acces":
+ * panoul „Conturi" dat unui manager nu-i dă și puterea asupra administratorilor.
  *
  * `utilizator_lab` a stat în ENUM din migrarea 009 fără să-l poată alege
  * nimeni, fiindcă n-avea ce face: nu deschide niciun panou și nu-i dă omului
@@ -91,6 +93,53 @@ function guard_leader_role(string $nou, string $vechi, string $motiv = ''): void
         fail($motiv !== '' ? $motiv : 'Rolurile de administrator se dau și se iau numai de un fondator.',
             403, 'founder_only');
     }
+    // A TREIA REGULĂ, de la 2.7.0: portița „nu există niciun fondator" e a
+    // ADMINISTRATORULUI, nu a oricui a ajuns până aici.
+    //
+    // Până la „Acces" n-avea cine altcineva să ajungă: toate rutele de conturi
+    // cereau `require_admin()`, deci „nu e fondator" însemna „e administrator".
+    // De când panoul „Conturi" se poate da din matrice (cheia `conturi`), aici
+    // poate ajunge și un manager — iar pe o bază rămasă fără fondator portița
+    // de deasupra i-ar fi lăsat să-și facă singur un cont de administrator, ori
+    // să-i schimbe unuia parola și să intre în locul lui. Panoul dă lista de
+    // conturi; rangul nu se dă din bife.
+    //
+    // La matricea din pornire rândul ăsta nu oprește pe nimeni: cine are
+    // „Conturi" e deja administrator.
+    if ($atinge && !e_admin($euSunt)) {
+        fail($motiv !== '' ? $motiv : 'Conturile de administrator le poate atinge numai un administrator.',
+            403, 'leader_only');
+    }
+}
+
+/**
+ * Contul unui om din conducere nu-l SCRIE cineva fără rang — nicio coloană.
+ *
+ * `guard_leader_role()` păzește cele patru uși prin care se IA un cont (rolul,
+ * starea, adresa, parola). Restul coloanelor — numele, telefonul, zona, codul
+ * de pontaj, codul de recomandare — au rămas dinadins libere între oameni de
+ * același rang: un administrator îi corectează altuia numele fără să cheme
+ * fondatorul.
+ *
+ * De la 2.7.0 panoul „Conturi" se poate da din „Acces" și cuiva fără rang, iar
+ * pentru el „restul coloanelor" nu mai e o corectură între colegi: managerul
+ * cu bifa asta îi schimba fondatorului numele sub care apare în Jurnal, îi
+ * punea un cod de pontaj și ponta în locul lui, ori îi muta codul de
+ * recomandare. Niciuna nu-i dădea contul, dar toate scriau în contul cuiva de
+ * deasupra lui. Proba vie `.claude/test-acces.mjs` (grupul G) a prins-o pe
+ * prima.
+ *
+ * La matricea din pornire rândul ăsta nu oprește pe nimeni: cine are „Conturi"
+ * e deja administrator. Se cheamă în fiecare rută care scrie într-un cont,
+ * imediat după ce contul a fost găsit.
+ */
+function guard_cont_de_conducere(string $rolulLui): void
+{
+    if (!in_array($rolulLui, GP_ADMIN_ROLES, true) || e_admin(current_user())) {
+        return;
+    }
+    fail('Contul unui administrator ori al unui fondator îl poate schimba numai cineva din conducere. '
+        . 'Panoul „Conturi" îți dă conturile celorlalți: clienți, agenți, angajați.', 403, 'leader_only');
 }
 
 /**
@@ -114,9 +163,60 @@ function guard_last_founder(int $id, string $rolulLui): void
     }
 }
 
+/**
+ * Vede cel care întreabă pragurile de neplătite ale clienților? (runda 2.7.0)
+ *
+ * Două condiții, și amândouă țin de ACEEAȘI întrebare, de-aia stau împreună:
+ * coloana există (migrarea 032) ȘI omul are dreptul `plati.prag` — din pornire,
+ * numai fondatorul. O citesc lista de conturi și răspunsul corecturii unui cont;
+ * scrisă în două locuri, s-ar fi despărțit pe partea care arată.
+ */
+function user_vede_prag(array $cine): bool
+{
+    return plati_supported() && drept('plati.prag', $cine);
+}
+
+/**
+ * Pune pragul propriu pe rândul de cont trimis paginii — NUMAI pe conturile de
+ * client și NUMAI celui care are voie să-l vadă.
+ *
+ * CHEIA LIPSEȘTE CU TOTUL când omul n-are dreptul, nu vine `null`: `null` e o
+ * valoare („urmează pragul general”), iar pagina „Conturi” își desenează cutia
+ * pragului tocmai după prezența cheii. Trimisă goală oricui, ar fi spus
+ * administratorului fără drept că toți clienții sunt pe pragul general — o
+ * minciună care arată a răspuns.
+ *
+ * `public_user()` nu scoate coloana (are lista ei fixă de chei), deci ăsta e
+ * singurul loc prin care pragul unui client părăsește serverul pe un rând de
+ * cont.
+ *
+ * CE NU E CHEIA ASTA: o taină. (Îndreptat la recitirea rundei, 5 octombrie
+ * 2026 — comentariile de aici promiteau mai mult decât face codul și decât
+ * cere foaia rundei.) `plati.prag` e dreptul de a PUNE pragul unui client;
+ * cheia lipsă ține cutia pragului nedesenată în „Conturi” la cine n-are ce face
+ * cu ea și nu-i spune „general” despre un cont pe care nu-l poate întreba. Cât e
+ * pragul după care e JUDECAT un client se vede, dinadins, în alte două locuri:
+ *
+ *   · `GET /plati/client/#` (cheia `prag`) și refuzul `409 prag_neplatite` —
+ *     oricui are „Comenzi”: omul care scrie comanda trebuie să știe de ce e
+ *     oprit și la cât;
+ *   · Jurnalul — schimbarea pragului intră în rândul `user_update` „ca orice
+ *     câmp” (foaia rundei), la vedere pentru oricine are Jurnalul, ca și
+ *     `prag_ocolit`. Cine a ridicat pragul unui datornic, și când, e tocmai
+ *     întrebarea pentru care există Jurnalul; ascunsă după „Încasări”, n-ar
+ *     mai putea-o pune administratorul care ține conturile.
+ */
+function user_cu_prag(array $u, array $r, bool $vede): array
+{
+    if ($vede && (string) ($r['role'] ?? '') === 'client') {
+        $u['pragNeplatite'] = ($r['prag_neplatite'] ?? null) === null ? null : (int) $r['prag_neplatite'];
+    }
+    return $u;
+}
+
 function route_users_list(): void
 {
-    require_admin();
+    $eu = require_drept('conturi');
 
     // Coloanele de recomandare se cer numai dacă migrarea 007 a fost rulată.
     // Cerute necondiționat, o instalare pe care fișierele au fost urcate
@@ -152,6 +252,13 @@ function route_users_list(): void
     // Bifa arată ce se poate schimba de aici; dreptul se citește din `/auth/me`.
     $areLivrare = livrare_semn_suportat();
     $extra .= $areLivrare ? ', u.poate_confirma_livrarea' : '';
+    // Migrarea 032, cu poarta ei — și cu DREPTUL ei: pragul propriu de comenzi
+    // neplătite. Coloana nici nu se cere din bază pentru cine n-are
+    // `plati.prag`, ca rândul de cont să n-o poată purta nici din greșeală (ce
+    // ține și ce nu ține cheia lipsă: v. `user_cu_prag()`).
+    // Fără 032 interogarea rămâne literă cu literă cea de ieri.
+    $arePrag = user_vede_prag($eu);
+    $extra .= $arePrag ? ', u.prag_neplatite' : '';
     $join = $areReferral ? ' LEFT JOIN users r ON r.id = u.referred_by' : '';
     $join .= $areOrigine ? ' LEFT JOIN users v ON v.id = u.vouched_by' : '';
 
@@ -172,8 +279,13 @@ function route_users_list(): void
         // „niciun cont n-are încă semnul" de „coloana nici nu există" — și ar
         // desena o bifă pe care serverul o refuză cu 503.
         'livrare' => $areLivrare,
-        'referralRateDefault' => $areBani ? referral_default_rate() : 0.0, 'users' => array_map(static function ($r) use ($areBani, $areOrigine, $areLivrare) {
-        $u                = public_user($r);
+        // Ce are fiecare rol ACUM (runda 2.7.0): rândul de lângă lista de
+        // roluri îl repovestește de aici, nu din pornire. Etichetele și lista
+        // de panouri pleacă odată cu el, ca pagina să nu țină a treia copie.
+        'acces' => ['roluri' => drepturi_pe_roluri(), 'etichete' => GP_DREPT_ETICHETE,
+            'panouri' => GP_DREPT_PANOURI],
+        'referralRateDefault' => $areBani ? referral_default_rate() : 0.0, 'users' => array_map(static function ($r) use ($areBani, $areOrigine, $areLivrare, $arePrag) {
+        $u                = user_cu_prag(public_user($r), $r, $arePrag);
         $u['phone']       = $r['phone'];
         $u['active']      = (bool) $r['active'];
         $u['lastLogin']   = $r['last_login'];
@@ -239,7 +351,7 @@ function route_users_list(): void
  */
 function route_users_vouch(string $id): void
 {
-    $eu = require_admin();
+    $eu = require_drept('conturi');
     if (!user_origin_supported()) {
         fail(
             'Recunoașterea conturilor cere migrarea sql/010_origine_cont.sql, care nu a fost '
@@ -249,10 +361,11 @@ function route_users_vouch(string $id): void
         );
     }
 
-    $t = one('SELECT id, name, customer_name, self_registered, vouched_at FROM users WHERE id = ?', [(int) $id]);
+    $t = one('SELECT id, name, customer_name, self_registered, vouched_at, role FROM users WHERE id = ?', [(int) $id]);
     if (!$t) {
         fail('Contul nu există.', 404, 'not_found');
     }
+    guard_cont_de_conducere((string) $t['role']);
     if ((int) $t['self_registered'] !== 1) {
         fail(
             'Contul acesta n-a fost făcut de pe site, deci n-are ce se recunoaște: '
@@ -328,11 +441,17 @@ function route_users_create(): void
     // parolă de minimum 8, `text_field`, ciocnirea 1062) e deja aici și n-are
     // niciun rost scrisă a doua oară, unde ar rămâne în urmă la prima corectură.
     //
-    // Poarta îngustă stă imediat sub `require_staff()`, înaintea oricărei
-    // citiri din cerere: cine nu e admin sau fondator trebuie să fie agent, iar
+    // Poarta îngustă stă imediat sub `require_personal(…)`, înaintea oricărei
+    // citiri din cerere: cine n-are panoul „Conturi" trebuie să fie agent, iar
     // agentul nu poate cere decât rolul „client".
-    $eu = require_staff();
-    $b  = body();
+    //
+    // „Are panoul Conturi" se citește din „Acces" (cheia `conturi`), o singură
+    // dată, și tot de el atârnă mai jos cât de amănunțit e un refuz: cine are
+    // lista de conturi primește numele contului de care s-a lovit, cine n-o are
+    // primește doar vestea.
+    $eu         = require_personal('conturi');
+    $areConturi = drept('conturi', $eu);
+    $b          = body();
 
     // CINE E RECOMANDANTUL CONTULUI NOU: nimeni, sau chiar cel care apasă.
     //
@@ -348,7 +467,7 @@ function route_users_create(): void
     // poate împinge cumpărători în lista altcuiva — adică în comisioanele
     // altcuiva. Recomandantul rămâne cine a apăsat butonul, cum a fost mereu.
     $vreauLegat = false;
-    if (!e_admin($eu)) {
+    if (!$areConturi) {
         if ((string) $eu['role'] !== 'agent_vanzari') {
             fail(
                 'Conturile se fac din „Conturi", cu un cont de administrator. '
@@ -384,7 +503,10 @@ function route_users_create(): void
         $codul = referral_public((int) $eu['id']);
         $pricina = null;
 
-        if ($codul === null && !e_admin($eu)) {
+        // După ROL, nu după panou: agentul își face codul singur și dacă
+        // fondatorul i-a dat „Conturi". La matricea din pornire e aceeași
+        // întrebare ca „n-are Conturi" — cine a ajuns aici fără panou e agent.
+        if ($codul === null && (string) $eu['role'] === 'agent_vanzari') {
             // AGENTUL ÎȘI FACE CODUL AICI, nu e trimis după el.
             //
             // Defectul, întreg: butonul „fă un cont de cumpărător" se arată
@@ -492,7 +614,7 @@ function route_users_create(): void
     // Codul rămâne 409 „email_taken” pentru toată lumea: nu se ascunde faptul
     // că adresa are deja cont — asta i-ar face agentului butonul de neînțeles —
     // ci doar numele contului.
-    check_user_email($email, null, !e_admin($eu));
+    check_user_email($email, null, !$areConturi);
 
     // Aceeași crăpătură ca la articolele din depozit: verificarea de mai sus e
     // din memorie, iar între ea și scriere încap două cereri paralele. Se
@@ -532,11 +654,11 @@ function route_users_create(): void
             // pentru el o informație pe care n-are de unde s-o afle altfel.
             fail(
                 'Mai există un client cu numele „' . $strigat . '"'
-                  . (e_admin($eu) ? ' (contul „' . $altul['username'] . '")' : '')
+                  . ($areConturi ? ' (contul „' . $altul['username'] . '")' : '')
                   . '. Două conturi cu același nume fac ca NICIUNUL să nu mai primească '
                   . 'comenzile luate la telefon pe numele acela — nici cel vechi. '
                   . 'Alege alt nume'
-                  . (e_admin($eu) ? ', ori corectează-l pe cel vechi din „Conturi".' : '.'),
+                  . ($areConturi ? ', ori corectează-l pe cel vechi din „Conturi".' : '.'),
                 409,
                 'customer_name_taken'
             );
@@ -613,7 +735,7 @@ function route_users_create(): void
 
 function route_users_update(string $id): void
 {
-    $me = require_admin();
+    $me = require_drept('conturi');
     $b  = body();
     $id = (int) $id;
 
@@ -621,6 +743,7 @@ function route_users_update(string $id): void
     if (!$target) {
         fail('Contul nu există.', 404, 'not_found');
     }
+    guard_cont_de_conducere((string) $target['role']);
     // Contul de sistem poate primi cel mult o redenumire; rolul și starea lui
     // sunt legate de funcționarea tabletelor.
     if ((int) $target['is_system'] === 1 && (array_key_exists('role', $b) || array_key_exists('active', $b))) {
@@ -770,8 +893,15 @@ function route_users_update(string $id): void
         // instalarea fără niciun administrator. Lista, nu şirul „admin": de
         // când există fondatori, un fondator care se trece singur pe „client"
         // ar face aceeași pagubă, doar cu un rol mai sus.
+        //
+        // Cine a ajuns aici fără rang (panoul „Conturi" primit din „Acces")
+        // nu-și poate schimba rolul deloc: în jos îl oprește rândul ăsta, în
+        // sus îl oprește `guard_leader_role()`. Vorba e pe măsura lui.
         if ($id === (int) $me['id'] && !in_array($b['role'], GP_ADMIN_ROLES, true)) {
-            fail('Nu îți poți schimba propriul rol de administrator.', 422, 'self_demote');
+            fail(in_array((string) $me['role'], GP_ADMIN_ROLES, true)
+                    ? 'Nu îți poți schimba propriul rol de administrator.'
+                    : 'Nu îți poți schimba propriul rol. Cere-i unui administrator.',
+                422, 'self_demote');
         }
         // Cine are voie să dea și să ia rolurile de conducere. Aici se oprește
         // administratorul care ar vrea să-și dea singur rolul de fondator, și
@@ -788,6 +918,47 @@ function route_users_update(string $id): void
         // codul: de aici încolo îi trebuie ca să lucreze. Se scrie după UPDATE,
         // mai jos, ca să nu depindă de reușita lui.
         $devineAgent = $b['role'] === 'agent_vanzari' && $target['role'] !== 'agent_vanzari';
+    }
+    // PRAGUL PROPRIU DE COMENZI NEPLĂTITE (runda 2.7.0, migrarea 032; hotărârea
+    // patronului din 4–5 octombrie 2026: pragul e 2 pentru toată lumea, cu
+    // excepții puse pe client).
+    //
+    // STĂ ÎNAINTEA BLOCULUI `active`, dinadins: acela șterge sesiunile contului
+    // pe loc, deci un refuz venit după el ar fi lăsat în urmă o faptă făcută pe
+    // jumătate. Toate refuzurile pragului cad aici, înaintea oricărei scrieri.
+    //
+    // ORDINEA REFUZURILOR: întâi DREPTUL. Panoul „Conturi” îl are și
+    // administratorul; pragul e al celui cu `plati.prag` — din pornire numai
+    // fondatorul. Celui fără drept nu i se spune nici dacă baza are migrarea,
+    // nici dacă valoarea trimisă ar fi fost bună: 403 și atât.
+    //
+    // TREI VALORI VECINE, TREI ÎNȚELESURI, și niciuna nu se rotunjește în alta:
+    // `null` = „urmează pragul general”, 0 = „fără limită”, 1…99 = pragul lui.
+    // `""`, `"abc"`, 2.5, -1, 100 și `true` se refuză (`plati_prag_citit()`):
+    // un `(int)` pus aici ar fi scos de sub prag clientul căruia i s-a golit
+    // caseta din greșeală.
+    if (array_key_exists('pragNeplatite', $b)) {
+        if (!drept('plati.prag', $me)) {
+            fail('Nu ai dreptul să accesezi această resursă.', 403, 'forbidden');
+        }
+        plati_cere_baza('prag_unavailable');
+        $prag = $b['pragNeplatite'] === null
+            ? null
+            : plati_prag_citit($b['pragNeplatite'], 'Pragul de neplătite');
+        // Rolul de DUPĂ salvare: o cerere care face contul client și îi pune
+        // pragul în aceeași apăsare e bună; una care îl scoate dintre clienți,
+        // nu. Rolul din cerere a trecut deja de verificarea de deasupra.
+        $rolCuPrag = array_key_exists('role', $b) ? (string) $b['role'] : (string) $target['role'];
+        if ($rolCuPrag !== 'client') {
+            fail(
+                'Pragul de comenzi neplătite se pune numai pe conturile de client: '
+                  . 'numai ele comandă și numai lor li se numără neplătitele.',
+                422,
+                'prag_only_clients'
+            );
+        }
+        $sets[] = 'prag_neplatite = ?';
+        $vals[] = $prag;
     }
     if (array_key_exists('active', $b)) {
         if ($id === (int) $me['id'] && !$b['active']) {
@@ -875,6 +1046,17 @@ function route_users_update(string $id): void
         // șoferului și când. „poate_confirma_livrarea: 1” ar fi cerut atunci
         // citirea codului ca să se afle în ce parte bate cifra.
         'poate_confirma_livrarea' => ['confirmă livrarea', ['1' => 'poate', '0' => 'nu poate']],
+        // Pragul intră în jurnal ca orice câmp, dar cu cele două valori care nu
+        // sunt numere spuse pe nume: `NULL` e „general”, nu „—”, iar 0 e „fără
+        // limită”, nu „0” — altfel „Prag de neplătite: — → 0” s-ar fi citit ca
+        // „i s-a pus pragul zero”, adică pe dos.
+        //
+        // Rândul e `user_update`, deci îl citește oricine are Jurnalul, cu sau
+        // fără `plati.prag` și „Încasări”. E voit (foaia rundei: „intră în
+        // jurnal ca orice câmp”) și nu scoate la iveală nimic ascuns — v.
+        // `user_cu_prag()`. `GP_PLATI_FAPTE_ASCUNSE` ține numai faptele care
+        // poartă bani ori nume de datornici.
+        'prag_neplatite' => ['Prag de neplătite', ['' => 'general', '0' => 'fără limită']],
     ]);
     $vals[] = $id;
     q('UPDATE users SET ' . implode(', ', $sets) . ' WHERE id = ?', $vals);
@@ -890,12 +1072,18 @@ function route_users_update(string $id): void
         referral_assign($id, (string) $target['name'], (string) $target['username']);
     }
 
-    json_out(['user' => public_user(one('SELECT * FROM users WHERE id = ?', [$id]))]);
+    // Rândul întors poartă pragul după ACEEAȘI regulă ca lista (`user_cu_prag()`):
+    // numai pe un cont de client și numai celui cu `plati.prag`. Administratorul
+    // care corectează un telefon nu primește deci cheia, iar pagina lui nu
+    // desenează cutia pragului. Atât ține regula: pragul după care e judecat
+    // clientul îl vede oricum din fișa de plată a clientului și din Jurnal.
+    $dupa = one('SELECT * FROM users WHERE id = ?', [$id]);
+    json_out(['user' => user_cu_prag(public_user($dupa), $dupa, user_vede_prag($me))]);
 }
 
 function route_users_delete(string $id): void
 {
-    $me = require_admin();
+    $me = require_drept('conturi');
     $id = (int) $id;
 
     if ($id === (int) $me['id']) {
@@ -955,17 +1143,18 @@ function route_users_delete(string $id): void
  */
 function route_users_lab_pin(string $id): void
 {
-    require_admin();
+    require_drept('conturi');
     require_lab();
 
     $b   = body();
     $id  = (int) $id;
     $pin = trim((string) ($b['pin'] ?? ''));
 
-    $target = one('SELECT name, username, is_system, active FROM users WHERE id = ?', [$id]);
+    $target = one('SELECT name, username, is_system, active, role FROM users WHERE id = ?', [$id]);
     if (!$target) {
         fail('Contul nu există.', 404, 'not_found');
     }
+    guard_cont_de_conducere((string) $target['role']);
     // Contul „panou" e al tabletei, nu al unui om: pontajul lui ar fi tocmai
     // lucrul de care se apără toată lucrarea asta — o tură scrisă pe nimeni.
     if ((int) $target['is_system'] === 1) {
@@ -1017,7 +1206,7 @@ function route_users_lab_pin(string $id): void
 /** Resetarea parolei de către admin. */
 function route_users_password(string $id): void
 {
-    require_admin();
+    require_drept('conturi');
     $b   = body();
     $id  = (int) $id;
     $new = need($b, 'password');
@@ -1047,7 +1236,7 @@ function route_users_password(string $id): void
     // afară, în plin lucru, fără ca cineva să înțeleagă de ce.
     if ((int) $target['is_system'] === 1) {
         fail('Contul „panou" nu se deschide cu parolă, ci cu codul tabletelor. '
-            . 'Codul se schimbă din Setări → Acces.', 422, 'system_account');
+            . 'Codul se schimbă din Setări → Tableta.', 422, 'system_account');
     }
 
     q(
@@ -1090,7 +1279,7 @@ function route_users_password(string $id): void
  */
 function route_users_referral(string $id): void
 {
-    require_admin();
+    require_drept('conturi');
     $id = (int) $id;
 
     if (!referral_supported()) {
@@ -1098,10 +1287,11 @@ function route_users_referral(string $id): void
             503, 'referral_unavailable');
     }
 
-    $target = one('SELECT id, name, username, referral_code, is_system FROM users WHERE id = ?', [$id]);
+    $target = one('SELECT id, name, username, referral_code, is_system, role FROM users WHERE id = ?', [$id]);
     if (!$target) {
         fail('Contul nu există.', 404, 'not_found');
     }
+    guard_cont_de_conducere((string) $target['role']);
     // Contul comun „panou" al tabletelor nu recomandă pe nimeni.
     if ((int) $target['is_system'] === 1) {
         fail('Contul „panou” este de sistem și nu poate avea cod de recomandare.', 422, 'system_account');
@@ -1142,13 +1332,14 @@ function route_users_referral(string $id): void
  */
 function route_users_referral_edit(string $id): void
 {
-    $u  = require_admin();
+    $u  = require_drept('conturi');
     $id = (int) $id;
 
-    $target = one('SELECT id, name, referral_code, is_system FROM users WHERE id = ?', [$id]);
+    $target = one('SELECT id, name, referral_code, is_system, role FROM users WHERE id = ?', [$id]);
     if (!$target) {
         fail('Contul nu există.', 404, 'not_found');
     }
+    guard_cont_de_conducere((string) $target['role']);
     if ((int) $target['is_system'] === 1) {
         fail('Contul de sistem nu poate avea cod de recomandare.', 422, 'system_account');
     }

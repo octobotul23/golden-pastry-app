@@ -41,7 +41,7 @@ declare(strict_types=1);
  */
 function route_items_list(): void
 {
-    require_ops();
+    require_drept('depozit', 'catalog');
 
     // Cele două agregări stau în subinterogări, nu în același GROUP BY: unite,
     // fiecare mișcare s-ar înmulți cu fiecare rezervare a articolului, iar
@@ -130,7 +130,7 @@ function stock_item_public(array $r): array
 /** POST /stock/items — articol nou. */
 function route_items_create(): void
 {
-    require_ops();
+    require_drept('depozit');
     $b = body();
 
     // Lungimile se verifică aici, unde încă se poate spune ce e greșit.
@@ -245,7 +245,7 @@ function route_items_create(): void
 /** PATCH /stock/items/{id} — denumire, categorie, unitate, prag, produs. */
 function route_items_update(string $id): void
 {
-    require_ops();
+    require_drept('depozit');
     $b  = body();
     $id = (int) $id;
 
@@ -436,12 +436,22 @@ function stock_local_day_utc(string $day, int $plusZile = 0): string
  *     Depozitul nici nu mai desenează butonul pe un asemenea articol (`inRecipe`
  *     din listare); refuzul rămâne pentru rețeta scrisă între două citiri.
  *
- *  2. **Are istoric** — mișcări în registru sau marfă rezervată pentru comenzi
- *     → articolul se SCOATE DIN LISTĂ (`active = 0`), nu se șterge. Rândurile
- *     din `stock_moves` poartă numele ca text, deci registrul rămâne lizibil,
- *     iar `fk_moves_item` e ON DELETE SET NULL: o ștergere adevărată ar tăia
- *     legătura și ar lăsa în urmă intrări care nu mai duc nicăieri. Registrul
- *     depozitului e o socoteală, nu o listă de curățat.
+ *  2. **Are istoric** — mișcări în registru, marfă rezervată pentru comenzi
+ *     ori PREȚURI scrise → articolul se SCOATE DIN LISTĂ (`active = 0`), nu se
+ *     șterge. Rândurile din `stock_moves` poartă numele ca text, deci registrul
+ *     rămâne lizibil, iar `fk_moves_item` e ON DELETE SET NULL: o ștergere
+ *     adevărată ar tăia legătura și ar lăsa în urmă intrări care nu mai duc
+ *     nicăieri. Registrul depozitului e o socoteală, nu o listă de curățat.
+ *
+ *     La fel prețurile (runda 2.7.0, migrarea 034). `fk_item_prices_item` e
+ *     ON DELETE CASCADE: o ștergere adevărată le-ar lua cu ea pe toate, fără
+ *     niciun rând în Jurnal — pe când ștergerea UNUI preț, pe ruta lui, scrie
+ *     `pret_sters`. Iar ruta de aici stă pe cheia `depozit`: prețurile scrise
+ *     de fondator ar fi putut dispărea, cu istoric cu tot, la o apăsare a cuiva
+ *     care n-are voie nici să le vadă (cheia `preturi`). Cu un preț scris,
+ *     articolul nu mai e greșeala de tastare de acum două minute. Cine vrea
+ *     să-l șteargă de tot șterge întâi prețurile, din fila lor: acolo se cere
+ *     dreptul și rămâne urma.
  *
  *  3. **Curat, fără nicio urmă** → se șterge de-a binelea. E cazul greșelii de
  *     tastare de acum două minute, iar acolo un articol „scos din listă", pe
@@ -451,13 +461,13 @@ function stock_local_day_utc(string $day, int $plusZile = 0): string
  * Răspunsul spune ce s-a întâmplat (`mode`), ca pagina să nu ghicească și să
  * poată explica omului de ce articolul cu istoric n-a dispărut de tot.
  *
- * `require_ops()`, ca restul depozitului: cine poate face intrări și ieșiri
+ * Cheia `depozit`, ca restul depozitului: cine poate face intrări și ieșiri
  * poate și să scoată un articol din listă — putea deja, prin PATCH cu
  * `active: false`. Ștergerea adevărată se face doar acolo unde n-are ce strica.
  */
 function route_items_delete(string $id): void
 {
-    $u  = require_ops();
+    $u  = require_drept('depozit');
     $id = (int) $id;
 
     $item = one('SELECT id, name, active FROM stock_items WHERE id = ?', [$id]);
@@ -479,7 +489,7 @@ function route_items_delete(string $id): void
         fail(
             'Articolul „' . $item['name'] . '” intră în rețeta produsului '
             . (count($nume) === 1 ? '„' . $nume[0] . '”' : 'următoarelor produse: „' . implode('”, „', $nume) . '”')
-            . (e_admin($u)
+            . (drept('catalog', $u)
                 ? '. Scoate-l întâi din rețetă, din Catalog.'
                 : '. Cere-i unui administrator să-l scoată întâi din rețetă, din Catalog.'),
             409,
@@ -487,29 +497,75 @@ function route_items_delete(string $id): void
         );
     }
 
-    // 2. Istoricul: mișcări din registru sau marfă rezervată pentru comenzi.
-    $miscari  = (int) scalar('SELECT COUNT(*) FROM stock_moves WHERE item_id = ?', [$id]);
-    $rezervat = (int) scalar('SELECT COUNT(*) FROM stock_reservations WHERE item_id = ?', [$id]);
+    // 2. și 3. se hotărăsc SUB ÎNCUIETOAREA ARTICOLULUI: numărătoarea
+    // istoricului și ștergerea sunt o singură hotărâre. Scrierea unui preț
+    // încuie același rând (`route_item_prices_add()`), deci cele două trec PE
+    // RÂND: ori prețul apucă înainte, și articolul de aici are deja istoric,
+    // ori ștergerea apucă înainte, și scrierea prețului nu mai găsește
+    // articolul (404). Fără încuietoare, un preț scris în clipa dintre
+    // numărătoare și `DELETE` ar fi plecat odată cu articolul, prin cascadă,
+    // fără nicio urmă.
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        if (!one('SELECT id FROM stock_items WHERE id = ? FOR UPDATE', [$id])) {
+            // Șters de altcineva între citirea de sus și încuietoare.
+            $pdo->rollBack();
+            fail('Articolul nu există.', 404, 'not_found');
+        }
 
-    if ($miscari > 0 || $rezervat > 0) {
-        q('UPDATE stock_items SET active = 0 WHERE id = ?', [$id]);
-        audit('stock_item_deactivate', 'stock_item', (string) $id, $item['name']);
+        // 2. Istoricul: mișcări din registru, marfă rezervată pentru comenzi,
+        // prețuri scrise. De prețuri se întreabă biblioteca costurilor, care
+        // răspunde numai cu da ori nu: tabelul lor nu se numește în fișierul
+        // ăsta, ca nicio interogare a Depozitului să nu poată căra o cifră. Pe
+        // o bază fără migrarea 034 răspunsul e „nu".
+        $miscari  = (int) scalar('SELECT COUNT(*) FROM stock_moves WHERE item_id = ?', [$id]);
+        $rezervat = (int) scalar('SELECT COUNT(*) FROM stock_reservations WHERE item_id = ?', [$id]);
+        $preturi  = costuri_are_preturi($id);
+
+        $pricini = [];
+        if ($miscari > 0) {
+            $pricini[] = $miscari . ' ' . ($miscari === 1 ? 'mișcare' : 'mișcări') . ' în registru';
+        }
+        if ($rezervat > 0) {
+            $pricini[] = 'marfă rezervată pentru comenzi';
+        }
+        if ($preturi) {
+            // Că are prețuri nu e o taină (Jurnalul o spune oricui îl deschide);
+            // taină e cifra, și cifra nu se scrie aici.
+            $pricini[] = 'prețuri scrise';
+        }
+
+        if ($pricini) {
+            q('UPDATE stock_items SET active = 0 WHERE id = ?', [$id]);
+            audit('stock_item_deactivate', 'stock_item', (string) $id, $item['name']);
+        } else {
+            // 3. Fără nicio urmă: se șterge.
+            q('DELETE FROM stock_items WHERE id = ?', [$id]);
+            audit('stock_item_delete', 'stock_item', (string) $id, $item['name']);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    if ($pricini) {
+        $ultima = array_pop($pricini);
         json_out([
             'ok'   => true,
             'mode' => 'deactivated',
             'message' => 'Articolul „' . $item['name'] . '” a fost scos din depozit. '
-                . 'Nu s-a șters de tot fiindcă are ' . $miscari . ' '
-                . ($miscari === 1 ? 'mișcare' : 'mișcări') . ' în registru'
-                . ($rezervat > 0 ? ' și marfă rezervată pentru comenzi' : '')
+                . 'Nu s-a șters de tot fiindcă are '
+                . ($pricini ? implode(', ', $pricini) . ' și ' : '') . $ultima
                 . ' — istoricul rămâne întreg. Atenție: de acum comenzile care se potriveau pe el '
                 . 'nu se mai scad din depozit până nu are produsul un alt articol. Îl poți repune '
                 . 'oricând din josul paginii, de la „Scoase din depozit”.',
         ]);
     }
 
-    // 3. Fără nicio urmă: se șterge.
-    q('DELETE FROM stock_items WHERE id = ?', [$id]);
-    audit('stock_item_delete', 'stock_item', (string) $id, $item['name']);
     json_out([
         'ok'   => true,
         'mode' => 'deleted',
@@ -519,7 +575,7 @@ function route_items_delete(string $id): void
 
 function route_moves_list(): void
 {
-    require_ops();
+    require_drept('depozit');
 
     $where  = [];
     $params = [];
@@ -582,7 +638,7 @@ function route_moves_list(): void
 /** POST /stock/moves — intrare (direction 1) sau ieșire (-1). */
 function route_moves_create(): void
 {
-    $u = require_ops();
+    $u = require_drept('depozit');
     $b = body();
 
     $qty = num_field($b['qty'] ?? null, 'Cantitatea', 0, 1000000, 'bad_qty');
@@ -716,7 +772,7 @@ function stock_de_scazut(): array
  */
 function route_stock_sync(): void
 {
-    $u    = require_ops();
+    $u    = require_drept('depozit');
     $done = status_done();
     if ($done === '') {
         fail('Nu este configurată etapa care încheie comanda.', 409, 'no_done_status');
@@ -870,7 +926,9 @@ function route_stock_sync(): void
         }
         $pdo->commit();
     } catch (Throwable $e) {
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
 

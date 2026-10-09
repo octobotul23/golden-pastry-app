@@ -131,7 +131,7 @@ function route_referrals_make_code(): void
  */
 function route_referrals_all(): void
 {
-    require_admin();
+    require_drept('recomandari');
     referral_require_money();
 
     $q    = $_GET['month'] ?? '';
@@ -298,7 +298,7 @@ function route_referrals_all(): void
  */
 function route_referrals_pay(): void
 {
-    $u = require_admin();
+    $u = require_drept('recomandari.bani');
     referral_require_money();
 
     $b   = body();
@@ -335,7 +335,7 @@ function route_referrals_pay(): void
  */
 function route_referrals_rate_fix_preview(): void
 {
-    require_admin();
+    require_drept('recomandari');
     referral_require_money();
 
     json_out(referral_zero_rate_preview());
@@ -356,7 +356,7 @@ function route_referrals_rate_fix_preview(): void
  */
 function route_referrals_rate_fix(): void
 {
-    $u = require_admin();
+    $u = require_drept('recomandari.bani');
     referral_require_money();
 
     $r = referral_zero_rate_fix((int) $u['id']);
@@ -372,7 +372,7 @@ function route_referrals_rate_fix(): void
  */
 function route_referrals_resolve(string $id): void
 {
-    $u = require_admin();
+    $u = require_drept('recomandari');
     referral_require_money();
 
     $b   = body();
@@ -401,7 +401,7 @@ function route_referrals_resolve(string $id): void
  */
 function route_referrals_delete(string $id): void
 {
-    $u = require_admin();
+    $u = require_drept('recomandari');
     referral_require_money();
 
     $rand = referral_commission_dismiss((int) $id, true, (int) $u['id']);
@@ -422,7 +422,7 @@ function route_referrals_delete(string $id): void
  */
 function route_referrals_restore(string $id): void
 {
-    $u = require_admin();
+    $u = require_drept('recomandari');
     referral_require_money();
 
     $rand = referral_commission_dismiss((int) $id, false, (int) $u['id']);

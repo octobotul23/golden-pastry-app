@@ -39,10 +39,19 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Bara de la coadă se taie AICI, ca în actualizeaza-vps.sh, înainte ca vreo cale
+# să fie folosită. Calea ajunge, literă cu literă, în rândul de cron de mai jos,
+# iar cele două scripturi își compară textul cu fișierul și îl rescriu „numai
+# dacă diferă": cu „--dir /var/www/gp/" scris firesc, cu bară, instalarea ar fi
+# scris „…/gp//api/cron/plati.php", actualizarea (care taie bara) „…/gp/api/…",
+# și fiecare l-ar fi găsit „altfel" pe al celeilalte, la fiecare rulare.
+DIR="${DIR%/}"
+
 # ------------------------------------------------------------------ ajutoare --
 
 rosu()   { printf '\033[31m%s\033[0m\n' "$*"; }
 verde()  { printf '\033[32m%s\033[0m\n' "$*"; }
+galben() { printf '\033[33m%s\033[0m\n' "$*"; }
 pas()    { printf '\n\033[1m▸ %s\033[0m\n' "$*"; }
 info()   { printf '  %s\n' "$*"; }
 mor()    { rosu "EROARE: $*"; exit 1; }
@@ -56,6 +65,9 @@ my() {
 
 [[ $EUID -eq 0 ]] || mor "rulează cu sudo: sudo bash $0 --domain exemplu.ro"
 [[ -n "$DOMAIN" ]] || mor "lipsește --domain (ex: --domain goldenpastry.ro)"
+# După tăierea barei, „--dir /" rămâne gol: mai jos vin `chown -R` și `find … chmod`
+# pe calea asta, care pe rădăcina discului ar fi schimbat stăpânul întregului server.
+[[ "$DIR" == /?* ]] || mor "--dir cere o cale întreagă, alta decât rădăcina discului (ex: --dir /var/www/gp)"
 command -v apt-get >/dev/null || mor "scriptul e pentru Ubuntu/Debian (apt)"
 
 # Unde e pachetul: folderul dat, folderul curent sau cel al scriptului.
@@ -123,8 +135,11 @@ ACTUALIZARE=0
 
 pas "Instalez Apache, PHP și MySQL"
 export DEBIAN_FRONTEND=noninteractive
+# `cron` e în listă din 2.7.0: raportul de încasări îl pornește serverul, nu o
+# pagină (vezi „Ceasul plăților", mai jos). Imaginile obișnuite de Ubuntu îl au
+# deja; cele subțiri nu, iar acolo rapoartele n-ar fi plecat niciodată, în tăcere.
 apt-get update -qq
-apt-get install -y -qq apache2 mysql-server rsync unzip openssl \
+apt-get install -y -qq apache2 mysql-server rsync unzip openssl cron \
   php php-mysql php-mbstring php-curl php-xml php-zip php-gd libapache2-mod-php \
   >/dev/null
 # Portul 80 liber? Multe imagini de VPS vin cu nginx (sau un panou) pornit, iar
@@ -327,6 +342,58 @@ find "$DIR" -type d -exec chmod 755 {} \;
 find "$DIR" -type f -exec chmod 644 {} \;
 chmod 640 "$DIR/api/config.php"
 info "products/ scriibil de Apache"
+
+# ------------------------------------------------------------ ceasul plăților --
+
+pas "Ceasul plăților"
+# Raportul de încasări și amintirile de scadență (2.7.0) nu le cere nicio
+# pagină: le pornește serverul, din cinci în cinci minute. Fără rândul de mai
+# jos nu pleacă niciun raport, oricât de bine ar fi pus chatul în „Încasări".
+#
+# ACELAȘI text, literă cu literă, ca în actualizeaza-vps.sh: fiecare dintre cele
+# două scripturi scrie fișierul numai dacă diferă, deci două texte deosebite
+# l-ar fi rescris pe rând, la fiecare rulare a celuilalt. De ce `flock`, de ce
+# `logger` și de ce întâi lângă el și apoi mutat — vezi acolo.
+CRON_FISIER="/etc/cron.d/goldenpastry-plati"
+CRON_TEXT="# Golden Pastry: raportul de încasări și amintirile de scadență, pe Telegram.
+# Scris de scripturile de instalare și de actualizare; nu se editează de mână.
+*/5 * * * * www-data flock -n /run/lock/gp-plati.lock php $DIR/api/cron/plati.php 2>&1 | logger -t gp-plati"
+if [[ ! "$DIR" =~ ^[A-Za-z0-9_./-]+$ ]]; then
+  rosu "  Calea „$DIR” are semne pe care cron le citește altfel. Ceasul NU a fost pus;"
+  info "rapoartele de încasări nu vor pleca până nu e pus de mână."
+elif [[ ! -f "$DIR/api/cron/plati.php" ]]; then
+  rosu "  Pachetul nu are api/cron/plati.php (e mai vechi de 2.7.0?). Ceasul NU a fost pus."
+elif [[ ! -d /etc/cron.d ]]; then
+  rosu "  Serverul nu are cron (lipsește /etc/cron.d). Ceasul NU a fost pus."
+  info "Pune-l cu:  apt-get install -y cron   și rulează din nou scriptul."
+elif [[ -f "$CRON_FISIER" && "$(cat "$CRON_FISIER")" == "$CRON_TEXT" ]]; then
+  info "$CRON_FISIER — neschimbat"
+else
+  printf '%s\n' "$CRON_TEXT" > "$CRON_FISIER.nou"
+  chown root:root "$CRON_FISIER.nou"
+  chmod 644 "$CRON_FISIER.nou"
+  mv -f "$CRON_FISIER.nou" "$CRON_FISIER"
+  info "$CRON_FISIER — scris (din 5 în 5 minute; se citește cu: journalctl -t gp-plati)"
+fi
+# FIȘIERUL NU E CEASUL. /etc/cron.d există și pe un server FĂRĂ cron: îl aduc
+# alte pachete (php își pune acolo curățenia sesiunilor), deci întrebarea de mai
+# sus trece, rândul se scrie, scriptul zice „scris" — și nu-l citește nimeni,
+# niciodată. De aceea se întreabă de PROGRAM și de SERVICIU, cu același bloc ca
+# în actualizeaza-vps.sh, și se spune pe față când rândul e pus degeaba.
+if [[ -f "$CRON_FISIER" ]]; then
+  if ! command -v cron >/dev/null 2>&1; then
+    galben "  Rândul e scris, dar serverul nu are programul cron: ceasul NU merge."
+    info "Pune-l cu:  apt-get install -y cron   (pornește singur; rândul e deja la locul lui)."
+  else
+    systemctl enable --now cron >/dev/null 2>&1 || service cron start >/dev/null 2>&1 || true
+    if systemctl is-active --quiet cron 2>/dev/null || pgrep -x cron >/dev/null 2>&1; then
+      info "serviciul cron merge"
+    else
+      galben "  Rândul e scris, dar serviciul cron e oprit: ceasul NU merge."
+      info "Pornește-l cu:  systemctl enable --now cron   și vezi de ce:  systemctl status cron"
+    fi
+  fi
+fi
 
 # ------------------------------------------------------------ gazde virtuale --
 

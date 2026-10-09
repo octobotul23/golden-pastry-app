@@ -201,7 +201,7 @@ $h = static fn(?string $s): string => htmlspecialchars((string) $s, ENT_QUOTES, 
       <p>Cu el se deschid panourile de lucru de pe tablete, fără cont
         individual. <strong>Notează-l acum.</strong> Se păstrează criptat, deci
         nu mai poate fi afișat niciodată — nici de această pagină, nici din
-        Setări. Dacă îl pierzi, pui altul din <em>Setări → Acces</em>.</p>
+        Setări. Dacă îl pierzi, pui altul din <em>Setări → Tableta</em>.</p>
     </div>
   <?php endif; ?>
 <?php elseif ($adminCount === 0): ?>

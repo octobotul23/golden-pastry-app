@@ -94,7 +94,7 @@ function lab_shift_public(array $r): array
  */
 function route_lab_people(): void
 {
-    require_clock();
+    require_drept('pontaj');
     require_lab();
 
     $rows = all(
@@ -138,7 +138,7 @@ function route_lab_people(): void
  */
 function route_lab_clock(): void
 {
-    require_clock();
+    require_drept('pontaj');
     require_lab();
 
     $b   = body();
@@ -239,7 +239,7 @@ function route_lab_clock(): void
  */
 function route_lab_shifts(): void
 {
-    require_shifts();
+    require_drept('conduce_tura');
     require_lab();
 
     $azi  = today_local();
@@ -334,7 +334,7 @@ function route_lab_shifts(): void
  */
 function route_lab_shift_update(string $idTxt): void
 {
-    $cine = require_admin();
+    $cine = require_drept('pontaj.corectura');
     require_lab();
 
     $id = (int) $idTxt;
@@ -429,7 +429,7 @@ function route_lab_shift_update(string $idTxt): void
  */
 function route_lab_production(): void
 {
-    require_shifts();
+    require_drept('conduce_tura');
     require_lab();
 
     $azi  = today_local();
@@ -789,7 +789,7 @@ function lab_message_until(string $ora): ?string
  */
 function route_lab_messages(): void
 {
-    $cine = require_ops();
+    $cine = require_drept('laborator');
     require_lab_board();
 
     $rows = all(
@@ -820,7 +820,7 @@ function route_lab_messages(): void
  */
 function route_lab_message_new(): void
 {
-    $cine = require_shifts();
+    $cine = require_drept('conduce_tura');
     require_lab_board();
 
     $b = body();
@@ -888,7 +888,7 @@ function route_lab_message_new(): void
  */
 function route_lab_message_delete(string $idTxt): void
 {
-    $cine = require_shifts();
+    $cine = require_drept('conduce_tura');
     require_lab_board();
 
     $id = (int) $idTxt;
@@ -955,7 +955,7 @@ function route_lab_message_delete(string $idTxt): void
  */
 function route_lab_ordine(): void
 {
-    require_ops();
+    require_drept('laborator');
     $b   = body();
     $zi  = valid_day(trim((string) ($b['day'] ?? '')));
     $ids = $b['ids'] ?? [];
@@ -984,7 +984,9 @@ function route_lab_ordine(): void
         }
         db()->commit();
     } catch (Throwable $e) {
-        db()->rollBack();
+        if (db()->inTransaction()) {
+            db()->rollBack();
+        }
         throw $e;
     }
 
@@ -998,13 +1000,27 @@ function route_lab_ordine(): void
  *
  * CHEAMĂ-O DIN TRANZACȚIE: pune `FOR UPDATE` pe comenzile zilei.
  *
- * ZĂVORÂREA SE FACE ÎN ORDINEA `id`, NU ÎN ORDINEA DE LUCRU. Aici a greșit
- * ciorna rundei, și greșeala ar fi costat scump: `route_stock_sync()` ia
- * comenzile `ORDER BY id FOR UPDATE`, și tot pe `id` le ia și
- * `route_order_production()`. Zăvorâte în ordinea `lab_seq`, două tranzacții
- * ar putea apuca aceleași două rânduri în ordine inversă — IMPAS, în mijlocul
- * turei, cu aluatul pe masă. Se zăvorăsc pe `id`, și abia apoi se așază în
- * ordinea de lucru, în PHP, unde nicio bază nu mai are ce bloca.
+ * CHEAMĂ-O PRIMA: zăvorul se poate lua de la capăt după un impas (v. bucla
+ * din corp), iar asta e curat numai cât tranzacția n-a scris încă nimic.
+ *
+ * ZĂVORÂREA NU SE FACE ÎN ORDINEA `id`, ORICÂT AR SCRIE `ORDER BY id`. Aici
+ * scria că da, și nu era adevărat: `ORDER BY` sortează ce s-a citit, iar
+ * lacătele se iau în ordinea CITIRII — printr-un indice care începe cu ziua,
+ * întâi înregistrarea din indice, apoi rândul. PE CARE indice, hotărăște
+ * motorul, nu codul de aici: `orders` are trei care încep cu ziua — (zi,
+ * număr), (zi, stare) și (zi, zonă), v. `sql/001_schema.sql` —, iar citirea
+ * nu cere niciunul anume. Aici scria „prin indicele (zi, număr)”, ca un fapt,
+ * fără să-l fi măsurat nimeni. Citit apoi de două ori, pe 9 oct. 2026, în
+ * raportul de impas al motorului (`SHOW ENGINE INNODB STATUS`, MySQL 8.4.3,
+ * baza de lucru): lacătele citirii stăteau pe `uq_orders_day_seq`, adică
+ * chiar (zi, număr). E ce a ales motorul atunci, pe datele de atunci — o
+ * măsurătoare, nu o făgăduială a codului; și nici nu trebuie una: oricare ar
+ * fi ales, lacătele vin pe dos față de cine are întâi rândul.
+ * `route_order_production()`,
+ * `route_orders_update()` și `route_orders_delete()` iau întâi rândul. Cele
+ * două feluri se pot prinde în IMPAS (văzut pe viu, 5 oct. 2026) — de aceea
+ * citirea de jos se reia. Așezarea în ordinea de lucru se face tot în PHP,
+ * unde nicio bază nu mai are ce bloca.
  *
  * ORDINEA DE LUCRU: `lab_seq` întâi, cele nearanjate la coadă, iar între egale
  * numărul zilei (`seq`). Aceeași ordine pe care o arată panoul, fiindcă
@@ -1021,10 +1037,46 @@ function route_lab_ordine(): void
  */
 function lab_ziua_si_produsul(string $zi, int $pid, string $nume): array
 {
-    $comenzi = all(
-        'SELECT id, ref, seq, customer_name, status, lab_seq FROM orders WHERE day = ? ORDER BY id FOR UPDATE',
-        [$zi]
-    );
+    // IMPASUL SE REIA, NU I SE ARATĂ OMULUI (runda 2.7.0, 5 oct. 2026).
+    //
+    // Citirea de mai jos intră printr-un indice care începe cu ziua (azi sunt
+    // trei: (zi, număr), (zi, stare), (zi, zonă); pe care îl ia, hotărăște
+    // motorul): prinde întâi înregistrarea din INDICE și abia apoi rândul
+    // comenzii. Cine scrie într-o comandă vine pe dos — `route_orders_update`
+    // și `route_orders_delete` au rândul și cer înregistrările din indici abia
+    // când mută ziua, schimbă starea ori șterg. Când se prind una pe alta,
+    // MySQL omoară una din ele cu 1213; dacă aceea e împărțirea, omul de la
+    // masă primea „Eroare BD” pentru o apăsare nevinovată (văzut pe viu, cu o
+    // ștergere și cu o mutare pe altă zi).
+    //
+    // Fiindcă indicele nu e unul anume, nici cine vine pe dos nu e numai
+    // „mutarea pe altă zi”: o schimbare de stare atinge (zi, stare), una de
+    // zonă atinge (zi, zonă). De aceea PATCH-ul își reia ORICE 1213 al
+    // trecerii, nu numai pe al mutării (v. bucla din `route_orders_update()`).
+    //
+    // Reluarea e curată fiindcă zăvorul e PRIMA interogare a tranzacției, în
+    // amândouă rutele care cheamă funcția: încercarea omorâtă n-a apucat să
+    // scrie nimic, iar impasul a desfăcut-o întreagă. Se deschide alta și se ia
+    // de la capăt. Numai 1213 și de cel mult trei ori: orice altă eroare e o
+    // defecțiune adevărată.
+    $pdo = db();
+    for ($incercare = 1; ; $incercare++) {
+        try {
+            $comenzi = all(
+                'SELECT id, ref, seq, customer_name, status, lab_seq FROM orders WHERE day = ? ORDER BY id FOR UPDATE',
+                [$zi]
+            );
+            break;
+        } catch (PDOException $e) {
+            if ($incercare >= 3 || (int) ($e->errorInfo[1] ?? 0) !== 1213) {
+                throw $e;
+            }
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            $pdo->beginTransaction();
+        }
+    }
 
     usort($comenzi, static function (array $a, array $b): int {
         $la = $a['lab_seq'] === null ? PHP_INT_MAX : (int) $a['lab_seq'];
@@ -1104,7 +1156,7 @@ function lab_produsul_cerut(array $b): array
  */
 function route_lab_productie_imparte(): void
 {
-    $u = require_ops();
+    $u = require_drept('laborator');
     $b = body();
 
     $zi           = valid_day(trim((string) ($b['day'] ?? '')));
@@ -1280,7 +1332,7 @@ function route_lab_productie_imparte(): void
  */
 function route_lab_productie_desfa(): void
 {
-    $u = require_ops();
+    $u = require_drept('laborator');
     $b = body();
 
     $zi           = valid_day(trim((string) ($b['day'] ?? '')));

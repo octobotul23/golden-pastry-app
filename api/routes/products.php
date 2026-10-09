@@ -25,7 +25,7 @@ declare(strict_types=1);
 function route_products_list(): void
 {
     $u   = current_user();
-    $all = isset($_GET['all']) && $u && e_admin($u);
+    $all = isset($_GET['all']) && $u && drept('catalog', $u);
 
     // CELE TREI COLOANE ALE LATURILOR se cer numai dacă baza le are.
     //

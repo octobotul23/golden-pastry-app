@@ -330,6 +330,9 @@ if ($hasConfig) {
             'telegram_links'       => '021_raspundere.sql',
             'lab_production'       => '021_raspundere.sql',
             'schema_migrations'    => '025_registru_migrari.sql',
+            'role_rights'          => '033_acces.sql',
+            'stock_item_prices'    => '034_costuri.sql',
+            'orders_deleted'       => '035_comenzi_sterse.sql',
         ];
         $missing = array_values(array_diff(array_keys($need), $tables));
         // Numele lipsă spune singur care fișier n-a intrat, ca în docs/01 și în
@@ -409,6 +412,10 @@ if ($hasConfig) {
             '029_numere_in_catalog.sql',
             '030_gata_de_livrare.sql',
             '031_fise_tehnice.sql',
+            '032_plati_si_prag.sql',
+            '033_acces.sql',
+            '034_costuri.sql',
+            '035_comenzi_sterse.sql',
         ];
         $areRegistru = in_array('schema_migrations', $tables, true);
         check(
@@ -894,6 +901,67 @@ if ($hasConfig) {
                     . 'unei fișe din Produse e refuzată cu un mesaj care numește migrarea. Purtarea '
                     . 'fără ele nu e stricată, e cea de dinainte.',
             ],
+            // 032 aduce șapte coloane pe `orders`, una pe `users`, șapte rânduri
+            // în `settings` și semnul ei. Se cer toate: coloanele spun că plata
+            // are unde se scrie, rândurile că pragul și raportul au de unde se
+            // citi, semnul că și comenzile de dinainte au fost judecate — o
+            // dată. Cele două indexuri ale ei (`ix_orders_plata`,
+            // `ix_orders_plata_la`) rămân numite, nu cerute, ca al lui 020: doar
+            // grăbesc numărătoarea, nu țin nimic.
+            '032_plati_si_prag.sql' => [
+                'nume'    => 'Plata fiecărei comenzi și pragul de neplătite (migrarea 032)',
+                'coloane' => [
+                    'orders' => ['plata', 'plata_scadenta', 'plata_la', 'plata_de',
+                                 'plata_suma', 'plata_nota', 'plata_amintire_la'],
+                    'users'  => ['prag_neplatite'],
+                ],
+                'setari'  => ['plati_prag_implicit', 'plati_telegram_chat_id', 'plati_raport_ore',
+                              'plati_amintiri', 'plati_raport_trimis_1', 'plati_raport_trimis_2',
+                              'panel_base_url', 'migration_032_plati_si_prag'],
+                'ce'      => 'Țin starea plății fiecărei comenzi — neplătită, amânată, plătită ori '
+                    . 'plătită prin bancă —, cu scadența, clipa, suma și omul care a bifat-o; pe '
+                    . 'cont, pragul lui de comenzi neplătite; iar în `settings`, pragul general, '
+                    . 'chatul și orele raportului de bani. Semnul spune că s-au judecat o dată '
+                    . 'comenzile de dinainte: cele predate, cu ziua trecută, au fost trecute '
+                    . 'plătite. Fără coloane, plata unei comenzi n-are unde se scrie și pragul '
+                    . 'n-are ce număra; fără judecata aceea, fiecare client vechi apare cu tot '
+                    . 'istoricul lui „de plată".',
+            ],
+            // `role_rights` e numărat sus, la tabelele aplicației; aici stă
+            // numai lămurirea, ca la 019. Migrarea nu pune nicio coloană pe un
+            // tabel vechi și niciun rând în `settings`, deci n-are ce cere.
+            '033_acces.sql' => [
+                'nume'    => 'Bifele mutate în „Acces" (migrarea 033)',
+                'coloane' => [],
+                'setari'  => [],
+                'ce'      => 'Ține bifele pe care fondatorul le-a mutat în „Acces" — numai pe cele '
+                    . 'schimbate față de pornire; tabelul gol înseamnă „ca până ieri". Fără '
+                    . 'tabelul ei, fiecare rol intră exact unde intra și până acum, citirea '
+                    . 'matricei răspunde cu cea din pornire, iar salvarea unei bife e refuzată cu '
+                    . 'un mesaj care numește migrarea. Purtarea fără el nu e stricată, e cea de '
+                    . 'dinainte.',
+            ],
+            // `stock_item_prices` e numărat sus, la tabelele aplicației; aici stă
+            // numai lămurirea. Tabelul pornește gol, iar migrarea n-are semn.
+            '034_costuri.sql' => [
+                'nume'    => 'Prețul de cumpărare al articolelor din depozit (migrarea 034)',
+                'coloane' => [],
+                'setari'  => [],
+                'ce'      => 'Ține istoricul prețurilor de cumpărare — cât costă făina, ouăle, untul, '
+                    . 'și din ce zi —, din care se socotesc costul fiecărui produs și ce rămâne din '
+                    . 'el. Fără tabelul lui, niciun preț n-are unde se scrie, deci nici costul n-are '
+                    . 'din ce se socoti. Articolele, rețetele și mișcările din depozit nu-l cer.',
+            ],
+            // `orders_deleted` e numărat sus, la tabelele aplicației; aici stă
+            // numai lămurirea. Arhiva pornește goală, iar migrarea n-are semn.
+            '035_comenzi_sterse.sql' => [
+                'nume'    => 'Ce era într-o comandă ștearsă (migrarea 035)',
+                'coloane' => [],
+                'setari'  => [],
+                'ce'      => 'Ține poza unei comenzi anulate care a fost apoi ștearsă: antetul, '
+                    . 'pozițiile, cine a șters-o și când — ca ștergerea să se poată citi și după ce '
+                    . 'rândul a plecat din `orders`. Fără tabelul ei, poza n-are unde se face.',
+            ],
         ];
 
         // Coloanele fiecărui tabel se cer o singură dată, nu o dată pe migrare:
@@ -979,6 +1047,138 @@ if ($hasConfig) {
                     : '')
                     . $m['ce'] . ' Importă sql/' . $fisier . ' din phpMyAdmin — sau, mai bine, '
                     . 'rulează toate fișierele din sql/ în ordinea numelui, cum face instaleaza-vps.sh.',
+                false
+            );
+        }
+
+        // --- ceasul plăților (runda 2.7.0) ---------------------------------
+        //
+        // Raportul de încasări e primul lucru din aplicație pe care nu-l cere
+        // nicio pagină: îl pornește serverul, din /etc/cron.d. Lipsa lui nu
+        // strică nimic la vedere — „Încasări" se deschide, chatul se salvează,
+        // butonul de probă trimite — doar că la ora aleasă nu pleacă nimic. E
+        // genul de lipsă pe care n-o găsește nimeni, deci se caută aici.
+        //
+        // Rândul spune și ULTIMA TRIMITERE, cu starea ei: un ceas pus care n-a
+        // mai însemnat nimic de două zile, cu chat și ore alese, e un ceas care
+        // nu rulează.
+        //
+        // Se citesc numai `settings` și `notifications`; nicio coloană a
+        // migrării 032 nu e numită aici. Chatul NU se scrie pe pagină.
+        $ceasFisier = '/etc/cron.d/goldenpastry-plati';
+        $ceasPhp    = is_file(__DIR__ . '/cron/plati.php');
+        $ceasText   = is_file($ceasFisier) && is_readable($ceasFisier) ? (string) file_get_contents($ceasFisier) : '';
+        $ceasPus    = $ceasText !== '' && strpos($ceasText, 'api/cron/plati.php') !== false;
+        $peWindows  = DIRECTORY_SEPARATOR === '\\';
+
+        $ceasSet = [];
+        // Chatul și orele, alese de mai mult de două zile? (`updated_at` se
+        // mută singur la orice salvare a rândului.) Fără coloană, nu se știe,
+        // deci nu se acuză.
+        $ceasAlesDemult = false;
+        if (in_array('settings', $tables, true)) {
+            $cuData = in_array('updated_at', $vaz('settings'), true);
+            $st = $pdo->prepare(
+                'SELECT setting_key, value, ' . ($cuData ? '(updated_at < NOW() - INTERVAL 2 DAY)' : '0') . ' AS demult'
+                . ' FROM settings WHERE setting_key IN (?, ?, ?, ?)'
+            );
+            $st->execute(['plati_telegram_chat_id', 'plati_raport_ore', 'plati_raport_trimis_1', 'plati_raport_trimis_2']);
+            $demult = [];
+            foreach ($st->fetchAll(PDO::FETCH_ASSOC) as $r) {
+                $ceasSet[(string) $r['setting_key']] = trim((string) ($r['value'] ?? ''));
+                $demult[(string) $r['setting_key']]  = (int) $r['demult'] === 1;
+            }
+            $ceasAlesDemult = ($demult['plati_telegram_chat_id'] ?? false) && ($demult['plati_raport_ore'] ?? false);
+        }
+        $ceasChat = ($ceasSet['plati_telegram_chat_id'] ?? '') !== '';
+        $ceasOre  = trim(str_replace(',', ' ', $ceasSet['plati_raport_ore'] ?? '')) !== '';
+        $ceasZi   = max($ceasSet['plati_raport_trimis_1'] ?? '', $ceasSet['plati_raport_trimis_2'] ?? '');
+
+        $ceasUltim = 'nicio trimitere a ceasului până acum';
+        if (in_array('notifications', $tables, true) && in_array('event', $vaz('notifications'), true)) {
+            // FĂRĂ RAPORTUL DE PROBĂ. Butonul „Trimite un raport de probă" din
+            // „Încasări" scrie tot pe evenimentul plati_raport, dar îl apasă un
+            // om, nu ceasul: socotit aici, un ceas care n-a rulat niciodată ar
+            // fi arătat „ultima trimitere: raport, azi, plecată" după o singură
+            // apăsare. Se deosebește prin subiect — cel din GP_PLATI_TRIMITERI
+            // (api/lib/plati-raport.php), scris aici a doua oară fiindcă pagina
+            // asta nu încarcă bibliotecile; check-plati le ține la fel.
+            $faraProba = in_array('subject', $vaz('notifications'), true);
+            $st = $pdo->prepare(
+                'SELECT event, status, COALESCE(sent_at, created_at) AS la FROM notifications'
+                . ' WHERE event IN (?, ?)' . ($faraProba ? ' AND (subject IS NULL OR subject <> ?)' : '')
+                . ' ORDER BY id DESC LIMIT 1'
+            );
+            $st->execute(array_merge(['plati_raport', 'plati_amintire'], $faraProba ? ['Raport de probă'] : []));
+            $r = $st->fetch(PDO::FETCH_ASSOC);
+            if ($r) {
+                // Clipa stă în bază pe UTC; aici se scrie pe ceasul patiseriei.
+                $la = (new DateTimeImmutable((string) $r['la'], new DateTimeZone('UTC')))
+                    ->setTimezone(new DateTimeZone('Europe/Bucharest'))->format('d.m.Y H:i');
+                $ceasUltim = 'ultima trimitere: ' . ($r['event'] === 'plati_amintire' ? 'amintire' : 'raport')
+                    . ', ' . $la . ', ' . ($r['status'] === 'sent' ? 'plecată' : 'NEPLECATĂ');
+            }
+        }
+
+        // Ceasul a amuțit? Numai când are ce trimite (chat și măcar o oră) și
+        // ultima zi însemnată e mai veche de ieri. Fără chat, tăcerea e cea cerută.
+        //
+        // …ORI N-A BĂTUT NICIODATĂ. Până pe 9 oct. 2026 se cerea o zi însemnată
+        // (`$ceasZi !== ''`), deci tocmai ceasul care nu pornise NICIODATĂ —
+        // rândul scris pe un server fără cron — trecea drept bun, cât timp nu
+        // apuca să însemneze nimic. Acum: fișierul de cron pus de mai mult de
+        // două zile, chatul și orele alese tot de atâta vreme, și nicio zi
+        // însemnată. Două zile, ca la celălalt caz: în ele au trecut cel puțin
+        // trei ore de raport, oricum ar sta ceasurile bazei față de al serverului.
+        $ieri          = (new DateTimeImmutable('yesterday', new DateTimeZone('Europe/Bucharest')))->format('Y-m-d');
+        $ceasPusLa     = $ceasPus ? (int) @filemtime($ceasFisier) : 0;
+        $ceasNiciodata = $ceasZi === '' && $ceasAlesDemult && $ceasPusLa > 0 && $ceasPusLa < time() - 2 * 86400;
+        $ceasAmutit    = $ceasPus && $ceasChat && $ceasOre && ($ceasZi !== '' ? $ceasZi < $ieri : $ceasNiciodata);
+
+        if (!$ceasPhp) {
+            $ceasGasit = 'lipsește api/cron/plati.php';
+        } elseif ($peWindows) {
+            // Calculatorul de lucru n-are /etc/cron.d și nici nu trebuie: acolo
+            // ceasul îl pornesc probele, cu mâna.
+            $ceasGasit = 'nu se judecă pe Windows (pe server îl pune actualizeaza-vps.sh)';
+        } elseif (!$ceasPus) {
+            $ceasGasit = is_dir('/etc/cron.d') ? 'nepus: lipsește ' . $ceasFisier : 'nepus: serverul nu are cron (/etc/cron.d)';
+        } else {
+            $ceasGasit = 'pus, din 5 în 5 minute';
+        }
+        check(
+            'Ceasul plăților (raportul de încasări pe Telegram)',
+            $ceasPhp && ($peWindows || $ceasPus) && !$ceasAmutit,
+            $ceasGasit . ' · ' . ($ceasChat ? $ceasUltim : 'chatul banilor nu e ales, deci nu pleacă nimic')
+                . ($ceasAmutit ? ' · ultima zi însemnată: ' . ($ceasZi !== '' ? $ceasZi : 'niciuna, niciodată') : ''),
+            $ceasAmutit
+                ? ($ceasZi !== ''
+                    ? 'Ceasul e pus, chatul și orele sunt alese, dar de două zile n-a mai plecat niciun raport. '
+                    : 'Ceasul e pus de mai mult de două zile, chatul și orele sunt alese, dar n-a însemnat '
+                        . 'niciodată vreo oră: nu rulează (de obicei: serverul nu are programul cron, ori '
+                        . 'serviciul lui e oprit). ')
+                    . 'Vezi ce spune: journalctl -t gp-plati -n 20 — și dacă serviciul cron merge: '
+                    . 'systemctl status cron (dacă lipsește: apt-get install -y cron).'
+                : 'Raportul de încasări și amintirile de scadență le pornește serverul, nu o pagină: '
+                    . 'fără rândul din ' . $ceasFisier . ' nu pleacă niciunul, oricât de bine ar fi pus '
+                    . 'chatul în „Încasări". Îl scrie actualizeaza-vps.sh (și cu --doar-fisiere) și '
+                    . 'instaleaza-vps.sh; dacă lipsește cron, întâi: apt-get install -y cron.',
+            false
+        );
+
+        // Adresa Telegramului se poate muta din config.php pe un primitor
+        // local, pentru probe. Rămasă mutată pe server, TOATE anunțurile —
+        // comenzi, cereri, raportul de bani — pleacă în gol, fără nicio eroare
+        // la vedere. Se scrie numai gazda, niciodată tokenul.
+        $tgBaza = trim((string) ($cfg['telegram_api_base'] ?? ''));
+        if ($tgBaza !== '') {
+            check(
+                'Adresa Telegramului',
+                false,
+                'mutată din config.php spre ' . ((string) (parse_url($tgBaza, PHP_URL_HOST) ?: 'o adresă care nu se poate citi')),
+                'În api/config.php, telegram_api_base trebuie să fie goală pe server (ori să lipsească): '
+                    . 'cu ea pusă, niciun mesaj nu ajunge la Telegramul adevărat. Cheia e numai pentru '
+                    . 'probele de pe calculatorul de lucru.',
                 false
             );
         }

@@ -5,13 +5,13 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **o sută patruzeci de minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele optsprezece plimbări stă singură și își spune la
-început cât ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale
+Durează **două sute șaisprezece minute** cu totul. Nu trebuie făcută dintr-o
+bucată: fiecare din cele douăzeci și două de plimbări stă singură și își spune
+la început cât ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale
 bucăților care au minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o
 plimbare, se adună și aici.
 
-Cele optsprezece, în ordinea în care se fac cel mai ușor:
+Cele douăzeci și două, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -63,10 +63,33 @@ Cele optsprezece, în ordinea în care se fac cel mai ușor:
     laboratorul oprit la „Gata de livrare" (17.2), „Marchează livrat",
     „Resetează bifele" și comanda care se face gri (17.3), livrarea pusă din
     „Comenzi" și ridicarea închisă de birou (17.4).
-18. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+18. **Runda 2.7.0 la prag** — contul nou, fără nimic de plată, și prima
+    comandă (18.1), a doua trecută cu avertizare (18.2), a treia oprită și
+    mesajul din „Contactează-ne" (18.3), refuzul din „Comenzi", la manager
+    (18.4), întrebarea fondatorului și rândul din Jurnal (18.5), pagina
+    clientului, oprit și apoi plătit (18.6), și pragul schimbat din Setări,
+    din Conturi și din Încasări (18.7).
+19. **Runda 2.7.0 la bani** — cine vede „Încasări" (19.1), plăcile și
+    pastilele (19.2), comutatorul cu patru poziții, pe o comandă de probă
+    (19.3), „Amânată" și ziua ei (19.4), soldul clientului, „Avertizare" și
+    „Blocat" (19.5), raportul de pe Telegram, cu ceasul rulat în gol (19.6),
+    și partea „Încasări" din Statistici, cu cele două nume îndreptate (19.7).
+20. **Runda 2.7.0 în birou** — tabelul din „Acces" și bifele care nu se mută
+    (20.1), o bifă luată de la un rol (20.2), un preț nou în Depozit ›
+    „Prețuri" (20.3), costul în formularul produsului (20.4), prețul de probă
+    șters (20.5), profitul din Statistici (20.6), comanda de probă plătită,
+    anulată, și refuzul ștergerii (20.7), ce nu mai vede managerul (20.8),
+    ștergerea, „Ce era în comandă" din Jurnal și totul pus la loc (20.9).
+21. **Runda 2.7.0 pe ecran** — fereastra produsului la mijloc, cu `Esc`
+    (21.1), finalizarea la fel (21.2), „Istoricul comenzilor" la client
+    (21.3), „Comandă din nou" care adună peste coș, cu „Scoate-le înapoi"
+    (21.4), formularul din „Comenzi" care întreabă la „înapoi" (21.5), copia
+    cu ziua goală, din „Istoric" (21.6) și întrebarea din Catalog, la clicul
+    pe lângă formular (21.7).
+22. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A optsprezecea se face la capăt dinadins: prinde într-o singură trecere tot ce
-ai deschis mai devreme.
+A douăzeci și doua se face la capăt dinadins: prinde într-o singură trecere
+tot ce ai deschis mai devreme.
 
 ---
 
@@ -166,23 +189,31 @@ Pe telefon, e butonul **☰** din dreapta barei de sus.
 
 | Cont | Cade pe | În sertar, exact astea |
 |---|---|---|
-| `demo-fondator` | Comenzi | Comenzi · Laborator · Rută · Depozit · **Pontaj** · Catalog · Conturi · Recomandări · Jurnal · **Statistici** · Setări · Parola mea |
-| `testadmin` | Comenzi | aceleași, **fără Statistici** — unsprezece |
-| `demo-manager` | Comenzi | Comenzi · Laborator · Rută · Depozit · **Pontaj** · Parola mea |
+| `demo-fondator` | Comenzi | Comenzi · Laborator · Rută · Depozit · **Pontaj** · Catalog · Conturi · Recomandări · Jurnal · **Încasări** · **Statistici** · Setări · **Acces** · **Istoric** · Parola mea |
+| `testadmin` | Comenzi | aceleași, **fără Încasări, Statistici și Acces** — douăsprezece |
+| `demo-manager` | Comenzi | Comenzi · Laborator · Rută · Depozit · **Pontaj** · **Istoric** · Parola mea |
 | `testangajat` | Laborator | Laborator · Rută · Depozit · **Pontaj** · Parola mea |
-| `mihai` | **Recomandări** | Comenzi · Recomandări · Parola mea |
+| `mihai` | **Recomandări** | Comenzi · Recomandări · **Istoric** · Parola mea |
+
+Tabelul e cel **din pornire**, adică de dinainte ca fondatorul să fi mutat vreo
+căsuță în pagina „Acces". Dacă ai dat ori ai luat ceva de acolo, sertarele
+arată ce ai hotărât tu, nu ce scrie aici; „Înapoi la început", din „Acces", le
+aduce la tabel.
 
 **Ce caut aici, mai ales:**
 
-- **Managerul și angajatul au acum „Pontaj" în sertar.** E intrarea nouă. Dacă
-  lipsește, pachetul nu duce `shared/gp-api.js` proaspăt.
-- **„Statistici" e singurul buton pe care fondatorul îl are și administratorul
-  nu.** Până acum, cele două sertare erau la fel, iar deosebirea dintre roluri se
-  vedea numai în Conturi. Pune-le una lângă alta: intri cu `demo-fondator`,
-  numeri **douăsprezece** intrări, ieși, intri cu `testadmin` și numeri
-  **unsprezece**. Dacă administratorul vede „Statistici", poarta de pe server
-  (`GP_STATS_ROLES`) și sertarul s-au despărțit — e defect, și e cel mai supărător
-  fel de defect, fiindcă butonul duce la un refuz.
+- **Managerul și angajatul au „Pontaj" în sertar.** Dacă lipsește, pachetul nu
+  duce `shared/gp-api.js` proaspăt.
+- **De la 2.7.0, „Istoric" e în sertarul oricui scrie comenzi** — fondator,
+  administrator, manager și agent —, dar **nu** și în al angajatului.
+- **Trei intrări le are fondatorul și administratorul nu: „Încasări",
+  „Statistici" și „Acces".** Pune sertarele unul lângă altul: intri cu
+  `demo-fondator`, numeri **cincisprezece** intrări, ieși, intri cu `testadmin`
+  și numeri **douăsprezece**. Dacă administratorul vede vreuna din cele trei
+  fără să i-o fi dat fondatorul din „Acces", poarta de pe server și sertarul
+  s-au despărțit — e defect, și e cel mai supărător fel de defect, fiindcă
+  butonul duce la un refuz. „Acces" nu se poate da nimănui: dacă o vede altcineva
+  decât fondatorul, e defect oricum.
 - **Fondatorul are „Statistici" și în panoul de comenzi, în grupa „În
   comenzi".** Pe monitor stă în bara din stânga, sub **„Cereri de pe site"**, cu o
   săgeată → în loc de număr, fiindcă nu e o vedere a panoului, ci altă pagină.
@@ -213,9 +244,10 @@ Magazinul e la un clic — butonul **„Intră în magazin"** de pe pagina de in
 —, dar acela e o săritură între subdomenii: local te duce pe site-ul adevărat
 (`goldenpastry.ro`). Te întorci tastând `http://127.0.0.1:8101/`.
 
-**Trebuie să vezi**, în sertarul lui: **Comanda mea · Recomandări · Parola mea**
-— „Recomandări" fiindcă are cod (`cumparator`). Intră apoi cu **`testclient`**,
-care **n-are** cod: în sertarul lui rămân doar **Comanda mea · Parola mea**.
+**Trebuie să vezi**, în sertarul lui: **Recomandări · Comanda mea · Istoric ·
+Parola mea** — „Recomandări" fiindcă are cod (`cumparator`), „Istoric" fiindcă,
+de la 2.7.0, orice client îl are. Intră apoi cu **`testclient`**, care
+**n-are** cod: în sertarul lui rămân **Comanda mea · Istoric · Parola mea**.
 
 ---
 
@@ -565,8 +597,8 @@ practic invizibil ziua.
 
 ## 6 · Statisticile, care sunt numai ale fondatorului
 
-*Cinci minute. Panoul cel mai nou, și singurul din casă cu o poartă mai strâmtă
-decât a administratorului.*
+*Cinci minute. Un panou cu poarta mai strâmtă decât a administratorului: din
+pornire îl vede numai fondatorul.*
 
 **Apeși:** intri cu `demo-fondator` și apeși **„Statistici"** în sertar (sau, în
 panoul de comenzi, în grupa **„În comenzi"**). Pe amândouă le-ai numărat deja la
@@ -632,8 +664,8 @@ văzut doar că cifra pe „ziua comenzii" nu e absurdă.
 și asta e jumătate din probă.
 
 **Trebuie să vezi:** un ecran închis la culoare, cu sigla casei și rândul
-*„Contul «testadmin» nu are acces la statistici. Cifrele casei se deschid numai
-fondatorului — nici măcar administratorului, care conduce patiseria zi de zi."*
+*„Contul «testadmin» nu are acces la statistici. Cifrele casei le vede fondatorul
+și cine a primit pagina de la el."*
 Dedesubt, două butoane: înapoi la panoul lui și ieșirea lui obișnuită. **Niciun
 buton din ecranul ăsta nu are voie să ducă la un al doilea refuz** — de-aia sunt
 socotite din rolul omului, nu scrise de mână.
@@ -865,8 +897,10 @@ tale au rămas în formular."* În fila B, comanda e tot în **„În cuptor"**,
 **telefonul a rămas cel vechi** — din salvarea aceea n-a plecat nimic, nici
 măcar câmpurile care n-au nicio legătură cu etapa.
 
-**Apeși:** în fila A închizi formularul cu **„Anulează"** (butonul de jos, nu
-etapa), pui comanda înapoi în etapa în care ai găsit-o și închizi una din file.
+**Apeși:** în fila A închizi formularul cu **„Închide"**, butonul de jos.
+Telefonul tastat e încă în el, deci pagina întreabă: **„Ieși fără să salvezi
+comanda #…?"** Apeși **„Ies fără să salvez"**. Pui comanda înapoi în etapa în
+care ai găsit-o și închizi una din file.
 
 ### 7.7 Ecranul rămas în urmă: tableta din laborator
 
@@ -1155,13 +1189,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.6.0 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.7.0 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.6.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.7.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1350,7 +1384,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.6.0 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.7.0 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -1894,8 +1928,10 @@ Apoi schimbi numai cantitatea, pe rând, **fără să salvezi**:
 Rândul cu 90 e cel care contează: fără el, „cer 150 la B, apoi tai la 90" ar fi
 adus B unei cantități care nu l-ar fi primit niciodată.
 
-Închizi formularul cu **×**, fără să salvezi. În Catalog pui B la loc,
-**3,90**. Comanda o anulezi ca la 7.4: **„Editează comanda"** → la **„Stare"**,
+Închizi formularul cu **×**, fără să salvezi: cantitatea schimbată e încă în
+el, deci pagina întreabă **„Ieși fără să salvezi comanda #…?"**, iar tu apeși
+**„Ies fără să salvez"**. În Catalog pui B la loc, **3,90**. Comanda o anulezi
+ca la 7.4: **„Editează comanda"** → la **„Stare"**,
 **„Anulată"** → **„Salvează modificările"**.
 
 ### 13.6 Vederile magazinului, și cea de pornire din Setări
@@ -1920,11 +1956,13 @@ Pui la loc **„Patru pe ecran"** în Setări, și salvezi.
 
 Tot în fereastra privată treci pe 390 și reîncarci.
 
-**Trebuie să vezi:** pornește pe **„Unul pe rând"** — pornirea de telefon, pe
-care n-ai atins-o. Alegerea de pe calculator nu trece pe telefon: se țin minte
-deosebit. „Patru pe ecran" pune **două** carduri pe rând, „Șase pe ecran"
-**trei**: pe un ecran îngust grila pune câte încap, fără să strivească vreun
-card.
+**Trebuie să vezi:** pornește pe **„Patru pe ecran"**, cu **două** carduri pe
+rând. De la 2.7.0 e pornirea și pe telefon; până atunci era „Unul pe rând".
+Se alege deosebit de cea de pe calculator, din același card din Setări, la
+**„Cum se deschide magazinul pe telefon și tabletă"**, iar o vedere aleasă pe
+calculator nu trece pe telefon: se țin minte deosebit. „Șase pe ecran" pune
+**trei** carduri pe rând: pe un ecran îngust grila pune câte încap, fără să
+strivească vreun card.
 
 ### 13.7 Filtrele magazinului
 
@@ -2198,7 +2236,8 @@ rând: la trei, cutiile n-ar mai avea loc. De pe la **1130** revin trei.
 
 ### 15.2 Telefonul: numele și prețul, într-o bulă
 
-Treci pe **390**, reîncarci și apeși **„Patru pe ecran"**.
+Treci pe **390** și reîncarci. De la 2.7.0 magazinul se deschide și aici pe
+**„Patru pe ecran"**; până atunci trebuia apăsat.
 
 **Trebuie să vezi:** **două** carduri pe rând. Jos pe fiecare poză, o **bulă
 întunecată**: numele, prețul cu semnul catalogului, apoi prețul celuilalt
@@ -2346,8 +2385,8 @@ adăugată: #… · Plimbare 2.6.0 livrare."* Notează-ți numărul: e **comanda
 **Apeși:** pe rândul ei, **„Vezi produsele"** → **„Editează comanda"**.
 **Trebuie să vezi** titlul **„Editează comanda #…"**, iar aici **„Stare"** și
 **„Referință"** sunt la locul lor: la corectare chiar scriu. Închizi cu
-**„Anulează"** de jos, care închide formularul fără să salveze; comanda nu se
-atinge.
+**„Închide"** de jos. N-ai schimbat nimic, deci formularul se închide fără
+nicio întrebare; comanda nu se atinge.
 
 **Apeși:** ieși, intri cu `demo-manager` → **„+ Comandă nouă"**. Același titlu,
 același buton, tot fără „Stare" și „Referință". Client `Plimbare 2.6.0
@@ -2447,8 +2486,11 @@ ciocolată".
 apare în magazin. PDF, maximum 10 MB."* Nimic n-a plecat încă: scoaterea se
 face numai la salvare.
 
-**Apeși „Păstrează fișa"**, apoi **„Renunță"**. **Nu salva.** Dacă ai salvat
-din greșeală, editezi iar produsul, alegi la congelat fișierul
+**Apeși „Păstrează fișa"**, apoi **„Renunță"**. **Nu salva.** Formularul se
+închide fără nicio întrebare: cu fișa păstrată, nimic din el nu mai e
+schimbat. Dacă te întreabă **„Ieși fără să salvezi produsul?"**, ai apăsat
+„Renunță" cu scoaterea încă pusă; apeși **„Ies fără să salvez"**, tot nimic
+n-a plecat. Dacă ai salvat din greșeală, editezi iar produsul, alegi la congelat fișierul
 `fise/fisa-tehnica-croissant-cu-ciocolata-congelat.pdf` din folderul
 proiectului și salvezi.
 
@@ -2473,7 +2515,8 @@ singur —, apoi la **„Comanda este anulată când ajunge la"** alegi tot
 **Trebuie să vezi:** *„Aceeași etapă, «Predată», nu poate și încheia, și anula
 comanda. Alege două etape diferite la «Etapele cu rol special»."*
 
-**Apeși „Renunță"**, din bara de sus. **Trebuie să vezi** cele două liste cum
+**Apeși „Renunță"**, din bara de sus. Pagina întreabă **„Arunci schimbările
+nesalvate?"**; apeși **„Le arunc"**. **Trebuie să vezi** cele două liste cum
 erau și **niciun** „Ai modificări nesalvate". Bifele de anunțuri le pui la loc
 abia la capătul lui 17: plimbarea următoare le mai folosește.
 
@@ -2614,7 +2657,1372 @@ lucrează cineva pe ruta zilei: ar pierde și bifele lui.
 
 ---
 
-## 18 · Telefon, tabletă, calculator
+## 18 · Runda 2.7.0 la prag: avertizarea, oprirea, mesajul, trecerea peste prag, de unde se schimbă
+
+*Nouăsprezece minute. Pragul de comenzi neplătite, văzut pe rând de client, de
+manager și de tine: unde previne, unde oprește, cine trece peste el, ce rămâne
+scris și de unde se schimbă. Banii înșiși, cu pagina „Încasări", sunt plimbarea
+următoare (19); aici o deschizi numai ca să vezi „Plătită" la client și, la
+capăt, a treia ușă a pragului.*
+
+Pe 4 octombrie 2026 ai hotărât ca un client cu două comenzi neplătite să nu mai
+primească a treia până nu plătește. Pragul e 2 pentru toți și se schimbă din
+Setări ori din Încasări; excepția unui client — un număr al lui ori „fără
+limită" — se pune din Conturi; peste prag trece, din pornire, numai fondatorul,
+iar trecerea rămâne scrisă în Jurnal. Clientul își vede soldul în capul paginii
+„Comanda mea" și „De plată" ori „Plătită" pe fiecare comandă. Tot pe pachetul
+construit (8101), pe calculator (1440).
+
+**Ce ține loc la prag:** comenzile legate de contul clientului care nu sunt nici
+plătite, nici anulate — și cele trecute pe „Amânată" (19.4) —, plus cererile
+trimise din magazin, cu produse, pe care biroul încă nu le-a acceptat. Soldul
+adună numai comenzile: o cerere neacceptată nu e o datorie. Poarta e pe server;
+magazinul, „Comanda mea" și formularul din „Comenzi" scriu ce răspunde el.
+
+**Două ferestre.** Cea obișnuită e a **biroului**. Una **privată**
+(`Ctrl+Shift+N`) e a **clientului**, cu două file: **magazinul** și **„Comanda
+mea"**. Sesiunea e a browserului, nu a filei: într-o singură fereastră, contul
+clientului ar intra peste al tău.
+
+**Pregătești:** în fereastra biroului, `demo-fondator` → `/lab/setari.html` →
+fila **„General"** → cardul **„Comenzi neplătite"**. La **„Prag de comenzi
+neplătite"** trebuie să scrie **2**. Dacă scrie altceva, notează-ți cifra, scrie
+2 și apasă **„Salvează"**, din bara care apare sus: plimbarea e socotită pe
+pragul 2, iar cifra ta o pui la loc la capăt. Apoi fila **„Notificări"** →
+**„Ce anunțuri primești, și pe unde"**: notează-ți cum sunt bifele și scoate
+**Telegram** și **WhatsApp** de pe rândurile **„Cerere nouă"**, **„Comandă
+nouă"**, **„Comandă anulată"** și **„Cont nou pe site"** → **„Salvează"**.
+Plimbarea face un cont, trimite trei cereri, scrie două comenzi și le anulează,
+iar de pe calculatorul tău amândouă canalele trimit de-adevăratelea — Telegram
+în grupul echipei, WhatsApp pe numărul tău. E-mailul, unde e bifat, cade în
+Mailpit (`http://127.0.0.1:8025`) și nu pleacă nicăieri.
+
+### 18.1 Cont nou și prima comandă: de la „Nu ai nimic de plată." la „De plată"
+
+**Apeși:** în fereastra clientului, `http://127.0.0.1:8101/clienti/index.html`
+→ **„Fă-ți cont"** (ca la 4.1). La **„Numele tău"** scrii `Plimbare 2.7.0 prag`,
+la **„Utilizator"** `plimbare-270-prag`, un telefon, la **„Adresa firmei"**
+`Strada Probei 1`, la **„Zona"** una din oraș, și o parolă de cel puțin 8
+caractere, pe care o ții minte până la capăt. **„E-mail"** și codul de
+recomandare rămân goale: contul de probă n-are de ce primi scrisori. Apoi
+**„Creează contul"**. Dacă pagina răspunde *„Există deja un cont cu acest
+utilizator."*, a rămas contul unei plimbări lăsate la jumătate: faci întâi
+„Desfaci tot", de la capătul plimbării, și o iei de aici.
+
+**Trebuie să vezi** pagina **„Comanda mea"** și, primul lucru de pe ea,
+cartonașul soldului: **„Nu ai nimic de plată."** — un cartonaș ca toate
+celelalte, fără roșu. Contul e nou, deci pornești sigur de la zero. Dacă nu
+vezi niciun cartonaș de sold, serverul n-a răspuns că pragul e pornit (bază
+fără migrarea 032): oprește-te aici, plimbarea n-are ce arăta.
+
+**Apeși:** în a doua filă a ferestrei private, `http://127.0.0.1:8101/catalog`
+→ pe un produs, **„Adaugă în comandă"** → în coș, **„Finalizare comandă"**.
+
+**Trebuie să vezi** fereastra **„Finalizare comandă"**, iar deasupra butonului
+**„Finalizează comanda"** **nimic** galben și nimic roșu: cine n-are nimic
+neplătit nu află că există un prag.
+
+**Apeși „Finalizează comanda".** **Trebuie să vezi** mulțumirea de la 4.2 —
+*„Comanda a ajuns la noi. Intră în producție după ce o confirmăm — o vezi în
+«Comanda mea», din meniul contului."* Închizi fereastra cu **„Închide"**.
+
+**Apeși:** în fereastra biroului, `/lab/comenzi.html` → fila **„Cereri de pe
+site"** → pe cererea lui, **„Acceptă și fă comanda"** → nu schimbi nimic → jos,
+**„Acceptă cererea"** (ca la 4.3).
+
+**Trebuie să vezi** sus *„Cerere acceptată → #… · Plimbare 2.7.0 prag."*
+Notează-ți numărul: e **comanda A**. S-a născut neplătită, ca orice comandă.
+
+**Apeși:** `/lab/conturi.html` → placa lui `Plimbare 2.7.0 prag`, ca să i se
+deschidă fișa → la **„Cont făcut de pe site"**, unde scrie **„Nerecunoscut"**,
+apeși **„Recunosc clientul"**.
+
+**Trebuie să vezi** sus *„«Plimbare 2.7.0 prag» e recunoscut. De acum comenzile
+luate la telefon pe numele lui i se leagă de contul lui."* Fără pasul ăsta, o
+comandă scrisă în birou pe numele lui nu s-ar lega de cont, iar o comandă fără
+cont n-are prag: 18.4 și 18.5 n-ar avea ce arăta.
+
+**Trebuie să vezi** în fila „Comanda mea", în câteva secunde de când o aduci în
+față și fără reîncărcare: cartonașul soldului scrie **„Sold de plată: … RON ·
+1 comandă"**, tot fără roșu, iar pe comanda A stă insigna **„De plată"**.
+
+### 18.2 A doua comandă trece, cu avertizare
+
+**Apeși:** în fila magazinului, alt produs → **„Adaugă în comandă"** →
+**„Finalizare comandă"**.
+
+**Trebuie să vezi**, deasupra butonului, un rând galben: *„Ai 1 comandă
+neplătită (… RON). Poți trimite încă una; după aceea comenzile se opresc până
+la plată."* În paranteză e soldul, adică suma comenzii A. Butonul e tot
+**„Finalizează comanda"**, aprins.
+
+**Apeși „Finalizează comanda"**, apoi **„Închide"**. Cererea asta rămâne
+**neacceptată** până la 18.6: de acum ține și ea loc la prag.
+
+### 18.3 A treia e oprită; „Contactează-ne" trimite numai un mesaj
+
+**Apeși:** al treilea produs → **„Adaugă în comandă"** → **„Finalizare
+comandă"**.
+
+**Trebuie să vezi**, în locul rândului galben, o casetă roșie:
+- **„Numărul maxim de comenzi a fost atins."**;
+- *„Până plătești soldul comenzilor precedente nu putem primi o comandă
+  nouă."*;
+- un singur rând în listă: comanda A, cu numărul, ziua și suma ei;
+- **„Sold de plată: … RON"** — aceeași sumă, fiindcă soldul adună numai
+  comenzile;
+- *„Se numără și o cerere trimisă, încă neacceptată."* — de asta e oprit cu o
+  singură comandă în listă;
+- butonul **„Contactează-ne"**, cu *„pentru mai multe detalii despre situația
+  actuală"* sub el;
+- butonul de trimitere **stins**, cu **„Oprit până la plată"** pe el, și
+  dedesubt: *„Comanda nu poate pleca până la plata soldului de mai sus. Coșul
+  tău rămâne salvat."*;
+- sub butonul verde **„Trimite pe WhatsApp"**: *„Cât comanda e oprită, WhatsApp
+  trimite numai un mesaj cu datele tale de contact, fără produsele din coș."*
+  Oprirea ține deci și pe drumul acela.
+
+Butonul verde tot nu-l apăsa: deschide WhatsApp-ul adevărat, spre numărul
+patiseriei.
+
+**Apeși „Contactează-ne".**
+
+**Trebuie să vezi** același formular, schimbat pe loc — nu altă pagină:
+- titlul **„Scrie-ne un mesaj"** și *„Pleacă numai mesajul de mai jos, fără
+  produse. Coșul tău rămâne salvat, neatins."*;
+- în locul casetei roșii, caseta **„Mesajul tău"**, cu textul scris gata:
+  *„Vreau să vorbesc cu cineva despre comenzile neplătite."*, și sub ea *„Poți
+  schimba textul. Pleacă numai mesajul — produsele din coș rămân la locul
+  lor."*;
+- butonul de trimitere aprins, **„Trimite mesajul"**, și sub el **„Înapoi la
+  comandă"**; sub butonul verde, nota e acum *„WhatsApp trimite numai mesajul
+  și datele tale de contact, fără produsele din coș."*
+
+**Apeși „Trimite mesajul".**
+
+**Trebuie să vezi** *„Mulțumim!"* și *„Mesajul tău a ajuns la noi. Te sunăm sau
+îți scriem în aceeași zi lucrătoare. Coșul a rămas neatins."* Închizi cu
+**„Închide"**: produsul e tot în coș. Mesajul a trecut fiindcă poarta
+serverului judecă numai cererile cu produse. Iar oprirea nu e a butonului
+stins: o cerere cu produse ajunsă totuși la server ar fi refuzată acolo, cu
+aceleași vorbe.
+
+### 18.4 În „Comenzi", cu managerul: comanda nu se scrie
+
+**Apeși:** în fereastra biroului ieși — **„Ieși"** stă jos, în bara din stânga,
+lângă numele contului —, intri cu `demo-manager` → `/lab/comenzi.html` → **„+
+Comandă nouă"** → la **„Client"** scrii `Plimbare` și îl alegi din lista de sub
+casetă.
+
+**Trebuie să vezi:**
+- telefonul, adresa și zona, umplute singure din comanda A;
+- sub casetă, vorba din timp: *„Are 2 comenzi neplătite ori în așteptare (…
+  lei) — pragul e 2. Comanda nu se va putea scrie."* E numai o vorbă: „Adaugă
+  comanda" rămâne aprins, fiindcă hotărârea e a serverului, la scriere.
+
+Dacă în loc de asta scrie *„Cont nerecunoscut: comanda se scrie, dar nu se
+leagă de el…"*, ai sărit „Recunosc clientul" de la 18.1.
+
+**Apeși:** **„Din catalog"** → **„+"** pe un card → **„Gata"** (ca la 16.2);
+golești caseta **„Cod de recomandare"**, dacă e ceva în ea → **„Adaugă
+comanda"**.
+
+**Trebuie să vezi** formularul rămas deschis, cu tot ce ai scris, și în el
+refuzul:
+- *„Plimbare 2.7.0 prag are 2 comenzi neplătite ori în așteptare (… lei) —
+  pragul e 2. Nu am scris nimic."*;
+- rândul comenzii A: numărul, ziua și suma ei, în lei;
+- *„Plus o cerere în așteptare."*;
+- **„Sold neplătit: … lei"**;
+- **nicio întrebare** și niciun buton de trecere: managerul n-are, din pornire,
+  dreptul „Trece peste prag".
+
+**Apeși „Închide"**, jos. **Trebuie să vezi** întrebarea **„Ieși fără să
+salvezi comanda nouă?"**, cu *„Comanda nouă nu e salvată: ce ai scris în
+formular se pierde."* → **„Ies fără să salvez"**. N-a rămas nimic scris.
+
+### 18.5 Cu fondatorul: întrebarea, „Da, scrie comanda" și rândul din Jurnal
+
+**Apeși:** ieși, intri cu `demo-fondator` → `/lab/comenzi.html` → **„+ Comandă
+nouă"** → același client, ales din listă.
+
+**Trebuie să vezi** aceeași vorbă din timp, cu o coadă în plus: *„… Comanda nu
+se va putea scrie. Poți trece peste prag la salvare."*
+
+**Apeși:** un produs din **„Din catalog"**, golești caseta codului → **„Adaugă
+comanda"**.
+
+**Trebuie să vezi** același refuz ca la 18.4 și, sub el, întrebarea **„Treci
+peste prag pentru Plimbare 2.7.0 prag?"**, cu butoanele **„Nu"** și **„Da,
+scrie comanda"**. „Nu" lasă refuzul scris și stinge întrebarea, fără să se
+scrie nimic.
+
+**Apeși „Da, scrie comanda".**
+
+**Trebuie să vezi** formularul închis și, sus, *„Comandă nouă adăugată: #… ·
+Plimbare 2.7.0 prag."* E **comanda B**, scrisă peste prag.
+
+**Apeși:** `/lab/jurnal.html`.
+
+**Trebuie să vezi**, printre cele mai noi rânduri, cu insigna **„Conturi"**:
+*„prag_ocolit · Peste prag pentru «Plimbare 2.7.0 prag»: 2 neîncasate, pragul e
+2 — comanda #…"*, cu numărul comenzii B. Rândul stă pe contul clientului, nu
+pe comandă: răspunde la „cui i s-a dat peste prag, și de către cine".
+
+### 18.6 Pagina clientului: oprit, apoi plătit
+
+**Apeși:** în fereastra biroului, `/lab/comenzi.html` → **„Cereri de pe
+site"**.
+
+**Trebuie să vezi** două cereri ale lui: cea de la 18.2, cu produsul ei, și
+mesajul de la 18.3, cu *„Fără produse selectate — doar cerere de ofertă."* Pe
+cea cu produs apeși **„Refuză"**; sus scrie *„Cererea de la Plimbare 2.7.0 prag
+a fost refuzată."* Mesajul îl lași până la capăt.
+
+**Trebuie să vezi** în fila „Comanda mea", în câteva secunde:
+- cartonașul soldului, acum **roșu**: **„Numărul maxim de comenzi a fost
+  atins."**, *„Până plătești soldul comenzilor precedente nu putem primi o
+  comandă nouă."*, comenzile A și B cu numărul, ziua și suma lor, **„Sold de
+  plată: … RON · 2 comenzi"** și butonul **„Contactează-ne"**;
+- **„De plată"** pe amândouă comenzile;
+- sub **„Comanda trimisă, în așteptare"**, mesajul de la 18.3, fără produse,
+  cu insigna **„Se confirmă"**;
+- sub **„O cerere n-a putut fi onorată"**, cererea refuzată, cu insigna **„Nu
+  s-a putut onora"** și cu **„Comandă din nou →"** **stins**; sub buton: *„Se
+  poate din nou după plata comenzilor de mai sus."* Butonul nu dispare: omul
+  care îl caută ar crede că s-a stricat pagina.
+
+**„Contactează-ne"** de aici e o legătură spre magazin, pe alt subdomeniu:
+local nu-l apăsa. Tastezi, în fila magazinului,
+`http://127.0.0.1:8101/?subiect=neplatite`. **Trebuie să vezi** pagina Contact,
+cu același formular **„Scrie-ne un mesaj"** și același text pus gata, iar în
+bara de adrese, adresa paginii Contact, fără coada `?subiect=…`. Nu mai trimiți
+un mesaj.
+
+**Apeși:** în fereastra biroului, `/lab/incasari.html` → la **„Caută"** scrii
+`Plimbare 2.7.0` → pe rândul comenzii A, **„Plătită"**.
+
+**Trebuie să vezi** pe rând *„Salvat: Plătită."* și *„Nu mai ține de vederea
+«De încasat». Rămâne aici până reîncarci lista."*
+
+**Trebuie să vezi** în fila „Comanda mea", în câteva secunde:
+- cartonașul fără roșu: **„Sold de plată: … RON · 1 comandă"** — numai B;
+- pe A, **„Plătită"**; pe B, tot **„De plată"**;
+- **„Comandă din nou →"** aprins la loc. Nu-l apăsa: e tot o legătură spre
+  magazin.
+
+A rămas o comandă neplătită din două îngăduite: clientul e iar prevenit, ca la
+18.2. „Comanda mea" nu spune asta altfel decât prin sold; rândul galben e numai
+în magazin. Trecută pe „Amânată" în loc de „Plătită", comanda A l-ar fi ținut
+oprit: o amânare ține loc la prag până la plată (19.5).
+
+### 18.7 De unde se schimbă pragul: Setări, Conturi și Încasări
+
+**Apeși:** în fereastra biroului, `/lab/setari.html` → fila **„General"** →
+cardul **„Comenzi neplătite"** → ștergi cifra din **„Prag de comenzi
+neplătite"**.
+
+**Trebuie să vezi** sub casetă: *„Caseta goală nu se salvează: golul nu
+înseamnă zero. Scrie un număr de la 0 la 99."* Apăsat acum, **„Salvează"** din
+bara de sus nu trimite nimic și o spune, sus: *„N-am trimis nimic spre
+server."*, cu lămurirea casetei goale după ea.
+
+**Apeși:** scrii `0`. **Trebuie să vezi:** *„Zero: fără limită. Clienții care
+urmează pragul general nu mai sunt opriți, oricâte comenzi neplătite au. Cei cu
+prag al lor, pus din Conturi, rămân pe al lor."* **Nu salva** zeroul.
+
+**Apeși:** scrii `1` → **„Salvează"**. **Trebuie să vezi** *„Setările au fost
+salvate."*, iar în fila „Comanda mea", în câteva secunde, cartonașul iar
+**roșu**, cu comanda B în listă: cu pragul 1, o singură comandă neplătită
+oprește.
+
+**Apeși:** `/lab/conturi.html` → placa lui `Plimbare 2.7.0 prag` → în fișă,
+**„Prag de neplătite"**.
+
+**Trebuie să vezi** trei butoane — **„General (1)"**, apăsat, **„Al lui"** și
+**„Fără limită"** — și sub ele: *„Cu pragul 1 nu există avertizare: cât are o
+comandă neplătită, nu mai poate trimite alta până la plată."* Controlul îl
+vede, din pornire, numai fondatorul: e dreptul „Pragul de neplătite al unui
+client".
+
+**Apeși „Fără limită".** Pleacă pe loc, fără alt buton. **Trebuie să vezi** sus
+*„«Plimbare 2.7.0 prag» nu mai are limită de comenzi neplătite: nu e oprit
+niciodată."*, sub butoane *„Nu e oprit niciodată."*, pe placă și în capul fișei
+insigna **„fără limită"**, iar în „Comanda mea" cartonașul **fără roșu**, deși
+pragul general e tot 1.
+
+**Apeși „Al lui".** Se deschide caseta **„Al lui: câte comenzi neplătite"**.
+Scrii `0` → **„Salvează pragul"**. **Trebuie să vezi** refuzul: *„Scrie un număr
+de la 1 la 99. Pentru un client care nu se oprește niciodată, alege «Fără
+limită»."* Aici zeroul și golul nu se scriu: „fără limită" se alege, nu se
+tastează. Scrii `5` → **„Salvează pragul"**. **Trebuie să vezi** *„«Plimbare
+2.7.0 prag» are de acum pragul lui de neplătite: 5 comenzi."*, butonul **„Al
+lui: 5"** și insigna **„prag 5"**.
+
+**Apeși „General (1)".** **Trebuie să vezi** *„«Plimbare 2.7.0 prag» urmează de
+acum pragul general de neplătite."*, insigna dispărută și, în „Comanda mea",
+cartonașul iar roșu.
+
+**Apeși:** `/lab/incasari.html` — pagina pe care, din pornire, o are numai
+fondatorul (19.1) → cartonașul **„Pragul pentru toți clienții"** → în caseta
+lui, unde scrie 1, scrii `2` → **„Salvează pragul"**. **Trebuie să vezi** sub
+casetă *„Salvat: 2 comenzi neplătite."*, iar cartonașul clientului iar fără
+roșu. E același număr ca în Setări, schimbat pe altă ușă.
+
+**Desfaci tot:** în fereastra biroului, cu `demo-fondator`, în ordinea asta:
+- `/lab/incasari.html` → pastila **„Plătite"** → la „Caută", `Plimbare 2.7.0`
+  → pe comanda A, **„Neplătită"**; pe rând scrie *„Salvat: Neplătită."* Întâi
+  asta: o comandă anulată cu banii trecuți ca încasați ar rămâne în vederea
+  „De restituit";
+- `/lab/comenzi.html` → A și B, pe rând: **„Vezi produsele"** → la **„Etapa"**,
+  **„Anulată"** (direct, ca la 7.1). Rămân în registru, anulate, și nu mai țin
+  loc la prag;
+- fila **„Cereri de pe site"** → pe mesajul de la 18.3, **„Refuză"**: o cerere
+  fără produse nu poate deveni comandă, deci altfel nu se închide;
+- `/lab/conturi.html` → placa lui → **„Șterge contul"**, apoi **„Apasă din nou:
+  șterg definitiv contul"** (ca la 4.3). Cu el se duc și recunoașterea, și
+  orice prag al lui;
+- `/lab/setari.html`: la „General", cifra ta de la început, dacă era alta decât
+  2; la „Notificări", bifele cum le-ai găsit, cu Telegram și WhatsApp cu tot;
+- închizi fereastra privată: produsul rămas în coș de la 18.3 se duce odată cu
+  ea.
+
+Rămân în bază două comenzi anulate și trei cereri — una acceptată, două
+refuzate —, toate pe numele `Plimbare 2.7.0 prag` și fără cont legat de ele,
+plus rândurile din Jurnal ale plimbării.
+
+---
+
+## 19 · Runda 2.7.0 la bani: pagina „Încasări", cele patru stări ale plății, raportul de pe Telegram
+
+*Nouăsprezece minute. Banii casei, de la cine are voie să-i vadă până la
+raportul care pleacă pe Telegram: o comandă de probă trecută prin cele patru
+stări, soldul și starea clientului, și aceleași cifre regăsite în Statistici.
+Făcută cum scrie, plimbarea nu trimite niciun mesaj nimănui.*
+
+Pe 4–5 octombrie 2026 ai hotărât ca plata să se țină pe comanda întreagă, în
+patru stări — Neplătită, Amânată, Plătită, Bancă —, ca banii să se bifeze
+într-un singur loc, pagina „Încasări", pe care din pornire o are numai
+fondatorul, și ca raportul de bani să plece pe Telegram în chatul lui, altul
+decât cel al comenzilor. Tot pe pachetul construit (8101), pe calculator (1440).
+
+**Pregătești**, cu `testadmin`, două lucruri:
+
+- `/lab/setari.html` → fila **„Notificări"** → sus, în **„Ce anunțuri primești,
+  și pe unde"**, notează-ți cum sunt bifele pe rândurile **„Comandă nouă"** și
+  **„Comandă anulată"** și scoate de pe amândouă **Telegram** și **WhatsApp**
+  → **„Salvează"**. Comanda de probă se scrie la 19.3 și se anulează la capăt,
+  iar de pe calculatorul tău amândouă trimit de-adevăratelea — Telegram în
+  grupul echipei, WhatsApp pe numărul tău. E-mailul cade în Mailpit
+  (`http://127.0.0.1:8025`) și nu pleacă nicăieri.
+- `/lab/conturi.html` → **„+ Cont nou"**. La **„Nume afișat"** scrii
+  `Plimbare 2.7.0 bani`, la **„Utilizator"** `plimbare-bani`, la **„Parolă"**
+  orice, de cel puțin 8 caractere (contul nu intră nicăieri și îl ștergi la
+  capăt), **„E-mail de recuperare"** rămâne gol, iar la **„Acces"** alegi
+  **„Client"**. Casetele clientului, apărute acum, le lași goale → **„Adaugă
+  contul"**. Sus trebuie să scrie *„Contul «Plimbare 2.7.0 bani» a fost creat ca
+  client."* Dacă în listă e deja un „Plimbare 2.7.0 bani", rămas de la o
+  plimbare lăsată la jumătate, nu mai faci altul: ce a rămas pe el se vede și
+  se îndreaptă la 19.3 și la 19.5. Îți trebuie un cont, nu un nume scris de
+  mână pe comandă: numai contul are prag, deci „Avertizare" și „Blocat".
+
+### 19.1 Cine vede pagina
+
+**Trebuie să vezi**, tot cu `testadmin`, în meniul din stânga: **nicio** intrare
+„Încasări". Administratorul, din pornire, nu are pagina (1).
+
+**Apeși:** tastezi `http://127.0.0.1:8101/lab/incasari.html`.
+
+**Trebuie să vezi:** titlul **„Încasări"** și, sub el, *„Contul «…» nu are acces
+la încasări. Banii casei îi vede numai cine a primit pagina asta."*, cu numele
+contului între ghilimele, și două butoane: **„← Înapoi la panoul meu"** și
+**„← Alege panoul"**. Nicio sumă, nicio listă, niciun nume de client. Dacă
+`testadmin` vede totuși pagina, cineva i-a dat-o din „Acces" (20.1): o iei
+înapoi de acolo și tastezi adresa din nou.
+
+**Apeși „← Înapoi la panoul meu"** — te duce în „Comenzi" —, apoi **„Ieși"**,
+de jos, din bara din stânga, și intri cu `demo-fondator`.
+
+**Trebuie să vezi**, în meniu: intrarea **„Încasări"**, între „Jurnal" și
+„Statistici". Fondatorul le are pe toate, orice ar scrie în „Acces". O apeși.
+
+### 19.2 Capul paginii, plăcile, pastilele
+
+**Trebuie să vezi**, de sus în jos:
+- titlul **„Încasări"**, sub el **„Adus la …"**, cu ora, și butonul
+  **„Reîncarcă"**. Lista nu se împrospătează singură: ce a bifat altcineva
+  între timp vezi abia după „Reîncarcă";
+- placa mare **„De încasat acum"**: suma și, sub ea, „… comenzi · … clienți" —
+  ori *„Toate comenzile sunt plătite."*;
+- plăcile **„Amânate"** (suma, câte comenzi, și „niciuna depășită" ori câte
+  sunt depășite), **„Încasat azi"** și **„Încasat în perioadă"**, ultimele
+  două cu împărțirea „direct … | bancă …". Plăcile **„De restituit"** și
+  **„Diferențe"** apar numai când au ce spune: pe prima o vezi plină la 20.9,
+  pe a doua n-o stârnește nicio plimbare;
+- comutatorul **„Pe comenzi"** / **„Pe clienți"** și șase pastile;
+- în dreapta listei, coloana **„Cine are de plătit"**: primii doisprezece
+  clienți, de la soldul cel mai mare în jos;
+- în bara din stânga: *„Plata se ține pe comanda întreagă. O bifă pusă aici nu
+  schimbă etapa comenzii, totalul ori stocul și nu trimite niciun anunț."*
+
+Notează-ți suma și numărul de comenzi de pe „De încasat acum" și suma de pe
+„Încasat azi": plimbarea le mișcă și le aduce înapoi. Nu pornesc de la zero —
+la trecerea la 2.7.0, comenzile vechi ajunse la etapa finală, cu ziua trecută,
+au devenit „Plătită", iar celelalte „Neplătită".
+
+Cele șase pastile: **„De încasat"** — neplătitele și amânatele, cele mai vechi
+sus; pe ea se deschide pagina —, **„Amânate"**, **„Plătite"** — și cele prin
+bancă; fără perioadă aleasă arată numai ultimele 30 de zile, și o spune sub
+filtre —, **„De restituit"** — anulatele cu banii încasați —, **„Diferențe"**
+— comenzile al căror total s-a schimbat după plată — și **„Toate"**. Patru
+dintre ele poartă și numărul, după un punct — de pildă „De încasat · 9".
+
+**Apeși** pastilele pe rând și te întorci la **„De încasat"**. **Trebuie să
+vezi** lista schimbându-se la fiecare, iar pe o vedere goală vorba ei, nu o
+pagină albă — de pildă *„Nicio comandă amânată. Nimeni nu are un termen de
+plată în față."* ori *„Nimic de dat înapoi. Nicio comandă anulată nu are banii
+încasați."*
+
+### 19.3 Comanda de probă și comutatorul cu patru poziții
+
+**Apeși:** din meniu **„Comenzi"** → **„+ Comandă nouă"**. În **„Client"**
+scrii `Plimbare` și alegi din lista de sub casetă **„Plimbare 2.7.0 bani"**. La
+**„Canal"** alegi **„Ridicare"** — merge fără adresă și fără zonă. **„Din
+catalog"** → **„+"** pe cardul unui produs → **„Gata"**. Golești caseta **„Cod
+de recomandare"**, dacă e ceva în ea → **„Adaugă comanda"**.
+
+**Trebuie să vezi:** sub „Client", după ce ai ales contul, **niciun** rând
+despre comenzi neplătite — contul nu are niciuna. Formularul se închide, iar
+sus scrie *„Comandă nouă adăugată: #… · Plimbare 2.7.0 bani."* Notează-ți
+numărul comenzii.
+
+**Apeși:** din meniu **„Încasări"**, apoi în **„Caută"** scrii `Plimbare`.
+
+**Trebuie să vezi:**
+- un singur rând: numărul comenzii, ziua, totalul, „Plimbare 2.7.0 bani",
+  etapa, și comutatorul **„Neplătită"** · **„Amânată"** · **„Plătită"** ·
+  **„Bancă"**, cu **„Neplătită"** aprins — așa pornește orice comandă.
+  Notează-ți totalul. Două rânduri înseamnă o comandă rămasă de la o plimbare
+  lăsată la jumătate: pe cea veche o anulezi ca la „Desfaci" și te întorci
+  aici;
+- placa „De încasat acum" e mai mare decât ce ți-ai notat la 19.2 cu totalul
+  comenzii și cu o comandă.
+
+**Apeși „Plătită".**
+
+**Trebuie să vezi:**
+- s-a salvat din apăsare, fără alt buton: pe rând scrie **„Salvat: Plătită."**,
+  iar „Plătită" e cel aprins;
+- tot pe rând, *„Nu mai ține de vederea «De încasat». Rămâne aici până reîncarci
+  lista."* — rândul nu-ți fuge de sub deget — și clipa plății, cu numele tău:
+  „încasată … · bifată de …";
+- plăcile s-au socotit din nou: „De încasat acum" a coborât la ce ți-ai notat,
+  iar **„Încasat azi"** a crescut cu totalul comenzii, la „direct";
+- etapa comenzii, pe rând, e aceeași: plata nu mută comanda.
+
+**Apeși „Bancă".** **Trebuie să vezi:** **„Salvat: Plătită prin bancă."**, iar
+pe „Încasat azi" totalul comenzii stă acum la „bancă", nu la „direct".
+
+**Apeși „Reîncarcă".** **Trebuie să vezi:** rândul a plecat din „De încasat"; în
+locul listei scrie *„Nicio comandă pentru ce ai ales."*, cu butonul **„Șterge
+filtrele"** (nu-l apăsa: căutarea îți mai trebuie).
+
+**Apeși** pastila **„Plătite"** și, pe rândul găsit acolo, **„Neplătită"**.
+**Trebuie să vezi** **„Salvat: Neplătită."** Te întorci la pastila **„De
+încasat"**: comanda e iar la locul ei, neplătită, iar plăcile sunt cele de la
+începutul bucății. O bifă pusă din greșeală se ia înapoi cu totul.
+
+### 19.4 „Amânată" cere o zi
+
+**Apeși „Amânată"**, pe rândul comenzii de probă.
+
+**Trebuie să vezi:** nimic salvat încă — „Neplătită" e tot cel aprins —, iar
+sub rând s-a deschis o foaie: **„Plătește până pe"**, **„Notă (nu e
+obligatorie)"**, **„Renunță"** și **„Salvează"**.
+
+**Apeși „Salvează"**, fără zi. **Trebuie să vezi:** *„Alege ziua până la care
+plătește. Fără zi, amânarea nu se poate salva."*
+
+**Apeși:** la „Plătește până pe" alegi **ziua de azi** — calendarul nu lasă
+alese zilele dinaintea ei —, la notă scrii `Plimbare 2.7.0` → **„Salvează"**.
+Ziua de azi, ca raportul de la 19.6 să aibă ce aminti; altminteri amânarea
+primește orice zi de azi încolo, cel mult 365 de zile. Iar **„Renunță"**, pe o
+foaie scrisă, întreabă întâi **„Ieși fără să salvezi amânarea?"**, cu **„Rămân
+în formular"** și **„Ies fără să salvez"**.
+
+**Trebuie să vezi:**
+- foaia se închide; pe rând, **„Amânată"** aprins și **„Salvat: Amânată."**;
+- termenul, „până …", cu ziua aleasă, și **„Notă: Plimbare 2.7.0"**;
+- rândul rămâne în „De încasat": amânarea mută termenul, nu datoria;
+- placa **„Amânate"** a crescut cu totalul comenzii și cu o comandă — termenul
+  de azi nu se numără la depășite —, iar pastila „Amânate" are numărul mai
+  mare cu unu.
+
+### 19.5 Soldul clientului, „Avertizare" și „Blocat"
+
+**Apeși „Pe clienți"** (în „Caută" scrie tot `Plimbare`).
+
+**Trebuie să vezi** un singur card, **„Plimbare 2.7.0 bani"**:
+- suma e totalul comenzii de probă, iar sub ea scrie „1 comandă · cea mai veche
+  de azi";
+- pastila **„Avertizare 1/2"**: o comandă neîncasată din cele două ale pragului
+  general. Comanda e amânată și se numără la fel;
+- butonul **„Prag: general (2)"**.
+
+Dacă pe buton scrie **„Prag: al lui, …"** ori **„Prag: fără limită"**, contul a
+rămas cu pragul lui de la o plimbare lăsată la jumătate: îl apeși → **„General
+(…)"** și abia apoi mergi mai departe. Dacă scrie „general" cu altă cifră decât
+2, pragul casei a fost schimbat (18.7), iar pastila numără față de el.
+
+**Apeși „Prag: general (2)".** **Trebuie să vezi** căsuța pragului: *„Câte
+comenzi neplătite poate avea până când comenzile noi i se opresc."*, butoanele
+**„General (2)"** și **„Fără limită"**, o casetă pentru număr, cu „1–99" în ea,
+**„Pune pragul"** și **„Renunță"**.
+
+**Apeși:** scrii `1` în casetă → **„Pune pragul"**.
+
+**Trebuie să vezi:** deasupra, pe verde, *„Pragul pentru «Plimbare 2.7.0 bani» e
+acum 1 comandă neplătită."*; pe card, pastila **„Blocat 1/1"** și butonul
+**„Prag: al lui, 1"**. Din clipa asta, o comandă nouă pe numele lui e oprită la
+salvare (18.4). Îl deblochează plata — „Plătită" ori „Bancă" —, fără să umble
+cineva la prag, cum ai văzut la 18.6; „Amânată" nu.
+
+**Apeși „Prag: al lui, 1"** → **„General (2)"**. **Trebuie să vezi:** *„Pragul
+pentru «Plimbare 2.7.0 bani» e acum cel general."*, pastila **„Avertizare
+1/2"** și butonul **„Prag: general (2)"**.
+
+### 19.6 „Raport pe Telegram": ce are, și cum îl vezi fără să plece
+
+**Trebuie să vezi**, pe aceeași pagină, cartonașul **„Raport pe Telegram"**:
+- *„De două ori pe zi, în grupul ales: cât e de încasat, cât s-a încasat și ce
+  amânări au trecut de termen."*;
+- **„Chat ID"** — gol din pornire, iar cât e gol raportul nu pleacă nicăieri.
+  E alt grup decât cel al comenzilor;
+- **„Ora 1"** și **„Ora 2"** — 09:00 și 18:00 din pornire —, fiecare cu
+  **„Oprește"** lângă ea;
+- comutatorul **„Amintiri la Amânate"**, pornit din pornire: la primul raport
+  al zilei pleacă și un mesaj cu amânările ajunse la termen;
+- **„Adresa panoului"**, apoi **„Salvează"**, stins cât n-ai schimbat nimic, și
+  **„Trimite acum un raport de probă"**;
+- **„Ultimele trimiteri"** — *„Încă nu a plecat niciun raport."*, ori cele mai
+  noi cinci, fiecare cu „a plecat" ori „n-a plecat".
+
+Notează-ți dacă „Chat ID" e gol: plimbarea altceva nu schimbă aici.
+
+> **„Trimite acum un raport de probă" TRIMITE de-adevăratelea**, în chatul scris
+> la „Chat ID", cu sumele casei în mesaj. Plimbarea **nu** îți cere s-o apeși.
+> Dacă vrei s-o vezi mergând, pune întâi la „Chat ID" un grup **al tău**,
+> salvează, și abia apoi apasă: mesajul începe cu *„Probă — așa arată raportul
+> care pleacă la orele alese."* Cu o schimbare nesalvată în cartonaș, butonul
+> nici nu ajunge la server: răspunde *„Salvează întâi schimbările de mai sus.
+> Raportul de probă pleacă după ce e salvat pe server, nu după ce scrie aici."*
+
+**Calea fără trimitere: ceasul, rulat în gol.** Pe server, raportul îl trimite
+un program pornit din cinci în cinci minute (`docs/09-actualizare-vps.md`, la
+„Ceasul plăților"). Pe calculatorul tău îl chemi de mână, cu `--uscat`:
+tipărește ce AR pleca, nu trimite nimic și nu însemnează nimic ca trimis.
+
+**Apeși:** dacă „Chat ID" e gol, scrii în el un număr cu formă de chat — de
+pildă `-1001234567890` — → **„Salvează"**. **Trebuie să vezi:** *„Setările
+raportului sunt salvate."* Salvarea nu trimite nimic.
+
+**Apeși:** într-o a treia fereastră de terminal, din folderul proiectului
+(serverele rămân pornite):
+
+```bash
+C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe api\cron\plati.php --uscat --acum="2026-10-09 09:02"
+```
+
+La `--acum` pui ziua în care faci plimbarea și ora de la „Ora 1" plus două
+minute, în ceasul României. Comanda se dă din folderul proiectului, nu din
+`deploy`: ceasul din pachet n-are configurarea lângă el și răspunde *„plati ·
+oprit: lipsește api/config.php"*.
+
+**Trebuie să vezi** un rând care începe cu `plati`, apoi clipa cerută, și sub
+el, fiecare după un rând `---`, cele două mesaje care ar pleca:
+
+```
+plati 2026-10-09 09:02 · uscat, nimic trimis și nimic însemnat · ar pleca raportul de la 09:00 · ar pleca amintirea pentru 1 amânare · spre api.telegram.org
+---
+Încasări · …, 09:02
+De încasat: … lei · … comenzi · … clienți
+Amânate: … · … lei
+Încasat ieri: …
+Cei mai mari:
+• … — … com. · … lei · din …
+---
+Important — azi e termenul de plată
+• #… Plimbare 2.7.0 bani — … lei — fără telefon pe comandă
+```
+
+- la **„De încasat:"**, aceeași sumă și același număr de comenzi ca pe placa „De
+  încasat acum" — cu tot cu comanda de probă;
+- **„Cei mai mari:"** sunt primii cinci după sold, aceiași din capul coloanei
+  „Cine are de plătit". Unde nu e nimic, rândul rămâne și o spune: „Amânate:
+  niciuna", „Încasat ieri: nimic";
+- al doilea mesaj e amintirea — pe ecran are un semn de atenție în față —, cu
+  comanda de probă, amânată la 19.4 până azi. Dacă baza mai are amânări ajunse
+  la termen, le numără și le înșiră pe toate; cu „Amintiri la Amânate" oprit,
+  mesajul lipsește;
+- la capătul rândului de sus, **încotro** ar fi plecat: `api.telegram.org` e
+  Telegramul adevărat.
+
+Fiecare răspuns începe cu `plati` și cu clipa. Tot răspunsuri bune sunt:
+- `uscat · oprit: Botul de Telegram nu are token. Pune-l în Setări, la
+  Telegram.` — pe calculatorul ăsta botul nu e legat, deci textul raportului
+  nu se poate vedea de aici;
+- `uscat · oprit: Raportul de bani nu are chat. Pune numărul chatului în
+  Încasări › Raport pe Telegram.` — n-ai salvat „Chat ID";
+- `uscat · nimic de trimis` — ora de la `--acum` nu cade în cele două ore de
+  după „Ora 1" ori „Ora 2", ori raportul acelei ore a plecat deja în ziua
+  scrisă.
+
+În pagină, la „Ultimele trimiteri", n-a apărut niciun rând nou: rularea în gol
+n-a însemnat nimic, iar a doua oară dă același răspuns.
+
+> **Fără `--uscat`, aceeași comandă TRIMITE** raportul în chatul salvat și îl
+> însemnează ca trimis. N-o rula așa.
+
+### 19.7 În Statistici: partea „Încasări" și cele două nume îndreptate
+
+**Apeși:** din meniu **„Statistici"** → **„Inelul zilei"**.
+
+**Trebuie să vezi:**
+- sub suma vânzărilor scrie **„vândut prin comenzi"**, nu „intrat din comenzi":
+  cardul numără vânzarea, nu banul ajuns în casă;
+- un card nou, cu o sumă și **„de încasat acum"** sub ea, apoi „… comenzi · …
+  clienți" și „încasat în perioadă: …"; dedesubt, legătura **„Deschide Încasări
+  →"**. Suma e cea de pe placa „De încasat acum" din Încasări. Apăsat, cardul
+  deschide foaia **„Încasări"** · **„Cât s-a încasat"**.
+
+**Apeși** cardul cu „vândut prin comenzi". **Trebuie să vezi** foaia cu
+**„Vânzări"** deasupra și titlul **„Cât s-a vândut"**, iar printre cifrele ei
+**„Încă de livrat"**. Astea sunt cele două nume îndreptate: foaia se chema
+„Banii intrați" · „Cât a intrat în casă", iar cifra, „Încă de încasat". De când
+casa ține plățile, „încasat" se spune numai despre bani primiți. Închizi cu
+`Esc`.
+
+**Apeși „Registrul".** **Trebuie să vezi:** prima întrebare e **„Cât s-a
+vândut?"**, iar mai jos e una nouă, **„Câți bani au intrat cu adevărat?"**, cu
+*„Ce s-a plătit, nu ce s-a vândut: o comandă livrată și neplătită e vânzare, dar
+nu e încă ban în casă."*, trei cifre și tabelul **„Cine are de plătit"**, cu
+primii cinci.
+
+**Apeși „Tabloul de dimineață".** **Trebuie să vezi:** placa **„Vânzări"** și
+caseta **„Încasările, rând cu rând"**. Partea asta din Statistici o primește
+numai cine are și pagina „Încasări"; din pornire, numai fondatorul.
+
+**Apeși „Deschide Încasări →"**, din josul casetei. **Trebuie să vezi** pagina
+„Încasări", cu pastila „De încasat" aprinsă: legătura merge și în pachet.
+
+**Desfaci**, în ordinea asta:
+
+- **Plata.** În „Încasări", pe rândul comenzii de probă, **„Neplătită"**: a
+  rămas „Amânată" de la 19.4. Rândul nu mai arată termenul, iar placa „Amânate"
+  e iar cea de la 19.2.
+- **Pragul.** În „Pe clienți", pe cardul lui scrie **„Prag: general (2)"**, de
+  la 19.5.
+- **Comanda.** `/lab/comenzi.html` → pe rândul ei, **„Vezi produsele"** → la
+  **„Etapa"** alegi **„Anulată"**; merge direct (7.1). Comanda rămâne în
+  registru, anulată; de tot se șterge ca la 20.9. Înapoi în „Încasări", „De
+  încasat acum" și „Încasat azi" sunt iar cele notate la 19.2.
+- **Contul.** `/lab/conturi.html` → apeși placa **„Plimbare 2.7.0 bani"** →
+  **„Șterge contul"**, apoi **„Apasă din nou: șterg definitiv contul"**. Sus
+  scrie *„Contul «Plimbare 2.7.0 bani» a fost șters."*
+- **Raportul.** În „Încasări", la „Raport pe Telegram": dacă „Chat ID" era gol,
+  îl golești → **„Salvează"** → *„Setările raportului sunt salvate."*
+- **Bifele.** `/lab/setari.html` → „Notificări" → bifele de pe „Comandă nouă" și
+  „Comandă anulată" cum erau → **„Salvează"**. Abia acum, după ce comanda e
+  anulată.
+
+Rămân, și nu se pot șterge, rândurile din Jurnal: schimbările de plată
+(*„plata_schimba · Comandă #… — Neplătită → Plătită"* și celelalte; numărul de
+acolo e al comenzii fără mia din față — #7 pentru comanda #1007), pragul pus și
+luat, contul făcut și șters, setările raportului. Pe cele de plată le vede
+numai cine are și „Jurnal", și „Încasări".
+
+---
+
+## 20 · Runda 2.7.0 în birou: pagina „Acces", prețurile și costul, ștergerea comenzii anulate
+
+*Nouăsprezece minute. Ce a adus runda la masa din birou: pagina din care
+fondatorul împarte panourile și faptele pe roluri, prețul materiilor prime,
+costul unui produs și profitul din Statistici, și comanda anulată care se poate
+șterge de tot. Plimbarea scrie un preț și o comandă de probă și le șterge tot
+ea; la capăt, bifele sunt cum le-ai găsit.*
+
+Pe 4 octombrie 2026 ai cerut ca aplicația să țină minte cât costă făina, ouăle
+și untul și să-ți spună cât te costă un produs și cât îți rămâne din el, iar o
+comandă anulată să poată fi ștearsă de tot, cu ce era în ea păstrat în Jurnal.
+Tot runda asta aduce pagina „Acces", din care hotărăști singur ce vede și ce
+face fiecare rol. De aceea, tot ce scrie mai jos despre „cine vede" e spus **din
+pornire**: așa e împărțirea până muți tu o bifă. Banii au plimbările lor: 18
+și 19. Tot pe pachetul construit (8101), pe calculator (1440).
+
+**Pregătești:** `demo-fondator` → `/lab/setari.html` → fila **„Notificări"**.
+Sus, în **„Ce anunțuri primești, și pe unde"**, notează-ți cum sunt bifele pe
+rândurile **„Comandă nouă"** și **„Comandă anulată"**, apoi scoate de pe
+amândouă **Telegram** și **WhatsApp** → **„Salvează"**. Plimbarea scrie o
+comandă și o anulează, iar de pe calculatorul tău amândouă trimit
+de-adevăratelea — Telegram în grupul echipei, WhatsApp pe numărul tău.
+E-mailul, dacă e bifat, cade în Mailpit (`http://127.0.0.1:8025`) și nu pleacă
+nicăieri. Schimbarea stării de plată și ștergerea unei comenzi nu trimit nimic,
+pe niciun canal.
+
+### 20.1 „Acces": tabelul, și bifele care nu se mută
+
+**Apeși:** tot cu `demo-fondator`, din meniu, **„Acces"** — între „Setări" și
+„Istoric". Intrarea asta o are numai fondatorul.
+
+**Trebuie să vezi:**
+- titlul **„Acces"** și, sub el, *„Totul e ca în prima zi."* Dacă scrie altceva
+  — *„1 bifă mutată față de prima zi"* ori *„… bife mutate față de prima zi"*
+  —, cineva a mai umblat aici: notează-ți căsuțele însemnate „altfel decât în
+  prima zi", fiindcă întoarcerea de la capătul plimbării le șterge pe
+  **toate**, nu numai pe a ta, și va trebui să le pui la loc cu mâna;
+- legenda, cu patru semne: „altfel decât în prima zi", „mutată, încă
+  nesalvată", „nu se poate schimba", „bifată, dar fără panoul ei";
+- două tabele. **„Panouri"**: *„Intrările din meniu. Fără bifă, pagina nu se
+  deschide și serverul nu-i dă datele."* **„Fapte"**: *„Ce are voie să facă
+  într-un panou cine îl are deja."*;
+- șase coloane, câte una de rol; a fondatorului e bifată de sus până jos și nu
+  se mută;
+- jos, în bara din stânga: *„Bifa se verifică pe server, la fiecare cerere. O
+  ușă închisă aici e închisă și pentru cine îi știe adresa."* (se vede la 20.8);
+- sub tabele, trei rânduri de lămurire. De ținut minte e al tabletei:
+  *„Angajat: Cuprinde și tableta din laborator. Tableta rămâne însă numai cu
+  Laborator, Rută, Depozit și Pontaj, orice ai bifa aici."*
+
+**Apeși** căsuța de pe rândul **„Pontaj"**, coloana **Om de laborator**.
+**Trebuie să vezi**, sub rând: *„Om de laborator: nu se poate schimba. E singura
+pagină a omului de laborator."* Nicio bifă nu s-a mișcat și nu a apărut nicio
+bară de salvare. La fel răspunde, în „Fapte", căsuța agentului de vânzări de pe
+**„Scrie comenzi și acceptă cereri"**: comenzile lui trec pe la birou, ca
+cereri.
+
+### 20.2 O bifă luată: „Rută", de la Manager
+
+**Apeși:** în „Panouri", căsuța de pe rândul **„Rută"**, coloana **Manager**
+(bifată din pornire).
+
+**Trebuie să vezi:** bifa dispare; sus se lipește o bară cu **„1 schimbare
+nesalvată"**, **„Renunță"** și **„Salvează"**; iar cartonașul **„La salvare"**
+spune *„Manager pierde «Rută»."* Pe server încă nu s-a schimbat nimic. O faptă
+legată de un panou luat — în „Fapte", sub **„Pune ordinea opririlor"**, scrie
+*„Ține de Rută."* — rămâne bifată, cu semnul „bifată, dar fără panoul ei", dar
+nu mai deschide nimic.
+
+**Apeși „Salvează".**
+
+**Trebuie să vezi:**
+- *„Bifele sunt salvate."*, cu *„Manager pierde «Rută»."* și *„Serverul ține
+  cont de ele de pe acum. Cine e deja intrat își vede meniul schimbat la
+  următoarea pagină deschisă."*;
+- sub titlu: *„1 bifă mutată față de prima zi"*, iar căsuța managerului poartă
+  semnul „altfel decât în prima zi";
+- sus, în dreapta, a apărut **„Înapoi la început"**. Nu-l apăsa încă.
+
+Dacă te oprești aici, bifa se pune la loc cu „Pui totul la loc", de la capătul
+plimbării.
+
+### 20.3 Depozit › „Prețuri": un preț nou
+
+**Apeși:** din meniu **„Depozit"** → fila **„Prețuri"**, ultima din șir, după
+„Registru". Din pornire o vede numai fondatorul (fapta „Prețurile
+ingredientelor").
+
+**Trebuie să vezi:**
+- titlul **„Prețurile din depozit"** și, sub el, *„… articole · … cu preț"* —
+  cu coada *„· … din rețete fără preț"*, când e cazul;
+- dacă vreo rețetă folosește un articol fără preț, sus de tot, o bandă roșie
+  care le numără: *„… articole din rețete n-au preț — costul produselor lor nu
+  se poate socoti."* E așteptată până scrii prețurile, nu e defect; **„Pune
+  preț"** din ea deschide aceeași foaie ca cel de pe rând;
+- pe fiecare rând: numele, categoria, prețul cu *„din …"* ori **„fără preț"**;
+  la capăt **„Preț nou"** — ori **„Pune preț"**, unde nu e niciunul — și
+  **„Istoric · N ▾"** numai unde s-a scris măcar un preț;
+- mai jos, sub rândul *„Produse finite — pune preț numai dacă le cumperi gata
+  făcute; altfel costul lor se socotește din rețetă."*, articolele finite.
+
+Alege o materie primă de **deasupra** rândului „Produse finite" care scrie
+**„fără preț"** și nu scrie *„· scos din depozit"* lângă categorie: pe ea,
+prețul de probă nu calcă peste nimic. Ține minte și o a doua, la fel — îți
+trebuie la 20.4. (Dacă toate au preț, ia una al cărei preț nu e „din" ziua de
+azi și sari, la 20.4, peste pasul cu a doua.)
+
+**Apeși** **„Pune preț"** pe rândul ei.
+
+**Trebuie să vezi** foaia **„Preț nou"**, cu numele articolului și *„· fără preț
+până acum"*, și în ea: **„Preț"**, cu unitatea alături („lei/kg", după
+articol); **„Valabil din"**, pe ziua de azi; **„Notă (opțional)"**; caseta
+**„Socotește din factură"**; jos, **„Renunță"** și **„Salvează"**. Salvată
+goală, foaia refuză cu *„Scrie prețul ca număr, de exemplu 3,45."*
+
+**Apeși:** în „Socotește din factură" scrii `50` la lei și `25` la cantitate
+(cifrele cenușii din casete sunt numai o pildă: trebuie scrise). **Trebuie să
+vezi**, dedesubt, *„= 2,00 lei/kg, pus în câmpul de preț"*, cu unitatea
+articolului tău, și **2,00** în caseta „Preț". Dacă deasupra notei apare, pe
+galben, *„Înlocuiește prețul din ziua asta (…)."*, articolul are deja un preț
+pe azi: **„Renunță"** → **„Ies fără să salvez"** și alegi altul. Altfel,
+**„Salvează"**.
+
+**Trebuie să vezi:** foaia închisă; sus, *„Preț nou · … · 2,00 lei/kg din …"*,
+cu numele articolului și cu ziua plimbării; pe rând, **2,00 lei/kg**, *„din
+…"*, butonul schimbat în **„Preț nou"** și **„Istoric · 1 ▾"**. Apeși pe el: un
+rând cu ziua și *„· acum"*, prețul, *„scris de …"* cu numele tău, și
+**„Șterge"**. Încă nu-l apăsa: prețul îți trebuie la 20.4.
+
+### 20.4 Catalog: costul, în formularul produsului
+
+**Apeși:** din meniu **„Catalog"** → **„Editează"** pe „Croissant cu ciocolată"
+(ori pe alt produs de probă) → cobori la **„Rețetă — pentru o bucată"**.
+
+**Trebuie să vezi** de unde pleci: lângă titlu scrie câte materii prime are
+rețeta. Cel mai curat e un produs cu *„fără materii prime"*. Unul cu rețetă
+merge și el, dacă niciun rând al ei nu scrie, în roșu, **„fără preț"**; altfel
+caseta galbenă de la ultimul pas e pe ecran de la început și primele două
+verificări nu apar: **„Renunță"** și iei alt produs. Dacă n-ai niciunul
+potrivit, **„+ Produs nou"** are aceeași parte de rețetă, goală — numai că
+rezumatul de cost n-are coada cu „rămân" cât n-ai scris un preț de vânzare.
+Rândurile de cost le vede, din pornire, numai fondatorul (fapta „Costul
+produselor și profitul"): cu `testadmin`, același formular are rețeta, dar
+niciun leu.
+
+**Apeși:** din lista **„+ Adaugă o materie primă…"** alegi materia primă de la
+20.3.
+
+**Trebuie să vezi** un rând nou, cu *„× 2,00 lei/kg"* sub el — prețul scris
+adineauri, încă fără sumă — și, stins, *„Costul apare după ce scrii cantitatea
+la: …."*, cu numele ei. Dacă pe galben apare *„Produsul n-are articol finit în
+depozit. …"*, e despre stoc, nu despre cost: o lași.
+
+**Apeși:** în căsuța de cantitate a rândului scrii `0,5`, apoi `Tab`.
+
+**Trebuie să vezi:** *„× 2,00 lei/kg = 1,00 lei"* pe rând, iar dedesubt *„Cost
+materii prime: … lei/buc"*, urmat, pentru fiecare catalog în care produsul are
+preț, de *„· la coapte (…) rămân … lei, …%"* ori *„· la congelate (…)"* — iar
+unde prețul de vânzare e sub cost, *„pierzi … lei"*. Sub rezumat: *„Socotit din
+ce e scris acum în formular, cu prețurile de azi din Depozit."* Costul se
+socotește deci înainte de salvare.
+
+**Apeși:** din aceeași listă alegi a doua materie primă, cea rămasă „fără
+preț", și îi scrii cantitatea `1`, apoi `Tab`.
+
+**Trebuie să vezi:** pe rândul ei, în roșu, **„fără preț"**; în locul
+rezumatului, o casetă galbenă: *„Costul nu se poate socoti. Lipsește prețul la:
+…."*, cu numele ei, și butonul **„Scrie prețurile în Depozit"**, care se
+deschide în altă filă. Un cost socotit pe jumătate nu se arată deloc. Butonul
+nu-l apăsa.
+
+**Desfaci:** **„Renunță"** → **„Ieși fără să salvezi produsul?"** → **„Ies fără
+să salvez"**. Rețeta produsului a rămas cum era. Dacă ai apăsat din greșeală
+„Salvează": deschizi iar produsul, scoți cele două rânduri cu **×** și salvezi.
+
+### 20.5 Prețul de probă, șters din istoric
+
+**Apeși:** **„Depozit"** → **„Prețuri"** → pe articolul de la 20.3, **„Istoric
+· 1 ▾"** → **„Șterge"**.
+
+**Trebuie să vezi**, chiar în rând, întrebarea *„Ștergi prețul din … (2,00
+lei/kg)? Costurile de după ziua aceea se vor socoti cu prețul dinainte."* — cu
+ziua și unitatea ta — și două butoane: **„Păstrează"** și **„Șterge"**. Apeși
+**„Șterge"**.
+
+**Trebuie să vezi:** sus, *„Preț șters · … · …"*, cu numele articolului și ziua;
+rândul scrie iar **„fără preț"**, cu **„Pune preț"**, iar „Istoric" a dispărut
+cu totul. Articolul e cum l-ai găsit.
+
+### 20.6 Statistici: profitul din materii prime
+
+**Apeși:** din meniu **„Statistici"**, vederea **„Inelul zilei"**. Dacă
+intervalul de pornire n-are comenzi, pune întâi în filtre unul care are (6).
+
+**Trebuie să vezi**, după cele patru carduri de cifre, unul nou:
+- o cifră mare — ori **„—"** — și sub ea *„profit din materii prime"*;
+- apoi *„… marjă · din vânzări de …"*. Când n-are ce socoti, rândul spune de
+  ce — de pildă *„niciun produs vândut n-are încă cost socotit"*;
+- uneori și *„… din vânzări n-au cost socotit — …"*: banii produselor fără
+  rețetă ori cu o materie primă fără preț, ținuți aparte;
+- nota: *„Socotit cu rețeta de azi și cu prețul materiilor prime din ziua
+  fiecărei comenzi."* Adică: o rețetă schimbată azi mută și profitul lunilor
+  trecute; prețul nu.
+
+Apăsat, cardul deschide lupa **„Cât rămâne după materiile prime"**, care spune
+că profitul de aici scade numai materiile prime — *„nu și salariile, chiria ori
+curentul"*.
+
+**Apeși „Registrul".** **Trebuie să vezi** întrebarea **„A ȘASEA"** — *„Cât te
+costă și cât îți rămâne?"* — cu un tabel: Produs · Bucăți · Vânzări · Cost ·
+Profit · Marjă · Stare, de la cel mai mare profit în jos. Sub întrebare pot sta
+unul-două rânduri care încep cu *„Pune preț la: …"*: sunt îndemnuri, nu erori —
+spun de ce unele rânduri n-au cost. La „Stare" poate scrie *„≈ estimat"*, *„sub
+cost"*, *„fără rețetă"* ori *„lipsește prețul la: …"*; rândurile fără cost au
+**„—"** în loc de cifre și stau la urmă. Jos, rândul de adunare **„Toate cele
+cu cost socotit"**. Același tabel e și în „Tabloul de dimineață", sub
+**„Profitul, rând cu rând"**. Aici n-ai scris nimic, deci n-ai ce desface.
+
+### 20.7 Comanda de probă: plătită, anulată, și refuzul ștergerii
+
+**Apeși:** din meniu **„Comenzi"** → **„+ Comandă nouă"**. La „Client" scrii
+`Plimbare 2.7.0 ștergere`, lași „Telefon" gol, la „Canal" alegi **„Ridicare"**,
+apoi **„Din catalog"** → **„+"** pe un card → **„Gata"**. Golești caseta **„Cod
+de recomandare"**, dacă e ceva în ea → **„Adaugă comanda"**.
+
+**Trebuie să vezi:** *„Comandă nouă adăugată: #… · Plimbare 2.7.0 ștergere."*
+Notează-ți numărul. La capătul rândului ei, butonul cu scris roșu e
+**„Anulează"**: pe o comandă vie pagina nu oferă ștergerea nicăieri.
+
+**Apeși:** din meniu **„Încasări"** → la **„Caută"** scrii `Plimbare 2.7.0` →
+pe rândul comenzii, **„Plătită"**.
+
+**Trebuie să vezi:** *„Salvat: Plătită."*, apoi, pe rând, *„încasată … · bifată
+de …"*.
+
+**Apeși:** **„Comenzi"** → pe rândul comenzii, **„Anulează"**.
+
+**Trebuie să vezi** caseta **„Anulezi comanda #…?"**, cu *„Dispare de pe panoul
+din laborator și de pe ruta șoferului, dar rămâne în registru, marcată
+«Anulată»."* și butoanele **„Păstrează"** / **„Anulează comanda"**. Îl apeși pe
+al doilea: *„Comanda #… a fost anulată."*, iar butonul din capătul rândului
+scrie acum **„Șterge"**. Îl vede fondatorul, mereu, și — din pornire —
+administratorul (fapta „Șterge comenzile anulate"); managerul nu, cum arată
+20.8. Aceeași ușă e și jos, în formularul comenzii deschise la editare:
+**„Șterge definitiv"**.
+
+**Apeși „Șterge".**
+
+**Trebuie să vezi** caseta, cuvânt cu cuvânt:
+- titlul **„Ștergi definitiv comanda #…?"**;
+- *„Plimbare 2.7.0 ștergere · …. 1 produs, … lei. Dispare din registru; în
+  Jurnal rămâne ce era în ea."* — după nume vine ziua comenzii;
+- **„Păstrează"** și **„Șterge definitiv"**.
+
+**Apeși „Șterge definitiv".** **Trebuie să vezi** caseta închisă, comanda tot în
+listă și, pe roșu, refuzul serverului: *„Comanda #… e trecută ca plătită. Dacă
+banii s-au dat înapoi, trece-o întâi pe «Neplătită», din Încasări, apoi
+șterge-o."* O comandă cu bani trecuți pe ea nu dispare; la fel e refuzată una
+pentru care s-a plătit deja un comision de recomandare.
+
+### 20.8 Cu contul managerului: ce nu mai vede
+
+**Apeși:** tot din „Comenzi", **„Ieși"** (jos, în bara din stânga, lângă
+numele contului; pe „Acces" butonul nu e) → intri cu `demo-manager`.
+
+**Trebuie să vezi:**
+- meniul fără **„Rută"**: Comenzi · Laborator · Depozit · Pontaj · Istoric ·
+  Parola mea. Bifa luată la 20.2 a ajuns la el fără ca cineva să-i fi schimbat
+  contul;
+- pe rândul comenzii `Plimbare 2.7.0 ștergere`, anulată, **niciun** buton cu
+  scris roșu la capăt: nici „Anulează", nici „Șterge". N-o deschide. Tot așa,
+  în „Depozit" filele lui se opresc la „Registru", fără „Prețuri".
+
+**Apeși:** scrii în bara browserului `/lab/ruta.html` — adresa panoului luat.
+
+**Trebuie să vezi** un ecran întunecat, cu titlul **„Ruta șoferului"** și
+*„Contul «…» nu are acces la ruta șoferului. Rolul lui lucrează în altă parte —
+te duc acolo."*; un buton auriu, **„Comenzi"**; apoi **„Ieși din cont"** și
+**„← Alege panoul"**. Nicio oprire, nicio hartă: asta e *„ușa închisă și pentru
+cine îi știe adresa"* de la 20.1. Dacă ruta se deschide, bifa s-a salvat numai
+pe ecran, nu și pe server. La fel răspunde `/lab/acces.html`, tastată: *„Contul
+«…» nu are acces aici. Cine ce vede în aplicație hotărăște numai fondatorul."*
+
+### 20.9 Ștergerea, și ce rămâne în Jurnal
+
+**Apeși:** **„Ieși din cont"** → intri cu `demo-fondator` → din meniu
+**„Încasări"**.
+
+**Trebuie să vezi** placa **„De restituit"**, cu suma comenzii de probă și, sub
+ea, *„1 comandă anulată, cu banii încasați"* — mai mult, dacă baza avea și
+altele —, iar pe pastila cu același nume, numărul.
+
+**Apeși** pastila **„De restituit"**. **Trebuie să vezi** comanda de probă și,
+pe rândul ei: *„Comanda e anulată, dar banii sunt încasați. Dă banii înapoi,
+apoi pune aici «Neplătită»."* Apeși **„Neplătită"**: *„Salvat: Neplătită."*
+
+**Apeși:** **„Comenzi"** → pe rândul ei, **„Șterge"** → **„Șterge definitiv"**.
+
+**Trebuie să vezi:** *„Comanda #… a fost ștearsă. Ce era în ea se vede în
+Jurnal."*, iar rândul a dispărut din listă. N-a plecat niciun anunț.
+
+**Apeși:** din meniu **„Jurnal"** → sub **„Din tot jurnalul"**, butonul
+**„Comenzi șterse"**.
+
+**Trebuie să vezi** lista strânsă la ștergeri — sus, *„Comenzi șterse: …, în tot
+jurnalul"* — și rândul *„Comandă ștearsă · Comandă #… ștearsă definitiv ·
+Plimbare 2.7.0 ștergere · …"*. Apeși pe el.
+
+**Trebuie să vezi** fereastra **„Comandă ștearsă #…"**, cu:
+- sub **„Ce s-a schimbat"**, pe gri: *„Comanda a fost ștearsă definitiv de …, pe
+  …, la …. Mai jos e ce era în ea."*;
+- blocul **„Ce era în comandă"**: numărul, clientul și ziua; *„Canal: panou"* —
+  adică de unde a venit comanda, din panou, nu de pe site; poziția, cu suma
+  ei; *„Total: …"*; *„Scrisă de …"*;
+- **„Tot ce s-a mai scris despre asta"**, cu rândurile ei de dinainte;
+- **niciun** buton „Vezi comanda": n-are unde să ducă.
+
+Închizi cu `Esc` și apeși iar **„Comenzi șterse"**, ca să stingi filtrul. În
+lista întreagă sunt și urmele celorlalte bucăți: *„Preț de ingredient scris ·
+…"* și *„Preț de ingredient șters · …"*, amândouă fără sumă, și
+*„acces_schimbat · Manager: −Rută"*, cu numele faptei scris încă așa cum îl
+ține serverul.
+
+**Pui totul la loc.** **Apeși:** din meniu **„Acces"** → **„Înapoi la
+început"**, sus în dreapta.
+
+**Trebuie să vezi** întrebarea **„Te întorci la împărțirea din prima zi?"**, cu
+numărul bifelor care se pierd și, după două puncte, *„fiecare rol rămâne cu ce
+avea când a fost instalată aplicația. În Jurnal rămâne scris la ce ai
+renunțat."*; dedesubt, **„Păstrează cum e"** și **„Da, înapoi la început"**.
+
+**Apeși „Da, înapoi la început".**
+
+**Trebuie să vezi:** *„Totul e înapoi la început."*; sub titlu, iar *„Totul e
+ca în prima zi."*; căsuța **Manager** de pe „Rută" bifată, fără niciun semn.
+Dacă la 20.1 ți-ai notat bife mutate de dinainte, le pui acum la loc cu mâna →
+**„Salvează"**. Managerul are iar „Rută" în meniu, de la următoarea pagină pe
+care o deschide.
+
+**Apeși:** **„Setări"** → **„Notificări"**: pui bifele de pe „Comandă nouă" și
+„Comandă anulată" cum le-ai găsit, cu tot cu Telegram ori WhatsApp →
+**„Salvează"**.
+
+**Ce rămâne în urmă,** dinadins: rândurile din Jurnal — printre ele
+*„acces_reset · Înapoi la început. S-a renunțat la: Manager: −Rută."* — și, în
+Mailpit, mesajul comenzii noi și al anulării, dacă E-mail era bifat. Altceva
+nimic: prețul e șters (20.5), rețeta nu s-a salvat (20.4), comanda nu mai e în
+registru (20.9), bifele sunt cele din prima zi.
+
+---
+
+## 21 · Runda 2.7.0 pe ecran: fereastra la mijloc, istoricul cu „Comandă din nou", formularele care întreabă
+
+*Nouăsprezece minute. Ce s-a schimbat la vedere: ferestrele magazinului stau la
+mijloc pe calculator, fiecare cont își are istoricul cu „Comandă din nou", iar
+un formular scris nu se mai închide fără să întrebe. Scrii o singură comandă,
+pe care o anulezi la capăt.*
+
+Pe 4 și 5 octombrie 2026 ai hotărât trei lucruri care se văd pe ecran. Fereastra
+produsului și cea de finalizare stau la mijloc pe calculator, nu lipite de
+marginea de jos. Clientul și cine scrie comenzi din panou își găsesc comenzile
+vechi într-o pagină de istoric, cu **„Comandă din nou"** pe fiecare. Iar ce a
+scris omul într-un formular nu se mai pierde fără o întrebare — pe 4 octombrie
+ai pierdut chiar tu un produs nou, scris pe jumătate, apăsând alături de
+formular. Tot pe pachetul construit (8101), pe calculator (1440). Plimbarea 22
+trece prin toate ecranele, la cele trei lățimi; aici vezi numai ce a adus runda.
+
+**Pregătești**, în fereastra obișnuită: `http://127.0.0.1:8101/lab/index.html`
+→ intri cu `demo-fondator` → `/lab/setari.html` → fila **„Notificări"** → **„Ce
+anunțuri primești, și pe unde"**. Îți notezi cum stau rândurile **„Cerere
+nouă"**, **„Comandă nouă"** și **„Comandă anulată"** și scoți de pe toate trei
+bifa de la **Telegram** și de la **WhatsApp** → **„Salvează"**. La 21.5 scrii o
+comandă de probă, iar la capăt o anulezi; de pe calculatorul tău amândouă
+canalele trimit de-adevăratelea — Telegram în grupul echipei, WhatsApp pe
+numărul tău. „Cerere nouă" e pentru ocolul de la 21.3, dacă ajungi la el.
+E-mailul cade în Mailpit (`http://127.0.0.1:8025`) și nu pleacă nicăieri.
+
+Apoi deschizi o fereastră **privată** (`Ctrl+Shift+N`), ca magazinul să
+pornească fără cont și cu coșul gol: în ea faci bucățile 21.1–21.4, iar
+celelalte trei în fereastra obișnuită. Două lucruri de știut dinainte:
+
+- **Contul de client.** 21.3 și 21.4 cer un client care are măcar o comandă și
+  care nu e oprit la pragul de comenzi neplătite (din pornire, două). Ale cui
+  sunt comenzile din baza locală se vede abia pe ecran: încerci întâi cu
+  `demo-cumparator`, apoi cu `testclient`; ce faci dacă niciunul nu se
+  potrivește scrie la 21.3.
+- **Butonul clientului nu se apasă local.** „Comandă din nou" de pe pagina
+  clientului duce în magazin, adică pe alt subdomeniu, iar în pachet poartă
+  adresa de producție. La 21.4 îi muți adresa cu mâna. Cel din panou rămâne pe
+  aceeași gazdă și se apasă (21.6).
+
+### 21.1 Fereastra produsului, la mijloc
+
+**Apeși:** în fereastra privată, cu browserul întins pe tot ecranul,
+`http://127.0.0.1:8101/catalog` → poza unui produs (ori numele lui).
+
+**Trebuie să vezi:**
+- fereastra produsului **la mijlocul ecranului**: același gol deasupra și
+  dedesubt, catalogul întunecat de jur împrejur și **toate cele patru colțuri
+  rotunjite**. Până la 2.7.0 urca de jos și rămânea lipită de marginea de jos a
+  monitorului, cu colțurile de jos drepte;
+- sus în ea, numele produsului și butonul **„Închide"**; poza și textul stau
+  **alături**, nu una sub alta;
+- adresa din bară a rămas `/catalog`: e o fereastră peste catalog, nu o pagină
+  nouă.
+
+**Apeși `Esc`.** **Trebuie să vezi** fereastra închisă și catalogul exact unde
+l-ai lăsat. Până la 2.7.0 `Esc` nu închidea decât sertarul de meniu. O deschizi
+iar și apeși pe întunericul de lângă ea: se închide la fel. La fel din
+**„Închide"**.
+
+**Apeși:** `F12` → butonul cu telefon și tabletă → lățimea **390** → poza unui
+produs.
+
+**Trebuie să vezi** foaia de jos, ca până acum: lipită de marginea de jos și
+rotunjită numai sus — pe telefon acolo e degetul. La mijloc stă numai de la
+**768 de puncte lățime și 500 înălțime** în sus, amândouă deodată. De aceea,
+dacă pe calculator fereastra îți iese lipită de jos, uită-te întâi dacă `F12`
+nu e deschis în partea de jos a ecranului: îi ia paginii din înălțime. Închizi
+foaia, apeși iar butonul cu telefon și tabletă și închizi `F12`.
+
+### 21.2 Finalizarea, tot la mijloc
+
+**Apeși:** pe cardul unui produs, butonul cu **„Adaugă"** pe el, apoi, în coșul
+din dreapta, **„Finalizare comandă"**.
+
+**Trebuie să vezi:**
+- fereastra **„Finalizare comandă"** la mijloc, ca a produsului, cu
+  **„Închide"** sus;
+- în ea, produsul ales, cu **„Adaugă alte produse"** sub el, și formularul. Cât
+  n-ai cont, butonul de trimitere se cheamă **„Trimite cererea"**. **Nu-l
+  apăsa**: ar trimite o cerere adevărată în panou.
+
+**Apeși `Esc`.** **Trebuie să vezi** fereastra închisă și produsul tot în coș:
+`Esc` închide ce e deasupra, nu golește nimic. O apăsare închide un singur
+lucru, în ordinea asta: sertarul de meniu, fereastra de finalizare, fereastra
+produsului, foaia coșului de pe telefon. **Lasă produsul în coș**: îți trebuie
+la 21.4.
+
+### 21.3 „Istoricul comenzilor", la client
+
+**Apeși:** tot în fereastra privată, `http://127.0.0.1:8101/clienti/index.html`
+→ intri cu `demo-cumparator` → cazi în „Comanda mea" → din sertar,
+**„Istoric"**.
+
+**Trebuie să vezi:**
+- în sertar, **„Istoric"** între „Comanda mea" și „Parola mea". Din magazin nu
+  ajungi la el de-a dreptul: meniul contului de acolo n-are „Istoric", te duce
+  întâi în „Comanda mea";
+- titlul **„Istoricul comenzilor"**, cu *„Tot ce ai comandat, de la cea mai
+  nouă."* sub el;
+- dacă ai cereri neacceptate ori respinse, stau sus, sub **„Cereri care n-au
+  devenit comenzi"**, cu **„Așteaptă răspuns"** ori **„Respinsă"**; „Comandă
+  din nou" au numai cele respinse;
+- comenzile strânse pe luni, sub titluri mici ca „Octombrie 2026";
+- pe fiecare rând: numărul comenzii, ziua, etapa într-o pastilă — cu vorbele
+  clientului: **„Programată"**, **„Se prepară"**, **„Gata de livrare"** (la
+  ridicare, **„Gata de ridicat"**), **„Livrată"** (ori **„Ridicată"**),
+  **„Anulată"** —, apoi **„De plată"** ori **„Plătită"** (pe cele anulate,
+  niciuna), primele trei produse, cu restul strâns în *„și încă 2"*, și
+  totalul, scris ca *„340,00 lei"*;
+- apeși pe rând: se desface, cu fiecare poziție și cu **„Total"** dedesubt;
+- sub fiecare comandă, **„Comandă din nou →"** — și pe cele încă în lucru, și
+  pe cele anulate: cine comandă același lucru în fiecare zi vrea să-l repete
+  tocmai cât comanda de azi e pe drum;
+- jos de tot, câte vezi din câte sunt (*„20 din 57"*) și, cât mai sunt comenzi
+  neaduse, un buton: **„Arată încă 20"** — ori, când au rămas mai puține,
+  **„Arată ultimele 5"**.
+
+Pagina „Comanda mea" a rămas cu cele mai noi șase comenzi trecute, sub **„Ce ai
+comandat până acum"**; cine are mai multe găsește sub ele **„Vezi tot
+istoricul →"**, care duce tot aici.
+
+**Dacă contul nu se potrivește:**
+- pagina scrie *„Încă n-ai nicio comandă. Când trimiți prima, o găsești
+  aici."*: ieși și încerci cu `testclient`. Dacă nici el n-are niciuna, îi faci
+  una: din contul lui trimiți o comandă din magazin, ca la 4.2 (butonul se
+  cheamă acum **„Finalizează comanda"**), și o accepți din fereastra obișnuită,
+  ca în primul paragraf de la 4.3. Până o accepți, stă sub „Cereri care n-au
+  devenit comenzi", cu „Așteaptă răspuns". Comanda trimisă ți-a golit coșul:
+  înainte de 21.4 pui iar un produs în el, din catalog. Sunt vreo patru minute
+  în plus, nenumărate sus; comanda aceea o anulezi la capăt, ca pe cea de
+  probă;
+- butonul **„Comandă din nou →"** e stins, iar sub el e un rând care începe cu
+  *„Se poate din nou după…"*: contul e oprit la prag. E purtarea bună a unui
+  cont oprit, nu un defect (18.6), dar aici îți trebuie unul care poate
+  comanda: treci la celălalt;
+- amândouă sunt oprite: în fereastra obișnuită, `/lab/conturi.html` → placa
+  clientului → în fișă, la **„Prag de neplătite"**, îți notezi care buton e
+  apăsat și apeși **„Fără limită"**. În fereastra privată, `F5`: butonul s-a
+  aprins. La capăt apeși la loc butonul notat.
+
+### 21.4 „Comandă din nou", la client: se adaugă peste coș
+
+Pe pachetul local butonul acesta **nu se apasă**: e o săritură între subdomenii
+(vezi „Ce NU e defect aici"), poartă adresa `https://goldenpastry.ro/` și,
+apăsat, te scoate pe site-ul adevărat. De acolo nu pleacă nimic cât nu apeși tu
+pe trimitere, dar proba nu mai e pe pachet. Pe server, apăsat, face exact ce
+vezi mai jos.
+
+**Apeși:** clic dreapta pe **„Comandă din nou →"** de sub o comandă → copiezi
+adresa legăturii → o lipești în bara de adrese și, **înainte de Enter**,
+schimbi începutul `https://goldenpastry.ro/` în `http://127.0.0.1:8101/`. Tot
+ce urmează, de la `?reia=` încolo, rămâne neatins. Enter.
+
+**Trebuie să vezi:**
+- magazinul local, pe catalog, cu fereastra **„Finalizare comandă"** deschisă
+  **singură**, la mijloc;
+- în capul ei, caseta: *„Am pus în coș produsele din comanda #…. Ce aveai deja
+  a rămas. Prețurile sunt cele de azi."*, cu butoanele **„Scoate-le înapoi"** și
+  **„Am înțeles"**;
+- în lista din fereastră, **și** produsul pus la 21.2, **și** cele din comanda
+  veche, cu cantitățile de atunci. Până la 2.7.0 reluarea **înlocuia** coșul;
+  acum adună peste el;
+- butonul de trimitere se cheamă **„Finalizează comanda"**, fiindcă ești client
+  cu cont. **Nu-l apăsa**: ar pleca o cerere adevărată, pe numele contului.
+  Dacă deasupra lui e și un rând galben despre comenzile neplătite, e
+  avertizarea pragului (18.2), nu a reluării;
+- din adresa din bară a dispărut coada cu `?reia=`: o reîncărcare a paginii nu
+  mai pune produsele încă o dată.
+
+Un produs care nu se mai vinde nu intră în coș, și se spune: caseta capătă încă
+un rând, *„Un produs nu mai e în catalog și a rămas pe dinafară."* Iar o
+poziție care n-a fost niciodată un produs din magazin (una scrisă de mână în
+panou) e numită dinainte în „Istoric", sub buton: *„Nu intră în coș, fiindcă nu
+sunt în magazin: …"*. Dacă n-a mai rămas niciun produs de pus, fereastra nu se
+deschide, iar deasupra catalogului scrie **„Comanda aceea nu mai poate fi
+refăcută"**.
+
+**Apeși „Scoate-le înapoi".**
+
+**Trebuie să vezi:** produsele comenzii vechi ies din coș, produsul tău de la
+21.2 rămâne, caseta dispare. Fereastra rămâne deschisă, fiindcă mai ai ceva în
+coș; s-ar fi închis numai cu coșul golit de tot. Butonul scade exact ce a adus
+reluarea: ce ai fi adăugat tu între timp ar fi rămas.
+
+**Apeși `Esc`**, apoi, în coș, **„Golește"**. Coșul se golește pe loc, fără
+întrebare, și nu s-a trimis nimic. Închizi fereastra privată: sesiunea
+clientului se duce odată cu ea.
+
+### 21.5 „Comenzi": formularul scris întreabă, la „înapoi"
+
+**Apeși:** în fereastra obișnuită, `/lab/comenzi.html` → **„+ Comandă nouă"**
+și, fără să scrii nimic, săgeata „înapoi" a browserului.
+
+**Trebuie să vezi** formularul închis, iar tu tot în „Comenzi": un formular
+neatins se închide fără nicio întrebare, iar „înapoi" închide formularul, nu te
+scoate din pagină.
+
+**Apeși:** **„+ Comandă nouă"** → la **„Client"** scrii `Plimbare 2.7.0 ecran`
+→ săgeata „înapoi" a browserului.
+
+**Trebuie să vezi** formularul tot pe ecran, iar peste el întrebarea:
+- titlul *„Ieși fără să salvezi comanda nouă?"*;
+- sub el, *„Comanda nouă nu e salvată: ce ai scris în formular se pierde."*;
+- două butoane: **„Rămân în formular"**, în stânga, și **„Ies fără să
+  salvez"**, roșu, în dreapta.
+
+**Apeși „Rămân în formular".** Numele e tot în casetă. În „Comenzi" formularul
+are trei uși, și toate trei întreabă la fel: **×** din colț, **„Închide"** de
+jos și „înapoi". Clicul pe lângă formular și `Esc` nu-l închid aici deloc, nici
+scris, nici gol.
+
+**Apeși:** la **„Canal"**, **„Ridicare"** → **„Din catalog"** → **„+"** pe
+cardul unui produs → **„Gata"** → la **„Notă pentru laborator"** scrii
+`de probă` → golești caseta **„Cod de recomandare"**, dacă e ceva în ea →
+**„Adaugă comanda"**.
+
+**Trebuie să vezi:** formularul se închide **fără** nicio întrebare — salvarea
+nu întreabă —, iar sus scrie *„Comandă nouă adăugată: #… · Plimbare 2.7.0
+ecran."* E o comandă adevărată, pe ziua de azi, și se vede și în laborator: o
+anulezi la capăt.
+
+### 21.6 „Comandă din nou", din panou: o copie cu ziua goală
+
+**Apeși:** din meniu, **„Istoric"**. Din pornire îl au fondatorul,
+administratorul, managerul și agentul de vânzări; angajatul și omul de
+laborator n-au intrarea, iar la adresa tastată pagina le scrie că *„istoricul e
+al celor care scriu comenzi."*
+
+**Trebuie să vezi:**
+- titlul **„Istoricul comenzilor"**, cu *„Comenzile scrise de tine din panou.
+  Cele venite de pe site sunt ale clienților și nu apar aici."*;
+- comanda scrisă la 21.5, de găsit după nume — la o a doua trecere prin
+  plimbare, rândul cel mai de sus cu numele acesta —: numărul, ziua, etapa,
+  aici cu numele ei din atelier, nu cu vorbele clientului, **„Plimbare 2.7.0
+  ecran"**, produsul și totalul. **Fără** „De plată" ori „Plătită": acelea sunt
+  numai pe pagina clientului;
+- sub ea, **„Comandă din nou →"**.
+
+**Apeși „Comandă din nou →".**
+
+**Trebuie să vezi:**
+- ești în „Comenzi", cu formularul deschis, iar adresa din bară e
+  `http://127.0.0.1:8101/lab/comenzi`, **fără** `?reia=` în coadă: pagina
+  citește numărul comenzii o singură dată și îl scoate din adresă;
+- titlul e tot **„Comandă nouă"**, iar butonul tot **„Adaugă comanda"**. Că e o
+  copie o spune banda din capul formularului: **„Copie după comanda #…. Alege
+  ziua de livrare."**, iar sub ea, *„Nota comenzii vechi n-a fost copiată: «de
+  probă»."*;
+- **copiate**: clientul, **„Ridicare"** de la „Canal" și pozițiile, fiecare cu
+  latura și cantitatea ei (la o comandă cu livrare, și telefonul, adresa și
+  zona);
+- **necopiate**: ziua — la **„Zi"** scrie **„— alege ziua —"** —, ora, nota,
+  „urgent" și numărul comenzii, pe care îl dă serverul la salvare. Prețurile
+  sunt cele de azi.
+
+**Apeși „Adaugă comanda"**, fără să alegi ziua. **Trebuie să vezi** *„Alege
+ziua de livrare."*, în roșu lângă „Zi" și încă o dată jos, lângă buton. Nu s-a
+salvat nimic: o copie nu pleacă din greșeală pe o zi pe care n-ai ales-o tu.
+
+**Apeși:** schimbi cantitatea de pe primul rând (din 1 faci 2) → **×** din
+colțul formularului.
+
+**Trebuie să vezi** întrebarea, cu vorbele copiei: *„Ieși fără să salvezi copia
+comenzii?"*, iar sub ea, *„Copia comenzii #… nu e salvată: se pierde, cu tot ce
+ai schimbat în ea."* **Apeși „Ies fără să salvez".** Formularul se închide și
+nu s-a scris nimic. O copie neatinsă s-ar fi închis fără întrebare, ca orice
+formular neatins.
+
+**Apeși `F5`.** **Trebuie să vezi** pagina „Comenzi" fără formular: cu numărul
+scos din adresă, o reîncărcare nu deschide a doua copie.
+
+### 21.7 Catalog: clicul pe lângă formular
+
+**Apeși:** din meniu, **„Catalog"** → **„+ Produs nou"** → fără să scrii nimic,
+clic pe întunericul din stânga ori din dreapta formularului.
+
+**Trebuie să vezi** formularul închis pe loc, fără întrebare: n-ai scris nimic,
+n-ai ce pierde.
+
+**Apeși:** **„+ Produs nou"** → la **„Nume (RO)"** scrii `Plimbare 2.7.0` → clic
+pe întunericul de lângă formular. E chiar pățania ta de pe 4 octombrie.
+
+**Trebuie să vezi** formularul tot acolo, cu numele în casetă, iar peste el:
+- titlul *„Ieși fără să salvezi produsul?"*;
+- sub el, *„Ai început un produs nou. Dacă ieși, tot ce ai scris și ai ales
+  aici se pierde."*;
+- **„Rămân în formular"**, în stânga, și **„Ies fără să salvez"**, roșu, în
+  dreapta.
+
+**Apeși `Esc`.** **Trebuie să vezi** întrebarea închisă și formularul neatins:
+`Esc` înseamnă „rămân". Tot „rămân" înseamnă clicul pe lângă întrebare și
+`Enter`, fiindcă din pornire apăsarea stă pe „Rămân în formular": o tastă
+scăpată nu aruncă nimic. Singurul drum de ieșire e **„Ies fără să salvez"**.
+
+**Apeși:** **×** din colțul formularului. Vine aceeași întrebare — o pun și
+**„Renunță"** de jos, și „înapoi". **Apeși „Ies fără să salvez".**
+
+**Trebuie să vezi** formularul închis și niciun „Plimbare 2.7.0" în catalog: nu
+s-a salvat nimic. Pe formularul din Catalog, fără întrebare pe ecran, `Esc` nu
+face nimic. Vorbele sunt ale fiecărei pagini: „produsul" aici, „comanda nouă"
+și „copia comenzii" în „Comenzi"; pe ale Setărilor le vezi mai jos, la bife.
+
+**Pui totul la loc**, în ordinea asta:
+- **comanda de probă**, cât bifele sunt încă scoase: `/lab/comenzi.html` → pe
+  rândul „Plimbare 2.7.0 ecran", **„Vezi produsele"** → la **„Etapa"** alegi
+  **„Anulată"** — merge direct, fără casetă (7.1) —, iar sus scrie *„#… a
+  trecut în «Anulată»."* Iese din laborator, dar rămâne în registru și în
+  „Istoric", cu „Anulată" pe ea; de tot se șterge ca la 20.9. La fel anulezi
+  și comanda făcută la 21.3, dacă ai avut nevoie de ea;
+- **pragul clientului**, dacă l-ai mutat la 21.3: `/lab/conturi.html` → placa
+  lui → la „Prag de neplătite", butonul notat;
+- **bifele**, și cu ele ultima întrebare a rundei: `/lab/setari.html` → fila
+  **„Notificări"** → pui Telegram și WhatsApp la loc pe cele trei rânduri, cum
+  le-ai notat, și, **înainte de „Salvează"**, apeși **„Comenzi"**, în bara din
+  stânga. **Trebuie să vezi** că nu pleci nicăieri: **„Arunci schimbările
+  nesalvate?"**, cu *„Se pierde tot ce ai schimbat în Setări de la ultima
+  salvare, în toate filele."* și butoanele **„Rămân"** și **„Le arunc"**. Apeși
+  **„Rămân"** → **„Salvează"** → *„Setările au fost salvate."* Dacă ai apăsat
+  „Le arunc", ești în „Comenzi", cu bifele tot scoase: te întorci și le pui
+  iar. Dacă n-ai avut ce pune la loc, întrebarea nu vine: n-ai schimbat nimic.
+  La `F5` ori la închiderea filei peste o pagină scrisă întreabă browserul, cu
+  fereastra și vorbele lui — nu e defect;
+- **restul n-are ce desface**: coșul l-ai golit la 21.4, iar din copie și din
+  Catalog nu s-a salvat nimic.
+
+---
+
+## 22 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -2759,7 +4167,7 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele optsprezece ies, proba automată se mai trece o dată pe
+Când toate cele douăzeci și două ies, proba automată se mai trece o dată pe
 deasupra:
 
 ```bash
@@ -2767,4 +4175,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.6.0`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.7.0`.

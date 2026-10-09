@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acces · Golden Pastry</title>
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+<link rel="icon" type="image/png" sizes="48x48" href="assets/favicon-48.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<script src="./support.js"></script>
+<script src="./shared/gp-api.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="stylesheet" href="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/hearth.css">
+<link rel="stylesheet" href="shared/gp-nav.css">
+<link rel="stylesheet" href="shared/gp-bara.css">
+<script src="_ds/hearth-918148ab-9f4a-4472-9670-d2dff5fe19ee/_ds_bundle.js"></script>
+<style>
+body{margin:0;background:var(--h-bg-sunk);font-family:var(--h-font-body);color:var(--h-fg);-webkit-tap-highlight-color:transparent}
+a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
+
+/* ---- O BIFĂ DIN GRILĂ ----
+   Butonul ține tot pătratul celulei (pragul de deget al casei, 44px), iar
+   semnul desenat e căsuța mică din mijloc. Cele patru stări se spun prin
+   `data-st`, o listă de cuvinte, nu prin patru clase: o celulă poate fi deodată
+   bifată, nesalvată și altfel decât în pornire, iar fiecare cuvânt își desenează
+   partea lui fără să știe de celelalte.
+
+     da / nu   bifată ori nu
+     altfel    se deosebește de pornire        → bulina din colț
+     nou       mutată și încă nesalvată        → inelul
+     fix       nu se poate schimba             → chenar punctat
+     surd      bifată, dar fără panoul ei      → ștearsă
+     inchis    pagina nu primește apăsări acum                        */
+[data-ac=cel]{position:relative;display:flex;align-items:center;justify-content:center;width:100%;min-height:48px;margin:0;padding:0;border:0;border-radius:12px;background:none;font:inherit;color:inherit;cursor:pointer}
+[data-ac=cel]:hover{background:var(--h-bg-sunk)}
+[data-ac=cel]:focus-visible{outline:2px solid var(--h-accent);outline-offset:-3px}
+[data-ac=cel]>i,[data-ac=leg]>i,[data-ac=mereu]>i{display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:26px;height:26px;border-radius:8px;border:1.5px solid var(--h-line-strong);background:var(--h-bg-surface);font-style:normal;font-size:15px;font-weight:800;line-height:1;color:transparent;transition:background-color .15s var(--h-ease-out),border-color .15s var(--h-ease-out)}
+[data-st~=da]>i{background:var(--h-accent);border-color:var(--h-accent);color:#1B120B}
+[data-st~=nou]>i{box-shadow:0 0 0 3px var(--h-bg-surface),0 0 0 5px var(--h-honey-500)}
+[data-st~=surd]>i{opacity:.42}
+[data-st~=fix]>i{border-style:dashed;opacity:.6}
+[data-ac=cel][data-st~=fix]{cursor:help}
+[data-ac=cel][data-st~=inchis]{cursor:default}
+[data-ac=cel][data-st~=inchis]:hover{background:none}
+[data-ac=cel][data-st~=altfel]::after,[data-ac=leg][data-st~=altfel]::after{content:"";position:absolute;top:7px;left:calc(50% + 10px);width:8px;height:8px;border-radius:50%;background:var(--h-jam);box-shadow:0 0 0 2px var(--h-bg-surface)}
+/* Coloana fondatorului: aceeași căsuță, bifată și ștearsă, fără buton sub ea. */
+[data-ac=mereu]{display:flex;align-items:center;justify-content:center;min-height:48px}
+[data-ac=mereu]>i{background:var(--h-bg-sunk);border-color:var(--h-line);color:var(--h-fg-faint)}
+[data-ac=leg]{position:relative;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;flex:none}
+[data-ac=leg][data-st~=altfel]::after{top:0;left:calc(50% + 8px)}
+
+[data-ac=rand]:hover{background:var(--h-bg-page)}
+[data-ac=nota]{font-size:12px;line-height:1.4;color:var(--h-warning-fg,#8A5A00)}
+[data-ac=nota][data-fel=fix]{color:var(--h-fg-subtle)}
+[data-ac=nota][data-fel=altfel]{color:var(--h-jam-600)}
+[data-ac=nota][data-fel=nou]{color:var(--h-honey-600)}
+
+/* Sub 1024px grila nu mai încape: lângă meniul din stânga (252px) îi rămân mai
+   puțin de 696px, cât cer șase coloane de bife și una de nume, iar cartonașul
+   ei taie ce iese (măsurat la 901px: ultimele două coloane ieșeau din ecran).
+   În locul ei vine lista de pe telefon — un rol ales din pastile, apoi un
+   comutator pe rând. Aceleași date, îmbrăcate în două feluri; care se vede
+   hotărăște numai foaia asta. Legenda pleacă odată cu grila: pe listă fiecare
+   semn e scris în cuvinte sub comutatorul lui. */
+@media (max-width:1023px){
+[data-ac=grila],[data-ac=legenda]{display:none!important}
+[data-ac=tel]{display:flex!important}
+}
+@media (max-width:760px){
+[data-ac=shell]{flex-direction:column!important}
+[data-ac=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
+[data-ac=sidehead]{flex:1!important;width:100%!important;min-width:0!important}
+[data-ac=nav]{display:none!important}
+[data-ac=sidefoot]{display:none!important}
+[data-ac=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+[data-ac=topbar] h1{font-size:20px!important}
+[data-ac=topbar]>div:last-child{width:100%!important;margin-left:0!important}
+[data-ac=topbar]>div:last-child>.h-btn{flex:1 1 auto!important}
+[data-ac=body]{padding:14px 14px 26px!important;gap:12px!important}
+}
+</style>
+</helmet>
+
+<sc-if value="{{ blocked }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--h-cocoa-800);background-image:radial-gradient(90% 70% at 50% 0%, rgba(242,166,59,.16), transparent 70%)">
+<div style="width:100%;max-width:440px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:56px;height:56px;object-fit:contain">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-family:var(--h-font-display);font-size:25px;font-weight:600;color:var(--h-cream-100)">Acces</span>
+<span style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.68);text-wrap:pretty">{{ blockedLine }}</span>
+</div>
+<!-- Cele două ieșiri ale casei, amândouă socotite, niciuna scrisă de mână:
+     panoul de acasă al contului (`gp.primaPagina`) și ieșirea lui obișnuită
+     (`gp.iesire`). Tiparul e cel din Statistici și din Jurnal. -->
+<div style="width:100%;display:grid;grid-template-columns:1fr;gap:8px">
+<a href="{{ acasaHref }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700;text-decoration:none">{{ acasaEt }}</a>
+<a href="{{ navBack.href }}" style="display:flex;align-items:center;justify-content:center;min-height:50px;padding:0 12px;border-radius:14px;background:transparent;border:1px solid rgba(255,255,255,.24);color:rgba(255,255,255,.82);font-size:15px;font-weight:600;text-decoration:none">{{ navBack.et }}</a>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
+<div data-ac="shell" style="display:flex;min-height:100vh;align-items:stretch">
+
+<div data-ac="side" class="gp-meniu-derulat" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-ac="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
+<img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
+<div style="display:flex;flex-direction:column">
+<span style="font-family:var(--h-font-display);font-size:18px;font-weight:600;letter-spacing:.02em">Golden Pastry</span>
+<span style="font-size:13px;opacity:.7">Acces</span>
+</div>
+<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
+</div>
+<div data-ac="nav" class="gp-meniu-derulat" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+</div>
+<div data-ac="sidefoot" style="flex:none;margin-top:auto;display:flex;flex-direction:column;gap:10px">
+<!-- Pastila cu numele se arată numai când se știe al cui e numele ȘI că e
+     fondator: cuvântul de sub nume e scris fix în marcaj. -->
+<sc-if value="{{ sideWho }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
+<div style="display:flex;flex-direction:column;min-width:0;flex:1">
+<span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
+<span style="font-size:12px;opacity:.6">fondator</span>
+</div>
+</div>
+</sc-if>
+<a href="Intrare.dc.html" style="display:flex;align-items:center;min-height:44px;padding:0 14px;border-radius:12px;color:rgba(255,255,255,.72);font-size:14px;font-weight:600;text-decoration:none">← Alege panoul</a>
+<p style="margin:0;font-size:12px;opacity:.6;line-height:1.5">Bifa se verifică pe server, la fiecare cerere. O ușă închisă aici e închisă și pentru cine îi știe adresa.</p>
+<gp-versiune></gp-versiune>
+</div>
+</div>
+<sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+<div class="gp-navsheet" onClick="{{ onNavClose }}">
+<div class="gp-navcard" onClick="{{ onNavKeep }}">
+<div class="gp-navgrab"></div>
+<div class="gp-navhead">
+<div class="gp-navid">
+<span class="gp-navtitle">Golden Pastry</span>
+<span class="gp-navsub">{{ navHere }}</span>
+<gp-versiune></gp-versiune>
+</div>
+<button class="gp-navx" type="button" title="Închide" aria-label="Închide" onClick="{{ onNavClose }}">×</button>
+</div>
+<sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
+<sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
+</sc-if>
+<sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
+<a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
+</sc-if>
+</sc-for>
+<div class="gp-navsep"></div>
+<sc-if value="{{ navWho }}" hint-placeholder-val="{{ true }}">
+<div class="gp-navrow gp-navrow--who">
+<span class="gp-navwho"><span class="gp-navname">{{ authName }}</span><span class="gp-navquiet">conectat</span></span>
+<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>
+</div>
+</sc-if>
+<sc-if value="{{ navAnon }}" hint-placeholder-val="{{ false }}">
+<button class="gp-navrow" type="button" onClick="{{ onLogout }}">Ieși din cont</button>
+</sc-if>
+<a class="gp-navrow" href="{{ navBack.href }}">{{ navBack.et }}</a>
+</div>
+</div>
+</sc-if>
+
+
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;background:var(--h-bg-page)">
+
+<div data-ac="topbar" style="display:flex;align-items:center;gap:16px;padding:20px 28px;border-bottom:1px solid var(--h-line);background:var(--h-bg-surface)">
+<div style="display:flex;flex-direction:column;gap:3px">
+<h1 class="h-h3" style="margin:0;font-size:24px">Acces</h1>
+<span style="font-size:14px;color:var(--h-fg-subtle)">{{ sub }}</span>
+</div>
+<div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+<!-- Numai când e ceva de dat înapoi. Pe matricea din prima zi butonul ar
+     goli un tabel gol și n-ar schimba nimic pe ecran. -->
+<sc-if value="{{ areReset }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onCereReset }}" style="min-height:44px;font-size:14px">Înapoi la început</button>
+</sc-if>
+</div>
+</div>
+
+<sc-if value="{{ eroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="margin:16px 28px 0;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Matricea de acces nu s-a încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ eroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<div data-ac="body" style="flex:1;display:flex;flex-direction:column;gap:16px;padding:20px 28px 40px;min-width:0">
+
+<sc-if value="{{ asteapta }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:15px;color:var(--h-fg-faint)">Se încarcă…</p>
+</sc-if>
+
+<!-- BAZA FĂRĂ MIGRAREA 033. Pagina se deschide și arată împărțirea de acum —
+     e chiar cea din pornire, fiindcă fără tabel n-are unde sta o bifă mutată —
+     dar nu primește apăsări. Spune ce lipsește, cu numele fișierului, ca omul
+     să nu creadă că bifele sunt stricate. -->
+<sc-if value="{{ doarCitire }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Bifele nu se pot muta încă.</p>
+<p style="margin:0;font-size:15px;line-height:1.5;text-wrap:pretty">Baza de date nu are tabelul pentru „Acces”. Rulează migrarea <b>sql/033_acces.sql</b>, apoi deschide pagina din nou. Până atunci vezi mai jos cine ce are acum — adică împărțirea din prima zi.</p>
+</div>
+</sc-if>
+
+<!-- Bara de salvare a casei (shared/gp-bara.css): apare numai când e ceva de
+     salvat și rămâne lipită sus cât ține derularea — matricea are douăzeci și
+     patru de rânduri, iar butonul nu trebuie căutat. -->
+<sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+<div data-ac="savebar" class="gp-bara gp-bara--sus">
+<span class="gp-bara__spus">{{ dirtyLine }}</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onRenunta }}" style="font-size:14px">Renunță</button>
+<button type="button" class="{{ saveCls }}" onClick="{{ onSave }}" style="font-size:15px;font-weight:700">{{ saveLabel }}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ eroareSalv }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px">
+<p class="h-alert__title" style="margin:0;font-size:15px;font-weight:700">{{ eroareSalvTitlu }}</p>
+<p style="margin:0;font-size:14px;line-height:1.45">{{ eroareSalv }}</p>
+</div>
+</sc-if>
+
+<!-- ÎNTREBAREA DE DINAINTEA GOLIRII. În pagină, nu `confirm()`: fereastra
+     browserului nu poate spune câte bife se pierd, iar pe telefon arată ca o
+     eroare. -->
+<sc-if value="{{ cereReset }}" hint-placeholder-val="{{ false }}">
+<div data-ac="reset" role="alertdialog" aria-label="Înapoi la început" class="h-card" style="padding:18px 20px;border-radius:18px;border:1px solid var(--h-danger);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">Te întorci la împărțirea din prima zi?</span>
+<p style="margin:0;font-size:15px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">{{ resetLinie }}</p>
+</div>
+<div style="display:flex;gap:10px;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onResetNu }}" style="min-height:44px;font-size:15px;flex:1 1 150px">Păstrează cum e</button>
+<button type="button" class="{{ resetCls }}" onClick="{{ onResetDa }}" style="min-height:44px;font-size:15px;font-weight:700;flex:1 1 150px">{{ resetLabel }}</button>
+</div>
+</div>
+</sc-if>
+
+<!-- CE S-A SALVAT. Rămâne pe ecran până la următoarea bifă mutată: e singura
+     dovadă că apăsarea a ajuns pe server, iar o casetă care se stinge singură
+     dispare tocmai cât omul se uită în altă parte. -->
+<sc-if value="{{ areSalvat }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--success" style="border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:4px">
+<p class="h-alert__title" style="margin:0;font-size:15px;font-weight:700">{{ salvatTitlu }}</p>
+<sc-for list="{{ salvat }}" as="l" hint-placeholder-count="2">
+<p style="margin:0;font-size:14px;line-height:1.45">{{ l.text }}</p>
+</sc-for>
+<p style="margin:0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Serverul ține cont de ele de pe acum. Cine e deja intrat își vede meniul schimbat la următoarea pagină deschisă.</p>
+</div>
+</sc-if>
+
+<!-- CE SE SCHIMBĂ LA SALVARE, spus în cuvinte, cât bifele sunt încă nesalvate.
+     O bulină pe o grilă de o sută douăzeci de celule se pierde ușor din ochi;
+     „Manager pierde Depozit" nu. -->
+<sc-if value="{{ dirty }}" hint-placeholder-val="{{ false }}">
+<div data-ac="rezumat" class="h-card" style="padding:16px 18px;border-radius:18px;display:flex;flex-direction:column;gap:8px">
+<span class="h-eyebrow" style="font-size:12px">La salvare</span>
+<sc-for list="{{ deSalvat }}" as="l" hint-placeholder-count="2">
+<p style="margin:0;font-size:15px;line-height:1.45">{{ l.text }}</p>
+</sc-for>
+<sc-for list="{{ avertizari }}" as="a" hint-placeholder-count="0">
+<p style="margin:0;font-size:14px;line-height:1.45;padding:9px 12px;border-radius:10px;background:var(--h-warning-soft);color:var(--h-fg)">{{ a.text }}</p>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ areMatrice }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:16px">
+
+<div data-ac="legenda" style="display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;font-size:13px;color:var(--h-fg-subtle)">
+<span style="display:inline-flex;align-items:center;gap:6px"><span data-ac="leg" data-st="da altfel" aria-hidden="true"><i>✓</i></span>altfel decât în prima zi</span>
+<span style="display:inline-flex;align-items:center;gap:6px"><span data-ac="leg" data-st="da nou" aria-hidden="true"><i>✓</i></span>mutată, încă nesalvată</span>
+<span style="display:inline-flex;align-items:center;gap:6px"><span data-ac="leg" data-st="da fix" aria-hidden="true"><i>✓</i></span>nu se poate schimba</span>
+<span style="display:inline-flex;align-items:center;gap:6px"><span data-ac="leg" data-st="da surd" aria-hidden="true"><i>✓</i></span>bifată, dar fără panoul ei</span>
+</div>
+
+<!-- ───────────────────────────────────────── pe telefon și pe tabletă ── -->
+<div data-ac="tel" style="display:none;flex-direction:column;gap:14px">
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ pastile }}" as="p" hint-placeholder-count="5">
+<button type="button" class="{{ p.cls }}" aria-pressed="{{ p.apasat }}" onClick="{{ p.onClick }}" style="min-height:44px;font-size:14px;border-radius:999px;padding:0 16px">{{ p.et }}</button>
+</sc-for>
+</div>
+<sc-if value="{{ telAreNota }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">{{ telNota }}</p>
+</sc-if>
+<sc-for list="{{ telGrupe }}" as="g" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+<span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">{{ g.titlu }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ g.sub }}</span>
+</div>
+<div class="h-card" style="padding:2px 16px;border-radius:18px">
+<sc-for list="{{ g.randuri }}" as="r" hint-placeholder-count="12">
+<div data-ac="telrand" style="display:flex;flex-direction:column;gap:2px;padding:8px 0;border-bottom:1px solid var(--h-line)">
+<label class="h-switch" style="min-height:44px;font-size:15px"><input type="checkbox" checked="{{ r.on }}" disabled="{{ r.blocat }}" onChange="{{ r.onMuta }}"><span>{{ r.eticheta }}</span></label>
+<sc-if value="{{ r.areSub }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:12px;line-height:1.4;color:var(--h-fg-faint)">{{ r.sub }}</span>
+</sc-if>
+<sc-for list="{{ r.note }}" as="n" hint-placeholder-count="0">
+<span data-ac="nota" data-fel="{{ n.fel }}">{{ n.text }}</span>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<!-- ───────────────────────────────────────────────────── pe monitor ── -->
+<div data-ac="grila" style="display:flex;flex-direction:column;gap:18px">
+<sc-for list="{{ grupe }}" as="g" hint-placeholder-count="2">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+<span style="font-family:var(--h-font-display);font-size:20px;font-weight:600">{{ g.titlu }}</span>
+<span style="font-size:13px;color:var(--h-fg-subtle)">{{ g.sub }}</span>
+</div>
+<div class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
+<!-- Capul se repetă la fiecare grupă, nu stă lipit sus: sus e deja bara de
+     salvare, iar două lucruri lipite de aceeași margine se acoperă unul pe
+     altul. Douăsprezece rânduri încap sub un cap fără derulare. -->
+<div data-ac="cap" style="display:grid;grid-template-columns:minmax(220px,1fr) repeat(6,minmax(70px,96px));gap:4px;align-items:end;padding:12px 14px 10px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:12px;font-weight:700;line-height:1.25;color:var(--h-fg-subtle)">
+<span style="letter-spacing:.06em;text-transform:uppercase">{{ g.capEt }}</span>
+<span style="text-align:center">Fondator</span>
+<sc-for list="{{ g.coloane }}" as="k" hint-placeholder-count="5">
+<span style="text-align:center;text-wrap:balance">{{ k.eticheta }}</span>
+</sc-for>
+</div>
+<sc-for list="{{ g.randuri }}" as="r" hint-placeholder-count="12">
+<div data-ac="rand" style="display:grid;grid-template-columns:minmax(220px,1fr) repeat(6,minmax(70px,96px));gap:4px;align-items:center;padding:2px 14px 2px 18px;border-bottom:1px solid var(--h-line)">
+<div style="display:flex;flex-direction:column;gap:2px;min-width:0;padding:8px 0">
+<span style="font-size:15px;font-weight:600;line-height:1.3">{{ r.eticheta }}</span>
+<sc-if value="{{ r.areSub }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:12px;line-height:1.4;color:var(--h-fg-faint)">{{ r.sub }}</span>
+</sc-if>
+<sc-for list="{{ r.note }}" as="n" hint-placeholder-count="0">
+<span data-ac="nota" data-fel="{{ n.fel }}">{{ n.text }}</span>
+</sc-for>
+</div>
+<span data-ac="mereu" title="Fondatorul are mereu tot"><i aria-hidden="true">✓</i></span>
+<sc-for list="{{ r.celule }}" as="c" hint-placeholder-count="5">
+<button type="button" data-ac="cel" data-st="{{ c.st }}" aria-pressed="{{ c.apasat }}" aria-label="{{ c.spus }}" title="{{ c.titlu }}" onClick="{{ c.onMuta }}"><i aria-hidden="true">✓</i></button>
+</sc-for>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ subsol }}" as="s" hint-placeholder-count="3">
+<p style="margin:0;font-size:13px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">{{ s.text }}</p>
+</sc-for>
+</div>
+
+</div>
+</sc-if>
+
+</div>
+</div>
+
+</div>
+</sc-if>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+// PAGINA „ACCES” (runda 2.7.0). Cererea patronului, 4 octombrie 2026: „un
+// meniu Acces unde să pot pune nivelul de acces pentru orice”.
+//
+// Pagina NU hotărăște nimic. Judecata — cine are ce — stă pe server, în
+// api/lib/auth.php (`drept()`), și o întreabă fiecare rută la fiecare cerere.
+// Aici se desenează matricea venită de la `GET /acces` și se trimit înapoi
+// bifele mutate (`PUT /acces`). Tot ce e scris cu litere pe ecran — numele
+// drepturilor, ale rolurilor, motivul unei celule fixe, de ce panou atârnă o
+// faptă — vine din răspunsul serverului, nu dintr-o listă scrisă aici: o a doua
+// copie a matricei ar rămâne în urmă la prima cheie nouă.
+
+/** Numele unei celule în `state.v`: „cheie|rol”. */
+const loc = (cheie, rol) => cheie + "|" + rol;
+const areCheia = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+
+/** „A”, „A și B”, „A, B și C”. */
+const insira = (xs) => (xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " și " + xs[xs.length - 1]);
+/** La fel, cu „sau”: o faptă cere ORICARE din panourile ei. */
+const oricare = (xs) => (xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " sau " + xs[xs.length - 1]);
+const inGhilimele = (xs) => xs.map((x) => "„" + x + "”");
+
+/**
+ * „3 bife”, „20 de bife”, „101 bife”.
+ *
+ * „De” se pune când ultimele două cifre sunt 00 ori de la 20 în sus — regula
+ * limbii, nu a casei. Matricea are o sută douăzeci de celule, deci pragul chiar
+ * se atinge.
+ */
+const cate = (n, unu, multe) => {
+  if (n === 1) return "1 " + unu;
+  const r = n % 100;
+  return n + (n >= 20 && (r === 0 || r >= 20) ? " de " : " ") + multe;
+};
+
+class Component extends DCLogic {
+  // `m` e matricea așa cum a trimis-o serverul. `v` ține NUMAI bifele mutate și
+  // nesalvate, pe numele celulei: o celulă pusă la loc pe valoarea de pe server
+  // iese din `v`, deci „e ceva de salvat?” e o singură întrebare — are `v`
+  // vreo cheie? — și nu se poate certa cu ce se trimite.
+  state = { navOpen: false, auth: null, loaded: false, eroare: "", m: null, v: {},
+    // Rolul ales din pastile, pe telefon. Pe monitor nu se folosește.
+    rol: "admin",
+    // Celula fixă apăsată ultima: sub rândul ei se scrie de ce nu se mută.
+    spus: "",
+    saving: false, eroareSalv: "", eroareSalvTitlu: "", salvat: [], salvatTitlu: "",
+    cereReset: false, resetand: false };
+
+  componentDidMount() {
+    document.documentElement.setAttribute("data-theme", "light");
+    if (!window.__gpNav) {
+      window.__gpNav = 1;
+      document.addEventListener("click", (e) => {
+        const a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a) return;
+        if (a.getAttribute("target")) return;
+        const h = a.getAttribute("href") || "";
+        if (!/\.dc\.html$/i.test(h)) return;
+        const q = location.search;
+        if (!q) return;
+        e.preventDefault();
+        location.href = h + q;
+      }, true);
+    }
+    this.porneste();
+    // Escape închide întrebarea de dinaintea golirii — pe „nu”, ca peste tot în
+    // casă: o tastă apăsată din reflex n-are voie să șteargă ceva.
+    this.onEsc = (ev) => {
+      if (ev.key !== "Escape") return;
+      if (this.state.cereReset && !this.state.resetand) this.setState({ cereReset: false });
+    };
+    window.addEventListener("keydown", this.onEsc);
+    // Paza plecării (runda 2.7.0; patronul, 4 oct. 2026): cu bife mutate și
+    // nesalvate, o intrare din meniu apăsată din mers ori fila închisă le
+    // arunca pe toate fără un cuvânt. Biblioteca întreabă cu vorbele de la
+    // `ciornaDeschisa()` și ține fereastra browserului numai cât e ceva scris.
+    // Pagina n-are „Înapoi” al ei prin istoric: acolo ține tot fereastra aceea.
+    // `componentDidMount` se poate aprinde a doua oară: paza nouă o scoate
+    // singură pe cea veche, deci aici nu se numără nimic.
+    this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("keydown", this.onEsc);
+    if (typeof this.__scoatePaza === "function") this.__scoatePaza();
+  }
+
+  /**
+   * Află cine e intrat, apoi — numai pentru fondator — cere matricea.
+   *
+   * `gp.me()` are DOUĂ feluri de „fără cont”: serverul care răspunde lămurit
+   * „nu ești conectat” (`null`) și serverul la care nu s-a ajuns (aruncă).
+   * `NEAFLAT` le desparte, ca o rețea căzută să nu trimită omul la intrare și
+   * nici să nu-i ridice în față un refuz despre un cont pe care pagina nu l-a
+   * aflat. Tiparul e cel din Jurnal.
+   */
+  porneste() {
+    const NEAFLAT = {};
+    return gp.me()
+      .then((user) => {
+        if (user) this.setState({ auth: gp.auth(user) });
+        return user;
+      })
+      .catch((e) => {
+        this.setState({ eroare: gp.motiv(e, "pagina „Acces”"), loaded: true });
+        return NEAFLAT;
+      })
+      .then((user) => {
+        if (user === NEAFLAT) return null;
+        if (!user) { gp.toLogin(); return null; }
+        // Rangul, nu o bifă: pagina care împarte drepturile nu se poate da din
+        // matricea pe care o împarte (api/lib/auth.php, `require_acces()`).
+        // Pentru oricine altcineva serverul răspunde 403, deci nici nu întreabă.
+        if (user.role !== "fondator") { this.setState({ loaded: true }); return null; }
+        return this.pull();
+      });
+  }
+
+  pull() {
+    return gp.get("/acces")
+      // Matricea poate sosi și A DOUA oară peste bife mutate și nesalvate:
+      // motorul paginilor re-aprinde `componentDidMount`, ori omul apasă
+      // „Încearcă din nou” sub caseta roșie. Până la runda 2.7.0 sosirea le
+      // ștergea pe toate (`v: {}`) fără un cuvânt — tocmai „Le arunc”-ul pe
+      // care paza îl cere spus de om. Acum rămân cele care mai au rost.
+      .then((r) => { this.setState({ m: r, v: this.bifeRamase(r), loaded: true, eroare: "" }); })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else this.setState({ eroare: gp.motiv(e, "matricea de acces"), loaded: true });
+      });
+  }
+
+  /**
+   * Bifele nesalvate care mai au rost peste matricea abia sosită `M`.
+   *
+   * Aceeași măsură ca în `muta()`, ca `v` să rămână ce spune comentariul
+   * stării — NUMAI bife mutate față de server, pe celule care se pot muta:
+   * `ciornaDeschisa()` și bara numără cheile lui `v` și nu mai compară nimic.
+   *   · bifa pe care serverul o are deja (salvată între timp din altă filă)
+   *     iese, ca una adusă la loc: altfel bara ar număra o schimbare care nu
+   *     schimbă nimic;
+   *   · bifa de pe un rând dispărut ori de pe o celulă devenită fixă iese și
+   *     ea: omul n-ar mai avea de unde s-o ia înapoi, iar serverul ar refuza
+   *     TOATĂ salvarea din cauza ei (tot ori nimic — api/routes/acces.php).
+   * La prima sosire `v` e gol și nu rămâne nimic de ales.
+   */
+  bifeRamase(M) {
+    const vechi = this.state.v, v = {};
+    Object.keys(vechi).forEach((k) => {
+      const i = k.lastIndexOf("|");
+      const rol = k.slice(i + 1);
+      const r = ((M && M.randuri) || []).find((x) => x.cheie === k.slice(0, i));
+      if (!r || (r.fix && r.fix[rol])) return;
+      if (!!vechi[k] !== !!r.acum[rol]) v[k] = vechi[k];
+    });
+    return v;
+  }
+
+  /** Rândul unei chei, din matricea de pe ecran. */
+  rand(cheie) {
+    const M = this.state.m;
+    return M ? (M.randuri || []).find((x) => x.cheie === cheie) || null : null;
+  }
+
+  /**
+   * Mută o bifă.
+   *
+   * Nu atinge serverul: schimbarea stă în `v` până la „Salvează”. O bifă adusă
+   * înapoi pe valoarea de pe server IESE din `v` — altfel bara de salvare ar
+   * rămâne aprinsă peste o matrice identică cu cea salvată, iar „Salvează” ar
+   * trimite o schimbare care nu schimbă nimic.
+   */
+  muta(cheie, rol) {
+    const S = this.state, M = S.m;
+    if (!M || !M.activ || S.saving || S.resetand) return;
+    const r = this.rand(cheie);
+    if (!r) return;
+    if (r.fix && r.fix[rol]) { this.setState({ spus: loc(cheie, rol) }); return; }
+    const k = loc(cheie, rol);
+    const v = Object.assign({}, S.v);
+    const peServer = !!r.acum[rol];
+    const era = areCheia(v, k) ? v[k] : peServer;
+    if (!era === peServer) delete v[k]; else v[k] = !era;
+    // Vorbele de la salvarea trecută se sting la prima bifă nouă: altfel „Bifele
+    // sunt salvate” ar sta deasupra unei bare care spune „1 schimbare nesalvată”.
+    this.setState({ v, spus: "", salvat: [], salvatTitlu: "", eroareSalv: "", eroareSalvTitlu: "" });
+  }
+
+  /**
+   * Bifele mutate și nesalvate, spuse ca întrebare — ori `null` când nu e nimic
+   * de păzit. E SINGURUL loc care știe ce înseamnă „scris” pe pagina asta: îl
+   * întreabă „Renunță”, paza plecării (legăturile, fila închisă) și biblioteca
+   * la ieșirea din cont. Runda 2.7.0: pe 4 oct. 2026 patronul a pierdut un
+   * produs scris pe jumătate dintr-un clic alături și a cerut ca site-ul să
+   * întrebe înainte să arunce.
+   *
+   * Citește `this.state` ACUM, nu o poză din desen: paza îl cheamă la o apăsare
+   * venită mult după ultimul desen.
+   *
+   * „Scris” = `v` are ceva. `muta()` scoate din `v` bifa adusă înapoi pe
+   * valoarea de pe server și nu scrie nimic pe o celulă fixă ori pe matricea
+   * numai de citit (fără migrarea 033), deci numărul cheilor e chiar numărul de
+   * pe bară: aici nu se mai compară nimic a doua oară.
+   *
+   * Legat de formularul DESENAT: sub ecranul de refuz nu e nicio matrice.
+   * Bifele pot rămâne în stare dedesubt (motorul re-aprinde `componentDidMount`,
+   * iar între timp în filă a intrat alt cont) și n-au voie să țină în pagină un
+   * om care nu le vede și nu le poate salva. Condiția e chiar `blocked` din
+   * `renderVals()`.
+   *
+   * Vorbele sunt „Rămân” / „Le arunc”, nu „Ies fără să salvez”: la „Renunță”
+   * omul nu iese de nicăieri, rămâne în pagină cu bifele date înapoi.
+   *
+   * CÂT „SALVEAZĂ” E PE DRUM, vorbele sunt altele (încheierea rundei 2.7.0).
+   * Cererea cu bifele a plecat și nu mai poate fi oprită de aici: „Le arunc”
+   * n-ar arunca nimic, iar „Rolurile rămân cu ce au acum” ar fi o minciună
+   * dacă cererea ajunge. Tocmai pe pagina care împarte drepturile, omul pleca
+   * încredințat că n-a schimbat nimic. Întrebarea spune atunci numai ce se
+   * știe — salvarea e pe drum, iar cine pleacă nu-i mai vede răspunsul — și
+   * are alt al doilea buton. Când sosește răspunsul sub ea, biblioteca o
+   * retrage singură (vorbele de aici nu mai sunt aceleași). „Renunță” nu
+   * ajunge niciodată la vorbele astea: cât merge salvarea nu face nimic.
+   */
+  ciornaDeschisa() {
+    const S = this.state;
+    if (S.loaded && !!S.auth && S.auth.role !== "fondator" && !S.eroare) return null;
+    const n = Object.keys(S.v).length;
+    if (!n) return null;
+    if (S.saving) {
+      return {
+        titlu: "Pleci înainte să afli dacă s-au salvat bifele?",
+        text: "Salvarea e pe drum spre server și nu mai poate fi oprită de aici. Dacă pleci acum, nu vezi dacă bifele s-au salvat ori au fost refuzate.",
+        nu: "Rămân",
+        da: "Plec oricum"
+      };
+    }
+    return {
+      titlu: "Arunci schimbările nesalvate?",
+      text: (n === 1 ? "Se pierde " : "Se pierd ") + cate(n, "bifă mutată și nesalvată", "bife mutate și nesalvate") + ". Rolurile rămân cu ce au acum.",
+      nu: "Rămân",
+      da: "Le arunc"
+    };
+  }
+
+  /**
+   * Bifele mutate, spuse în cuvinte, pe roluri și în ordinea coloanelor:
+   * „Manager primește „Catalog”.”, „Angajat pierde „Depozit” și „Rută”.”.
+   *
+   * Aceeași funcție scrie și rezumatul de dinaintea salvării, și caseta de
+   * după: cele două nu pot spune lucruri diferite despre aceeași apăsare.
+   */
+  inCuvinte(v) {
+    const M = this.state.m;
+    if (!M) return [];
+    const linii = [];
+    (M.coloane || []).forEach((c) => {
+      const plus = [], minus = [];
+      (M.randuri || []).forEach((r) => {
+        const k = loc(r.cheie, c.rol);
+        if (!areCheia(v, k)) return;
+        (v[k] ? plus : minus).push(r.eticheta);
+      });
+      if (plus.length) linii.push({ text: c.eticheta + " primește " + insira(inGhilimele(plus)) + "." });
+      if (minus.length) linii.push({ text: c.eticheta + " pierde " + insira(inGhilimele(minus)) + "." });
+    });
+    return linii;
+  }
+
+  salveaza() {
+    const S = this.state, M = S.m;
+    if (!M || S.saving) return null;
+    const chei = Object.keys(S.v);
+    if (!chei.length) return null;
+    const schimbari = chei.map((k) => {
+      const i = k.lastIndexOf("|");
+      return { cheie: k.slice(0, i), rol: k.slice(i + 1), permis: !!S.v[k] };
+    });
+    // Rezumatul se scrie ACUM, din ce pleacă, nu din răspuns: răspunsul e
+    // matricea întreagă, din care nu se mai vede ce s-a mișcat.
+    const spuse = this.inCuvinte(S.v);
+    this.setState({ saving: true, eroareSalv: "", eroareSalvTitlu: "" });
+    return gp.put("/acces", { schimbari })
+      .then((r) => {
+        this.setState({ m: r, v: {}, saving: false, spus: "", salvat: spuse, salvatTitlu: "Bifele sunt salvate." });
+      })
+      .catch((e) => {
+        // Bifele rămân pe ecran, nesalvate: serverul a refuzat toată salvarea
+        // (tot ori nimic — api/routes/acces.php), deci nimic din ele n-a intrat.
+        //
+        // Sesiunea pierdută e tot un refuz și își spune titlul și motivul ca
+        // oricare altul (runda 2.7.0). Cu bife nesalvate `gp.toLogin()` întreabă
+        // întâi, iar omul care alege „Rămân să copiez” rămânea în fața unei
+        // matrice care nu spunea nimic; nici al doilea „Salvează” nu spunea,
+        // fiindcă biblioteca întreabă O SINGURĂ dată. Motivul e scris aici, cu
+        // vorbele întrebării ei: `gp.motiv()` nu cunoaște 401. Steagul se
+        // stinge ÎNAINTE de plecare din același motiv: altfel matricea ar
+        // rămâne înghețată pe „Se salvează…”.
+        this.setState({ saving: false, eroareSalvTitlu: "Bifele nu s-au salvat. Niciuna.",
+          eroareSalv: e.isAuth ? "Nu mai ești în cont, iar până nu intri din nou nu se poate salva nimic." : gp.motiv(e, "bifele") });
+        if (e.isAuth) gp.toLogin();
+      });
+  }
+
+  /** Înapoi la început: golește tabelul de pe server și, odată cu el, ce era nesalvat aici. */
+  reseteaza() {
+    const S = this.state;
+    if (!S.m || S.resetand) return null;
+    this.setState({ resetand: true, eroareSalv: "", eroareSalvTitlu: "" });
+    return gp.del("/acces")
+      .then((r) => {
+        this.setState({ m: r, v: {}, resetand: false, cereReset: false, spus: "",
+          salvat: [{ text: "Fiecare rol are iar ce avea în prima zi. În Jurnal a rămas scris la ce s-a renunțat." }],
+          salvatTitlu: "Totul e înapoi la început." });
+      })
+      .catch((e) => {
+        // Ca la salvare: întâi se dezgheață pagina și se spune ce nu s-a făcut
+        // și de ce — și la sesiunea pierdută —, apoi se pleacă. Întrebarea de
+        // reset se închide și ea, ca la orice golire nereușită.
+        this.setState({ resetand: false, cereReset: false, eroareSalvTitlu: "Nu s-a dat nimic înapoi.",
+          eroareSalv: e.isAuth ? "Nu mai ești în cont, iar până nu intri din nou nu se poate da nimic înapoi." : gp.motiv(e, "matricea de acces") });
+        if (e.isAuth) gp.toLogin();
+      });
+  }
+
+  renderVals() {
+    const S = this.state, auth = S.auth;
+    const eFondator = !!auth && auth.role === "fondator";
+    const M = S.m, V = S.v;
+    const randuri = M ? (M.randuri || []) : [];
+    const coloane = M ? (M.coloane || []) : [];
+    const activ = !!(M && M.activ);
+    const inchis = !activ || S.saving || S.resetand;
+
+    const dupaCheie = {};
+    randuri.forEach((r) => { dupaCheie[r.cheie] = r; });
+    const etCheie = (k) => (dupaCheie[k] ? dupaCheie[k].eticheta : k);
+    const etRol = {};
+    coloane.forEach((c) => { etRol[c.rol] = c.eticheta; });
+
+    /* ---- o celulă: ce e pe server, ce se vrea, și ce se spune despre ea ---- */
+    const fix = (r, rol) => (r.fix && r.fix[rol]) || null;
+    const peServer = (r, rol) => { const f = fix(r, rol); return f ? !!f.valoare : !!r.acum[rol]; };
+    const vrut = (r, rol) => { const k = loc(r.cheie, rol); return areCheia(V, k) ? !!V[k] : peServer(r, rol); };
+    // O faptă bifată pe un rol care n-are niciunul din panourile ei: bifa stă,
+    // dar serverul tot „nu” răspunde (`GP_DREPT_CERE`). Se spune pe ecran, ca
+    // fondatorul să nu creadă că salvarea n-a mers.
+    const faraUsa = (r, rol, citeste) => citeste(r, rol) && (r.cere || []).length > 0
+      && !(r.cere || []).some((p) => dupaCheie[p] && citeste(dupaCheie[p], rol));
+    const surd = (r, rol) => faraUsa(r, rol, vrut);
+
+    const celula = (r, rol) => {
+      const f = fix(r, rol), on = vrut(r, rol), k = loc(r.cheie, rol);
+      const nou = !f && areCheia(V, k);
+      const altfel = !f && on !== !!r.implicit[rol];
+      const mut = surd(r, rol);
+      const st = [on ? "da" : "nu"];
+      if (f) st.push("fix");
+      if (nou) st.push("nou");
+      if (altfel) st.push("altfel");
+      if (mut) st.push("surd");
+      if (inchis) st.push("inchis");
+      return { f, on, nou, altfel, mut, st: st.join(" ") };
+    };
+    const faraPanou = (r) => "fără " + oricare((r.cere || []).map(etCheie)) + " bifa nu ajută";
+
+    /* ---- grila de pe monitor ---- */
+    const randGrila = (r) => {
+      const note = [];
+      const celule = coloane.map((c) => {
+        const x = celula(r, c.rol);
+        if (x.mut) note.push({ fel: "surd", text: c.eticheta + ": " + faraPanou(r) + "." });
+        if (x.f && S.spus === loc(r.cheie, c.rol)) {
+          note.push({ fel: "fix", text: c.eticheta + ": nu se poate schimba. " + (x.f.motiv || "") });
+        }
+        return {
+          st: x.st,
+          apasat: x.on ? "true" : "false",
+          spus: c.eticheta + ", " + r.eticheta + ": " + (x.on ? "da" : "nu") + (x.f ? ", nu se poate schimba" : ""),
+          titlu: x.f ? "Nu se poate schimba. " + (x.f.motiv || "")
+            : x.mut ? faraPanou(r).charAt(0).toUpperCase() + faraPanou(r).slice(1)
+            : x.nou ? "Mutată, încă nesalvată"
+            : x.altfel ? "Altfel decât în prima zi" : "",
+          onMuta: () => this.muta(r.cheie, c.rol)
+        };
+      });
+      const sub = (r.cere || []).length ? "Ține de " + oricare((r.cere || []).map(etCheie)) + "." : "";
+      return { eticheta: r.eticheta, sub, areSub: !!sub, note, celule };
+    };
+    const panouri = randuri.filter((r) => r.fel === "panou");
+    const fapte = randuri.filter((r) => r.fel !== "panou");
+    const grupe = [
+      { titlu: "Panouri", capEt: "Panoul", sub: "Intrările din meniu. Fără bifă, pagina nu se deschide și serverul nu-i dă datele.", coloane, randuri: panouri.map(randGrila) },
+      { titlu: "Fapte", capEt: "Fapta", sub: "Ce are voie să facă într-un panou cine îl are deja.", coloane, randuri: fapte.map(randGrila) }
+    ];
+
+    /* ---- lista de pe telefon: un rol, un comutator pe rând ---- */
+    const rolAles = coloane.some((c) => c.rol === S.rol) ? S.rol : (coloane[0] ? coloane[0].rol : "");
+    const colAleasa = coloane.find((c) => c.rol === rolAles) || null;
+    const randTel = (r) => {
+      const x = celula(r, rolAles);
+      const note = [];
+      if (x.f) note.push({ fel: "fix", text: "Nu se poate schimba. " + (x.f.motiv || "") });
+      if (x.mut) note.push({ fel: "surd", text: faraPanou(r).charAt(0).toUpperCase() + faraPanou(r).slice(1) + "." });
+      if (x.nou) note.push({ fel: "nou", text: "Mutată, încă nesalvată." });
+      else if (x.altfel) note.push({ fel: "altfel", text: "Altfel decât în prima zi." });
+      const sub = (r.cere || []).length ? "Ține de " + oricare((r.cere || []).map(etCheie)) + "." : "";
+      return { eticheta: r.eticheta, sub, areSub: !!sub, on: x.on, blocat: !!x.f || inchis, note,
+        onMuta: () => this.muta(r.cheie, rolAles) };
+    };
+    const nesalvatePe = (rol) => Object.keys(V).filter((k) => k.slice(k.lastIndexOf("|") + 1) === rol).length;
+    const pastile = coloane.map((c) => {
+      const n = nesalvatePe(c.rol);
+      return {
+        et: c.eticheta + (n ? " · " + n : ""),
+        cls: c.rol === rolAles ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+        apasat: c.rol === rolAles ? "true" : "false",
+        onClick: () => this.setState({ rol: c.rol, spus: "" })
+      };
+    });
+    const telGrupe = [
+      { titlu: "Panouri", sub: "Intrările din meniu.", randuri: panouri.map(randTel) },
+      { titlu: "Fapte", sub: "Ce are voie să facă într-un panou.", randuri: fapte.map(randTel) }
+    ];
+
+    /* ---- ce se schimbă la salvare, și ce trebuie știut înainte ---- */
+    const nNesalvate = Object.keys(V).length;
+    const dirty = nNesalvate > 0;
+    const avertizari = [];
+    if (dirty) {
+      // Un panou pe care nu-l mai are nimeni în afară de fondator. Nu e o
+      // greșeală — Statistici așa e din prima zi —, dar când se ajunge acolo
+      // printr-o bifă luată, trebuie spus: în ziua în care fondatorul lipsește,
+      // panoul acela nu-l mai deschide nimeni.
+      panouri.forEach((r) => {
+        const avea = coloane.some((c) => peServer(r, c.rol));
+        const are = coloane.some((c) => vrut(r, c.rol));
+        if (avea && !are) avertizari.push({ text: "„" + r.eticheta + "” rămâne numai la fondator. Cât lipsește el, panoul nu-l mai deschide nimeni." });
+      });
+      // Faptele rămase fără ușă DIN CAUZA bifelor de acum. Cele care erau deja
+      // așa pe server nu se repetă aici: stau scrise pe rândul lor.
+      coloane.forEach((c) => {
+        const mute = fapte.filter((r) => surd(r, c.rol) && !faraUsa(r, c.rol, peServer));
+        if (mute.length) {
+          avertizari.push({ text: c.eticheta + " rămâne cu " + insira(inGhilimele(mute.map((r) => r.eticheta)))
+            + " bifat" + (mute.length === 1 ? "ă" : "e") + ", dar fără panoul de care ține bifa nu ajută." });
+        }
+      });
+      // Panoul „Conturi” dat cuiva care nu e administrator: nu e doar o listă
+      // de nume. Cine îl are dă parole noi, deci poate intra în locul altuia.
+      // Rangul rămâne păzit pe server (`guard_leader_role()`, api/routes/users.php).
+      const rc = dupaCheie.conturi;
+      if (rc) {
+        const noi = coloane.filter((c) => c.rol !== "admin" && vrut(rc, c.rol) && !peServer(rc, c.rol));
+        if (noi.length) {
+          avertizari.push({ text: "Cine are „Conturi” face conturi noi și dă parole noi celorlalți, deci poate intra în locul lor. "
+            + "De conturile de administrator și de fondator nu se poate atinge." });
+        }
+      }
+    }
+
+    const nSchimbate = M ? (M.schimbate || 0) : 0;
+    const subsol = [{ text: "Fondatorul are mereu tot, iar pagina asta e numai a lui: nu se poate da altcuiva din bife." }]
+      .concat(coloane.filter((c) => c.nota).map((c) => ({ text: c.eticheta + ": " + c.nota })))
+      .concat([{ text: "Clienții nu au bife. Văd magazinul, comenzile lor și — dacă au cod — Recomandări." }]);
+
+    return {
+      meniu: gp.meniu("Acces", S.auth),
+      navHere: "Acces",
+      navBack: gp.iesire(S.auth),
+      navOpen: S.navOpen,
+      onNavOpen: () => this.setState({ navOpen: true }),
+      onNavClose: () => this.setState({ navOpen: false }),
+      onNavKeep: (e) => e.stopPropagation(),
+      navWho: !!auth,
+      navAnon: false,
+      sideWho: eFondator,
+      onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
+      authName: auth ? auth.name : "",
+
+      // Ecranul de refuz vorbește despre CONTUL omului, deci nu se aprinde până
+      // nu se știe al cui e. Cele patru lacăte sunt ale casei (v. Setări).
+      blocked: S.loaded && !!auth && !eFondator && !S.eroare,
+      allowed: !S.loaded || !auth || eFondator || !!S.eroare,
+      blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces aici. Cine ce vede în aplicație hotărăște numai fondatorul.",
+      acasaHref: gp.primaPagina(auth),
+      acasaEt: "← Înapoi la panoul meu",
+
+      // Subtitlul numără ce a venit de la server, deci tace până vine și tace
+      // când n-a venit: zero nu e un răspuns, e o așteptare.
+      sub: (!M || S.eroare) ? ""
+        : nSchimbate ? cate(nSchimbate, "bifă mutată", "bife mutate") + " față de prima zi"
+        : "Totul e ca în prima zi.",
+      asteapta: !S.loaded && !S.eroare,
+      eroare: S.eroare,
+      // Reîncercarea ia drumul de la capăt: caseta se poate aprinde și înainte
+      // să se fi aflat cine e intrat, iar atunci n-are rost cerută matricea.
+      onReincearca: () => { this.setState({ eroare: "", loaded: false }, () => this.porneste()); },
+
+      areMatrice: !!M,
+      doarCitire: !!M && !M.activ,
+
+      dirty,
+      dirtyLine: cate(nNesalvate, "schimbare nesalvată", "schimbări nesalvate"),
+      saveCls: S.saving ? "h-btn h-btn--primary h-btn--loading" : "h-btn h-btn--primary",
+      saveLabel: S.saving ? "Se salvează…" : "Salvează",
+      onSave: () => this.salveaza(),
+      // Ușă păzită (runda 2.7.0): cu bife mutate întreabă, fără ele lucrează pe
+      // loc, ca până acum. Cât merge salvarea ORI golirea nu face nimic — nici
+      // întrebare: răspunsul serverului hotărăște ce rămâne pe ecran, iar bifele
+      // aruncate între timp s-ar fi întors salvate ori ar fi pierit la un refuz.
+      onRenunta: () => { if (!this.state.saving && !this.state.resetand) gp.inchideCiorna(this.ciornaDeschisa(), () => this.setState({ v: {}, spus: "", eroareSalv: "", eroareSalvTitlu: "" })); },
+      deSalvat: this.inCuvinte(V),
+      avertizari,
+
+      eroareSalv: S.eroareSalv,
+      eroareSalvTitlu: S.eroareSalvTitlu,
+      areSalvat: !!S.salvatTitlu && !dirty,
+      salvatTitlu: S.salvatTitlu,
+      salvat: S.salvat,
+
+      // „Înapoi la început” are ce da înapoi numai când pe SERVER e ceva mutat.
+      // Bifele nesalvate de pe ecran le șterge „Renunță”.
+      areReset: activ && nSchimbate > 0 && !S.cereReset,
+      onCereReset: () => this.setState({ cereReset: true, salvat: [], salvatTitlu: "" }),
+      cereReset: S.cereReset,
+      resetLinie: "Se pierd " + cate(nSchimbate, "bifă mutată", "bife mutate")
+        + (dirty ? " și " + cate(nNesalvate, "schimbare nesalvată", "schimbări nesalvate") + " de pe ecran" : "")
+        + ": fiecare rol rămâne cu ce avea când a fost instalată aplicația. În Jurnal rămâne scris la ce ai renunțat.",
+      resetCls: S.resetand ? "h-btn h-btn--danger h-btn--loading" : "h-btn h-btn--danger",
+      resetLabel: S.resetand ? "Se dă înapoi…" : "Da, înapoi la început",
+      onResetNu: () => { if (!S.resetand) this.setState({ cereReset: false }); },
+      onResetDa: () => this.reseteaza(),
+
+      grupe,
+      pastile,
+      telGrupe,
+      telNota: colAleasa && colAleasa.nota ? colAleasa.nota : "",
+      telAreNota: !!(colAleasa && colAleasa.nota),
+      subsol
+    };
+  }
+}
+
+</script>
+</body>
+</html>

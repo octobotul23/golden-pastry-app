@@ -903,6 +903,72 @@ else
   chmod -R u=rwX,go=rX "$DIR"
   chmod 640 "$DIR/api/config.php"
   info "config.php 640 · restul 755/644 · totul pe www-data"
+
+  pas "Ceasul plăților"
+  # Raportul de încasări și amintirile de scadență (2.7.0) nu le cere nicio
+  # pagină: le pornește serverul, din cinci în cinci minute. E primul lucru din
+  # aplicație care rulează fără ca cineva să fi deschis site-ul, deci fără
+  # rândul de mai jos nu pleacă niciun raport, oricât de bine ar fi pus chatul
+  # în „Încasări" — și nimic nu spune de ce.
+  #
+  # Stă AICI, în ramura fișierelor (deci și la --doar-fisiere), după drepturi:
+  # rândul cheamă un fișier pe care abia copierea de mai sus l-a adus. La
+  # --doar-baza nu se atinge — acolo n-a venit niciun fișier nou.
+  #
+  # `flock -n`: dacă o rulare ține mai mult de cinci minute (Telegram care nu
+  # răspunde), următoarea nu pornește peste ea. `logger`: ce tipărește ceasul
+  # se citește cu `journalctl -t gp-plati`; fără el, cron ar încerca să trimită
+  # ieșirea pe e-mail, unui server care n-are poștă.
+  #
+  # Se scrie NUMAI dacă diferă: cron recitește fișierul când i se schimbă data,
+  # iar un fișier rescris la fiecare actualizare ar arăta, în `ls -l`, ca umblat
+  # de fiecare dată. Întâi lângă el și apoi mutat, ca cron să nu prindă niciodată
+  # un rând scris pe jumătate (numele cu punct nu-l citește: cron sare peste
+  # fișierele din cron.d care au punct în nume).
+  CRON_FISIER="/etc/cron.d/goldenpastry-plati"
+  CRON_TEXT="# Golden Pastry: raportul de încasări și amintirile de scadență, pe Telegram.
+# Scris de scripturile de instalare și de actualizare; nu se editează de mână.
+*/5 * * * * www-data flock -n /run/lock/gp-plati.lock php $DIR/api/cron/plati.php 2>&1 | logger -t gp-plati"
+  if [[ ! "$DIR" =~ ^[A-Za-z0-9_./-]+$ ]]; then
+    # Un spațiu ori un `%` în cale ar fi citite de cron altfel decât de shell.
+    galben "  Calea „$DIR” are semne pe care cron le citește altfel. Ceasul NU a fost pus;"
+    info "rapoartele de încasări nu vor pleca până nu e pus de mână."
+  elif [[ ! -f "$DIR/api/cron/plati.php" ]]; then
+    galben "  Pachetul nu are api/cron/plati.php (e mai vechi de 2.7.0?). Ceasul NU a fost pus."
+  elif [[ ! -d /etc/cron.d ]]; then
+    galben "  Serverul nu are cron (lipsește /etc/cron.d). Ceasul NU a fost pus."
+    info "Pune-l cu:  apt-get install -y cron   și rulează din nou actualizarea cu --doar-fisiere."
+  elif [[ -f "$CRON_FISIER" && "$(cat "$CRON_FISIER")" == "$CRON_TEXT" ]]; then
+    info "$CRON_FISIER — neschimbat"
+  else
+    printf '%s\n' "$CRON_TEXT" > "$CRON_FISIER.nou"
+    chown root:root "$CRON_FISIER.nou"
+    chmod 644 "$CRON_FISIER.nou"
+    mv -f "$CRON_FISIER.nou" "$CRON_FISIER"
+    info "$CRON_FISIER — scris (din 5 în 5 minute; se citește cu: journalctl -t gp-plati)"
+  fi
+  # FIȘIERUL NU E CEASUL. /etc/cron.d există și pe un server FĂRĂ cron: îl aduc
+  # alte pachete (php își pune acolo curățenia sesiunilor), deci întrebarea de
+  # mai sus trece, rândul se scrie, scriptul zice „scris" — și nu-l citește
+  # nimeni, niciodată. Aici e locul cu primejdia cea mare: un server instalat
+  # ÎNAINTE de 2.7.0 n-a primit `cron` de la instalare (lista de pachete îl are
+  # abia de atunci). De aceea se întreabă de PROGRAM și de SERVICIU, la fiecare
+  # actualizare cu fișiere, și se spune pe față când rândul e pus degeaba.
+  # Actualizarea NU instalează pachete: spune comanda.
+  if [[ -f "$CRON_FISIER" ]]; then
+    if ! command -v cron >/dev/null 2>&1; then
+      galben "  Rândul e scris, dar serverul nu are programul cron: ceasul NU merge."
+      info "Pune-l cu:  apt-get install -y cron   (pornește singur; rândul e deja la locul lui)."
+    else
+      systemctl enable --now cron >/dev/null 2>&1 || service cron start >/dev/null 2>&1 || true
+      if systemctl is-active --quiet cron 2>/dev/null || pgrep -x cron >/dev/null 2>&1; then
+        info "serviciul cron merge"
+      else
+        galben "  Rândul e scris, dar serviciul cron e oprit: ceasul NU merge."
+        info "Pornește-l cu:  systemctl enable --now cron   și vezi de ce:  systemctl status cron"
+      fi
+    fi
+  fi
 fi
 
 # ------------------------------------------------------------------- Apache --

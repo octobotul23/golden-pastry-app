@@ -84,6 +84,20 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-dep=modalfoot]{flex-wrap:wrap!important;gap:8px!important}
 [data-dep=modalfoot]>button{min-width:0!important;margin-left:0!important;flex:1 1 100%!important;min-height:50px!important}
 [data-dep=modalfoot]>[data-dep=btnsave]{order:-2!important}
+/* Fila „Prețuri” (runda 2.7.0). Rândul unui articol e un flex care se
+   înfășoară: pe ecran lat numele, prețul și butoanele au fiecare baza lui și
+   stau pe o linie. Aici numele își ia linia întreagă, iar prețul împarte linia
+   a doua cu butoanele cât încap; când nu încap (un articol cu „Istoric” ȘI
+   „Preț nou”, la 320), butoanele trec singure dedesubt, în dreapta. Nimic nu
+   are lățime fixă mai mare decât ecranul și niciun text nu e ținut pe un rând
+   cu `nowrap`, deci n-are ce să iasă din 320. */
+[data-dep=prrow]{padding:12px 14px!important;gap:6px 10px!important}
+[data-dep=prnume]{flex:1 1 100%!important}
+[data-dep=prpret]{flex:1 1 150px!important}
+[data-dep=practiuni]{flex:0 0 auto!important}
+[data-dep=prist]{padding:2px 14px 12px!important}
+[data-dep=pristzi],[data-dep=pristpret]{flex:0 0 auto!important}
+[data-dep=prfinite]{padding:12px 14px!important}
 }
 @media (max-width:1100px){
 [data-dep=logrow]{grid-template-columns:66px 96px minmax(0,1fr) auto!important;gap:8px 10px!important}
@@ -131,7 +145,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ depozitDeschis }}" hint-placeholder-val="{{ true }}">
 <div data-dep="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
-<div data-dep="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-dep="side" class="gp-meniu-derulat" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
 <div data-dep="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
 <img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
@@ -140,10 +154,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
-<div data-dep="nav" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
+<div data-dep="nav" class="gp-meniu-derulat" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
@@ -191,7 +205,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -471,6 +485,175 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!--
+  FILA „PREȚURI” (runda 2.7.0; hotărârile patronului din 4–5 oct. 2026).
+
+  Cât costă un kilogram de făină ori un ou, cu ziua de la care e valabil
+  prețul. De aici socotește serverul costul unui produs (Catalog) și profitul
+  (Statistici). Se desenează numai cui are dreptul `preturi` (`isPreturi`):
+  fără el nu există nici fila, nici cererea spre `/stock/prices`, iar pagina
+  arată întocmai ca înainte. Prețul NU apare în „Stoc” și nici în „Registru”:
+  pe acelea le deschide tot laboratorul.
+
+  Cinci stări, fiecare cu cardul ei, ca niciuna să nu spună altceva decât știe
+  pagina: actualizarea lipsă (503), pana, „se citește”, lista și golul.
+-->
+<sc-if value="{{ isPreturi }}" hint-placeholder-val="{{ false }}">
+<div data-dep="preturi" style="display:flex;flex-direction:column;gap:14px;min-width:0">
+
+<!-- Baza de date n-a primit migrarea 034: fila se vede, cu un rând care
+     numește actualizarea lipsă — și fără niciun buton care ar duce la un refuz. -->
+<sc-if value="{{ prLipsa }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:16px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Prețurile nu se pot scrie încă.</p>
+<p style="margin:0;font-size:15px;line-height:1.45;text-wrap:pretty">{{ prLipsa }}</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ prEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700">Prețurile nu s-au încărcat.</p>
+<p style="margin:0;font-size:15px;line-height:1.45">{{ prEroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onPrReincearca }}" style="min-height:44px;padding:0 18px;font-size:15px;border-radius:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ prVine }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Se citesc prețurile…</p>
+</div>
+</sc-if>
+
+<!-- SUS, CU ROȘU: articolele care intră într-o rețetă și n-au preț folosibil.
+     Stau deasupra listei fiindcă de ele atârnă cifre din alte două pagini: un
+     produs cu o singură linie fără preț rămâne fără cost de tot (nu cu „suma
+     celor care au”), deci și fără profit. Fiecare rând spune ce produse ține
+     în loc și are butonul lui, ca omul să nu caute articolul prin listă. -->
+<sc-if value="{{ prAreLipsuri }}" hint-placeholder-val="{{ false }}">
+<div data-dep="prlipsuri" class="h-alert h-alert--danger" style="border-radius:16px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;align-items:stretch">
+<p class="h-alert__title" style="margin:0;font-size:15px;font-weight:700;line-height:1.4;text-wrap:pretty">{{ prLipsuriTitlu }}</p>
+<sc-for list="{{ prLipsuri }}" as="l" hint-placeholder-count="2">
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding-top:10px;border-top:1px solid var(--h-line)">
+<div style="display:flex;flex-direction:column;gap:2px;flex:1 1 200px;min-width:0">
+<span style="font-size:15px;font-weight:600;line-height:1.4;overflow-wrap:anywhere">{{ l.text }}</span>
+<sc-if value="{{ l.produse }}" hint-placeholder-val="{{ true }}">
+<span style="font-size:13px;line-height:1.45;color:var(--h-fg-muted);overflow-wrap:anywhere">{{ l.produse }}</span>
+</sc-if>
+</div>
+<sc-if value="{{ l.cuButon }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--primary" onClick="{{ l.onPret }}" style="flex:none;margin-left:auto;min-height:44px;padding:0 16px;font-size:14px">{{ l.btn }}</button>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ prAreLista }}" hint-placeholder-val="{{ true }}">
+<div data-dep="prlista" class="h-card" style="padding:0;border-radius:18px;overflow:hidden">
+<!-- O SINGURĂ listă, în ordinea în care se citește: întâi materiile prime și
+     ambalajele, apoi rândul care lămurește produsele finite, apoi ele. Rândul
+     de lămurire e un element al listei (`eTitlu`), nu un al doilea `sc-for`:
+     cu două liste, marcajul rândului ar fi fost scris de două ori și s-ar fi
+     depărtat una de alta la prima îndreptare. -->
+<sc-for list="{{ prRows }}" as="a" hint-placeholder-count="6">
+<sc-if value="{{ a.eTitlu }}" hint-placeholder-val="{{ false }}">
+<div data-dep="prfinite" style="padding:14px 18px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line);font-size:13px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty"><strong style="color:var(--h-fg)">Produse finite</strong> — pune preț numai dacă le cumperi gata făcute; altfel costul lor se socotește din rețetă.</div>
+</sc-if>
+<sc-if value="{{ a.eArticol }}" hint-placeholder-val="{{ true }}">
+<div data-dep="prrow" style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:12px 18px;border-bottom:1px solid var(--h-line)">
+<div data-dep="prnume" style="display:flex;flex-direction:column;gap:3px;flex:1 1 200px;min-width:0">
+<span style="font-size:16px;font-weight:600;line-height:1.3;overflow-wrap:anywhere">{{ a.nume }}</span>
+<span style="font-size:12px;color:var(--h-fg-subtle);overflow-wrap:anywhere">{{ a.cat }}</span>
+</div>
+<div data-dep="prpret" style="display:flex;flex-direction:column;gap:3px;flex:1.3 1 230px;min-width:0">
+<div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px">
+<sc-if value="{{ a.arePret }}" hint-placeholder-val="{{ true }}">
+<span class="h-numeric" style="font-size:16px;font-weight:700">{{ a.pret }}</span>
+<span style="font-size:13px;color:var(--h-fg-muted)">{{ a.deCand }}</span>
+</sc-if>
+<!-- „fără preț” e scris stins, dar cu `--h-fg-subtle`, nu cu `--h-fg-faint`:
+     cel din urmă are 3,3:1 și e, după foaia temei, numai pentru semne și linii. -->
+<sc-if value="{{ a.faraPret }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:15px;color:var(--h-fg-subtle)">fără preț</span>
+</sc-if>
+<sc-if value="{{ a.schimb }}" hint-placeholder-val="{{ false }}">
+<span class="h-numeric" style="font-size:14px;font-weight:700;color:{{ a.schimbFg }}">{{ a.schimb }}</span>
+</sc-if>
+</div>
+<sc-if value="{{ a.urmator }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;line-height:1.4;color:var(--h-fg-muted)">{{ a.urmator }}</span>
+</sc-if>
+<sc-if value="{{ a.altaUnitate }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;line-height:1.4;font-weight:600;color:var(--h-danger)">{{ a.altaUnitate }}</span>
+</sc-if>
+</div>
+<div data-dep="practiuni" style="display:flex;gap:8px;justify-content:flex-end;flex:0 0 232px;margin-left:auto">
+<sc-if value="{{ a.areIstoric }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ a.onIstoric }}" aria-expanded="{{ a.desfacut }}" style="min-height:44px;padding:0 12px;font-size:14px">{{ a.istoricLabel }}</button>
+</sc-if>
+<button type="button" class="{{ a.btnCls }}" onClick="{{ a.onPret }}" style="min-height:44px;min-width:104px;padding:0 14px;font-size:14px">{{ a.btn }}</button>
+</div>
+</div>
+<!-- ISTORICUL SE DESFACE PE RÂND, iar cererea pleacă abia la desfacere: lista
+     de sus are un rând pe articol, nu tot ce s-a scris vreodată despre el. -->
+<sc-if value="{{ a.desfacut }}" hint-placeholder-val="{{ false }}">
+<div data-dep="prist" style="display:flex;flex-direction:column;padding:2px 18px 14px;background:var(--h-bg-sunk);border-bottom:1px solid var(--h-line)">
+<sc-if value="{{ a.istVine }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:12px 0 0;font-size:14px;color:var(--h-fg-muted)">Se citește istoricul…</p>
+</sc-if>
+<sc-if value="{{ a.istErr }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 0 0">
+<p style="margin:0;flex:1 1 200px;min-width:0;font-size:14px;line-height:1.45;color:var(--h-danger)">{{ a.istErr }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ a.onIstoricIar }}" style="flex:none;min-height:44px;padding:0 16px;font-size:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+<sc-if value="{{ a.istGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:12px 0 0;font-size:14px;color:var(--h-fg-muted)">Niciun preț scris încă pentru articolul ăsta.</p>
+</sc-if>
+<sc-for list="{{ a.ist }}" as="h" hint-placeholder-count="2">
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:10px 0;border-bottom:1px solid var(--h-line)">
+<span data-dep="pristzi" style="flex:0 0 132px;font-size:14px;font-weight:600">{{ h.zi }}</span>
+<span data-dep="pristpret" class="h-numeric" style="flex:0 0 132px;font-size:15px;font-weight:700">{{ h.pret }}</span>
+<span style="flex:1 1 160px;min-width:0;font-size:13px;line-height:1.45;color:var(--h-fg-muted);overflow-wrap:anywhere">{{ h.meta }}</span>
+<sc-if value="{{ h.liber }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ h.onSterge }}" style="flex:none;margin-left:auto;min-height:44px;padding:0 14px;font-size:14px;color:var(--h-danger)">Șterge</button>
+</sc-if>
+<!-- ÎNTREBAREA DE DINAINTEA ȘTERGERII. În pagină, nu `confirm()`: fereastra
+     browserului nu poate spune ce se întâmplă cu costurile, iar pe telefon
+     arată ca o eroare. Stă chiar pe rândul prețului despre care întreabă. -->
+<sc-if value="{{ h.intreb }}" hint-placeholder-val="{{ false }}">
+<div role="alertdialog" aria-label="Ștergi prețul?" style="flex:1 1 100%;display:flex;flex-direction:column;gap:10px;margin-top:4px;padding:12px 14px;border-radius:14px;border:1px solid var(--h-danger);background:var(--h-bg-surface)">
+<p style="margin:0;font-size:14px;line-height:1.5;text-wrap:pretty">{{ h.intrebare }}</p>
+<sc-if value="{{ h.stergErr }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;line-height:1.45;font-weight:600;color:var(--h-danger)">{{ h.stergErr }}</p>
+</sc-if>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ h.onPastreaza }}" style="min-height:44px;font-size:15px;flex:1 1 120px">Păstrează</button>
+<button type="button" class="h-btn h-btn--danger" onClick="{{ h.onStergeDa }}" disabled="{{ h.stergBusy }}" style="min-height:44px;font-size:15px;font-weight:700;flex:1 1 120px">{{ h.stergLabel }}</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</sc-if>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ prGol }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
+<p style="margin:0;font-size:16px;line-height:1.45;color:var(--h-fg-muted);text-wrap:pretty">{{ prGolLinie }}</p>
+<sc-if value="{{ prCautat }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onPrFaraCautare }}" style="min-height:44px;padding:0 16px;font-size:14px">Șterge căutarea</button>
+</sc-if>
+</div>
+</sc-if>
+
+</div>
+</sc-if>
+
 </div>
 </div>
 
@@ -591,19 +774,19 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Denumire
-<input autoFocus="{{ true }}" class="h-input" value="{{ artN }}" onChange="{{ onArtN }}" placeholder="ex. Cutie tort 26 cm" style="height:50px;font-size:16px">
+<input autoFocus="{{ true }}" class="h-input" value="{{ artN }}" onChange="{{ onArtN }}" placeholder="ex. Cutie tort 26 cm" disabled="{{ artBusy }}" style="height:50px;font-size:16px">
 </label>
 
 <div data-dep="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Categorie
-<select class="h-input" value="{{ artC }}" onChange="{{ onArtC }}" style="height:50px;font-size:15px">
+<select class="h-input" value="{{ artC }}" onChange="{{ onArtC }}" disabled="{{ artBusy }}" style="height:50px;font-size:15px">
 <sc-for list="{{ artCats }}" as="o" hint-placeholder-count="3">
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
 </select>
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Unitate
-<select class="h-input" value="{{ artU }}" onChange="{{ onArtU }}" style="height:50px;font-size:15px">
+<select class="h-input" value="{{ artU }}" onChange="{{ onArtU }}" disabled="{{ artBusy }}" style="height:50px;font-size:15px">
 <sc-for list="{{ artUnits }}" as="o" hint-placeholder-count="3">
 <option value="{{ o.v }}">{{ o.l }}</option>
 </sc-for>
@@ -612,7 +795,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Prag minim ({{ artU }})
-<input class="h-input h-numeric" value="{{ artMin }}" onChange="{{ onArtMin }}" inputMode="decimal" placeholder="prag implicit din Setări" style="height:50px;font-size:17px">
+<input class="h-input h-numeric" value="{{ artMin }}" onChange="{{ onArtMin }}" inputMode="decimal" placeholder="prag implicit din Setări" disabled="{{ artBusy }}" style="height:50px;font-size:17px">
 </label>
 <p style="margin:-6px 0 0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Lăsat gol, articolul ia pragul implicit din Setări. Cu pragul 0 nu apare niciodată în „Sub prag minim”, deci nimeni nu află când s-a terminat.</p>
 
@@ -629,10 +812,110 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 
+<!--
+  FOAIA „PREȚ NOU” (runda 2.7.0). Aceeași foaie ca „Articol nou”: aceleași
+  cârlige (`modalwrap`, `modalcard`, `g2`, `modalfoot`, `btnsave`), deci pe
+  telefon urcă de jos, cu „Salvează” deasupra lui „Renunță”, fără nicio regulă
+  de stil în plus.
+
+  Prețul e PRIMUL câmp și cere focusul: foaia se deschide la apăsarea unui
+  buton, iar omul a venit să scrie o cifră (cererea patronului păzită de
+  `.claude/check-focus.mjs`). De aceea deasupra lui nu stă niciun `sc-if`.
+  Unitatea e scrisă lângă câmp și nu se poate schimba: prețul e „lei pe
+  unitatea articolului”, iar serverul o ia de pe articol, nu din ce trimite
+  pagina.
+-->
+<sc-if value="{{ prFoaieDeschisa }}" hint-placeholder-val="{{ false }}">
+<div data-dep="modalwrap" style="position:fixed;inset:0;z-index:60;background:rgba(27,18,11,.62);display:flex;align-items:center;justify-content:center;padding:24px;animation:dp-fade .18s var(--h-ease-out)">
+<div data-dep="modalcard" class="h-card" style="width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:22px 24px;border-radius:22px;display:flex;flex-direction:column;gap:14px;animation:dp-pop .22s var(--h-ease-spring)">
+
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="display:flex;flex-direction:column;gap:3px;min-width:0">
+<h2 class="h-h4" style="margin:0;font-size:21px">Preț nou</h2>
+<span style="font-size:13px;line-height:1.4;color:var(--h-fg-subtle);overflow-wrap:anywhere">{{ prSub }}</span>
+</div>
+<button type="button" aria-label="Închide foaia de preț" class="h-btn h-btn--ghost" onClick="{{ onPrCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px;flex:none">×</button>
+</div>
+
+<div data-dep="g2" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start">
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Preț
+<span style="display:flex;align-items:center;gap:8px">
+<input autoFocus="{{ true }}" class="h-input h-numeric" value="{{ prPret }}" onChange="{{ onPrPret }}" inputMode="decimal" placeholder="0,00" disabled="{{ prBusy }}" style="height:50px;font-size:17px;flex:1;min-width:0">
+<span style="flex:none;font-size:15px;font-weight:600;color:var(--h-fg)">{{ prUnit }}</span>
+</span>
+<!-- Refuzul stă LÂNGĂ câmpul lui, cu vorbele serverului (`bad_price`). -->
+<sc-if value="{{ prErrPret }}" hint-placeholder-val="{{ false }}">
+<span data-dep="prerrpret" style="font-size:13px;line-height:1.4;font-weight:600;color:var(--h-danger)">{{ prErrPret }}</span>
+</sc-if>
+</label>
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Valabil din
+<input type="date" class="h-input" value="{{ prZi }}" onChange="{{ onPrZi }}" min="{{ prZiMin }}" max="{{ prZiMax }}" disabled="{{ prBusy }}" style="height:50px;font-size:16px;min-width:0">
+<sc-if value="{{ prErrZi }}" hint-placeholder-val="{{ false }}">
+<span data-dep="prerrzi" style="font-size:13px;line-height:1.4;font-weight:600;color:var(--h-danger)">{{ prErrZi }}</span>
+</sc-if>
+</label>
+</div>
+
+<!-- Ziua aleasă are deja un preț: salvarea îl ÎNLOCUIEȘTE (serverul ține un
+     singur preț pe zi). Foaia o spune dinainte, cu prețul care se pierde. -->
+<sc-if value="{{ prInlocuieste }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--warning" style="border-radius:14px;padding:10px 14px;font-size:14px;line-height:1.45">{{ prInlocuieste }}</div>
+</sc-if>
+<sc-if value="{{ prIstNota }}" hint-placeholder-val="{{ false }}">
+<p style="margin:-6px 0 0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ prIstNota }}</p>
+</sc-if>
+
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Notă (opțional)
+<input class="h-input" value="{{ prNota }}" onChange="{{ onPrNota }}" placeholder="factura, furnizorul" disabled="{{ prBusy }}" style="height:48px;font-size:15px">
+</label>
+
+<!-- „SOCOTEȘTE DIN FACTURĂ”. Pe factură nu scrie prețul pe kilogram, scrie
+     cât s-a plătit pe un sac: împărțirea o face pagina și pune rezultatul în
+     câmpul de sus. Cât cantitatea e goală ori zero nu pune nimic, iar dacă
+     pusese ceva și socoteala nu mai iese, dă înapoi prețul scris de om. -->
+<div data-dep="prfactura" style="display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:14px;background:var(--h-bg-sunk);border:1px solid var(--h-line)">
+<span style="font-size:13px;font-weight:700;color:var(--h-fg-muted)">Socotește din factură</span>
+<!-- Două jumătăți care nu se rup: „am plătit [50] lei” și „pe [25] kg”. Într-un
+     singur șir de cinci bucăți, pe un telefon de 390 de puncte ultima — unitatea
+     — cădea singură pe rândul al doilea, departe de caseta ei. Așa, când nu
+     încap alături, coboară jumătatea întreagă: caseta cu unitatea ei cu tot.
+     Fără `white-space:nowrap`: un `inline-flex` își ține oricum copiii pe un
+     rând, iar un text bătut în cuie pe un singur rând e tocmai ce fila asta
+     nu-și îngăduie (la 320 de puncte ar împinge foaia în lături). -->
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:15px;color:var(--h-fg-muted)">
+<span data-dep="prfactura-suma" style="display:inline-flex;align-items:center;gap:8px">
+<span>am plătit</span>
+<input aria-label="Suma plătită, în lei" class="h-input h-numeric" value="{{ prSuma }}" onChange="{{ onPrSuma }}" inputMode="decimal" placeholder="50" disabled="{{ prBusy }}" style="height:46px;width:92px;font-size:16px">
+<span>lei</span>
+</span>
+<span data-dep="prfactura-cant" style="display:inline-flex;align-items:center;gap:8px">
+<span>pe</span>
+<input aria-label="{{ prCantNume }}" class="h-input h-numeric" value="{{ prCant }}" onChange="{{ onPrCant }}" inputMode="decimal" placeholder="25" disabled="{{ prBusy }}" style="height:46px;width:92px;font-size:16px">
+<span>{{ prUnitate }}</span>
+</span>
+</div>
+<sc-if value="{{ prCalc }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:14px;line-height:1.4;font-weight:600;color:{{ prCalcFg }}">{{ prCalc }}</span>
+</sc-if>
+</div>
+
+<sc-if value="{{ prErr }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" style="border-radius:14px;padding:12px 14px;font-size:14px">{{ prErr }}</div>
+</sc-if>
+
+<div data-dep="modalfoot" style="display:flex;align-items:center;gap:10px;padding-top:2px">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onPrCancel }}" style="min-height:48px;font-size:15px">Renunță</button>
+<button data-dep="btnsave" type="button" class="h-btn h-btn--primary" onClick="{{ onPrSave }}" disabled="{{ prBusy }}" style="margin-left:auto;min-height:48px;min-width:190px;font-size:16px">{{ prSaveLabel }}</button>
+</div>
+
+</div>
+</div>
+</sc-if>
+
 </sc-if>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;showReserved&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Depozit&quot;},&quot;autoDeduct&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Depozit&quot;},&quot;defaultView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Stoc&quot;,&quot;Registru&quot;],&quot;default&quot;:&quot;Stoc&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Depozit&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;showReserved&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Depozit&quot;},&quot;autoDeduct&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Depozit&quot;},&quot;defaultView&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Stoc&quot;,&quot;Registru&quot;,&quot;Prețuri&quot;],&quot;default&quot;:&quot;Stoc&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Depozit&quot;}}">
 const MKEY = "gp-stock-moves-v1", NKEY = "gp-stock-min-v1", SKEY = "gp-stock-sync-v1";
 const OKEY = "gp-admin-orders-v1", AKEY = "gp-auth-v1", UKEY = "gp-users-v1";
 const LKEY = "gp-log-v1";
@@ -710,6 +993,196 @@ const dLabel = (iso) => {
   return base;
 };
 
+/* ───────────────────────────── prețurile (runda 2.7.0) ─────────────────────
+ *
+ * Fila „Prețuri”: cât costă o unitate dintr-un articol, cu ziua de la care e
+ * valabil prețul. Patronul a cerut-o („where I can select how much some things
+ * cost like flour or eggs”) și a hotărât, pe 4–5 oct. 2026, că numai fondatorul
+ * o vede din pornire, cu dreptul `preturi` din „Acces”.
+ *
+ * Socotelile de mai jos stau AICI, în afara clasei, ca funcții curate: fără
+ * stare, fără `gp`, fără ecran. Așa le poate rula `.claude/check-costuri-
+ * depozit.mjs` pe cifre adevărate, în loc să le caute ca text în fișier.
+ */
+
+/** Refuzul 503 al rutelor de preț, cu vorbele serverului; aici numai ca plasă,
+    pentru un răspuns venit fără mesaj. */
+const FARA_034 = "Prețurile nu sunt încă disponibile: baza de date n-a primit actualizarea rundei 2.7.0.";
+
+/**
+ * Fila „Prețuri” cerută din adresă: `Depozit.dc.html?vedere=preturi`.
+ *
+ * Formularul produsului din Catalog trimite omul aici când rețeta are o linie
+ * fără preț („Lipsește prețul la: Ouă”). Fără ușa asta ar fi ajuns pe „Stoc”
+ * și ar fi căutat singur fila. Până acum vederea se putea cere numai din
+ * proprietatea `defaultView`, pe care o adresă n-o poate purta.
+ *
+ * `try`: probele încarcă logica paginii într-o lume fără `location`.
+ */
+const CERUT_PRETURI = (() => {
+  try { return new URLSearchParams(location.search || "").get("vedere") === "preturi"; }
+  catch (e) { return false; }
+})();
+
+/**
+ * Numărul scris de un om într-o casetă — ori `null`, nu zero.
+ *
+ * `num()` de mai sus face zero din orice nu înțelege, ceea ce e bine pentru o
+ * cantitate afișată și periculos aici: PREȚUL ZERO E UN PREȚ („primit pe
+ * gratis”, hotărârea din 4–5 oct. 2026), deci „n-am înțeles” n-are voie să se
+ * confunde cu el. Nici `parseFloat` singur nu ajunge: din „3,45 lei” face
+ * 3.45 și din „12abc” face 12, adică salvează altceva decât a scris omul.
+ *
+ * Virgula se primește („3,45”) și se preface în punct: serverul refuză
+ * virgula cu `bad_price`, fiindcă prefacerea e treaba paginii (contractul
+ * rundei, §4). O singură virgulă — „1.234,50” rămâne neînțeles, nu ghicit.
+ */
+const numarScris = (text) => {
+  const s = String(text === null || text === undefined ? "" : text).trim().replace(",", ".");
+  if (!/^(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  const x = Number(s);
+  return isFinite(x) ? x : null;
+};
+
+/**
+ * „Socotește din factură”: suma plătită împărțită la cantitate.
+ *
+ * Patru zecimale, cât ține coloana `stock_item_prices.price`: un ou la 1 leu
+ * trei bucăți e 0,3333, nu 0,33 — pe o mie de ouă diferența se vede în cost.
+ * Cantitatea goală, zero ori neînțeleasă dă `null`: împărțirea la zero ar fi
+ * scris „Infinity” în câmpul de preț.
+ */
+const pretDinFactura = (suma, cantitate) => {
+  const s = numarScris(suma), c = numarScris(cantitate);
+  if (s === null || c === null || !(c > 0)) return null;
+  const p = Math.round((s / c) * 10000) / 10000;
+  return isFinite(p) ? p : null;
+};
+
+/**
+ * Prețul, cu virgulă: măcar două zecimale, cel mult patru.
+ * 3.45 → „3,45” · 2 → „2,00” · 0.3333 → „0,3333” · 3.6 → „3,60”.
+ *
+ * Fără punctul miilor: forma asta se pune și ÎNAPOI în câmpul de preț (din
+ * „Socotește din factură”), iar de acolo trebuie s-o înțeleagă `numarScris`.
+ *
+ * NIMIC NU E ZERO. `Number(null)` și `Number("")` dau 0, deci un preț lipsă
+ * ieșea de aici „0,00” — iar zero e un preț adevărat („primit pe gratis”,
+ * hotărârea din 4–5 oct. 2026): pagina ar fi afirmat un preț pe care nu l-a
+ * primit. Se primește numai un număr ori un text cu cifre (baza poate trimite
+ * „3.4500”); orice altceva iese gol. Găsit la a doua citire a rundei 2.7.0,
+ * înainte ca vreun rând să fi apucat s-o pățească.
+ */
+const zecimalePret = (v) => {
+  const n = typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" ? Number(v) : NaN;
+  const x = Math.round(n * 10000) / 10000;
+  if (!isFinite(x)) return "";
+  return x.toFixed(4).replace(/0{1,2}$/, "").replace(".", ",");
+};
+
+/**
+ * Banii unui preț, cum se scriu în casă: virgulă la zecimale, punct la mii.
+ * Depozitul n-a arătat niciodată bani, deci n-avea ajutorul lui; `lei` din
+ * Statistici taie la două zecimale, iar un preț are până la patru.
+ */
+const leiPret = (v) => {
+  const p = zecimalePret(v).split(",");
+  return p.length === 2 ? p[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + p[1] : "";
+};
+
+/**
+ * „3,45 lei/kg”. Unitatea e a PREȚULUI (cea din clipa scrierii), nu a articolului.
+ * Fără sumă nu scrie nimic: „ lei/kg” rămas singur ar arăta ca un preț șters pe jumătate.
+ */
+const pretPeUnitate = (v, unitate) => { const bani = leiPret(v); return bani ? bani + " lei/" + unitate : ""; };
+
+/** Ziua mutată cu `zile` zile, ca text ISO; socotită pe UTC, ca fusul aparatului să nu mute nimic. */
+const ziMutata = (iso, zile) => {
+  const p = String(iso || "").split("-").map(Number);
+  const d = new Date(Date.UTC(p[0], p[1] - 1, p[2] + zile));
+  return isNaN(d) ? "" : d.toISOString().slice(0, 10);
+};
+
+/** Câte zile sunt de la o zi ISO până la alta (negativ când a doua e înaintea primei); 0 când una din ele nu e zi. */
+const zileIntre = (deLa, panaLa) => {
+  const clipa = (iso) => { const p = String(iso || "").split("-").map(Number); return Date.UTC(p[0], p[1] - 1, p[2]); };
+  const n = Math.round((clipa(panaLa) - clipa(deLa)) / 86400000);
+  return isFinite(n) ? n : 0;
+};
+
+/**
+ * Între ce zile poate fi „Valabil din”: cu cel mult 1100 de zile în urmă și
+ * 60 înainte — aceleași margini ca pe server (`bad_day`, contractul rundei,
+ * §4). Înainte, cât pentru un preț anunțat de furnizor.
+ */
+const PRET_ZILE_INAPOI = 1100, PRET_ZILE_INAINTE = 60;
+const limiteleZilei = (azi) => ({ min: ziMutata(azi, -PRET_ZILE_INAPOI), max: ziMutata(azi, PRET_ZILE_INAINTE) });
+
+/**
+ * Ziua aleasă e o zi adevărată și stă între margini?
+ *
+ * `min`/`max` de pe câmp nu ajung: pe un browser fără calendar, `type=date`
+ * e o casetă de text în care se poate scrie orice, iar în cele care au
+ * calendar ziua se poate tasta peste margine. Verificarea se face deci și
+ * aici, înainte de cerere.
+ */
+const ziInLimite = (zi, azi) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(zi))) return false;
+  if (ziMutata(zi, 0) !== zi) return false;
+  const l = limiteleZilei(azi);
+  return zi >= l.min && zi <= l.max;
+};
+
+/**
+ * „1 oct.” — ziua unui preț, cum o cere contractul rundei („3,45 lei/kg din
+ * 1 oct.”). Cu punct de prescurtare, fiindcă stă în mijlocul unei fraze;
+ * „mai” nu e prescurtat, deci n-are punct. Anul se scrie numai când nu e cel
+ * de acum: un preț poate fi vechi de trei ani, iar „14 aug.” fără an ar fi
+ * citit ca vara asta.
+ */
+const ziPret = (iso, azi) => {
+  const p = String(iso || "").split("-");
+  if (p.length !== 3) return String(iso || "");
+  const luna = MON[parseInt(p[1], 10) - 1] || "";
+  return parseInt(p[2], 10) + " " + luna + (luna && luna !== "mai" ? "." : "")
+    + (p[0] !== String(azi || TODAY).slice(0, 4) ? " " + p[0] : "");
+};
+
+/**
+ * Punctul de la capătul unei propoziții — pus numai dacă nu e deja acolo.
+ *
+ * `ziPret` dă „4 dec.”, cu punctul prescurtării, fiindcă e făcut pentru
+ * mijlocul unei fraze. Pus la CAPĂTUL uneia, lângă punctul ei, ieșea „Alege o
+ * zi între 1 oct. 2023 și 4 dec..” — în 274 de zile din cele 365 ale lui
+ * 2026 (scăpau numai marginea căzută în „mai” și cea căzută în anul următor,
+ * după care vine anul). În română, prescurtarea de la sfârșit își împarte
+ * punctul cu propoziția: unul singur. Găsit la a doua citire a rundei 2.7.0;
+ * proba de până atunci avea „azi” în martie, cu marginea de sus tocmai în mai.
+ */
+const cuPunct = (text) => (/\.$/.test(text) ? text : text + ".");
+
+/**
+ * Săgeata cu procent de lângă preț: „▲ +7,8%”.
+ *
+ * SCUMPIREA E ROȘIE, IEFTINIREA VERDE — pe dos față de un grafic de vânzări,
+ * fiindcă aici cifra e un cost: ce urcă e veste proastă. Culoarea nu poartă
+ * singură înțelesul: săgeata și semnul spun același lucru și fără ea.
+ * `null` (nimic cu ce compara, ori prețul dinainte era zero) nu desenează
+ * nimic: un „0%” inventat ar spune că prețul a stat pe loc.
+ */
+const semnSchimbare = (schimbare) => {
+  if (typeof schimbare !== "number" || !isFinite(schimbare)) return null;
+  const r = Math.round(schimbare * 10) / 10;
+  const cat = Math.abs(r).toFixed(1).replace(".", ",") + "%";
+  if (r > 0) return { text: "▲ +" + cat, fg: "var(--h-danger)" };
+  if (r < 0) return { text: "▼ −" + cat, fg: "var(--h-success)" };
+  return { text: "= 0%", fg: "var(--h-fg-subtle)" };
+};
+
+/** „20 de articole”, dar „19 articole”: „de” de la 20 încolo și la sutele rotunde. */
+const cuDe = (n) => { const r = Math.abs(n) % 100; return n !== 0 && (r === 0 || r >= 20); };
+const cateArticole = (n) => n === 1 ? "un articol" : n + (cuDe(n) ? " de articole" : " articole");
+
 class Component extends DCLogic {
   // `scoase` stă separat de `items` dinadins: articolele scoase din depozit
   // n-au voie să intre în socotelile de zi cu zi — „Sub prag", „Lipsă", numărul
@@ -718,19 +1191,79 @@ class Component extends DCLogic {
   //
   // `refuzat` e răspunsul serverului la citirea stocului (403), nu o socoteală
   // a paginii: cât e adevărat, se desenează ecranul de refuz și nimic altceva.
-  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], deScazut: null, auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", pastila: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", refuzat: false, sterg: null };
+  //
+  // PREȚURILE (runda 2.7.0) au starea lor, despărțită de a stocului:
+  //   `preturi`   — răspunsul întreg de la `GET /stock/prices`, ori null;
+  //   `prCititLa` — ziua patiseriei în care a venit răspunsul acela (v. `aziPreturi`);
+  //   `prLoaded`  — a venit măcar o dată; `prEroare` — pana; `prLipsa` — 503;
+  //   `prIst`     — istoricul desfăcut (un singur articol odată);
+  //   `prFoaie`   — foaia „Preț nou”; `prSterg` — întrebarea de ștergere.
+  // `prEroare` e câmp deosebit de `eroare`, ca la Pontaj și la Recomandări:
+  // sunt două cereri, iar stocul citit bine din 15 în 15 secunde n-are dreptul
+  // să stingă motivul pentru care n-au venit prețurile.
+  state = { navOpen: false, items: [], scoase: [], categories: [], units: [], moves: [], mins: {}, orders: [], deScazut: null, auth: null, who: "Laborator", role: "", view: "Stoc", cat: "Toate", sort: "cat", search: "", pastila: "", form: null, art: null, menu: false, msg: "", msgBad: false, loaded: false, eroare: "", refuzat: false, sterg: null, preturi: null, prCititLa: "", prLoaded: false, prEroare: "", prLipsa: "", prIst: null, prFoaie: null, prSterg: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
     // dacă le redenumești din panou, pagina trebuie să afle de la server.
     gp.lists().then(() => this.setState({ listsReady: true })).catch(() => {});
     document.documentElement.setAttribute("data-theme", "light");
+    // Motorul paginilor poate aprinde `componentDidMount` de mai multe ori pe
+    // aceeași instanță. Ascultătorul vechi se scoate întâi: cu doi, un singur
+    // „Înapoi” pe un formular scris ar fi pus DOUĂ intrări la loc în istoric,
+    // iar omul ar fi rămas cu una de prisos (un „Înapoi” care nu face nimic).
+    if (this.__gpBack) window.removeEventListener("popstate", this.__gpBack);
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
       const st = this.state || {};
-      if (st.menu || st.form || st.art) this.setState({ menu: false, form: null, art: null });
+      // FORMULAR SCRIS (runda 2.7.0, cerut de patron pe 4 oct. 2026): „Înapoi”
+      // nu-l mai închide pe tăcute. Browserul a scos deja intrarea ferestrei,
+      // deci se pune la loc (`__gpOvWas` rămâne adevărat: fereastra e tot
+      // deschisă), apoi se întreabă. La „Ies”, `setState` închide, iar
+      // `__gpSync` scoate intrarea ca la orice închidere. Cu întrebarea DEJA
+      // pe ecran, `gp.inchideCiorna` nu mai pune una și nu închide a doua
+      // oară: rămân intrarea pusă la loc și întrebarea de dinainte.
+      //
+      // UN SINGUR FORMULAR PE RÂND, CEL DE DEASUPRA (reparat pe 9 oct. 2026).
+      // În stare pot sta două: mișcarea refuzată de server se întoarce,
+      // scrisă, SUB articolul ori sub foaia de preț deschise cât cererea ei
+      // era pe drum (v. `ciornaDesenate`). „Înapoi” întreba de unul singur și,
+      // la „Ies”, le închidea pe toate: mișcarea refuzată pierea fără ca
+      // întrebarea s-o fi pomenit. Iar cu cel de sus neatins, întreba de
+      // mișcare peste un formular gol de articol. Acum lucrează numai cu cel
+      // pe care omul îl vede: scris, întreabă de EL și numai pe el îl închide;
+      // neatins, îl închide pe loc. Cât mai rămâne unul dedesubt, intrarea stă
+      // pusă la loc (`__gpSync` n-o scoate: o fereastră e tot deschisă), deci
+      // „Înapoi”-ul următor îl găsește pe acela, nu scoate omul din pagină
+      // peste el.
+      //
+      // CÂT MERGE SALVAREA (R4, tot 9 oct.), „Înapoi” nu face nimic, ca „×”
+      // (v. `ciornaInSalvare`): intrarea se pune la loc și atât. După zece
+      // secunde fără răspuns întreabă și el, cu vorbele supapei, tot ca „×”
+      // (`ciornaSupapa`, încheierea din 9 oct.): altfel o cerere rămasă pe
+      // drum ținea omul în fața unui formular din care nu mai ieșea nicicum.
+      //
+      // Formularul neatins rămas singur și sertarul de meniu trec mai jos, ca
+      // până acum.
+      const desenate = this.ciornaDesenate();
+      const sus = desenate[0];
+      const scris = sus ? this.ciornaDeschisa(sus) : null;
+      const salvand = !!sus && this.ciornaInSalvare(sus);
+      if (scris || salvand || desenate.length > 1) {
+        try { history.pushState({ gpOv: 1 }, ""); } catch (e) {}
+        if (!salvand) gp.inchideCiorna(scris, () => this.setState({ menu: false, [sus]: null }));
+        else this.ciornaSupapa(sus, () => this.setState({ menu: false, [sus]: null }));
+        return;
+      }
+      if (st.menu || st.form || st.art || st.prFoaie) this.setState({ menu: false, form: null, art: null, prFoaie: null });
     };
     window.addEventListener("popstate", this.__gpBack);
+    // PAZA PLECĂRII (runda 2.7.0): cât un formular e scris, o legătură apăsată
+    // întreabă întâi, iar închiderea filei ridică fereastra browserului. Se
+    // pune aici, la montare; scoaterea ei nu se bizuie pe `componentWillUnmount`,
+    // care poate să nu ruleze niciodată — `gp.pazaCiornei` o scoate singură pe
+    // cea veche la fiecare chemare.
+    this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
     if (!window.__gpNav) {
       window.__gpNav = 1;
       document.addEventListener("click", (e) => {
@@ -746,6 +1279,27 @@ class Component extends DCLogic {
       }, true);
     }
     this.setState({ view: this.props.defaultView === "Registru" ? "Registru" : "Stoc" });
+    // „Prețuri” cerută din proprietate ori din adresă NU se deschide aici:
+    // dreptul `preturi` se află abia când vine contul, din `pull()`. Până
+    // atunci pagina stă pe „Stoc”, iar dorința se ține minte pe instanță; o
+    // împlinește `componentDidUpdate`, și numai cui are dreptul. Cine o cere
+    // fără drept rămâne pe „Stoc” — nu pe un ecran gol și nu pe un refuz.
+    this.__vreaPreturi = this.props.defaultView === "Prețuri" || CERUT_PRETURI;
+    // Ușa din adresă e de O SINGURĂ folosință. Ascultătorul de mai sus lipește
+    // coada adresei la fiecare legătură din meniu (pentru `?api=…` al serverelor
+    // de probă), deci `vedere=preturi` ar fi umblat din pagină în pagină și ar
+    // fi deschis „Prețuri” la fiecare întoarcere în Depozit. Se scoate din
+    // adresă, cu restul cozii neatins.
+    if (CERUT_PRETURI) {
+      try {
+        // Tăiat ca text, nu rescris cu `URLSearchParams.toString()`: acela ar
+        // fi codat din nou și restul cozii (`api=http://…` ar fi ieșit
+        // `api=http%3A%2F%2F…`), iar coada aceea o citesc și alte pagini.
+        const rest = (location.search || "").replace(/^\?/, "").split("&")
+          .filter((b) => b && b.split("=")[0] !== "vedere").join("&");
+        history.replaceState(history.state, "", location.pathname + (rest ? "?" + rest : "") + (location.hash || ""));
+      } catch (e) {}
+    }
     // gp.poll() aduce prima dată imediat, apoi din 15 în 15 secunde; se
     // oprește cât fila e ascunsă și nu suprapune două ture. Cu setInterval,
     // fila lăsată deschisă cerea 4 liste (mișcări LIMIT 1000, comenzi LIMIT
@@ -755,6 +1309,329 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     if (typeof this.timer === "function") this.timer();
+    // De curtoazie: paza nu se bizuie pe rândul ăsta (v. `componentDidMount`).
+    if (typeof this.__scoatePaza === "function") this.__scoatePaza();
+  }
+
+  /**
+   * După fiecare desenare: ține fila „Prețuri” legată de DREPT, nu de clic.
+   *
+   * Dreptul `preturi` vine cu contul (`pull()` îl recitește din 15 în 15
+   * secunde) și se poate schimba din „Acces” cu Depozitul deschis în altă
+   * filă. Două lucruri atârnă de el și niciunul nu se poate hotărî la
+   * încărcare, când contul încă nu e citit:
+   *   · fila cerută din proprietate ori din adresă se deschide abia acum, și
+   *     numai cui are dreptul;
+   *   · cui i s-a luat dreptul cu fila deschisă i se închide, iar prețurile
+   *     deja aduse se șterg din pagină — altfel ar fi rămas pe ecran până la
+   *     reîncărcare, lângă o filă care nu mai există.
+   * Metoda ajunge la clasă (`support.js`, `componentDidUpdate`); fiecare
+   * ramură își stinge singură condiția, deci `setState` de aici nu se învârte.
+   */
+  componentDidUpdate() {
+    const S = this.state || {};
+    if (!S.auth) return;
+    const are = gp.are("preturi", S.auth);
+    if (this.__vreaPreturi) {
+      this.__vreaPreturi = false;
+      if (are && !S.refuzat) this.intraInPreturi();
+      return;
+    }
+    if (S.view === "Prețuri" && !are) {
+      this.setState({ view: "Stoc", preturi: null, prLoaded: false, prEroare: "", prLipsa: "", prIst: null, prFoaie: null, prSterg: null });
+    }
+  }
+
+  /**
+   * Deschide fila „Prețuri” și cere lista: la fiecare intrare, ca prețul scris de pe alt aparat să se vadă.
+   *
+   * ISTORICUL DESFĂCUT SE STRÂNGE LA INTRARE. Lista vine proaspătă, iar
+   * rândurile de istoric rămase din vizita de dinainte nu se mai cer: sub o
+   * listă nouă ar fi stat un istoric vechi, fără nimic care s-o spună. Cine îl
+   * vrea îl desface, și atunci se citește din nou.
+   */
+  intraInPreturi() {
+    this.setState({ view: "Prețuri", cat: "Toate", pastila: "", menu: false, prIst: null, prSterg: null });
+    return this.pullPreturi();
+  }
+
+  /**
+   * Aduce lista de prețuri (`GET /stock/prices`).
+   *
+   * FĂRĂ DREPT NU PLEACĂ NIMIC. Serverul ar refuza oricum (`require_drept`),
+   * dar o cerere refuzată la fiecare deschidere a Depozitului ar umple
+   * jurnalul serverului cu 403-uri ale unor oameni care n-au greșit nimic.
+   *
+   * Nu stă în `pull()`: lista nu se schimbă din 15 în 15 secunde, ci când
+   * scrie cineva un preț — deci se cere la intrarea în filă și după fiecare
+   * salvare ori ștergere.
+   *
+   * Trei feluri de „n-a venit”, fiecare cu locul lui pe ecran: sesiunea
+   * expirată duce la intrare; 503 `costuri_unavailable` e o stare a
+   * instalării (baza n-are migrarea 034), nu o pană — fila rămâne, cu un rând
+   * care numește actualizarea lipsă; restul sunt pene, cu „Încearcă din nou”.
+   *
+   * RĂSPUNSUL UNEI CITIRI MAI VECHI NU SCRIE PESTE CEA NOUĂ. Lista se cere
+   * după fiecare salvare și fiecare ștergere, deci două scrieri grăbite lasă
+   * două citiri pe drum; dacă prima sosește a doua, aducea lista de DINAINTEA
+   * celei de-a doua scrieri și o punea pe ecran — prețul abia salvat dispărea
+   * până la intrarea următoare în filă. Fiecare citire își ia un număr la
+   * plecare, iar la sosire scrie numai dacă e tot ultima plecată; la fel pana
+   * ei, care altfel ar fi stins o listă venită bine. Tot acolo se aruncă și
+   * răspunsul sosit după ce contului i s-a luat dreptul: prețurile n-au ce
+   * căuta în starea unei pagini care nu mai are voie să le arate.
+   */
+  pullPreturi() {
+    if (!gp.are("preturi", this.state.auth)) return Promise.resolve();
+    const nr = this.__prCitire = (this.__prCitire || 0) + 1;
+    const depasita = () => nr !== this.__prCitire || !gp.are("preturi", this.state.auth);
+    return gp.get('/stock/prices')
+      .then((r) => {
+        if (depasita()) return;
+        if (r && r.activ === false) return this.setState({ preturi: null, prLoaded: false, prEroare: "", prLipsa: FARA_034 });
+        // Ziua în care a venit lista se ține lângă ea, citită chiar acum de pe
+        // ceasul patiseriei: de la ea numără `aziPreturi()` zilele trecute.
+        zileProaspete();
+        this.setState({ preturi: r || {}, prCititLa: TODAY, prLoaded: true, prEroare: "", prLipsa: "" });
+      })
+      .catch((e) => {
+        if (depasita()) return;
+        if (e.isAuth) gp.toLogin();
+        else if (e.code === "costuri_unavailable") this.setState({ preturi: null, prLoaded: false, prEroare: "", prLipsa: e.message || FARA_034, prIst: null, prFoaie: null, prSterg: null });
+        else this.setState({ prEroare: gp.motiv(e, "prețurile") });
+      });
+  }
+
+  /**
+   * Ziua de azi a prețurilor: a serverului, din lista adusă — DUSĂ LA ZI cu
+   * zilele trecute de atunci pe ceasul patiseriei. Până vine lista, ceasul singur.
+   *
+   * `P.azi` e ziua serverului din clipa citirii, iar lista se cere numai la
+   * intrarea în filă și după o scriere. Cu fila rămasă deschisă peste miezul
+   * nopții (pagina asta îl trece deschisă: v. `zileProaspete`, mai sus), foaia
+   * „Preț nou” pornea pe ziua de IERI: prețul scris dimineața intra cu o zi în
+   * urmă și schimba costul comenzilor de ieri — fără ca omul să fi ales vreo
+   * zi. Marginile câmpului și anul din „14 aug.” rămâneau și ele în urmă.
+   * Găsit la a doua citire a rundei 2.7.0.
+   *
+   * Ziua serverului rămâne temelia (ceasul unui telefon poate fi greșit cu o
+   * oră ori cu o zi); de pe ceasul paginii se ia numai CÂT A TRECUT de la
+   * citire. Înapoi nu se merge: ziua unui server nu scade, deci un ceas dat
+   * înapoi lasă ziua citită cum era.
+   */
+  aziPreturi() {
+    zileProaspete();
+    const S = this.state, P = S.preturi;
+    if (!(P && typeof P.azi === "string" && /^\d{4}-\d{2}-\d{2}$/.test(P.azi))) return TODAY;
+    const trecute = zileIntre(S.prCititLa, TODAY);
+    return trecute > 0 ? ziMutata(P.azi, trecute) : P.azi;
+  }
+
+  /**
+   * Aduce istoricul unui articol (`GET /stock/items/#/prices`) în rândul desfăcut.
+   *
+   * Răspunsul se aruncă dacă între timp omul a desfăcut alt rând ori l-a
+   * închis pe ăsta: altfel istoricul făinii ar fi apărut sub ouă.
+   */
+  cereIstoric(itemId) {
+    const vechi = this.state.prIst;
+    const acelasi = !!vechi && vechi.id === itemId && vechi.stare === "gata";
+    // La reîmprospătare (după o salvare ori o ștergere) rândurile vechi rămân
+    // pe ecran până vin cele noi; „Se citește…” apare numai la prima desfacere.
+    this.setState({ prIst: { id: itemId, stare: acelasi ? "gata" : "vine", preturi: acelasi ? vechi.preturi : [], err: "" }, prSterg: null });
+    return gp.get('/stock/items/' + itemId + '/prices')
+      .then((r) => {
+        const I = this.state.prIst;
+        if (!I || I.id !== itemId) return;
+        this.setState({ prIst: { id: itemId, stare: "gata", preturi: (r && Array.isArray(r.preturi)) ? r.preturi : [], err: "" } });
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else if (this.state.prIst && this.state.prIst.id === itemId) this.setState({ prIst: { id: itemId, stare: "eroare", preturi: [], err: gp.motiv(e, "istoricul prețurilor") } });
+      });
+  }
+
+  /** Desface istoricul unui articol; a doua apăsare îl strânge la loc. */
+  desfaIstoric(itemId) {
+    const I = this.state.prIst;
+    if (I && I.id === itemId) return this.setState({ prIst: null, prSterg: null });
+    return this.cereIstoric(itemId);
+  }
+
+  /**
+   * Deschide foaia „Preț nou” pentru un articol din lista de prețuri.
+   *
+   * Odată cu foaia pleacă și cererea istoricului: de acolo află foaia dacă
+   * ziua aleasă are deja un preț („Înlocuiește prețul din ziua asta…”). Lista
+   * de sus nu ajunge — ea ține numai prețul de azi și pe cel care urmează, iar
+   * omul poate alege orice zi din ultimii trei ani.
+   *
+   * `cheie` deosebește deschiderile între ele: răspunsul unei cereri pornite
+   * dintr-o foaie închisă între timp n-are voie să scrie în cea deschisă după.
+   * Semaforul salvării se stinge la deschidere, ca la „Articol nou”: o cerere
+   * rămasă fără răspuns nu trebuie să blocheze prețurile până la reîncărcare.
+   * (De la R4 încoace, asta mai prinde numai foaia închisă de COD cât cererea
+   * ei era pe drum — ecranul de refuz, dreptul luat. Foaia rămasă pe ecran
+   * își așteaptă răspunsul: v. rândul întâi de mai jos.)
+   */
+  deschidePret(a) {
+    // CÂT FOAIA DE PE ECRAN ÎȘI SALVEAZĂ PREȚUL, „Preț nou” al altui rând nu
+    // face nimic (R4, 9 oct. 2026; v. `ciornaInSalvare`). Foaia aceea e mereu
+    // scrisă — fără preț nu pleacă —, deci deschizătorul ar fi întrebat „Ieși
+    // fără să salvezi prețul?” despre un preț care tocmai se salvează.
+    if (this.ciornaInSalvare("prFoaie")) return;
+    // Altă foaie cerută peste una SCRISĂ (cu Tab se ajunge, pe sub fereastră,
+    // la „Preț nou” al altui rând): întâi se întreabă, ca la orice ușă —
+    // altfel prețul scris pe jumătate era înlocuit pe tăcute de o foaie goală.
+    const scrisa = this.ciornaDeschisa("prFoaie");
+    if (scrisa) return gp.inchideCiorna(scrisa, () => { this.setState({ prFoaie: null }); this.deschidePret(a); });
+    this.__prBusy = false;
+    this.__prNr = (this.__prNr || 0) + 1;
+    const cheie = this.__prNr;
+    const azi = this.aziPreturi();
+    this.setState({
+      prFoaie: {
+        cheie, id: a.itemId, nume: a.nume, unit: a.unit,
+        acum: a.pret ? pretPeUnitate(a.pret.price, a.pret.unit || a.unit) + " din " + ziPret(a.pret.validFrom, azi) : "",
+        pret: "", zi: azi, nota: "", suma: "", cant: "",
+        // Ce a scris OMUL în câmpul de preț, ținut deoparte: „Socotește din
+        // factură” pune peste el, și tot de aici i-l dă înapoi (v. `dinFactura`).
+        deMana: "",
+        errPret: "", errZi: "", err: "", busy: false,
+        ist: null, istErr: ""
+      }
+    });
+    this.ciornaPoza("prFoaie");
+    return gp.get('/stock/items/' + a.itemId + '/prices')
+      .then((r) => {
+        const F = this.state.prFoaie;
+        if (F && F.cheie === cheie) this.setState({ prFoaie: Object.assign({}, F, { ist: (r && Array.isArray(r.preturi)) ? r.preturi : [], istErr: "" }) });
+      })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else if (this.state.prFoaie && this.state.prFoaie.cheie === cheie) this.setState({ prFoaie: Object.assign({}, this.state.prFoaie, { ist: null, istErr: gp.motiv(e, "prețurile de până acum") }) });
+      });
+  }
+
+  /**
+   * Salvează prețul din foaie (`POST /stock/items/#/prices`).
+   *
+   * DOUĂ APĂSĂRI NU SCRIU DE DOUĂ ORI. Două paze, ca la „Articol nou”:
+   * `busy` din stare, care stinge și butonul cât cererea e pe drum, și
+   * semaforul de pe instanță. Al doilea nu atârnă de clipa în care motorul
+   * scrie starea: azi o scrie pe loc (`support.js`, `__setLogicState`), dar
+   * cu o stare scrisă abia la desenarea următoare două tapuri grăbite ar citi
+   * amândouă `busy: false`. Proba le încearcă pe amândouă felurile.
+   *
+   * Pleacă un NUMĂR, nu textul din casetă: virgula omului („3,45”) e
+   * prefăcută în punct de `numarScris`, iar ce nu e număr nu pleacă deloc.
+   * Ziua pleacă mereu, chiar când e cea de azi: „azi” al paginii e o socoteală
+   * a ei (ziua serverului de la ultima citire, dusă la zi cu ceasul patiseriei
+   * — v. `aziPreturi`), iar în minutul miezului nopții cele două se pot despărți.
+   *
+   * REFUZUL RĂMÂNE ÎN FOAIE, lângă câmpul lui și cu vorbele serverului:
+   * `bad_price` sub preț, `bad_day` sub zi, orice altceva (și 503-ul care
+   * numește actualizarea lipsă) deasupra butoanelor. Foaia nu se închide și
+   * nu pierde nimic din ce a scris omul — bannerul de sus ar fi rămas acoperit
+   * de ea.
+   */
+  salveazaPret() {
+    const F = this.state.prFoaie;
+    if (!F || F.busy || this.__prBusy) return;
+    const azi = this.aziPreturi();
+    const curat = { errPret: "", errZi: "", err: "" };
+    const pret = numarScris(F.pret);
+    if (pret === null) {
+      return this.setState({ prFoaie: Object.assign({}, F, curat, { errPret: "Scrie prețul ca număr, de exemplu 3,45." }) });
+    }
+    if (!ziInLimite(F.zi, azi)) {
+      const l = limiteleZilei(azi);
+      return this.setState({ prFoaie: Object.assign({}, F, curat, { errZi: cuPunct("Alege o zi între " + ziPret(l.min, azi) + " și " + ziPret(l.max, azi)) }) });
+    }
+    this.__prBusy = true;
+    // Clipa pornirii, pentru supapa ușii (v. `ciornaAsteptare`).
+    this.__prDe = this.ceasulSalvarii();
+    this.setState({ prFoaie: Object.assign({}, F, curat, { busy: true }) });
+    const aFoaiei = () => { const acum = this.state.prFoaie; return acum && acum.cheie === F.cheie ? acum : null; };
+    return gp.post('/stock/items/' + F.id + '/prices', { price: pret, validFrom: F.zi, note: String(F.nota || "").trim() })
+      .then((r) => {
+        this.__prBusy = false;
+        const spus = (r && r.corectura ? "Preț corectat · " : "Preț nou · ") + F.nume + " · " + pretPeUnitate(pret, F.unit) + " din " + ziPret(F.zi, azi);
+        // Foaia se închide numai dacă e tot cea din care a plecat cererea.
+        this.setState(Object.assign({ msg: spus, msgBad: false }, aFoaiei() ? { prFoaie: null } : {}));
+        return this.dupaScriere(F.id);
+      }, (e) => {
+        this.__prBusy = false;
+        const acum = aFoaiei();
+        // Foaia a fost închisă cât cererea era pe drum: refuzul n-are unde să
+        // se arate decât sus.
+        if (!acum) return this.setState({ msg: e.message, msgBad: true });
+        const refuz = { busy: false, errPret: "", errZi: "", err: "" };
+        refuz[e.code === "bad_price" ? "errPret" : e.code === "bad_day" ? "errZi" : "err"] = e.message || (e.code === "costuri_unavailable" ? FARA_034 : "Prețul nu s-a salvat.");
+        this.setState({ prFoaie: Object.assign({}, acum, refuz) });
+        // `price_gone`: prețul s-a scris, dar altcineva l-a șters în aceeași
+        // clipă. Foaia rămâne deschisă, cu ce a scris omul și cu vorba
+        // serverului; lista din spatele ei se recitește, ca rândul să arate ce
+        // e ACUM în bază, nu ce era când s-a deschis foaia.
+        if (e.code === "price_gone") return this.dupaScriere(F.id);
+      });
+  }
+
+  /**
+   * Șterge un rând de preț (`DELETE /stock/prices/#`) — numai după ce omul a
+   * răspuns „Șterge” la întrebarea din pagină (`prSterg`).
+   *
+   * Fără întrebarea deschisă pe chiar prețul ăsta nu pleacă nimic: ștergerea
+   * schimbă costul tuturor comenzilor de după ziua aceea, deci nu are voie să
+   * fie la un singur tap distanță.
+   *
+   * 404 `not_found` NU E UN REFUZ, E O VESTE: prețul nu mai e pe server — l-a
+   * șters altcineva, de pe alt aparat, cât pagina asta stătea cu lista veche.
+   * Până la a doua citire a rundei 2.7.0 răspunsul rămânea în întrebare, ca
+   * orice refuz, iar pagina nu recitea nimic: după „Păstrează”, rândul șters
+   * stătea mai departe în istoric, cu prețul lui scris ca „acum” pe rândul
+   * articolului. Ce voia omul s-a întâmplat deja, deci întrebarea se închide,
+   * sus se spune că prețul fusese șters, iar lista și istoricul se citesc din
+   * nou. (Serverul dă același cod și pentru o rută pe care n-o cunoaște —
+   * `api/index.php` —, dar cele patru rute de preț vin în același fișier, iar
+   * lista de pe ecran a fost citită prin una din ele.)
+   */
+  stergePret(pretId, itemId, spus) {
+    const D = this.state.prSterg;
+    if (!D || D.id !== pretId || D.busy || this.__prStergBusy) return;
+    this.__prStergBusy = true;
+    this.setState({ prSterg: Object.assign({}, D, { busy: true, err: "" }) });
+    return gp.del('/stock/prices/' + pretId)
+      .then(() => {
+        this.__prStergBusy = false;
+        this.setState({ prSterg: null, msg: "Preț șters · " + spus, msgBad: false });
+        return this.dupaScriere(itemId);
+      }, (e) => {
+        this.__prStergBusy = false;
+        if (e.code === "not_found") {
+          this.setState({ prSterg: null, msg: "Prețul fusese deja șters · " + spus, msgBad: false });
+          return this.dupaScriere(itemId);
+        }
+        const acum = this.state.prSterg;
+        if (acum && acum.id === pretId) this.setState({ prSterg: Object.assign({}, acum, { busy: false, err: e.message }) });
+        else this.setState({ msg: e.message, msgBad: true });
+      });
+  }
+
+  /**
+   * După o salvare ori o ștergere: lista din nou, și istoricul dacă e desfăcut pe articolul atins.
+   *
+   * Istoricul recitit care a rămas GOL se strânge: articolului i s-a șters
+   * ultimul preț, deci panoul n-ar mai avea ce arăta — și nici buton care să-l
+   * strângă (v. `desfacut`, în `preturiVals`). Lăsat în stare, s-ar fi desfăcut
+   * singur la primul preț scris după aceea.
+   */
+  dupaScriere(itemId) {
+    const I = this.state.prIst;
+    return Promise.all([this.pullPreturi(), I && I.id === itemId ? this.cereIstoric(itemId) : null]).then(() => {
+      const acum = this.state.prIst;
+      if (acum && acum.id === itemId && acum.stare === "gata" && acum.preturi.length === 0) this.setState({ prIst: null, prSterg: null });
+    });
   }
 
   /**
@@ -874,7 +1751,7 @@ class Component extends DCLogic {
     if (typeof this.timer === "function") { this.timer(); this.timer = null; }
     // Casetele deschise se închid: din ele nu mai pleacă nimic pe care serverul
     // să-l primească.
-    const inchis = { refuzat: true, eroare: "", loaded: true, form: null, art: null, menu: false, navOpen: false, sterg: null };
+    const inchis = { refuzat: true, eroare: "", loaded: true, form: null, art: null, menu: false, navOpen: false, sterg: null, prFoaie: null, prSterg: null };
     return gp.me()
       .then((user) => {
         if (!user) return gp.toLogin();
@@ -900,7 +1777,31 @@ class Component extends DCLogic {
    * pe alt server decât cel care tocmai a cerut schimbarea parolei.
    */
   laParola() {
-    location.href = "Parola.dc.html" + (location.search || "");
+    const pleaca = () => { location.href = "Parola.dc.html" + (location.search || ""); };
+    // FORMULAR SCRIS (runda 2.7.0): plecarea asta o face codul, deci paza
+    // legăturilor n-o vede. Trece prin `gp.ciornaLasaIesirea()`: pe pagina
+    // curată pleacă pe loc, ca până acum; cu ceva scris întreabă, iar la „Ies”
+    // ridică paza și pleacă.
+    //
+    // O SINGURĂ ÎNTREBARE. `pull()` ajunge aici la fiecare 15 secunde, cât
+    // serverul cere schimbarea parolei. Cine a răspuns „Rămân în formular” nu
+    // mai e întrebat cât formularul lui e tot scris — altfel întrebarea i-ar
+    // fi sărit peste ce scrie, de patru ori pe minut. Cum îl închide ori îl
+    // salvează, citirea următoare îl duce la „Parola mea”.
+    if (this.__parolaRamas && gp.ciornaMurdara()) return;
+    // VORBELE PLECĂRII ĂSTEIA, nu ale formularului (încheierea din 9 oct.
+    // 2026, ca în Pontaj). Până atunci omul era întrebat „Ieși fără să
+    // salvezi mișcarea?” cu „Rămân în formular” — ca și cum rămânând ar mai
+    // putea salva. Nu poate: cât parola e provizorie, serverul refuză tot.
+    // Rămâne numai ca să-și copieze ce a scris, și asta i se spune.
+    const voie = gp.ciornaLasaIesirea({
+      titlu: "Pleci fără ce ai scris?",
+      text: "Ai primit o parolă nouă, iar până nu alegi ce faci cu ea nu se poate salva nimic. Poți rămâne ca să copiezi ce ai scris.",
+      nu: "Rămân să copiez", da: "Merg la parolă"
+    });
+    if (voie === true) { this.__parolaRamas = false; return pleaca(); }
+    this.__parolaRamas = true;
+    voie.then((da) => { if (da) pleaca(); });
   }
 
   /**
@@ -1158,15 +2059,488 @@ class Component extends DCLogic {
       .then(() => { this.__syncing = false; this.setState({ syncing: false }); });
   }
 
+  /**
+   * PAZA FORMULARELOR NESALVATE (runda 2.7.0) — metodele `ciorna…` de mai jos,
+   * până la `ceasulSalvarii` (`ciornaDesenate`, `ciornaInSalvare`,
+   * `ciornaAsteptare`, `ciornaSupapa` și ceasul sunt ale reparației din
+   * 9 oct. 2026; fără număr scris aici, că numărul rămâne în urmă la prima
+   * metodă nouă).
+   *
+   * De unde vine: pe 4 oct. 2026 patronul a pierdut un produs nou scris pe
+   * jumătate, dintr-un clic alături de formular, și a cerut ca site-ul să
+   * întrebe înainte să lase baltă un formular scris. În Depozit sunt trei:
+   * mișcarea (`form`), articolul nou (`art`) și foaia „Preț nou” (`prFoaie`).
+   * Pragul scris pe rând rămâne nepăzit, dinadins: se salvează singur la
+   * ieșirea din casetă.
+   *
+   * `ciornaCampuri` — ce a putut scrie ori alege OMUL într-un formular, și
+   * nimic altceva. Erorile, `busy`, `cheie`, istoricul foii de preț (`ist`,
+   * care vine singur, după deschidere) și `deMana` (umbra câmpului de preț)
+   * rămân pe dinafară: cu ele în poză, un formular neatins ar fi ajuns
+   * „scris” de la un răspuns al serverului, iar ușa ar fi întrebat degeaba.
+   */
+  ciornaCampuri(care) {
+    const f = (this.state || {})[care];
+    if (!f) return null;
+    if (care === "form") return { k: f.k, p: f.p, q: f.q, r: f.r, note: f.note };
+    if (care === "art") return { n: f.n, c: f.c, u: f.u, min: f.min };
+    return { pret: f.pret, zi: f.zi, nota: f.nota, suma: f.suma, cant: f.cant };
+  }
+
+  /**
+   * Poza formularului, luată din STARE imediat după `setState`-ul care îl
+   * deschide (`setState` pune starea pe loc). Din stare, nu din ce i s-a dat
+   * lui `setState`: articolul din capul listei, categoria filei ori ziua de azi
+   * sunt alese de pagină la deschidere și nu sunt „scrise” de nimeni.
+   *
+   * NU se reface când mișcarea refuzată de server se deschide la loc: acolo
+   * sunt cifrele omului, nesalvate, deci formularul întors e scris.
+   */
+  ciornaPoza(care) {
+    this.__ciornaPoze = Object.assign({}, this.__ciornaPoze);
+    this.__ciornaPoze[care] = this.ciornaCampuri(care);
+  }
+
+  /**
+   * E vreun formular SCRIS pe ecran? Întoarce `null` ori vorbele întrebării
+   * lui. Cu `care`, se uită numai la formularul acela (ușa lui proprie).
+   *
+   * Citește `this.state` ACUM, la fiecare chemare: mânerele din `renderVals()`
+   * țin starea de la ultima desenare, iar paza plecării e chemată de bibliotecă
+   * la un clic care poate veni înaintea desenării următoare.
+   *
+   * LEGATĂ DE CE E DESENAT, nu de ce a rămas în stare (v. `ciornaDesenate`,
+   * singurul loc care știe ce se desenează): despre un formular pe care omul
+   * nu-l vede n-are ce să fie întrebat — ar fi rămas blocat în fața unei
+   * întrebări fără obiect. Cu `care` (o ușă, „Înapoi”) întreabă de formularul
+   * acela; cele trei rânduri de la capăt sunt în ordinea straturilor. Fără
+   * `care` (plecarea din pagină) și cu DOUĂ formulare scrise, le spune pe nume
+   * pe amândouă; cu salvarea pe drum, întreabă de veste, nu de „nesalvat”
+   * (cele trei adaosuri din 9 oct. 2026, lămurite în corp).
+   *
+   * Comparația o face `gp.ciornaDiferita` („2,5” și „2.50” sunt același
+   * lucru, spațiile de la capete nu se numără). Un formular fără poză — ajuns
+   * în stare pe altă cale decât deschizătorul lui — e socotit scris: pagina
+   * nu știe ce e în el, deci întreabă.
+   */
+  ciornaDeschisa(care) {
+    const poze = this.__ciornaPoze || {};
+    const desenate = this.ciornaDesenate();
+    const scris = (c) => (!care || care === c) && desenate.indexOf(c) >= 0 && gp.ciornaDiferita(poze[c], this.ciornaCampuri(c));
+    const vorbe = (titlu, text) => ({ titlu, text, nu: "Rămân în formular", da: "Ies fără să salvez" });
+    // TREI ADAOSURI ALE ÎNCHEIERII (9 oct. 2026), toate înaintea rândurilor
+    // vechi de mai jos, care rămân cum erau pentru un singur formular scris.
+    //
+    // (1) DOUĂ FORMULARE SCRISE DEODATĂ, la o plecare din PAGINĂ (fără `care`:
+    //     legătura din meniu, „Ieși din cont”, fila închisă). Plecarea le
+    //     pierde pe amândouă, iar întrebarea vorbea numai de cel de deasupra:
+    //     mișcarea refuzată, întoarsă SUB articol, pierea fără să fi fost
+    //     pomenită. Acum sunt spuse pe nume. Ușile și „Înapoi” vin cu `care`
+    //     și întreabă mai departe de UN formular, cel pe care îl închid (cu
+    //     `care`, `scris` nu lasă în listă decât formularul acela).
+    const scrise = ["prFoaie", "art", "form"].filter(scris);
+    if (scrise.length > 1) {
+      const peNume = scrise.map((c) => ({ prFoaie: "prețul", art: "articolul", form: "mișcarea" })[c]);
+      return vorbe("Ieși fără să salvezi ce ai scris?", "Sunt " + (scrise.length === 2 ? "două" : "trei") + " formulare scrise, unul peste altul: "
+        + peNume.slice(0, -1).join(", ") + " și " + peNume[peNume.length - 1] + ". Ce nu s-a salvat din ele se pierde dacă ieși.");
+    }
+    // (2) SALVAREA PE DRUM. Cât articolul ori prețul își așteaptă răspunsul,
+    //     „Ieși fără să salvezi articolul?” e o întrebare mincinoasă: cererea a
+    //     plecat, iar „Ies fără să salvez” n-o mai oprește. Ce pierde omul
+    //     plecând e VESTEA — dacă s-a scris ori nu —, și despre ea e întrebat.
+    //     Aici ajung numai plecările din pagină: ușile formularului tac atunci
+    //     (R4), iar după zece secunde întreabă cu vorbele supapei
+    //     (`ciornaAsteptare`).
+    const peDrum = (titlu, text, nu) => ({ titlu, text, nu: nu || "Rămân în formular", da: "Ies fără să aștept" });
+    if (scrise[0] === "prFoaie" && this.ciornaInSalvare("prFoaie")) return peDrum("Pleci înainte să afli dacă s-a salvat prețul?", "Prețul e pe drum spre server. Dacă pleci acum, nu mai vezi dacă s-a scris.");
+    if (scrise[0] === "art" && this.ciornaInSalvare("art")) return peDrum("Pleci înainte să afli dacă s-a adăugat articolul?", "Articolul e pe drum spre server. Dacă pleci acum, nu mai vezi dacă s-a adăugat.");
+    // (3) MIȘCAREA PE DRUM. Formularul ei se închide chiar la „Salvează”, deci
+    //     cât cererea n-are răspuns pagina părea curată și lăsa omul să plece:
+    //     refuzul serverului („Cantitatea nu e bună”) venea într-o pagină la
+    //     care nu se mai uita nimeni, iar mișcarea rămânea nescrisă fără ca
+    //     depozitarul să afle. `__miscariPeDrum` le numără (v. `onSave`). Sub
+    //     ecranul de refuz nu se întreabă: acolo vestea n-ar avea unde apărea.
+    if (!care && !scrise.length && this.__miscariPeDrum > 0 && !(this.state || {}).refuzat) {
+      return peDrum("Pleci înainte să afli dacă mișcarea s-a scris?", "Mișcarea e pe drum spre server. Dacă pleci acum, nu mai vezi dacă s-a scris în registru.", "Rămân în pagină");
+    }
+    if (scris("prFoaie")) return vorbe("Ieși fără să salvezi prețul?", "Prețul, ziua și nota scrise aici se pierd: prețul nou nu se scrie, iar costurile rămân socotite ca până acum.");
+    if (scris("art")) return vorbe("Ieși fără să salvezi articolul?", "Denumirea, categoria și pragul scrise aici se pierd: articolul nu se adaugă în depozit.");
+    if (scris("form")) return vorbe("Ieși fără să salvezi mișcarea?", "Cantitatea, motivul și nota scrise aici se pierd: mișcarea nu ajunge în registru, iar stocul rămâne neschimbat.");
+    return null;
+  }
+
+  /**
+   * Formularele DESENATE acum, de sus în jos (reparația din 9 oct. 2026).
+   *
+   * ÎN STARE POT STA DOUĂ DEODATĂ. Mișcarea pleacă la salvat și formularul ei
+   * se închide pe loc; cât cererea e pe drum, omul deschide „+ Articol” ori
+   * „Preț nou”; serverul refuză mișcarea, iar formularul ei se întoarce,
+   * scris, SUB celălalt. Cele trei ferestre au același `z-index`, deci
+   * deasupra stă cea scrisă mai jos în șablon: foaia de preț, apoi articolul,
+   * apoi mișcarea. Lista de aici e în ordinea aceea; „Înapoi” (`__gpBack`)
+   * lucrează cu primul din ea, singurul pe care omul îl vede întreg.
+   *
+   * CE SE DESENEAZĂ: sub ecranul de refuz, niciun formular; foaia de preț,
+   * numai cui are dreptul `preturi`. Ce a rămas în stare fără să fie pe ecran
+   * nu e nici de întrebat (`ciornaDeschisa`), nici de închis pe rând.
+   */
+  ciornaDesenate() {
+    const S = this.state || {};
+    if (S.refuzat) return [];
+    return ["prFoaie", "art", "form"].filter((c) => !!S[c] && (c !== "prFoaie" || gp.are("preturi", S.auth)));
+  }
+
+  /**
+   * Formularul `care` își are salvarea pe drum? (R4; pus aici pe 9 oct. 2026.)
+   *
+   * CÂT MERGE SALVAREA, FORMULARUL NU SE MAI ATINGE: nu se scrie în el și nu
+   * se închide. Până acum, „×” apăsat atunci întreba „Ieși fără să salvezi
+   * articolul?” despre un articol care tocmai se salva; „Ies fără să salvez”
+   * nu oprea nimic — cererea plecase —, iar răspunsul venea oricum în bara de
+   * sus: „Articol adăugat”. Întrebarea mințea de două ori. Iar o literă
+   * tastată după „Adaugă” intra în casetă, nu mai prindea cererea plecată și
+   * pierea când răspunsul închidea formularul, fără niciun semn.
+   *
+   * De aceea se opresc, cât `busy`: scriitorii formularului (`scrieArt`,
+   * `scrieFoaie`; casetele sunt și stinse în șablon, cu `disabled`), ușile
+   * lui („×”, „Renunță”), „Înapoi” (`__gpBack`) și deschizătorul de același
+   * fel apăsat pe sub fereastră (`onNewArt`, `deschidePret`). Mișcarea n-are
+   * nevoie: formularul ei se închide chiar la apăsarea lui „Salvează”.
+   *
+   * PREȚUL HOTĂRÂRII: o cerere rămasă fără răspuns ținea formularul pe ecran
+   * până venea unul, ori până la reîncărcare — `request()` din bibliotecă nu
+   * are termen. De la încheierea din 9 oct. 2026 ușile lui au o SUPAPĂ, ca în
+   * Comenzi (v. `ciornaAsteptare`): tac zece secunde, apoi întreabă. Legătura
+   * din meniu și „Ieși din cont” rămân vii tot timpul, și întreabă: plecarea
+   * din pagină chiar poate lăsa salvarea neterminată.
+   *
+   * Steagul se citește din starea VIE, nu din ce au prins mânerele la ultima
+   * desenare: între apăsarea pe „Salvează” și desenul următor, ele sunt încă
+   * cele de dinainte.
+   */
+  ciornaInSalvare(care) {
+    const f = (this.state || {})[care];
+    return !!(f && f.busy);
+  }
+
+  /**
+   * SUPAPA UȘILOR (încheierea din 9 oct. 2026): vorbele cu care ușa
+   * formularului `care` întreabă după ZECE SECUNDE de salvare fără răspuns;
+   * `null` până atunci și când nu se salvează nimic.
+   *
+   * DE CE. R4 a oprit ușile cât merge salvarea, cu temei (v. mai sus). Dar pe
+   * semnalul slab din depozit o cerere poate rămâne fără răspuns cu minutele:
+   * casetele stinse, „Se salvează…”, „×”, „Renunță” și „Înapoi” mute — omul
+   * nu mai avea altă ieșire decât reîncărcarea paginii, care pierde și ce era
+   * scris în formularul de dedesubt. După zece secunde ușa întreabă. „Rămân
+   * în formular” așteaptă mai departe. „Ies fără să aștept” închide
+   * formularul, iar răspunsul, când vine, nu-și mai găsește gazda și se spune
+   * în bara de sus (R3: `aMea()`, `aFoaiei()`) — de aceea întrebarea nu
+   * promite nici „salvat”, nici „pierdut”. Vorbele sunt cele din Comenzi.
+   *
+   * Deschizătorii de același fel („+ Articol”, „Preț nou” al altui rând,
+   * apăsați pe sub fereastră) rămân muți cât ține cererea: nu sunt uși ale
+   * formularului, iar ieșirea o dau cele de mai sus.
+   *
+   * Clipa pornirii (`__artDe`, `__prDe`) se ia pe rândul de lângă semaforul
+   * salvării (`__artBusy = true`, `__prBusy = true`), singurele două locuri
+   * care pun `busy`. Fără clipă, ușa tace: mai bine mută decât să întrebe din
+   * prima secundă.
+   */
+  ciornaAsteptare(care) {
+    if (!this.ciornaInSalvare(care)) return null;
+    const de = care === "art" ? this.__artDe : this.__prDe;
+    if (typeof de !== "number" || this.ceasulSalvarii() - de < 10000) return null;
+    return {
+      titlu: "Ieși fără să aștepți salvarea?",
+      text: "Salvarea a plecat, dar serverul n-a răspuns încă. Dacă ieși, răspunsul apare sus, în pagină, când vine. Înainte să scrii din nou, uită-te în listă: poate s-a salvat.",
+      nu: "Rămân în formular", da: "Ies fără să aștept"
+    };
+  }
+
+  /**
+   * Ușa formularului `care`, apăsată CÂT MERGE SALVAREA lui: până la zece
+   * secunde nu face nimic (întoarce `null`, ca până acum); de acolo întreabă
+   * cu vorbele supapei și, la „Ies fără să aștept”, face `treci`.
+   *
+   * Vorbele se dau ca FUNCȚIE (al treilea argument al lui `gp.inchideCiorna`):
+   * biblioteca le citește din nou la fiecare schimbare a paginii și retrage
+   * singură întrebarea când răspunsul salvării a sosit sub ea — formularul
+   * închis de izbândă, ori rămas cu refuzul scris în el, nu mai e „în
+   * așteptare”. Pentru clipa dintre răspuns și desen rămâne paza din `treci`:
+   * un „Ies” dat supapei după ce salvarea s-a încheiat nu mai închide nimic —
+   * altfel ar fi închis un formular tocmai refuzat, cu pricina în el și cu tot
+   * ce era tastat, fără întrebarea formularului scris.
+   */
+  ciornaSupapa(care, treci) {
+    const vorbe = () => this.ciornaAsteptare(care);
+    const acum = vorbe();
+    if (!acum) return null;
+    return gp.inchideCiorna(acum, () => { if (this.ciornaInSalvare(care)) treci(); }, vorbe);
+  }
+
+  /**
+   * Ceasul supapei, în milisecunde. `performance.now()` merge numai înainte:
+   * ora tabletei potrivită în mijlocul unei salvări n-are voie să deschidă ușa
+   * înainte de vreme, nici s-o țină închisă o oră. `Date.now()` rămâne numai
+   * pentru o lume fără el.
+   */
+  ceasulSalvarii() {
+    return (typeof performance !== "undefined" && performance && typeof performance.now === "function")
+      ? performance.now() : Date.now();
+  }
+
   __gpSync() {
     const st = this.state || {};
-    const now = !!(st.menu || st.form || st.art);
+    // Foaia „Preț nou” e o fereastră ca celelalte: „Înapoi” de pe telefon o
+    // închide pe ea, nu scoate omul din Depozit.
+    const now = !!(st.menu || st.form || st.art || st.prFoaie);
     if (now === this.__gpOvWas) return;
     this.__gpOvWas = now;
     try {
       if (now) history.pushState({ gpOv: 1 }, "");
       else if (history.state && history.state.gpOv) { this.__gpSkip = true; history.back(); }
     } catch (e) {}
+  }
+
+  /**
+   * Tot ce desenează fila „Prețuri”, socotit într-un singur loc.
+   *
+   * Stă în afara lui `renderVals()` ca socoteala stocului să rămână neatinsă
+   * de ea; `renderVals()` ia de aici fiecare valoare pe nume (obiectul lui se
+   * citește cheie cu cheie de `.claude/check-pages.mjs`, deci nu se răsfiră).
+   *
+   * FĂRĂ DREPT ÎNTOARCE O FILĂ CARE NU EXISTĂ: `are` e fals, lista e goală,
+   * foaia e închisă — chiar dacă în stare ar fi rămas ceva de dinainte.
+   */
+  preturiVals() {
+    const S = this.state, set = (x) => this.setState(x);
+    const are = gp.are("preturi", S.auth);
+    const deschisa = are && S.view === "Prețuri";
+    const P = (are && S.preturi) || {};
+    const azi = this.aziPreturi();
+    const toate = Array.isArray(P.articole) ? P.articole : [];
+    const dupaId = {};
+    toate.forEach((a) => { dupaId[a.itemId] = a; });
+    const I = are ? S.prIst : null, D = are ? S.prSterg : null, F = are ? S.prFoaie : null;
+    const gata = deschisa && S.prLoaded && !S.prLipsa;
+
+    // SUS, CU ROȘU. Rândurile vin de la server (`faraPret`): el știe ce
+    // articol intră în ce rețetă. Pagina adaugă doar unitățile, pe care le
+    // are în `articole`, fiindcă „unitate schimbată” are vorba ei și vorba
+    // aceea numește amândouă unitățile.
+    //
+    // A TREIA PRICINĂ, `bucla`: un articol finit al cărui produs ajunge, prin
+    // rețete, să se cuprindă pe sine. Nu e o lipsă de preț și are vorba ei —
+    // cu „Pune preț” lângă ea, omul ar fi scris un preț peste o rețetă greșită
+    // și ar fi primit un cost fără nicio noimă. De aceea rândul trimite la
+    // Catalog și n-are buton.
+    const lipsuri = (Array.isArray(P.faraPret) ? P.faraPret : []).map((l) => {
+      const a = dupaId[l.itemId] || null;
+      const schimbata = l.pricina === "unitate_schimbata";
+      const bucla = l.pricina === "bucla";
+      const uPret = a && a.pret ? a.pret.unit : "", uAcum = a ? a.unit : "";
+      const produse = (Array.isArray(l.produse) ? l.produse : []).filter(Boolean);
+      return {
+        text: bucla ? l.nume + ": rețeta lui se întoarce la el însuși, deci costul nu se poate socoti. Îndreapt-o în Catalog."
+          : !schimbata ? String(l.nume || "")
+          : uPret && uAcum
+            ? l.nume + ": prețul e scris pe " + uPret + ", articolul e acum în " + uAcum + ". Scrie prețul din nou."
+            : l.nume + ": prețul e scris pe altă unitate decât are articolul acum. Scrie prețul din nou.",
+        produse: produse.length ? "→ " + produse.join(", ") : "",
+        // Butonul numai când articolul e și în listă: foaia are nevoie de
+        // unitatea lui, iar una ghicită ar scrie prețul pe altă măsură.
+        cuButon: !!a && !bucla,
+        btn: schimbata ? "Preț nou" : "Pune preț",
+        onPret: () => (a && !bucla ? this.deschidePret(a) : null)
+      };
+    });
+    // Titlul benzii spune „n-au preț” numai când chiar despre preț e vorba.
+    // Se întreabă răspunsul serverului, nu rândurile de mai sus: un steag pus
+    // pe rând numai pentru titlu ar fi un câmp pe care marcajul nu-l cere.
+    const cuBucla = (Array.isArray(P.faraPret) ? P.faraPret : []).some((l) => l.pricina === "bucla");
+
+    const q = S.search.trim().toLowerCase();
+    const cautate = toate.filter((a) => !q || String(a.nume || "").toLowerCase().indexOf(q) >= 0);
+
+    const rand = (a) => {
+      const u = String(a.unit || "");
+      const p = a.pret || null, urm = a.urmator || null;
+      // Săgeata numai lângă un preț: fără preț n-are ce compara.
+      const semn = p ? semnSchimbare(a.schimbare) : null;
+      // PANOUL DE ISTORIC SE DESENEAZĂ NUMAI CÂT EXISTĂ ȘI BUTONUL CARE ÎL
+      // STRÂNGE. Butonul „Istoric” stă sub `areIstoric` (lista spune că
+      // articolul are măcar un preț scris); panoul stătea numai sub „e
+      // desfăcut”. După ștergerea ultimului preț, lista venea cu `istoric: 0`:
+      // butonul pierea, iar panoul rămânea deschis pe „Niciun preț scris
+      // încă…”, fără nimic care să-l închidă — nici ieșirea din filă nu-l
+      // strângea. Cele două atârnă acum de aceeași valoare, socotită o dată.
+      const areIstoric = Number(a.istoric) > 0;
+      const desfacut = areIstoric && !!I && I.id === a.itemId;
+      return {
+        eTitlu: false, eArticol: true,
+        nume: a.nume,
+        // Lista cuprinde și articole scoase din depozit, dacă au rămas într-o
+        // rețetă ori au un preț: consumul lor e adevărat. Rândul o spune, ca
+        // omul să nu caute articolul în „Stoc”.
+        cat: String(a.category || "") + (a.active === false ? " · scos din depozit" : ""),
+        // `!!p`, nu `!!p.price`: prețul zero e un preț („primit pe gratis”).
+        arePret: !!p, faraPret: !p,
+        pret: p ? pretPeUnitate(p.price, p.unit || u) : "",
+        deCand: p ? "din " + ziPret(p.validFrom, azi) : "",
+        schimb: semn ? semn.text : "",
+        schimbFg: semn ? semn.fg : "var(--h-fg-subtle)",
+        urmator: urm ? "de pe " + ziPret(urm.validFrom, azi) + ": " + pretPeUnitate(urm.price, urm.unit || u) : "",
+        // Prețul a fost scris pe altă unitate decât are articolul azi (kg → g).
+        // Nu se înmulțește pe tăcute: se spune, iar costul rămâne nesocotit.
+        altaUnitate: p && a.unitateSchimbata === true
+          ? "Prețul e scris pe " + (p.unit || "altă unitate") + ", articolul e acum în " + u + ". Scrie prețul din nou."
+          : "",
+        btn: p ? "Preț nou" : "Pune preț",
+        btnCls: p ? "h-btn h-btn--secondary" : "h-btn h-btn--primary",
+        onPret: () => this.deschidePret(a),
+        areIstoric,
+        istoricLabel: "Istoric · " + Number(a.istoric) + (desfacut ? " ▴" : " ▾"),
+        desfacut,
+        onIstoric: () => this.desfaIstoric(a.itemId),
+        istVine: desfacut && I.stare === "vine",
+        istErr: desfacut && I.stare === "eroare" ? I.err : "",
+        onIstoricIar: () => this.cereIstoric(a.itemId),
+        istGol: desfacut && I.stare === "gata" && I.preturi.length === 0,
+        ist: !desfacut ? [] : I.preturi.map((h) => {
+          const intreb = !!D && D.id === h.id;
+          const ziua = ziPret(h.validFrom, azi), cat = pretPeUnitate(h.price, h.unit || u);
+          return {
+            zi: ziua + (h.validFrom > azi ? " · urmează" : p && p.id === h.id ? " · acum" : ""),
+            pret: cat,
+            meta: [
+              h.note,
+              h.setBy ? "scris de " + h.setBy : "",
+              h.unitateSchimbata === true ? "pe altă unitate decât are articolul acum (" + u + ")" : ""
+            ].filter(Boolean).join(" · "),
+            // Două steaguri, nu unul negat (`sc-if` primește o valoare): cât
+            // întrebarea e deschisă, butonul „Șterge” al rândului nu se mai
+            // desenează — rămân numai cele două răspunsuri.
+            liber: !intreb, intreb,
+            intrebare: "Ștergi prețul din " + ziua + " (" + cat + ")? Costurile de după ziua aceea se vor socoti cu prețul dinainte.",
+            stergErr: intreb ? D.err : "",
+            stergBusy: intreb && !!D.busy,
+            stergLabel: intreb && D.busy ? "Se șterge…" : "Șterge",
+            // Apăsarea pe „Șterge” NUMAI întreabă. Semaforul se stinge aici,
+            // ca o ștergere rămasă fără răspuns să nu le blocheze pe toate.
+            onSterge: () => (this.__prStergBusy = false, set({ prSterg: { id: h.id, itemId: a.itemId, busy: false, err: "" } })),
+            onPastreaza: () => set({ prSterg: null }),
+            onStergeDa: () => this.stergePret(h.id, a.itemId, a.nume + " · " + ziua)
+          };
+        })
+      };
+    };
+
+    // PRODUSELE FINITE STAU LA URMĂ, sub rândul care le lămurește. Un articol
+    // finit (legat de un produs din Catalog) are de regulă costul socotit din
+    // rețeta produsului; preț i se pune numai când e cumpărat gata făcut.
+    // Amestecate printre materii prime, ar fi arătat ca niște lipsuri.
+    const obisnuite = cautate.filter((a) => a.finit !== true), finite = cautate.filter((a) => a.finit === true);
+    const rows = !gata ? [] : obisnuite.map(rand)
+      .concat(finite.length ? [{ eTitlu: true, eArticol: false }] : [])
+      .concat(finite.map(rand));
+
+    const cuPret = toate.filter((a) => !!a.pret).length;
+    const lim = limiteleZilei(azi);
+    const calc = F ? pretDinFactura(F.suma, F.cant) : null;
+    // Ziua aleasă în foaie are deja un preț? Se află din istoricul articolului.
+    const aceeasiZi = F && Array.isArray(F.ist) ? (F.ist.filter((h) => h.validFrom === F.zi)[0] || null) : null;
+    // „Socotește din factură” scrie în două casete; rezultatul se pune singur
+    // în câmpul de preț de îndată ce se poate socoti. Cât nu se poate
+    // (cantitate goală ori zero), prețul scris de om rămâne neatins.
+    //
+    // IAR CÂND SOCOTEALA NU MAI IESE, OMUL ÎȘI PRIMEȘTE PREȚUL ÎNAPOI. Cantitatea
+    // se tastează cifră cu cifră: din „50 de lei pe 25” pagina vede întâi „pe
+    // 2” și pune 25,00. Ștearsă apoi cantitatea, 25,00 rămânea în câmp — un
+    // preț pe care nu l-a scris nimeni și pe care nicio socoteală nu-l mai
+    // ținea, gata de salvat. Acum, dacă în câmp stă încă cifra pusă de
+    // socoteală (`calc` e cea de dinaintea schimbării), se pune la loc ce
+    // scrisese omul cu mâna lui (`deMana`; gol, dacă nu scrisese nimic). Un
+    // preț tastat PESTE cel socotit nu se atinge: nu mai e al socotelii.
+    // (Două `if`-uri de sine stătătoare, nu `if`/`else`: proba scoate câte
+    // unul din pagină ca să-și vadă regula roșie, iar un `else` rămas singur
+    // ar fi oprit pagina cu totul, în loc să înroșească regula lui.)
+    //
+    // SCRIITORUL FOII (R4, 9 oct. 2026): tot ce scrie în foaie trece pe aici,
+    // iar cât merge salvarea nu mai scrie nimic. Ce s-ar tasta atunci nu mai
+    // prinde cererea plecată și s-ar pierde când răspunsul închide foaia; iar
+    // dacă serverul refuză, foaia ar rămâne alta decât cea trimisă, fără ca
+    // omul să știe care din ele e pe server (v. `ciornaInSalvare`).
+    const scrieFoaie = (schimb) => (this.ciornaInSalvare("prFoaie") ? null : set({ prFoaie: Object.assign({}, F, schimb) }));
+    const dinFactura = (schimb) => {
+      const noua = Object.assign({}, F, schimb);
+      const p = pretDinFactura(noua.suma, noua.cant);
+      if (p !== null) { noua.pret = zecimalePret(p); noua.errPret = ""; }
+      if (p === null && calc !== null && numarScris(F.pret) === calc) noua.pret = F.deMana || "";
+      return scrieFoaie(noua);
+    };
+
+    return {
+      are, deschisa,
+      cate: are && S.prLoaded ? String(toate.length) : "",
+      // CAPUL DE PE TELEFON, PE ACELEAȘI TREI RAMURI CA `sub` de dedesubt.
+      // „se citesc” se spune numai cât o cerere chiar e pe drum: la 503 și la
+      // pană scria tot „Prețuri · se citesc”, deasupra unui card care spunea
+      // că prețurile NU vin. Acolo rămâne numai numele filei.
+      eticheta: "Prețuri" + (S.prLipsa ? ""
+        : !S.prLoaded ? (S.prEroare ? "" : " · se citesc")
+        : " · " + cateArticole(cautate.length).replace(/^un /, "1 ")),
+      sub: S.prLipsa ? "Baza de date așteaptă actualizarea rundei 2.7.0."
+        : !S.prLoaded ? (S.prEroare ? "Prețurile n-au venit." : "Se citesc prețurile…")
+        : cateArticole(toate.length).replace(/^un /, "1 ") + " · " + cuPret + " cu preț"
+          + (lipsuri.length ? " · " + lipsuri.length + " din rețete " + (cuBucla ? "cu socoteala oprită" : "fără preț") : ""),
+      lipsa: deschisa ? S.prLipsa : "",
+      eroare: deschisa ? S.prEroare : "",
+      vine: deschisa && !S.prLoaded && !S.prEroare && !S.prLipsa,
+      areLipsuri: gata && lipsuri.length > 0,
+      lipsuriTitlu: lipsuri.length === 1
+        ? "Un articol din rețete " + (cuBucla ? "oprește socoteala" : "n-are preț") + " — costul produselor lui nu se poate socoti."
+        : lipsuri.length + (cuDe(lipsuri.length) ? " de" : "") + " articole din rețete " + (cuBucla ? "opresc socoteala" : "n-au preț") + " — costul produselor lor nu se poate socoti.",
+      lipsuri: gata ? lipsuri : [],
+      areLista: rows.length > 0,
+      rows,
+      // „Niciun articol” e o afirmație despre depozit: nu se face cât pe ecran
+      // e o pană, fiindcă atunci pagina n-a apucat să afle (lacătul `prEroare`).
+      gol: gata && rows.length === 0 && !S.prEroare,
+      golLinie: q ? "Niciun articol cu „" + S.search.trim() + "” în nume." : "Niciun articol în depozit.",
+      cautat: q !== "",
+
+      foaie: !!F,
+      fSub: F ? F.nume + (F.acum ? " · acum " + F.acum : " · fără preț până acum") : "",
+      fPret: F ? F.pret : "", fUnit: F ? "lei/" + F.unit : "", fUnitate: F ? F.unit : "",
+      fZi: F ? F.zi : "", fZiMin: lim.min, fZiMax: lim.max,
+      fNota: F ? F.nota : "", fSuma: F ? F.suma : "", fCant: F ? F.cant : "",
+      fCantNume: F ? "Cantitatea cumpărată, în " + F.unit : "",
+      // „pus în câmpul de preț” se spune numai cât chiar e acolo: după ce omul
+      // tastează alt preț peste cel socotit, rândul rămâne cu socoteala singură.
+      fCalc: !F ? ""
+        : calc !== null ? "= " + pretPeUnitate(calc, F.unit) + (numarScris(F.pret) === calc ? ", pus în câmpul de preț" : "")
+        : String(F.suma).trim() !== "" && String(F.cant).trim() !== "" ? "Scrie suma și cantitatea ca numere, iar cantitatea mai mare decât zero."
+        : "",
+      fCalcFg: calc !== null ? "var(--h-fg)" : "var(--h-danger)",
+      fErrPret: F ? F.errPret : "", fErrZi: F ? F.errZi : "", fErr: F ? F.err : "",
+      fInlocuieste: aceeasiZi ? "Înlocuiește prețul din ziua asta (" + pretPeUnitate(aceeasiZi.price, aceeasiZi.unit || F.unit) + ")." : "",
+      fIstNota: F && F.istErr ? "Nu am putut citi prețurile de până acum, deci foaia nu poate spune dacă ziua aleasă are deja unul. Dacă are, salvarea îl înlocuiește." : "",
+      fBusy: !!(F && F.busy),
+      fSaveLabel: F && F.busy ? "Se salvează…" : "Salvează",
+      onFPret: (e) => scrieFoaie({ pret: e.target.value, deMana: e.target.value, errPret: "", err: "" }),
+      onFZi: (e) => scrieFoaie({ zi: e.target.value, errZi: "", err: "" }),
+      // Nota are cel mult 255 de semne pe server; tăiată aici, ca omul să vadă
+      // ce se salvează, nu să afle dintr-un refuz.
+      onFNota: (e) => scrieFoaie({ nota: String(e.target.value).slice(0, 255) }),
+      onFSuma: (e) => dinFactura({ suma: e.target.value }),
+      onFCant: (e) => dinFactura({ cant: e.target.value }),
+      // Cât merge salvarea, ușa nu face nimic și nu întreabă (R4, 9 oct. 2026;
+      // v. `ciornaInSalvare`). Altfel: neatinsă închide pe loc, scrisă întreabă.
+      // După zece secunde de salvare fără răspuns, supapa (`ciornaSupapa`).
+      onFCancel: () => (this.ciornaInSalvare("prFoaie") ? this.ciornaSupapa("prFoaie", () => set({ prFoaie: null })) : gp.inchideCiorna(this.ciornaDeschisa("prFoaie"), () => set({ prFoaie: null }))),
+      onFSave: () => this.salveazaPret()
+    };
   }
 
   renderVals() {
@@ -1272,9 +2646,16 @@ class Component extends DCLogic {
       return ia !== ib ? ia - ib : a.c.n.localeCompare(b.c.n, "ro");
     });
 
-    const openForm = (name, kind) => set({
+    // Singurul loc din care se deschide formularul de mișcare (butoanele de sus
+    // și „Intrare” / „Ieșire” de pe fiecare rând). Runda 2.7.0:
+    //   · apăsat peste un formular SCRIS (cu Tab se ajunge la butoane pe sub
+    //     fereastră), întreabă întâi — altfel îl lua de la capăt pe tăcute;
+    //   · `__formNr` numără deschiderile: coada unei salvări refuzate își ține
+    //     minte numărul și nu scrie peste alt formular decât al ei (v. `onSave`);
+    //   · poza de deschidere se ia după `set`, din stare (v. `ciornaPoza`).
+    const openForm = (name, kind) => gp.inchideCiorna(this.ciornaDeschisa("form"), () => (this.__formNr = (this.__formNr || 0) + 1, set({
       form: { k: kind, p: name || (rows.length ? rows[0].c.n : ((this.state.items[0] || {}).name || "")), q: "", r: kind === "in" ? IN_R[0] : OUT_R[0], note: "", err: "" }
-    });
+    }), this.ciornaPoza("form")));
 
     const rowVals = rows.map(x => ({
       n: x.c.n, c: x.c.c, u: x.c.u,
@@ -1317,7 +2698,7 @@ class Component extends DCLogic {
           return set({
             sterg: x.c.id,
             msg: "Scoți „" + x.c.n + "” din depozit? Apasă încă o dată pe „Sigur?”. "
-              + "Dacă articolul are mișcări în registru, ele rămân — dispare doar din listă.",
+              + "Dacă articolul are mișcări în registru ori prețuri scrise, ele rămân — dispare doar din listă.",
             msgBad: true
           });
         }
@@ -1396,6 +2777,11 @@ class Component extends DCLogic {
     // salvarea ar pica cu „Categorie necunoscută”.
     const artCats = (S.categories || []).length ? S.categories : CATS_OF();
     const artUnits = (S.units || []).length ? S.units : ["buc", "kg", "L"];
+    // SCRIITORUL ARTICOLULUI (R4, 9 oct. 2026): cele patru casete ale lui scriu
+    // toate pe aici, iar cât merge salvarea nu mai scriu nimic. O literă
+    // tastată după „Adaugă” nu mai prindea cererea plecată și pierea când
+    // răspunsul închidea formularul, fără niciun semn (v. `ciornaInSalvare`).
+    const scrieArt = (schimb) => (this.ciornaInSalvare("art") ? null : set({ art: Object.assign({}, A, schimb) }));
     const fc = F ? (byName[F.p] || { u: "buc" }) : { u: "buc" };
     // Caseta de mișcare pornește de la aceeași cifră ca lista: soldul
     // serverului. Calculată din mișcările ajunse în pagină, verificarea de mai
@@ -1415,6 +2801,10 @@ class Component extends DCLogic {
     // Aceeași întrebare pentru registru. Filtrele lui sunt cele din `logDays`:
     // categoria, căutarea și pastila de intrări ori de ieșiri.
     const areFiltreLog = S.cat !== "Toate" || q !== "" || S.pastila === "in" || S.pastila === "out";
+    // Fila „Prețuri” (runda 2.7.0): tot ce desenează ea, socotit în
+    // `preturiVals()`. Fără dreptul `preturi`, `PV.are` e fals și nimic din ce
+    // urmează nu adaugă vreun buton ori vreo cifră.
+    const PV = this.preturiVals();
 
     return {
       // ECRANUL DE REFUZ (runda 2.6.0). Două steaguri, nu unul negat, fiindcă
@@ -1492,10 +2882,11 @@ class Component extends DCLogic {
       // îi scria „schimbă parola” și îl ducea în Conturi, unde parola proprie se
       // poate numai reseta — adică îl scotea afară.
       //
-      // Acum: omul pe nume are legătura spre „Parola mea”, pe care o au toate
-      // rolurile (`gp.PANOURI_ROL`); contul de sistem are numele și „tabletă
-      // comună”, ca text; iar cât contul nu s-a citit, rândul mic rămâne gol —
-      // pagina nu știe încă cine e, deci nu spune nimic despre el.
+      // Acum: omul pe nume are legătura spre „Parola mea”, pe care o are oricine
+      // (`oricine` în `gp.MENIU`: nu e un drept care se dă ori se ia din
+      // „Acces”); contul de sistem are numele și „tabletă comună”, ca text; iar
+      // cât contul nu s-a citit, rândul mic rămâne gol — pagina nu știe încă
+      // cine e, deci nu spune nimic despre el.
       contLeg: omAnume,
       contText: !omAnume,
       accountHint: omAnume ? "contul tău · schimbă parola" : S.auth ? "tabletă comună" : "",
@@ -1504,12 +2895,24 @@ class Component extends DCLogic {
       // mai citea nimeni: cookie-ul HttpOnly rămânea valabil, următorul
       // pull() punea numele la loc, iar mișcările se scriau tot pe contul
       // omului care credea că a ieșit — pe o tabletă comună, cu tot ce urmează.
+      //
+      // Mesajul se pune DUPĂ ce ieșirea a trecut de întrebarea formularului
+      // scris (runda 2.7.0), nu înainte: `gp.logout()` întreabă el însuși, iar
+      // la „Rămân în formular” nu se mai împlinește niciodată — nici `.finally`
+      // de mai jos nu mai rulează —, deci mesajul pus dinainte rămânea pe ecran
+      // pentru totdeauna, deasupra unei sesiuni care nu se închidea. Pe pagina
+      // curată `gp.ciornaLasaIesirea()` întoarce `true` pe loc: totul ca până acum.
       onLogout: () => {
-        set({ msg: "Se închide sesiunea…", msgBad: false });
-        gp.logout().finally(() => gp.toLogin());
+        const iese = () => {
+          set({ msg: "Se închide sesiunea…", msgBad: false });
+          gp.logout().finally(() => gp.toLogin());
+        };
+        const voie = gp.ciornaLasaIesirea();
+        if (voie === true) return iese();
+        voie.then((da) => { if (da) iese(); });
       },
-      viewTitle: S.view === "Registru" ? "Registru de mișcări" : "Stoc în depozit",
-      viewSub: S.loaded
+      viewTitle: PV.deschisa ? "Prețurile din depozit" : S.view === "Registru" ? "Registru de mișcări" : "Stoc în depozit",
+      viewSub: PV.deschisa ? PV.sub : S.loaded
         ? items.length + " poziții · " + inToday.length + " intrări și " + outToday.length + " ieșiri azi · " + (alerts + shorts.length) + " atenționări"
           // Serverul dă cel mult 1000 de mișcări: registrul și totalurile lui
           // acoperă doar atât. Stocul curent e calculat pe server din TOATE
@@ -1574,10 +2977,15 @@ class Component extends DCLogic {
       syncBusy: !!S.syncing,
       syncLabel: S.syncing ? "Se scade…" : "Scade din stoc",
 
-      tabs: ["Toate"].concat(CATS_OF()).concat(["Registru"]).map(t => {
-        const isLogTab = t === "Registru";
-        const count = isLogTab ? S.moves.length : (t === "Toate" ? items.length : items.filter(x => x.c.c === t).length);
-        const active = isLogTab ? S.view === "Registru" : (S.view === "Stoc" && S.cat === t);
+      // FILA „PREȚURI” STĂ DUPĂ „REGISTRU”, ȘI NUMAI CU DREPTUL `preturi`
+      // (runda 2.7.0). Se recunoaște după LOC — ultima din listă —, nu după
+      // nume: categoriile vin din Setări → Liste, iar o categorie pe care
+      // cineva a botezat-o „Prețuri” ar fi fost luată drept fila de prețuri.
+      tabs: ["Toate"].concat(CATS_OF()).concat(["Registru"]).concat(PV.are ? ["Prețuri"] : []).map((t, i, toate) => {
+        const isPretTab = PV.are && i === toate.length - 1;
+        const isLogTab = !isPretTab && t === "Registru";
+        const count = isPretTab ? PV.cate : isLogTab ? S.moves.length : (t === "Toate" ? items.length : items.filter(x => x.c.c === t).length);
+        const active = isPretTab ? PV.deschisa : isLogTab ? S.view === "Registru" : (S.view === "Stoc" && S.cat === t);
         return {
           label: t, count: String(count),
           cls: active ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
@@ -1585,7 +2993,7 @@ class Component extends DCLogic {
           // pe categoria de dinainte fără ca vreo filă să arate asta: în Registru
           // nicio filă de categorie nu e aprinsă, deci omul n-avea de unde ști de
           // ce cifra din cap e mai mică decât cea de pe filă.
-          onClick: () => set(isLogTab ? { view: "Registru", cat: "Toate", pastila: "" } : { view: "Stoc", cat: t, pastila: "" })
+          onClick: () => isPretTab ? this.intraInPreturi() : set(isLogTab ? { view: "Registru", cat: "Toate", pastila: "" } : { view: "Stoc", cat: t, pastila: "" })
         };
       }),
       sorts:[{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
@@ -1613,6 +3021,9 @@ class Component extends DCLogic {
       // stocul · 14 poziții" ar fi fost o propoziție care se contrazice pe ea.
       currentLabel: (() => {
         const numePastila = { prag: "Sub prag minim", lipsa: "Lipsă la comenzi", in: "Intrări azi", out: "Ieșiri azi" };
+        // Pe fila „Prețuri” capul numără articolele din lista de prețuri, cu
+        // tot cu căutare — tot lungimea listei de dedesubt, ca mai sus.
+        if (S.view === "Prețuri" && PV.deschisa) return PV.eticheta;
         if (S.view === "Registru") {
           const cate = logDays.reduce((n, z) => n + z.moves.length, 0);
           return (numePastila[S.pastila] || "Registru") + " · " + cate + " mișcări";
@@ -1622,16 +3033,20 @@ class Component extends DCLogic {
       menuOpen: S.menu,
       onMenuOpen: () => set({ menu: true }),
       onMenuClose: () => set({ menu: false }),
-      menuViews: ["Toate"].concat(CATS_OF()).concat(["Registru"]).map(t => {
-        const isLogTab = t === "Registru";
-        const active = isLogTab ? S.view === "Registru" : (S.view === "Stoc" && S.cat === t);
+      // Aceeași filă „Prețuri” și în meniul de pe telefon, cu aceeași condiție
+      // și recunoscută tot după loc: bara de file e ascunsă sub 760px, deci
+      // pusă numai acolo, fila n-ar fi existat pe telefon.
+      menuViews: ["Toate"].concat(CATS_OF()).concat(["Registru"]).concat(PV.are ? ["Prețuri"] : []).map((t, i, toate) => {
+        const isPretTab = PV.are && i === toate.length - 1;
+        const isLogTab = !isPretTab && t === "Registru";
+        const active = isPretTab ? PV.deschisa : isLogTab ? S.view === "Registru" : (S.view === "Stoc" && S.cat === t);
         return {
-          label: isLogTab ? "Registru de mișcări" : (t === "Toate" ? "Tot stocul" : t),
-          count: String(isLogTab ? S.moves.length : (t === "Toate" ? items.length : items.filter(x => x.c.c === t).length)),
+          label: isPretTab ? "Prețuri" : isLogTab ? "Registru de mișcări" : (t === "Toate" ? "Tot stocul" : t),
+          count: String(isPretTab ? PV.cate : isLogTab ? S.moves.length : (t === "Toate" ? items.length : items.filter(x => x.c.c === t).length)),
           mark: active ? "✓" : "",
           bg: active ? "var(--h-accent-soft)" : "var(--h-bg-sunk)",
           bd: active ? "var(--h-accent)" : "var(--h-line)",
-          onClick: () => set(isLogTab ? { view: "Registru", cat: "Toate", menu: false, pastila: "" } : { view: "Stoc", cat: t, menu: false, pastila: "" })
+          onClick: () => isPretTab ? this.intraInPreturi() : set(isLogTab ? { view: "Registru", cat: "Toate", menu: false, pastila: "" } : { view: "Stoc", cat: t, menu: false, pastila: "" })
         };
       }),
       menuSorts: [{ v: "cat", l: "Pe categorii" }, { v: "low", l: "Stoc mic întâi" }, { v: "recent", l: "Mișcări recente" }].map(s => ({
@@ -1641,7 +3056,35 @@ class Component extends DCLogic {
         onClick: () => set({ sort: s.v, menu: false })
       })),
 
-      isStock: S.view === "Stoc", isLog: S.view === "Registru",
+      // Trei vederi, din care se desenează mereu exact una. „Prețuri” rămasă
+      // în stare fără drept (dreptul luat din „Acces” cu fila deschisă, până
+      // apucă `componentDidUpdate` s-o închidă) cade pe „Stoc”, nu pe un ecran
+      // gol: `isStock` e „nici registru, nici prețuri deschise”.
+      isStock: S.view !== "Registru" && !PV.deschisa, isLog: S.view === "Registru",
+      isPreturi: PV.deschisa,
+      prLipsa: PV.lipsa,
+      prEroare: PV.eroare,
+      // NU `set(...)`, din aceeași pricină ca la `onReincearca` de mai sus:
+      // scurtătura are un singur parametru, deci cererea n-ar mai fi plecat.
+      onPrReincearca: () => { this.setState({ prEroare: "" }, () => this.pullPreturi()); },
+      prVine: PV.vine,
+      prAreLipsuri: PV.areLipsuri, prLipsuriTitlu: PV.lipsuriTitlu, prLipsuri: PV.lipsuri,
+      prAreLista: PV.areLista, prRows: PV.rows,
+      prGol: PV.gol, prGolLinie: PV.golLinie,
+      prCautat: PV.cautat,
+      onPrFaraCautare: () => set({ search: "" }),
+      // Foaia „Preț nou”.
+      prFoaieDeschisa: PV.foaie, prSub: PV.fSub,
+      prPret: PV.fPret, prUnit: PV.fUnit, prUnitate: PV.fUnitate,
+      prZi: PV.fZi, prZiMin: PV.fZiMin, prZiMax: PV.fZiMax,
+      prNota: PV.fNota, prSuma: PV.fSuma, prCant: PV.fCant, prCantNume: PV.fCantNume,
+      prCalc: PV.fCalc, prCalcFg: PV.fCalcFg,
+      prErrPret: PV.fErrPret, prErrZi: PV.fErrZi, prErr: PV.fErr,
+      prInlocuieste: PV.fInlocuieste, prIstNota: PV.fIstNota,
+      prBusy: PV.fBusy, prSaveLabel: PV.fSaveLabel,
+      onPrPret: PV.onFPret, onPrZi: PV.onFZi, onPrNota: PV.onFNota,
+      onPrSuma: PV.onFSuma, onPrCant: PV.onFCant,
+      onPrCancel: PV.onFCancel, onPrSave: PV.onFSave,
       resDisplay: showRes ? "flex" : "none",
       resInline: showRes ? "inline" : "none",
       rows: rowVals, noRows: rowVals.length === 0 && !S.eroare,
@@ -1662,9 +3105,11 @@ class Component extends DCLogic {
         : "Se citește stocul…",
       onClearFilters: () => set({ cat: "Toate", search: "", sort: "cat", pastila: "" }),
       // De ce n-are articolul buton „Șterge”, spus sub cursor. Rețeta se schimbă
-      // din Catalog, pe care îl au numai administratorul și fondatorul; celorlalți
-      // nu li se spune „scoate-l din rețetă”, fiindcă n-au de unde.
-      retetaTitlu: gp.eAdmin(S.role)
+      // din Catalog, iar Catalogul e un drept (`catalog`) pe care fondatorul îl
+      // dă din „Acces”; cui nu-l are nu i se spune „scoate-l din rețetă”,
+      // fiindcă n-are de unde. E aceeași întrebare pe care o pune serverul
+      // când refuză ștergerea (`drept('catalog', $u)`, api/routes/stock.php).
+      retetaTitlu: gp.are("catalog", S.auth)
         ? "Articolul intră într-o rețetă. Cât e acolo nu se poate scoate din depozit: scoate-l întâi din rețetă, din Catalog."
         : "Articolul intră într-o rețetă. Cât e acolo nu se poate scoate din depozit: cere-i unui administrator să-l scoată întâi din rețetă.",
 
@@ -1691,7 +3136,18 @@ class Component extends DCLogic {
 
       // Deschiderea casetei stinge semaforul: o cerere rămasă fără răspuns nu
       // trebuie să blocheze adăugarea până la reîncărcarea paginii.
-      onNewArt: () => (this.__artBusy = false, set({
+      //
+      // Runda 2.7.0, ca la `openForm`: apăsat peste un articol SCRIS întreabă
+      // întâi; `__artNr` numără deschiderile, pentru cozile salvării (v.
+      // `onArtSave`); poza de deschidere se ia după `set`, din stare.
+      //
+      // CÂT ARTICOLUL DE PE ECRAN SE SALVEAZĂ, butonul nu face nimic (R4,
+      // 9 oct. 2026; v. `ciornaInSalvare`): formularul acela e mereu scris —
+      // fără denumire nu pleacă —, deci ar fi întrebat „Ieși fără să salvezi
+      // articolul?” despre unul care tocmai se salvează. Semaforul îl mai
+      // stinge de aici numai pentru caseta închisă de COD cât cererea ei era
+      // pe drum (ecranul de refuz); cea rămasă pe ecran își așteaptă răspunsul.
+      onNewArt: () => (this.ciornaInSalvare("art") ? null : gp.inchideCiorna(this.ciornaDeschisa("art"), () => (this.__artBusy = false, this.__artNr = (this.__artNr || 0) + 1, set({
         art: {
           n: "", min: "", err: "", busy: false,
           // Pornim pe fila deschisă: articolul apare în lista din fața omului,
@@ -1699,7 +3155,7 @@ class Component extends DCLogic {
           c: artCats.indexOf(S.cat) >= 0 ? S.cat : artCats[0],
           u: artUnits[0]
         }
-      })),
+      }), this.ciornaPoza("art")))),
       hasArt: !!A,
       artN: A ? A.n : "", artC: A ? A.c : "", artU: A ? A.u : "",
       artMin: A ? A.min : "", artErr: A ? A.err : "",
@@ -1707,11 +3163,14 @@ class Component extends DCLogic {
       artUnits: artUnits.map(u => ({ v: u, l: u })),
       artBusy: !!(A && A.busy),
       artSaveLabel: A && A.busy ? "Se salvează…" : "Adaugă articolul",
-      onArtN: (e) => set({ art: Object.assign({}, A, { n: e.target.value, err: "" }) }),
-      onArtC: (e) => set({ art: Object.assign({}, A, { c: e.target.value, err: "" }) }),
-      onArtU: (e) => set({ art: Object.assign({}, A, { u: e.target.value }) }),
-      onArtMin: (e) => set({ art: Object.assign({}, A, { min: e.target.value, err: "" }) }),
-      onArtCancel: () => set({ art: null }),
+      onArtN: (e) => scrieArt({ n: e.target.value, err: "" }),
+      onArtC: (e) => scrieArt({ c: e.target.value, err: "" }),
+      onArtU: (e) => scrieArt({ u: e.target.value }),
+      onArtMin: (e) => scrieArt({ min: e.target.value, err: "" }),
+      // Cât merge salvarea, ușa nu face nimic și nu întreabă (R4, 9 oct. 2026;
+      // v. `ciornaInSalvare`). Altfel: neatins închide pe loc, scris întreabă.
+      // După zece secunde de salvare fără răspuns, supapa (`ciornaSupapa`).
+      onArtCancel: () => (this.ciornaInSalvare("art") ? this.ciornaSupapa("art", () => set({ art: null })) : gp.inchideCiorna(this.ciornaDeschisa("art"), () => set({ art: null }))),
       onArtSave: () => {
         // Semaforul stă pe instanță, nu în stare: `setState` nu schimbă starea
         // pe loc, deci două tapuri grăbite ar citi amândouă `busy: false` și ar
@@ -1731,13 +3190,30 @@ class Component extends DCLogic {
         // aprins pare că n-a răspuns, iar al doilea tap ar trimite încă un
         // articol cu același nume — refuzat de server, cu mesaj roșu degeaba.
         this.__artBusy = true;
+        // Clipa pornirii, pentru supapa ușii (v. `ciornaAsteptare`).
+        this.__artDe = this.ceasulSalvarii();
         set({ art: Object.assign({}, A, { err: "", busy: true }) });
+        // COADA ÎȘI ȚINE MINTE FORMULARUL (runda 2.7.0). Cât cererea e pe
+        // drum, caseta se poate închide și alta se poate deschide în locul
+        // ei. Ușile n-o mai fac (R4, v. `ciornaInSalvare`), dar ecranul de
+        // refuz o închide și atunci, iar numărul de mai jos e a doua plasă,
+        // pentru orice drum pe care paza aceea nu-l știe. Răspunsul
+        // întârziat nu are voie să atingă decât formularul din care a plecat:
+        // altfel izbânda închidea articolul scris după, iar refuzul îi scria
+        // eroarea altuia, îi aprindea butonul la loc (al doilea „Adaugă”
+        // trimitea articolul de două ori) ori refăcea caseta la care omul
+        // tocmai renunțase. `aMea()` întoarce formularul numai dacă e tot cel
+        // de la apăsare și e încă deschis; semaforul se stinge numai de coada
+        // deschiderii lui (altă deschidere l-a stins deja, v. `onNewArt`).
+        const nr = this.__artNr;
+        const aMea = () => (this.__artNr === nr ? (this.__artBusy = false, this.state.art) : null);
         return this.adaugaArticol(nume, A.c, A.u, prag)
-          .then(() => { this.__artBusy = false; return set({ art: null, msgBad: false, msg: "Articol adăugat · " + nume + " · pornește de la 0, pune-i prima intrare." }); })
+          .then(() => set(Object.assign({ msgBad: false, msg: "Articol adăugat · " + nume + " · pornește de la 0, pune-i prima intrare." }, aMea() ? { art: null } : {})))
           // Refuzul serverului („există deja un articol cu numele…”) se arată
           // chiar în casetă: bannerul de sus rămâne acoperit de fereastră, deci
           // omul ar vedea doar o casetă care nu se închide, fără să afle de ce.
-          .catch((e) => { this.__artBusy = false; return set({ art: Object.assign({}, this.state.art || A, { err: e.message, busy: false }) }); });
+          // Fără caseta lui pe ecran, n-are unde să se arate decât sus.
+          .catch((e) => { const acum = aMea(); return set(acum ? { art: Object.assign({}, acum, { err: e.message, busy: false }) } : { msg: e.message, msgBad: true }); });
       },
 
       hasForm: !!F,
@@ -1763,7 +3239,7 @@ class Component extends DCLogic {
       onFQ: (e) => set({ form: Object.assign({}, F, { q: e.target.value, err: "" }) }),
       onFR: (e) => set({ form: Object.assign({}, F, { r: e.target.value }) }),
       onFNote: (e) => set({ form: Object.assign({}, F, { note: e.target.value }) }),
-      onCancel: () => set({ form: null }),
+      onCancel: () => gp.inchideCiorna(this.ciornaDeschisa("form"), () => set({ form: null })),
       onSave: () => {
         if (!F) return;
         const qv = num(F.q);
@@ -1771,7 +3247,19 @@ class Component extends DCLogic {
         if (F.k === "out" && qv > fStock) return set({ form: Object.assign({}, F, { err: "Nu ai decât " + fmt(fStock) + " " + fc.u + " în stoc. Fă mai întâi intrarea sau corectează inventarul." }) });
         // Mișcarea se scrie pe server; stocul se recalculează de acolo.
         set({ form: null });
+        // Numărul deschiderii, ținut minte de coada cererii (runda 2.7.0).
+        const nr = this.__formNr;
+        // MIȘCAREA E PE DRUM (încheierea din 9 oct. 2026): formularul s-a
+        // închis mai sus, deci numai numărătoarea asta mai știe că pagina
+        // așteaptă un răspuns; paza plecării o citește (`ciornaDeschisa`,
+        // adaosul 3). Scade pe AMÂNDOUĂ ramurile, înaintea cozilor de mai jos:
+        // rămasă sus după un refuz, pagina ar întreba la fiecare plecare.
+        // Întrebarea plecării rămasă pe ecran o retrage biblioteca singură,
+        // la desenul de după răspuns (`gp.ciornaRetrage`).
+        this.__miscariPeDrum = (this.__miscariPeDrum || 0) + 1;
+        const sosita = () => { this.__miscariPeDrum = Math.max(0, (this.__miscariPeDrum || 0) - 1); };
         this.addMove(fc.id, qv, F.k === "in" ? 1 : -1, F.r, F.note)
+          .then((r) => (sosita(), r), (e) => { sosita(); throw e; })
           .then(() => set({
             msg: (F.k === "in" ? "Intrare înregistrată · +" : "Ieșire înregistrată · −") + fmt(qv) + " " + fc.u + " " + F.p,
             msgBad: false
@@ -1780,7 +3268,13 @@ class Component extends DCLogic {
           // nimic. Caseta se deschide la loc, cu cifrele omului în ea și cu
           // motivul înăuntru — bannerul de sus ar rămâne acoperit de fereastră,
           // iar depozitarul ar trebui să retasteze cantitatea ca să reîncerce.
-          .catch((e) => set({ form: Object.assign({}, F, { err: e.message }), msg: "" }));
+          //
+          // NUMAI DACĂ LOCUL E TOT AL EI. Dacă între timp omul a deschis alt
+          // formular de mișcare, refuzul întârziat i-l înlocuia cu cel vechi —
+          // cifrele noi pierdute, fără nicio întrebare; iar sub ecranul de
+          // refuz punea la loc un formular pe care nu-l mai vede nimeni.
+          // Atunci motivul rămâne sus, în bara roșie, unde l-a pus `addMove`.
+          .catch((e) => (this.__formNr !== nr || this.state.refuzat ? null : set({ form: Object.assign({}, F, { err: e.message }), msg: "" })));
       }
     };
   }

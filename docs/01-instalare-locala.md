@@ -58,9 +58,9 @@ notificare).
 ### Restul folderului `sql/` — migrările
 
 Cele două fișiere de mai sus **nu sunt tot**. `001_schema.sql` face 17 tabele,
-iar aplicația de azi cere 21. Ce lipsește se naște abia în migrări:
+iar aplicația de azi cere 28. Ce lipsește se naște abia în migrări:
 `referral_commissions` din `008`, `founder_invites` din `009`, `lab_shifts` din
-`014`, `lab_messages` din `015` — plus nouă coloane din `users`, între ele
+`014`, `lab_messages` din `015` și încă șapte după ele — plus nouă coloane din `users`, între ele
 `referral_code`, `referred_by` și `referred_at`, care vin din `007`. O bază
 oprită la `002` arată întreagă și nu se plânge la import: se plânge pagina, mai
 târziu, cu „lipsește migrarea".
@@ -86,25 +86,31 @@ Se rulează de câte ori vrei: fiecare migrare se uită întâi în
 **Cum verifici.** Ultimele rânduri ale uneltei sunt chiar verificarea:
 
 ```
-Tabele în gp_dev: 25
+Tabele în gp_dev: 28
 audit_log, founder_invites, lab_messages, lab_production, lab_shifts, ...
 Produse în catalog: 22
 
 GATA — baza e pregătită.
 ```
 
-**25 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
+**28 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
 numele care lipsește îți spune care migrare n-a intrat: `referral_commissions`
 e din `008`, `founder_invites` din `009`, `lab_shifts` din `014`,
-`lab_messages` din `015`, `request_claims` din `019`, iar `telegram_links` și
-`lab_production` din `021`, iar `schema_migrations` din `025`. Ultimul e
-registrul migrărilor: dacă el lipsește, uită-te dacă nu cumva lipsesc și altele
-— e singurul care poate răspunde singur la întrebarea asta, cu
+`lab_messages` din `015`, `request_claims` din `019`, `telegram_links` și
+`lab_production` din `021`, `schema_migrations` din `025`, iar
+`role_rights` din `033`, `stock_item_prices` din `034` și `orders_deleted` din
+`035`. `schema_migrations` e registrul migrărilor: dacă el lipsește, uită-te
+dacă nu cumva lipsesc și altele — e singurul care poate răspunde singur la
+întrebarea asta, cu
 `SELECT fisier FROM schema_migrations`. Fără primul, „Recomandări" nu-ți arată banii; fără
 `lab_shifts` și `lab_messages`, „Pontaj" și tabla de anunțuri din Panoul
-Laborator răspund lămurit că lipsește migrarea. Ultimele două tac în schimb:
+Laborator răspund lămurit că lipsește migrarea. Cele două din `021` tac în schimb:
 fără `telegram_links` butonul de legare a Telegramului nu pornește, iar fără
-`lab_production` raportul de producție pe tură iese **gol**, nu cu eroare. Și dacă în dreptul vreunui fișier scrie un număr
+`lab_production` raportul de producție pe tură iese **gol**, nu cu eroare. Cele
+trei de la urmă nu opresc nimic din ce mergea: fără `role_rights` fiecare rol
+intră unde intra și până acum, numai bifele mutate în „Acces" n-au unde se
+scrie; fără `stock_item_prices` n-au unde se scrie prețurile de cumpărare; iar
+fără `orders_deleted` n-are unde se ține ce era într-o comandă ștearsă. Și dacă în dreptul vreunui fișier scrie un număr
 de erori, nu trece peste: eroarea e tipărită dedesubt, cu instrucțiunea lângă
 ea.
 
@@ -236,6 +242,6 @@ sau spune-mi ce scrie și mă uit eu.
 importat `001_schema.sql` *înainte* de `002_seed.sql`.
 
 **O pagină spune că „lipsește migrarea", sau „Recomandări" nu arată niciun ban**
-— migrările n-au intrat. Numără tabelele din `gp_dev`: dacă sunt 17, nu 21, ai
+— migrările n-au intrat. Numără tabelele din `gp_dev`: dacă sunt 17, nu 28, ai
 rămas la `002`. Rulează `.claude/instalare-local.php` (pasul 3); merge și peste
 o bază care are deja comenzi, nu pierde nimic.

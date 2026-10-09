@@ -29,7 +29,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </helmet>
 
 <!-- POARTA DE ROL A PANOULUI, ÎN PAGINĂ.
-     Serverul o ține de la început (rutele de aici sunt `require_ops()`), dar
+     Serverul o ține de la început (rutele de aici cer dreptul `ruta`), dar
      pagina nu întreba nimic: cine tasta adresa capătă panoul întreg, cu o
      casetă roșie de refuz în fiecare colț și nicio propoziție care să spună
      de ce. Ecranul ăsta o spune, și trimite omul unde are ce face.
@@ -396,7 +396,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -514,19 +514,19 @@ const SPEED = 22, SERVICE = 6;
 /**
  * Cine are voie să DESCHIDĂ panoul.
  *
- * Serverul a ținut poarta de la început: rutele de aici sunt `require_ops()`,
- * iar `GP_OPS_ROLES` nu are nici `client`, nici `agent_vanzari`. Pagina însă
- * nu întreba nimic, deci cine tasta adresa capătă panoul întreg, plin de
- * refuzuri, fără să afle că nu e al lui.
+ * Serverul a ținut poarta de la început: rutele de aici cer dreptul `ruta`
+ * (`require_drept('ruta')`), pe care din pornire nu-l are nici `client`, nici
+ * `agent_vanzari`. Pagina însă nu întreba nimic, deci cine tasta adresa capătă
+ * panoul întreg, plin de refuzuri, fără să afle că nu e al lui.
  *
- * Răspunsul se citește din matricea meniului, nu se scrie a doua oară: dacă
- * mâine „Rută" iese din meniul unui rol, poarta se închide singură.
- * Aceeași regulă și aceleași cuvinte ca în „Administrare Comenzi" ·
- * `vedeComenzi`.
+ * Întrebarea e un DREPT, nu o listă de roluri (runda 2.7.0): panoul se dă și
+ * se ia din „Acces", iar răspunsul vine de la server, pe cont (`drepturi`).
+ * De aceea se întreabă CONTUL, nu rolul lui — rolul singur ar răspunde din
+ * implicit și n-ar ști ce a bifat fondatorul. Aceeași regulă și aceleași
+ * cuvinte ca în „Administrare Comenzi" · `vedeComenzi`.
  */
-const PANOUL = "Rută";
 const CE_PANOU = "ruta șoferului";
-const vedePanoul = (a) => (gp.PANOURI_ROL[(a && a.role) || ""] || []).indexOf(PANOUL) >= 0;
+const vedePanoul = (a) => gp.are("ruta", a);
 // „Resetează bifele": cât rămâne armat după prima apăsare și cât e surd la a
 // doua (milisecunde). Cinci secunde ajung cât să citești rândul de lămurire;
 // trei sferturi de secundă despart o hotărâre de un deget care a atins de

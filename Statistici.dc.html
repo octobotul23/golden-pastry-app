@@ -380,6 +380,155 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 .st-sterge{min-height:30px;padding:0 10px;border-radius:9px;border:1px solid var(--h-line);background:transparent;font-family:inherit;font-size:12px;font-weight:600;color:var(--h-fg-muted);cursor:pointer}
 .st-sterge:hover{background:var(--h-bg-sunk);color:var(--h-fg)}
 
+/* ======================================================================== */
+/*  Profitul din materii prime — runda 2.7.0 (hotărârile din 4–5 oct. 2026) */
+/* ======================================================================== */
+
+/* Se desenează în toate trei vederile, dar NUMAI când răspunsul de la
+   `/stats` poartă cheia `costuri` — adică pentru cine are dreptul cu același
+   nume. Fără ea, nimic din ce e mai jos nu ajunge pe ecran.
+
+   DOUĂ FELURI DE CULOARE, CU DOUĂ ROSTURI. Scrisul — profitul, pierderea,
+   lipsa — ia tokenii TEMEI (`--h-success`, `--h-danger`, `--h-warning`), care
+   se întorc singuri pe noapte: verdele de zi (#426A32) pe fundalul tabloului
+   de dimineață ar fi fost un verde stins pe cafeniu, de necitit. Pastila
+   marjei, în schimb, ia culorile DATELOR (`--viu-*`), care nu se schimbă cu
+   tema, din aceeași pricină ca feliile inelului: o pastilă care e verde în
+   registru și altfel de verde în tablou n-ar mai fi aceeași treaptă. Scrisul
+   de pe ea e cacaoa cea mai închisă pe toate trei: albul pe roșul viu are
+   numai 3,5:1, sub pragul de citit al unui scris de 12px. */
+.st-castig{color:var(--h-success)}
+.st-pierdere{color:var(--h-danger)}
+.st-marja{display:inline-block;font-size:12px;font-weight:800;line-height:1.3;padding:3px 9px;border-radius:99px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--h-cocoa-900)}
+.st-marja--bun{background:var(--viu-verde)}
+.st-marja--mijloc{background:var(--viu-chihlimbar)}
+.st-marja--slab{background:var(--viu-rosu)}
+/* Fără marjă nu e o treaptă, deci nu e pastilă: o liniuță stinsă. O pastilă
+   cenușie cu „—” în ea ar fi părut a patra treaptă, cea mai proastă. */
+.st-marja--fara{background:transparent;color:var(--h-fg-subtle);font-weight:400;padding-left:0;padding-right:0}
+
+/* Fișa din vederea A ține toată lățimea: e a cincea într-o grilă de două
+   coloane, iar singură pe un rând, pe jumătate, ar fi lăsat un gol lângă ea. */
+.st-kpi--profit{grid-column:1/-1}
+.st-kpi--profit .st-fin{line-height:1.5}
+/* Două clase, ca să bată `.st-kpi .st-fin` de mai sus, care are tot două și
+   ar fi lăsat rândul stins, la fel cu cele de lângă el. */
+.st-kpi--profit .st-plipsa{color:var(--h-warning);font-weight:700}
+
+/* Masa profitului, în același motor ca celelalte (`--st-col` pe masă).
+   Deosebirile ei, toate cu pricină:
+     · NIMIC NU SE TAIE CU TREI PUNCTE. Numele se rupe pe două rânduri, iar o
+       cifră prea lată trece dedesubt — aici stă „lipsește prețul la: …”, care
+       tăiat ar fi spus tocmai jumătatea nefolositoare;
+     · forma stivuită n-o dă o grilă scrisă a doua oară, ci trei variabile pe
+       care le întoarce banda: croiala, lățimea numelui și a stării, alinierea
+       cifrelor. Regulile de mai jos au două clase, deci bat fără `!important`
+       regulile cu una singură din banda de 1150 (care ar fi pus „Bucăți”
+       singur pe un rând, cum pune „Categorie” la celelalte mese). */
+.st-tp{--st-col:minmax(0,2fr) 62px 106px 106px 112px 78px minmax(0,1.5fr);--st-min:0px}
+.st-tp .st-rand{grid-template-columns:var(--st-col)}
+.st-tp .st-rand>:nth-child(1),.st-tp .st-rand>:nth-child(7){grid-column:var(--tp-lat,auto)}
+.st-tp .st-rand>:nth-child(2){grid-column:auto}
+.st-tp .st-rand--dat>:nth-child(1){font-weight:600}
+.st-tp .st-nrcol{text-align:var(--tp-nr,right)}
+.st-tp .st-cel{white-space:normal;overflow:visible;overflow-wrap:anywhere}
+/* Costul pe bucată, sub costul întreg: aceeași întrebare („cât mă costă?”)
+   pusă a doua oară, la o bucată — nu merita o a opta coloană. */
+.st-pebuc{display:block;font-size:11.5px;font-weight:400;color:var(--h-fg-subtle)}
+.st-pstare{font-size:12.5px;color:var(--h-fg-muted)}
+.st-pstare--lipsa{color:var(--h-warning);font-weight:700}
+/* „sub cost”: cu două clase, altfel `.st-pstare`, scrisă mai jos decât
+   `.st-pierdere` și la fel de tare, i-ar fi luat roșul. */
+.st-pstare.st-pierdere{color:var(--h-danger);font-weight:700}
+/* Rândul celor fără cost stă SUB total, nu în el: banii lui nu intră la
+   profit, iar o linie groasă deasupra l-ar fi făcut să pară al doilea total. */
+.st-rand--neac{border-top:1px dashed var(--h-line-strong);color:var(--h-fg-muted)}
+.st-pindemn{margin:0 0 14px;padding:11px 13px;border-radius:10px;background:var(--h-warning-soft);border-left:3px solid var(--h-warning);font-size:13.5px;line-height:1.5;color:var(--h-fg)}
+.st-pleg{font-weight:700;white-space:nowrap}
+.st-pnota{margin:12px 0 0;font-size:12.5px;line-height:1.5;color:var(--h-fg-subtle);max-width:74ch}
+.st-pnota+.st-pnota{margin-top:4px}
+.st-pstins{margin:0;padding:14px 16px;border:1px dashed var(--h-line-strong);border-radius:12px;font-size:13.5px;line-height:1.5;color:var(--h-fg-muted)}
+.st-akpi .st-pstins{grid-column:1/-1}
+
+/* ======================================================================== */
+/*  Încasările — runda 2.7.0 (hotărârile din 4–5 oct. 2026)                 */
+/* ======================================================================== */
+
+/* Se desenează în toate trei vederile, dar NUMAI când răspunsul de la
+   `/stats` poartă cheia `plati` — adică pentru cine are dreptul `incasari`.
+   Fără ea, nimic din ce e mai jos nu ajunge pe ecran.
+
+   CLASELE EI ÎNCEP CU `st-i`, ȘI NU ÎMPRUMUTĂ NIMIC DE LA PROFIT. Fraza de
+   „stins” și îndemnul galben arată ca ale profitului, dar au numele lor:
+   `st-pstins` și `st-pnota` sunt semnele după care `check-costuri-statistici`
+   recunoaște că pe ecran a apărut ceva din PROFIT. Împrumutate aici, proba
+   aceea ar fi strigat „profit” la cine are numai Încasările.
+
+   NICIO CULOARE BĂTUTĂ ÎN CUIE. Tot scrisul ia tokenii temei, care se întorc
+   singuri pe noapte (pagina întreagă e pe întuneric cât stă tabloul de
+   dimineață), iar plăcile din tablou iau fundalul „adânc” al barei lui de sus
+   (`--h-cocoa-900`), nu unul ales din ochi. */
+.st-kpi--incas{grid-column:1/-1}
+.st-kpi--incas .st-fin{line-height:1.5}
+/* „cu termenul trecut”: două clase, ca să bată `.st-kpi .st-fin`, din aceeași
+   pricină ca `.st-plipsa` de la profit. */
+.st-kpi--incas .st-itrecut{color:var(--h-warning);font-weight:700}
+
+/* Masa datornicilor, în același motor ca celelalte (`--st-col` pe masă), cu
+   PATRU coloane. Deosebirile ei, toate cu pricină:
+     · NIMIC NU SE TAIE CU TREI PUNCTE. Un nume de client tăiat nu mai spune
+       cui i se cere banul, iar „28 sept. · de 7 zile” tăiat pierde tocmai
+       zilele. Numele se rupe pe două rânduri;
+     · forma stivuită e pe DOUĂ coloane, nu pe trei ca la celelalte mese:
+       numele pe tot rândul, „Comenzi” și „De plată” alături, „Cea mai veche”
+       pe tot rândul. Socotit: la 320, în tabloul de dimineață, rândului îi
+       rămân 244px; trei coloane ar fi dat 75 de fiecare, iar capul „CEA MAI
+       VECHE” are peste o sută. Pe două, fiecare jumătate are 117;
+     · `--st-min:0px`: masa nu se trage niciodată cu degetul, se așază.
+   Regulile au două clase, deci bat fără `!important` regulile cu una singură
+   din banda de 1150 (care ar fi pus „Comenzi” singur pe un rând). */
+.st-ti{--st-col:minmax(0,2fr) 84px 116px minmax(0,1.5fr);--st-min:0px}
+.st-ti .st-rand{grid-template-columns:var(--st-col)}
+.st-ti .st-rand>:nth-child(2){grid-column:auto}
+.st-ti .st-rand>:nth-child(4){grid-column:var(--ti-lat,auto)}
+.st-ti .st-rand--dat>:nth-child(1){font-weight:600}
+.st-ti .st-cel,.st-ti .st-cap{white-space:normal;overflow:visible;overflow-wrap:anywhere}
+.st-ititlu{font-family:var(--h-font-display);font-size:17px;font-weight:600;line-height:1.25;margin:24px 0 10px}
+.st-ileg{font-weight:700}
+.st-ijos{margin:14px 0 0;font-size:13.5px;line-height:1.5}
+.st-ispus{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle)}
+/* Fraza despre filtre. Galbenă, ca îndemnul de la profit: nu e o notă de
+   subsol, e o piedică pusă în calea unei citiri greșite — cine a ales
+   „Congelate” ar lua încasările întregii case drept ale congelatelor. */
+.st-inota{margin:0 0 14px;padding:11px 13px;border-radius:10px;background:var(--h-warning-soft);border-left:3px solid var(--h-warning);font-size:13.5px;line-height:1.5;color:var(--h-fg)}
+.st-istins{margin:0;padding:14px 16px;border:1px dashed var(--h-line-strong);border-radius:12px;font-size:13.5px;line-height:1.5;color:var(--h-fg-muted)}
+/* În inelul zilei toate stau în grila fișelor, pe tot rândul, și golul dintre
+   ele îl dă grila — de aceea marginile lor se sting aici. */
+.st-akpi .st-inota,.st-akpi .st-ijos,.st-akpi .st-istins{grid-column:1/-1}
+.st-akpi .st-inota,.st-akpi .st-ijos{margin:0}
+/* Plăcile din tabloul de dimineață stau ÎNĂUNTRUL unei cutii care are deja
+   fundalul lor: fără treapta mai adâncă s-ar fi văzut numai ramele. */
+.st-ictile{margin-top:2px}
+.st-ictile .st-tile{background:var(--h-cocoa-900)}
+.st-cjos .st-ititlu{color:var(--h-cream-50)}
+
+/* ÎN REGISTRU MASA PROFITULUI SE STIVUIEȘTE MAI DEVREME DECÂT CELELALTE.
+   Socotit, nu ales din ochi: coloana registrului e fereastra minus 600 (bara
+   din stânga 252, marginile 56, fișa 266 și golul de 26), iar cele cinci
+   coloane de cifre, cu golurile și marginile rândului, iau 560. La 1280
+   numelui și stării le-ar fi rămas împreună 120px — „Croissant cu vanilie și
+   zmeură” pe patru rânduri. De la 1400 în sus le rămân cel puțin 240, și masa
+   stă pe un singur rând. În tabloul de dimineață masa ține toată foaia, deci
+   acolo pragul e cel al celorlalte mese (rândul ei e în banda de 1150).
+
+   `auto-fill`, nu trei coloane fixe ca la celelalte: o sumă cu „≈” în față
+   are 13 semne, iar la 320 o treime de rând are 74px în tablou și 84 în
+   registru — s-ar fi rupt fiecare sumă în două. Cu cel puțin 104px pe
+   coloană, la 320 ies două pe rând, la 390 două ori trei, pe tabletă cinci. */
+@media (max-width:1400px){
+.st-b .st-tp{--st-col:repeat(auto-fill,minmax(104px,1fr));--tp-lat:1/-1;--tp-nr:left}
+}
+
 /* SUB 1150px MESELE SE AȘAZĂ PE MAI MULTE RÂNDURI, ÎN LOC SĂ SE TRAGĂ.
 
    PRAGUL NU E ALES DIN OCHI, E SOCOTIT. Bara din stânga și marginile iau 325px
@@ -421,6 +570,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 .st-rand--cap{padding:10px}
 .st-nrcol{text-align:left}
 .st-capbtn{min-height:0;line-height:1.6}
+.st-tp{--st-col:repeat(auto-fill,minmax(104px,1fr));--tp-lat:1/-1;--tp-nr:left} /* masa profitului, în tabloul de dimineață (în registru s-a stivuit deja, de la 1400): aceleași trei variabile, vezi deasupra de ce nu trei coloane fixe */
+.st-ti{--st-col:repeat(2,minmax(0,1fr));--ti-lat:1/-1} /* masa datornicilor: numele pe tot rândul (regula de mai sus), „Comenzi” și „De plată” alături, „Cea mai veche” pe tot rândul — vezi la ea de ce două coloane și nu trei */
 }
 
 @media (max-width:760px){
@@ -430,6 +581,21 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-st=nav]{display:none!important}
 [data-st=sidefoot]{display:none!important}
 [data-st=topbar]{flex-wrap:wrap!important;padding:12px 14px!important;gap:10px!important}
+/* Comutatorul de vederi e împins la dreapta cu `margin-left:auto`, scris pe
+   element. Cât încape lângă titlu e bine; pe telefon bara se rupe, el cade pe
+   rândul al doilea și rămâne lipit de marginea dreaptă, sub un titlu aliniat la
+   stânga. Pinul se scoate aici, ca rândul al doilea să înceapă de unde începe
+   primul.
+
+   Și titlul CREȘTE, în aceeași bandă. Banda ține de la 760px în jos, dar bara
+   se rupe abia pe la 520: între ele comutatorul stă încă lângă titlu, iar fără
+   pin și fără nimic în loc rămânea lipit de el, cu tot golul în dreapta (la
+   700px: 110px de la margine, 218px goi după el). Cu titlul crescut, cât stau
+   pe același rând îl împinge el la dreapta, unde era; rupt, comutatorul pleacă
+   de la marginea stângă. Celelalte panouri dau grupului rândul întreg
+   (`width:100%`); aici ar fi însemnat un rând în plus la 600–760px, degeaba. */
+[data-st=topbar]>div:first-child{flex:1 1 auto!important}
+[data-st=topbar]>div:last-child{margin-left:0!important}
 [data-st=topbar] h1{font-size:20px!important}
 [data-st=body]{padding:14px 14px 26px!important;gap:12px!important}
 /* Pe telefon degetul are nevoie de mai mult decât ochiul: chipurile și
@@ -456,6 +622,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 .st-cdr{margin-left:0;width:100%}
 .st-ainel,.st-ajos,.st-ccard,.st-cjos,.st-bfisa{padding:16px 14px}
 .st-cbar{padding:12px 12px}
+.st-pleg{display:inline-flex;align-items:center;min-height:44px} /* legătura „Depozit › Prețuri” din îndemnul de sub profit: singură în mijlocul unei fraze ieșea de 20px, cât rândul ei */
+.st-ileg{display:inline-flex;align-items:center;min-height:44px} /* legăturile părții de Încasări — „Deschide Încasări →” și numele datornicilor cu cont: un rând de scris are 20px, iar pragul de deget e 44 (rând aparte de cel al profitului: `check-costuri-statistici` numără acolo O regulă cu selectorul `.st-pleg`) */
 }
 </style>
 </helmet>
@@ -487,7 +655,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
 <div data-st="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
-<div data-st="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-st="side" class="gp-meniu-derulat" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
 <div data-st="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
 <img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
@@ -496,10 +664,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
-<div data-st="nav" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
+<div data-st="nav" class="gp-meniu-derulat" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
@@ -518,7 +686,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
 <div style="display:flex;flex-direction:column;min-width:0;flex:1">
 <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
-<span style="font-size:12px;opacity:.6">fondator</span>
+<span style="font-size:12px;opacity:.6">{{ sideRol }}</span>
 </div>
 </div>
 </sc-if>
@@ -547,7 +715,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -680,6 +848,73 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span class="st-fin">{{ k.fin }}</span>
 </button>
 </sc-for>
+<!-- FIȘA PROFITULUI E SCRISĂ AICI, NU PUSĂ A CINCEA ÎN `kpiuri`. Cele patru de
+     deasupra au toate aceleași trei rânduri; asta are și un rând care apare
+     numai uneori (banii fără cost socotit) și o pastilă. Trecută prin șablonul
+     lor, l-ar fi umplut de ramuri pentru o singură fișă. Și mai e un câștig:
+     `kpiuri` rămâne neatinsă, deci pentru cine n-are dreptul `costuri` grila
+     e, la literă, cea de până la runda 2.7.0. -->
+<sc-if value="{{ profitAre }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="st-card st-kpi st-kpi--profit" onClick="{{ onProfitLupa }}">
+<span class="{{ profitCifCls }}">{{ profitCif }}</span>
+<span class="st-den">profit din materii prime</span>
+<sc-if value="{{ profitAreTotal }}" hint-placeholder-val="{{ false }}">
+<span class="st-fin"><span class="{{ profitTot.marjaCls }}">{{ profitTot.marja }}</span> marjă · din vânzări de {{ profitTot.bani }}</span>
+</sc-if>
+<sc-if value="{{ profitFaraTotal }}" hint-placeholder-val="{{ false }}">
+<span class="st-fin">{{ profitFaraTotalLinie }}</span>
+</sc-if>
+<sc-if value="{{ profitNeacoperit }}" hint-placeholder-val="{{ false }}">
+<span class="st-fin st-plipsa">{{ profitNeacoperit }}</span>
+</sc-if>
+<span class="st-fin">{{ profitNota }}</span>
+<sc-if value="{{ profitNotaEstimat }}" hint-placeholder-val="{{ false }}">
+<span class="st-fin">{{ profitNotaEstimat }}</span>
+</sc-if>
+</button>
+</sc-if>
+<sc-if value="{{ profitStins }}" hint-placeholder-val="{{ false }}">
+<p class="st-pstins">{{ profitStinsLinie }}</p>
+</sc-if>
+<!-- FIȘA ÎNCASĂRILOR, LÂNGĂ CEA A PROFITULUI ȘI SCRISĂ AICI DIN ACEEAȘI PRICINĂ
+     (runda 2.7.0, hotărârile patronului din 4–5 oct. 2026): `kpiuri` rămâne
+     neatinsă, deci cine n-are dreptul `incasari` vede grila de ieri, la
+     literă. Cifra ei e ce NU s-a plătit încă, pe toată casa — nu pe
+     intervalul ales și nu pe filtrele de sus; când e pus vreun filtru, fraza
+     de sub fișă o spune.
+
+     FIȘA E BUTON (deschide foaia de lupă), DECI LEGĂTURA NU STĂ ÎN EA. O
+     legătură pusă într-un buton e marcaj stricat, iar o apăsare ar fi deschis
+     și foaia, și pagina Încasări. Legătura are rândul ei, sub fișă.
+
+     Tot ce e al părții stă sub un `sc-if` al unui steag care începe cu
+     `incas` — și aici, și în registru, și în tabloul de dimineață. De faptul
+     ăsta se leagă proba când o scutește de regula „vânzarea nu se numește
+     încasare”: aici, și numai aici, „încasat” e vorba potrivită.
+
+     RAMURILE SUNT NUMĂRATE (`check-stat-incasari`, regula locului): în
+     fiecare vedere, una `incasAre` — cea de mai jos, care cuprinde fișa — și
+     una `incasStins`, și nicio alta. Un al treilea `sc-if` cu steag `incas…`,
+     pus oriunde în pagină, înroșește proba: ce mai are de spus partea se
+     scrie înăuntrul celor două. -->
+<sc-if value="{{ incasAre }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="st-card st-kpi st-kpi--incas" onClick="{{ incasLupa }}">
+<span class="st-cif">{{ incasSuma }}</span>
+<span class="st-den">de încasat acum</span>
+<span class="st-fin">{{ incasCati }}</span>
+<span class="st-fin">{{ incasInPerioada }}</span>
+<sc-if value="{{ incasAmanate }}" hint-placeholder-val="{{ false }}">
+<span class="{{ incasAmanateCls }}">{{ incasAmanate }}</span>
+</sc-if>
+</button>
+<sc-if value="{{ incasFiltre }}" hint-placeholder-val="{{ false }}">
+<p class="st-inota">{{ incasFiltreLinie }}</p>
+</sc-if>
+<p class="st-ijos"><a class="st-ileg" href="{{ incasHref }}">Deschide Încasări →</a></p>
+</sc-if>
+<sc-if value="{{ incasStins }}" hint-placeholder-val="{{ false }}">
+<p class="st-istins">{{ incasStinsLinie }}</p>
+</sc-if>
 </div>
 </div>
 
@@ -792,7 +1027,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 
 <section class="st-bintrebare">
 <span class="st-bnr">ÎNTÂIA</span>
-<h3>Câți bani au intrat?</h3>
+<h3>Cât s-a vândut?</h3>
 <p class="st-sub">Numai din comenzile neanulate, la prețul de pe rândul comenzii, cu reducerile deja scăzute.</p>
 <div class="st-btrei">
 <sc-for list="{{ bTrei }}" as="t" hint-placeholder-count="3">
@@ -864,7 +1099,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <section class="st-bintrebare">
 <span class="st-bnr">A PATRA</span>
 <h3>Cine cumpără cel mai mult?</h3>
-<p class="st-sub">După banii aduși în perioada aleasă, nu de la începutul lumii.</p>
+<p class="st-sub">După cât au cumpărat în perioada aleasă, nu de la începutul lumii.</p>
 <div class="st-masa">
 <div class="st-tbl st-tb">
 <div class="st-rand st-rand--cap">
@@ -930,6 +1165,167 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p style="margin:0;padding:18px 0;font-size:14px;color:var(--h-fg-subtle)">{{ tabelGolLinie }}</p>
 </sc-if>
 </section>
+
+<!-- A ȘASEA ÎNTREBARE EXISTĂ NUMAI CÂND SERVERUL TRIMITE `costuri` (runda 2.7.0,
+     hotărârile patronului din 4–5 oct. 2026). Cheia lipsește cu totul pentru
+     cine n-are dreptul cu același nume, și atunci registrul se încheie cu a
+     cincea, ca până acum: nici titlu rămas singur, nici masă cu liniuțe.
+
+     Capetele NU sortează, ca la celelalte mese ale registrului: ordinea vine
+     de la server (de la cel mai mare profit în jos), iar pagina mai face un
+     singur lucru peste ea — duce la urmă rândurile fără cost. Un cap apăsat
+     le-ar fi amestecat printre celelalte, fiindcă un cost care nu se știe nu
+     e nici mai mare, nici mai mic decât altul.
+
+     Masa e scrisă a doua oară, întocmai, în tabloul de dimineață. Șablonul
+     n-are bucăți care să se poată chema din două locuri; ce le ține la fel e
+     că amândouă citesc ACELEAȘI chei (`profitRanduri`, `profitTot`,
+     `profitNeac`), iar `check-costuri-statistici` le desenează pe amândouă
+     și pune cifrele față în față.
+
+     Îndemnul de sub titlu e o LISTĂ (`profitIndemnuri`), nu o frază: ce ține
+     de prețuri și ce ține de rețetă nu se spun în același paragraf, iar
+     „— în Depozit › Prețuri” se lipește numai de paragraful care chiar duce
+     acolo (`i.leg`) și numai pentru cine are dreptul `preturi`. Vezi în cod,
+     la „Îndemnul”, cele trei pricini și cele două feluri de a le spune. -->
+<sc-if value="{{ profitAre }}" hint-placeholder-val="{{ false }}">
+<section class="st-bintrebare">
+<span class="st-bnr">A ȘASEA</span>
+<h3>Cât te costă și cât îți rămâne?</h3>
+<p class="st-sub">Ce rămâne din vânzări după materiile prime — nu și după salarii, chirie ori curent. De la cel mai mare profit în jos; produsele fără cost socotit stau la urmă.</p>
+<sc-for list="{{ profitIndemnuri }}" as="i" hint-placeholder-count="0">
+<p class="st-pindemn">{{ i.text }}<sc-if value="{{ i.leg }}" hint-placeholder-val="{{ false }}"> — în <a class="st-pleg" href="{{ profitLegHref }}">Depozit › Prețuri</a></sc-if></p>
+</sc-for>
+<sc-if value="{{ profitAreRanduri }}" hint-placeholder-val="{{ false }}">
+<div class="st-masa">
+<div class="st-tbl st-tp">
+<div class="st-rand st-rand--cap">
+<sc-for list="{{ capProfit }}" as="h" hint-placeholder-count="7">
+<span class="{{ h.cls }}">{{ h.et }}</span>
+</sc-for>
+</div>
+<sc-for list="{{ profitRanduri }}" as="r" hint-placeholder-count="8">
+<div class="st-rand st-rand--dat">
+<span class="st-cel">{{ r.nume }}</span>
+<span class="st-cel st-nrcol">{{ r.bucati }}</span>
+<span class="st-cel st-nrcol">{{ r.bani }}</span>
+<span class="st-cel st-nrcol">{{ r.cost }}<small class="st-pebuc">{{ r.costBuc }}</small></span>
+<span class="{{ r.profitCls }}">{{ r.profit }}</span>
+<span class="st-nrcol"><span class="{{ r.marjaCls }}">{{ r.marja }}</span></span>
+<span class="{{ r.stareCls }}">{{ r.stare }}</span>
+</div>
+</sc-for>
+<div class="st-rand st-rand--jos">
+<span class="st-cel">{{ profitTot.nume }}</span>
+<span class="st-cel st-nrcol">{{ profitTot.bucati }}</span>
+<span class="st-cel st-nrcol">{{ profitTot.bani }}</span>
+<span class="st-cel st-nrcol">{{ profitTot.cost }}</span>
+<span class="{{ profitTot.profitCls }}">{{ profitTot.profit }}</span>
+<span class="st-nrcol"><span class="{{ profitTot.marjaCls }}">{{ profitTot.marja }}</span></span>
+<span class="{{ profitTot.stareCls }}">{{ profitTot.stare }}</span>
+</div>
+<sc-if value="{{ profitNeacAre }}" hint-placeholder-val="{{ false }}">
+<div class="st-rand st-rand--neac">
+<span class="st-cel">{{ profitNeac.nume }}</span>
+<span class="st-cel st-nrcol">{{ profitNeac.bucati }}</span>
+<span class="st-cel st-nrcol">{{ profitNeac.bani }}</span>
+<span class="st-cel st-nrcol">—</span>
+<span class="st-cel st-nrcol">—</span>
+<span class="st-nrcol"><span class="st-marja st-marja--fara">—</span></span>
+<span class="st-cel st-pstare">{{ profitNeac.stare }}</span>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ profitGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:18px 0;font-size:14px;color:var(--h-fg-subtle)">{{ tabelGolLinie }}</p>
+</sc-if>
+<p class="st-pnota">{{ profitNota }}</p>
+<sc-if value="{{ profitNotaEstimat }}" hint-placeholder-val="{{ false }}">
+<p class="st-pnota">{{ profitNotaEstimat }}</p>
+</sc-if>
+<sc-if value="{{ profitNotaRotunjire }}" hint-placeholder-val="{{ false }}">
+<p class="st-pnota">{{ profitNotaRotunjire }}</p>
+</sc-if>
+</section>
+</sc-if>
+<sc-if value="{{ profitStins }}" hint-placeholder-val="{{ false }}">
+<section class="st-bintrebare">
+<p class="st-pstins">{{ profitStinsLinie }}</p>
+</section>
+</sc-if>
+
+<!-- ÎNTREBAREA ÎNCASĂRILOR EXISTĂ NUMAI CÂND SERVERUL TRIMITE `plati` (runda
+     2.7.0, hotărârile patronului din 4–5 oct. 2026). Până acum întâia
+     întrebare se chema „Câți bani au intrat?” și răspundea cu VÂNZAREA; de
+     când casa ține condica plăților, aceea întreabă „Cât s-a vândut?”, iar
+     banii plătiți cu adevărat stau aici.
+
+     NUMĂRUL EI DE ORDINE NU E SCRIS DE MÂNĂ (`incasNr`). Dreptul `incasari` și
+     dreptul `costuri` se dau despărțit din „Acces”: cine le are pe amândouă
+     vede întrebarea profitului înaintea ei, și ea e A ȘAPTEA; cine are numai
+     Încasările ar fi văzut, cu un număr scris fix, un registru care sare de
+     la a cincea la a șaptea. „A ȘASEA” de la profit rămâne scrisă de mână:
+     înaintea ei nu lipsește niciodată nimic.
+
+     Masa e scrisă a doua oară, întocmai, în tabloul de dimineață — din
+     aceeași pricină ca masa profitului: șablonul n-are bucăți care să se
+     poată chema din două locuri. Ce le ține la fel e că amândouă citesc
+     ACELEAȘI chei (`incasCap`, `incasDatornici`, `incasInca`).
+
+     NUMELE UNUI DATORNIC E LEGĂTURĂ NUMAI DACĂ ARE CONT (`d.cuCont`); cel
+     scris numai pe comandă rămâne text. Două steaguri pereche, fiindcă
+     `sc-if` primește o valoare. -->
+<sc-if value="{{ incasAre }}" hint-placeholder-val="{{ false }}">
+<section class="st-bintrebare">
+<span class="st-bnr">{{ incasNr }}</span>
+<h3>Câți bani au intrat cu adevărat?</h3>
+<p class="st-sub">Ce s-a plătit, nu ce s-a vândut: o comandă livrată și neplătită e vânzare, dar nu e încă ban în casă.</p>
+<sc-if value="{{ incasFiltre }}" hint-placeholder-val="{{ false }}">
+<p class="st-inota">{{ incasFiltreLinie }}</p>
+</sc-if>
+<div class="st-btrei">
+<sc-for list="{{ incasTrei }}" as="t" hint-placeholder-count="3">
+<button type="button" class="st-bcifra" onClick="{{ t.onClick }}">
+<span class="st-bmare">{{ t.val }}<small>{{ t.sub }}</small></span>
+</button>
+</sc-for>
+</div>
+<h4 class="st-ititlu">Cine are de plătit</h4>
+<sc-if value="{{ incasAreDatornici }}" hint-placeholder-val="{{ false }}">
+<div class="st-masa">
+<div class="st-tbl st-ti">
+<div class="st-rand st-rand--cap">
+<sc-for list="{{ incasCap }}" as="h" hint-placeholder-count="4">
+<span class="{{ h.cls }}">{{ h.et }}</span>
+</sc-for>
+</div>
+<sc-for list="{{ incasDatornici }}" as="d" hint-placeholder-count="5">
+<div class="st-rand st-rand--dat">
+<span class="st-cel"><sc-if value="{{ d.cuCont }}" hint-placeholder-val="{{ false }}"><a class="st-ileg" href="{{ d.href }}">{{ d.nume }}</a></sc-if><sc-if value="{{ d.faraCont }}" hint-placeholder-val="{{ true }}">{{ d.nume }}</sc-if></span>
+<span class="st-cel st-nrcol">{{ d.comenzi }}</span>
+<span class="st-cel st-nrcol st-tare">{{ d.sold }}</span>
+<span class="st-cel">{{ d.veche }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ incasInca }}" hint-placeholder-val="{{ false }}">
+<p class="st-ispus">{{ incasInca }}</p>
+</sc-if>
+<sc-if value="{{ incasNimeni }}" hint-placeholder-val="{{ false }}">
+<p class="st-ispus">Nimeni. Toate comenzile sunt plătite.</p>
+</sc-if>
+<p class="st-ijos"><a class="st-ileg" href="{{ incasHref }}">Deschide Încasări →</a></p>
+</section>
+</sc-if>
+<sc-if value="{{ incasStins }}" hint-placeholder-val="{{ false }}">
+<section class="st-bintrebare">
+<p class="st-istins">{{ incasStinsLinie }}</p>
+</section>
+</sc-if>
 
 </div>
 </div>
@@ -1045,6 +1441,131 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 </div>
 
+<!-- PROFITUL, ÎN TABLOUL DE DIMINEAȚĂ. Aceeași masă ca în registru, pe aceleași
+     chei — vezi acolo de ce capetele nu sortează și de ce e scrisă de două
+     ori. Aici nu e nicio culoare bătută în cuie: scrisul ia tokenii temei
+     (pagina întreagă e pe noapte cât stă vederea asta), iar pastilele iau
+     culorile datelor, aceleași ca ziua. -->
+<sc-if value="{{ profitAre }}" hint-placeholder-val="{{ false }}">
+<div class="st-cjos">
+<h3>Profitul, rând cu rând</h3>
+<p class="st-sub">{{ profitSub }}</p>
+<sc-for list="{{ profitIndemnuri }}" as="i" hint-placeholder-count="0">
+<p class="st-pindemn">{{ i.text }}<sc-if value="{{ i.leg }}" hint-placeholder-val="{{ false }}"> — în <a class="st-pleg" href="{{ profitLegHref }}">Depozit › Prețuri</a></sc-if></p>
+</sc-for>
+<sc-if value="{{ profitAreRanduri }}" hint-placeholder-val="{{ false }}">
+<div class="st-masa">
+<div class="st-tbl st-tp">
+<div class="st-rand st-rand--cap">
+<sc-for list="{{ capProfit }}" as="h" hint-placeholder-count="7">
+<span class="{{ h.cls }}">{{ h.et }}</span>
+</sc-for>
+</div>
+<sc-for list="{{ profitRanduri }}" as="r" hint-placeholder-count="8">
+<div class="st-rand st-rand--dat">
+<span class="st-cel">{{ r.nume }}</span>
+<span class="st-cel st-nrcol">{{ r.bucati }}</span>
+<span class="st-cel st-nrcol">{{ r.bani }}</span>
+<span class="st-cel st-nrcol">{{ r.cost }}<small class="st-pebuc">{{ r.costBuc }}</small></span>
+<span class="{{ r.profitCls }}">{{ r.profit }}</span>
+<span class="st-nrcol"><span class="{{ r.marjaCls }}">{{ r.marja }}</span></span>
+<span class="{{ r.stareCls }}">{{ r.stare }}</span>
+</div>
+</sc-for>
+<div class="st-rand st-rand--jos">
+<span class="st-cel">{{ profitTot.nume }}</span>
+<span class="st-cel st-nrcol">{{ profitTot.bucati }}</span>
+<span class="st-cel st-nrcol">{{ profitTot.bani }}</span>
+<span class="st-cel st-nrcol">{{ profitTot.cost }}</span>
+<span class="{{ profitTot.profitCls }}">{{ profitTot.profit }}</span>
+<span class="st-nrcol"><span class="{{ profitTot.marjaCls }}">{{ profitTot.marja }}</span></span>
+<span class="{{ profitTot.stareCls }}">{{ profitTot.stare }}</span>
+</div>
+<sc-if value="{{ profitNeacAre }}" hint-placeholder-val="{{ false }}">
+<div class="st-rand st-rand--neac">
+<span class="st-cel">{{ profitNeac.nume }}</span>
+<span class="st-cel st-nrcol">{{ profitNeac.bucati }}</span>
+<span class="st-cel st-nrcol">{{ profitNeac.bani }}</span>
+<span class="st-cel st-nrcol">—</span>
+<span class="st-cel st-nrcol">—</span>
+<span class="st-nrcol"><span class="st-marja st-marja--fara">—</span></span>
+<span class="st-cel st-pstare">{{ profitNeac.stare }}</span>
+</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ profitGol }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;padding:18px 0;font-size:14px;color:var(--h-fg-subtle)">{{ tabelGolLinie }}</p>
+</sc-if>
+<p class="st-pnota">{{ profitNota }}</p>
+<sc-if value="{{ profitNotaEstimat }}" hint-placeholder-val="{{ false }}">
+<p class="st-pnota">{{ profitNotaEstimat }}</p>
+</sc-if>
+<sc-if value="{{ profitNotaRotunjire }}" hint-placeholder-val="{{ false }}">
+<p class="st-pnota">{{ profitNotaRotunjire }}</p>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ profitStins }}" hint-placeholder-val="{{ false }}">
+<p class="st-pstins">{{ profitStinsLinie }}</p>
+</sc-if>
+
+<!-- ÎNCASĂRILE, ÎN TABLOUL DE DIMINEAȚĂ. Aceleași cifre și aceeași masă ca în
+     registru, pe aceleași chei, în felul vederii ăsteia: cifrele sunt PLĂCI
+     (ca cele șase de sus), nu numere de registru, iar banii se scriu întregi,
+     cu bănuți, cum îi scrie tabloul peste tot. Nimic împrumutat din celelalte
+     două vederi: cutia, plăcile și masa sunt ale tabloului, iar scrisul ia
+     tokenii temei, care aici sunt cei de noapte. -->
+<sc-if value="{{ incasAre }}" hint-placeholder-val="{{ false }}">
+<div class="st-cjos">
+<h3>Încasările, rând cu rând</h3>
+<p class="st-sub">{{ incasSub }}</p>
+<sc-if value="{{ incasFiltre }}" hint-placeholder-val="{{ false }}">
+<p class="st-inota">{{ incasFiltreLinie }}</p>
+</sc-if>
+<div class="st-ctile st-ictile">
+<sc-for list="{{ incasPlaci }}" as="p" hint-placeholder-count="3">
+<button type="button" class="st-tile" onClick="{{ p.onClick }}">
+<span class="st-den">{{ p.den }}</span>
+<span class="st-cif">{{ p.cif }}</span>
+<span class="st-fin">{{ p.fin }}</span>
+</button>
+</sc-for>
+</div>
+<h4 class="st-ititlu">Cine are de plătit</h4>
+<sc-if value="{{ incasAreDatornici }}" hint-placeholder-val="{{ false }}">
+<div class="st-masa">
+<div class="st-tbl st-ti">
+<div class="st-rand st-rand--cap">
+<sc-for list="{{ incasCap }}" as="h" hint-placeholder-count="4">
+<span class="{{ h.cls }}">{{ h.et }}</span>
+</sc-for>
+</div>
+<sc-for list="{{ incasDatornici }}" as="d" hint-placeholder-count="5">
+<div class="st-rand st-rand--dat">
+<span class="st-cel"><sc-if value="{{ d.cuCont }}" hint-placeholder-val="{{ false }}"><a class="st-ileg" href="{{ d.href }}">{{ d.nume }}</a></sc-if><sc-if value="{{ d.faraCont }}" hint-placeholder-val="{{ true }}">{{ d.nume }}</sc-if></span>
+<span class="st-cel st-nrcol">{{ d.comenzi }}</span>
+<span class="st-cel st-nrcol st-tare">{{ d.sold }}</span>
+<span class="st-cel">{{ d.veche }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ incasInca }}" hint-placeholder-val="{{ false }}">
+<p class="st-ispus">{{ incasInca }}</p>
+</sc-if>
+<sc-if value="{{ incasNimeni }}" hint-placeholder-val="{{ false }}">
+<p class="st-ispus">Nimeni. Toate comenzile sunt plătite.</p>
+</sc-if>
+<p class="st-ijos"><a class="st-ileg" href="{{ incasHref }}">Deschide Încasări →</a></p>
+</div>
+</sc-if>
+<sc-if value="{{ incasStins }}" hint-placeholder-val="{{ false }}">
+<p class="st-istins">{{ incasStinsLinie }}</p>
+</sc-if>
+
 </div>
 </sc-if>
 
@@ -1116,6 +1637,44 @@ const buc = (v) => {
   return Number.isInteger(n) ? String(n) : n.toFixed(2).replace(".", ",");
 };
 const pct = (parte, tot) => (tot ? Math.round((nr(parte) / nr(tot)) * 1000) / 10 : 0).toString().replace(".", ",") + "%";
+
+/* UNELTELE PROFITULUI (runda 2.7.0), ținute lângă `lei` și `pct` fiindcă le
+   poartă de mână — nu scriu banii și procentele a doua oară, numai hotărăsc
+   CÂND e voie să fie scrise.
+
+   `eNumar` e paza împotriva lui `nr()`. `nr(null)` e 0, și pentru bucăți ori
+   vânzări așa trebuie: o zi fără vânzare chiar a adus zero lei. La cost e pe
+   dos. Serverul trimite `null` tocmai ca să spună „nu se poate socoti” — un
+   produs fără rețetă, o materie primă fără preț — iar `lei(null)` ar scrie
+   „0,00 lei”: adică „nu te costă nimic”, cu profitul cât toată vânzarea. O
+   cifră falsă și frumoasă e mai rea decât o liniuță, fiindcă pe ea se iau
+   hotărâri. Șirul gol și `true` nu sunt nici ele numere, deși `Number()` le
+   face 0 și 1. */
+const eNumar = (v) =>
+  (typeof v === "number" && isFinite(v)) || (typeof v === "string" && v.trim() !== "" && isFinite(Number(v)));
+
+/* Semnul unui profit, socotit LA BAN, nu pe numărul crud: −0,004 lei se scrie
+   „0,00 lei”, iar un „0,00 lei” roșu ar fi o pierdere care nu există. */
+const semnBani = (v) => {
+  const bani = Math.round(nr(v) * 100);
+  return bani > 0 ? 1 : (bani < 0 ? -1 : 0);
+};
+
+/* Marja, la o zecimală — ACEEAȘI cifră și pentru scris, și pentru culoare.
+   Dacă pastila ar judeca numărul crud și scrisul pe cel rotunjit, 59,96 ar
+   ieși „60%” pe o pastilă de treapta de mijloc: două păreri despre aceeași
+   marjă, la un deget una de alta.
+
+   Treptele sunt cele hotărâte de patron (4–5 oct. 2026): de la 60% în sus e
+   bine, între 30 și 60 e la mijloc, sub 30 e slab. Capetele țin de treapta de
+   SUS — 60,0 e bine, 30,0 e la mijloc — fiindcă așa se citește „de la 60”. O
+   marjă sub zero cade tot la „slab”: n-are treaptă a ei, are minusul. */
+const marjaRot = (m) => Math.round(nr(m) * 10) / 10;
+const treaptaMarjei = (m) => {
+  const r = marjaRot(m);
+  return r >= 60 ? "bun" : (r >= 30 ? "mijloc" : "slab");
+};
+const marjaScrisa = (m) => pct(marjaRot(m), 100);
 
 /**
  * Ziua mutată cu atâtea zile, socotită în UTC.
@@ -1326,6 +1885,14 @@ class Component extends DCLogic {
         if (!/\.dc\.html$/i.test(h)) return;
         const q = location.search;
         if (!q) return;
+        // O legătură care își poartă întrebarea ei („Incasari.dc.html?f=deincasat”,
+        // „…?client=31”, runda 2.7.0) pleacă așa cum e scrisă. Aici, în sursă,
+        // ea nici nu ajunge până la rândul ăsta: nu se termină în „.dc.html”.
+        // Dar la construirea pachetului testul de mai sus e lărgit la orice
+        // adresă a casei, iar rândul de mai jos i-ar lipi a doua întrebare —
+        // „incasari?f=deincasat?dc=1” — din care pagina Încasări n-ar mai
+        // înțelege nici vederea, nici clientul.
+        if (h.indexOf("?") >= 0) return;
         e.preventDefault();
         location.href = h + q;
       }, true);
@@ -1771,16 +2338,16 @@ class Component extends DCLogic {
 
     const FOI = {
       bani: {
-        eyebrow: "Banii intrați",
-        titlu: "Cât a intrat în casă",
+        eyebrow: "Vânzări",
+        titlu: "Cât s-a vândut",
         mare: lei(rez.bani),
         cifre: [
           { et: "Pe zi, în medie", val: lei(rez.baniPeZi) },
-          { et: "Încă de încasat", val: lei(rez.baniDeIncasat) },
+          { et: "Încă de livrat", val: lei(rez.baniDeIncasat) },
           { et: "Pierdut prin anulări", val: lei(rez.baniAnulati) },
           { et: "Perioada dinainte", val: lei(fata.bani) + (pasBani ? " · " + pasBani : "") },
         ],
-        text: "Suma e făcută din pozițiile comenzilor — cantitate × preț de pe rând — nu din totalul scris pe comandă. Numai așa se poate spune cât a adus fiecare produs în parte. Comenzile în etapa „" + (etape.anulata || "anulată") + "” nu intră la socoteală, dar se numără separat, ca să se vadă cât s-a pierdut.",
+        text: "Suma e făcută din pozițiile comenzilor — cantitate × preț de pe rând — nu din totalul scris pe comandă. Numai așa se poate spune cât s-a vândut din fiecare produs în parte. Comenzile în etapa „" + (etape.anulata || "anulată") + "” nu intră la socoteală, dar se numără separat, ca să se vadă cât s-a pierdut.",
       },
       comenzi: {
         eyebrow: "Comenzile",
@@ -1824,7 +2391,7 @@ class Component extends DCLogic {
         cifre: celMaiBun ? [
           { et: "Comenzi", val: String(celMaiBun.comenzi) },
           { et: "Bucăți", val: buc(celMaiBun.bucati) },
-          { et: "Din tot ce a intrat", val: pct(celMaiBun.bani, rez.bani) },
+          { et: "Din tot ce s-a vândut", val: pct(celMaiBun.bani, rez.bani) },
           { et: "Are cont", val: celMaiBun.cont ? "da" : "nu, comandă scrisă pe nume" },
         ] : [],
         text: "Clienții fără cont se strâng după numele scris pe comandă. Două scrieri deosebite ale aceluiași nume sunt, pentru socoteala asta, doi oameni — de-aia lista de sus are mai multă dreptate decât coada ei.",
@@ -1857,6 +2424,419 @@ class Component extends DCLogic {
       },
       felie: null,
     };
+
+    /* ------------------------------------------------ profitul ------------ */
+
+    /* PROFITUL DIN MATERII PRIME (runda 2.7.0, hotărârile patronului din 4–5
+       oct. 2026). Vine în ACELAȘI răspuns, sub cheia `costuri`: nu pleacă a
+       doua cerere, deci nu poate ajunge pe ecran profitul unei luni lângă
+       vânzările alteia, iar un filtru schimbat le redesenează pe amândouă din
+       același răspuns nou. Tot ce urmează se socotește din `D`, la fiecare
+       desenare — nu se ține nimic în stare, deci n-are ce rămâne în urmă.
+
+       TREI STĂRI, și fiecare se desenează altfel:
+         · cheia LIPSEȘTE — omul n-are dreptul `costuri` (din pornire îl are
+           numai fondatorul). Pagina arată întocmai ca până la runda asta:
+           toate steagurile de mai jos ies false și nu se desenează nimic;
+         · `activ:false` — are dreptul, dar baza de date n-a primit migrarea
+           034. O singură frază, care numește ce lipsește; fără fișă, fără
+           titlu, fără masă;
+         · `activ:true` — fișa din inelul zilei, întrebarea a șasea din
+           registru, lista din tabloul de dimineață. Toate trei din aceleași
+           chei, ca să nu poată arăta trei cifre deosebite. */
+    const costuri = (D && D.costuri && typeof D.costuri === "object") ? D.costuri : null;
+    const profitAre = !!costuri && costuri.activ === true;
+    const profitStins = !!costuri && costuri.activ === false;
+    const ctot = (profitAre && costuri.total) || {};
+    const totEstimat = ctot.estimat === true;
+
+    const clsSemn = (s) => s > 0 ? " st-castig" : (s < 0 ? " st-pierdere" : "");
+    const pastila = (m, aprox) => eNumar(m)
+      ? { et: aprox + marjaScrisa(m), cls: "st-marja st-marja--" + treaptaMarjei(m) }
+      : { et: "—", cls: "st-marja st-marja--fara" };
+
+    /* UN RÂND ARE COST numai dacă serverul o spune (`ok` ori `estimat`) ȘI
+       cifrele chiar au venit. Amândouă, nu una: starea singură ar fi lăsat un
+       `cost:null` scăpat de server să se scrie „0,00 lei”, iar cifrele
+       singure ar fi socotit profit pe un rând despre care serverul a spus că
+       n-are rețetă. Orice altă stare — și una pe care pagina n-o cunoaște
+       încă — e „fără cost”: liniuțe, și pricina în cuvinte. */
+    const randProfit = (p) => {
+      const cuCost = (p.stare === "ok" || p.stare === "estimat") && eNumar(p.cost) && eNumar(p.profit);
+      // „≈” stă pe cifrele care ies din cost — costul, profitul, marja — nu pe
+      // bucăți și pe vânzări, care sunt numărate, nu estimate.
+      const aprox = (cuCost && p.stare === "estimat") ? "≈ " : "";
+      const semn = cuCost ? semnBani(p.profit) : 0;
+      // `lipsa` vine ca listă de nume; biblioteca de costuri o ține și ca
+      // listă de rânduri cu `nume`. Se primesc amândouă, ca o schimbare de
+      // formă pe server să nu scrie „[object Object]” în dreptul produsului.
+      const lipsa = (Array.isArray(p.lipsa) ? p.lipsa : [])
+        .map((x) => (x && typeof x === "object") ? x.nume : x).filter(Boolean);
+      const marja = cuCost ? pastila(p.marja, aprox) : pastila(null, "");
+      const vorbe = [];
+      if (cuCost) {
+        if (p.stare === "estimat") vorbe.push("≈ estimat");
+        // Vândut sub cât costă materiile lui. Minusul și roșul o arată; vorba
+        // o spune și celui care nu deosebește roșul de verde.
+        if (semn < 0) vorbe.push("sub cost");
+      } else if (p.stare === "fara_reteta") vorbe.push("fără rețetă");
+      else if (p.stare === "lipsa_pret") vorbe.push(lipsa.length ? "lipsește prețul la: " + lipsa.join(", ") : "lipsește un preț");
+      else vorbe.push("fără cost socotit");
+      return {
+        nume: p.nume || "—",
+        faraCost: !cuCost,
+        nBuc: nr(p.bucati),
+        nProfit: cuCost ? nr(p.profit) : 0,
+        bucati: buc(p.bucati),
+        bani: lei(p.bani),
+        cost: cuCost ? aprox + lei(p.cost) : "—",
+        costBuc: (cuCost && eNumar(p.costBucata)) ? aprox + lei(p.costBucata) + "/buc" : "",
+        profit: cuCost ? aprox + lei(p.profit) : "—",
+        profitCls: "st-cel st-nrcol st-tare" + (cuCost ? clsSemn(semn) : " st-slab"),
+        marja: marja.et,
+        marjaCls: marja.cls,
+        stare: vorbe.join(" · "),
+        stareCls: "st-cel st-pstare" + (cuCost ? clsSemn(Math.min(semn, 0)) : " st-pstare--lipsa"),
+      };
+    };
+
+    /* ORDINEA E A SERVERULUI — de la cel mai mare profit în jos — iar pagina
+       mai face un singur lucru peste ea: duce la urmă rândurile fără cost,
+       păstrându-le pe toate în ordinea în care au venit. Nu le sortează ea
+       după profit a doua oară (ar fi fost două păreri despre aceeași ordine),
+       dar nici nu lasă un rând cu liniuțe să stea între două cu cifre, dacă
+       vreodată ar veni așa: ochiul care coboară pe coloana profitului s-ar
+       opri la el ca la un zero. */
+    const profitToate = ((profitAre && Array.isArray(costuri.produse)) ? costuri.produse : []).map(randProfit);
+    const profitCuCost = profitToate.filter((r) => !r.faraCost);
+    const profitFaraCost = profitToate.filter((r) => r.faraCost);
+    const profitRanduri = profitCuCost.concat(profitFaraCost);
+
+    /* TOTALUL E AL SERVERULUI, ȘI E UNUL SINGUR PENTRU TOATE TREI VEDERILE.
+       La celelalte mese suma se face din rândurile de deasupra; aici nu,
+       fiindcă marja nu se adună — e profitul întreg împărțit la vânzările
+       întregi, iar media marjelor de pe rânduri ar fi fost altă cifră, falsă.
+       `profitTot` se citește din fișa vederii A, din rândul de sub masă al
+       vederii B și din cel al vederii C: aceeași cheie, deci aceeași cifră.
+
+       Fără niciun rând cu cost nu e ce total să fie — serverul trimite atunci
+       profit 0 din vânzări 0, iar „0,00 lei profit” lângă o listă întreagă
+       de produse fără cost ar fi spus că s-a muncit degeaba. Liniuțe. */
+    const profitAreTotal = profitAre && profitCuCost.length > 0 && eNumar(ctot.profit);
+    const aproxTot = (profitAreTotal && totEstimat) ? "≈ " : "";
+    const semnTot = profitAreTotal ? semnBani(ctot.profit) : 0;
+    const marjaTot = profitAreTotal ? pastila(ctot.marja, aproxTot) : pastila(null, "");
+    const vorbeTot = [];
+    if (profitAreTotal && totEstimat) vorbeTot.push("≈ estimat");
+    if (semnTot < 0) vorbeTot.push("sub cost");
+    const profitTot = {
+      nume: "Toate cele cu cost socotit",
+      bucati: profitCuCost.length ? buc(profitCuCost.reduce((s, r) => s + r.nBuc, 0)) : "—",
+      bani: (profitAreTotal && eNumar(ctot.baniAcoperiti)) ? lei(ctot.baniAcoperiti) : "—",
+      cost: (profitAreTotal && eNumar(ctot.cost)) ? aproxTot + lei(ctot.cost) : "—",
+      profit: profitAreTotal ? aproxTot + lei(ctot.profit) : "—",
+      profitCls: "st-cel st-nrcol" + clsSemn(semnTot),
+      marja: marjaTot.et,
+      marjaCls: marjaTot.cls,
+      stare: vorbeTot.join(" · "),
+      stareCls: "st-cel st-pstare" + clsSemn(Math.min(semnTot, 0)),
+    };
+
+    // Câte produse n-au cost: numărul serverului, când îl trimite — același
+    // în fișa vederii A și în rândul de sub masă — altfel rândurile numărate.
+    const nNeacoperite = eNumar(ctot.produseNeacoperite) ? nr(ctot.produseNeacoperite) : profitFaraCost.length;
+    const deProduse = numarat(nNeacoperite, "produs", "produse");
+    const baniNeac = nr(ctot.baniNeacoperiti);
+    const profitNeacAre = profitAre && (profitFaraCost.length > 0 || baniNeac > 0);
+    const profitNeac = {
+      nume: "Fără cost socotit — " + deProduse,
+      bucati: profitFaraCost.length ? buc(profitFaraCost.reduce((s, r) => s + r.nBuc, 0)) : "—",
+      bani: eNumar(ctot.baniNeacoperiti) ? lei(ctot.baniNeacoperiti) : "—",
+      stare: "nu intră la profit",
+    };
+
+    /* Îndemnul. `lipsuri` e lista articolelor care țin un cost pe loc, cu
+       pricina fiecăruia. Contractul rundei (§3) are TREI pricini, și niciuna
+       nu cere același lucru:
+         · `fara_pret` — articolul n-are niciun preț;
+         · `unitate_schimbata` — are unul, dar scris pe vechea unitate de
+           măsură (kg, iar articolul e acum în g), pe care serverul nu-l
+           înmulțește pe tăcute;
+         · `bucla` — un produs finit pus în rețetă ajunge, din rețetă în
+           rețetă, înapoi la el însuși. Aici nu lipsește niciun preț: e de
+           îndreptat rețeta.
+       La prima scriere pagina despărțea numai `unitate_schimbata` și lăsa TOT
+       restul sub „Pune preț la:”, deci pe cel cu rețeta încurcată îl trimitea
+       în Depozit › Prețuri, după un gol care nu e acolo (găsit la a doua
+       citire, 5 oct. 2026). De aceea fiecare pricină se recunoaște PE NUME,
+       iar una pe care pagina n-o cunoaște încă nu mai cade în sacul celor
+       fără preț: despre ea se spune numai ce se știe — că ține costul pe loc.
+
+       DOUĂ FELURI DE A SPUNE, DUPĂ CINE CITEȘTE. Dreptul `costuri` (vede
+       profitul) și dreptul `preturi` (ține prețurile) sunt două chei tocmai
+       ca patronul să le poată da despărțit (hotărârea din 4 oct. 2026). Cui
+       le are pe amândouă i se spune ce are de făcut, cu legătura spre fila
+       unde se face. Celui care vede profitul dar nu ține prețurile i se spune
+       numai CE LIPSEȘTE, cu vorba contractului de la Catalog („Lipsește
+       prețul la: Ouă, Unt.”): un „Pune preț la… în Depozit › Prețuri” i-ar fi
+       poruncit un lucru pe care n-are voie să-l facă, într-o filă pe care n-o
+       are — legătura fusese luată, dar porunca rămăsese. Rețeta încurcată se
+       spune la fel amândurora și fără nicio legătură: nu se îndreaptă din
+       fila „Prețuri”.
+
+       Iese o LISTĂ de paragrafe, nu o frază: `leg` spune, pentru fiecare,
+       dacă i se lipește „— în Depozit › Prețuri”. */
+    const lipsuri = (profitAre && Array.isArray(costuri.lipsuri)) ? costuri.lipsuri.filter((l) => l && l.nume) : [];
+    const cuPricina = (pricina) => lipsuri.filter((l) => l.pricina === pricina).map((l) => l.nume);
+    const faraPret = cuPricina("fara_pret");
+    const altaUnitate = cuPricina("unitate_schimbata");
+    const inBucla = cuPricina("bucla");
+    const altaPricina = lipsuri
+      .filter((l) => l.pricina !== "fara_pret" && l.pricina !== "unitate_schimbata" && l.pricina !== "bucla")
+      .map((l) => l.nume);
+    const arePreturi = gp.are("preturi", auth);
+    const dePreturi = [];
+    if (arePreturi) {
+      if (faraPret.length) dePreturi.push("Pune preț la: " + faraPret.join(", "));
+      if (altaUnitate.length) {
+        dePreturi.push((dePreturi.length ? "scrie" : "Scrie") + " din nou prețul la: " + altaUnitate.join(", ")
+          + (altaUnitate.length === 1 ? " (i s-a schimbat unitatea de măsură)" : " (li s-a schimbat unitatea de măsură)"));
+      }
+    } else {
+      if (faraPret.length) dePreturi.push("Lipsește prețul la: " + faraPret.join(", ") + ".");
+      if (altaUnitate.length) {
+        dePreturi.push("La " + altaUnitate.join(", ") + " s-a schimbat unitatea de măsură, "
+          + (altaUnitate.length === 1 ? "prețul trebuie scris din nou." : "prețurile trebuie scrise din nou."));
+      }
+    }
+    const indemnuri = [];
+    // Porunca se leagă cu „;” și se încheie în legătură; constatarea e făcută
+    // din propoziții întregi, fiecare cu punctul ei.
+    if (dePreturi.length) indemnuri.push({ text: dePreturi.join(arePreturi ? "; " : " "), leg: arePreturi });
+    if (inBucla.length) indemnuri.push({ text: "Rețetele se cer una pe alta la: " + inBucla.join(", ") + " — de îndreptat în rețetă.", leg: false });
+    if (altaPricina.length) indemnuri.push({ text: "Costul nu se poate socoti cu: " + altaPricina.join(", ") + ".", leg: false });
+
+    // Capete fără buton (`false`): vezi în marcaj, la întrebarea a șasea, de
+    // ce masa asta nu se sortează din cap.
+    const capProfit = capete([
+      { et: "Produs" }, { et: "Bucăți", nrcol: true }, { et: "Vânzări", nrcol: true },
+      { et: "Cost", nrcol: true }, { et: "Profit", nrcol: true }, { et: "Marjă", nrcol: true },
+      { et: "Stare" },
+    ], false);
+
+    // Fraza de sub fiecare loc unde scrie un profit, vorbă cu vorbă cea din
+    // contractul rundei (§7). Stă într-un singur loc, ca fișa, registrul,
+    // tabloul și foaia de lupă să nu poată spune patru lucruri: costul e
+    // socotit cu rețeta de AZI, nu cu cea din ziua comenzii, și pagina o
+    // spune pe față (runda 2.7.0, hotărârile din 4–5 oct. 2026).
+    const profitNota = "Socotit cu rețeta de azi și cu prețul materiilor prime din ziua fiecărei comenzi.";
+    const profitNotaEstimat = (profitAre && totEstimat)
+      ? "≈ o parte din cost e estimată: unele prețuri au fost scrise după ce s-au vândut produsele."
+      : "";
+    /* ROTUNJIREA TOTALULUI. Serverul rotunjește profitul întreg o singură
+       dată, din sumele nerotunjite; rândurile le rotunjește pe fiecare în
+       parte. Cine adună rândurile de mână poate ieși cu un ban altfel decât
+       totalul de sub ele și crede că socoteala e greșită. Fraza apare numai
+       când diferența chiar e pe ecran (în bani întregi, cum sunt scrise
+       cifrele) și numai cât poate fi rotunjire: cel mult un ban de rând. O
+       diferență mai mare e altceva, și nu se îmbracă în vorba asta. */
+    const baniDiferenta = profitAreTotal
+      ? Math.abs(Math.round(nr(ctot.profit) * 100) - profitCuCost.reduce((s, r) => s + Math.round(r.nProfit * 100), 0))
+      : 0;
+    const profitNotaRotunjire = (baniDiferenta > 0 && baniDiferenta <= profitCuCost.length)
+      ? "Totalul e rotunjit o singură dată, din sumele nerotunjite: de aceea diferă cu " + numarat(baniDiferenta, "ban", "bani") + " de suma rândurilor de mai sus."
+      : "";
+
+    /* Foaia de lupă a fișei. Se adaugă aici, nu în lista de mai sus, fiindcă
+       are nevoie de `profitTot`; iar când răspunsul nu mai are `costuri`,
+       cheia e `null` și foaia rămasă deschisă se închide singură, în loc să
+       arate profitul unui răspuns care nu mai e pe ecran. */
+    FOI.profit = profitAre ? {
+      eyebrow: "Profit din materii prime",
+      titlu: "Cât rămâne după materiile prime",
+      mare: profitTot.profit,
+      cifre: [
+        { et: "Marjă", val: profitTot.marja },
+        { et: "Vânzări cu cost socotit", val: profitTot.bani },
+        { et: "Costul materiilor prime", val: profitTot.cost },
+      ].concat(profitNeacAre ? [{ et: "Vânzări fără cost socotit", val: profitNeac.bani + " · " + deProduse }] : []),
+      text: profitNota + (profitNotaEstimat ? " " + profitNotaEstimat : "")
+        + " Profitul de aici scade numai materiile prime — nu și salariile, chiria ori curentul. Produsele fără rețetă ori cu o materie primă fără preț nu intră la socoteală: banii lor se văd aparte.",
+    } : null;
+
+    /* ------------------------------------------------ încasările ---------- */
+
+    /* ÎNCASĂRILE (runda 2.7.0, hotărârile patronului din 4–5 oct. 2026: „câți
+       bani avem de încasat și de la cine, câți bani am încasat deja”). Până
+       la runda asta pagina numea VÂNZAREA „bani intrați”, iar cifra „Încă de
+       încasat” număra, de fapt, comenzile NELIVRATE. Cât nimeni nu ținea
+       socoteala plăților, vorba trecea; de când casa are condica lor (pagina
+       Încasări), aceleași cuvinte pe două pagini ar fi însemnat două sume.
+       Deci vânzarea se numește vânzare peste tot mai sus, iar banii plătiți
+       cu adevărat stau aici, sub numele lor.
+
+       Vin în ACELAȘI răspuns, sub cheia `plati` — nu pleacă a doua cerere —
+       și se socotesc din `D` la fiecare desenare, ca profitul: nimic ținut în
+       stare, deci nimic rămas în urmă când se schimbă intervalul.
+
+       TREI STĂRI, ca la `costuri`:
+         · cheia LIPSEȘTE — omul n-are dreptul `incasari` (din pornire îl are
+           numai fondatorul). Toate steagurile de mai jos ies false, toate
+           vorbele goale și `FOI.incasari` e `null`: pagina e cea de ieri, cu
+           vânzarea numită vânzare și nimic altceva;
+         · `activ:false` — are dreptul, dar baza de date n-a primit migrarea
+           032. O singură frază, care o numește;
+         · `activ:true` — fișa din inelul zilei, întrebarea din registru,
+           lista din tabloul de dimineață și foaia de lupă, toate din
+           aceleași chei, ca să nu poată arăta patru cifre deosebite.
+
+       TOATE CHEILE PĂRȚII ÎNCEP CU `incas`, și tot marcajul ei stă sub un
+       `sc-if` al unui steag cu același început. Nu e o cochetărie de nume:
+       de faptul ăsta se leagă `check-stat-incasari` când scutește partea de
+       regula „vânzarea nu se numește încasare” — pe ea, și numai pe ea.
+
+       NUMELE SINGUR NU PĂZEȘTE NIMIC. La a doua citire a rundei, scutirea a
+       fost furată sub chiar `incasAre`, scris a doua oară lângă „Cât s-a
+       vândut?”: steagul era cel adevărat și tăcea fără bloc, cum i se cerea.
+       Proba ține de aceea trei fapte, și la oricare din ele pică:
+         · LOCUL — în fiecare vedere, o singură ramură `incasAre`, care își
+           cuprinde ancora (fișa `.st-kpi--incas`, întrebarea numerotată din
+           registru, cutia `.st-cjos`), urmată de una `incasStins`. Un al
+           treilea `sc-if incas…`, oriunde în pagină, e roșu: ce mai are de
+           spus partea se scrie ÎNĂUNTRUL celor două;
+         · TĂCEREA — fără blocul `plati`, fiecare cheie `incas…` tace și
+           zona e goală;
+         · SURZENIA LA VÂNZĂRI — cu același `plati` și cu alte vânzări (alte
+           sume, alte produse, alți cumpărători, alt profit), partea scrie
+           literă cu literă la fel. Nicio cheie de aici n-are voie să
+           citească din `rez`, `produse`, `clienti` ori `costuri`; singura
+           atingere e `profitAre`, care alege numai numărul de ordine al
+           întrebării (`incasNr`).
+
+       ȚINE DE BLOC, NU DE ROL. Nimic de mai jos nu întreabă cine e omul:
+       dreptul `incasari` se dă din „Acces” oricui hotărăște patronul, îl
+       judecă serverul, iar pagina desenează ce primește. Proba desenează
+       același răspuns câte unui cont de fiecare rol al casei și cere aceeași
+       parte — o întrebare despre rol scrisă aici ar lăsa fără ea tocmai omul
+       căruia i s-a dat dreptul, fără nicio eroare.
+
+       FILTRELE DE SUS NU ATING BLOCUL. Felul mărfii, categoria, canalul, zona
+       și clientul cern POZIȚII de comandă; plata e a comenzii întregi, deci
+       serverul ține seama aici numai de interval. Pagina o spune cu vorbe
+       (`incasFiltreLinie`), în fiecare loc al părții, ori de câte ori e pus
+       vreun filtru: altfel cine a ales „Congelate” ar citi încasările
+       întregii case drept ale congelatelor. */
+    const plati = (D && D.plati && typeof D.plati === "object") ? D.plati : null;
+    const incasAre = !!plati && plati.activ === true;
+    const incasStins = !!plati && plati.activ === false;
+    // O bucată lipsă din bloc nu are voie să oprească desenarea paginii
+    // întregi: `plati.incasat.suma` pe un `incasat` lipsă ar arunca, și
+    // odată cu Încasările ar cădea și vânzările.
+    const bucata = (cheie) => (incasAre && plati[cheie] && typeof plati[cheie] === "object") ? plati[cheie] : {};
+    const pDe = bucata("deIncasat"), pAm = bucata("amanate"), pIn = bucata("incasat"), pDin = bucata("dinPerioada");
+
+    /* ZILELE PÂNĂ LA PLATĂ. Serverul trimite `zilePlata: null` când în
+       perioadă nu s-a bifat nicio plată: media nu e atunci zero, e NEȘTIUTĂ.
+       `nr(null)` ar fi scris „0,0” — adică „toți plătesc pe loc”, tocmai
+       când nu se știe nimic. Liniuță, din aceeași pricină ca la cost
+       (`eNumar`). Cu virgulă și cu o zecimală, mereu („4,2”, „1,0”): e o
+       medie, iar o medie scrisă „1” ar părea numărată. De aceea vorba de
+       lângă ea rămâne „zile”, la plural și fără „de”, ca la orice măsură cu
+       zecimale; acordul lui `numarat` e pentru numere întregi. */
+    const pZile = (incasAre && plati.zilePlata && typeof plati.zilePlata === "object" && eNumar(plati.zilePlata.medie))
+      ? plati.zilePlata : null;
+    const incasMedie = pZile ? nr(pZile.medie).toFixed(1).replace(".", ",") : "—";
+
+    const deClienti = (n) => numarat(n, "client", "clienți");
+    // „Nimic de încasat” se judecă după COMENZI, nu după sumă: fraza de
+    // dedesubt vorbește despre comenzi, iar o comandă neplătită de zero lei
+    // (un dar, o mostră) tot neplătită e.
+    const incasNimic = incasAre && Math.round(nr(pDe.comenzi)) === 0;
+    const incasCati = !incasAre ? "" : (incasNimic
+      ? "Toate comenzile sunt plătite."
+      : deComenzi(pDe.comenzi) + " · " + deClienti(pDe.clienti));
+    const nAmanate = incasAre ? Math.round(nr(pAm.comenzi)) : 0;
+    const nTrecute = incasAre ? Math.round(nr(pAm.depasite)) : 0;
+    const incasAmanate = nAmanate > 0
+      ? numarat(nAmanate, "amânată", "amânate") + " · " + lei(pAm.suma)
+        + (nTrecute > 0 ? " · " + nTrecute + " cu termenul trecut" : "")
+      : "";
+
+    /* DATORNICII. Primii cinci, în ordinea serverului (cel mai mare rest de
+       plată întâi): pagina nu-i sortează a doua oară, ca lista de aici și
+       cea din pagina Încasări să nu poată avea două ordini.
+
+       ÎN ADRESĂ AJUNGE NUMAI NUMĂRUL CONTULUI, NICIODATĂ NUMELE. Adresele
+       rămân în istoricul browserului și în jurnalele serverului; un nume de
+       client n-are ce căuta acolo. De aceea datornicul fără cont (scris numai
+       pe comandă, `customerId` nul) rămâne text: singurul fel de a-l căuta în
+       Încasări ar fi fost după nume. Numărul se verifică aici cu același
+       tipar cu care îl citește pagina Încasări din adresă (`citesteAdresa`):
+       orice altceva decât cifre nu face legătură.
+
+       „De câte zile așteaptă” vine de la server (`zile`), socotit după ceasul
+       lui; pagina numai îl scrie. Zero ori lipsă → numai ziua: „de 0 zile”
+       n-ar fi spus nimic. */
+    const datornici = (incasAre && Array.isArray(plati.datornici))
+      ? plati.datornici.filter((d) => d && typeof d === "object") : [];
+    const incasDatornici = datornici.map((d) => {
+      const cont = (typeof d.customerId === "number" || typeof d.customerId === "string")
+        && /^\d{1,10}$/.test(String(d.customerId)) && Number(d.customerId) > 0;
+      const asteapta = Math.round(nr(d.zile));
+      return {
+        nume: d.nume || "—",
+        cuCont: cont,
+        faraCont: !cont,
+        href: cont ? "Incasari.dc.html?client=" + String(Number(d.customerId)) : "",
+        comenzi: String(Math.round(nr(d.comenzi))),
+        sold: lei(d.sold),
+        veche: d.ceaMaiVeche
+          ? ziScurta(d.ceaMaiVeche) + (asteapta > 0 ? " · de " + deZile(asteapta) : "")
+          : "—",
+      };
+    });
+    // Câți sunt cu totul: numărul serverului, dar niciodată mai mic decât
+    // rândurile care chiar au venit — „și încă −2 clienți” nu e o frază.
+    const nDatornici = incasAre ? Math.max(Math.round(nr(plati.datorniciTotal)), datornici.length) : 0;
+    const nNearatati = nDatornici - datornici.length;
+
+    // Capete fără buton, ca la masa profitului: ordinea e a serverului.
+    const incasCap = incasAre ? capete([
+      { et: "Client" }, { et: "Comenzi", nrcol: true }, { et: "De plată", nrcol: true },
+      { et: "Cea mai veche" },
+    ], false) : [];
+
+    const incasFiltre = incasAre && spuse.length > 0;
+    const incasFiltreLinie = incasFiltre
+      ? "Încasările nu țin seama de filtrele de sus: plata e a comenzii întregi, nu a unui produs ori a unui fel de marfă."
+      : "";
+
+    /* Foaia de lupă a părții. Ca `FOI.profit`: `null` când răspunsul nu mai
+       are blocul, deci foaia rămasă deschisă se închide singură, în loc să
+       arate încasările unui răspuns care nu mai e pe ecran.
+
+       FOILE N-AU LOC DE LEGĂTURĂ (au ochi, titlu, cifră, rânduri și un text),
+       deci „Deschide Încasări →” stă numai în vederi, lângă parte. Fraza
+       despre filtre, în schimb, e text, și se lipește la text. */
+    FOI.incasari = incasAre ? {
+      eyebrow: "Încasări",
+      titlu: "Cât s-a încasat",
+      mare: lei(pIn.suma),
+      cifre: [
+        { et: "Direct", val: lei(pIn.direct) },
+        { et: "Prin bancă", val: lei(pIn.banca) },
+        { et: "De încasat acum", val: lei(pDe.suma) + " · " + deComenzi(pDe.comenzi) },
+        { et: "Din perioada asta, încă neplătit", val: lei(pDin.suma) + " · " + deComenzi(pDin.comenzi) },
+        { et: "Amânate", val: nAmanate + " · " + lei(pAm.suma) },
+        { et: "Până la plată, în medie", val: pZile ? incasMedie + " zile" : "—" },
+      ],
+      text: "„Încasat” numără plățile bifate în perioada aleasă, după ziua în care s-a bifat plata, nu după ziua livrării. „De încasat acum” e tot ce nu s-a plătit până azi, oricând ar fi fost livrat. Comenzile anulate nu intră."
+        + (incasFiltre ? " " + incasFiltreLinie : ""),
+    } : null;
+    // Foaia „Vânzări” trimite la cea de alături — numai pentru cine o are.
+    // Se lipește aici, nu în lista de mai sus: acolo `plati` nu e încă citit,
+    // iar pentru cine n-are blocul textul rămâne, literă cu literă, cel vechi.
+    if (incasAre) FOI.bani.text += " Ce s-a și încasat din ele e în foaia „Încasări”.";
 
     const foaie = S.lupa === "felie" && S.lupaDate
       ? (() => {
@@ -1902,11 +2882,16 @@ class Component extends DCLogic {
       onNavKeep: (e) => e.stopPropagation(),
       navWho: !!auth,
       navAnon: false,
-      // Și `areVoie`, nu doar `!!auth`: rangul de sub nume e scris fix în
+      // Și rangul, nu doar `!!auth`: cuvântul de sub nume e scris fix în
       // marcaj („fondator”), iar între `gp.me()` și răspuns pagina poate
       // desena o clipă învelișul întreg peste un cont fără drept — atunci
       // pastila ar fi scris „fondator” peste numele unui șofer.
+      //
+      // De la runda 2.7.0 statisticile se pot da din „Acces” și altui rol:
+      // cuvântul de sub nume e rolul omului (`gp.numeRol`), nu „fondator”
+      // scris fix, iar lacătul e dreptul paginii (`areVoie`).
       sideWho: !!auth && areVoie,
+      sideRol: gp.numeRol(auth),
       onLogout: () => { gp.logout().finally(() => gp.toLogin()); },
 
       // Ecranul de refuz vorbește despre CONTUL omului, deci nu se aprinde
@@ -1915,7 +2900,7 @@ class Component extends DCLogic {
       // inventat peste un om despre care nu se aflase nimic.
       blocked: S.loaded && !!auth && !areVoie && !S.eroare,
       allowed: !S.loaded || !auth || areVoie || !!S.eroare,
-      blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces la statistici. Cifrele casei se deschid numai fondatorului — nici măcar administratorului, care conduce patiseria zi de zi.",
+      blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces la statistici. Cifrele casei le vede fondatorul și cine a primit pagina de la el.",
       acasaHref: gp.primaPagina(auth),
       acasaEt: "← Înapoi la panoul meu",
       authName: auth ? auth.name : "",
@@ -1983,7 +2968,7 @@ class Component extends DCLogic {
       kpiuri: [
         {
           cls: "st-card st-kpi st-kpi--bani", cifCls: "st-cif",
-          cif: lei(rez.bani), den: "intrat din comenzi",
+          cif: lei(rez.bani), den: "vândut prin comenzi",
           fin: lei(rez.baniPeZi) + " pe zi, în " + deZile(zileCerute),
           onClick: lupa("bani"),
         },
@@ -2007,7 +2992,7 @@ class Component extends DCLogic {
         },
         {
           cls: "st-card st-kpi", cifCls: "st-cif st-cif--nume",
-          cif: celMaiBun ? celMaiBun.nume : "—", den: "clientul care a adus cei mai mulți bani",
+          cif: celMaiBun ? celMaiBun.nume : "—", den: "clientul care a cumpărat cel mai mult",
           fin: celMaiBun ? deComenzi(celMaiBun.comenzi) + " · " + lei(celMaiBun.bani) : "nicio comandă pe interval",
           onClick: lupa("client"),
         },
@@ -2084,7 +3069,7 @@ class Component extends DCLogic {
       placi: [
         {
           cls: "st-tile st-tile--pun", cifCls: "st-cif",
-          den: "Bani intrați", cif: lei(rez.bani),
+          den: "Vânzări", cif: lei(rez.bani),
           tare: pasBani, tareCls: semnCls(pasBani),
           fin: pasBani ? " față de perioada dinainte" : "prima perioadă măsurată",
           areSpark: true, spark, onClick: lupa("bani"),
@@ -2144,6 +3129,118 @@ class Component extends DCLogic {
         ? "Banii se socotesc din pozițiile comenzilor (cantitate × preț de pe rând), deci o comandă fără nicio poziție nu se numără nicăieri. Felul mărfii — coaptă sau congelată — stă pe poziție, nu pe comandă. Comenzile din etapa „"
           + (etape.anulata || "anulată") + "” sunt scoase din toate cifrele în afară de cele două care le numără anume."
         : "",
+
+      /* ---------------------------------------------- profitul ------------ */
+      // Toate cheile de aici tac când răspunsul n-are `costuri`: steagurile
+      // sunt false, listele goale, iar marcajul lor stă întreg sub
+      // `profitAre` ori `profitStins`. Vezi mai sus cele trei stări.
+      profitAre, profitStins,
+      // O singură frază, și numește ce lipsește — ca omul să aibă ce spune
+      // celui care ține serverul, nu doar „nu merge”. Vorba e cea din fila
+      // „Prețuri” a Depozitului („baza de date n-a primit actualizarea rundei
+      // 2.7.0”): e aceeași lipsă (migrarea 034), văzută din două pagini, și
+      // spusă în două feluri ar fi părut două pene.
+      profitStinsLinie: "Profitul din materii prime nu e încă disponibil: baza de date n-a primit actualizarea rundei 2.7.0.",
+      profitCif: profitTot.profit,
+      profitCifCls: "st-cif" + clsSemn(semnTot),
+      profitAreTotal,
+      profitFaraTotal: profitAre && !profitAreTotal,
+      // Trei pricini pentru care fișa n-are total, fiecare cu vorba ei. A
+      // treia n-ar trebui să se întâmple — serverul trimite totalul ori de
+      // câte ori are un rând cu cost — dar dacă îl scapă `null`, „niciun
+      // produs n-are cost” ar fi fost o minciună, cu masa de dedesubt, plină
+      // de costuri, drept martor (găsit la a doua citire, 5 oct. 2026).
+      profitFaraTotalLinie: !profitToate.length
+        ? "nicio poziție de comandă pe intervalul ăsta"
+        : (profitCuCost.length ? "totalul nu s-a putut socoti" : "niciun produs vândut n-are încă cost socotit"),
+      profitNeacoperit: (profitAre && baniNeac > 0)
+        ? lei(baniNeac) + " din vânzări n-au cost socotit — " + deProduse
+        : "",
+      profitNota, profitNotaEstimat, profitNotaRotunjire,
+      onProfitLupa: lupa("profit"),
+      capProfit, profitRanduri, profitTot, profitNeacAre, profitNeac,
+      profitAreRanduri: profitAre && profitRanduri.length > 0,
+      profitGol: profitAre && profitRanduri.length === 0,
+      profitSub: profitRanduri.length
+        ? numarat(profitRanduri.length, "produs", "produse") + " · de la cel mai mare profit în jos · cele fără cost socotit stau la urmă"
+        : "",
+      // Paragrafele îndemnului, fiecare cu `text` și `leg` (vezi mai sus, la
+      // „Îndemnul”). Lista goală nu desenează nimic.
+      profitIndemnuri: indemnuri,
+      // Adresa e scrisă o singură dată, aici, și duce de-a dreptul la fila
+      // „Prețuri”: Depozitul își alege vederea din `?vedere=preturi` (aceeași
+      // adresă pe care o face și Catalogul, din rețeta produsului). Cât ducea
+      // numai la pagină, omul trimis „în Depozit › Prețuri” ajungea pe „Stoc”
+      // și își căuta singur fila — pe telefon, a cincea dintr-un șir care se
+      // derulează. Coada trece neatinsă prin paza de apăsare de mai sus (ca a
+      // legăturilor spre Încasări), iar `check-costuri-statistici` cere ca
+      // întrebarea să fie chiar cea citită de pagina Depozit.
+      profitLegHref: "Depozit.dc.html?vedere=preturi",
+
+      /* ---------------------------------------------- încasările ---------- */
+      // Toate cheile de aici tac când răspunsul n-are `plati`: steagurile
+      // sunt false, vorbele goale, listele goale — și adresa e goală, ca
+      // pentru cine n-are dreptul `incasari` pagina să nu poarte nicio
+      // legătură spre Încasări, nici măcar una nedesenată. Marcajul lor stă
+      // întreg sub `incasAre` ori `incasStins`. Vezi mai sus cele trei stări
+      // și de ce toate numele încep cu `incas`.
+      incasAre, incasStins,
+      // O singură frază, care numește ce lipsește — vorba contractului rundei
+      // (§4), ca omul să aibă ce spune celui care ține serverul.
+      incasStinsLinie: incasStins
+        ? "Încasările nu se pot arăta: baza de date n-a primit actualizarea plăților (migrarea 032)."
+        : "",
+      incasLupa: lupa("incasari"),
+      // Fișa din inelul zilei: ce e de încasat ACUM, pe toată casa.
+      incasSuma: incasAre ? lei(pDe.suma) : "",
+      incasCati,
+      incasInPerioada: incasAre ? "încasat în perioadă: " + lei(pIn.suma) : "",
+      incasAmanate,
+      incasAmanateCls: incasAmanate ? "st-fin" + (nTrecute > 0 ? " st-itrecut" : "") : "",
+      // Numărul de ordine al întrebării din registru, SOCOTIT: a șaptea când
+      // întrebarea profitului e pe ecran înaintea ei, a șasea când nu e (vezi
+      // în marcaj de ce nu e scris de mână). Se leagă de `profitAre`, nu de
+      // `costuri`: cu `activ:false` profitul scrie numai o frază, fără număr.
+      incasNr: incasAre ? (profitAre ? "A ȘAPTEA" : "A ȘASEA") : "",
+      // Cele trei cifre mari ale registrului, în felul întâii întrebări:
+      // întregi, fără bănuți (`intreg`), cu vorba dedesubt. Toate trei deschid
+      // aceeași foaie, unde stau și bănuții.
+      incasTrei: incasAre ? [
+        { val: intreg(pIn.suma), sub: "lei încasați în perioadă", onClick: lupa("incasari") },
+        { val: intreg(pDe.suma), sub: "lei de încasat acum", onClick: lupa("incasari") },
+        { val: incasMedie, sub: "zile până la plată, în medie", onClick: lupa("incasari") },
+      ] : [],
+      // Aceleași trei, ca plăci ale tabloului de dimineață: acolo banii se
+      // scriu cu bănuți, ca pe celelalte plăci, iar rândul de jos spune din ce
+      // e făcută cifra.
+      incasPlaci: incasAre ? [
+        {
+          den: "Încasat în perioadă", cif: lei(pIn.suma),
+          fin: "direct " + lei(pIn.direct) + " · prin bancă " + lei(pIn.banca),
+          onClick: lupa("incasari"),
+        },
+        { den: "De încasat acum", cif: lei(pDe.suma), fin: incasCati, onClick: lupa("incasari") },
+        {
+          den: "Până la plată, în medie", cif: pZile ? incasMedie + " zile" : "—",
+          fin: pZile ? "socotit pe " + deComenzi(pZile.comenzi) : "nicio plată bifată în perioadă",
+          onClick: lupa("incasari"),
+        },
+      ] : [],
+      incasSub: !incasAre ? "" : (nDatornici > 0
+        ? numarat(nDatornici, "client are", "clienți au") + " de plătit · de la cea mai mare sumă în jos"
+        : "Niciun client nu are de plătit"),
+      incasCap, incasDatornici,
+      incasAreDatornici: incasDatornici.length > 0,
+      // „Nimeni” numai când chiar nu e nimeni: o listă venită goală lângă un
+      // total mai mare decât zero nu e „toate plătite”, e o listă care lipsește.
+      incasNimeni: incasAre && nDatornici === 0,
+      incasInca: nNearatati > 0 ? "și încă " + deClienti(nNearatati) + " — toți sunt în Încasări" : "",
+      incasFiltre, incasFiltreLinie,
+      // Adresa e scrisă o singură dată, aici, cu numele paginii ca la toate
+      // legăturile casei: la construirea pachetului `Incasari.dc.html` se
+      // preschimbă în adresa ei de pe server, iar coada (`?f=deincasat`) trece
+      // neatinsă. „deincasat” e vederea paginii Încasări cu același nume.
+      incasHref: incasAre ? "Incasari.dc.html?f=deincasat" : "",
 
       /* ---------------------------------------------- lupa ---------------- */
       lupa: !!foaie,

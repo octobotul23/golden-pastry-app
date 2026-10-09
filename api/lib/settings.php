@@ -370,17 +370,104 @@ function secret_keys(): array
 }
 
 /**
+ * Al cui e dreptul de a vedea și de a scrie o setare a PLĂȚILOR (runda 2.7.0,
+ * migrarea 032; hotărârile patronului din 4–5 octombrie 2026).
+ *
+ * Trei răspunsuri, și deosebirea dintre primele două e toată paza:
+ *
+ *   `null`  cheia nu e a plăților — se poartă ca până acum;
+ *   `''`    e o ÎNSEMNARE A SERVERULUI: nu se arată și nu se scrie din niciun
+ *           panou, de către nimeni, nici de fondator;
+ *   altfel  cheia din „Acces” fără de care setarea nici nu se arată, nici nu se
+ *           scrie: pragul general e al lui `plati.prag`, iar chatul raportului
+ *           de bani, orele lui, amintirile și adresa panoului sunt ale lui
+ *           `plati.telegram`.
+ *
+ * DE CE STĂ AICI, ȘI NU ÎN `api/lib/plati.php`. O citesc `settings_public()` și
+ * `settings_save()` de mai jos, iar ele sunt singurele două uși prin care o
+ * setare iese ori intră printr-un panou. Pusă dincolo, fișierul ăsta ar fi
+ * căpătat o legătură spre biblioteca plăților, și orice script care îl încarcă
+ * singur ar fi murit pe „Call to undefined function” la prima setare citită.
+ *
+ * ORICE ALTĂ CHEIE CU NUMELE PLĂȚILOR E A NIMĂNUI, dinadins. O cheie
+ * `plati_…` semănată de o migrare de mâine și uitată din lista de mai jos ar fi
+ * plecat, la fel ca până în runda asta, spre oricine deschide Setările. Așa,
+ * uitarea închide: cheia nouă nu se vede deloc până nu i se scrie aici stăpânul.
+ * (`plati_raport_trimis_1/2` — „am trimis azi raportul de dimineață/de seară” —
+ * și `migration_032_*` cad tot pe ramura asta.)
+ */
+function setare_plati_drept(string $cheie): ?string
+{
+    if ($cheie === 'plati_prag_implicit') {
+        return 'plati.prag';
+    }
+    if (in_array($cheie, ['plati_telegram_chat_id', 'plati_raport_ore', 'plati_amintiri', 'panel_base_url'], true)) {
+        return 'plati.telegram';
+    }
+    if (str_starts_with($cheie, 'plati_') || str_starts_with($cheie, 'migration_032_')) {
+        return '';
+    }
+    return null;
+}
+
+/**
+ * Însemnările pe care și le scrie serverul singur, în tabelul de setări.
+ *
+ * `migration_NNN_*` spune că o migrare a rulat (unele și CÂND: 032 își ține
+ * clipa acolo, iar `catalog_numere_supported()` numără chiar rândul lui 029), iar
+ * `plati_raport_trimis_*` e locul revendicat de ceasul raportului de bani. Sunt
+ * RÂNDURI în `settings`, deci paza „cheia fără rând se refuză” din
+ * `settings_save()` nu le apără: un `PUT /settings` scris de mână le-ar fi
+ * rescris, cu „ok”. Un `plati_raport_trimis_1` golit așa ar fi trimis raportul
+ * de dimineață a doua oară.
+ */
+function setare_a_serverului(string $cheie): bool
+{
+    return str_starts_with($cheie, 'migration_') || str_starts_with($cheie, 'plati_raport_trimis_');
+}
+
+/**
  * Forma trimisă către panou: secretele apar mascate (`••••••3f9a`) plus un
  * indicator `*_set` care spune dacă valoarea există, ca interfața să poată
  * afișa „configurat” fără a cunoaște tokenul.
+ *
+ * SETĂRILE PLĂȚILOR SE CERN AICI, NU ÎN RUTĂ (runda 2.7.0). Funcția întorcea
+ * TOATE rândurile din tabel, deci cele semănate de migrarea 032 — chatul
+ * raportului de bani, orele lui, pragul general — ar fi plecat din prima zi
+ * spre oricine are „Setări”, adică spre fiecare administrator, deși sunt ale
+ * fondatorului până le dă el altcuiva din „Acces”. Cernute în rută, a doua rută
+ * care ar chema mâine funcția asta le-ar fi scos iar pe toate; cernute aici,
+ * nu există drum pe lângă.
+ *
+ * Se judecă pe CEL CARE A FĂCUT CEREREA. Fără sesiune (un script, un ceas)
+ * `drept()` răspunde „nu”, deci cheile plăților lipsesc: cade închis.
+ *
+ * Însemnările MAI VECHI ale migrărilor (`migration_010_…` până la 031) pleacă
+ * mai departe ca și până acum: răspunsul lui `GET /settings` pe o bază fără 032
+ * trebuie să rămână literă cu literă cel de ieri, iar în ele nu scrie nimic
+ * despre bani.
  */
 function settings_public(bool $fresh = false): array
 {
     $all     = settings_all($fresh);
     $secrets = secret_keys();
     $out     = [];
+    // Fiecare drept se întreabă o singură dată, nu la fiecare cheie.
+    $vede    = [];
 
     foreach ($all as $k => $v) {
+        $stapan = setare_plati_drept((string) $k);
+        if ($stapan !== null) {
+            if ($stapan === '') {
+                continue;
+            }
+            if (!array_key_exists($stapan, $vede)) {
+                $vede[$stapan] = drept($stapan);
+            }
+            if (!$vede[$stapan]) {
+                continue;
+            }
+        }
         if (in_array($k, $secrets, true)) {
             $out[$k]           = mask_secret($v);
             $out[$k . '_set'] = $v !== '';
@@ -459,6 +546,38 @@ function settings_save(array $incoming, array $user): array
             422,
             'unknown_setting'
         );
+    }
+
+    // ÎNSEMNĂRILE SERVERULUI ȘI SETĂRILE PLĂȚILOR NU SE SCRIU PE AICI (runda
+    // 2.7.0). Stau DUPĂ refuzul de deasupra, dinadins: pe o bază fără 032 cheile
+    // plăților n-au rând, deci acolo cad pe „nu există în baza de date”, ca
+    // ieri. Aici ajung numai cele care AU rând — tocmai cele pe care refuzul
+    // acela nu le poate apăra.
+    //
+    // Setările plăților au ușa lor (`plati_setari_scrie()`, api/lib/plati.php),
+    // cu alte drepturi și cu altă faptă în Jurnal. Trecute pe aici, rândul
+    // `settings_update` ar fi scris „plati_telegram_chat_id: … → …” — iar pe
+    // acela îl citește oricine are Jurnalul, cu sau fără „Încasări”. Ruta le
+    // scoate din `$incoming` înainte să cheme funcția asta; refuzul de mai jos e
+    // pentru apelantul de mâine care uită.
+    foreach (array_keys($incoming) as $cheie) {
+        $cheie = (string) $cheie;
+        if (setare_a_serverului($cheie)) {
+            fail(
+                'Setarea „' . $cheie . '” e o însemnare a serverului și nu se scrie din panou. '
+                  . 'Nimic din salvarea asta NU a fost scris.',
+                422,
+                'setting_read_only'
+            );
+        }
+        if (setare_plati_drept($cheie) !== null) {
+            fail(
+                'Setarea „' . $cheie . '” e a plăților și nu se scrie pe drumul setărilor obișnuite. '
+                  . 'Nimic din salvarea asta NU a fost scris.',
+                422,
+                'setting_read_only'
+            );
+        }
     }
 
     foreach ($incoming as $key => $raw) {

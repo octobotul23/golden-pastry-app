@@ -54,16 +54,52 @@ function route_requests_list(): void
     if ($u['role'] === 'client') {
         $where[]  = 'r.customer_id = ?';
         $params[] = (int) $u['id'];
+    } elseif (!orders_readable($u)) {
+        // Aceeași cădere întoarsă ca la comenzi, și în aceeași ordine: cine
+        // n-are registrul deschis — azi omul de laborator, mâine oricine căruia
+        // fondatorul i-a luat din „Acces" și Comenzile, și Laboratorul, și Ruta
+        // — nu vede niciun rând. Se întreabă ÎNAINTEA ramurii agentului, ca
+        // luarea panoului să-i ia și felia. Regula stă scrisă o singură dată,
+        // în `orders_readable()` (api/lib/auth.php).
+        $where[] = '1 = 0';
     } elseif ($u['role'] === 'agent_vanzari') {
         $sc      = referral_agent_scope((int) $u['id'], 'r.customer_id', 'r.referral_code');
         $where[] = $sc['sql'];
         $params  = array_merge($params, $sc['params']);
-    } elseif (!orders_readable($u)) {
-        // Și aceeași cădere întoarsă ca la comenzi, din același motiv: un rol
-        // care nu e nici client, nici agent, nici personal — azi omul de
-        // laborator — primea altfel lista întreagă. Regula stă scrisă o
-        // singură dată, în `orders_readable()` (api/lib/auth.php).
-        $where[] = '1 = 0';
+    }
+
+    // „CERERILE SCRISE DE MINE” — `?mine=1`, perechea celui din lista
+    // comenzilor (`route_orders_list()`, api/routes/orders.php).
+    //
+    // Hotărârea patronului din 4–5 octombrie 2026 (runda 2.7.0): istoricul e și
+    // al celor din casă care scriu comenzi, iar în el intră și cererile lor
+    // care n-au devenit comenzi. Aici regula e mai scurtă decât la comenzi:
+    // cererea are autor numai când a scris-o un om al casei (migrarea 022), iar
+    // cea de pe site n-are niciunul — deci nu mai trebuie un canal care să le
+    // despartă.
+    //
+    // ÎN OGRADĂ, NU NUMAI ÎN LISTĂ, și de aceea stă DEASUPRA rândurilor care pun
+    // ograda deoparte. `counts` se numără din ogradă: cu condiția pusă mai jos,
+    // lângă filtrul de stare, pagina ar fi scris „3 respinse” deasupra unei
+    // liste cu una — numărul casei peste lista omului.
+    //
+    // NUMAI ÎNGUSTEAZĂ, ca la comenzi: marginile de deasupra rămân toate și se
+    // leagă cu AND. Clientul își vede oricum numai cererile lui, deci
+    // parametrul nu-l atinge. Numai șirul „1” îl aprinde, comparat fără
+    // `(string)` — un `?mine[]=1` sosește ca tablou.
+    //
+    // FĂRĂ MIGRAREA 022 coloana `created_by` lipsește, iar numită în WHERE ar
+    // fi căzut cu „Unknown column”, adică 500 pe o listă. Pe o asemenea bază
+    // nimeni din casă n-a scris vreo cerere pe numele lui — n-avea unde să-și
+    // lase numele —, deci răspunsul adevărat e „niciun rând”: `1 = 0`, ca la
+    // registrul închis, și numărătoarea iese zero odată cu lista.
+    if ($u['role'] !== 'client' && ($_GET['mine'] ?? null) === '1') {
+        if (request_staff_supported()) {
+            $where[]  = 'r.created_by = ?';
+            $params[] = (int) $u['id'];
+        } else {
+            $where[] = '1 = 0';
+        }
     }
 
     // Marginile ogrăzii, puse deoparte înainte de filtrul de stare. Din ele
@@ -159,9 +195,12 @@ function route_requests_list(): void
 /**
  * A DOUA TRIMITERE A ACELEIAȘI CERERI — răspunsul cererii dintâi (migrarea 026).
  *
- * Se cheamă dintr-un singur loc: din `catch`-ul lui `route_requests_create()`,
- * când `INSERT`-ul a căzut pe `uq_req_cheie`. Ciocnirea aia nu e o eroare — e
- * chiar dovada că cererea asta a intrat deja, o dată.
+ * Se cheamă din două locuri, amândouă în `route_requests_create()`. Cel vechi
+ * e `catch`-ul, când `INSERT`-ul a căzut pe `uq_req_cheie`: ciocnirea aia nu e
+ * o eroare — e chiar dovada că cererea asta a intrat deja, o dată. Cel nou
+ * (runda 2.7.0) e poarta pragului de comenzi neplătite, care caută cheia
+ * ÎNAINTE să numere: altfel clientul aflat fix la prag ar primi „refuzat”
+ * pentru o cerere primită. Amândouă o cheamă cu tranzacția ÎNCHISĂ.
  *
  * HOTĂRÂREA PATRONULUI: „ÎI ARĂTĂM CĂ A REUȘIT." Nu se refuză și nu se numără a
  * doua oară. Iese același 201 cu același rând, ca și cum atunci ar fi sosit —
@@ -294,9 +333,11 @@ function route_requests_create(): void
     // Întrebarea e nouă de la 18 septembrie 2026, când `POST /requests` a
     // devenit și drumul agentului de vânzări și al angajatului: ei scriu o
     // cerere acolo unde până ieri scriau o comandă (v. `GP_ORDER_CREATE_ROLES`,
-    // api/lib/auth.php). `GP_STAFF_ROLES`, nu „are cont": un client cu cont e
-    // tot lumea de pe site, iar `utilizator_lab` n-are ce scrie aici.
-    $dinCasa = $user && in_array((string) $user['role'], GP_STAFF_ROLES, true);
+    // api/lib/auth.php). `e_personal()`, nu „are cont": un client cu cont e
+    // tot lumea de pe site. Omul de laborator scrie de aici numai dacă a primit
+    // din „Acces" panoul Comenzi — altfel cererea lui, cu autor cu tot, s-ar fi
+    // înregistrat ca venită de pe site.
+    $dinCasa = $user && e_personal($user, 'comenzi');
 
     // Personalul care comandă de pe site o face pentru altcineva, deci numele
     // din formular rămâne al clientului. Înainte, orice cerere trimisă de un
@@ -380,9 +421,50 @@ function route_requests_create(): void
     //
     // Toată regula — și de ce tace în loc să refuze, și de ce managerul leagă
     // mai departe — stă scrisă la `client_by_name_in_scope()`, api/lib/orders.php.
+    //
+    // PRAGUL, PENTRU CINE N-ARE OGRADĂ, SE JUDECĂ LA ACCEPTARE (9 octombrie
+    // 2026). Tăcerea de mai sus avea o crăpătură la celălalt capăt: omul fără
+    // ogradă (cel din laborator, cu panoul „Comenzi” primit din „Acces”) leagă
+    // după nume orice cont — iar poarta pragului, câteva zeci de rânduri mai
+    // jos, îi răspundea 409 pentru numele unui client ajuns la prag și 201
+    // pentru oricare altul. Adică formularul rămânea unealtă de ghicit, numai
+    // că acum ghicea cine e DATOR: scrii numele firmei, și răspunsul îți spune
+    // dacă mai are voie să comande.
+    //
+    // Deci pentru el cererea legată de un cont INTRĂ, în așteptare, iar
+    // răspunsul nu spune nimic despre plăți: e același, valoare cu valoare,
+    // pentru clientul ajuns la prag și pentru unul cu aceeași istorie plătită.
+    // (Că numele scris ARE cont se vede și acum, din `customerId` și din
+    // `rangClient` — legarea după nume e hotărârea din 14 septembrie și nu ține
+    // de plăți. Ce nu se mai vede e cum STĂ contul acela.) Cererea nu scapă de
+    // prag: cea cu produse se numără din clipa asta împotriva clientului
+    // (`plati_situatie()`), iar poarta o judecă la acceptare — în fața cuiva
+    // care scrie comenzi, adică a cuiva care are voie să vadă lista.
+    //
+    // CINE E „EL” SE ÎNTREABĂ ÎNTR-UN SINGUR LOC: `plati_poate_afla()`, aceeași
+    // socoteală care alege între refuzul lung și cel scurt. Cine ar primi aici
+    // refuzul SCURT nu e judecat aici deloc — fiindcă refuzul scurt, dat la
+    // trimitere, e chiar răspunsul „da/nu” despre datoria clientului, oricât de
+    // puține vorbe ar avea.
+    //
+    // Până la a doua citire (9 octombrie 2026) semnul se ridica numai pe
+    // drumul numelui și numai pentru cine n-are ogradă deloc
+    // (`client_scope_for() === null`). Rămânea pe dinafară agentul căruia
+    // fondatorul i-a luat din „Acces” panoul „Comenzi”: ograda lui e a
+    // ROLULUI, deci cererea îi era judecată la trimitere; socoteala comună
+    // cere însă și panoul, deci refuzul lui era cel scurt. 409 pentru clientul
+    // lui ajuns la prag, 201 pentru oricare altul — și scriind numele, și
+    // alegând contul din listă (`test-plati-prag`, secțiunea N). De aceea
+    // semnul stă acum DUPĂ amândouă legările și nu mai întreabă pe ce drum s-a
+    // ajuns la cont.
+    //
+    // Ce NU se schimbă: clientul în nume propriu, agentul cu panoul „Comenzi”
+    // (pentru clienții lui) și cine scrie comenzi sunt opriți tot aici, la
+    // trimitere, cu lista. Ce le spune refuzul le-ar fi spus și ușa din timp.
     if ($customerId === null && $user) {
         $customerId = client_by_name_in_scope($user, $customerName);
     }
+    $pragLaAcceptare = $customerId !== null && !plati_poate_afla($user, (int) $customerId);
     if (!$user && $phone === '') {
         fail('Numărul de telefon este obligatoriu pentru cererile fără cont.', 422, 'missing_phone');
     }
@@ -530,9 +612,71 @@ function route_requests_create(): void
     $cheie   = request_key_normalize((string) ($b['cheie'] ?? ''));
     $cuCheie = $cheie !== '' && request_key_supported();
 
+    // Trecerea peste pragul de comenzi neplătite, dacă a fost una: se scrie în
+    // jurnal abia după commit, cu numărul cererii născute (v. poarta de mai jos).
+    $pragOcolit = null;
+
     $pdo = db();
     $pdo->beginTransaction();
     try {
+        // POARTA PRAGULUI DE COMENZI NEPLĂTITE (runda 2.7.0).
+        //
+        // Hotărârea patronului, 4–5 octombrie 2026: a doua comandă neplătită
+        // trece cu avertizare, a treia se oprește până la plată — pentru client,
+        // pentru agent și pentru manager la fel. Numai cine are dreptul
+        // `plati.ocoleste` (din pornire fondatorul) poate trece, cu confirmare.
+        //
+        // NUMAI CEREREA CU PRODUSE, LEGATĂ DE UN CONT. Mesajul fără coș (o
+        // întrebare, o cerere de ofertă) nu e o comandă și nu se oprește
+        // niciodată: tocmai omul rămas dator trebuie să ne poată scrie. Iar
+        // vizitatorul fără cont n-are ce prag să atingă — pragul e al contului.
+        //
+        // E PRIMA INSTRUCȚIUNE A TRANZACȚIEI, și nu din pedanterie. Baza lucrează
+        // pe REPEATABLE READ: prima citire fără lacăt îngheață imaginea pe care
+        // o vede tranzacția. Lacătul pe rândul clientului (`plati_lacat()`) NU o
+        // îngheață, deci numărătoarea de după el vede tot ce a scris fila care a
+        // ținut lacătul înainte. Pusă după `INSERT`, ori după o singură citire
+        // nevinovată, două cereri plecate deodată ar număra amândouă „unu” și ar
+        // trece amândouă.
+        if ($priced && $customerId !== null) {
+            plati_lacat($customerId);
+
+            // ÎNTÂI RETRIMITEREA, APOI PRAGUL (migrarea 026).
+            //
+            // Clientul aflat fix la prag trimite cererea, ea intră, răspunsul se
+            // pierde pe drum, iar pagina o trimite din nou cu aceeași cheie.
+            // Întrebat întâi pragul, a doua trimitere ar număra cererea dintâi —
+            // a lui! — și ar răspunde „refuzat” pentru o cerere PRIMITĂ. Omul ar
+            // suna să întrebe de ce, iar laboratorul ar coace deja.
+            //
+            // Rândul se caută SUB lacătul clientului: două retrimiteri pornite
+            // deodată stau la rând aici, iar a doua o vede pe prima scrisă.
+            // (Fără lacăt, a doua cade tot bine, pe `uq_req_cheie`, în `catch`.)
+            if ($cuCheie && scalar('SELECT 1 FROM order_requests WHERE idempotency_key = ? LIMIT 1', [$cheie])) {
+                // Tranzacția se închide ÎNAINTE de răspuns: `request_reply_again()`
+                // scrie în jurnal și iese prin `json_out()`, iar lacătul clientului
+                // n-are de ce să mai țină pe nimeni.
+                $pdo->rollBack();
+                request_reply_again($cheie, $user, $b);
+                // S-A ÎNTORS FĂRĂ SĂ RĂSPUNDĂ: rândul a pierit exact între cele
+                // două citiri (o curățenie, o ștergere). Cererea asta e deci una
+                // nouă — dar tranzacția e închisă, iar lacătul s-a dus cu ea.
+                // Se iau amândouă de la capăt; altfel `INSERT`-ul de mai jos s-ar
+                // scrie fără tranzacție și `commit()` ar cădea.
+                $pdo->beginTransaction();
+                plati_lacat($customerId);
+            }
+
+            // Lacătul și căutarea retrimiterii rămân pentru toți; numai
+            // JUDECATA se sare pentru cererea celui care n-are de ce să afle
+            // cum stă clientul (de ce, acolo unde se pune `$pragLaAcceptare`).
+            // Cererea lui se scrie sub același lacăt, deci numărătoarea
+            // clientului o vede la următoarea întrebare a oricui.
+            if (!$pragLaAcceptare) {
+                $pragOcolit = plati_poarta($customerId, $user, $b);
+            }
+        }
+
         q(
             $cuCheie
                 ? 'INSERT INTO order_requests
@@ -644,7 +788,14 @@ function route_requests_create(): void
         }
         $pdo->commit();
     } catch (Throwable $e) {
-        $pdo->rollBack();
+        // „Dacă mai e deschisă”: poarta pragului de mai sus își închide singură
+        // tranzacția înainte de a răspunde cu cererea dintâi, iar o eroare
+        // apărută chiar atunci ar ajunge aici cu tranzacția deja închisă —
+        // `rollBack()` gol ar arunca „There is no active transaction” și ar
+        // îngropa eroarea adevărată sub a lui.
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         // CIOCNIREA DE CHEI NU E O EROARE, E RĂSPUNSUL (migrarea 026).
         //
         // `uq_req_cheie` a oprit a doua scriere a aceleiași cereri, adică exact
@@ -690,6 +841,13 @@ function route_requests_create(): void
 
     $req = attach_request_items([one('SELECT * FROM order_requests WHERE id = ?', [$id])])[0];
     audit('request_create', 'request', (string) $id, 'Cerere de la ' . $customerName);
+
+    // Trecerea peste prag lasă urmă: cine, pentru ce client, câte neîncasate
+    // avea și ce s-a scris. După commit, ca rândul să nu poată vorbi despre o
+    // cerere care n-a mai intrat.
+    if ($pragOcolit !== null) {
+        plati_jurnal_ocolire($pragOcolit, 'cererea #' . $id);
+    }
 
     // Jetonul cu care omul își leagă cererea de contul pe care și-l face în
     // clipa următoare. Numai pentru VIZITATORUL ANONIM care a apăsat chiar
@@ -840,7 +998,7 @@ function route_requests_accept(string $id): void
     // `require_admin()`, poarta i-ar fi spus managerului „scrie tu una nouă în
     // loc s-o accepți pe asta”: aceeași comandă, aceeași zi, dar cererea
     // clientului rămâne neînchisă și legătura cerere → comandă se rupe.
-    $u  = require_order_create();
+    $u  = require_drept('comenzi.scrie');
     $b  = body();
     $id = (int) $id;
 
@@ -949,12 +1107,26 @@ function route_requests_accept(string $id): void
     //
     // Dezlegarea de tot rămâne cerută pe față, nu ca efect al unei corecturi
     // de nume: PATCH /orders/{id} cu `customerId: null`.
-    $customerId = $req['customer_id'];
-    if ($customerName !== (string) $req['customer_name']) {
-        $gasit = client_by_name($customerName);
-        if ($gasit !== null) {
-            $customerId = $gasit;
-        }
+    //
+    // O SINGURĂ CĂUTARE, DOUĂ HOTĂRÂRI (runda 2.7.0). Întrebarea „la ce cont
+    // duce numele ăsta?” se pune o dată, aici, iar răspunsul ei slujește și
+    // legării de mai sus, și porții pragului de comenzi neplătite (v. „CONTUL
+    // JUDECAT”, înaintea tranzacției). Se caută când numele a fost corectat —
+    // ca până acum — și, nou, când cererea a venit FĂRĂ cont, chiar cu numele
+    // neatins. În al doilea caz răspunsul NU leagă nimic: se ține minte numai
+    // pentru judecata pragului.
+    //
+    // De ce nu două chemări, una pentru fiecare hotărâre: între ele contul
+    // poate fi recunoscut ori dezactivat, iar atunci comanda s-ar lega după un
+    // răspuns și s-ar judeca după altul. Și fiindcă drumurile pe care un nume
+    // ajunge la un cont sunt numărate dinadins
+    // (`.claude/test-defect-cont-uzurpat.mjs`, „tot patru drumuri cheamă
+    // poarta”): acceptarea e UN drum, deci întreabă o dată.
+    $customerId   = $req['customer_id'];
+    $numeCorectat = $customerName !== (string) $req['customer_name'];
+    $contDupaNume = ($numeCorectat || $customerId === null) ? client_by_name($customerName) : null;
+    if ($numeCorectat && $contDupaNume !== null) {
+        $customerId = $contDupaNume;
     }
 
     $statuses = order_statuses();
@@ -1017,6 +1189,52 @@ function route_requests_accept(string $id): void
     $pdo     = db();
     $orderId = null;
 
+    // Pentru poarta pragului de comenzi neplătite, dinăuntrul buclei (runda
+    // 2.7.0). Toate se află AICI, înaintea tranzacției: înăuntrul ei, orice
+    // citire fără lacăt făcută înaintea porții ar îngheța imaginea bazei — iar
+    // `client_by_name()` e tocmai o citire fără lacăt (de aceea căutarea după
+    // nume s-a făcut mai sus, o singură dată, și aici doar i se folosește
+    // răspunsul).
+    //
+    //   · contul pe care se JUDECĂ pragul, ca număr, fiindcă `plati_poarta()`
+    //     nu primește text;
+    //   · de unde vine apăsarea: de sub anunțul de pe Telegram nu se poate
+    //     trece peste prag, fiindcă acolo n-are unde să se arate confirmarea.
+    //
+    // CONTUL JUDECAT NU E MEREU CONTUL PE CARE SE SCRIE COMANDA. Când comanda se
+    // naște cu cont — al cererii, ori cel găsit după numele corectat la
+    // acceptare — cele două sunt unul și același. Când cererea a venit FĂRĂ
+    // cont, se judecă contul la care duce NUMELE cu care se naște comanda, cu
+    // aceeași recunoaștere ca la legare (`client_by_name()`: un singur cont de
+    // client, activ, cunoscut casei, cu numele întocmai) — chiar aceeași
+    // căutare, `$contDupaNume`.
+    //
+    // De ce (găsit la recitirea rundei, 5 octombrie 2026): legarea de mai sus
+    // caută contul numai când numele a fost SCHIMBAT. Clientul oprit de prag
+    // ieșea din cont, trimitea aceeași cerere de pe formularul public, cu numele
+    // lui scris la fel, iar cererea venea fără cont (formularul public nu leagă
+    // pe nimeni după un nume tastat: ar fi și oracol, și ușă de uzurpat).
+    // Managerul o accepta fără să atingă numele, poarta primea „niciun cont” și
+    // se dădea la o parte: a treia comandă neplătită a aceluiași om, născută
+    // chiar pe ușa pe care pragul o păzește. Pragul se ocolea cu o delogare.
+    //
+    // Comanda NU se leagă de cont din pricina asta: `$customerId` rămâne gol,
+    // ca până acum. Cine a completat formularul n-a dovedit că e clientul, iar o
+    // comandă legată de un cont după un nume tastat de un necunoscut i-ar apărea
+    // aceluia în „Comenzile mele” (paza „cont uzurpat”). Se judecă doar dacă
+    // CASA mai dă marfă pe numele ăsta; a cui e comanda rămâne de hotărât pe
+    // față, la acceptare (corectând numele) ori din fișa comenzii.
+    //
+    // Refuzul ajunge numai la oamenii casei care au „Comenzi · scrie” — aceiași
+    // care primesc același refuz când scriu numele clientului într-o comandă
+    // nouă (POST /orders). Nimic nu se întoarce spre vizitator: cererea lui a
+    // fost primită cu 201 și stă pe „nou”, deci formularul nu spune nimănui cât
+    // datorează firma al cărei nume l-a tastat.
+    $pragPeNume   = $customerId === null && $contDupaNume !== null;
+    $pragCont     = $customerId !== null ? (int) $customerId : $contDupaNume;
+    $pragTelegram = requests_decided_via() === 'telegram';
+    $pragOcolit   = null;
+
     // Verificarea stării de la începutul rutei s-a făcut în afara oricărei
     // tranzacții, iar între ea și inserarea de aici încap două tablete care
     // apasă „Adaugă comanda" pe aceeași cerere în aceeași secundă. UNIQUE(day,
@@ -1055,6 +1273,27 @@ function route_requests_accept(string $id): void
                     'has_order'
                 );
             }
+
+            // POARTA PRAGULUI DE COMENZI NEPLĂTITE (runda 2.7.0; hotărârea
+            // patronului din 4–5 octombrie 2026).
+            //
+            // Stă DUPĂ lacătul cererii și ÎNAINTEA primei citiri fără lacăt
+            // (`MAX(seq)`, chiar dedesubt): cele două citiri de deasupra sunt cu
+            // `FOR UPDATE` și nu îngheață imaginea tranzacției, deci numărătoarea
+            // de sub lacătul clientului vede și comanda scrisă adineauri din altă
+            // filă. Ordinea lacătelor e cerere → client; cine ține lacătul unui
+            // client nu cere niciodată rândul unei cereri vechi, deci cele două
+            // nu se pot aștepta una pe alta.
+            //
+            // Cererea de acum iese din numărătoare (`'cerere' => $id`): ea e
+            // chiar cea care devine comandă, iar numărată ar fi oprit orice
+            // client aflat la un pas de prag să-și vadă acceptată cererea primită
+            // deja. Înăuntrul buclei, ca o reluare după „Duplicate entry” să
+            // numere din nou, pe tranzacția ei.
+            //
+            // Refuzul iese cu tranzacția dată înapoi: cererea rămâne „nou”, nu se
+            // naște comandă, nu se rezervă marfă, nu pleacă niciun anunț.
+            $pragOcolit = plati_poarta($pragCont, $u, $b, ['cerere' => (int) $id], $pragTelegram);
 
             $seq = (int) scalar('SELECT COALESCE(MAX(seq), 0) + 1 FROM orders WHERE day = ?', [$day]);
             q(
@@ -1158,7 +1397,9 @@ function route_requests_accept(string $id): void
             $pdo->commit();
             break;
         } catch (PDOException $e) {
-            $pdo->rollBack();
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
             if ($e->getCode() !== '23000' || $attempt === 4) {
                 throw $e;
             }
@@ -1193,7 +1434,21 @@ function route_requests_accept(string $id): void
     // panou (api/routes/orders.php, funcția care scrie comanda nouă):
     // `referral_commission_sync()` scrie `orders.referral_code`, iar un rând
     // citit înaintea lui poartă încă `null` acolo.
-    $order = attach_items([one('SELECT * FROM orders WHERE id = ?', [$orderId])], true, true)[0];
+    $order = attach_items([one('SELECT * FROM orders WHERE id = ?', [$orderId])], true, true, plati_fel($u))[0];
+
+    // Trecerea peste prag lasă urmă în jurnal, după commit, cu comanda născută.
+    //
+    // Când pragul s-a judecat după nume (cerere fără cont), rândul o spune pe
+    // față. Altfel, cine îl citește peste o lună caută comanda în „Încasări”,
+    // la clientul acela, și n-o găsește: ea a rămas nelegată de cont.
+    if ($pragOcolit !== null) {
+        plati_jurnal_ocolire(
+            $pragOcolit,
+            'comanda ' . $order['ref'] . ', din cererea #' . (int) $id
+                . ($pragPeNume ? ' (cerere fără cont, pe numele lui; comanda a rămas nelegată de cont)' : '')
+        );
+    }
+
     $order['commission'] = $comision === null ? null : [
         'id'       => (int) $comision['id'],
         'referrer' => $comision['referrer_id'] !== null ? (int) $comision['referrer_id'] : null,
@@ -1266,7 +1521,7 @@ function route_requests_reject(string $id): void
     // spune „da” poate spune și „nu”. Despărțite, managerul ar fi putut accepta
     // orice și n-ar fi putut respinge nimic — iar o cerere pe care n-o vrea i-ar
     // fi rămas în față până venea un administrator s-o șteargă.
-    $u  = require_order_create();
+    $u  = require_drept('comenzi.scrie');
     $b  = body();
     $id = (int) $id;
 
@@ -1324,7 +1579,9 @@ function route_requests_reject(string $id): void
         }
         $pdo->commit();
     } catch (Throwable $e) {
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
 
@@ -1349,7 +1606,10 @@ function route_requests_reopen(string $id): void
     // Ca la acceptare și respingere, pe aceeași listă: redeschiderea anulează o
     // hotărâre deja luată, deci cere aceeași autoritate ca ea și n-are ce căuta
     // în contul comun al tabletelor.
-    require_order_create();
+    $u  = require_drept('comenzi.scrie');
+    // Corpul se citește numai pentru `ocolesteprag` (poarta pragului, mai jos).
+    // Panoul trimite `{}`; un corp lipsă e tot „nimic”.
+    $b  = body();
     $id = (int) $id;
 
     // Referința comenzii vine odată cu cererea: dacă redeschiderea trebuie
@@ -1387,23 +1647,89 @@ function route_requests_reopen(string $id): void
         );
     }
 
-    // Condiția pe stare ține și când doi administratori apasă „Redeschide" în
-    // aceeași clipă: fără ea, al doilea ar readuce la „nou" o cerere pe care
-    // primul o redeschisese deja și pe care cineva apucase s-o accepte — adică
-    // tot a doua comandă din aceleași date, pe altă cale.
-    $redeschisa = q(
-        "UPDATE order_requests SET status = 'nou', reject_reason = NULL, handled_by = NULL, handled_at = NULL
-          WHERE id = ? AND status = 'respinsa' AND order_id IS NULL",
-        [$id]
-    )->rowCount();
-    if ($redeschisa === 0) {
-        fail('Cererea nu mai este respinsă — altcineva a apucat s-o schimbe. Reîncarcă lista de cereri.', 409, 'already_handled');
+    // REDESCHIDEREA TRECE PRIN POARTA PRAGULUI DE COMENZI NEPLĂTITE (runda
+    // 2.7.0; găsit la recitirea rundei, 5 octombrie 2026).
+    //
+    // O cerere respinsă nu intră în numărătoarea clientului; una „nou”, cu
+    // produse, intră (`plati_situatie()`). Redeschiderea o mută deci din afara
+    // numărătorii înăuntrul ei — exact ce face trimiterea unei cereri noi, pe
+    // care poarta o păzește. Fără poartă aici, clientul ajuns la prag cât i-a
+    // stat cererea respinsă trecea peste el printr-o apăsare a managerului
+    // (care n-are dreptul să treacă peste prag și nici nu afla că o face), iar
+    // două redeschideri apăsate deodată treceau amândouă pe ultimul loc liber.
+    //
+    // Se judecă întocmai ca o cerere nouă: numai cererea CU produse (una fără
+    // produse e o întrebare, nu ține locul unei comenzi) și CU cont (cea fără
+    // cont nu e în numărătoarea nimănui; pragul ei se judecă la acceptare, pe
+    // numele cu care se naște comanda). Celelalte se redeschid ca până acum.
+    //
+    // „Are produse?” se află AICI, înaintea tranzacției: înăuntrul ei, o citire
+    // fără lacăt făcută înaintea porții ar îngheța imaginea bazei, iar
+    // numărătoarea de sub lacătul clientului n-ar mai vedea ce a scris cealaltă
+    // filă. Răspunsul nu se poate învechi până la poartă: pozițiile unei cereri
+    // se scriu o singură dată, la naștere, și nu le mai atinge nimeni.
+    $cuProduse = scalar('SELECT 1 FROM order_request_items WHERE request_id = ? LIMIT 1', [$id]) !== null;
+
+    $pdo        = db();
+    $pragOcolit = null;
+    $pdo->beginTransaction();
+    try {
+        // Rândul cererii, sub lacăt, și starea citită din nou: verificările de
+        // deasupra s-au făcut în afara tranzacției. Lacătul ține și când doi
+        // administratori apasă „Redeschide" în aceeași clipă — al doilea
+        // așteaptă aici și găsește cererea deja „nou”; fără el ar readuce la
+        // „nou" o cerere pe care primul o redeschisese și pe care cineva apucase
+        // s-o accepte, adică tot a doua comandă din aceleași date, pe altă cale.
+        //
+        // Contul vine tot de aici, nu din citirea de sus: o cerere fără cont se
+        // poate lega între timp de contul nou al celui care a trimis-o.
+        $sub = one('SELECT status, order_id, customer_id FROM order_requests WHERE id = ? FOR UPDATE', [$id]);
+        if (!$sub || $sub['status'] !== 'respinsa' || $sub['order_id'] !== null) {
+            $pdo->rollBack();
+            fail('Cererea nu mai este respinsă — altcineva a apucat s-o schimbe. Reîncarcă lista de cereri.', 409, 'already_handled');
+        }
+
+        // Ordinea lacătelor e cea de la acceptare: cerere → client. Între
+        // `beginTransaction()` și poartă stă numai citirea cu lacăt de deasupra,
+        // care nu îngheață imaginea. Cererea de față nu se scoate din
+        // numărătoare: e încă „respinsa”, deci nu se numără pe sine.
+        //
+        // Refuzul iese cu tranzacția dată înapoi și are forma celorlalte porți
+        // (409 `prag_neplatite`): cererea rămâne respinsă, cu motivul ei.
+        if ($cuProduse && $sub['customer_id'] !== null) {
+            $pragOcolit = plati_poarta((int) $sub['customer_id'], $u, $b);
+        }
+
+        // Condiția pe stare rămâne și sub lacăt: e a doua plasă, pentru ziua în
+        // care altcineva ar scrie starea fără să ia rândul.
+        $redeschisa = q(
+            "UPDATE order_requests SET status = 'nou', reject_reason = NULL, handled_by = NULL, handled_at = NULL
+              WHERE id = ? AND status = 'respinsa' AND order_id IS NULL",
+            [$id]
+        )->rowCount();
+        if ($redeschisa === 0) {
+            $pdo->rollBack();
+            fail('Cererea nu mai este respinsă — altcineva a apucat s-o schimbe. Reîncarcă lista de cereri.', 409, 'already_handled');
+        }
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
     }
 
     // Hotărârea s-a desfăcut, deci se șterge și urma ei: cererea e din nou în
     // așteptare, iar un „respinsă de pe telefon" rămas lipit de ea ar minți la
     // prima reclamație — adică tocmai la treaba pentru care există coloana.
     requests_mark_decided($id, null);
+
+    // Trecerea peste prag lasă urmă în jurnal, după commit — v.
+    // `plati_jurnal_ocolire()`.
+    if ($pragOcolit !== null) {
+        plati_jurnal_ocolire($pragOcolit, 'cererea #' . $id . ', redeschisă după un refuz');
+    }
 
     audit('request_reopen', 'request', (string) $id, 'Refuz anulat — ' . $req['customer_name']);
     json_out(['ok' => true]);

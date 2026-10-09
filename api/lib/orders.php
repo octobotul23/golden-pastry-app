@@ -184,10 +184,10 @@ function client_display_name(?string $firma, ?string $nume): string
 /**
  * Ograda de clienți a unui om din echipă.
  *
- * Întoarce `null` pentru cine n-are voie să caute deloc (manager, angajat,
- * client, vizitator), altfel o pereche: `toti` pentru administrator și
- * fondator, iar pentru agentul de vânzări numărul lui, cu care se taie lista
- * la clienții aduși chiar de el.
+ * Întoarce `null` pentru cine n-are voie să caute deloc (angajat, client,
+ * vizitator), altfel o pereche: `toti` pentru cine scrie comenzi (cheia
+ * `comenzi.scrie` din „Acces"), iar pentru agentul de vânzări numărul lui, cu
+ * care se taie lista la clienții aduși chiar de el.
  *
  * STĂ AICI, în `api/lib/`, nu în fișierul de rute, fiindcă routerul încarcă UN
  * SINGUR fișier de rute pe cerere (api/index.php). Regula e nevoie în două
@@ -198,8 +198,10 @@ function client_display_name(?string $firma, ?string $nume): string
 function client_scope_for(array $u): ?array
 {
     $rol = (string) ($u['role'] ?? '');
-    // `GP_ORDER_CREATE_ROLES`, nu `GP_ADMIN_ROLES`: de la 19 septembrie 2026
-    // regula e „cine poate scrie comanda poate căuta clientul". Managerul a
+    // `writes_orders()`, nu `e_admin()`: de la 19 septembrie 2026 regula e
+    // „cine poate scrie comanda poate căuta clientul" — iar din 2.7.0 „cine
+    // poate scrie comanda" se citește din „Acces" (cheia `comenzi.scrie`), nu
+    // dintr-o listă de roluri. Managerul a
     // intrat aici la cererea patronului — „când scrii numele clientului să ai o
     // căutare prin istoricul clienților și să-i poți alege" —, iar deschiderea
     // nu-i arată nimic nou: numele, telefonul și adresa fiecărui client îi trec
@@ -214,7 +216,7 @@ function client_scope_for(array $u): ?array
     // comanda de contul clientului scriind numele — v. lămurirea de la
     // `client_by_name_in_scope()`. Alegerea cu degetul e drumul mai SIGUR
     // dintre cele două: un nume tastat poate nimeri alt cont, un cont ales nu.
-    if (in_array($rol, GP_ORDER_CREATE_ROLES, true)) {
+    if (writes_orders($u)) {
         return ['toti' => true, 'agent' => 0];
     }
     if ($rol === 'agent_vanzari') {
@@ -1593,8 +1595,27 @@ function request_claim_use(string $jeton, int $userId): ?int
  * nu putea nici măcar ARĂTA codul scris pe comandă, darămite să-l
  * corecteze. Lipsește (rămâne null) pe o instalare fără migrarea 008 —
  * coloana nu există, iar `$o[...] ?? null` o trece fără să se plângă.
+ *
+ * @param string $plata Cât din plata comenzii pleacă în JSON (runda 2.7.0,
+ *                      hotărârea patronului din 4–5 octombrie 2026):
+ *                      `''` nimic, `'client'` numai `dePlata`, `'tot'` și
+ *                      starea, scadența, clipa plății, suma și nota. Îl dă
+ *                      `plati_fel()` (api/lib/plati.php), din cine se uită.
+ *
+ * AL TREILEA SECRET, cu steagul lui — și nu e un `bool`, fiindcă are trei
+ * trepte, nu două. Clientul află despre comanda lui un singur lucru: mai e de
+ * plătit sau nu. Că patronul i-a amânat-o, până când, ori că a plătit prin
+ * bancă sunt însemnările casei, nu ale lui. Cine are dreptul `incasari` le
+ * vede pe toate. Restul casei — laboratorul, șoferul, agentul — nu primește
+ * NICI CHEILE: un `plata: null` ar fi spus paginii „există așa ceva, dar nu
+ * pentru tine”, iar un câmp gol ajunge mai devreme sau mai târziu desenat.
+ *
+ * Fără migrarea 032 nu se adaugă nimic, pentru nimeni. Nu costă nicio
+ * interogare în plus: coloanele vin odată cu rândul comenzii (`SELECT *`), iar
+ * un rând adus cu listă fixă de coloane, fără `plata`, rămâne fără chei —
+ * funcția nu se duce după ele.
  */
-function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor = false): array
+function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor = false, string $plata = ''): array
 {
     $orders = array_values(array_filter($orders));
     if (!$orders) {
@@ -1657,8 +1678,20 @@ function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor 
         ))
         : [];
 
-    return array_map(static function (array $o) use ($byOrder, $cuRecomandare, $cuAutor, $primele, $autori) {
-        return [
+    // Plata — v. `@param $plata` din antet. Orice alt cuvânt decât cele două
+    // înseamnă „nimic”: un apelant care greșește argumentul nu are voie să
+    // deschidă din greșeală sertarul cu scadențe.
+    //
+    // Etapa de anulare se citește o dată, aici, nu pe fiecare rând. Nepusă în
+    // Setări (șir gol) înseamnă că nicio comandă nu e anulată — aceeași regulă
+    // ca în `plati_situatie()`, ca steagul de pe comandă și numărătoarea de la
+    // prag să nu spună două lucruri despre aceeași comandă.
+    $cuPlata    = ($plata === 'client' || $plata === 'tot') && plati_supported();
+    $toataPlata = $cuPlata && $plata === 'tot';
+    $anulata    = $cuPlata ? status_cancelled() : '';
+
+    return array_map(static function (array $o) use ($byOrder, $cuRecomandare, $cuAutor, $primele, $autori, $cuPlata, $toataPlata, $anulata) {
+        $rand = [
             'id'           => (int) $o['id'],
             'seq'          => (int) $o['seq'],
             'ref'          => $o['ref'] ?: ('#' . (1000 + (int) $o['seq'])),
@@ -1704,6 +1737,26 @@ function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor 
             'updatedAt'    => $o['updated_at'],
             'items'        => $byOrder[(int) $o['id']] ?? [],
         ];
+
+        // Cheile plății se ADAUGĂ, nu se pun pe `null`: cine n-are voie să le
+        // vadă nu primește nici numele lor (v. antetul). `array_key_exists`
+        // lasă pe dinafară rândul adus fără coloana `plata` — de acolo n-avem
+        // ce spune, iar a ghici „neplătită” ar fi o minciună cu bani.
+        if ($cuPlata && array_key_exists('plata', $o)) {
+            $stare = (string) $o['plata'];
+            if ($toataPlata) {
+                $rand['plata']         = $stare;
+                $rand['plataScadenta'] = $o['plata_scadenta'] ?? null;
+                $rand['plataLa']       = $o['plata_la'] ?? null;
+                $rand['plataSuma']     = isset($o['plata_suma']) ? round((float) $o['plata_suma'], 2) : null;
+                $rand['plataNota']     = $o['plata_nota'] ?? null;
+            }
+            // „De plătit” = neîncasată ȘI neanulată: o comandă anulată nu mai
+            // e datorie, oricum i-ar fi rămas bifa.
+            $rand['dePlata'] = in_array($stare, GP_PLATI_NEINCASATE, true)
+                && ($anulata === '' || (string) $o['status'] !== $anulata);
+        }
+        return $rand;
     }, $orders);
 }
 
@@ -2044,4 +2097,125 @@ function stock_reserve_order(int $orderId): int
     }
 
     return $scrise;
+}
+
+/* ------------------------------------------- arhiva comenzilor șterse -- */
+
+/**
+ * A fost importată migrarea 035, cea a comenzilor șterse?
+ *
+ * Aceeași poartă ca `request_claim_supported()` și `request_key_supported()` de
+ * mai sus, din același motiv: fișierele urcă pe server înaintea importului, iar
+ * în fereastra aceea o interogare pe `orders_deleted` ar cădea cu „1146 Table
+ * doesn't exist". Aici paguba ar fi fost dublă: `DELETE /orders/#` ar fi dat
+ * 500 în loc să spună ce lipsește, iar Jurnalul — care caută în arhivă orice
+ * comandă pe care n-o mai găsește în `orders` — ar fi căzut la fiecare rând
+ * vechi deschis, adică ar fi stricat o pagină care mergea.
+ *
+ * Cade ÎNCHIS, și aici „închis" înseamnă „nu se șterge nimic": fără tabel nu
+ * are unde rămâne poza, iar o ștergere fără urmă e exact ce n-a vrut patronul
+ * (runda 2.7.0, 4 oct. 2026: „dacă văd ștergerea, să pot vedea ce era
+ * comanda"). Ruta răspunde 503 și numește migrarea; Jurnalul merge ca ieri.
+ *
+ * NICIO interogare pe `orders_deleted` n-are voie să plece înaintea întrebării
+ * ăsteia. Ținută minte pe cerere: Jurnalul o pune de două ori la aceeași
+ * deschidere de rând (legătura spre cerere, apoi lămurirea lucrului).
+ */
+function comenzi_sterse_supported(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        return $ok = ((int) scalar(
+            "SELECT COUNT(*) FROM information_schema.TABLES
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders_deleted'"
+        ) === 1);
+    } catch (Throwable $e) {
+        error_log('[gp] nu pot verifica arhiva comenzilor șterse: ' . $e->getMessage());
+        return $ok = false;
+    }
+}
+
+/**
+ * Versiunea formei în care se scrie poza unei comenzi șterse (cheia `v`).
+ *
+ * Poza se scrie o dată și se citește ani la rând. Când forma ei se schimbă —
+ * o cheie redenumită, pozițiile așezate altfel —, numărul urcă, iar cititorul
+ * din Jurnal (`log_poza_comenzii()`, api/routes/log.php) știe că are în față o
+ * poză pe care n-o mai înțelege și spune „nu pot arăta ce era" în loc să arate
+ * pe jumătate. O coloană NOUĂ în `orders` nu schimbă forma: rândurile intră
+ * întregi, iar cititorul ia din ele numai ce cunoaște.
+ */
+const GP_POZA_COMANDA_V = 1;
+
+/**
+ * Poza unei comenzi, făcută chiar înainte să fie ștearsă: textul JSON care
+ * intră în `orders_deleted.snapshot`.
+ *
+ * RÂNDURILE INTRĂ ÎNTREGI, cum au venit din `SELECT *` — nu pe o listă de
+ * coloane scrisă cu mâna. O listă ținută minte rămâne în urmă la prima migrare
+ * care mai pune o coloană, iar aici ce lipsește nu se mai poate lua de nicăieri:
+ * rândul din `orders` și pozițiile lui pleacă în clipa următoare. Așa intră în
+ * poză și starea plății (`plata…`, migrarea 032) și treptele de preț (028),
+ * fără ca funcția asta să fi auzit de ele.
+ *
+ * Din cerere se iau numai patru câmpuri, dinadins: cererea NU se șterge, deci
+ * rândul ei rămâne de citit în `order_requests`. Aici e doar cât să se știe din
+ * ce s-a născut comanda și când.
+ *
+ * Numele celui care șterge și al celui care a scris comanda stau ca TEXT, nu
+ * doar ca număr de cont: poza trebuie să rămână de citit și după ce conturile
+ * acelea nu mai există (același motiv ca la `audit_log.user_label`).
+ *
+ * POZA NU SE TAIE ȘI NU SE CÂRPEȘTE. `json_body()` (api/lib/http.php) înlocuiește
+ * octeții stricați cu semnul de întrebare al Unicodului, fiindcă un răspuns
+ * trebuie să ajungă oricum la om; o urmă n-are voie să fie altceva decât ce era
+ * în bază. Dacă `json_encode` nu poate scrie, funcția ARUNCĂ: ruta e în
+ * tranzacție, tranzacția se desface, comanda rămâne neatinsă, iar omul primește
+ * 500. O ștergere fără poză ar fi fost tocmai ce n-a vrut patronul.
+ *
+ * @param array<string, mixed>             $o        rândul din `orders`, întreg
+ * @param array<int, array<string, mixed>> $pozitii  rândurile din `order_items`, în ordinea `id`
+ * @param array<string, mixed>|null        $comision rândul din `referral_commissions`, întreg
+ * @param array<string, mixed>|null        $cerere   rândul din `order_requests` (se iau patru câmpuri)
+ * @param array<string, mixed>             $cont     contul care șterge (`id`, `name`, `role`)
+ * @param string                           $clipa    „AAAA-LL-ZZ HH:MM:SS", UTC, ca restul bazei
+ */
+function comanda_stearsa_poza(
+    array $o,
+    array $pozitii,
+    ?array $comision,
+    ?array $cerere,
+    ?string $scrisaDe,
+    array $cont,
+    string $clipa
+): string {
+    $poza = json_encode([
+        'v'         => GP_POZA_COMANDA_V,
+        'comanda'   => $o,
+        'pozitii'   => array_values($pozitii),
+        'comision'  => $comision,
+        'cerere'    => $cerere === null ? null : [
+            'id'            => (int) $cerere['id'],
+            'status'        => $cerere['status'] ?? null,
+            'created_at'    => $cerere['created_at'] ?? null,
+            'customer_name' => $cerere['customer_name'] ?? null,
+        ],
+        'scrisaDe'  => $scrisaDe,
+        'stearsaDe' => [
+            'id'   => (int) $cont['id'],
+            'nume' => (string) ($cont['name'] ?? ''),
+            'rol'  => (string) ($cont['role'] ?? ''),
+        ],
+        'stearsaLa' => $clipa,
+    ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+    if ($poza === false) {
+        throw new RuntimeException(
+            'poza comenzii ' . ($o['id'] ?? '?') . ' nu s-a putut scrie: ' . json_last_error_msg()
+        );
+    }
+    return $poza;
 }

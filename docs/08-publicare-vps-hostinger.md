@@ -24,7 +24,8 @@ Scriptul din rădăcina proiectului face singur tot ce urmează în ghid: instal
 Apache + PHP + MySQL, creează baza și utilizatorul cu parolă generată, copiază
 pachetul în cele patru foldere, scrie gazdele virtuale, generează
 `api/config.php` (cheie de criptare, cod de instalare, `photo_dir`, cookie pe
-`.domeniu`), importă schema și cere certificatele.
+`.domeniu`), importă schema, pune ceasul plăților (pasul 6b) și cere
+certificatele.
 
 Urci pe VPS `deploy/`, `sql/` și scriptul, unul lângă altul, apoi:
 
@@ -88,7 +89,7 @@ Așteaptă să se propage înainte de pasul cu certificatele. Verifici cu
 
 ```bash
 apt update && apt upgrade -y
-apt install -y apache2 mysql-server unzip \
+apt install -y apache2 mysql-server unzip cron \
   php php-mysql php-mbstring php-curl php-xml php-zip php-gd libapache2-mod-php
 a2enmod rewrite headers expires
 systemctl restart apache2
@@ -101,6 +102,17 @@ ufw --force enable
 Verifici versiunea: `php -v` trebuie să arate 8.3 sau mai nou (aplicația cere
 minim 8.0). Extensiile obligatorii: `pdo_mysql`, `openssl`, `mbstring`, `curl`,
 `json`, `filter`.
+
+`cron` e în listă de la 2.7.0, și nu de formă: e ceasul serverului, cel care
+pornește singur, din cinci în cinci minute, verificarea raportului de încasări
+(pasul 6b). Pe un Ubuntu întreg e deja pus și atunci `apt` doar trece pe lângă
+el; pe unul pornit dintr-o imagine minimală poate lipsi, iar fără el raportul
+de bani nu pleacă niciodată. Paginile aplicației n-au de unde ști asta. O spune
+scriptul de instalare, la pasul „Ceasul plăților”: pe roșu când lipsește până
+și folderul `/etc/cron.d`, pe galben când folderul e, dar programul `cron`
+lipsește ori stă oprit. Pagina de verificare de la pasul 8 vede numai dacă
+fișierul ceasului e scris, nu și dacă `cron` rulează; asta se vede în jurnal,
+cum scrie la pasul 6b.
 
 Cele trei module Apache nu sunt de formă:
 
@@ -211,11 +223,11 @@ De la runda 2.6.0, în `deploy/public_html/` stă și folderul **`fise/`**: cele
 laturii congelate (`fisa-tehnica-rolldog-congelat.pdf` și celelalte). Pleacă
 numai la magazin, cu `public_html/`; `lab/` și `clienti/` n-au copie, iar
 `.htaccess`-ul lor trimite orice cerere `fise/…` la `goldenpastry.ro` cu un
-302, la fel ca pe cele pentru poze (`.claude/build-deploy.mjs:568-576`).
+302, la fel ca pe cele pentru poze (`.claude/build-deploy.mjs:582-590`).
 `.htaccess`-ul magazinului le dă PDF-urilor tipul `application/pdf`, le cere
 browserului să întrebe de fiecare dată dacă fișa s-a schimbat (`no-cache`) și
 le ține în afara Google (`X-Robots-Tag: noindex`) — blocul „fișele tehnice
-(PDF)” din `HT_SEO` (`:478`). Pe `api/` nu ajunge nimic din toate astea.
+(PDF)” din `HT_SEO` (`:492`). Pe `api/` nu ajunge nimic din toate astea.
 
 Pe server:
 
@@ -267,12 +279,13 @@ tabele ca să ghicești:
 mysql -u root -p gp -e "SELECT fisier, aplicata_la FROM schema_migrations ORDER BY fisier"
 ```
 
-Verifici: **25 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
+Verifici: **28 de tabele**, iar `products` cu 22 de rânduri. Dacă ies mai
 puține, numele care lipsește îți spune care migrare n-a intrat:
 `referral_commissions` e din `008`, `founder_invites` din `009`, `lab_shifts`
 din `014`, `lab_messages` din `015`, `request_claims` din `019`,
-`telegram_links` și `lab_production` din `021`, iar `schema_migrations` din
-`025`. Fără `referral_commissions`, pagina „Recomandări" răspunde „Eroare
+`telegram_links` și `lab_production` din `021`, `schema_migrations` din
+`025`, `role_rights` din `033`, `stock_item_prices` din `034`, iar
+`orders_deleted` din `035`. Fără `referral_commissions`, pagina „Recomandări" răspunde „Eroare
 internă"; fără `lab_shifts` și `lab_messages`, „Pontaj" și tabla de anunțuri
 din Panoul Laborator răspund lămurit că lipsește migrarea — vezi
 `lab_supported()` și `lab_board_supported()`. Iar dacă lipsește chiar
@@ -302,8 +315,9 @@ toate cheile lipsă numite (`unknown_setting`), și nu scrie nimic din ea.
 
 `016_zona_cont.sql` nu se vede în numărul de tabele: ea aduce o **coloană**
 (`users.zone`) și încă o zonă în lista de livrare. O verifici în aplicație, nu
-în `SHOW TABLES` — Setări → Zone trebuie să aibă „În afara Bucureștiului și
-Ilfovului" la coada listei, **fără coordonate**, iar formularul de cont nou din
+în `SHOW TABLES` — în Setări, pe fila „Liste”, „Zone de livrare” trebuie să
+aibă „În afara Bucureștiului și Ilfovului" la coada listei, **fără
+coordonate**, iar formularul de cont nou din
 „Conturi" trebuie să aibă caseta „Zona". Fără ea, zona de pe cont răspunde 503
 cu un mesaj care spune limpede ce lipsește, iar restul aplicației merge mai
 departe.
@@ -508,6 +522,62 @@ după nu mai pune la loc o fișă pe care ai scos-o din Catalog. Fără
 coloane, magazinul nu arată butonul fișei la niciun produs, iar încărcarea
 unei fișe e refuzată cu un mesaj care numește migrarea.
 
+`032_plati_si_prag.sql` **nu se vede nici ea** în numărul de tabele: opt
+coloane, două indexuri și opt rânduri în `settings`. Pe `orders` stau cele
+șapte coloane ale plății — de la `plata` la `plata_amintire_la` —, iar pe
+`users`, `prag_neplatite`. Numărul rămâne tot **25**, iar dovada se cere din
+`settings`, pe semnul pe care migrarea și-l scrie la coadă:
+
+```sql
+SELECT value FROM settings WHERE setting_key = 'migration_032_plati_si_prag';
+```
+
+Rândul poartă data rulării și e zăvorul celor doi pași ai ei care scriu date.
+Întâi, comenzile aflate la etapa finală, cu ziua trecută, sunt trecute o dată
+drept plătite; pe o instalare nouă n-are ce judeca — nu e încă nicio comandă.
+Apoi, vederea cu care se deschide magazinul pe telefon și tabletă
+(`catalog_vedere_telefon`, semănată de `028` cu `unu`) e trecută pe `patru`:
+de aceea, pe o instalare nouă, magazinul pornește pe „Patru pe ecran” și pe
+telefon, și pe calculator. Ce aduce: starea plății fiecărei comenzi — neplătită,
+amânată, plătită ori plătită prin bancă; comanda nouă se naște neplătită — și
+pragul de comenzi neplătite: cel general, `plati_prag_implicit`, semănat cu
+**2**, și cel de pe cont, `prag_neplatite`, gol din pornire, adică „pragul
+general”. Tot ea seamănă chatul și orele raportului de bani
+(`plati_telegram_chat_id`, gol, și `plati_raport_ore`, „09:00,18:00”) și adresa
+panoului (`panel_base_url`); pe toate le alegi din „Încasări”, la pasul 8d.
+Cele două indexuri, `ix_orders_plata` și `ix_orders_plata_la`, sunt de felul
+lui `020`: doar grăbesc. Fără migrare, casa vinde ca înaintea ei — niciun prag
+nu oprește vreo comandă —, iar „Încasări” și tot ce arată ori schimbă plata
+răspund lămurit că plățile nu sunt pornite, cu numele fișierului în frază.
+Ceasul de la pasul 6b nu se supără nici el: scrie în jurnalul lui că baza nu
+are încă plățile și nu trimite nimic.
+
+`033_acces.sql` **se vede** în numărul de tabele: ea aduce `role_rights`, al
+douăzeci și șaselea. Acolo stau bifele pe care fondatorul le mută în „Acces” —
+cine intră pe ce panou și cine face ce faptă —, și numai cele schimbate față de
+pornire. Tabelul se naște gol, iar gol înseamnă că fiecare rol intră unde îl
+lasă codul din pornire: pe o instalare nouă n-ai nimic de făcut. Fără tabel,
+rolurile intră tot așa, dar o bifă mutată n-are unde se scrie: pagina „Acces”
+se deschide numai de citit, sub caseta „Bifele nu se pot muta încă.”, care
+numește fișierul migrării.
+
+`034_costuri.sql` **se vede** și ea: aduce `stock_item_prices`, al douăzeci și
+șaptelea — istoricul prețurilor de cumpărare ale articolelor din depozit, cu
+ziua de la care e bun fiecare. Se naște gol: migrarea nu scrie niciun preț.
+Fără tabel, prețurile n-au unde se scrie, deci costul unui produs n-are din ce
+se socoti: fila „Prețuri” din Depozit arată, în locul listei, fraza serverului
+cu numele fișierului. Articolele, rețetele și mișcările din depozit nu cer
+tabelul și merg fără el.
+
+`035_comenzi_sterse.sql` **se vede** și ea: aduce `orders_deleted`, al douăzeci
+și optulea. E o arhivă — poza unei comenzi anulate care a fost apoi ștearsă, cu
+cine a șters-o și când —, fără nicio cheie străină, dinadins: o cheie spre
+client ar fi șters poza odată cu clientul ori i-ar fi golit câmpul, iar arhiva
+trebuie să rămână întreagă tocmai după ce clientul ori contul acela nu mai
+există. Se naște goală. Fără tabel, anularea unei comenzi merge, dar „Șterge
+definitiv” e refuzat cu numele fișierului în frază, fiindcă poza n-ar avea unde
+rămâne. După ea, numărul e cel de sus: **28**.
+
 ---
 
 ## 5b. Urcarea cu WinSCP
@@ -599,6 +669,20 @@ Ce schimbi față de exemplu:
 `allowed_origins` conține deja cele patru adrese de producție; scoate liniile
 `http://*.gp.test` de dezvoltare.
 
+De la 2.7.0, exemplul are și o cheie pe care **o lași cum e**:
+`'telegram_api_base' => ''`. Ea spune la ce adresă pleacă mesajele de Telegram,
+iar goală ori lipsă înseamnă Telegramul adevărat, `https://api.telegram.org` —
+singura valoare bună pe server. Cheia există numai pentru probele de pe
+calculatorul de lucru, care o îndreaptă spre un primitor local, ca rapoartele
+de încasări trimise de ele să poată fi numărate fără să ajungă pe telefonul
+cuiva. Stă în fișier, și nu în Setări, dinadins: la adresa aceea călătorește,
+cu fiecare mesaj, tokenul botului. Ce stă în Setări se schimbă dintr-un ecran,
+de către oricine are dreptul lui, pe când `config.php` îl scrie numai cine are
+deja serverul în mână. Dacă rămâne din greșeală o adresă în ea, pagina de
+verificare de la pasul 8 o arată, la rândul „Adresa Telegramului”, iar ceasul
+de la pasul 6b o scrie la coada rândului din jurnalul lui, de fiecare dată când
+trimite ceva.
+
 Apoi:
 
 ```bash
@@ -608,6 +692,156 @@ mkdir -p /var/www/gp/public_html/products
 chown -R www-data:www-data /var/www/gp/public_html/products
 chmod 755 /var/www/gp/public_html/products
 ```
+
+---
+
+## 6b. Ceasul plăților
+
+De la 2.7.0, aplicația are un lucru care **rulează singur, fără să fie cineva
+pe site**: raportul de încasări de pe Telegram și amintirile pentru plățile
+amânate. Până la ea, tot ce făcea serverul pornea dintr-o apăsare — a unui
+client, a unui om din laborator, a ta. Un raport „la 09:00” n-are cine să-l
+apese, așa că îl pornește ceasul sistemului, `cron`: din cinci în cinci minute
+rulează un fișier din pachet, `api/cron/plati.php`, care se uită la ceasul
+României și se întreabă dacă a venit vreuna din orele alese în „Încasări”.
+
+`instaleaza-vps.sh` pune ceasul singur, la pasul „Ceasul plăților”, după ce a
+scris `config.php` și a așezat drepturile. Cu mâna, e un singur fișier,
+`/etc/cron.d/goldenpastry-plati`, cu exact aceste trei rânduri:
+
+```
+# Golden Pastry: raportul de încasări și amintirile de scadență, pe Telegram.
+# Scris de scripturile de instalare și de actualizare; nu se editează de mână.
+*/5 * * * * www-data flock -n /run/lock/gp-plati.lock php /var/www/gp/api/cron/plati.php 2>&1 | logger -t gp-plati
+```
+
+```bash
+chown root:root /etc/cron.d/goldenpastry-plati
+chmod 644 /etc/cron.d/goldenpastry-plati
+systemctl enable --now cron
+```
+
+Fiecare bucată din rândul al treilea are rostul ei. `*/5 * * * *` înseamnă
+„din cinci în cinci minute”. `www-data` e contul sub care rulează, același cu
+al serverului web — singurul, în afară de `root`, care are voie să citească
+`config.php`. `flock -n` ține un lacăt cât durează o rulare: dacă Telegram nu
+răspunde și una ține mai mult de cinci minute, următoarea nu pornește peste ea.
+`logger -t gp-plati` trimite în jurnalul sistemului tot ce tipărește ceasul;
+fără el, `cron` ar încerca să trimită ieșirea pe e-mail, unui server care n-are
+poștă. Calea e cea a folderului de instalare: dacă ai instalat cu `--dir` în
+altă parte, scriptul scrie în rând folderul acela.
+
+Scriptul scrie fișierul **numai dacă textul de pe server diferă** de cel de mai
+sus. La rularea în care îl pune, spune
+`/etc/cron.d/goldenpastry-plati — scris (din 5 în 5 minute; se citește cu: journalctl -t gp-plati)`;
+la toate cele de după, `/etc/cron.d/goldenpastry-plati — neschimbat`.
+`actualizeaza-vps.sh` scrie același text, literă cu literă, tocmai ca niciunul
+dintre cele două scripturi să nu-l rescrie pe al celuilalt. De aceea fișierul
+nu se editează de mână: orice ai schimba în el, rularea următoare a oricăruia
+dintre scripturi îl întoarce la textul de mai sus.
+
+Sunt trei pricini din care scriptul **nu** pune ceasul, și le spune pe roșu,
+fără să oprească instalarea; toate trei se încheie cu „Ceasul NU a fost pus”.
+Întâi, un folder de instalare cu spații ori cu alte semne pe care `cron` le
+citește altfel decât terminalul — scriptul primește în cale numai litere, cifre
+și semnele `_`, `.`, `-` și `/`. Atunci rândul rămâne de scris de mână, iar până
+atunci, spune scriptul, „rapoartele de încasări nu vor pleca”; scris întocmai
+ca mai sus s-ar strica însă la fel, deci calea se pune între ghilimele drepte,
+iar fiecare `%` din ea se scrie `\%`. Mai simplu e să instalezi de la început
+într-un folder fără asemenea semne, cum e cel din pornire, `/var/www/gp`. Apoi,
+un pachet fără `api/cron/plati.php`, adică unul mai vechi de 2.7.0. Și un
+server fără folderul `/etc/cron.d`, caz în care îți dă și comanda care îl
+aduce, `apt-get install -y cron`, după care rulezi scriptul încă o dată.
+
+Mai e o capcană, și scriptul o caută anume: **fișierul nu e ceasul.** Folderul
+`/etc/cron.d` există și pe un server fără `cron` — îl aduc alte pachete —, deci
+rândul se poate scrie fără să-l citească nimeni, niciodată. De aceea, după
+scriere, scriptul întreabă de program și de serviciu. Dacă programul lipsește,
+scrie pe galben „Rândul e scris, dar serverul nu are programul cron: ceasul NU
+merge.” și comanda care îl pune. Dacă programul e, îl pornește și îl lasă
+pornit la fiecare repornire a mașinii, apoi spune „serviciul cron merge”; dacă
+tot nu merge, „Rândul e scris, dar serviciul cron e oprit: ceasul NU merge.”,
+cu `systemctl status cron` ca să vezi de ce.
+
+**Ce înseamnă pentru tine.** Din pornire, raportul pleacă la 09:00 și la 18:00,
+ora României, dar numai după ce ai ales chatul în care să vină — pasul 8d. Până
+atunci ceasul bate în gol și nu e nimic stricat: la fiecare cinci minute scrie
+în jurnal de ce tace și nu trimite nimic.
+
+Dacă serverul e oprit la ora raportului, raportul nu se pierde pe loc. La prima
+bătaie de după repornire, ceasul vede că ora a trecut și trimite raportul
+atunci — dar numai dacă au trecut mai puțin de **două ore** de la ea. De la
+două ore în sus îl sare, iar următorul vine la ora următoare: un raport „de dimineață”
+sosit după-amiaza ar spune o poveste veche cu aer de proaspătă. Tot așa sunt
+prinse și orele de dinaintea miezului nopții: una pusă la 23:30 e trimisă și la
+00:10, dacă atunci s-a trezit serverul.
+
+Același raport nu pleacă niciodată de două ori. Înainte să trimită, ceasul își
+însemnează în bază că ora aceea e luată, și abia apoi trimite; rularea de peste
+cinci minute găsește însemnarea și trece mai departe. Prețul alegerii e spus pe
+față în jurnal: dacă trimiterea pică tocmai atunci — Telegram nu răspunde —,
+raportul acela **nu se mai încearcă**. Rămâne scris ca neplecat, cu pricina
+lui, în „Încasări”, la „Ultimele trimiteri”, și îl poți cere pe loc cu
+„Trimite acum un raport de probă”. Ordinea pe dos ar fi fost mai rea: un raport
+trimis și neînsemnat ar fi plecat din nou la fiecare cinci minute, două ore la
+rând, cu lista datornicilor de fiecare dată.
+
+**Cum vezi că merge.** În trei locuri, de la cel mai apropiat de ceas la cel
+mai apropiat de tine. Întâi jurnalul sistemului, pe server:
+
+```bash
+journalctl -t gp-plati -n 20
+```
+
+Trebuie să vezi câte un rând la fiecare cinci minute:
+`plati 2026-10-12 09:00 · raportul de la 09:00 a plecat` când a trimis,
+`… · nimic de trimis` între ore, `… · oprit: Raportul de bani nu are chat. …`
+cât n-ai ales chatul. În fața fiecăruia, `journalctl` pune ceasul serverului,
+care poate fi altul decât al României; data și ora României sunt cele de după
+cuvântul `plati`. Niciun rând nou de mai mult de cinci minute înseamnă că
+`cron` nu rulează: `systemctl status cron`.
+
+Apoi o rulare de probă, care **nu trimite și nu însemnează nimic** — numai
+tipărește ce ar pleca dacă ar fi ora:
+
+```bash
+sudo -u www-data php /var/www/gp/api/cron/plati.php --uscat --acum="2026-10-12 09:02"
+```
+
+La `--acum` scrii ziua în care ești și o oră de raport, în ceasul României;
+fără el, ceasul judecă pentru clipa de față și, între ore, răspunde doar „nimic
+de trimis”. Tot „nimic de trimis” răspunde și dacă raportul orei aceleia a
+plecat deja în ziua scrisă: fiecare oră se trimite o singură dată pe zi, iar
+proba ține seama de asta. Scrie atunci ziua de mâine: textul tipărit e socotit
+pentru ziua scrisă, nu pentru cea în care ești. Cât n-ai ales chatul, și
+rularea de probă spune tot „oprit: Raportul de bani nu are chat. …”, deci proba
+cu textul raportului se face după pasul 8d. Rulează-l ca `www-data`, nu ca
+`root`: așa afli și dacă acel cont poate citi `config.php`, adică exact ce i se
+cere ceasului adevărat.
+
+Al treilea loc e pagina de verificare de la pasul 8, la rândul „Ceasul plăților
+(raportul de încasări pe Telegram)”, iar după ce ai intrat în panou, lista
+„Ultimele trimiteri” din „Încasări”.
+
+**Cum îl oprești.** Dacă nu vrei rapoarte, nu umbla la server: în „Încasări”,
+la cardul „Raport pe Telegram”, apasă „Oprește” la „Ora 1” și la „Ora 2”,
+stinge „Amintiri la Amânate” și apasă „Salvează”. Ceasul bate mai departe, dar
+scrie „oprit: nicio oră de raport aleasă, iar amintirile sunt oprite” și nu
+trimite nimic; îl pornești la loc scriind orele înapoi. Dacă vrei să taci
+ceasul însuși — muți aplicația, ții serverul în reparație —, ștergi fișierul:
+
+```bash
+rm -f /etc/cron.d/goldenpastry-plati
+```
+
+Nu se pierde nimic: orele și chatul stau în bază, nu în fișier. Îl pune la loc
+următoarea rulare a lui `actualizeaza-vps.sh` ori a lui `instaleaza-vps.sh`, fie
+că vrei, fie că nu — deci, dacă vrei să rămână oprit și după o actualizare,
+oprește orele din „Încasări”, nu fișierul.
+
+Prin browser, ceasul nu se poate porni. Fișierul lui stă în folderul publicat,
+deci are o adresă, dar cerut pe ea răspunde 404 și nu face nimic: altfel oricine
+i-ar fi aflat adresa ar fi putut porni un raport.
 
 ---
 
@@ -639,6 +873,14 @@ Trebuie să iasă totul verde. Dacă nu:
 | Lipsesc tabele | reia importul din pasul 3; dacă baza e mai veche, rulează migrarea care lipsește din `sql/` |
 | Cheia de criptare | în `config.php` nu sunt exact 64 de caractere hexazecimale |
 | Conexiune HTTPS: nu | `certbot` n-a terminat (pasul 7), sau `.htaccess` lipsește din folder |
+| Ceasul plăților (raportul de încasări pe Telegram): „nepus: lipsește /etc/cron.d/goldenpastry-plati” | fișierul de la pasul 6b n-a fost scris: scrie-l, ori rulează din nou `instaleaza-vps.sh` |
+| Ceasul plăților: „nepus: serverul nu are cron (/etc/cron.d)” | `apt-get install -y cron`, apoi pasul 6b |
+| Adresa Telegramului: „mutată din config.php spre …” | în `api/config.php`, golește `telegram_api_base` (pasul 6): cu ea pusă, niciun mesaj — nici de comandă, nici raportul de bani — nu ajunge la Telegramul adevărat |
+
+Rândul ceasului e verde și când scrie „pus, din 5 în 5 minute · chatul banilor
+nu e ales, deci nu pleacă nimic”: la instalare așa și trebuie, fiindcă chatul îl
+alegi abia la pasul 8d. Rândul „Adresa Telegramului” nu apare deloc pe un
+server pus cum trebuie — se arată numai când cheia are ceva în ea.
 
 **Șterge `verifica.php` după ce totul e verde:**
 
@@ -666,6 +908,14 @@ Primul câmp este **codul de instalare** — cel pe care l-ai pus la pasul 6 în
 Parola trebuie să aibă minimum 10 caractere; e contul cu drepturi depline peste
 comenzi, conturi și setări, deci nu o refolosi de altundeva.
 
+De la 2.7.0, „drepturi depline” nu mai înseamnă chiar tot. Contul făcut aici e
+un **administrator**, iar tot ce ține de bani — paginile „Încasări” și
+„Statistici”, prețurile din Depozit, costul din rețete — e din pornire numai al
+**fondatorului**. Pagina „Acces”, cea cu bifele pe roluri, e a lui și a nimănui
+altcuiva, orice s-ar bifa: din ea se dau toate celelalte. Cum ajunge contul
+ăsta fondator e scris la pasul 8d; până atunci intrările acelea nu-ți apar în
+meniu, și nu e o stricăciune.
+
 Dacă pagina îți spune că nu e pus niciun cod de instalare, deschide
 `/var/www/gp/api/config.php`, completează `install_code` cu un cod de cel puțin
 12 caractere, salvează și reîncarcă.
@@ -681,7 +931,7 @@ poate crea niciun cont.
 > deschid panourile de lucru de pe tabletele din laborator, fără cont
 > individual. Se păstrează criptat, deci **nu mai poate fi afișat niciodată** —
 > nici de pagina asta, nici din Setări. Dacă îl pierzi, pui pur și simplu altul
-> din *Setări → Acces*.
+> din *Setări → Tableta*.
 >
 > Codul nu mai e o valoare fixă, aceeași la orice instalare: una fixă ar fi
 > însemnat că oricine a citit proiectul poate deschide panourile tale.
@@ -727,19 +977,106 @@ Dacă pasul 3 merge, partea grea e gata: datele chiar circulă între dispozitiv
 
 ## 8d. Primele setări
 
-**`lab.goldenpastry.ro/setari`**, cu contul de administrator.
+**`lab.goldenpastry.ro/setari`**, cu contul de administrator. Filele, în ordinea
+în care stau pe ecran:
 
-- **General** — numele firmei, telefonul, adresa de contact.
+- **General** — numele firmei, telefonul, adresa de contact. La „E-mail public”
+  pune o adresă pe care o deschizi chiar tu: e adresa de contact de pe site,
+  dar tot la ea pleacă, puțin mai jos, linkul care îți face contul fondator.
 - **Notificări** — adresa pe care vrei să primești comenzile noi, apoi
   **Trimite e-mail de test**. Pentru WhatsApp, pașii sunt în
-  [02-panoul-de-setari.md](02-panoul-de-setari.md).
-- **Acces** — aici schimbi codul tabletelor. Cel de la instalare merge deja;
+  [02-panoul-de-setari.md](02-panoul-de-setari.md). Tot aici stă botul de
+  Telegram al comenzilor; raportul de bani de mai jos pleacă prin același bot,
+  deci fără tokenul lui nu pleacă nici raportul.
+- **Liste** — etapele, intervalele și zonele, dacă ale tale diferă.
+- **Tableta** — aici schimbi codul tabletelor. Cel de la instalare merge deja;
   pune altul când pleacă cineva din echipă, sau dacă l-ai pierdut. Codul nu se
   poate afișa — se păstrează criptat — deci câmpul arată doar dacă există unul.
   Cât timp nu e configurat niciunul, tabletele nu pot deschide panoul: serverul
   răspunde „Codul panoului nu este configurat", adică poarta stă închisă, nu
-  deschisă.
-- **Liste** — etapele, intervalele și zonele, dacă ale tale diferă.
+  deschisă. Până la 2.7.0 fila asta se numea „Acces”; numele l-a luat pagina
+  fondatorului, cea cu bifele pe roluri, iar aici a rămas numai codul.
+
+**Fă-ți contul fondator, cât ești singurul administrator.** Contul de la pasul
+8b e un administrator, iar de la 2.7.0 tot ce ține de bani e, din pornire,
+numai al fondatorului, ca și pagina „Acces”. Cât nu există un fondator, intrările
+acelea nu apar în meniul nimănui, iar pragul de comenzi neplătite, de care e
+vorba mai jos, nu-l poate muta nimeni.
+
+Dreptul de fondator nu se ia, se cere. În „Parola mea”, la cardul „Contul de
+fondator”, apeși „Cere drept de fondator”: pleacă un e-mail la adresa de la
+„E-mail public”, cu un link bun o singură dată, din pornire vreme de 60 de
+minute. Îl deschizi, apeși „Confirm — fă-l fondator”, și contul e fondator. De
+aici vine ordinea de mai sus — întâi adresa din General și proba de e-mail din
+Notificări, apoi cererea. Fără adresă, pagina spune „Nu e trecută nicio adresă
+de e-mail a firmei în Setări → General. Linkul de confirmare n-are unde să
+plece.”; dacă e-mailul nu poate pleca, spune „Cererea s-a înregistrat, dar
+e-mailul n-a putut fi trimis. Verifică setările de e-mail, apoi cere din nou.”,
+și ceri din nou după ce proba de e-mail trece.
+
+Fă asta înainte să faci alt administrator. Cât ești singurul, serverul te lasă
+să ceri dreptul chiar dacă adresa firmei ai scris-o tu; din clipa în care mai
+există un administrator, cere ca adresa s-o fi scris altcineva decât cel care
+cere, fiindcă altfel linkul s-ar întoarce în mâna lui. Un drept de fondator dat
+se ia înapoi din „Conturi”, de către alt fondator, schimbând rolul contului;
+ultimul fondator nu poate fi scos.
+
+**`lab.goldenpastry.ro/incasari`**, cu contul devenit fondator. Sunt trei
+lucruri de hotărât aici înainte să dai conturi clienților, toate noi în 2.7.0.
+
+**Pragul.** La „Pragul pentru toți clienții” stă câte comenzi neplătite poate
+avea un client până când comenzile noi i se opresc. Instalarea îl pune pe
+**2**, și e bine să știi ce numără: o comandă e „neplătită” din clipa în care e
+scrisă, nu abia după livrare, iar o cerere cu produse, încă neacceptată, se
+numără și ea. Cu pragul 2, a doua intră, iar la a treia clientul citește
+„Numărul maxim de comenzi a fost atins. Până plătești soldul comenzilor
+precedente nu putem primi o comandă nouă. Contactează-ne pentru mai multe
+detalii.” Se numără numai comenzile legate de un cont de client; cele scrise pe
+un nume fără cont nu opresc pe nimeni. Dacă ai clienți care comandă în fiecare
+zi și plătesc mai rar, 2 e prea puțin: scrie cifra ta — **0 înseamnă fără
+limită** — și apasă „Salvează pragul”. Se desface la fel, scriind cifra
+dinainte; schimbarea nu atinge nicio comandă deja scrisă, numai pe următoarea.
+Din pornire, peste prag poate trece numai fondatorul, cu o confirmare, iar
+trecerea se scrie în Jurnal.
+
+**Raportul pe Telegram.** La cardul „Raport pe Telegram” scrii la „Chat ID”
+numărul grupului în care vrei cifrele — **alt grup decât cel al comenzilor**;
+pe același, salvarea e refuzată cu „Raportul de bani are chatul lui, altul
+decât cel al comenzilor.” Botul e același, deci trebuie adăugat și în grupul
+ăsta. Numărul unui grup nu e numele lui: are numai cifre și, la grupuri, un
+minus în față, ca în pilda dată de server, `-1001234567890`, și se scrie cu
+minus cu tot; orice altceva e refuzat la salvare, cu o frază care începe cu
+„Chatul raportului de bani nu arată a număr de chat Telegram”. „Ora 1” și
+„Ora 2” vin pe 09:00 și 18:00, ceasul României; „Oprește”, de lângă fiecare, o
+golește, iar la o oră goală nu pleacă niciun raport. „Amintiri la Amânate” vine
+aprins: lasă să plece, după raport, și mesajul despre amânările ajunse la
+termen. Dacă oprești amândouă orele și lași amintirile aprinse, ele pleacă
+singure, la 09:00. Apeși „Salvează”, apoi „Trimite acum un raport de probă”.
+Dacă pagina spune „Raportul de probă a plecat. Uită-te în grupul de pe
+Telegram.” și mesajul e acolo, lanțul e întreg — token, chat, bot în grup; dacă
+n-a plecat, pricina e scrisă lângă buton. Proba pleacă numai după salvare:
+apăsată înainte, pagina îți cere întâi să salvezi. La ore, raportul îl trimite
+ceasul de la pasul 6b; cât „Chat ID” e gol, ceasul rulează și nu trimite nimic.
+Orice câmp de aici se desface scriind valoarea dinainte și salvând din nou, iar
+un „Chat ID” golit oprește raportul cu totul.
+
+Un lucru care poate surprinde în ziua aceea: dacă salvezi chatul la mai puțin
+de două ore după una din cele două ore, raportul orei aceleia vine la prima
+bătaie a ceasului, în cel mult cinci minute. Nu e proba plecată încă o dată, e
+raportul adevărat, întârziat — aceeași regulă a celor două ore de la pasul 6b.
+
+**Adresa panoului.** Tot în card, „Adresa panoului” e adresa pe care se
+sprijină butonul de sub raport — „Deschide Încasări”, iar sub amintiri „Vezi
+amânatele” —, care deschide pagina gata filtrată. Instalarea scrie
+`https://lab.goldenpastry.ro`, oricare ar fi domeniul dat scriptului: dacă al
+tău e altul, schimb-o, altfel butonul duce la un panou care nu e al tău. Se
+scrie `https://`, gazda și atât — fără cale, fără „?” și fără „/” la capăt. O
+adresă care nu începe cu `https://` ori nu se deschide de oriunde (`localhost`,
+o adresă din rețeaua casei, un nume fără punct) e refuzată la salvare, cu
+pricina scrisă: Telegram nu primește un asemenea buton și, odată cu el,
+respinge **tot mesajul**. De aceea serverul mai are o plasă: dacă o asemenea
+adresă ajunge totuși în bază, raportul pleacă fără buton, nu rămâne netrimis.
+Câmpul lăsat gol înseamnă același lucru — raport fără buton.
 
 **`lab.goldenpastry.ro/conturi`** — creează conturile echipei. Fiecare client
 care trebuie să-și vadă comenzile are nevoie de un cont cu rolul „client":
@@ -753,6 +1090,17 @@ paginilor, vizibile oricui.
 **Depozitul pornește de la zero.** Toate articolele apar sub prag până faci un
 inventar real: `lab.goldenpastry.ro/depozit` → **+ Mișcare** → **Intrare** →
 „Corecție inventar", cu cantitățile de pe raft.
+
+Tot de la zero pornesc, de la 2.7.0, și prețurile de cumpărare. Fila „Prețuri”
+din Depozit — din pornire numai a fondatorului — are toate articolele fără
+preț, iar până la primul preț scris costul unui produs n-are din ce se socoti.
+Pe rândul articolului apeși „Pune preț”, scrii prețul unei unități și ziua de
+la care e valabil, și salvezi; un preț greșit se șterge din istoricul
+articolului, tot de acolo. Costul apare apoi în Catalog, în formularul
+produsului, sub „Rețetă — pentru o bucată”, numai pentru produsele care au
+rețetă și numai cui are dreptul — din pornire tot fondatorul. Cât unui
+ingredient îi lipsește prețul, acolo scrie „Costul nu se poate socoti.” și
+numele articolului fără preț.
 
 ---
 
@@ -773,7 +1121,9 @@ sudo bash /root/actualizeaza-vps.sh
 ```
 
 Face singur copia de siguranță a bazei, aplică migrările care lipsesc, copiază
-cele patru foldere și repornește Apache. Ce **nu** se atinge niciodată:
+cele patru foldere, se uită dacă ceasul plăților de la pasul 6b e la locul lui
+— îl scrie dacă lipsește ori s-a schimbat — și repornește Apache. Ce **nu** se
+atinge niciodată:
 `api/config.php` (nu e în pachet) și folderul pozelor urcate din panoul Catalog
 — în care stau și fișele tehnice încărcate de acolo. `fise/`, în schimb, e al
 pachetului: se scrie peste la fiecare actualizare, iar o fișă pusă cu mâna în el
@@ -781,7 +1131,7 @@ dispare la urcarea următoare.
 
 `instaleaza-vps.sh` se poate rula și el a doua oară, dar nu aplică migrările —
 pe o bază care are deja tabele nu importă nimic dinadins
-(`instaleaza-vps.sh:215`). Prima oară instalarea, de atunci încolo actualizarea.
+(`instaleaza-vps.sh:230`). Prima oară instalarea, de atunci încolo actualizarea.
 
 ---
 
@@ -811,3 +1161,18 @@ Cel mai des e o migrare care n-a intrat — vezi numărul de tabele de la pasul 
 **O comandă nouă nu ajunge pe e-mail.**
 Panoul de Setări → butonul de test spune de ce. Cel mai des, adresa
 expeditoare nu e pe domeniul tău și serverul refuză să trimită.
+
+**Raportul de încasări nu vine pe Telegram.**
+Apasă întâi „Trimite acum un raport de probă”, din „Încasări”. Dacă proba vine
+și raportul de la oră nu, lipsa e la ceas, nu la Telegram: pasul 6b, la „Cum
+vezi că merge”. Dacă nici proba nu vine, pricina e scrisă lângă buton.
+
+**Un client spune că nu mai poate comanda.**
+Dacă mesajul lui începe cu „Numărul maxim de comenzi a fost atins”, nu e o
+defecțiune: a ajuns la pragul de comenzi neplătite. În „Încasări”, la „De
+încasat”, îi însemni comenzile plătite, cu „Plătită” ori „Bancă”; ori îi dai
+pragul lui, de pe cartonașul lui de la „Pe clienți”, cu butonul „Prag: …”.
+Pragul pentru toți clienții e la pasul 8d. Însemnarea plăților și pragul unui
+singur client sunt scrise pas cu pas în
+[09-actualizare-vps.md](09-actualizare-vps.md), la „Ziua actualizării la
+2.7.0”, pașii 2 și 6.

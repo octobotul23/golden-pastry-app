@@ -7,7 +7,7 @@ reale, clienți reali și poze urcate de tine. Instalarea de la zero e în
 Ideea de bază, în două rânduri: **sursa e pe calculatorul tău, `deploy/` e doar
 rezultatul.** Modifici sursa, rulezi un script, urci ce a ieșit. Folderul
 `deploy/` se șterge și se reface complet la fiecare construire
-(`.claude/build-deploy.mjs:706`), deci orice ai scrie direct acolo dispare.
+(`.claude/build-deploy.mjs:720`), deci orice ai scrie direct acolo dispare.
 
 ---
 
@@ -17,12 +17,12 @@ Cinci lucruri. Niciunul nu are excepții.
 
 **1. `public_html/api/config.php` nu se suprascrie niciodată.**
 Acolo stau parola bazei de date și cheia de criptare. Nu e în pachet deloc —
-scriptul îl scoate (`.claude/build-deploy.mjs:912-914`) și mai verifică o dată
-la final (`:932-939`), deci nicio urcare nu-l poate atinge din greșeală.
+scriptul îl scoate (`.claude/build-deploy.mjs:926-928`) și mai verifică o dată
+la final (`:946-953`), deci nicio urcare nu-l poate atinge din greșeală.
 **Cheia de criptare nu se schimbă niciodată după instalare.** Dacă se schimbă,
 `api/lib/crypto.php:85` întoarce `null`, iar `api/lib/settings.php:36` doar
 scrie o linie în jurnal și merge mai departe — *tăcut*. Efectul vizibil:
-codul tabletelor devine gol, `api/routes/auth.php:400-404` răspunde 503
+codul tabletelor devine gol, `api/routes/auth.php:411-415` răspunde 503
 „Codul panoului nu este configurat", și toată echipa din laborator rămâne
 pe dinafară.
 
@@ -59,7 +59,7 @@ care distruge.
 Orice altă corectură făcută în File Manager — într-o pagină, într-un `.php`,
 în `.htaccess` — dispare fără avertisment la prima urcare. Dacă e nevoie de o
 schimbare permanentă în `.htaccess`, ea se scrie în sursă
-(`.claude/build-deploy.mjs:353, 478, 553, 579`), nu pe server.
+(`.claude/build-deploy.mjs:367, 492, 567, 593`), nu pe server.
 
 ---
 
@@ -75,45 +75,49 @@ node .claude/build-deploy.mjs
 ```
 
 Dacă la final scrie „N probleme", **te oprești aici** — scriptul iese cu cod 1
-(`:1085`). Sunt **șapte** lucruri din care se poate opri, și fiecare e scris pe
+(`:1099`). Sunt **șapte** lucruri din care se poate opri, și fiecare e scris pe
 ecran cu un `!` la început:
 
 | Ce scrie | Ce înseamnă | Unde |
 |---|---|---|
-| `legături nerezolvate` | o pagină trimite spre altă pagină pe care harta n-o cunoaște — pe server, butonul acela ar da 404 | `:836` |
-| `lipsește … (cerut de …)` | un fișier din lista gazdei nu e pe disc | `:867` |
-| `a ajuns în pachet — conține parola bazei de date` | `api/config.php` a intrat în pachet. Scriptul îl și șterge, dar tot se oprește: vrea să afli cum a ajuns acolo | `:936` |
-| `fără zăvorul de după instalare` | `setup.php` sau `verifica.php` a intrat în pachet fără zăvorul lui | `:962` |
-| `nume din dezvoltare rămase în pachet` | o trimitere a rămas pe numele de fișier din dezvoltare, nu pe adresa de pe server | `:1009` |
-| `nu am putut citi adresele din seo/adrese.php` | tabelul de adrese al magazinului n-a putut fi citit, deci verificarea de după el ar fi mințit | `:1043` |
-| `fișiere care fură o adresă a magazinului` | un fișier adevărat stă exact pe o adresă pe care ar trebui s-o servească `index.php` — Apache îl servește pe el, iar pagina aceea dispare din magazin | `:1054` |
+| `legături nerezolvate` | o pagină trimite spre altă pagină pe care harta n-o cunoaște — pe server, butonul acela ar da 404 | `:850` |
+| `lipsește … (cerut de …)` | un fișier din lista gazdei nu e pe disc | `:881` |
+| `a ajuns în pachet — conține parola bazei de date` | `api/config.php` a intrat în pachet. Scriptul îl și șterge, dar tot se oprește: vrea să afli cum a ajuns acolo | `:950` |
+| `fără zăvorul de după instalare` | `setup.php` sau `verifica.php` a intrat în pachet fără zăvorul lui | `:976` |
+| `nume din dezvoltare rămase în pachet` | o trimitere a rămas pe numele de fișier din dezvoltare, nu pe adresa de pe server | `:1023` |
+| `nu am putut citi adresele din seo/adrese.php` | tabelul de adrese al magazinului n-a putut fi citit, deci verificarea de după el ar fi mințit | `:1057` |
+| `fișiere care fură o adresă a magazinului` | un fișier adevărat stă exact pe o adresă pe care ar trebui s-o servească `index.php` — Apache îl servește pe el, iar pagina aceea dispare din magazin | `:1068` |
 
 Niciunul nu e „aproape bine": fiecare înseamnă un pachet care, urcat, strică
 ceva pe server.
 
 ### 2. Vezi ce s-a schimbat față de ce e pe server
 
-Harta sursă → pachet e fixă (`.claude/build-deploy.mjs:35-66` și `:71-78`):
+Harta sursă → pachet e fixă (`.claude/build-deploy.mjs:35-80` și `:85-92`):
 
 | Ai modificat | Se schimbă în pachet | Urci în |
 |---|---|---|
 | `Site Public.dc.html` | `public_html/app.html` | `public_html/` |
 | `Administrare Comenzi.dc.html` | `lab/comenzi.html` | `public_html/lab/` |
-| `Panou Laborator` · `Depozit` · `Conturi` · `Jurnal` · `Ruta Sofer` · `Produse` · `Setari` | câte un `.html` în `lab/` | `public_html/lab/` |
+| `Panou Laborator` · `Depozit` · `Pontaj` · `Conturi` · `Jurnal` · `Statistici` · `Incasari` · `Acces` · `Ruta Sofer` · `Produse` · `Setari` | câte un `.html` în `lab/` | `public_html/lab/` |
 | `Client.dc.html` | `clienti/client.html` | `public_html/clienti/` |
 | **`Intrare.dc.html`** | `clienti/index.html` **și** `lab/index.html` | **două foldere** |
 | **`Parola.dc.html`** | `clienti/parola.html` **și** `lab/parola.html` | **două foldere** |
 | **`Recomandari.dc.html`** | `clienti/recomandari.html` **și** `lab/recomandari.html` | **două foldere** |
+| **`Istoric.dc.html`** | `clienti/istoric.html` **și** `lab/istoric.html` | **două foldere** |
 | `support.js` · `shared/gp-api.js` · `_ds/` · `assets/` | **câte trei copii** | **toate trei subdomeniile** |
 | `image-slot.js` · `.image-slots.state.json` | o singură copie | `public_html/` |
 | `seo/index.php` · `seo/sitemap.php` · `seo/adrese.php` | `public_html/index.php`, `sitemap.php`, `adrese.php` | `public_html/` |
 | `fise/` (fișele tehnice, PDF) | `public_html/fise/`, o singură copie | `public_html/` |
 
-`Intrare`, `Parola` și `Recomandari` sunt **cele trei** pagini care ajung în
-două locuri, iar **cele două copii nu sunt identice**: scriptul le injectează
-adresa API-ului și rescrie legăturile dintre subdomenii
-(`rewriteLinks()`, `.claude/build-deploy.mjs:228`). O modificare în ele cere
-două urcări.
+`Intrare`, `Parola`, `Recomandari` și `Istoric` sunt **cele patru** pagini care
+ajung în două locuri, iar **cele două copii nu sunt identice**: scriptul le
+injectează adresa API-ului și rescrie legăturile dintre subdomenii
+(`rewriteLinks()`, `.claude/build-deploy.mjs:242`). O modificare în ele cere
+două urcări. `Istoric` e cea mai nouă dintre ele, de la 2.7.0: e a clientului,
+care intră pe `clienti.`, și a celor din casă care scriu comenzi, care intră pe
+`lab.`. Tot de la 2.7.0 sunt `Incasari` și `Acces`, numai pe `lab.`: cine intră
+pe ele hotărăște serverul, după cont, nu folderul în care stă fișierul.
 
 `adrese.php` nu e o poză și nu e un stil: e **tabelul de adrese al
 magazinului**, citit și de pagină, și de harta de site. Fără el pe server,
@@ -125,9 +129,9 @@ toate ale laturii congelate (`fisa-tehnica-rolldog-congelat.pdf` și celelalte).
 Stă numai lângă magazin: pe `lab.` și pe `clienti.` folderul nu există, iar
 cine cere de acolo o adresă `fise/…` — butonul „Vezi fișa” din Catalog — e
 trimis la gazda publică cu un 302, la fel ca pozele (cele două redirecționări
-sunt scrise una sub alta, `.claude/build-deploy.mjs:568-576`). Tot numai la
+sunt scrise una sub alta, `.claude/build-deploy.mjs:582-590`). Tot numai la
 gazda publică stau și antetele PDF-urilor — tipul `application/pdf`,
-`no-cache` și `X-Robots-Tag: noindex` —, în constanta `HT_SEO` (`:478`), la
+`no-cache` și `X-Robots-Tag: noindex` —, în constanta `HT_SEO` (`:492`), la
 blocul „fișele tehnice (PDF)”: fișa e un document de dat clientului, nu o
 pagină de găsit pe Google. Spre deosebire de `products/`, `fise/` **se urcă la
 fiecare actualizare** și se înlocuiește întreg, fiindcă pe server nu scrie
@@ -142,7 +146,7 @@ nimeni în el. Fișele încărcate de tine din Catalog nu ajung acolo, ci în
   `deploy/public_html/fise/`, **rămâne**: fișele din el sunt ale pachetului și
   pleacă de fiecare dată.
 - **`deploy/api/setup.php`** și **`deploy/api/verifica.php`** — revin în pachet
-  la fiecare construire, deliberat (`:910`, motivat la `:941-950`). Amândouă au
+  la fiecare construire, deliberat (`:924`, motivat la `:955-964`). Amândouă au
   zăvor propriu, dar zăvorul lui `setup.php` depinde de existența unui
   administrator activ (`api/setup.php:39-48`). Șterge-le de pe server după
   fiecare urcare.
@@ -177,7 +181,7 @@ patru subdomeniile odată**.
 
 API-ul e aproape întotdeauna aditiv: rute noi, câmpuri noi, iar paginile vechi
 ignoră ce nu cunosc. Paginile noi, în schimb, cer rute noi. Dacă urci întâi
-paginile, clientul primește pe ecran exact textul de la `api/index.php:378` —
+paginile, clientul primește pe ecran exact textul de la `api/index.php:437` —
 „Rută inexistentă: POST /requests/12/reopen" — iar comanda pur și simplu nu se
 face. Cu ordinea corectă, fereastra e „API nou + pagini vechi", care nu strică
 nimic.
@@ -199,6 +203,19 @@ Versiunea care face ca tableta din laborator să nu se mai deconecteze singură
 aduce încă una: **`session_days_panou`**. Lipsa ei nu strică nimic — valoarea
 implicită, un an, stă în cod (`session_days_panou()`, `api/lib/auth.php`) tocmai
 pentru cazul ăsta — dar copiind-o ai numărul la vedere, acolo unde îl cauți.
+
+Runda 2.7.0 aduce în exemplu o cheie care merge pe dos: **`telegram_api_base`**
+e singura pe care **nu** o copiezi. Ea spune la ce adresă pleacă mesajele de
+Telegram, iar pe server trebuie să lipsească ori să rămână goală — atunci
+adresa e cea adevărată, `https://api.telegram.org`. Cheia există numai pentru
+probele de pe calculatorul de lucru, care mută Telegramul pe un primitor local,
+ca rapoartele de încasări trimise de ele să poată fi numărate fără să ajungă pe
+telefonul nimănui. Stă în fișier, și nu în Setări, dinadins: la adresa aceea
+pleacă, în fiecare cerere, tokenul botului. Ce stă în Setări se schimbă
+dintr-un ecran, de către oricine are dreptul lui; ce stă în `config.php`, numai
+de către cine are deja serverul în mână. O valoare stricată nu cade în tăcere
+pe adresa adevărată, ci oprește trimiterile cu o eroare spusă pe nume, care îți
+cere să scoți cheia.
 
 **Șterge `setup.php` și `verifica.php` de pe server** după urcare.
 
@@ -236,7 +253,7 @@ peste schema nouă. Codul vechi nu știe de coloana nouă și nu o cere;
 funcționează normal tot intervalul.
 
 **De ce nu invers.** Codul nou cere o coloană care încă nu există → PDO ridică
-excepție → `api/index.php:378-384` întoarce „Eroare internă." Nu e o pagină
+excepție → `api/index.php:438-444` întoarce „Eroare internă." Nu e o pagină
 urâtă, e o **oprire**: formularul de comandă cade la trimitere, panoul nu mai
 încarcă lista. Nu există coadă și nu există reîncercare — comenzile din acel
 interval se pierd.
@@ -282,16 +299,20 @@ după nu.
 | `019_jeton_cerere.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând de comandă atins. Tabelul `request_claims` ține amprentele jetoanelor cu care se leagă cererea trimisă de pe site de contul făcut imediat după ea. La a doua rulare nu se întâmplă nimic: `IF NOT EXISTS` sare peste tot ce e înăuntru, chei străine cu tot. Cere `001` (are chei străine spre `order_requests` și `users`). |
 | `020_rang_client.sql` | Da — pune un index pe `orders` și nimic altceva, după ce întreabă `information_schema` dacă nu cumva e deja acolo: niciun tabel, nicio coloană, niciun rând atins. E prima migrare care **se poate uita fără pagubă**: fără ea insignele de client ies la fel, doar mai încet. Cere `001`. |
 | `021_raspundere.sql` | Da — patru bucăți, fiecare cu paza ei: indexul și coloana se uită întâi în `information_schema`, iar cele două tabele intră cu `CREATE TABLE IF NOT EXISTS`. Nu atinge niciun rând existent: coloana nouă `users.telegram_user_id` pornește `NULL` pe toate conturile, iar tabelele se nasc goale. Aduce răspunderea — cine a scris comanda (indexul `ix_orders_autor`, coloana de Telegram, tabelul `telegram_links`) și cine era de tură când s-a făcut (`lab_production`). **Jumătatea care se poate uita fără pagubă e numai indexul**, ca la `020`: fără el lista de comenzi iese la fel, doar mai încet. Celelalte trei nu: fără coloană, faptele apăsate în Telegram ies toate pe numele celui care a legat botul; fără `telegram_links`, legarea Telegramului nu se poate nici măcar porni; fără `lab_production`, raportul de producție pe tură iese **gol, fără eroare** — adică se descoperă la prima plată, nu la actualizare. `UNIQUE`-ul de pe `telegram_user_id` nu poate ciocni la import: în MySQL `NULL` nu se ciocnește cu `NULL`, iar la actualizare toate conturile sunt `NULL`. Cere `001` (chei străine spre `users` și `orders`) și `014` (coloana nouă se pune `AFTER lab_pin`). |
-| `022_cerere_de_la_personal.sql` | Da — patru coloane, fiecare cu paza ei în `information_schema`, plus indexul și cheia străină, în ordinea asta (cheia pusă înaintea indexului ar fi făcut MySQL să-și scrie singur un index fără nume ales, iar al nostru ar fi rămas al doilea, nefolosit). Nu atinge niciun rând existent: toate patru sunt `NULL` sau cu implicit, deci o cerere de pe site scrisă ieri rămâne întreagă. Aduce cererea scrisă de personal — de la hotărârea din 18 septembrie 2026, comanda intră de-a dreptul în sistem numai când o scrie un administrator, un manager sau fondatorul; restul scriu o CERERE. Drumul cererii e cel al site-ului, dar el purta mai puțin decât o comandă, iar ce nu purta se pierdea tăcut între formular și acceptare: **modul de onorare** (agentul alegea „Curier", iar la acceptare `route_requests_accept()` cădea pe `default_fulfillment()`, adică pe altceva), **urgent** și **la oră fixă** (se puteau cere numai la acceptare, deci graba știută de cel care a luat telefonul nu ajungea la cel care hotărăște) și **cine a scris-o** (`created_by`: fără ea, comanda născută din cererea agentului ar fi purtat numele administratorului care a apăsat „Acceptă", iar agentul ar fi dispărut din propria lui muncă). Coloana `created_by` ține două întrebări deodată — „cine" și „de unde": o cerere de pe site n-are autor, deci comanda născută din ea nu mai e însemnată „site" pe nedrept. Cere `001` (cheie străină spre `users`) și se rulează după `021`. |
+| `022_cerere_de_la_personal.sql` | Da — patru coloane, fiecare cu paza ei în `information_schema`, plus indexul și cheia străină, în ordinea asta (cheia pusă înaintea indexului ar fi făcut MySQL să-și scrie singur un index fără nume ales, iar al nostru ar fi rămas al doilea, nefolosit). Nu atinge niciun rând existent: toate patru sunt `NULL` sau cu implicit, deci o cerere de pe site scrisă înaintea migrării rămâne întreagă. Aduce cererea scrisă de personal — de la hotărârea din 18 septembrie 2026, comanda intră de-a dreptul în sistem numai când o scrie un administrator, un manager sau fondatorul; restul scriu o CERERE. Drumul cererii e cel al site-ului, dar el purta mai puțin decât o comandă, iar ce nu purta se pierdea tăcut între formular și acceptare: **modul de onorare** (agentul alegea „Curier", iar la acceptare `route_requests_accept()` cădea pe `default_fulfillment()`, adică pe altceva), **urgent** și **la oră fixă** (se puteau cere numai la acceptare, deci graba știută de cel care a luat telefonul nu ajungea la cel care hotărăște) și **cine a scris-o** (`created_by`: fără ea, comanda născută din cererea agentului ar fi purtat numele administratorului care a apăsat „Acceptă", iar agentul ar fi dispărut din propria lui muncă). Coloana `created_by` ține două întrebări deodată — „cine" și „de unde": o cerere de pe site n-are autor, deci comanda născută din ea nu mai e însemnată „site" pe nedrept. Cere `001` (cheie străină spre `users`) și se rulează după `021`. |
 | `023_laboratorul_si_livrarea.sql` | Da — două coloane, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie, niciun rând de date. Nu atinge nimic din ce există: `orders.lab_seq` se naște `NULL` („nearanjată"), iar `users.poate_confirma_livrarea` se naște `0`, pentru toți. `lab_seq` mută ordinea de lucru a laboratorului din browserul fiecărei tablete pe server — până acum ea stătea în `localStorage`, deci brutarul care aranja ziua aranja numai pentru el, iar colegul de lângă el vedea altceva; și, fiindcă împărțirea cantităților produse merge DE SUS ÎN JOS pe lista aceea, aceeași apăsare umplea alte comenzi, după tableta de pe care s-a apăsat. E soră cu `route_seq` din `003` și scrisă la fel (`NULL`, nu `0`, fiindcă `0` e o poziție adevărată — cea dintâi), dar nu se poate refolosi aceea: `route_seq` e ordinea OPRIRILOR mașinii, pusă de birou și păzită de `require_admin()`, iar ordinea în care mașina trece pe la clienți n-are nimic de-a face cu ordinea în care laboratorul coace. `poate_confirma_livrarea` e semnul fără de care serverul refuză etapa finală — „Predată" înseamnă *ajunsă la client*, și o punea oricine din personal: laboratorul o apăsa când termina de ambalat, iar comanda apărea livrată înainte să fi urcat în mașină. **Nicio umplere înapoi, dinadins**: toți se nasc fără semn, iar patronul bifează șoferul din „Conturi". O umplere „ca să nu înrăutățim" ar fi pus semnul tocmai pe contul comun al tabletelor — adică pe contul din pricina căruia s-a cerut lucrarea —, iar regula ar fi plecat la drum nefăcând nimic, fără ca nimeni să bage de seamă. Administratorul și fondatorul îl au din cod (`poate_confirma_livrarea()`, `api/lib/auth.php`), deci biroul nu se poate încuia pe dinafară. Cere `001` și se rulează după `022`. |
-| `024_doua_cataloage.sql` | Da — trei coloane pe `products`, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie străină. Are însă și un pas care **scrie date** — umplerea celor două bife —, iar acela e zăvorât cu `@coloane_noi`, numărat ÎNAINTE de `ALTER`-e: la a doua rulare `UPDATE`-ul nici nu se pregătește. Fără zăvor, fiecare actualizare ar fi pus la loc, lună după lună, fiecare latură pe care patronul o stinsese cu mâna — exact pățania lui `016`, și de-aia `.claude/test-migrari-repetate.mjs` o are și pe asta sub ochi. Umplerea e **prudentă dinadins**: `in_frozen = in_baked = (amândouă prețurile scrise)`, deci migrarea **nu mișcă nimic pe vitrină** — cine se vedea ieri se vede și azi, cine era ascuns rămâne ascuns. Ce se schimbă e numai vorba cu care panoul îl arată: „nu e în niciun catalog" în loc de „îi lipsește un preț". Forma îndrăzneață (`in_frozen = price_frozen IS NOT NULL`) ar fi ghicit apartenența din preț — tocmai ce a hotărât patronul să nu se facă — și ar fi publicat produse pe jumătate completate în secunda importului, fără niciun ecran între el și site. Nu atinge `photo`, nu atinge `active`, nu adaugă nicio grupă. Cere `001` și se rulează după `023`. |
+| `024_doua_cataloage.sql` | Da — trei coloane pe `products`, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie străină. Are însă și un pas care **scrie date** — umplerea celor două bife —, iar acela e zăvorât cu `@coloane_noi`, numărat ÎNAINTE de `ALTER`-e: la a doua rulare `UPDATE`-ul nici nu se pregătește. Fără zăvor, fiecare actualizare ar fi pus la loc, lună după lună, fiecare latură pe care patronul o stinsese cu mâna — exact pățania lui `016`, și de-aia `.claude/test-migrari-repetate.mjs` o are și pe asta sub ochi. Umplerea e **prudentă dinadins**: `in_frozen = in_baked = (amândouă prețurile scrise)`, deci migrarea **nu mișcă nimic pe vitrină** — cine se vedea înaintea ei se vede și după, cine era ascuns rămâne ascuns. Ce se schimbă e numai vorba cu care panoul îl arată: „nu e în niciun catalog" în loc de „îi lipsește un preț". Forma îndrăzneață (`in_frozen = price_frozen IS NOT NULL`) ar fi ghicit apartenența din preț — tocmai ce a hotărât patronul să nu se facă — și ar fi publicat produse pe jumătate completate în secunda importului, fără niciun ecran între el și site. Nu atinge `photo`, nu atinge `active`, nu adaugă nicio grupă. Cere `001` și se rulează după `023`. |
 | `025_registru_migrari.sql` | Da — face tabelul `schema_migrations` cu `CREATE TABLE IF NOT EXISTS` și scrie un singur rând, cu `INSERT IGNORE`: a doua rulare nu face nimic. Nu atinge nicio altă tabelă și niciun rând de date. E fișierul care **se rulează înaintea celorlalte**, nu la rândul lui: se cheamă `025`, deci în ordinea numelui ar veni după `003`–`024`, iar atunci primele douăzeci și două ar trece pe lângă un tabel care încă nu există și și-ar scrie numele abia la actualizarea următoare. Cele trei drumuri de urcare îl rulează o dată la început, apoi bucla — se poate, fiindcă e idempotent. **Ce NU face: nu se umple cu mâna.** S-ar putea scrie în el, dintr-o suflare, numele tuturor migrărilor până la `024` („dacă ai ajuns la 025, au rulat și alea") — adevărat când rulează bucla, minciună când cineva îl importă singur, din phpMyAdmin, pe o bază veche. Un registru care minte e mai rău decât niciun registru. Nu cere nimic și se rulează oriunde, pe orice bază. |
-| `026_cheie_cerere.sql` | Da — o coloană `idempotency_key` pe `order_requests` și un index unic `uq_req_cheie` peste ea, fiecare cu paza lui în `information_schema`: a doua rulare le găsește și nu face nimic. Nu scrie și nu schimbă niciun rând de date. Coloana se naște `NULL` și stă `AFTER created_at` fiindcă acela e ultimul câmp din `001_schema.sql`, deci e singurul loc care există pe **orice** bază, oricât de veche. Indexul unic trece peste cererile de până acum fără să se plângă, oricâte ar fi: în SQL `NULL` nu se ciocnește cu `NULL`, deci vechile cereri — toate fără cheie — rămân neatinse, și la fel cele care vin mai târziu de la un telefon cu pagina veche în memorie. **Ce NU face: nu curăță cererile duble adunate înainte.** Ea oprește perechea următoare, nu o desface pe cea de ieri — două cereri vechi, identice, rămân două rânduri, fiindcă n-avem de unde ști dacă omul a apăsat de două ori sau chiar a vrut două comenzi. Și **nu ea alege ce se întâmplă la ciocnire**: indexul doar spune „cheia asta a mai fost"; răspunsul — cererea dintâi, întoarsă ca și cum ar fi acum — e scris în `api/routes/requests.php`. O bază care ia migrarea fără fișierele noi nu pățește nimic: coloana rămâne goală și nimeni n-o citește. Nu cere nimic și se rulează oriunde. |
+| `026_cheie_cerere.sql` | Da — o coloană `idempotency_key` pe `order_requests` și un index unic `uq_req_cheie` peste ea, fiecare cu paza lui în `information_schema`: a doua rulare le găsește și nu face nimic. Nu scrie și nu schimbă niciun rând de date. Coloana se naște `NULL` și stă `AFTER created_at` fiindcă acela e ultimul câmp din `001_schema.sql`, deci e singurul loc care există pe **orice** bază, oricât de veche. Indexul unic trece peste cererile de până acum fără să se plângă, oricâte ar fi: în SQL `NULL` nu se ciocnește cu `NULL`, deci vechile cereri — toate fără cheie — rămân neatinse, și la fel cele care vin mai târziu de la un telefon cu pagina veche în memorie. **Ce NU face: nu curăță cererile duble adunate înainte.** Ea oprește perechea următoare, nu o desface pe cea de dinainte — două cereri vechi, identice, rămân două rânduri, fiindcă n-avem de unde ști dacă omul a apăsat de două ori sau chiar a vrut două comenzi. Și **nu ea alege ce se întâmplă la ciocnire**: indexul doar spune „cheia asta a mai fost"; răspunsul — cererea dintâi, întoarsă ca și cum ar fi acum — e scris în `api/routes/requests.php`. O bază care ia migrarea fără fișierele noi nu pățește nimic: coloana rămâne goală și nimeni n-o citește. Nu cere nimic și se rulează oriunde. |
 | `027_poza_fiecarei_laturi.sql` | Da — și e singura de până acum care **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Ea copiază o dată `products.photo` în `products.photo_baked` acolo unde a doua e goală, adică face a fiecărei laturi poza pe care până în 2.4.1 o ÎMPRUMUTA de la cealaltă. Zăvorul nu e în `information_schema` — n-ar avea ce căuta acolo, fiindcă nu se schimbă nimic în schemă —, ci în `settings`: `migration_027_poza_pe_latura`, scris la coada ei. A doua rulare îl găsește și nu mai copiază nimic, deci o poză pe care ai schimbat-o între timp la gata de servire rămâne a ta. **Ce NU face: nu pune la loc pozele de după ea.** Un produs născut după migrare are `photo_baked` gol până îi urci una — și așa și trebuie, de vreme ce împrumutul s-a tăiat. O bază care ia migrarea fără fișierele noi nu pățește nimic: cele două coloane ajung să poarte același nume de fișier, iar codul vechi arăta oricum poza aceea pe amândouă laturile. Nu cere nimic și se rulează oriunde. |
-| `028_preturi_pe_trepte.sql` | Da — zece coloane, fiecare cu paza ei în `information_schema`: șase pe `products` (`price_frozen_b`, `price_frozen_c`, `price_baked_b`, `price_baked_c`, `prag_b`, `prag_c`) și câte două pe `order_items` și pe `order_request_items` (`treapta`, `prag_treapta`), plus patru setări ale catalogului, cu `INSERT IGNORE`. A doua rulare nu face nimic și nu calcă ce ai ales între timp în Setări. Nu atinge niciun rând existent: coloanele noi se nasc `NULL`, adică „nicio treaptă" pe produs — fiecare produs rămâne cu prețul lui unic, exact cum îl vindeai — și „treapta A" pe fiecare poziție de comandă de dinainte. Codul le cere **pe toate zece** deodată (`catalog_trepte_supported()`): pe o bază cu jumătate din migrare casa vinde ca ieri, numai cu prețul A, în loc să scrie comenzi tarifate la B fără să țină minte pragul care le-a câștigat. Nu cere nicio migrare anterioară; registrul (`025`) îl folosește numai dacă îl găsește. |
-| `029_numere_in_catalog.sql` | Da — și, ca `027`, **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Dă o dată fiecărui produs — și celor scoși din catalog, care își păstrează locul pentru când se întorc — numărul din colțul pozei, 1, 2, 3…, în ordinea în care au fost puse (`id`), în coloana `products.sort`, care exista din `001` și ținea până acum pași de zece. Zăvorul e tot în `settings`: `migration_029_numere_catalog`, scris la coada ei, cu data rulării. A doua rulare îl găsește și nu mai renumerotează nimic — fără zăvor, fiecare actualizare ar fi pus la loc numerele de la import și ar fi șters, lună de lună, pe cele alese de patron în fila Produse. Pe o bază din care n-a fost șters niciun produs numerele ies exact cele de ieri (01 rămâne 01, 19 rămâne 19), deci vitrina nu se mișcă în clipa importului; unde s-a șters unul, cele de după el urcă cu un loc și închid golul. **Ce NU face: nu pune un index unic pe `sort`.** Unicitatea o ține serverul, sub lacăt, la fiecare mutare; un index ar fi făcut orice produs scris cu mâna în bază, fără `sort`, să cadă la import pe un zero dublu. Nu schimbă cheile: coșurile, pozele și comenzile trimit tot la ele. O bază care ia fișierele noi fără migrare nu pățește nimic: magazinul arată cheia bazei, ca ieri, iar fișa produsului refuză lămurit schimbarea numărului (`numbers_unavailable`, cu numele fișierului). Cere `001` și MySQL 8.0 sau mai nou (`ROW_NUMBER()`); registrul (`025`) îl folosește numai dacă îl găsește. |
+| `028_preturi_pe_trepte.sql` | Da — zece coloane, fiecare cu paza ei în `information_schema`: șase pe `products` (`price_frozen_b`, `price_frozen_c`, `price_baked_b`, `price_baked_c`, `prag_b`, `prag_c`) și câte două pe `order_items` și pe `order_request_items` (`treapta`, `prag_treapta`), plus patru setări ale catalogului, cu `INSERT IGNORE`. A doua rulare nu face nimic și nu calcă ce ai ales între timp în Setări. Nu atinge niciun rând existent: coloanele noi se nasc `NULL`, adică „nicio treaptă" pe produs — fiecare produs rămâne cu prețul lui unic, exact cum îl vindeai — și „treapta A" pe fiecare poziție de comandă de dinainte. Codul le cere **pe toate zece** deodată (`catalog_trepte_supported()`): pe o bază cu jumătate din migrare casa vinde ca înainte, numai cu prețul A, în loc să scrie comenzi tarifate la B fără să țină minte pragul care le-a câștigat. Nu cere nicio migrare anterioară; registrul (`025`) îl folosește numai dacă îl găsește. |
+| `029_numere_in_catalog.sql` | Da — și, ca `027`, **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Dă o dată fiecărui produs — și celor scoși din catalog, care își păstrează locul pentru când se întorc — numărul din colțul pozei, 1, 2, 3…, în ordinea în care au fost puse (`id`), în coloana `products.sort`, care exista din `001` și ținea până acum pași de zece. Zăvorul e tot în `settings`: `migration_029_numere_catalog`, scris la coada ei, cu data rulării. A doua rulare îl găsește și nu mai renumerotează nimic — fără zăvor, fiecare actualizare ar fi pus la loc numerele de la import și ar fi șters, lună de lună, pe cele alese de patron în fila Produse. Pe o bază din care n-a fost șters niciun produs numerele ies exact cele de dinainte (01 rămâne 01, 19 rămâne 19), deci vitrina nu se mișcă în clipa importului; unde s-a șters unul, cele de după el urcă cu un loc și închid golul. **Ce NU face: nu pune un index unic pe `sort`.** Unicitatea o ține serverul, sub lacăt, la fiecare mutare; un index ar fi făcut orice produs scris cu mâna în bază, fără `sort`, să cadă la import pe un zero dublu. Nu schimbă cheile: coșurile, pozele și comenzile trimit tot la ele. O bază care ia fișierele noi fără migrare nu pățește nimic: magazinul arată cheia bazei, ca înainte, iar fișa produsului refuză lămurit schimbarea numărului (`numbers_unavailable`, cu numele fișierului). Cere `001` și MySQL 8.0 sau mai nou (`ROW_NUMBER()`); registrul (`025`) îl folosește numai dacă îl găsește. |
 | `030_gata_de_livrare.sql` | Da — și, ca `027` și `029`, **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Pune o dată numele „Gata de livrare" în lista ta de etape (`order_statuses`), **chiar înaintea etapei finale** — cea numită în `order_status_done`, oricum s-ar chema ea la tine —, și numai dacă nu e deja acolo. Nu e un `UPDATE` cu lista scrisă în fișier, greșeala lui `003`: celelalte etape rămân cum le-ai lăsat, cu numele și cu ordinea lor. Dacă setarea etapei finale lipsește ori arată spre un nume care nu mai e în listă, locul e cel dinaintea ultimei etape care nu e anularea — aceeași regulă după care serverul își alege singur etapa finală (`status_done()`). Zăvorul e în `settings`: `migration_030_gata_de_livrare`, scris la coada ei, cu data rulării. A doua rulare îl găsește și nu mai atinge lista — fără zăvor, o etapă redenumită ori scoasă de tine din Setări s-ar întoarce sub numele vechi la fiecare actualizare, exact pățania lui `016`. Pe o instalare nouă n-are ce pune: lista din `002` are deja etapa. **Ce NU face: nu mută nicio comandă.** Cele aflate la „La ambalare" în clipa importului rămân acolo; laboratorul mai apasă o dată pe fiecare, și abia atunci se aprinde butonul curierului. Nu atinge `order_status_done` și `order_status_cancelled`, iar pe lângă o listă care nu e JSON trece fără s-o atingă. O bază care ia fișierele noi fără migrare nu pățește nimic: laboratorul se oprește tot la etapa dinaintea celei finale — numai că aceea e atunci ambalarea, deci de la „La ambalare” comanda e a curierului. Cere `001` și funcțiile JSON ale bazei (MySQL 5.7 sau mai nou); registrul (`025`) îl folosește numai dacă îl găsește. |
 | `031_fise_tehnice.sql` | Da — două coloane pe `products`, `sheet_frozen` și `sheet_baked`, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie străină. În ele stă calea fișei tehnice a fiecărei laturi; `NULL` înseamnă „fără fișă", și atunci magazinul nu arată niciun buton. Are și un pas care **scrie date**: leagă o dată, după `slug`, cele 21 de fișe venite cu pachetul de latura congelată a produselor lor, și numai acolo unde coloana e goală. Pasul e zăvorât în `settings` cu `migration_031_fise_tehnice`, scris la coada ei: a doua rulare îl găsește și nu mai leagă nimic — fără zăvor, o fișă scoasă de tine din Catalog s-ar întoarce la fiecare actualizare, fiindcă tocmai „goală" e starea pe care ai ales-o. **Ce NU face: nu scrie nimic în `sheet_baked`.** Coapte împrumută fișa de la congelate cât n-are una a ei, iar împrumutul se face în cod (`latura_fisa()`, `api/lib/laturi.php`), nu în bază — scris în bază, n-ar mai putea fi deosebit de o fișă pusă dinadins. Nu atinge greutatea, prețul ori descrierea niciunui produs și nu mută niciun fișier: scrie numai căi. Un produs pus de tine în Catalog cu altă adresă decât cea din pachet (alt `slug` — de pildă unul făcut din nou sub alt nume) nu e găsit și rămâne fără fișă; i se încarcă una din Catalog. O bază care ia fișierele noi fără migrare nu pățește nimic: magazinul nu arată butonul fișei, iar încărcarea unei fișe e refuzată lămurit (`fise_unavailable`, cu numele fișierului). Cere `001`; registrul (`025`) îl folosește numai dacă îl găsește. |
+| `032_plati_si_prag.sql` | Da — opt coloane, fiecare cu paza ei în `information_schema`: șapte pe `orders` (`plata`, `plata_scadenta`, `plata_la`, `plata_de`, `plata_suma`, `plata_nota`, `plata_amintire_la`) și una pe `users` (`prag_neplatite`); două indexuri pe `orders` (`ix_orders_plata`, `ix_orders_plata_la`), păzite la fel; și șapte setări, cu `INSERT IGNORE`. A doua rulare nu face nimic și nu calcă ce ai ales între timp în „Încasări” — pragul, chatul, cele două ore. Aduce condica banilor: starea plății fiecărei comenzi — neplătită, amânată, plătită ori plătită prin bancă —, cu scadența, clipa, suma și omul care a bifat-o, și pragul de comenzi neplătite: cel general (`plati_prag_implicit`, semănat cu 2) și cel de pe cont (`prag_neplatite`: gol înseamnă „pragul general”, zero înseamnă „fără limită”). Comenzile noi se nasc neplătite, din implicitul coloanei, deci nicio scriere de comandă nu trebuie atinsă. Are și un pas care **scrie date**: trece o dată drept plătite comenzile aflate la etapa finală — cea numită în `order_status_done`, oricum s-ar chema ea la tine — și cu ziua **trecută**, iar la `plata_suma` le scrie totalul lor. Fără judecata asta, în ziua urcării fiecare client vechi ar fi apărut cu tot istoricul lui „de plată”, iar pragul l-ar fi oprit de la prima comandă nouă. Pasul e zăvorât în `settings` cu `migration_032_plati_si_prag`, scris la coada ei: a doua rulare îl găsește și nu mai judecă nimic — fără zăvor, o comandă predată pe care ai trecut-o tu înapoi pe „neplătită” ar fi făcută la loc „plătită” la fiecare actualizare. Sub același zăvor mai face o scriere, singura care nu ține de bani: trece pe `patru` vederea cu care se deschide magazinul pe telefon și tabletă (`catalog_vedere_telefon`), numai dacă mai ținea `unu`, valoarea de pornire a lui `028`; o vedere aleasă de tine din Setări nu e călcată, nici la import, nici la actualizările de după. **Ce NU face: nu scrie `plata_la`.** Nu se știe când s-au plătit comenzile vechi, iar o dată pusă din burtă le-ar fi băgat pe toate în „încasat azi”. O comandă predată chiar în ziua importului rămâne neplătită, la fel și toate cele care n-au ajuns la etapa finală; cele anulate nu se numără oricum. Dacă setarea etapei finale lipsește ori e goală, nu marchează nimic — nu ghicește —, iar semnul se scrie oricum, deci nici mai târziu nu mai marchează. Nu atinge etapa, totalul ori ziua niciunei comenzi, nu pune prag pe niciun cont și nu trimite nimic pe Telegram. Ce nu se potrivește — o comandă predată și neîncasată — se îndreaptă cu mâna, după import, din „Încasări”. O bază care ia fișierele noi fără migrare nu pățește nimic: nicio comandă nu e oprită de prag și nimic nu se numără, iar paginile care au nevoie de plăți sunt refuzate lămurit (`plati_unavailable`, cu numele fișierului). Cere `001`; registrul (`025`) îl folosește numai dacă îl găsește. |
+| `033_acces.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând scris, nicio setare. Tabelul `role_rights` ține bifele pe care fondatorul le mută în „Acces” — cine intră pe ce panou și cine face ce faptă —, și **numai** pe cele schimbate față de pornire: cine are ce din pornire stă în cod (`GP_DREPT_IMPLICIT`, `api/lib/auth.php`), nu în bază. De-aceea tabelul se naște gol, iar **gol înseamnă „ca înaintea ei”**: cu migrarea importată și nicio bifă mișcată, fiecare rol intră exact unde intra până la 2.7.0. La a doua rulare nu se întâmplă nimic: `IF NOT EXISTS` sare peste tot ce e înăuntru, deci bifele mutate între timp rămân ale tale. **Ce NU face: nu atinge rolul niciunui cont** — `users.role` rămâne cum e. Și nu are semn în `settings`: nu face nimic „o singură dată”, deci n-are ce ține minte; că a rulat se vede din tabel și din registru. O bază care ia fișierele noi fără migrare nu pățește nimic: fiecare rută judecă după pornire, iar salvarea unei bife e refuzată lămurit (`acces_unavailable`, cu numele fișierului). Cere `001` (cheie străină spre `users`); registrul (`025`) îl folosește numai dacă îl găsește. |
+| `034_costuri.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând scris, nicio setare. Tabelul `stock_item_prices` ține **istoricul** prețurilor de cumpărare ale articolelor din depozit — cât costă făina, ouăle, untul, și din ce zi (`valid_from`) —, nu numai prețul de azi: costul unei zile se socotește cu ultimul preț de dinaintea ei, deci trecutul rămâne cu prețul de atunci. Un singur preț pe zi, pe articol (`uq_item_prices_day`): a doua scriere din aceeași zi e o corectură a primei, nu un al doilea preț. Lângă preț stă unitatea articolului din clipa scrierii, ca un articol trecut mai târziu din kg în g să nu facă fiecare cost să sară de o mie de ori fără să se vadă. Tabelul se naște gol: migrarea nu scrie niciun preț, iar „n-are preț” înseamnă „n-are niciun rând” — zero e un preț adevărat, al unui articol primit pe gratis. La a doua rulare nu se întâmplă nimic, deci prețurile scrise între timp rămân. **Ce NU face: nu atinge articolele, rețetele ori mișcările din depozit.** Nu are semn în `settings`. O bază care ia fișierele noi fără migrare nu pățește nimic: depozitul, rețetele și Statisticile răspund ca înaintea ei, fără costuri, iar citirea și scrierea unui preț sunt refuzate lămurit (`costuri_unavailable`, cu numele fișierului). Cere `001` (chei străine spre `stock_items` și `users`); registrul (`025`) îl folosește numai dacă îl găsește. |
+| `035_comenzi_sterse.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând scris, nicio setare. Tabelul `orders_deleted` e o arhivă: ține **poza** unei comenzi anulate care a fost apoi ștearsă — antetul, fiecare poziție, cine a șters-o și când —, ca ștergerea să se poată citi și după ce rândul a plecat din `orders`. Se naște gol: migrarea **nu șterge și nu mută nicio comandă**. La a doua rulare nu se întâmplă nimic, deci pozele adunate între timp rămân. **N-are nicio cheie străină, dinadins**: comanda pe care o descrie nu mai există, iar clientul ori contul care a șters-o pot dispărea și ei — o cheie străină ar fi șters poza odată cu clientul, ori i-ar fi golit câmpurile. O comandă se șterge o singură dată (`uq_orders_deleted_order`), dar numărul ei se poate refolosi: numerotarea e pe zi, iar ștergerea îl eliberează, deci poza își ține referința ei. Nu are semn în `settings`. O bază care ia fișierele noi fără migrare nu pățește nimic: anularea unei comenzi merge ca înaintea ei, iar ștergerea uneia anulate e refuzată lămurit (`comenzi_sterse_indisponibil`, cu numele fișierului), fără să atingă comanda. Nu cere nimic și se rulează oriunde; registrul (`025`) îl folosește numai dacă îl găsește. |
 
 Dacă o versiune viitoare are nevoie de o **setare** nouă, primești un fișier
 separat care conține doar acel `INSERT IGNORE INTO settings`. Nu reimportul
@@ -300,7 +321,7 @@ seed-ului.
 ### Cum verifici că migrarea a intrat
 
 `api/verifica.php` **nu te ajută**: pe o instalare vie răspunde 404
-(`api/verifica.php:1068-1074`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
+(`api/verifica.php:1264-1275`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
 
 **Întâi întreabă registrul.** Din `025_registru_migrari.sql` încoace, fiecare
 migrare își scrie numele într-un tabel când rulează, deci răspunsul se citește
@@ -317,8 +338,8 @@ unde-și scrie numele. Dacă tabelul însuși lipsește, baza n-a văzut încă 
 ci schema, deci spune adevărul și despre o bază care a trecut prin actualizări
 de dinaintea lui.
 
-Pentru starea de azi — migrările **003 … 031** — trebuie să întoarcă
-**72 de rânduri**:
+Pentru starea de azi — migrările **003 … 035** — trebuie să întoarcă
+**93 de rânduri**:
 
 ```sql
 SELECT TABLE_NAME, COLUMN_NAME
@@ -350,14 +371,19 @@ SELECT TABLE_NAME, COLUMN_NAME
         ('products','prag_c'), ('order_items','treapta'),
         ('order_items','prag_treapta'), ('order_request_items','treapta'),
         ('order_request_items','prag_treapta'), ('products','sheet_frozen'),
-        ('products','sheet_baked'))
+        ('products','sheet_baked'), ('orders','plata'),
+        ('orders','plata_scadenta'), ('orders','plata_la'),
+        ('orders','plata_de'), ('orders','plata_suma'),
+        ('orders','plata_nota'), ('orders','plata_amintire_la'),
+        ('users','prag_neplatite'))
 UNION ALL
 SELECT TABLE_NAME, '(tabel)'
   FROM information_schema.TABLES
  WHERE TABLE_SCHEMA = DATABASE()
    AND TABLE_NAME IN ('founder_invites', 'lab_shifts', 'lab_messages',
                       'request_claims', 'telegram_links', 'lab_production',
-                      'schema_migrations')
+                      'schema_migrations', 'role_rights', 'stock_item_prices',
+                      'orders_deleted')
 UNION ALL
 SELECT 'settings', CONCAT(setting_key, ' = ', value)
   FROM settings
@@ -366,17 +392,22 @@ SELECT 'settings', CONCAT(setting_key, ' = ', value)
                        'pret_prag_b_implicit', 'pret_prag_c_implicit',
                        'migration_029_numere_catalog',
                        'migration_030_gata_de_livrare',
-                       'migration_031_fise_tehnice')
+                       'migration_031_fise_tehnice',
+                       'plati_prag_implicit', 'plati_telegram_chat_id',
+                       'plati_raport_ore', 'plati_amintiri',
+                       'plati_raport_trimis_1', 'plati_raport_trimis_2',
+                       'panel_base_url', 'migration_032_plati_si_prag')
 UNION ALL
 SELECT TABLE_NAME, INDEX_NAME
   FROM information_schema.STATISTICS
  WHERE TABLE_SCHEMA = DATABASE()
    AND INDEX_NAME IN ('ix_orders_client_rang', 'ix_orders_autor',
-                      'ix_req_autor', 'uq_req_cheie')
+                      'ix_req_autor', 'uq_req_cheie',
+                      'ix_orders_plata', 'ix_orders_plata_la')
    AND SEQ_IN_INDEX = 1;
 ```
 
-**Mai puține rânduri decât 72 → citește care lipsesc.** Numele coloanei îți
+**Mai puține rânduri decât 93 → citește care lipsesc.** Numele coloanei îți
 spune singur unde s-a oprit importul: `referral_rate` e din 008, `vouched_at`
 din 010, `promo` din 011, `dismissed_at` din 012, `snoozed_until` din 013,
 `lab_pin` din 014, `zone` din 016, tabelul `request_claims` din 019, indexul
@@ -394,11 +425,17 @@ ale celor trei prețuri — șase pe `products`, de la `price_frozen_b` la
 `migration_029_numere_catalog` din 029, iar semnul
 `migration_030_gata_de_livrare` din 030, iar cele două coloane ale fișelor de
 pe `products` — `sheet_frozen` și `sheet_baked` — împreună cu semnul
-`migration_031_fise_tehnice`, din 031.
+`migration_031_fise_tehnice`, din 031, iar cele șapte coloane ale plății de pe
+`orders` — de la `plata` la `plata_amintire_la` —, `prag_neplatite` de pe
+`users`, indexurile `ix_orders_plata` și `ix_orders_plata_la`, cele șapte
+setări ale condicii banilor și semnul `migration_032_plati_si_prag` din 032,
+iar tabelul `role_rights` din 033, `stock_item_prices` din 034 și
+`orders_deleted` din 035.
 
-Rândurile care pot lipsi fără pagubă sunt cele trei de index: `020`, plus câte o
-bucată din `021` și din `022`. Fără ele insignele de client, lista de comenzi și
-lista de cereri ies la fel, doar mai încet — nicio poartă din cod nu le caută.
+Rândurile care pot lipsi fără pagubă sunt cele cinci de index: `020`, câte o
+bucată din `021` și din `022`, plus cele două din `032`. Fără ele insignele de
+client, lista de comenzi, lista de cereri și numărătoarea comenzilor neplătite
+ies la fel, doar mai încet — nicio poartă din cod nu le caută.
 Celelalte lipsuri sunt lucrări care nu merg.
 
 `021` e prima migrare care aduce deodată din toate felurile: o coloană
@@ -432,8 +469,9 @@ lista de roluri — `lab_shifts` e din `014`, care face și una, și alta, iar
 `016` merge invers: aduce o coloană (`users.zone`) și niciun tabel, deci urcă
 numărul de rânduri de la 30 la 31 și lasă lista de tabele cum era. Zona a opta
 din listă și lipsa punctului ei pe hartă **nu** se văd în interogarea asta —
-ele stau în `settings`, nu în schemă; pe acelea le vezi în Setări → Zone, unde
-zona nouă trebuie să fie în listă și fără coordonate.
+ele stau în `settings`, nu în schemă; pe acelea le vezi în Setări, pe fila
+„Liste”, la „Zone de livrare”, unde zona nouă trebuie să fie în listă și fără
+coordonate.
 
 `017` e de un al treilea fel, și de-aia rândul ei din interogare arată altfel
 decât toate celelalte: ea nu adaugă **nici** coloană, **nici** tabel — scrie o
@@ -452,9 +490,9 @@ două chei erau citite de pagina publică de mult, aveau casetele lor în Setăr
 există: patronul scria adresa firmei, apăsa „Salvează", primea răspuns bun, și
 nu se schimba nimic. Niciodată. Tăcerea aceea nu mai e cu putință: o cheie fără
 rând închide caseta din panou, iar cererea care o poartă totuși — un script, un
-import, o pagină rămasă deschisă de ieri — e refuzată întreagă, cu **toate**
+import, o pagină rămasă deschisă dinaintea actualizării — e refuzată întreagă, cu **toate**
 cheile lipsă numite și fără să se scrie nimic din ea
-(`api/lib/settings.php:448-462`, codul `unknown_setting`). De-aceea aici nu
+(`api/lib/settings.php:535-549`, codul `unknown_setting`). De-aceea aici nu
 contează numai că rândurile **există**, ci și **ce scrie în ele**: pe o
 instalare proaspăt migrată trebuie să citești
 `company_address = Șos. Olteniței 103` și
@@ -470,23 +508,25 @@ trece pe lângă un rând care există.)
 numai **toate deodată** — codul le numără și, dacă lipsește măcar una, se
 poartă ca înainte de migrare: fiecare produs are un singur preț, magazinul nu
 arată nicio scară, iar comenzile se tarifează la A. Nu e o stricăciune, e
-starea de ieri, ținută dinadins cât timp fișierele au ajuns pe server și
+starea de dinainte, ținută dinadins cât timp fișierele au ajuns pe server și
 importul încă nu. Singurul lucru refuzat în fereastra aceea e salvarea unui
 preț B sau C din fila Produse: serverul răspunde că lipsește migrarea `028` și
 nu scrie nimic, iar restul fișei produsului se salvează ca de obicei. Cele
 patru setări se văd cu **valoarea** lor, ca la `017` și `018`: pe o instalare
-proaspăt migrată citești `catalog_vedere_telefon = unu`,
+proaspăt migrată citești `catalog_vedere_telefon = patru`,
 `catalog_vedere_calculator = patru`, `pret_prag_b_implicit = 100` și
 `pret_prag_c_implicit = 300`. Altă valoare înseamnă că ai ales-o tu în Setări,
-iar migrarea a trecut pe lângă un rând care exista. Dacă lipsesc de tot,
-magazinul se deschide oricum — unul pe rând pe telefon, patru pe calculator —,
-iar produsele noi pornesc fără prag precompletat.
+iar migrarea a trecut pe lângă un rând care exista. Vederea de pe telefon are o
+poveste a ei: `028` o seamănă cu `unu`, iar `032` o trece o singură dată pe
+`patru` (v. mai jos, la `032`); între cele două importuri citești deci `unu`.
+Dacă lipsesc de tot, magazinul se deschide oricum — patru pe ecran, și pe
+telefon, și pe calculator —, iar produsele noi pornesc fără prag precompletat.
 
 `029` urcă numărul cu unu: un singur rând, semnul din `settings`. E de felul
 lui `027` — nu atinge schema deloc, deci nicio coloană n-ar putea-o dovedi —,
 și se citește cu **data** la care a rulat, nu cu o valoare anume:
 `migration_029_numere_catalog = 2026-…`. Fără el, fișierele noi se poartă ca
-ieri: numărul din colțul pozei e cheia bazei, iar fișa produsului refuză
+înainte: numărul din colțul pozei e cheia bazei, iar fișa produsului refuză
 schimbarea numărului cu un mesaj care numește migrarea — restul fișei se
 salvează. Cu el, numărul e `products.sort`, pe care migrarea l-a pus 1, 2, 3…
 în ordinea în care au fost puse produsele. Semnul e și zăvorul ei: dacă îl
@@ -517,6 +557,112 @@ numește migrarea. Produsul și pozele lui se salvează, dar rețeta nu: ea plea
 abia după fișe, iar formularul rămâne deschis și o spune. Semnul e zăvorul
 legării: dacă îl ștergi cu mâna, actualizarea următoare pune la loc fișele pe
 care le-ai scos între timp.
+
+`032` urcă numărul cu optsprezece: opt coloane, două indexuri și opt rânduri
+din `settings`. Coloanele sunt cele șapte ale plății, pe `orders`, și
+`prag_neplatite`, pe `users`: fără ele, plata unei comenzi n-are unde se scrie,
+iar pragul de comenzi neplătite n-are ce număra. Cele șapte setări se văd cu
+**valoarea** lor, ca la `028`: pe o instalare proaspăt migrată citești
+`plati_prag_implicit = 2`, `plati_raport_ore = 09:00,18:00`,
+`plati_amintiri = 1` și `panel_base_url = https://lab.goldenpastry.ro`, iar
+`plati_telegram_chat_id`, `plati_raport_trimis_1` și `plati_raport_trimis_2`
+cu nimic după semnul egal — pornesc goale, adică „niciun chat ales” și „nu s-a
+trimis niciodată”. Altă valoare înseamnă că ai ales-o tu din „Încasări”, ori că
+raportul a plecat între timp: în cele două rânduri `plati_raport_trimis_…`
+ceasul serverului își scrie singur **ziua** în care a luat ora aceea — o zi de
+felul `2026-10-12`, nu o oră —, tocmai ca să n-o trimită de două ori în aceeași
+zi (ceasul e povestit în
+[09-actualizare-vps.md](09-actualizare-vps.md), la „Ceasul plăților”). Cele
+două indexuri sunt de felul lui `020`: grăbesc numărătoarea comenzilor
+neplătite ale unui client și socoteala încasărilor dintr-o perioadă, nimic mai
+mult.
+
+Al optulea rând din `settings` e semnul, `migration_032_plati_si_prag`, citit
+cu data rulării, și e zăvorul singurului pas din `032` care scrie în comenzi.
+Migrarea îl caută **înaintea judecății** — după ce a pus coloanele, indexurile
+și setările — și îl scrie **la urmă**; numai când nu-l găsește judecă, o
+singură dată, comenzile de dinaintea ei. Judecata e scurtă: o comandă aflată la
+etapa finală — cea numită în `order_status_done`, oricum s-ar chema ea la tine —
+și cu ziua **mai veche** decât ziua importului, cu oricâte zile, e trecută
+„plătită”, cu totalul ei scris la `plata_suma` și cu nota `migrare 032`. Tot
+restul rămâne „neplătită”: comanda predată chiar în ziua importului și toate
+cele încă în lucru; cele anulate nu se numără oricum. Clipa plății (`plata_la`)
+nu se scrie la niciuna, fiindcă nu se știe când s-au plătit comenzile vechi. De
+aceea „Încasări” le numără la ziua **comenzii**, nu la ziua importului, iar
+banii din ziua urcării nu se umflă cu tot istoricul. Dacă setarea etapei finale
+lipsește ori e goală, migrarea nu marchează nimic — nu ghicește —, dar semnul
+îl scrie oricum, deci nici la rularea următoare nu mai judecă. Semnul nu se
+șterge cu mâna: fără el, actualizarea următoare ar trece din nou drept plătită
+fiecare comandă predată pe care ai lăsat-o între timp pe „neplătită”.
+
+Sub același semn stă și singura scriere din `032` care nu ține de bani: vederea
+cu care se deschide magazinul pe telefon și tabletă. Rândul
+`catalog_vedere_telefon` e trecut pe `patru` — „Patru pe ecran” —, dar numai
+dacă mai ținea `unu`, valoarea cu care l-a semănat `028`. O vedere aleasă din
+Setări înaintea importului („Șase pe ecran”, de pildă) rămâne cum era, iar după
+import semnul oprește mutarea: dacă pui la loc „Unul pe rând”, actualizările
+următoare nu ți-l mai schimbă. Rândul de pe calculator nu e atins, și niciun
+rând nu e făcut: pe o bază fără `028` nu e ce muta. Schimbarea ajunge la toți
+vizitatorii, și la cei care își aleseseră altă vedere pe telefon — o alegere
+ținută minte în browser ține numai cât Setările spun ce spuneau când a fost
+făcută.
+
+Fără `032`, fișierele noi vând ca înaintea ei, și fiecare parte a casei spune
+altceva. Scrierea unei comenzi nu judecă niciun prag: nicio comandă nu e oprită
+și nimic nu se numără. Magazinul clientului primește la întrebarea „cum stau cu
+plata?” răspunsul „nimic de spus” și se deschide ca de obicei — el n-are voie
+să cadă pentru o migrare neimportată. Tot ce arată ori schimbă plata e însă
+refuzat pe față, cu aceeași frază, care numește fișierul: „Plățile nu sunt încă
+pornite pe server: rulează întâi sql/032_plati_si_prag.sql.” Așa răspund
+registrul „Încasări”, starea de plată a unei comenzi, cardul „Raport pe
+Telegram”, raportul de probă și avertizarea de prag din formularul comenzii;
+pragul unui client, din „Conturi”, e refuzat cu aceeași frază. Statisticile se
+deschid fără partea lor de plăți, iar ceasul serverului scrie în jurnalul lui
+„nimic de făcut: baza nu are încă plățile (migrarea 032)” și nu trimite nimic.
+Dacă migrarea s-a oprit la mijloc — coloanele sunt, dar rândurile din
+`settings` nu —, salvarea pragului ori a setărilor raportului e refuzată cu
+altă frază, care spune și leacul: „Setările plăților nu sunt întregi pe server:
+rulează încă o dată sql/032_plati_si_prag.sql.” A doua rulare pune rândurile
+rămase pe drum și nu calcă nimic din ce a apucat să fie scris.
+
+`033` urcă numărul cu unu, și cu un tabel: `role_rights`. E de felul lui `015`
+— singura ei urmă în interogare e tabelul, fiindcă nu pune nicio coloană pe un
+tabel vechi și niciun rând în `settings`. Tabelul se naște gol, deci
+interogarea spune numai că el **există**, nu că s-a scris ceva în el — și așa
+și trebuie: în el stau numai bifele pe care fondatorul le-a mutat în „Acces”
+față de pornire, iar gol înseamnă „fiecare rol intră unde intra până la 2.7.0”.
+Cine are ce din pornire stă în cod (`GP_DREPT_IMPLICIT`, `api/lib/auth.php`),
+nu în bază. Fără tabel, fișierele noi nu încuie și nu descuie nimic: fiecare
+rută judecă după pornire, iar pagina „Acces” se deschide și arată împărțirea
+de pornire, numai de citit, sub caseta „Bifele nu se pot muta încă.”, care
+numește fișierul `sql/033_acces.sql`. O salvare trimisă totuși — dintr-o pagină
+rămasă deschisă — e refuzată de server la fel (`acces_unavailable`). Nimeni nu
+rămâne pe dinafară și nimeni nu capătă o ușă în plus cât lipsește tabelul.
+
+`034` urcă și ea numărul cu unu, cu tabelul `stock_item_prices`, tot gol:
+migrarea nu scrie niciun preț, deci gol înseamnă „niciun preț de cumpărare
+scris încă”. Fără tabel, depozitul, rețetele și Statisticile răspund ca
+înaintea ei, numai fără costuri, iar tot ce ține de prețuri e refuzat pe față:
+fila „Prețuri” din Depozit arată în locul listei fraza serverului, „Prețurile
+nu sunt încă disponibile: rulează întâi sql/034_costuri.sql.”, și niciun preț
+nu se poate nici citi, nici scrie (`costuri_unavailable`). Nu se pierde nimic
+în fereastra aceea, fiindcă nimic n-a apucat să fie scris.
+
+`035` urcă numărul tot cu unu, cu tabelul `orders_deleted`, gol și el: gol
+înseamnă „nicio comandă ștearsă”. **N-are nicio cheie străină, dinadins.** O
+cheie străină leagă un rând de altul și hotărăște ce pățește el când celălalt
+dispare, iar aici tocmai dispariția e subiectul: tabelul ține poza unei comenzi
+care nu mai există, iar clientul ei ori contul care a șters-o pot fi șterși și
+ei, mai târziu. Cu o cheie spre client, ștergerea clientului ar fi luat cu ea
+și poza (`ON DELETE CASCADE`) ori i-ar fi golit câmpul (`SET NULL`) — adică
+arhiva s-ar fi subțiat exact atunci când cauți în ea. De aceea poza își ține
+singură tot ce-i trebuie: numele clientului, referința, ziua, totalul și cine a
+șters-o stau scrise în ea, lângă numerele lor, nu ca trimiteri spre alte
+tabele. Fără tabel, o comandă anulată nu se poate șterge: serverul refuză
+„Șterge definitiv” cu fraza „Ștergerea comenzilor nu e pornită încă pe server:
+rulează întâi sql/035_comenzi_sterse.sql.” (`comenzi_sterse_indisponibil`) și
+nu atinge comanda — o ștergere fără urmă e tocmai ce n-a vrut casa. Anularea
+merge ca înaintea ei, fiindcă ea e o etapă, nu o ștergere.
 
 Lista nu se mai ține de mână. `.claude/test-doc-actualizari.mjs` chiar rulează
 interogarea asta pe baza de dezvoltare și numără rândurile, iar pe lângă asta o
@@ -556,7 +702,7 @@ Vreo trei minute. Fiecare pas prinde altceva.
    vechi. Dacă scrie „Nu s-a salvat: …", s-a urcat numai jumătate din pachet
    (API nou cu pagini vechi, ori invers): rulează din nou actualizarea.
 6. **Catalog → un produs cu poză urcată de tine.** Confirmă că se vede
-   miniatura: cererea trece prin redirecționarea din `.claude/build-deploy.mjs:568`,
+   miniatura: cererea trece prin redirecționarea din `.claude/build-deploy.mjs:582`,
    deci probează și `.htaccess`-ul de pe `lab`. Tot acolo, la un produs care are
    fișă tehnică, apasă „Vezi fișa”: PDF-ul trebuie să se deschidă într-o filă
    nouă, de pe `goldenpastry.ro`. Trece prin redirecționarea vecină, scrisă la
@@ -572,6 +718,17 @@ Vreo trei minute. Fiecare pas prinde altceva.
 8. **Sesiunile nu se pierd.** Stau în tabelul `sessions`, nu în fișiere. Urcarea
    nu deconectează pe nimeni. Singurele lucruri care rup sesiunile sunt
    schimbarea domeniului de cookie sau a cheii de criptare din `config.php`.
+9. **Ceasul plăților**, de la 2.7.0. E primul lucru din casă care rulează
+   singur, fără să fie cineva pe site: din cinci în cinci minute se uită dacă a
+   venit ora raportului de bani de pe Telegram. Rândul lui stă pe server, în
+   `/etc/cron.d/goldenpastry-plati`, nu în pachet, deci o urcare de fișiere nu
+   îl strică și nu îl pune; îl pune `actualizeaza-vps.sh`, care scrie în raport,
+   la pasul „Ceasul plăților”, dacă merge. După o actualizare, deschide
+   „Încasări” și uită-te jos, în cardul „Raport pe Telegram”, la „Ultimele
+   trimiteri”: raportul orei următoare trebuie să apară acolo. Cardul îl vede
+   din pornire numai fondatorul; cui i-l mai arăți hotărăști din „Acces”. Ce
+   faci când raportul n-a plecat scrie în
+   [09-actualizare-vps.md](09-actualizare-vps.md), la „Ceasul plăților”.
 
 ---
 
@@ -609,7 +766,7 @@ rândul de intrare cu referința comenzii.
 2.1.1, Depozitul număra comenzile de scăzut din cele mai noi 500 de comenzi, deci
 o comandă „Predată” mai veche — oprită de un articol lipsă sau redeschisă de o
 corectură — rămânea nescăzută fără niciun semn. Acum cifra vine de pe server,
-din toate comenzile (`api/routes/stock.php:667`). Dacă semnul apare cu comenzi
+din toate comenzile (`api/routes/stock.php:723`). Dacă semnul apare cu comenzi
 la care nu te așteptai, gândește-te întâi dacă nu le-ai scos deja marfa de mână,
 cu o mișcare de ieșire în registru: apăsarea pe „Scade din stoc” le-ar scădea a
 doua oară. În cazul ăsta adaugă o mișcare de intrare cu aceeași cantitate după
@@ -643,7 +800,7 @@ Pentru comenzile vechi, singura legătură rămâne însemnarea
 (`„#1042 Restaurant Bistro"`) — dar și referința, și numele clientului se pot
 schimba din formularul comenzii, deci o comandă redenumită de atunci nu se mai
 găsește nici așa. Tocmai de aceea codul reparat nu se mai leagă de însemnare, ci
-citește returul din registru, pe `order_id` (`api/lib/orders.php:1746`).
+citește returul din registru, pe `order_id` (`api/lib/orders.php:1799`).
 
 Ce faci cu ce iese: adaugă în Depozit o mișcare de **intrare** cu diferența
 (`iesit_net - pe_comanda`), pe articolul din registru, cu motivul „Corectură
@@ -749,8 +906,8 @@ Nerecuperabil altfel decât reîncărcând fiecare poză de mână.
 
 ### 3. Cache de 7 zile pe JavaScript — REPARAT în 2.0.3
 
-**Cum era.** `.claude/build-deploy.mjs:430-431` cere browserului să țină `.css`
-și `.js` șapte zile, în timp ce `:434` cere paginilor să nu se memoreze deloc,
+**Cum era.** `.claude/build-deploy.mjs:444-445` cere browserului să țină `.css`
+și `.js` șapte zile, în timp ce `:448` cere paginilor să nu se memoreze deloc,
 iar paginile chemau fișierele fără nicio versiune. Combinația implicită la
 fiecare actualizare era deci exact pe dos: **pagină nouă cu `support.js`
 vechi**, până la șapte zile.
@@ -761,7 +918,7 @@ aceea prinde doar erorile de randare — o eroare la trimiterea comenzii nu e
 prinsă de nimic, iar butonul rămâne pe „Se trimite…" la nesfârșit. Clientul
 crede că a comandat.
 
-**Ce s-a schimbat.** `puneVersiuni()` (`.claude/build-deploy.mjs:280`) lipește
+**Ce s-a schimbat.** `puneVersiuni()` (`.claude/build-deploy.mjs:294`) lipește
 pe fiecare trimitere către un `.js` sau `.css` amprenta conținutului acelui
 fișier — opt cifre hexa din SHA-256, ca `?v=8fe7df74`. Cheia de memorare a
 browserului e adresa întreagă, cu tot cu șirul de interogare:
@@ -805,7 +962,7 @@ lipește-le înapoi sub blocul generat, după extragere.
 ### 5. Urcare întreruptă la jumătate
 
 `support.js` trunchiat → pagina cu ambele limbi și `{{ }}` pe ecran. Un fișier
-din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:378-384`.
+din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:438-444`.
 Vestea bună: comenzile și cererile rulează în tranzacții, deci **nu rămân
 comenzi pe jumătate în bază**.
 
@@ -813,9 +970,9 @@ comenzi pe jumătate în bază**.
 
 Nu ține de actualizare, dar apare exact atunci și e pus pe seama ei. Coșul
 clientului se salvează în browserul lui cu **doar cantitățile**, nu prețurile
-(`Site Public.dc.html:3063`), deci o schimbare de preț se vede corect. **Dar
-dispariția e complet tăcută**: `:3702` ține în vitrină numai produsele bifate în
-catalogul deschis și cu prețul de acolo scris, iar `:4412-4418` scoate din coș
+(`Site Public.dc.html:3726-3736`), deci o schimbare de preț se vede corect. **Dar
+dispariția e complet tăcută**: `:4816-4818` ține în vitrină numai produsele bifate în
+catalogul deschis și cu prețul de acolo scris, iar `:5527-5534` scoate din coș
 rândurile rămase fără latura lor, fără niciun mesaj.
 
 Singura excepție e coșul refăcut din **„Comandă din nou”** (butonul de pe
@@ -846,7 +1003,7 @@ Trei lucruri, ordonate după cât ajută față de cât costă. Două sunt făcu
 a treia a căzut odată cu publicarea din panoul de găzduire.
 
 1. ~~**Versionarea fișierelor pentru cache**~~ — făcută în 2.0.3:
-   `puneVersiuni()` (`.claude/build-deploy.mjs:280`) lipește pe fiecare
+   `puneVersiuni()` (`.claude/build-deploy.mjs:294`) lipește pe fiecare
    trimitere către un `.js` sau `.css` amprenta conținutului lui, la
    construirea pachetului. Capcana 3 e închisă; vezi acolo ce înseamnă și ce
    rămâne de ținut minte.

@@ -67,7 +67,7 @@ function slug_scurt(string $slug, int $max): string
 /** GET /categories — grupele din catalog. Public. */
 function route_categories_list(): void
 {
-    $all = isset($_GET['all']) && e_admin(current_user() ?? '');
+    $all = isset($_GET['all']) && drept('catalog', current_user() ?? '');
     $rows = all(
         'SELECT * FROM product_categories' . ($all ? '' : ' WHERE active = 1') . ' ORDER BY sort, id'
     );
@@ -76,7 +76,7 @@ function route_categories_list(): void
 
 function route_categories_create(): void
 {
-    require_admin();
+    require_drept('catalog');
     $b = body();
 
     $name   = text_field($b['name'] ?? null, 'Numele grupei', CAT_NUME_MAX);
@@ -111,7 +111,7 @@ function route_categories_create(): void
 
 function route_categories_update(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $id  = (int) $id;
     $cat = one('SELECT * FROM product_categories WHERE id = ?', [$id]);
     if (!$cat) {
@@ -190,7 +190,7 @@ function route_categories_update(string $id): void
  */
 function route_categories_delete(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $id  = (int) $id;
     $cat = one('SELECT * FROM product_categories WHERE id = ?', [$id]);
     if (!$cat) {
@@ -216,7 +216,7 @@ function route_categories_delete(string $id): void
 
 function route_products_create(): void
 {
-    require_admin();
+    require_drept('catalog');
     $b = body();
 
     [$name, $nameEn, $desc, $descEn] = product_texts($b, true);
@@ -410,7 +410,7 @@ function product_numar_plin(int $n): void
 
 function route_products_update(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $id = (int) $id;
     $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
     if (!$p) {
@@ -623,7 +623,7 @@ function route_products_update(string $id): void
  */
 function route_products_delete(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $id = (int) $id;
     $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
     if (!$p) {
@@ -720,7 +720,7 @@ function route_products_delete(string $id): void
  */
 function route_products_photo(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $id = (int) $id;
     $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
     if (!$p) {
@@ -984,7 +984,7 @@ function fise_publice(array $p): array
  */
 function route_products_sheet(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $id = (int) $id;
     $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
     if (!$p) {
@@ -1080,7 +1080,7 @@ function route_products_sheet(string $id): void
  */
 function route_products_sheet_delete(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $id = (int) $id;
     $p  = one('SELECT * FROM products WHERE id = ?', [$id]);
     if (!$p) {
@@ -1470,7 +1470,7 @@ function slugify(string $text): string
 /** GET /products/{id}/recipe — liniile rețetei, plus articolul finit al produsului. */
 function route_product_recipe_get(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $id = (int) $id;
 
     $produs = one('SELECT id, name FROM products WHERE id = ?', [$id]);
@@ -1493,7 +1493,7 @@ function route_product_recipe_get(string $id): void
     // „Predată". Panoul poate spune asta din timp, nu după.
     $finit = one('SELECT id, name FROM stock_items WHERE product_id = ? AND active = 1', [$id]);
 
-    json_out([
+    $raspuns = [
         'product' => ['id' => $id, 'name' => $produs['name']],
         'recipe'  => array_map(static fn(array $r): array => [
             'itemId'   => (int) $r['item_id'],
@@ -1507,7 +1507,53 @@ function route_product_recipe_get(string $id): void
             'active'   => (int) $r['active'] === 1,
         ], $rows),
         'finished' => $finit ? ['id' => (int) $finit['id'], 'name' => $finit['name']] : null,
-    ]);
+    ];
+
+    // COSTUL REȚETEI (runda 2.7.0, cererea patronului din 4 oct. 2026: „să văd
+    // cât mă costă un produs"). Două chei în plus, și NUMAI pentru cine are
+    // dreptul `costuri` — din pornire, doar fondatorul.
+    //
+    // Catalogul îl deschid și administratorul, și managerul, iar ei n-au voie
+    // să vadă nici prețurile de cumpărare, nici costul. De aceea cheile nu vin
+    // goale ori `null` celui fără drept: nu vin DELOC, iar răspunsul lui e,
+    // literă cu literă, cel de până la runda asta. O cheie goală ar fi spus
+    // măcar că există ceva de văzut — și ar fi cerut fiecărei pagini să
+    // deosebească „n-am voie" de „nu e nimic".
+    //
+    // La fel pe o bază fără migrarea 034: fără tabelul prețurilor nu e nimic
+    // de socotit, iar rețeta trebuie să meargă ca ieri.
+    //
+    // Poarta rutei rămâne `catalog` (sus): cheia `costuri` nu deschide rețeta,
+    // doar adaugă la ea. Cine are `costuri` fără `catalog` e oprit la intrare.
+    if (drept('costuri') && costuri_supported()) {
+        $ctx = costuri_context();
+        $azi = today_local();
+
+        // `preturi`: prețul de AZI al fiecărui articol pe care formularul îl
+        // poate pune pe o linie, ca o linie adăugată să-și arate costul fără
+        // altă cerere. Pagina adună din ele costul rețetei pe care o editează
+        // omul; `cost` de mai jos e al rețetei SALVATE, socotit aici. Amândouă
+        // ies din aceeași funcție (`costuri_pret_articol()`), deci pe aceeași
+        // rețetă dau aceeași cifră.
+        //
+        // `(object)`: cheile sunt numere de articol, iar o listă goală ar
+        // pleca altfel ca `[]`, nu ca `{}` — pagina ar primi când un obiect,
+        // când un șir.
+        $raspuns['preturi'] = (object) costuri_preturi_formular($id, $azi, $ctx);
+
+        $cost = cost_produs($id, $azi, $ctx);
+        $raspuns['cost'] = [
+            // `null` când nu se poate socoti — niciodată 0 și niciodată suma
+            // liniilor care au preț (v. regula 4 din api/lib/costuri.php).
+            'total' => $cost['cost'],
+            'stare' => $cost['stare'],
+            'lipsa' => $cost['lipsa'],
+            // Ziua pentru care s-a socotit, cum o vede patiseria, nu serverul.
+            'zi'    => $azi,
+        ];
+    }
+
+    json_out($raspuns);
 }
 
 /**
@@ -1523,7 +1569,7 @@ function route_product_recipe_get(string $id): void
  */
 function route_product_recipe_put(string $id): void
 {
-    require_admin();
+    require_drept('catalog');
     $b  = body();
     $id = (int) $id;
 
@@ -1622,7 +1668,9 @@ function route_product_recipe_put(string $id): void
 
         $pdo->commit();
     } catch (Throwable $e) {
-        $pdo->rollBack();
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
         throw $e;
     }
 

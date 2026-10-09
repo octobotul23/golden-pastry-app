@@ -52,6 +52,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
    rămân listele derulante — care țin oricâte conturi pe un singur rând. */
 [data-jr=filters]{display:none!important}
 [data-jr=filtersel]{display:block!important}
+/* Al treilea filtru, „Comenzi șterse” (runda 2.7.0), își are lista derulantă
+   sub alt nume de cârlig — de ce, scrie lângă ea, în marcaj. Regula e aceeași:
+   butonul se ascunde odată cu celelalte, lista îi ia locul. */
+[data-jr=faptesel]{display:block!important}
+/* „Ce era în comandă”, din fereastra unui rând. Pe ecran lat o poziție are
+   trei coloane: ce · preț · sumă. Pe telefon cardul rămâne cu vreo 230px
+   înăuntru la 320, iar trei coloane ar lăsa numelui sub 90 — un „Croissant cu
+   unt” rupt pe trei rânduri. Prețul coboară sub nume, suma rămâne în dreapta. */
+[data-jr=poz]{grid-template-columns:minmax(0,1fr) auto!important}
+[data-jr=pozpret]{grid-column:1!important;grid-row:2!important;text-align:left!important}
+[data-jr=pozsuma]{grid-column:2!important}
 }
 </style>
 </helmet>
@@ -85,7 +96,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
 <div data-jr="shell" style="display:flex;min-height:100vh;align-items:stretch">
 
-<div data-jr="side" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
+<div data-jr="side" class="gp-meniu-derulat" style="width:252px;flex:none;position:sticky;top:0;align-self:flex-start;height:100vh;overflow-y:auto;background:var(--h-cocoa-800);color:var(--h-cream-100);display:flex;flex-direction:column;gap:26px;padding:22px 18px">
 <div data-jr="sidehead" style="flex:none;display:flex;align-items:center;gap:12px">
 <img src="assets/logo-auriu.png" alt="Golden Pastry" style="width:46px;height:46px;object-fit:contain;flex:none">
 <div style="display:flex;flex-direction:column">
@@ -94,10 +105,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>
 </div>
-<div data-jr="nav" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
+<div data-jr="nav" class="gp-meniu-derulat" style="flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin;display:flex;flex-direction:column;gap:6px">
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="10">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700">{{ m.et }}</span>
+<span style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:var(--h-accent);color:#1B120B;font-size:15px;font-weight:700" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a href="{{ m.href }}" style="display:flex;align-items:center;min-height:46px;padding:0 14px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--h-cream-100);font-size:15px;font-weight:600;text-decoration:none" style-hover="background:rgba(255,255,255,.14)">{{ m.et }}</a>
@@ -115,7 +126,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07)">
 <div style="display:flex;flex-direction:column;min-width:0;flex:1">
 <span style="font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ authName }}</span>
-<span style="font-size:12px;opacity:.6">administrator</span>
+<span style="font-size:12px;opacity:.6">{{ sideRol }}</span>
 </div>
 </div>
 </sc-if>
@@ -138,7 +149,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -216,6 +227,37 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </div>
 
+<!-- FILTRUL „COMENZI ȘTERSE” (runda 2.7.0, cererea patronului din 4 oct. 2026:
+     „if I see the deletion, I can see what was the order”). O comandă ștearsă
+     nu mai e în registru; singurul loc din care se mai ajunge la ea e rândul ei
+     de aici, iar rândul acela se pierde printre sute de altele.
+
+     Nu e al treilea rând de felul celor două de sus, deși arată la fel. „Cont”
+     și „Zonă” taie numai din rândurile deja aduse (câte 50 pe felie); o
+     ștergere de acum o lună nu e printre ele, deci un buton de felul lor ar fi
+     răspuns „nimic” despre ceva ce există. Ăsta întreabă SERVERUL, peste tot
+     jurnalul — de aici și numele de deasupra lui.
+
+     Pe telefon, ca la celelalte două: butonul se ascunde (stă în același
+     `data-jr="filters"`) și rămâne lista derulantă, ca filtrul pus să se vadă.
+     Lista poartă `faptesel`, nu numele surorilor ei: `check-panouri.mjs`
+     numără listele acelea și cere să fie exact două, câte una de fiecare filtru
+     care lucrează pe rândurile aduse. -->
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="h-eyebrow" style="font-size:12px">Din tot jurnalul</span>
+<select data-jr="faptesel" class="h-input" aria-label="Din tot jurnalul" value="{{ faptaPick }}" onChange="{{ onFaptaPick }}" style="display:none;width:100%;height:46px;font-size:15px">
+<sc-for list="{{ faptaOpts }}" as="o" hint-placeholder-count="2">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<div data-jr="filters" style="display:flex;flex-wrap:wrap;gap:6px">
+<button type="button" class="{{ faptaCls }}" aria-pressed="{{ faptaApasat }}" onClick="{{ onFapta }}" style="height:42px;font-size:14px;border-radius:12px;display:flex;align-items:center;gap:8px">
+<span>Comenzi șterse</span>
+<span class="h-numeric" style="font-weight:700;opacity:.8">{{ faptaNumar }}</span>
+</button>
+</div>
+</div>
+
 <sc-for list="{{ groups }}" as="g" hint-placeholder-count="2">
 <div style="display:flex;flex-direction:column;gap:10px">
 <div style="display:flex;align-items:baseline;gap:12px">
@@ -243,6 +285,18 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </div>
 </sc-for>
+
+<!-- Cât se caută comenzile șterse. Apăsarea pe filtru golește lista dinadins
+     (rândurile de pe ecran sunt ale jurnalului întreg, nu ale filtrului), iar
+     până răspunde serverul pagina n-are ce arăta. Fără rândul ăsta, omul ar
+     vedea butonul aprins deasupra unui ecran gol și ar citi golul drept
+     răspuns: „n-a șters nimeni nimic”. Același loc și aceeași mărime ca la
+     cardul de gol de dedesubt, ca ecranul să nu sară când vine răspunsul. -->
+<sc-if value="{{ faptaAsteapta }}" hint-placeholder-val="{{ false }}">
+<div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center">
+<p style="margin:0;font-size:16px;color:var(--h-fg-muted)">Se caută comenzile șterse…</p>
+</div>
+</sc-if>
 
 <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
 <div class="h-card" style="padding:40px 18px;border-radius:18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center">
@@ -293,9 +347,17 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      închide fereastra pe care omul tocmai o citește. -->
 <div data-jr="detcard" class="h-card" onClick="{{ onDetKeep }}" style="width:640px;max-width:100%;max-height:88vh;overflow-y:auto;padding:22px 24px;border-radius:22px;display:flex;flex-direction:column;gap:16px;animation:pf-pop .28s var(--h-ease-spring)">
 
+<!-- TITLUL ȘI BUTONUL DE ÎNCHIDERE, pe același rând. La 320px cardul are vreo
+     230px înăuntru, din care butonul ține 44 și golul 12: titlului îi rămân
+     cam 175. Un titlu din cuvinte obișnuite se rupe între ele; un nume de
+     client scris dintr-o bucată nu are unde, și fără `overflow-wrap:anywhere`
+     ar ieși peste buton. De când titlul unei comenzi șterse are un cuvânt în
+     plus („Comandă ștearsă #1009 · …”), e și mai puțin loc de greșit.
+     `min-width:0` pe coloană e perechea: fără el, o coloană flex nu se strânge
+     sub cel mai lung cuvânt al ei, oricum s-ar rupe textul. -->
 <div style="display:flex;align-items:flex-start;gap:12px">
 <div style="display:flex;flex-direction:column;gap:3px;min-width:0">
-<h2 class="h-h3" style="margin:0;font-size:20px;line-height:1.25">{{ detTitlu }}</h2>
+<h2 class="h-h3" style="margin:0;font-size:20px;line-height:1.25;overflow-wrap:anywhere">{{ detTitlu }}</h2>
 <span style="font-size:13px;color:var(--h-fg-subtle)">{{ detSub }}</span>
 </div>
 <button type="button" aria-label="Închide fereastra acțiunii" class="h-btn h-btn--ghost" onClick="{{ onDetClose }}" style="margin-left:auto;height:44px;width:44px;min-height:44px;padding:0;font-size:20px;flex:none">×</button>
@@ -337,6 +399,61 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-faint)">{{ detStersLinie }}</p>
 </sc-if>
 
+<!-- „CE ERA ÎN COMANDĂ” (runda 2.7.0, cererea patronului din 4 oct. 2026).
+     Ștergerea unei comenzi anulate e adevărată: rândul pleacă din registru. Ce
+     rămâne e poza făcută de server înaintea ștergerii, pe care o trimite aici
+     ca `subject.sters`. Fără blocul ăsta, fereastra unei comenzi șterse spunea
+     doar „nu mai există”, iar patronul n-avea de unde afla CE s-a șters —
+     tocmai lucrul pe care l-a cerut.
+
+     Același bloc se aprinde și în fereastra CERERII din care s-a născut
+     comanda: acolo poza vine pe rândul ștergerii, din istoria de mai jos
+     (v. `randSters`), iar fraza de deasupra spune a cui e comanda.
+
+     Fiecare bucată are steagul ei: poza unei comenzi vechi poate veni fără
+     oră, fără notă, fără cine a scris-o, iar un rând gol cu eticheta lui
+     („Notă:” și nimic după) ar arăta ca o stricăciune, nu ca o lipsă.
+
+     NICIO LEGĂTURĂ aici, dinadins. Numărul unei comenzi șterse se eliberează
+     și poate fi luat de alta în aceeași zi; un „Vezi comanda #12” ar duce la
+     comanda ALTUI client. Butonul de deasupra nici nu se desenează pe o
+     comandă ștearsă (vezi `detAreLink`).
+
+     Poziția e o grilă a ei, cu lățimi minime la preț și la sumă: așa cifrele
+     cad una sub alta de la un rând la altul fără un tabel, iar numele — singura
+     coloană care se strânge (`minmax(0,…)`) — se rupe când e lung, în loc să
+     împingă suma afară din card. Pe telefon grila se reașază din foaia de sus. -->
+<sc-if value="{{ detPoza }}" hint-placeholder-val="{{ false }}">
+<div data-jr="poza" style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--h-line);padding-top:14px">
+<span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">Ce era în comandă</span>
+<sc-if value="{{ pozaAntet }}" hint-placeholder-val="{{ true }}">
+<p style="margin:0;font-size:16px;font-weight:600;line-height:1.4;overflow-wrap:anywhere">{{ pozaAntet }}</p>
+</sc-if>
+<sc-if value="{{ pozaCanal }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;color:var(--h-fg-subtle);overflow-wrap:anywhere">{{ pozaCanal }}</p>
+</sc-if>
+<sc-for list="{{ pozaPozitii }}" as="pz" hint-placeholder-count="3">
+<div data-jr="poz" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(104px,auto) minmax(104px,auto);gap:2px 12px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--h-line)">
+<span style="grid-column:1;grid-row:1;min-width:0;font-size:15px;line-height:1.4;overflow-wrap:anywhere">{{ pz.ce }}</span>
+<span data-jr="pozpret" class="h-numeric" style="grid-column:2;grid-row:1;font-size:13px;color:var(--h-fg-subtle);text-align:right;white-space:nowrap">{{ pz.pret }}</span>
+<span data-jr="pozsuma" class="h-numeric" style="grid-column:3;grid-row:1;font-size:15px;font-weight:600;text-align:right;white-space:nowrap">{{ pz.suma }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ pozaFaraPozitii }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;color:var(--h-fg-faint)">Niciun produs păstrat.</p>
+</sc-if>
+<sc-if value="{{ pozaTotal }}" hint-placeholder-val="{{ true }}">
+<p class="h-numeric" style="margin:0;font-size:16px;font-weight:700;text-align:right">{{ pozaTotal }}</p>
+</sc-if>
+<sc-if value="{{ pozaNota }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;line-height:1.5;color:var(--h-fg-muted);white-space:pre-wrap;overflow-wrap:anywhere">{{ pozaNota }}</p>
+</sc-if>
+<sc-if value="{{ pozaScrisa }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:13px;color:var(--h-fg-faint);overflow-wrap:anywhere">{{ pozaScrisa }}</p>
+</sc-if>
+</div>
+</sc-if>
+
 <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--h-line);padding-top:14px">
 <span style="font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--h-fg-subtle)">{{ detIstTitlu }}</span>
 
@@ -364,7 +481,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-size:12px;color:var(--h-fg-faint)">{{ h.cine }}</span>
 <!-- De unde vine rândul, când nu vine de pe lucrul apăsat. Așa se vede pe
      față nașterea unei comenzi ieșite dintr-o cerere: ea e scrisă pe CERERE,
-     nu pe comandă, și fără insigna asta ar părea că s-a scris pe comandă. -->
+     nu pe comandă, și fără insigna asta ar părea că s-a scris pe comandă.
+
+     Numărul de pe ea e cel din bază, mai puțin pe rândurile unei comenzi
+     ȘTERSE arătate în fereastra cererii ei: acolo e referința de pe hârtii,
+     aceeași cu a blocului „Ce era în comandă” (v. `aCeleiSterse`). E de citit:
+     rândul de istorie n-are niciun buton și nicio legătură, dinadins — numărul
+     unei comenzi șterse poate fi deja al alteia. -->
 <sc-if value="{{ h.dinAlta }}" hint-placeholder-val="{{ false }}">
 <span class="h-badge" style="font-size:10px">{{ h.deUnde }}</span>
 </sc-if>
@@ -392,15 +515,29 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 // niciodată în ce trimite serverul. Din cauza asta fiecare buton de zonă
 // arăta 0 și, apăsat, golea lista întreagă, iar în coloana „Zonă” omul citea
 // „stock_item” în loc de numele zonei.
+//
+// LISTA ASTA E NUMĂRATĂ, NU ȚINUTĂ MINTE (runda 2.7.0). Scrisă cu mâna, a
+// rămas în urmă de patru ori fără să se vadă: comisioanele, laboratorul,
+// pontajul și anunțurile se scriau în jurnal de mult, iar patronul le citea
+// în coloana „Zonă” și pe butoanele de filtrare drept „commission”, „lab”,
+// „lab_shift”, „lab_message” — o zonă fără nume nu dispare, rămâne la coadă
+// cu numele ei tehnic. „Acces” ar fi fost a cincea. Acum proba
+// `check-jurnal.mjs` citește din tot `api/` al doilea argument al fiecărei
+// chemări `audit()` și cere ca fiecare să aibă un rând aici.
 const ZONES = [
   { key: "order", label: "Comenzi", cls: "h-badge h-badge--accent" },
   { key: "request", label: "Cereri", cls: "h-badge h-badge--jam" },
   { key: "product", label: "Produse", cls: "h-badge h-badge--success" },
   { key: "category", label: "Categorii", cls: "h-badge h-badge--success" },
+  { key: "lab", label: "Laborator", cls: "h-badge h-badge--warning" },
+  { key: "lab_message", label: "Anunțuri", cls: "h-badge h-badge--warning" },
+  { key: "lab_shift", label: "Pontaj", cls: "h-badge h-badge--warning" },
   { key: "stock", label: "Depozit", cls: "h-badge h-badge--honey" },
   { key: "stock_item", label: "Articole depozit", cls: "h-badge h-badge--honey" },
   { key: "route", label: "Rută", cls: "h-badge h-badge--warning" },
+  { key: "commission", label: "Comisioane", cls: "h-badge h-badge--jam" },
   { key: "user", label: "Conturi", cls: "h-badge h-badge--solid" },
+  { key: "acces", label: "Acces", cls: "h-badge h-badge--solid" },
   { key: "settings", label: "Setări", cls: "h-badge" }
 ];
 const ZLAB = {}, PCLS = {};
@@ -409,6 +546,116 @@ const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JS
 const z = (n) => (n < 10 ? "0" : "") + n;
 const dayKey = (ms) => { const d = new Date(ms); return d.getFullYear() + "-" + z(d.getMonth() + 1) + "-" + z(d.getDate()); };
 const MON = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
+
+// NUMELE FAPTELOR (runda 2.7.0). Pagina arată fapta cu numele ei din bază —
+// „order_update”, „login” — și până acum n-a avut nicio listă de nume pentru
+// ele: asta e prima. Are numai rândurile hotărâte în runda asta. O faptă fără
+// rând aici rămâne cum era, cu numele din bază — nu dispare și nu se preface
+// în liniuță.
+//
+// „Comandă ștearsă” (hotărât pe 4 oct. 2026): ștergerea unei comenzi e singura
+// faptă pe care patronul o CAUTĂ în jurnal după nume, din butonul „Comenzi
+// șterse”, deci singura al cărei nume tehnic îl citește sigur.
+//
+// Cele două fapte ale prețurilor (cererea patronului din 4 oct. 2026: să scrie
+// cât costă făina, ouăle, untul) primesc un nume omenesc, fiindcă „pret_nou”
+// mai și minte: aceeași faptă se scrie și la CORECTURA prețului din aceeași
+// zi, iar amănuntul de lângă ea spune atunci „Preț corectat pe…”. „Scris” le
+// cuprinde pe amândouă.
+//
+// „De ingredient”, nu doar „preț”: jurnalul ține și prețurile de VÂNZARE ale
+// produselor (pe zona „Produse”), iar omul care caută cine a umblat la prețul
+// făinii nu trebuie să le ia drept aceleași. E cuvântul din „Acces”
+// („Prețurile ingredientelor”).
+//
+// CIFRA NU E AICI și nici în amănunt: jurnalul îl deschid și cei fără dreptul
+// `preturi`. Rândul spune cine, pe ce articol și din ce zi — nu și cât.
+//
+// `hasOwnProperty`, nu `FAPTE[cod]` gol: numele faptei vine de la server, iar
+// un obiect simplu răspunde și la „constructor” ori „toString”, cu o funcție
+// în loc de nume.
+const FAPTE = { order_delete: "Comandă ștearsă", pret_nou: "Preț de ingredient scris", pret_sters: "Preț de ingredient șters" };
+const dinLista = (lista, cheie) => (typeof cheie === "string" && Object.prototype.hasOwnProperty.call(lista, cheie)) ? lista[cheie] : "";
+const numeFapta = (cod) => dinLista(FAPTE, cod) || cod || "";
+
+// ---- „Ce era în comandă”: cum se scrie o lipsă ----
+//
+// Poza unei comenzi șterse (`subject.sters`) e făcută de server dintr-un rând
+// care nu mai există, deci orice câmp al ei poate lipsi: comenzile vechi n-au
+// oră, cele scrise de pe site n-au cine le-a scris, iar o poză de pe o bază mai
+// veche poate veni și fără prețuri. Cele patru de mai jos întorc ȘIRUL GOL
+// pentru o lipsă, niciodată un cuvânt ori o cifră: `String(undefined)` scrie
+// „undefined” pe ecran, `Number(null)` e 0 și ar ieși „0,00 lei” — o sumă pe
+// care n-a trecut-o nimeni —, iar `NaN.toFixed(2)` scrie „NaN”. Un șir gol, în
+// schimb, stinge steagul rândului din marcaj și rândul nu se mai desenează.
+const curat = (v) => typeof v === "string" ? v.trim() : (typeof v === "number" && isFinite(v) ? String(v) : "");
+const numarDin = (v) => typeof v === "number" ? v
+  : (typeof v === "string" && v.trim() !== "" ? Number(v.trim().replace(",", ".")) : NaN);
+// Banii, cum îi scrie casa: virgulă la zecimale, punct la mii, „lei” la coadă.
+// Jurnalul n-a avut până acum nicio sumă de scris, deci nici ajutător pentru
+// ele; `shared/gp-api.js` nu are unul de împrumutat (acolo sunt numai
+// cantitățile), iar fiecare pagină cu bani și-l ține pe al ei. Miile se pun cu
+// mâna, nu cu `toLocaleString`: acela ascultă de limba browserului, iar pe un
+// telefon pus pe engleză ar scrie „1,234.50”.
+const lei = (v) => {
+  const n = numarDin(v);
+  if (!isFinite(n)) return "";
+  const r = Math.round(n * 100) / 100;
+  const parti = Math.abs(r).toFixed(2).split(".");
+  return (r < 0 ? "-" : "") + parti[0].replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + parti[1] + " lei";
+};
+// Cantitatea: „24”, nu „24.00”; „0,5”, nu „0.5”. E regula lui `gp.qtyLabel`,
+// scrisă aici a doua oară fiindcă `renderVals()` e rulat și de probele casei,
+// cu un `gp` de probă care nu-l are.
+const catDin = (v) => {
+  const n = numarDin(v);
+  return isFinite(n) ? String(Math.round(n * 1000) / 1000).replace(".", ",") : "";
+};
+// NUMĂRUL DE PE HÂRTII AL UNEI COMENZI ȘTERSE, luat din poza ei — pentru
+// titlul ferestrei și pentru insigna rândurilor ei (încheierile rundei 2.7.0).
+// Se crede numai când are în el măcar o cifră ori o literă. `curat()` singur
+// lasă să treacă orice text negol, iar dintr-un „#” rămas fără număr titlul
+// ieșea „Comandă ștearsă # · Brutăria Soare”: tocmai „ștearsă” fără niciun
+// număr după ea, lucrul pe care titlul îl ocolește când referința lipsește de
+// tot. Fără un număr de crezut întoarce șirul gol, iar cine întreabă cade pe
+// numărul din bază, ca înaintea arhivei.
+//
+// În BLOC referința se scrie mai departe cum a fost păstrată, cu `curat()`:
+// acolo e de citit ce s-a păstrat, nu de botezat ceva cu ea.
+const refDinPoza = (p) => { const t = p ? curat(p.ref) : ""; return /[\p{L}\p{N}]/u.test(t) ? t : ""; };
+// „de” dinaintea substantivului, după regula numeralului românesc: 19 acțiuni,
+// dar 20 de acțiuni; 101 acțiuni, dar 120 de acțiuni. E regula lui `ro_de()` de
+// pe server (api/lib/http.php), scrisă aici a doua oară fiindcă pagina n-are de
+// unde s-o împrumute.
+//
+// O folosesc TOATE locurile în care un număr stă lângă „acțiuni” ori „conturi”:
+// subsolul listei, subtitlul de sub titlu și antetul fiecărei zile. Până la
+// încheierile rundei 2.7.0 o folosea numai subsolul, deci aceeași pagină scria
+// jos „din 299 de acțiuni găsite” și sus „299 acțiuni găsite” — iar forma de
+// sus era ținută greșită chiar de o regulă din `check-panouri.mjs`, care cerea
+// „299 acțiuni găsite”. Regula cere acum forma cu „de”, cu marginile ei
+// (1, 19, 20, 101, 120, 299).
+const cuDe = (n) => { const r = n % 100; return (n >= 20 && (r === 0 || r >= 20)) ? "de " : ""; };
+// Numărul cu substantivul lui, acordat: „1 acțiune”, „19 acțiuni”, „20 de
+// acțiuni”. Un singur loc care știe și de singular, și de „de”: cele trei fraze
+// care numără își scriau fiecare acordul ei, și de aceea „de” a ajuns numai
+// într-una. Subsolul nu trece pe aici — verbul și participiul lui se acordă cu
+// alte numere decât substantivul, deci fraza lui se face bucată cu bucată.
+const cate = (n, unu, multe) => n + " " + (n === 1 ? unu : cuDe(n) + multe);
+// Ziua comenzii vine ca „2026-10-07” și se scrie ca în restul jurnalului:
+// „7 octombrie 2026”. Se taie din ȘIR, nu printr-un `Date`: un `Date` făcut
+// dintr-o zi fără oră e miezul nopții la Londra, iar citit la București ori,
+// mai rău, pe un ceas de la vest de Londra, poate ieși ziua de alături. Un șir
+// care nu arată a zi se întoarce cum a venit — tot e mai mult decât nimic.
+const ziDin = (s) => {
+  const t = curat(s);
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(t);
+  const luna = m ? MON[parseInt(m[2], 10) - 1] : "";
+  return luna ? parseInt(m[3], 10) + " " + luna + " " + m[1] : t;
+};
+// Canalele pe care le scrie serverul la o comandă (`api/routes/orders.php`).
+// Un canal care nu e aici se arată cu numele lui din bază.
+const CANALE = { site: "site", telefon: "telefon", whatsapp: "WhatsApp", panou: "panou" };
 
 /**
  * Adresa altei pagini, cu întrebarea ei, peste întrebarea paginii de acum.
@@ -436,6 +683,13 @@ class Component extends DCLogic {
   // întârziat despre altă căutare trebuie recunoscut și aruncat, ca omul să nu
   // vadă rezultatele cuvântului pe care tocmai l-a șters.
   state = { navOpen: false, log: [], pg: 1, pages: 1, total: 0, auth: null, who: "Toate", page: "Toate", search: "", q: "", eroare: "", eroareMai: "", loaded: false,
+    // FILTRUL „COMENZI ȘTERSE” (runda 2.7.0). `fapta` e fapta după care a
+    // filtrat SERVERUL lista din `log` — gol înseamnă jurnalul întreg, iar
+    // singura altă valoare de azi e „order_delete”. E perechea lui `q`, nu a
+    // lui `who`/`page`: aceia taie din rândurile aduse, ăsta hotărăște CE
+    // rânduri se aduc, deci merge în cerere și are aceeași pază de răspuns
+    // întârziat ca ea.
+    fapta: "",
     // FEREASTRA UNUI RÂND. `deschis` e rândul apăsat (obiectul din `log`, nu
     // numărul lui: rândul poate ieși din listă la următoarea reîmprospătare,
     // iar fereastra n-are voie să se golească sub degetul omului).
@@ -492,9 +746,10 @@ class Component extends DCLogic {
       // nu mai poate pune pe ecran o listă mai veche decât cea deja afișată.
       // Pornește abia după ce știm cine e conectat, ca administratorului să nu
       // i se arate o clipă ecranul „nu ai acces la jurnal”.
-      // …și doar pentru administrator: pentru oricine altcineva serverul
-      // răspunde 403 la /log, iar ecranul „nu ai acces" nu are ce
-      // reîmprospăta — pornea totuși, cu un refuz la fiecare 5 secunde.
+      // …și doar pentru cine are dreptul `jurnal` (îl dă fondatorul din
+      // „Acces”; serverul întreabă `require_drept('jurnal')`): pentru oricine
+      // altcineva serverul răspunde 403 la /log, iar ecranul „nu ai acces" nu
+      // are ce reîmprospăta — pornea totuși, cu un refuz la fiecare 5 secunde.
       // Utilizatorul vine din promisiune, nu din `this.state`: setState-ul de
       // mai sus e amânat de React, deci aici starea ar fi încă goală.
       .then((user) => {
@@ -502,7 +757,9 @@ class Component extends DCLogic {
         // Caseta e deja pe ecran, cu motivul ei și cu butonul de reîncercare.
         if (user === NEAFLAT) return;
         if (!user) gp.toLogin();
-        else if (gp.eAdmin(user)) this.stopPoll = gp.poll(() => this.pull(1), 5000);
+        // Ghilimelele simple sunt dinadins: proba `check-acces-echivalent.mjs`
+        // caută chemarea scrisă întocmai așa, ca s-o strice și s-o vadă roșie.
+        else if (gp.are('jurnal', user)) this.stopPoll = gp.poll(() => this.pull(1), 5000);
         else this.setState({ loaded: true });
       });
     this.onStore = () => this.pull(1);
@@ -532,7 +789,7 @@ class Component extends DCLogic {
    * jurnal ținut în localStorage nu înregistra ce făcea altcineva, de pe alt
    * dispozitiv — adică exact ce trebuie să vadă un jurnal.
    */
-  pull(page, term) {
+  pull(page, term, fap) {
     const wanted = page || 1;
     // Căutarea o face serverul, peste tot jurnalul, iar lista de aici e chiar
     // răspunsul lui. Filtrată doar în pagină, căutarea vedea numai cele 50 de
@@ -540,11 +797,24 @@ class Component extends DCLogic {
     // fusese înregistrată, doar că mai jos de primele 50 — iar omul rămânea cu
     // impresia că nu s-a înregistrat nimic despre ea.
     const termen = term === undefined ? this.state.q : term;
-    return gp.get('/log?page=' + wanted + (termen ? '&search=' + encodeURIComponent(termen) : ''))
+    // Filtrul de faptă („Comenzi șterse”) îl aplică tot serverul, din același
+    // motiv ca la căutare: o ștergere veche nu e printre cele 50 de rânduri
+    // aduse, deci o filtrare făcută în pagină ar răspunde „nicio comandă
+    // ștearsă” despre una care există. Vine în mână de la cine tocmai l-a
+    // schimbat (`reia`), ca și `term`: cererea pleacă atunci cu ce s-a ales,
+    // oricând ar așeza `setState` starea (vezi `reia`).
+    const fapta = fap === undefined ? (this.state.fapta || "") : fap;
+    return gp.get('/log?page=' + wanted + (termen ? '&search=' + encodeURIComponent(termen) : '') + (fapta ? '&action=' + encodeURIComponent(fapta) : ''))
       .then((r) => {
         // Între cerere și răspuns omul mai scrie în casetă. Un răspuns despre
         // altă căutare decât cea de acum nu are voie să ajungă pe ecran.
         if (termen !== this.state.q) return;
+        // La fel cu filtrul. Reîmprospătarea de la cinci secunde pleacă cu
+        // filtrul din clipa aceea; dacă omul îl stinge până vine răspunsul,
+        // prima pagină — care ÎNLOCUIEȘTE capul listei — ar așeza comenzile
+        // șterse peste jurnalul întreg, sub un buton care spune că filtrul e
+        // stins.
+        if (fapta !== (this.state.fapta || "")) return;
 
         const fresh = (r.entries || []).map((e) => ({
           id: e.id,
@@ -607,6 +877,9 @@ class Component extends DCLogic {
         // rezultatele bune ale căutării de acum. Fără ea, cele două ramuri ale
         // aceleiași promisiuni se purtau diferit cu același răspuns întârziat.
         else if (termen !== this.state.q) return;
+        // …și refuzul unei cereri făcute cu alt filtru de faptă decât cel de
+        // acum: caseta roșie ar vorbi despre o listă pe care omul a părăsit-o.
+        else if (fapta !== (this.state.fapta || "")) return;
         // „Încarcă mai vechi” cere o pagină > 1. Când doar felia aceea nu vine,
         // jurnalul de pe ecran E încărcat, deci caseta mare — care spune tare
         // „Jurnalul nu s-a încărcat.” — ar minți despre rândurile pe care omul
@@ -658,6 +931,37 @@ class Component extends DCLogic {
   }
 
   /**
+   * Pune DEODATĂ căutarea și filtrul de faptă, și cere lista de la capăt.
+   *
+   * E drumul butonului „Comenzi șterse” (runda 2.7.0) și al lui „Șterge
+   * filtrele” când filtrul acela e pus. Face ce face `cauta()` — golește
+   * lista, întoarce cursorul la prima pagină, stinge motivele vechi — fiindcă
+   * rândurile de pe ecran sunt răspunsul la întrebarea de dinainte; lăsate
+   * acolo, prima pagină a celei noi s-ar lipi în capul lor și jurnalul întreg
+   * ar rămâne pe ecran sub un filtru aprins.
+   *
+   * DE CE AMÂNDOUĂ ÎNTR-O SINGURĂ MÂNĂ, și nu două metode chemate una după
+   * alta. Două metode ar trimite două cereri pentru o singură apăsare, iar
+   * prima ar pleca cu jumătatea veche a perechii — un răspuns pe care paza din
+   * `pull()` îl aruncă oricum. Și mai rău dacă `setState` așază starea abia
+   * după apăsare: atunci AMÂNDOUĂ pleacă cu câte o jumătate veche, paza le
+   * aruncă pe amândouă și pagina rămâne pe „Se caută…” până la
+   * reîmprospătarea de la cinci secunde.
+   *
+   * Perechea pleacă spre `pull()` în mână ca metoda să nu atârne de clipa
+   * aceea. Runtime-ul de azi scrie starea pe loc (support.js,
+   * `__setLogicState`) și amână numai redesenarea; proba
+   * `.claude/check-sterse-jurnal.mjs` rulează pagina pe amândouă felurile.
+   *
+   * Fără scurtătura lui `cauta()` („aceeași căutare, nu mai cer”): cine cheamă
+   * metoda asta tocmai a schimbat ceva, altfel n-o chema.
+   */
+  reia(term, fap) {
+    this.setState({ q: term, fapta: fap, log: [], pg: 1, pages: 1, total: 0, loaded: false, eroare: "", eroareMai: "" });
+    return this.pull(1, term, fap);
+  }
+
+  /**
    * Deschide rândul apăsat.
    *
    * Se ține OBIECTUL, nu numărul lui. Jurnalul se reîmprospătează din cinci în
@@ -682,6 +986,21 @@ class Component extends DCLogic {
   incarcaIstoric(rand) {
     const ent = rand ? (rand.entity || "") : "";
     const id  = rand ? (rand.entityId || "") : "";
+    // ORICE DESCHIDERE IA SEMNUL DE LA CEA DE DINAINTE (runda 2.7.0). Semnul se
+    // punea numai mai jos, pe drumul care cere ceva; un rând fără obiect ieșea
+    // de aici pe rândul următor și lăsa în `semnIst` semnul ferestrei de
+    // dinainte. Pe o legătură lentă: omul deschide „Comandă ștearsă · Comandă
+    // #12”, o închide înainte de răspuns și apasă rândul de alături, unul din
+    // „Setări” ori din „Acces” — scris cu zonă, dar fără număr, deci fără
+    // nicio cerere de trimis. Răspunsul comenzii sosește, își găsește semnul
+    // neatins, și fereastra aceea se umple cu „Ce era în comandă”, sub titlul ei.
+    // Cursa e veche, dar până la poza comenzii șterse aducea un rând de istorie
+    // străin; de acum ar fi adus o comandă întreagă sub altă faptă.
+    //
+    // Golit AICI, deasupra ieșirii, nu numai înăuntrul ei: orice deschidere
+    // face de prisos răspunsurile pornite pentru alt rând, și cea care n-are
+    // ce cere. Drumul care cere își pune semnul lui câteva rânduri mai jos.
+    this.semnIst = "";
     // Un rând fără obiect — o intrare în cont, o setare fără număr — n-are
     // istorie de cerut. Fereastra lui se deschide oricum: clipa întreagă, omul,
     // IP-ul și amănuntul netăiat sunt tot ce s-a scris despre el, și tot e mai
@@ -712,8 +1031,11 @@ class Component extends DCLogic {
   renderVals() {
     const S = this.state, set = (x) => this.setState(x);
     const auth = S.auth;
-    const role = auth ? (auth.role || "") : "";
-    const isAdmin = gp.eAdmin(role);
+    // „Are Jurnalul?” — dreptul `jurnal`, întrebat cu CONTUL întreg (cel din
+    // `gp.auth()`, care poartă drepturile judecate de server), nu cu numele
+    // rolului: din rol s-ar afla numai împărțirea din pornire, nu și ce a
+    // mutat fondatorul în „Acces”.
+    const areVoie = gp.are("jurnal", auth);
 
     const all = S.log.slice().sort((a, b) => b.at - a.at);
     // Căutarea nu se mai repetă aici: a făcut-o serverul, peste tot jurnalul,
@@ -736,7 +1058,7 @@ class Component extends DCLogic {
       const people = Array.from(new Set(list.map(e => e.name))).length;
       return {
         label,
-        meta: list.length + (list.length === 1 ? " acțiune · " : " acțiuni · ") + people + (people === 1 ? " cont" : " conturi"),
+        meta: cate(list.length, "acțiune", "acțiuni") + " · " + cate(people, "cont", "conturi"),
         rows: list.map(e => {
           // Rolul vine de la server. Se deducea din numele de utilizator
           // („dacă te cheamă admin, ești admin") căutând într-o listă care era
@@ -752,7 +1074,7 @@ class Component extends DCLogic {
             roleCls: rl === "admin" ? "h-badge h-badge--honey" : rl === "client" ? "h-badge h-badge--accent" : "h-badge",
             page: ZLAB[e.page] || e.page || "—",
             pageCls: PCLS[e.page] || "h-badge",
-            action: (e.action || "") + (e.detail ? " · " + e.detail : ""),
+            action: numeFapta(e.action) + (e.detail ? " · " + e.detail : ""),
             titlu: "Deschide acțiunea",
             onOpen: () => this.deschide(e)
           };
@@ -768,8 +1090,52 @@ class Component extends DCLogic {
      */
     const D = S.deschis;
     const sub = S.subiect;
+    // Poza unei comenzi șterse (runda 2.7.0): `subject.sters`, pe care serverul
+    // o pune numai lângă `exists: false`. Fără ea — un cont șters, ori o
+    // comandă ștearsă pe o bază de dinaintea arhivei — fereastra rămâne cum
+    // era. O listă nu e o poză (`typeof [] === "object"`), deci se cere anume.
+    const stSub = (sub && !sub.exists && sub.sters && typeof sub.sters === "object" && !Array.isArray(sub.sters)) ? sub.sters : null;
     const dEnt = D ? (D.entity || "") : "";
     const dId  = D ? (D.entityId || "") : "";
+    // ȘI DIN FEREASTRA CERERII SE VEDE CE ERA COMANDA (runda 2.7.0,
+    // încheierile). Serverul aduce în fereastra unei cereri și rândurile
+    // comenzii în care s-a prefăcut, chiar ștearsă; rândul ștergerii își poartă
+    // atunci poza, `sters`, cu aceeași formă ca `subject.sters`. Patronul a
+    // cerut „dacă văd ștergerea, să pot vedea ce era comanda” — iar aici
+    // ștergerea SE VEDE, ca rând de istorie, deci tot aici se arată și comanda.
+    // Altfel omul ar citi „Comandă ștearsă” sub cererea lui și ar trebui să
+    // caute rândul comenzii în tot jurnalul ca să afle ce s-a șters.
+    //
+    // NUMAI în fereastra unei cereri, și numai de pe rândul unei ȘTERGERI DE
+    // COMANDĂ. În fereastra unei comenzi hotărăște `subject.sters`, singur: pe
+    // un MySQL vechi numărătoarea din `orders` pornește de la capăt după o
+    // repornire, iar o comandă nouă poate lua numărul uneia șterse ieri —
+    // istoria ei cuprinde atunci și ștergerea celei vechi, cu poză cu tot, și
+    // „Ce era în comandă” s-ar aprinde peste o comandă care există (serverul
+    // spune același lucru din partea lui: „cea vie câștigă”).
+    //
+    // …ȘI NUMAI CÂT CEREREA N-ARE O COMANDĂ VIE (`sub.ref` gol; a doua trecere
+    // a încheierilor). La o cerere, `ref` e referința comenzii ei VII: serverul
+    // o scoate din `orders`, unde o comandă ștearsă nu mai e. Cu el plin, o
+    // ștergere cu poză din istorie nu poate fi a comenzii cererii — e a alteia,
+    // care a purtat cândva același număr din bază (aceeași pricină ca mai sus).
+    // Crezută, aprindea „Ce era în comandă” cu marfa ALTUI client sub cererea
+    // asta, scria „Comanda făcută din cererea asta a fost ștearsă definitiv”
+    // despre o comandă care trăiește și stingea butonul spre ea. Aceeași regulă
+    // ca în fereastra comenzii, unde o poză de lângă `exists:true` nu aprinde
+    // nimic: cea vie câștigă.
+    //
+    // Dintre mai multe ștergeri cu poză se ia PRIMA din rânduri, adică cea mai
+    // nouă (serverul le trimite de la cea mai nouă) — aceeași pe care o alege
+    // și el când caută comanda ștearsă a unei cereri.
+    //
+    // `sters: null`, cheia lipsă ori altceva decât o poză: rândul rămâne un
+    // rând de istorie ca oricare, iar blocul nu se aprinde.
+    const randSters = (dEnt === "request" && !(sub && sub.ref))
+      ? (S.ist || []).find((h) => h && h.action === "order_delete"
+          && h.sters && typeof h.sters === "object" && !Array.isArray(h.sters))
+      : null;
+    const st = stSub || (randSters ? randSters.sters : null);
     const dNume = ZLAB[dEnt] || dEnt || "";
     const dRol = D ? (D.role || "") : "";
     const dRolEt = dRol === "agent_vanzari" ? "agent vânzări" : (dRol || "—");
@@ -781,6 +1147,23 @@ class Component extends DCLogic {
     // în care s-a prefăcut, iar scrisă în titlu ar boteza cererea cu numărul
     // altui lucru.
     const dNumar = (dEnt === "order" && sub && sub.ref) ? sub.ref : ("#" + dId);
+    // TITLUL UNEI COMENZI ȘTERSE (runda 2.7.0, încheierile). Pentru ea serverul
+    // trimite `ref: null`, dinadins (v. mai jos, la buton), deci titlul cădea pe
+    // numărul din bază: „Comenzi #31069” deasupra unui bloc care scria „#1009”
+    // — două numere pentru aceeași comandă, din care omul îl știe numai pe al
+    // doilea. Titlul ia acum referința din POZĂ și spune pe față că e ștearsă.
+    //
+    // Tot numai de citit: `linkRef`, de mai jos, nu-l vede pe `stRef`, deci din
+    // el nu se face nicio legătură. Fără poză (`sters: null`, o bază de
+    // dinaintea arhivei) ori cu o poză fără referință, titlul rămâne cel de
+    // ieri — decât „Comandă ștearsă” fără niciun număr după ea, mai bine
+    // numărul care există. Trece prin `refDinPoza()`: o referință venită ca alt
+    // fel de valoare ar scrie „[object Object]”, iar una fără nicio cifră („#”
+    // rămas singur) ar lăsa tot „Comandă ștearsă” fără număr.
+    //
+    // Nu se întreabă ce rând a fost apăsat: aceeași fereastră se deschide și de
+    // pe anularea de dinaintea ștergerii, și trebuie să poarte același titlu.
+    const stRef = (st && dEnt === "order") ? refDinPoza(st) : "";
     const dCandDt = D ? new Date(D.at) : null;
     const detCand = dCandDt
       ? (dCandDt.getDate() + " " + MON[dCandDt.getMonth()] + " " + dCandDt.getFullYear()
@@ -788,7 +1171,7 @@ class Component extends DCLogic {
       : "";
     const detTitlu = !D ? ""
       : (!dEnt ? "Acțiune fără obiect"
-        : dNume + " " + dNumar + (sub && sub.label ? " · " + sub.label : ""));
+        : (stRef ? "Comandă ștearsă " + stRef : dNume + " " + dNumar) + (sub && sub.label ? " · " + sub.label : ""));
     const detSub = !D ? ""
       : ("Acțiunea #" + D.id + (dEnt ? " · " + dEnt + ":" + dId : " · fără obiect"));
 
@@ -796,23 +1179,119 @@ class Component extends DCLogic {
     // comenzii spre care se poate merge: a comenzii însăși, sau a celei în care
     // s-a prefăcut cererea. Contul se cheamă după NUMĂR, nu după nume de
     // utilizator: numele n-are ce căuta într-o adresă web.
-    const linkRef = sub && sub.ref ? sub.ref : "";
+    //
+    // PE O COMANDĂ ȘTEARSĂ NU SE MERGE NICĂIERI (runda 2.7.0). Numărul ei s-a
+    // eliberat și poate fi luat de altă comandă în aceeași zi, deci „Vezi
+    // comanda #12” ar deschide comanda altui client, sub titlul celei șterse.
+    // Serverul trimite `ref: null` tocmai de aceea, iar pagina NU-și face unul
+    // din `sters.ref`: acela e de citit, în blocul „Ce era în comandă” și în
+    // titlu, nu de apăsat.
+    //
+    // `&& !st` e a doua încuietoare, pentru ziua în care serverul ar greși și
+    // ar trimite totuși un `ref` lângă poză — și stă AICI, la izvor, nu pe
+    // steagul butonului. Până la a doua trecere a încheierilor stătea numai pe
+    // steag (`detAreLink`): butonul nu se desena, dar mânerul lui, `onDetLink`,
+    // citea același `linkRef` plin și, chemat de orice alt buton, pleca la
+    // comanda care a luat numărul. Golită referința însăși, steagul, eticheta
+    // și mânerul nu mai au din ce să se despartă.
+    //
+    // Ține și în fereastra unei CERERI cu comanda ștearsă, unde poza vine de pe
+    // rândul ștergerii (`randSters`). Acolo `ref` e gol de la sine: cu el plin
+    // cererea are o comandă vie, iar poza de pe rând nici nu mai e crezută.
+    const linkRef = (sub && sub.ref && !st) ? sub.ref : "";
     const linkCont = (sub && sub.entity === "user" && sub.exists) ? sub.id : 0;
     const detAreLink = !!(linkRef || linkCont);
     const detLinkEt = linkRef ? "Vezi comanda " + linkRef : "Vezi contul";
 
-    const detIst = (S.ist || []).map((h) => {
+    /* ---- „Ce era în comandă” ----
+     *
+     * Totul vine din `st`, poza trimisă de server, și nimic nu se socotește
+     * aici în locul ei: nici totalul din pozițiile adunate, nici suma unei
+     * poziții din cantitate ori preț. O cifră pe care pagina ar scoate-o singură
+     * ar arăta la fel ca una păstrată, iar fereastra asta e tocmai dovada a ce
+     * a fost — ce nu s-a păstrat, lipsește.
+     */
+    const stCine = st ? curat(st.stearsaDe) : "";
+    // `stearsaLa` e UTC, ca `createdAt`, deci trece prin același `gp.utc()` și
+    // se arată pe ceasul omului. Un șir care nu e o clipă dă 0, iar 0 ar fi
+    // „1 ianuarie 1970” — se tace.
+    const stMs = (st && typeof st.stearsaLa === "string") ? gp.utc(st.stearsaLa) : 0;
+    const stDt = stMs > 0 ? new Date(stMs) : null;
+    const stCand = stDt
+      ? ("pe " + stDt.getDate() + " " + MON[stDt.getMonth()] + " " + stDt.getFullYear()
+         + ", la " + z(stDt.getHours()) + ":" + z(stDt.getMinutes()))
+      : "";
+    // În fereastra cererii fraza spune A CUI e comanda: sub titlul „Cereri #77”,
+    // un „Comanda a fost ștearsă” gol ar putea fi citit despre cerere, care e
+    // întreagă și la locul ei.
+    const stLinie = (stSub ? "Comanda" : "Comanda făcută din cererea asta") + " a fost ștearsă definitiv"
+      + (stCine ? " de " + stCine : "")
+      + (stCand ? (stCine ? ", " : " ") + stCand : "")
+      + ". Mai jos e ce era în ea.";
+    const pozaAntet = st ? [curat(st.ref), curat(st.client), ziDin(st.zi), curat(st.ora)].filter(Boolean).join(" · ") : "";
+    const stCanal = st ? curat(st.canal) : "";
+    const pozaPozitii = ((st && Array.isArray(st.pozitii)) ? st.pozitii : [])
+      .filter((p) => p && typeof p === "object")
+      .map((p) => {
+        const cata = catDin(p.cantitate);
+        const fel = curat(p.varianta);
+        const pret = lei(p.pret);
+        return {
+          // Varianta se scrie numai când nu e cea obișnuită: o poziție e
+          // „copt” din pornire, deci cuvântul pe fiecare rând ar fi zgomot, pe
+          // când un „congelat” e altă marfă.
+          ce: (cata ? cata + " × " : "") + (curat(p.nume) || "produs fără nume") + ((fel && fel !== "copt") ? " · " + fel : ""),
+          pret: pret ? "câte " + pret : "",
+          suma: lei(p.suma)
+        };
+      });
+    // Totalul 0 se tace, ca o lipsă: contractul cere aici un număr, deci un
+    // total nepăstrat poate ajunge și ca zero, iar „Total: 0,00 lei” sub trei
+    // poziții cu sume ar fi o minciună despre o comandă care a costat ceva.
+    const stTotal = st ? numarDin(st.total) : NaN;
+    const stNota = st ? curat(st.nota) : "";
+    const stScrisa = st ? curat(st.scrisaDe) : "";
+
+    // NUMĂRUL DE PE INSIGNA RÂNDURILOR UNEI COMENZI ȘTERSE (a doua trecere a
+    // încheierilor rundei 2.7.0). În fereastra cererii, rândurile comenzii ei
+    // șterse purtau pe insignă numărul din BAZĂ, „Comenzi #31069”, la un rând
+    // distanță de blocul „Ce era în comandă”, care scrie „#1009”: două numere
+    // pentru aceeași comandă, în aceeași fereastră — tocmai ce se reparase la
+    // titlu. Când blocul vine de pe un rând (`randSters`), rândurile comenzii
+    // aceleia iau pe insignă referința din poză, cea din bloc.
+    //
+    // CARE rânduri: cele scrise pe o comandă cu numărul din bază al ștergerii,
+    // de la rândul ștergerii ÎN JOS, până la ștergerea de dinaintea ei pe
+    // același număr. Nu „toate cu numărul acela”: numărul unei comenzi șterse
+    // poate fi luat de alta (v. mai sus, la MySQL-ul vechi), deci ce e deasupra
+    // ștergerii e al unei comenzi venite după, iar ce e de la o ștergere mai
+    // veche în jos e al uneia de dinainte — scris pe ele, „#1009” ar boteza
+    // rândurile altui client. Serverul trimite istoria de la cea mai nouă.
+    // Ștergerea ALTEI comenzi, nimerită între ele, nu oprește nimic: capătul e
+    // numai o ștergere pe același număr din bază.
+    //
+    // Fără un număr de crezut în poză (`refDinPoza`) nu se schimbă nimic, și
+    // tot așa în fereastra unei comenzi ori a unei cereri cu comanda vie, unde
+    // `randSters` e gol: insigna rămâne cu numărul din bază, tot ce există.
+    // Tot numai de citit — pe rândul de istorie nu e niciun buton.
+    const stRandRef = randSters ? refDinPoza(randSters.sters) : "";
+    const stRandId = (randSters && randSters.entityId != null) ? String(randSters.entityId) : "";
+    const iSters = stRandRef ? (S.ist || []).indexOf(randSters) : -1;
+    const iVeche = iSters < 0 ? -1 : (S.ist || []).findIndex((h, i) => i > iSters && h.action === "order_delete" && String(h.entityId) === stRandId);
+
+    const detIst = (S.ist || []).map((h, i) => {
       const hd = new Date(gp.utc(h.createdAt));
       const hId = h.entityId == null ? "" : String(h.entityId);
+      const aCeleiSterse = iSters >= 0 && i >= iSters && (iVeche < 0 || i < iVeche) && h.entity === "order" && hId === stRandId;
       return {
         cand: hd.getDate() + " " + MON[hd.getMonth()] + ", " + z(hd.getHours()) + ":" + z(hd.getMinutes()),
-        text: (h.action || "") + (h.detail ? " · " + h.detail : ""),
+        text: numeFapta(h.action) + (h.detail ? " · " + h.detail : ""),
         cine: h.user || "Sistem",
         // Rândul nu vine de pe lucrul apăsat, ci de pe perechea lui. Se spune,
         // ca nașterea unei comenzi ieșite dintr-o cerere — scrisă pe CERERE,
         // nu pe comandă — să nu pară scrisă acolo unde nu e.
         dinAlta: (h.entity || "") !== dEnt || hId !== dId,
-        deUnde: (ZLAB[h.entity] || h.entity || "—") + " #" + (hId || "?")
+        deUnde: (ZLAB[h.entity] || h.entity || "—") + " " + (aCeleiSterse ? stRandRef : "#" + (hId || "?"))
       };
     });
 
@@ -841,12 +1320,34 @@ class Component extends DCLogic {
     // apăsa. Un filtru fără număr nu minte; un filtru cu „0" mint, iar cine îl
     // citește pleacă crezând că patiseria n-a făcut nimic azi.
     const numar = (n) => ((!S.loaded || S.eroare) ? "" : String(n));
-    const conturi = ["Toate"].concat(accounts).map(u => ({
+    // FILTRUL ALES RĂMÂNE PE ECRAN ȘI CÂND NU MAI ARE NICIUN RÂND (runda 2.7.0).
+    // Butoanele și listele se fac din rândurile aduse, iar până la „Comenzi
+    // șterse” rândurile acelea se schimbau numai la o căutare. Acum se schimbă
+    // la o apăsare: patronul alege „Ana” la Cont, apasă „Comenzi șterse”, iar
+    // serverul trimite opt ștergeri, toate ale lui Octavian. `S.who` rămâne
+    // „ana”, dar Ana nu mai e în listă: niciun buton de cont aprins, lista de pe
+    // telefon arată „Toate conturile · 8”, subtitlul numără opt și dedesubt
+    // scrie „Nicio acțiune pe filtrele alese.” — un filtru pus pe care nu-l vede
+    // nimeni, tocmai ce cere contractul ștergerii să nu rămână pe telefon.
+    //
+    // Alegerea NU se golește pe furiș, din același motiv din care nu se golește
+    // căutarea: „comenzile șterse de Ana” e o întrebare firească, iar „niciuna”
+    // e răspunsul ei. Se ține în listă, cu zero lângă ea și aprinsă, ca omul să
+    // vadă ce a tăiat rândurile și s-o poată stinge din același loc. Eticheta
+    // venea de pe un rând de-al contului; fără niciun rând se scrie chiar
+    // valoarea aleasă, care e același nume (`pull()` pune în `u` și în `name`
+    // același `user` al serverului) — mai puțin la rândurile fără cont, unde
+    // `u` e semnul „—”, iar numele pe care li-l dă lista e „Sistem”.
+    const contAles = (S.who !== "Toate" && accounts.indexOf(S.who) < 0) ? [S.who] : [];
+    const zonaAleasa = (S.page !== "Toate" && zones.indexOf(S.page) < 0) ? [S.page] : [];
+    const conturi = ["Toate"].concat(accounts, contAles).map(u => ({
       v: u,
-      label: u === "Toate" ? "Toate conturile" : ((all.find(e => e.u === u) || {}).name || u),
+      label: u === "Toate" ? "Toate conturile" : ((all.find(e => e.u === u) || {}).name || (u === "—" ? "Sistem" : u)),
       count: numar(u === "Toate" ? all.length : all.filter(e => e.u === u).length)
     }));
-    const zonele = ["Toate"].concat(zones).map(p => ({
+    // Zona ținută stă la locul ei din ZONES, nu la coadă: un buton care sare
+    // din rând la fiecare apăsare pe „Comenzi șterse” nu mai e de găsit.
+    const zonele = ["Toate"].concat(zones.concat(zonaAleasa).sort((a, b) => rang(a) - rang(b))).map(p => ({
       v: p,
       label: p === "Toate" ? "Toate zonele" : (ZLAB[p] || p),
       count: numar(p === "Toate" ? all.length : all.filter(e => e.page === p).length)
@@ -858,6 +1359,15 @@ class Component extends DCLogic {
     // dintre el și nume: altfel pe telefon ar rămâne „Toate conturile · ", o
     // frază retezată care arată ca o stricăciune, nu ca o tăcere aleasă.
     const optiune = (x) => ({ v: x.v, l: x.count ? x.label + " · " + x.count : x.label });
+
+    // FILTRUL „COMENZI ȘTERSE” (runda 2.7.0). Numărul de lângă el e cel al
+    // SERVERULUI (`total`), nu numărul rândurilor aduse: filtrul e peste tot
+    // jurnalul, iar „50” lângă un buton sub care mai sunt o sută ar minți. De
+    // aceea se arată numai cât filtrul e pus — stins, pagina nu știe câte
+    // comenzi șterse sunt și nu ghicește din ce are pe ecran. Trece prin același
+    // `numar()` ca surorile lui, deci tace și el pe cerere picată ori neîncheiată.
+    const peSterse = S.fapta === "order_delete";
+    const faptaNumar = peSterse ? numar(S.total || 0) : "";
 
     return {
       // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
@@ -892,12 +1402,18 @@ class Component extends DCLogic {
       // scrie „conectat" sub un nume gol ar minți. Atunci nu se arată niciunul.
       navWho: !!auth,
       navAnon: false,
-      // Geamănul de pe monitor. Și `isAdmin`, nu doar `!!auth`: cuvântul de
+      // Geamănul de pe monitor. Și rangul, nu doar `!!auth`: cuvântul de
       // sub nume e scris fix în marcaj („administrator"), iar `pull()` poate
       // desena o clipă învelișul întreg peste un cont fără drept — atunci
       // pastila ar fi scris „administrator" peste numele unui șofer. Forma e
       // cea din `Setari.dc.html:sideWho`.
-      sideWho: !!auth && isAdmin,
+      //
+      // De la runda 2.7.0 cuvântul de sub nume e rolul omului (`gp.numeRol`),
+      // nu „administrator” scris fix: Jurnalul se poate da din „Acces” și
+      // unui manager, iar fondatorului pastila îi spunea „administrator”.
+      // Lacătul e dreptul paginii (`areVoie`).
+      sideWho: !!auth && areVoie,
+      sideRol: gp.numeRol(auth),
       // „Ieși din cont" lipsea cu totul din pagina asta — și de pe monitor,
       // nu doar de pe telefon. Sertarul îl arată în toate panourile, deci
       // trebuie să existe în toate. Sesiunea se închide pe SERVER, apoi
@@ -909,8 +1425,8 @@ class Component extends DCLogic {
       // acum pagina asta avea numai `S.loaded && !isAdmin`, adică exact
       // combinația în care un `gp.me()` picat ridica un refuz inventat peste
       // un om despre care nu se aflase nimic.
-      blocked: S.loaded && !!auth && !isAdmin && !S.eroare,
-      allowed: !S.loaded || !auth || isAdmin || !!S.eroare,
+      blocked: S.loaded && !!auth && !areVoie && !S.eroare,
+      allowed: !S.loaded || !auth || areVoie || !!S.eroare,
       // O singură frază, nu două pe ramuri: de când `blocked` cere `!!auth`,
       // ecranul ăsta se aprinde NUMAI peste un cont știut. Ramura „intră cu un
       // cont de administrator" era cod la care nu se mai putea ajunge pe
@@ -918,7 +1434,7 @@ class Component extends DCLogic {
       // unul lipsă: cine îl caută mâine îl găsește în fișier și nu-l poate
       // scoate pe ecran. Cine n-are sesiune nu ajunge aici — îl duce
       // `gp.toLogin()`.
-      blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces la jurnal. Doar administratorii văd ce a schimbat fiecare cont.",
+      blockedLine: "Contul „" + (auth ? auth.name : "") + "” nu are acces la jurnal. Ce a schimbat fiecare cont vede numai cine a primit pagina asta.",
       // Prima ieșire de pe ecranul de refuz: panoul de acasă al ROLULUI, din
       // aceeași tabelă din care îl ia și intrarea (`gp.primaPagina`). A doua e
       // `navBack`, de mai sus. Aceleași două chei ca în `Statistici.dc.html`.
@@ -937,8 +1453,12 @@ class Component extends DCLogic {
       // a găsit serverul în tot jurnalul, nu „0 acțiuni înregistrate” deasupra
       // casetei „Nicio acțiune care să conțină …”.
       sub: (!S.loaded || S.eroare) ? ""
-        : S.q ? (S.total || 0) + ((S.total || 0) === 1 ? " acțiune găsită" : " acțiuni găsite") + " în tot jurnalul"
-        : all.length + (all.length === 1 ? " acțiune înregistrată" : " acțiuni înregistrate") + " · " + accounts.length + (accounts.length === 1 ? " cont" : " conturi"),
+        // Cu filtrul „Comenzi șterse” pus, `S.log` ține numai ștergerile:
+        // „3 acțiuni înregistrate · 1 cont” deasupra lor ar spune că atât e
+        // tot jurnalul. Se scrie numărul serverului, cu numele lui.
+        : S.fapta ? "Comenzi șterse" + (S.q ? " care conțin „" + S.q + "”" : "") + ": " + (S.total || 0) + ", în tot jurnalul"
+        : S.q ? cate(S.total || 0, "acțiune găsită", "acțiuni găsite") + " în tot jurnalul"
+        : cate(all.length, "acțiune înregistrată", "acțiuni înregistrate") + " · " + cate(accounts.length, "cont", "conturi"),
       search: S.search,
       onSearch: (e) => {
         const text = e.target.value;
@@ -1000,6 +1520,38 @@ class Component extends DCLogic {
       pageOpts: zonele.map(optiune),
       onPagePick: (e) => set({ page: e.target.value }),
 
+      // ---- filtrul „Comenzi șterse” (runda 2.7.0) ----
+      //
+      // Un buton care se aprinde și se stinge, nu o listă de fapte: patronul a
+      // cerut un singur lucru de găsit repede, iar un rând de butoane cu toate
+      // numele tehnice din bază ar fi îngropat tocmai lucrul acela.
+      faptaCls: peSterse ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
+      // Culoarea singură nu spune „apăsat” unui cititor de ecran.
+      faptaApasat: peSterse,
+      faptaNumar,
+      // Căutarea de acum rămâne: „comenzile șterse ale Luminii” e o întrebare
+      // firească, iar un filtru care ar goli caseta de sus pe furiș ar răspunde
+      // la alta decât cea pusă.
+      onFapta: () => this.reia(S.q || "", peSterse ? "" : "order_delete"),
+      // Perechea de pe telefon. „Toate” e numai o valoare de listă — un
+      // `<option>` cu valoarea goală s-ar citi drept „nimic ales”; în stare și
+      // în cerere filtrul stins rămâne șirul gol.
+      faptaPick: peSterse ? "order_delete" : "Toate",
+      faptaOpts: [
+        { v: "Toate", l: "Toate acțiunile" },
+        { v: "order_delete", l: faptaNumar ? "Comenzi șterse · " + faptaNumar : "Comenzi șterse" }
+      ],
+      // Numai când alegerea chiar e alta: `reia` n-are scurtătura lui `cauta`
+      // („aceeași întrebare, nu mai cer”), deci chemată cu filtrul care e deja
+      // pus ar goli lista și ar cere-o din nou, degeaba.
+      onFaptaPick: (e) => {
+        const nou = e.target.value === "order_delete" ? "order_delete" : "";
+        if (nou !== (S.fapta || "")) this.reia(S.q || "", nou);
+      },
+      // „Se caută comenzile șterse…”. Cu `!S.eroare`, ca să nu stea sub caseta
+      // roșie o frază care spune că încă se caută ceva ce tocmai a picat.
+      faptaAsteapta: peSterse && !S.loaded && !S.eroare,
+
       // ---- fereastra unui rând ----
       detOpen: !!D,
       detTitlu,
@@ -1013,7 +1565,7 @@ class Component extends DCLogic {
       detIp: D ? (D.ip || "—") : "",
       detZona: D ? (ZLAB[D.page] || D.page || "—") : "",
       detZonaCls: D ? (PCLS[D.page] || "h-badge") : "h-badge",
-      detActiune: D ? (D.action || "—") : "",
+      detActiune: D ? (numeFapta(D.action) || "—") : "",
       detDetaliu: D ? (D.detail || "") : "",
       detAreDetaliu: !!(D && D.detail),
       detAreLink,
@@ -1022,8 +1574,26 @@ class Component extends DCLogic {
         if (linkRef) location.href = catre("Administrare Comenzi.dc.html", "q", linkRef);
         else if (linkCont) location.href = catre("Conturi.dc.html", "cont", linkCont);
       },
-      detSters: !!(sub && !sub.exists),
-      detStersLinie: "Lucrul acesta nu mai există în sistem — a fost șters. Rândurile de mai jos sunt tot ce a rămas din el.",
+      // `|| !!st`: în fereastra unei cereri lucrul apăsat EXISTĂ, dar comanda
+      // ei a fost ștearsă și poza a venit pe rândul ștergerii. Fără asta blocul
+      // „Ce era în comandă” s-ar aprinde fără fraza care spune a cui e comanda
+      // și că a fost ștearsă.
+      detSters: !!(sub && !sub.exists) || !!st,
+      detStersLinie: st ? stLinie : "Lucrul acesta nu mai există în sistem — a fost șters. Rândurile de mai jos sunt tot ce a rămas din el.",
+      // ---- „Ce era în comandă” ----
+      // Fiecare șir e gol când bucata lui lipsește din poză, iar marcajul îl
+      // citește și ca steag: rândul nu se desenează deloc.
+      detPoza: !!st,
+      pozaAntet,
+      pozaCanal: stCanal ? "Canal: " + (dinLista(CANALE, stCanal) || stCanal) : "",
+      pozaPozitii,
+      // O poză fără poziții spune asta pe față: altfel sub „Mai jos e ce era în
+      // ea” ar rămâne un antet și nimic, iar omul n-ar ști dacă lista s-a
+      // pierdut ori n-a apucat să se deseneze.
+      pozaFaraPozitii: !!st && pozaPozitii.length === 0,
+      pozaTotal: (isFinite(stTotal) && stTotal !== 0) ? "Total: " + lei(stTotal) : "",
+      pozaNota: stNota ? "Notă: " + stNota : "",
+      pozaScrisa: stScrisa ? "Scrisă de " + stScrisa : "",
       detIstTitlu: "Tot ce s-a mai scris despre asta",
       detIstEroare: S.istEroare,
       detIstAsteapta: !!D && !S.istGata && !S.istEroare,
@@ -1055,17 +1625,36 @@ class Component extends DCLogic {
       // Cu căutarea pe server, o listă goală nu mai înseamnă „jurnalul e gol”,
       // ci „nimic din tot jurnalul nu conține textul căutat”. Textul vechi ar fi
       // spus „nicio acțiune înregistrată încă” peste mii de acțiuni înregistrate.
-      emptyLine: S.q
+      // Cu filtrul „Comenzi șterse” pus și nimic venit de la server, golul e
+      // despre ȘTERGERI, nu despre jurnal: „Nicio acțiune înregistrată încă”
+      // ar spune că jurnalul întreg e gol. Când serverul a trimis ștergeri și
+      // le-a ascuns un filtru de cont ori de zonă, rămân frazele de mai jos.
+      emptyLine: (S.fapta && all.length === 0)
+        ? (S.q ? "Nicio comandă ștearsă care să conțină „" + S.q + "”." : "Nicio comandă ștearsă.")
+        : S.q
         ? "Nicio acțiune care să conțină „" + S.q + "”, în tot jurnalul."
         : all.length === 0 ? "Nicio acțiune înregistrată încă. Schimbă o comandă sau o parolă și apare aici." : "Nicio acțiune pe filtrele alese.",
       // „Șterge filtrele” se desenează numai când chiar e un filtru pus: un
       // cont ales, o zonă aleasă, o căutare trimisă (`S.q`) ori una încă în
       // casetă (`S.search`). Fără niciunul, butonul nu avea ce schimba.
-      areCeSterge: S.who !== "Toate" || S.page !== "Toate" || !!S.q || !!S.search,
+      // …ori filtrul „Comenzi șterse” (runda 2.7.0): fără el aici, cardul
+      // „Nicio comandă ștearsă.” n-ar avea niciun drum înapoi la jurnal.
+      areCeSterge: S.who !== "Toate" || S.page !== "Toate" || !!S.q || !!S.search || !!S.fapta,
       // Serverul trimite câte 50 de intrări. Pagina arăta doar primele și n-avea
       // nicio cale către cele mai vechi, deși scria că jurnalul e permanent.
+      //
+      // FRAZA SE ACORDĂ CU NUMĂRUL (runda 2.7.0). Cu filtrul „Comenzi șterse”
+      // un singur rând găsit e ceva obișnuit — prima comandă ștearsă vreodată —,
+      // iar subsolul scria sub ea „Se văd 1 din 1 acțiune găsite în tot
+      // jurnalul.”. Verbul merge după câte se văd, substantivul și participiul
+      // după câte sunt, iar de la douăzeci în sus numărul își ia „de”
+      // („din 60 de acțiuni”), după `cuDe` de sus.
       footLine: S.total
-        ? "Se văd " + S.log.length + " din " + S.total + (S.total === 1 ? " acțiune" : " acțiuni") + (S.q ? " găsite în tot jurnalul." : " înregistrate.")
+        ? (S.log.length === 1 ? "Se vede " : "Se văd ") + S.log.length + " din " + S.total + " " + cuDe(S.total)
+          + (S.total === 1 ? "acțiune" : "acțiuni")
+          + ((S.q || S.fapta)
+            ? (S.total === 1 ? " găsită" : " găsite") + " în tot jurnalul."
+            : (S.total === 1 ? " înregistrată." : " înregistrate."))
         : "Jurnalul se scrie pe server, la fiecare operație.",
       hasMore: S.pg < S.pages,
       moreLabel: "Încarcă mai vechi",
@@ -1096,6 +1685,12 @@ class Component extends DCLogic {
       onClearFilters: () => {
         clearTimeout(this.tCauta);
         set({ who: "Toate", page: "Toate", search: "" });
+        // „Comenzi șterse” e și el un filtru, și e singurul pe care `cauta("")`
+        // nu-l poate stinge: ea pleacă de la ce scrie în casetă, iar când
+        // căutarea e deja goală nici nu mai cere nimic — omul ar apăsa „Șterge
+        // filtrele” și ar rămâne pe aceleași comenzi șterse. Căutarea și
+        // filtrul se sting deodată, dintr-o singură cerere (vezi `reia`).
+        if (S.fapta) return this.reia("", "");
         // Ștergerea filtrelor înseamnă și întoarcerea la jurnalul întreg, nu
         // doar golirea casetei: altfel lista ar rămâne pe rezultatele unei
         // căutări care nu mai e scrisă nicăieri pe ecran.

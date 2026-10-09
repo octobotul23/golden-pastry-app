@@ -55,7 +55,7 @@ const GP_CLIENT_SEARCH_MIN = 2;
  */
 function route_clients_search(): void
 {
-    $u = require_staff();
+    $u = require_personal('comenzi.scrie');
 
     // Ograda vine din `api/lib/orders.php`, lângă `client_by_name()`, ca să fie
     // ACEEAȘI cu cea de la legarea cererii de cont (api/routes/requests.php).

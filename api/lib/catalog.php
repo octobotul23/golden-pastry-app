@@ -157,6 +157,13 @@ function catalog_vederi(): array
  * pereche pe care serverul o refuză ar fi o capcană. Un prag gol rămâne gol:
  * patronul poate hotărî să nu precompleteze nimic.
  *
+ * Vederea de pornire e „patru" pe amândouă ecranele. Pe telefon a fost „unu"
+ * până la 2.7.0 (hotărârea patronului din 9 octombrie 2026; rândul din bază îl
+ * mută `sql/032_plati_si_prag.sql`, o singură dată). Aceeași valoare o țin
+ * `gp.catalogImplicit()` din shared/gp-api.js și caseta din Setări: cu trei
+ * valori de rezervă deosebite, magazinul s-ar deschide într-o vedere și ar
+ * sări în alta când sosește `/lists`.
+ *
  * @return array{vedereTelefon: string, vedereCalculator: string, pragB: ?int, pragC: ?int}
  */
 function catalog_implicite(): array
@@ -175,7 +182,7 @@ function catalog_implicite(): array
         $c = null;
     }
     return [
-        'vedereTelefon'    => $vedere('catalog_vedere_telefon', 'unu'),
+        'vedereTelefon'    => $vedere('catalog_vedere_telefon', 'patru'),
         'vedereCalculator' => $vedere('catalog_vedere_calculator', 'patru'),
         'pragB'            => $b,
         'pragC'            => $c,

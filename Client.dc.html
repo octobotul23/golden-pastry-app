@@ -105,7 +105,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -145,6 +145,53 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-if>
 
 <div data-cl="pad" style="flex:1;display:flex;flex-direction:column;gap:14px;padding:18px 16px 26px">
+
+<!-- Soldul de plată (runda 2.7.0, hotărârea patronului din 4–5 oct. 2026). Stă
+     primul în pagină: e singurul lucru de aici care îl poate opri pe om din a
+     mai comanda, deci nu are voie să fie căutat sub lista de comenzi. Lipsește
+     cu totul cât serverul n-a răspuns „activ” (cont care nu e de client, bază
+     fără migrarea 032, cerere picată) — restul paginii arată atunci ca ieri.
+     Când comenzile sunt oprite, cardul se face roșu și poartă vorbele
+     patronului, lista de plată și „Contactează-ne”; butonul e o legătură spre
+     formularul de contact al magazinului, nu un telefon: omul vrea să scrie
+     acum, iar mesajul îl găsește acolo gata pus. Rândurile listei se rup pe
+     două la 320 px (flex-wrap), ca suma să nu iasă din card. -->
+<sc-if value="{{ soldAre }}" hint-placeholder-val="{{ false }}">
+<div class="{{ soldCls }}" style="padding:16px 18px;border-radius:20px;display:flex;flex-direction:column;gap:12px;align-items:stretch">
+<sc-if value="{{ platiBlocat }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px">
+<p class="h-alert__title" style="margin:0;font-size:16px;font-weight:700;line-height:1.35;text-wrap:pretty">{{ platiTitlu }}</p>
+<p style="margin:0;font-size:15px;line-height:1.5;text-wrap:pretty">{{ platiCorp }}</p>
+</div>
+</sc-if>
+<sc-if value="{{ platiAreLista }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ platiLista }}" as="d" hint-placeholder-count="2">
+<div style="display:flex;align-items:baseline;gap:4px 10px;flex-wrap:wrap;padding-bottom:6px;border-bottom:1px solid var(--h-line);font-size:14px;line-height:1.4">
+<span class="h-numeric" style="font-weight:700">{{ d.ref }}</span>
+<span style="min-width:0">{{ d.zi }}</span>
+<span class="h-numeric" style="margin-left:auto;font-weight:700;white-space:nowrap">{{ d.suma }}</span>
+</div>
+</sc-for>
+<sc-if value="{{ platiRest }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;line-height:1.45">{{ platiRest }}</span>
+</sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ soldText }}" hint-placeholder-val="{{ true }}">
+<span style="font-size:16px;font-weight:700;line-height:1.4;text-wrap:pretty">{{ soldText }}</span>
+</sc-if>
+<sc-if value="{{ platiCereri }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:13px;line-height:1.5;text-wrap:pretty">{{ platiCereri }}</span>
+</sc-if>
+<sc-if value="{{ platiBlocat }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+<a class="h-btn h-btn--secondary" href="{{ platiContactHref }}" style="min-height:46px;font-size:14px;text-decoration:none">Contactează-ne</a>
+<span style="font-size:13px;line-height:1.45;text-wrap:pretty">pentru mai multe detalii despre situația actuală</span>
+</div>
+</sc-if>
+</div>
+</sc-if>
 
 <sc-if value="{{ hasOrder }}" hint-placeholder-val="{{ true }}">
 <div style="display:flex;flex-direction:column;gap:14px">
@@ -190,6 +237,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ showStatus }}" hint-placeholder-val="{{ true }}">
 <span class="{{ statusCls }}" style="font-size:11px">{{ statusLabel }}</span>
 </sc-if>
+<sc-if value="{{ plataAre }}" hint-placeholder-val="{{ false }}">
+<span class="{{ plataCls }}" style="font-size:11px">{{ plataLabel }}</span>
+</sc-if>
 </div>
 <div style="display:flex;flex-direction:column;gap:8px">
 <sc-for list="{{ items }}" as="it" hint-placeholder-count="3">
@@ -219,7 +269,14 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-size:15px;font-weight:600">{{ m.day }}</span>
 <span style="font-size:13px;color:var(--h-fg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.line }}</span>
 </div>
-<span class="{{ m.chanCls }}" style="font-size:11px;flex:none">{{ m.chan }}</span>
+<!-- Semnul de plată stă SUB insigna modului, nu lângă ea: pe un rând, la
+     320 px, cele două insigne ar fi lăsat zilei mai puțin de 70 px. -->
+<span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none">
+<span class="{{ m.chanCls }}" style="font-size:11px">{{ m.chan }}</span>
+<sc-if value="{{ m.plataAre }}" hint-placeholder-val="{{ false }}">
+<span class="{{ m.plataCls }}" style="font-size:11px">{{ m.plataLabel }}</span>
+</sc-if>
+</span>
 </div>
 </sc-for>
 </div>
@@ -295,6 +352,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ c.poateReia }}" hint-placeholder-val="{{ false }}">
 <a class="h-btn h-btn--secondary" href="{{ c.reiaHref }}" style="min-height:46px;font-size:14px;align-self:flex-start;text-decoration:none">Comandă din nou →</a>
 </sc-if>
+<!-- Oprit la prag: același buton, stins, cu lămurirea în rândul de sub el
+     (v. `reluare()`). E buton, nu legătură fără adresă: un buton stins e
+     sărit de tastatură și anunțat ca atare de cititorul de ecran. -->
+<sc-if value="{{ c.reiaOprita }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" disabled="{{ true }}" style="min-height:46px;font-size:14px;align-self:flex-start">Comandă din nou →</button>
+</sc-if>
 <sc-if value="{{ c.areReiaNota }}" hint-placeholder-val="{{ false }}">
 <span style="font-size:13px;color:var(--h-fg-muted);line-height:1.45;text-wrap:pretty">{{ c.reiaNota }}</span>
 </sc-if>
@@ -325,8 +388,18 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <span style="font-size:15px;font-weight:600">{{ h.when }}</span>
 <span style="font-size:13px;color:var(--h-fg-muted)">{{ h.line }}</span>
 </div>
-<span class="{{ h.cls }}" style="font-size:11px;flex:none">{{ h.status }}</span>
-<span style="flex:none;font-size:12px;color:var(--h-fg-subtle)">{{ h.caret }}</span>
+<span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none">
+<span class="{{ h.cls }}" style="font-size:11px">{{ h.status }}</span>
+<sc-if value="{{ h.plataAre }}" hint-placeholder-val="{{ false }}">
+<span class="{{ h.plataCls }}" style="font-size:11px">{{ h.plataLabel }}</span>
+</sc-if>
+</span>
+<!-- Săgeata rândului e DESENATĂ, aceeași ca în „Istoric” (două laturi ale unui
+     pătrat, răsucit), nu o literă: „▸” ieșea de patru-cinci pixeli în scrisul
+     casei, oricât i s-ar fi mărit corpul, și altfel pe fiecare telefon. Închis
+     arată spre dreapta, desfăcut în jos. `aria-hidden`: starea o spune butonul
+     (`aria-expanded`), nu un desen. -->
+<span aria-hidden="true" style="flex:none;width:9px;height:9px;margin:3px 5px 0 0;border-right:2px solid var(--h-fg-muted);border-bottom:2px solid var(--h-fg-muted);transform:rotate({{ h.sageata }})"></span>
 </button>
 <sc-if value="{{ h.open }}" hint-placeholder-val="{{ false }}">
 <div style="padding:0 16px 14px;display:flex;flex-direction:column;gap:8px">
@@ -344,6 +417,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ h.poateReia }}" hint-placeholder-val="{{ false }}">
 <a class="h-btn h-btn--secondary" href="{{ h.reiaHref }}" style="min-height:46px;font-size:14px;align-self:flex-start;text-decoration:none">Comandă din nou →</a>
 </sc-if>
+<sc-if value="{{ h.reiaOprita }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--secondary" disabled="{{ true }}" style="min-height:46px;font-size:14px;align-self:flex-start">Comandă din nou →</button>
+</sc-if>
 <sc-if value="{{ h.areReiaNota }}" hint-placeholder-val="{{ false }}">
 <span style="font-size:13px;color:var(--h-fg-subtle);line-height:1.45;text-wrap:pretty">{{ h.reiaNota }}</span>
 </sc-if>
@@ -353,6 +429,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </sc-for>
 <sc-if value="{{ hasMorePast }}" hint-placeholder-val="{{ false }}">
 <button type="button" onClick="{{ showAllPast }}" style="min-height:46px;border:1px solid var(--h-line-strong);border-radius:14px;background:transparent;color:var(--h-fg-muted);font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer">{{ morePastLabel }}</button>
+</sc-if>
+<!-- Clientul vede aici cele mai noi șase comenzi; pe toate le are în „Istoric”,
+     pe luni și cu prețuri (5 oct. 2026). Butonul de deasupra rămâne numai al
+     previzualizării. Numele paginii stă scris dintr-o bucată: build-deploy îl
+     rescrie căutând exact textul ăsta. -->
+<sc-if value="{{ areTotIstoricul }}" hint-placeholder-val="{{ false }}">
+<a href="Istoric.dc.html" style="display:flex;align-items:center;justify-content:center;min-height:46px;border:1px solid var(--h-line-strong);border-radius:14px;color:var(--h-fg-muted);font-size:14px;font-weight:600;text-decoration:none">Vezi tot istoricul →</a>
 </sc-if>
 </div>
 </sc-if>
@@ -492,6 +575,26 @@ const bani = (v) => {
 };
 const roleOf = (x) => x.role || (x.u === "admin" ? "admin" : "angajat");
 const qty = (o) => (o.items || []).reduce((a, i) => a + gp.qty(i.q), 0);
+// SEMNUL DE PLATĂ INTRĂ ÎN PAGINĂ CA UN SINGUR DA/NU (runda 2.7.0).
+//
+// Serverul îi pune clientului pe fiecare comandă o singură cheie, `dePlata`
+// (adevărat = neîncasată și neanulată). `gp.toPageOrder` face o formă cu
+// câmpuri numite unul câte unul și lasă pe dinafară tot ce nu cunoaște, deci
+// cheia se pierdea pe drum; o aducem aici, peste forma lui.
+//
+// NUMAI ea, și numai dacă e chiar adevărat ori fals. Hotărârea patronului din
+// 4–5 oct. 2026: clientul vede „De plată” ori „Plătită” și atât — niciodată
+// „Amânată”, ziua până la care s-a amânat, „prin bancă” ori vreo notă. Contul
+// cu „Încasări” care se uită la pagină în previzualizare primește de la server
+// și starea, scadența și nota fiecărei comenzi; fiindcă aici nu intră în stare
+// decât un da/nu, vorbele acelea n-au pe unde ajunge pe ecran nici printr-o
+// greșeală de mai târziu din `renderVals()`. Cheia lipsă (server de dinainte
+// de 2.7.0, bază fără migrarea 032) rămâne lipsă: fără semn, nu „Plătită”.
+const cuPlata = (o) => {
+  const p = gp.toPageOrder(o);
+  if (o && typeof o.dePlata === "boolean") p.dePlata = o.dePlata;
+  return p;
+};
 // Jurnalul îl scrie serverul, la fiecare operație, în tabelul audit_log.
 // Varianta locală înregistra doar ce făcea browserul acesta — adică exact
 // ce NU trebuie să fie un jurnal. Păstrăm funcția ca să nu atingem zecile de
@@ -526,7 +629,16 @@ class Component extends DCLogic {
     // Fereastra spre ruta de azi, așa cum o dă `GET /routes/mine`. `null`
     // înseamnă „încă nu se știe" — și atunci cartonașul de rută nu se
     // desenează deloc, în loc să inventeze un număr.
-    ruta: null };
+    ruta: null,
+    // Ce a răspuns `GET /plati/mine` (runda 2.7.0; hotărârea patronului din
+    // 4–5 oct. 2026: clientul își vede soldul sus și „De plată” / „Plătită”
+    // pe fiecare comandă). `null` înseamnă „nu se știe ori nu e cazul”: server
+    // fără migrarea 032 (`activ: false`), cont care nu e de client, cerere
+    // picată. Atunci cardul de sold nu se desenează DELOC — un „Nu ai nimic de
+    // plată.” scris fără răspunsul serverului ar fi o afirmație despre banii
+    // omului pe care pagina n-a verificat-o, iar un „oprit” rămas de la tura
+    // de dinainte i-ar ține stins „Comandă din nou” după ce a plătit.
+    plati: null };
 
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
@@ -619,7 +731,9 @@ class Component extends DCLogic {
           // formularul ar fi lipsit — butonul „Încearcă din nou" stinge
           // `eroare` și l-ar fi scos la iveală — ci omul ar fi citit un motiv
           // stins de mult, lângă un formular care merge.)
-          return this.setState({ auth: null, orders: [], requests: [], loaded: true, eroare: "", sesiuneStiuta: true });
+          // `plati: null` — soldul e al contului care tocmai a ieșit; rămas în
+          // stare, s-ar fi desenat o clipă sub numele celui care intră după el.
+          return this.setState({ auth: null, orders: [], requests: [], loaded: true, eroare: "", sesiuneStiuta: true, plati: null });
         }
         // Cu parola provizorie, serverul refuză cu 403 ORICE altă cerere decât
         // schimbarea parolei. Pagina asta o lăsa pe om înăuntru, cererea de
@@ -679,8 +793,19 @@ class Component extends DCLogic {
         const ruta = user.role === 'client'
           ? gp.get('/routes/mine').catch(() => null)
           : Promise.resolve(null);
-        return Promise.all([gp.get('/orders'), cereri, ruta]).then(([r, cer, rt]) => this.setState({
-          orders: (r.orders || []).map(gp.toPageOrder),
+        // Soldul de plată și pragul (runda 2.7.0). Tot numai pentru clienți:
+        // altui rol serverul îi răspunde `activ: false` — omul casei nu
+        // cumpără —, deci ar fi încă o cerere la cinci secunde, degeaba. Un
+        // eșec n-are voie nici să ascundă comenzile, nici să aprindă caseta
+        // roșie: plățile sunt o lămurire în plus, nu pricina pentru care a
+        // deschis omul pagina. Rămâne `null`, adică fără card și fără nimic
+        // stins — pe un server de dinainte de 2.7.0 ruta nici nu există, iar
+        // pagina trebuie să arate întocmai ca ieri.
+        const plati = user.role === 'client'
+          ? gp.get('/plati/mine').catch(() => null)
+          : Promise.resolve(null);
+        return Promise.all([gp.get('/orders'), cereri, ruta, plati]).then(([r, cer, rt, pl]) => this.setState({
+          orders: (r.orders || []).map(cuPlata),
           // Peste 500 de comenzi serverul le dă numai pe cele mai noi; istoricul
           // nu mai promite atunci „toate”.
           taiat: !!r.truncated,
@@ -689,6 +814,10 @@ class Component extends DCLogic {
           requests: cer.ok ? cer.lista : this.state.requests,
           cerEroare: cer.ok ? "" : cer.motiv,
           ruta: rt,
+          // Numai răspunsul care spune pe față „activ”. Orice altceva — `null`
+          // de la cererea picată, `activ: false`, un răspuns de altă formă —
+          // stinge cardul, nu-l lasă pe cel de la tura de dinainte.
+          plati: pl && pl.activ === true ? pl : null,
           loaded: true,
           sesiuneStiuta: true,
           // O tură reușită stinge caseta: dacă serverul tocmai a răspuns, ce
@@ -758,6 +887,44 @@ class Component extends DCLogic {
       (o.cust || "").trim().toLowerCase() === (cust || "").trim().toLowerCase();
     const anulata = (o) => o.status === gp.cancelled();
 
+    /* --- plățile (runda 2.7.0; hotărârile patronului din 4–5 oct. 2026) --- */
+    // Soldul e al CONTULUI INTRAT. În previzualizarea personalului pagina
+    // imită alt cont, iar `/plati/mine` nici nu se cere acolo (`pull()`); pe
+    // contul de personal nimerit aici nu e nimic de arătat. Întrebarea de rol
+    // se mai pune o dată, ca un răspuns rămas în stare de la alt cont să nu se
+    // deseneze sub numele celui de acum.
+    const P = (!isPreview && !staffBlocked && role === "client" && S.plati && S.plati.activ === true)
+      ? S.plati : null;
+    // Cifrele vin de la server; pagina nu adună nimic din comenzile ei —
+    // istoricul de aici poate fi tăiat la cele mai noi 500 (`taiat`), deci o
+    // sumă făcută în pagină ar fi ieșit mai mică decât datoria adevărată.
+    const natural = (v) => { const n = Math.floor(Number(v)); return isFinite(n) && n > 0 ? n : 0; };
+    const pSold = P && isFinite(Number(P.sold)) && Number(P.sold) > 0 ? Number(P.sold) : 0;
+    const pCereri = P ? natural(P.cereri) : 0;
+    const pRanduri = P && Array.isArray(P.comenzi) ? P.comenzi : [];
+    // Câte comenzi sunt de plată: `n` le numără și pe cele trimise și încă
+    // neacceptate (`cereri`), care nu sunt datorie — se scad. Lista `comenzi`
+    // nu e de numărat: serverul o taie la douăzeci de rânduri.
+    const pComenzi = P ? (Math.max(0, natural(P.n) - pCereri) || pRanduri.length) : 0;
+    // OPRIT: numai când serverul spune chiar „blocat”. Pagina nu compară ea
+    // numărul cu pragul — pragul poate fi al clientului ori „fără limită”, iar
+    // socoteala lor e a serverului (`plati_situatie`).
+    const platiBlocat = !!P && P.stare === "blocat";
+    // „20 de comenzi”, dar „2 comenzi” și „101 comenzi”: „de” se pune când
+    // ultimele două cifre fac 00 ori trec de 19.
+    const cuDe = (n) => (n !== 0 && (n % 100 === 0 || n % 100 > 19) ? " de" : "");
+    const cateComenzi = (n) => (n === 1 ? "1 comandă" : n + cuDe(n) + " comenzi");
+    // Semnul de pe o comandă. Citește NUMAI da/nu-ul adus de `cuPlata` și
+    // scrie una din două vorbe scrise aici: nimic din comandă nu ajunge text.
+    // O comandă anulată n-are semn: nu mai e nici de plătit, nici plătită (iar
+    // banii de dat înapoi sunt treaba casei, nu o veste pentru client).
+    const semnPlata = (o) => {
+      if (!o || typeof o.dePlata !== "boolean" || anulata(o)) return { plataAre: false, plataLabel: "", plataCls: "h-badge" };
+      return o.dePlata
+        ? { plataAre: true, plataLabel: "De plată", plataCls: "h-badge h-badge--warning" }
+        : { plataAre: true, plataLabel: "Plătită", plataCls: "h-badge h-badge--success" };
+    };
+
     // Împărțirea se face pe data întreagă, nu pe ziua din lună: „29" se
     // repetă în fiecare lună, iar o comandă de peste o lună apărea drept azi.
     // O comandă anulată nu mai e „următoarea comandă" — trece în istoric.
@@ -778,7 +945,10 @@ class Component extends DCLogic {
       .filter(alMeu)
       .filter(o => anulata(o) || String(o.date || "") < TODAY_ISO)
       .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
-    const aratate = S.pastAll ? trecute : trecute.slice(0, 6);
+    // Șase rânduri. „Arată toate” (`pastAll`) a rămas numai al previzualizării:
+    // clientul are pentru restul pagina „Istoric”, deci aici lista lui nu se
+    // mai lungește niciodată (5 oct. 2026).
+    const aratate = (isPreview && S.pastAll) ? trecute : trecute.slice(0, 6);
 
     // Cererile trimise din magazin și neconfirmate încă. Până la acceptare ele
     // nu sunt comenzi — nu există în tabelul `orders`, deci `/orders` nu le
@@ -898,29 +1068,54 @@ class Component extends DCLogic {
     // dintr-o bucată, fiindcă build-deploy îl rescrie căutând exact textul
     // ăsta — lipit din bucăți, ar fi rămas o legătură spre nicăieri.
     //
+    // O SINGURĂ SOCOTEALĂ (5 oct. 2026). Codul, coada adresei și lămurirea de
+    // sub buton le face `gp.reiaComanda`, aceeași funcție pe care o cheamă și
+    // „Istoric”. Până acum pagina asta își scria nota singură, cu trei
+    // propoziții care stăteau și acolo: la prima corectură făcută într-un
+    // singur loc, cele două pagini ar fi spus lucruri diferite despre aceeași
+    // comandă. De la ea vine și `&din=<numărul comenzii>`, ca magazinul să
+    // poată spune din ce comandă a umplut coșul. Cererile refuzate n-au număr:
+    // pentru ele `ref` e gol și adresa rămâne fără `din`.
+    //
     // Nimic din reluare nu pleacă singur: magazinul pune produsele în coș, iar
     // ziua și trimiterea rămân ale omului, la prețurile de azi.
     //
     // În previzualizarea personalului pagina ține comenzile TUTUROR clienților:
     // butonul ar fi umplut coșul adminului cu comanda altcuiva. Acolo nu apare,
     // ca și cartonașul de recomandare.
-    const reluare = (items) => {
-      if (isPreview) return { areReia: false, poateReia: false, reiaHref: "", areReiaNota: false, reiaNota: "" };
-      const r = gp.reia(items);
-      const nota = (r.cod
-        ? [
-          r.scoase.length ? "Nu intră în coș, fiindcă nu sunt în magazin: " + r.scoase.join(", ") + "." : "",
-          r.rotunjit ? "Cantitățile cu zecimale intră rotunjite în sus, la bucăți întregi." : "",
-          r.taiat ? "Dintr-un produs intră în coș cel mult 9999 de bucăți." : ""
-        ]
-        : [r.scoase.length ? "Nu se poate reface din magazin: produsele ei nu mai sunt acolo." : ""]
-      ).filter(Boolean).join(" ");
+    //
+    // OPRIT LA PRAG (runda 2.7.0). Clientul ajuns la numărul maxim de comenzi
+    // nu mai poate trimite una nouă: magazinul i-ar umple coșul și l-ar opri
+    // abia la trimitere, după ce a ales ziua și a scris adresa. Butonul se
+    // STINGE aici, cu lămurirea sub el — nu dispare: omul care îl căuta ar fi
+    // crezut că s-a stricat pagina. Legătura nu se mai scrie deloc
+    // (`reiaHref` gol), ca butonul stins să nu aibă unde duce nici din
+    // tastatură. Lămurirea ia locul notei despre produsele rămase pe
+    // dinafară: până la plată nota aceea nu-i folosește la nimic.
+    //
+    // Cine n-are nimic de plătit și e totuși oprit a atins numărul numai din
+    // cereri trimise și încă neacceptate; „după plata comenzilor” i-ar fi
+    // cerut bani pe care nu-i datorează, deci vorba e alta. Amândouă vorbele
+    // stau în `gp.reiaOprire`, lângă cele pe care le spune „Istoric” aceluiași
+    // om (acolo soldul nu e „mai sus”, deci vorba îl trimite aici): scrise în
+    // două pagini, s-ar fi despărțit.
+    const oprire = gp.reiaOprire(P);
+    const reluare = (items, ref) => {
+      if (isPreview) return { areReia: false, poateReia: false, reiaOprita: false, reiaHref: "", areReiaNota: false, reiaNota: "" };
+      const r = gp.reiaComanda(items, ref);
+      if (platiBlocat && r.cod) {
+        return {
+          areReia: true, poateReia: false, reiaOprita: true, reiaHref: "", areReiaNota: true,
+          reiaNota: oprire ? oprire.sus : ""
+        };
+      }
       return {
-        areReia: !!r.cod || !!nota,
-        poateReia: !!r.cod,
-        reiaHref: r.cod ? "Site%20Public.dc.html?reia=" + r.cod : "",
-        areReiaNota: !!nota,
-        reiaNota: nota
+        areReia: r.are,
+        poateReia: r.poate,
+        reiaOprita: false,
+        reiaHref: r.poate ? "Site%20Public.dc.html" + r.coada : "",
+        areReiaNota: !!r.nota,
+        reiaNota: r.nota
       };
     };
 
@@ -988,11 +1183,62 @@ class Component extends DCLogic {
         return "Intrare.dc.html";
       })(),
       onLogout: () => {
-        gp.logout().finally(() => set({ auth: null, orders: [] }));
+        // `plati: null`: soldul celui care iese nu rămâne pentru cel care intră.
+        gp.logout().finally(() => set({ auth: null, orders: [], plati: null }));
       },
 
       clientName: cust || (auth ? auth.name : ""),
       mustChange: !!(auth && auth.temp),
+
+      /* --- soldul de plată și pragul (runda 2.7.0) --- */
+      // Cardul din capul paginii. Lipsește cu totul cât serverul n-a răspuns
+      // „activ” (v. `plati` din stare): nici „Nu ai nimic de plată.” nu se
+      // scrie pe negândite.
+      soldAre: !!P,
+      // Roșu numai când comenzile chiar sunt oprite; altfel e un card ca toate
+      // celelalte — un sold de plată nu e o greșeală a omului.
+      soldCls: platiBlocat ? "h-alert h-alert--danger" : "h-card",
+      // Banii se scriu cu `bani()`, ca în istoricul de mai jos („340,00 RON”):
+      // două feluri de a scrie o sumă pe același ecran ar fi arătat a două
+      // socoteli. Cel oprit fără nimic de plătit (a atins numărul numai din
+      // cereri încă neacceptate) nu citește „Nu ai nimic de plată.” lângă „până
+      // plătești soldul”: rândul tace, iar lămurirea o dă `platiCereri`.
+      soldText: !P ? "" : pSold > 0
+        ? "Sold de plată: " + bani(pSold) + (pComenzi > 0 ? " · " + cateComenzi(pComenzi) : "")
+        : (platiBlocat ? "" : "Nu ai nimic de plată."),
+      // Vorbele patronului, aceleași ca în magazin și ca în refuzul serverului
+      // (`409 prag_neplatite`): omul oprit trebuie să citească același lucru
+      // oriunde s-ar uita.
+      platiBlocat,
+      platiTitlu: "Numărul maxim de comenzi a fost atins.",
+      platiCorp: "Până plătești soldul comenzilor precedente nu putem primi o comandă nouă.",
+      // Ce are de plătit, rând cu rând — numai când e oprit, ca „comenzile de
+      // mai sus” din lămurirea butonului stins să aibă spre ce arăta. Din
+      // fiecare rând se iau trei lucruri, numite: referința, ziua și suma.
+      platiLista: platiBlocat
+        ? pRanduri.map((o) => ({ ref: String((o && o.ref) || ""), zi: zScurt(o && o.zi), suma: bani(o && o.total) }))
+        : [],
+      platiAreLista: platiBlocat && pRanduri.length > 0,
+      // Serverul trimite cel mult douăzeci de rânduri; restul se spune, ca
+      // suma rândurilor să nu pară alta decât soldul de sub ele.
+      platiRest: platiBlocat && pRanduri.length > 0 && pComenzi > pRanduri.length
+        ? "… și încă " + cateComenzi(pComenzi - pRanduri.length) + "."
+        : "",
+      // În numărul maxim intră și cererile trimise din magazin și încă
+      // neacceptate. Fără rândul ăsta, omul cu o comandă de plată și o cerere
+      // în așteptare n-ar pricepe de ce e oprit la „o comandă”.
+      platiCereri: !platiBlocat || !pCereri ? ""
+        : pCereri === 1
+          ? "Se numără și o cerere trimisă, încă neacceptată."
+          : "Se numără și " + pCereri + cuDe(pCereri) + " cereri trimise, încă neacceptate.",
+      // „Contactează-ne” duce în formularul de contact al magazinului, cu
+      // mesajul pus gata acolo. Magazinul stă pe altă gazdă decât pagina asta,
+      // deci îi ducem un COD scurt în adresă, pe o rută care există — niciodată
+      // textul mesajului, un nume ori o sumă (adresele rămân în istoricul
+      // browserului și în jurnalele serverului). Numele paginii stă scris
+      // dintr-o bucată, din aceeași pricină ca la `reluare()` de mai sus:
+      // build-deploy îl rescrie căutând exact textul ăsta.
+      platiContactHref: "Site%20Public.dc.html?subiect=neplatite",
 
       /* --- recomandări --- */
       // Cardul se arată oricui e conectat cu adevărat, CU sau FĂRĂ cod.
@@ -1017,11 +1263,13 @@ class Component extends DCLogic {
       // angajatul, omul de laborator și tableta comună a turei citeau „ecranul
       // ăsta e doar pentru clienți” și, dedesubt, „Fă-ți un cod →” spre un
       // panou pe care rolul lor nu-l are — iar tabletei serverul nici nu-i
-      // face cod. Întrebarea e cea a meniului (`gp.meniu`): panoul e în
-      // matricea rolului, ori contul are deja un cod. Clientul fără cod îl
-      // păstrează, din matrice — pentru el s-a deschis ușa asta.
+      // face cod. Întrebarea se pune chiar meniului (`gp.meniu`), care de la
+      // runda 2.7.0 știe și ce a bifat fondatorul în „Acces": contul are
+      // intrarea „Recomandări" (agentul, ori cine a primit dreptul), ori are
+      // deja un cod. Clientul fără cod n-o are în sertar, dar cardul îl
+      // păstrează — pentru el s-a deschis ușa asta —, de aceea e numit pe față.
       hasReferral: !isPreview && !!auth
-        && ((gp.PANOURI_ROL[auth.role] || []).indexOf("Recomandări") >= 0 || !!auth.referralCode),
+        && (auth.role === "client" || gp.meniu("", auth).some((m) => m.et === "Recomandări")),
       refHasCode: !!(auth && auth.ref && auth.ref.code && auth.ref.link),
       refCode: auth && auth.ref ? auth.ref.code : "",
       refLink: auth && auth.ref ? auth.ref.link : "",
@@ -1114,7 +1362,7 @@ class Component extends DCLogic {
         // să ghicească dacă e vina lui. Când motivul lipsește din bază, spunem
         // pe față că lipsește și trimitem la telefon.
         reason: c.reason || "Nu s-a scris un motiv. Sună-ne și îți spunem despre ce a fost vorba."
-      }, reluare(c.items))),
+      }, reluare(c.items, ""))),
 
       emptyLine: staffBlocked
         ? "Contul „" + (auth ? auth.name : "") + "” e cont de angajat: acest ecran e doar pentru clienți. Folosește panourile de lucru."
@@ -1146,6 +1394,12 @@ class Component extends DCLogic {
       showStatus,
       statusLabel: st ? st.l : "",
       statusCls: st ? st.c : "h-badge",
+      // „De plată” / „Plătită” pe comanda de sus (v. `semnPlata`). Cheile se
+      // scriu una câte una, nu vărsate dintr-un obiect: `check-pages` citește
+      // numele de aici ca să le potrivească cu marcajul.
+      plataAre: semnPlata(first).plataAre,
+      plataLabel: semnPlata(first).plataLabel,
+      plataCls: semnPlata(first).plataCls,
       items: first ? (first.items || []).map(i => ({ q: i.q, n: i.n })) : [],
       totalQty: first ? gp.qtyLabel(qty(first)) : "0",
       addrLine: first && CU_MASINA(first.chan) && first.addr ? "Livrare la " + first.addr + " · " + (first.zone || "") : "",
@@ -1153,21 +1407,26 @@ class Component extends DCLogic {
       hasMore: mine.length > 1,
       more: mine.slice(1).map(o => {
         const dd = zDif(o.date);
-        return {
+        return Object.assign({
           days: dd === 0 ? "azi" : String(dd),
           day: zLung(o.date),
           line: (o.items || []).map(i => i.q + " " + i.n).join(" · "),
           chan: o.chan, chanCls: CH[o.chan] || "h-badge"
-        };
+        }, semnPlata(o));
       }),
 
       /* --- ce a comandat până acum --- */
       hasPast: !!trecute.length,
       // Cu lista tăiată de server, istoricul are numai cele mai noi comenzi:
       // cifra nu mai are voie să pară „toate”.
+      //
+      // „24 DE comenzi” (9 oct. 2026): de când clientul vede aici numai șase
+      // rânduri, cifra asta e singurul loc din pagină care îi spune câte are
+      // cu totul — iar de la douăzeci în sus ieșea „24 comenzi”. Aceeași
+      // regulă ca la sold (`cuDe`, mai sus), nu una scrisă a doua oară.
       pastCount: S.taiat
-        ? (trecute.length === 1 ? "cea mai nouă comandă" : "cele mai noi " + trecute.length + " comenzi")
-        : (trecute.length === 1 ? "o comandă" : trecute.length + " comenzi"),
+        ? (trecute.length === 1 ? "cea mai nouă comandă" : "cele mai noi " + trecute.length + cuDe(trecute.length) + " comenzi")
+        : (trecute.length === 1 ? "o comandă" : trecute.length + cuDe(trecute.length) + " comenzi"),
       past: aratate.map(o => {
         const deschis = !!S.openPast[o.id];
         return Object.assign({
@@ -1177,7 +1436,9 @@ class Component extends DCLogic {
           // Aceeași socoteală ca pe cartonul de sus (`ETAPA_CLIENT`).
           status: ETAPA_CLIENT(o).l,
           cls: ETAPA_CLIENT(o).c,
-          caret: deschis ? "▾" : "▸",
+          // Cât se răsucește săgeata desenată: spre dreapta închis, în jos
+          // desfăcut. Aceleași două unghiuri ca în „Istoric”.
+          sageata: deschis ? "45deg" : "-45deg",
           open: deschis,
           expanded: String(deschis),
           items: (o.items || []).map(i => ({ q: i.q, n: i.n })),
@@ -1186,10 +1447,16 @@ class Component extends DCLogic {
             CU_MASINA(o.chan) ? (o.addr ? "livrată la " + o.addr : "livrare") : "ridicată de la laborator"
           ].filter(Boolean).join(" · "),
           toggle: () => set({ openPast: Object.assign({}, S.openPast, { [o.id]: !deschis }) })
-        }, reluare(o.items));
+        }, reluare(o.items, o.ref), semnPlata(o));
       }),
-      hasMorePast: trecute.length > aratate.length,
-      morePastLabel: (S.taiat ? "Vezi cele mai noi " : "Vezi toate cele ") + trecute.length + " comenzi",
+      // Ce urmează sub cele șase rânduri, când comenzile sunt mai multe: în
+      // previzualizare butonul de până acum („Vezi toate cele N comenzi” —
+      // acolo pagina ține comenzile tuturor, iar „Istoric” al omului din
+      // echipă arată altceva: ce a scris el); pentru client, legătura spre
+      // „Istoric”. Niciodată amândouă.
+      hasMorePast: isPreview && trecute.length > aratate.length,
+      areTotIstoricul: !isPreview && trecute.length > aratate.length,
+      morePastLabel: (S.taiat ? "Vezi cele mai noi " : "Vezi toate cele ") + trecute.length + cuDe(trecute.length) + " comenzi",
       showAllPast: () => set({ pastAll: true })
     };
   }

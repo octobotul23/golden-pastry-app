@@ -1,0 +1,9 @@
+# Golden Pastry — folderul ceasului (runda 2.7.0).
+#
+# Ce stă aici pornește serverul, din linia de comandă, nu un vizitator:
+# /etc/cron.d/goldenpastry-plati rulează api/cron/plati.php din cinci în cinci
+# minute. Prin adresă nu se dă nimic din folderul ăsta.
+#
+# Al doilea lacăt e în fișierul însuși (primul lui rând refuză orice altceva
+# decât linia de comandă), pentru serverele care nu citesc acest fișier.
+Require all denied

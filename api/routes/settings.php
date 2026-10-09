@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 function route_settings_get(): void
 {
-    require_admin();
+    require_drept('setari');
     // Anunțurile eșuate pleacă odată cu setările, ca panoul să le poată arăta
     // fără o cerere în plus. Până acum eșecul se scria doar în tabelul
     // `notifications`, în care nu se uita nicio pagină: o comandă care nu a
@@ -40,7 +40,7 @@ function failed_notifications(): array
                 o.ref AS order_ref, o.seq AS order_seq, o.day AS order_day
            FROM notifications n
            LEFT JOIN orders o ON o.id = n.order_id
-          WHERE n.status = 'failed' AND n.seen_at IS NULL
+          WHERE n.status = 'failed' AND n.seen_at IS NULL" . failed_notifications_fara_plati('n.event') . "
           ORDER BY n.id DESC LIMIT 20"
     );
 
@@ -67,8 +67,39 @@ function failed_notifications(): array
 /** Câte anunțuri eșuate nevăzute sunt, dincolo de cele 20 aduse în listă. */
 function failed_notifications_count(): int
 {
-    $r = one("SELECT COUNT(*) AS n FROM notifications WHERE status = 'failed' AND seen_at IS NULL");
+    $r = one(
+        "SELECT COUNT(*) AS n FROM notifications WHERE status = 'failed' AND seen_at IS NULL"
+            . failed_notifications_fara_plati('event')
+    );
     return (int) ($r['n'] ?? 0);
+}
+
+/**
+ * Bucata de `WHERE` care scoate anunțurile PLĂȚILOR din lista de eșecuri, pentru
+ * cine n-are dreptul `plati.telegram` (runda 2.7.0).
+ *
+ * UȘA DIN DOS pe care o închide: raportul de bani și amintirile de scadență se
+ * scriu în `notifications` ca orice anunț (evenimentele `plati_raport`,
+ * `plati_amintire`), iar lista asta trimite, pentru fiecare eșec, DESTINATARUL
+ * — adică tocmai numărul chatului de bani — și subiectul. Chatul l-ar fi aflat
+ * astfel orice administrator cu „Setări”, în prima zi în care Telegram refuza
+ * un raport, deși `GET /settings` i-l ascunde cu grijă.
+ *
+ * Se cerne după PREFIX (`plati_`), nu după o listă de două nume: un al treilea
+ * fel de anunț al plăților, scris mâine, intră singur sub regulă. Aceeași
+ * condiție stă pe listă, pe NUMĂRĂTOARE și pe stingere — o cifră care le-ar fi
+ * numărat și pe cele ascunse ar fi spus „mai e unul pe care nu-l vezi”.
+ *
+ * Pe o bază fără migrarea 013 coloana `event` nu există: nici anunțurile
+ * plăților n-au atunci cum să fie însemnate, deci nu e nimic de cernut — și o
+ * condiție pe coloana lipsă ar fi picat toată pagina de Setări cu 1054.
+ */
+function failed_notifications_fara_plati(string $coloana): string
+{
+    if (!notify_event_column() || drept('plati.telegram')) {
+        return '';
+    }
+    return " AND ($coloana IS NULL OR $coloana NOT LIKE 'plati!_%' ESCAPE '!')";
 }
 
 /**
@@ -99,7 +130,7 @@ function failed_notifications_count(): int
  */
 function route_settings_notifications_seen(): void
 {
-    require_admin();
+    require_drept('setari');
 
     $b   = body();
     $ids = [];
@@ -116,9 +147,12 @@ function route_settings_notifications_seen(): void
     $n = 0;
     if ($ids !== []) {
         $semne = implode(', ', array_fill(0, count($ids), '?'));
+        // Cu aceeași cernere ca lista: cine nu vede eșecurile plăților nu le
+        // poate nici stinge, ghicindu-le numărul de rând.
         $n = q(
             "UPDATE notifications SET seen_at = UTC_TIMESTAMP()
-              WHERE id IN ($semne) AND status = 'failed' AND seen_at IS NULL",
+              WHERE id IN ($semne) AND status = 'failed' AND seen_at IS NULL"
+                . failed_notifications_fara_plati('event'),
             $ids
         )->rowCount();
     }
@@ -136,13 +170,19 @@ function route_settings_notifications_seen(): void
 
 function route_settings_save(): void
 {
-    $u = require_admin();
+    $u = require_drept('setari');
     $b = body();
 
     $incoming = $b['settings'] ?? $b;
     if (!is_array($incoming)) {
         fail('Format invalid.', 422, 'bad_payload');
     }
+
+    // Setările plăților se judecă și se scot din cerere ÎNAINTEA tuturor
+    // celorlalte verificări: un refuz de drept trebuie să cadă primul, înainte
+    // ca vreo altă regulă să apuce să spună ceva. Se scriu abia la sfârșit,
+    // după `settings_save()` — vezi acolo.
+    [$incoming, $alePlatilor] = guard_plati($incoming, $u);
 
     // Validări minime, ca o greșeală de tastare să fie prinsă aici, nu abia
     // când se pierde notificarea unei comenzi reale.
@@ -243,11 +283,179 @@ function route_settings_save(): void
     $incoming = guard_hq_coords($incoming);
 
     $changed = settings_save($incoming, $u);
+
+    // Setările plăților, LA URMĂ și pe ușa lor (`plati_setari_scrie()`): toate
+    // refuzurile de mai sus — ale lor și ale celorlalte chei — au căzut deja,
+    // deci aici nu mai are ce opri salvarea la jumătate. Fapta din Jurnal e
+    // `plati_setari`, nu `settings_update`: pe a doua o citește oricine are
+    // Jurnalul, iar pragul și chatul banilor nu sunt ale oricui.
+    //
+    // În `changed` intră TOATE cheile plăților primite, nu doar cele care
+    // și-au schimbat valoarea — ca la `settings_save()`, unde `changed` înseamnă
+    // „am primit-o și am scris-o”. Pagina de Setări socotește „căzută” orice
+    // cheie trimisă care lipsește de aici și dă alarma; un prag retrimis
+    // neschimbat nu e o cădere.
+    if ($alePlatilor) {
+        plati_setari_scrie($alePlatilor, $u);
+        $changed = array_values(array_unique(array_merge($changed, array_keys($alePlatilor))));
+    }
+
     // `true` = recitire din baza de date, ca răspunsul să reflecte ce s-a salvat.
     json_out(['ok' => true, 'changed' => $changed, 'settings' => settings_public(true)]);
 }
 
 /* ------------------------------------------------------------- validări -- */
+
+/**
+ * Setările plăților și însemnările serverului, sosite prin `PUT /settings`
+ * (runda 2.7.0; hotărârile patronului din 4–5 octombrie 2026).
+ *
+ * Întoarce perechea [cererea fără cheile plăților, cheile plăților gata de
+ * scris]. NU scrie nimic: scrierea o face ruta, la urmă.
+ *
+ * PATRU FELURI DE CHEI, patru purtări, și toate judecate numai pe cheile care AU
+ * rând în tabel. Cele fără rând rămân în cerere și cad, ca până acum, pe
+ * refuzul `unknown_setting` din `settings_save()` — pe o bază fără 032 un
+ * `plati_prag_implicit` trimis de aici primește deci exact răspunsul de ieri.
+ *
+ *   1. ÎNSEMNĂRILE SERVERULUI (`migration_*`, `plati_raport_trimis_*`) — nu le
+ *      scrie nimeni, nici fondatorul: `422 setting_read_only`. Refuzul
+ *      „cheie necunoscută” nu le apăra, fiindcă SUNT rânduri. Un
+ *      `plati_raport_trimis_1` golit de aici ar fi trimis a doua oară raportul
+ *      de dimineață; un `migration_032_…` rescris ar fi mințit `api/verifica.php`
+ *      despre ziua în care s-a făcut migrarea.
+ *   2. SETĂRILE PLĂȚILOR fără dreptul lor → `403 plati_setting_denied`. Cine
+ *      are „Setări” nu are, din asta, și banii: pragul general e al lui
+ *      `plati.prag`, restul ale lui `plati.telegram` (`setare_plati_drept()`).
+ *      Refuzul NU pomenește valoarea de acum și nu trece prin nicio regulă:
+ *      un „chatul e același cu al comenzilor” spus celui fără drept i-ar fi
+ *      ghicit chatul banilor din două-trei încercări.
+ *   3. SETĂRILE PLĂȚILOR cu dreptul lor → prin `plati_setari_valideaza()`,
+ *      aceeași funcție pe care o cheamă `PUT /plati/setari`.
+ *   4. O CHEIE CARE NU E A PLĂȚILOR, dar poartă jumătate din regula lor:
+ *      `notify_telegram_chat_id`, chatul COMENZILOR. Regula „raportul de bani
+ *      are chatul lui, altul decât cel al comenzilor” (hotărârea patronului din
+ *      4–5 octombrie 2026) are două capete, iar până la recitirea rundei era
+ *      păzit numai unul: chatul banilor nu se putea pune peste al comenzilor,
+ *      dar cel al comenzilor se putea muta peste al banilor, de aici, de către
+ *      oricine are „Setări” — și de la primul raport toată tura afla din
+ *      grupul comenzilor cine cât datorează. Mutarea se refuză, întreagă.
+ *
+ *      CUI I SE SPUNE CE. Cine are `plati.telegram` primește regula pe nume
+ *      (`422 plati_chat_same`): chatul banilor îl vede oricum. Cine nu-l are
+ *      primește `422 chat_in_use`, cu vorbe care nu pomenesc banii.
+ *
+ *      Abaterea de la punctul 2, spusă pe față: refuzul ăsta ÎI CONFIRMĂ celui
+ *      fără drept un număr de chat — „conversația pe care ai scris-o e folosită
+ *      și în altă parte”. Dar numai un număr pe care îl avea deja în mână (un
+ *      număr de chat are 10–13 cifre și nu se nimerește pe încercate, iar
+ *      fiecare încercare greșită chiar mută chatul comenzilor și rămâne în
+ *      Jurnal), și nu spune nimic din ce păzește dreptul: nici sume, nici
+ *      nume, nici ore. Celelalte două căi erau mai rele amândouă: mutarea
+ *      lăsată să treacă trimite datornicii în grupul turei; mutarea „înghițită”
+ *      cu „ok” ar fi fost o salvare care minte.
+ *
+ * Refuzul e ÎNTREG, ca toate cele din ruta asta: la prima cheie oprită nu s-a
+ * scris încă nimic, nici din plăți, nici din rest.
+ */
+function guard_plati(array $incoming, array $u): array
+{
+    $auRand = settings_all();
+    $ale    = [];
+
+    foreach (array_keys($incoming) as $cheie) {
+        $nume = (string) $cheie;
+        if (!array_key_exists($nume, $auRand)) {
+            continue;                        // fără rând: o numește `settings_save()`
+        }
+        if (setare_a_serverului($nume)) {
+            fail(
+                'Setarea „' . $nume . '” e o însemnare a serverului și nu se scrie din panou. '
+                  . 'Nimic din salvarea asta NU a fost scris.',
+                422,
+                'setting_read_only'
+            );
+        }
+        $stapan = setare_plati_drept($nume);
+        if ($stapan === null) {
+            continue;
+        }
+        if ($stapan === '') {
+            fail(
+                'Setarea „' . $nume . '” e o însemnare a serverului și nu se scrie din panou. '
+                  . 'Nimic din salvarea asta NU a fost scris.',
+                422,
+                'setting_read_only'
+            );
+        }
+        if (!drept($stapan, $u)) {
+            fail(
+                'Nu ai dreptul să schimbi setarea „' . $nume . '”: ține de plăți. '
+                  . 'Nimic din salvarea asta NU a fost scris.',
+                403,
+                'plati_setting_denied'
+            );
+        }
+        $ale[$nume] = $incoming[$cheie];
+        unset($incoming[$cheie]);
+    }
+
+    // Chatul comenzilor din ACEASTĂ cerere, dacă cererea îl poartă. Un secret
+    // vine mascat ori gol („lasă ce era”), deci atunci rămâne cel din bază.
+    // Se află ÎNAINTEA ieșirii „nicio cheie a plăților”: sensul invers al
+    // regulii, chiar dedesubt, e tocmai pentru cererile fără nicio astfel de
+    // cheie.
+    $chatComenzi = null;
+    $k           = 'notify_telegram_chat_id';
+    if (array_key_exists($k, $incoming) && is_scalar($incoming[$k]) && !in_array($k, secret_keys(), true)) {
+        $chatComenzi = trim((string) $incoming[$k]);
+    }
+
+    // 4. SENSUL INVERS: chatul COMENZILOR mutat peste cel al banilor.
+    //
+    // Chatul banilor NU e în cererea asta (când e, cele două se compară dincolo,
+    // în `plati_setari_valideaza()`, fiecare cu valoarea NOUĂ a celuilalt — așa
+    // rămâne îngăduit schimbul lor între ele într-o singură salvare). Se compară
+    // deci ce s-ar scrie acum ca chat al comenzilor cu ce stă în bază ca chat al
+    // banilor, ca NUMERE (`plati_chat_acelasi()`).
+    //
+    // „Peste”, adică o MUTARE: se oprește numai o valoare care schimbă chatul
+    // comenzilor. Pe o bază în care cele două sunt deja egale (rămasă așa
+    // dinaintea reparației, ori atinsă cu mâna), pagina de Setări retrimite la
+    // fiecare salvare chatul comenzilor neschimbat; oprită și aceea, nimeni
+    // n-ar mai fi putut salva NIMIC din Setări până nu umbla cineva la bani.
+    $kBani = 'plati_telegram_chat_id';
+    if (
+        $chatComenzi !== null
+        && !array_key_exists($kBani, $ale)
+        && array_key_exists($k, $auRand)
+        && array_key_exists($kBani, $auRand)
+        && plati_chat_norma($chatComenzi) !== plati_chat_norma((string) $auRand[$k])
+        && plati_chat_acelasi($chatComenzi, (string) $auRand[$kBani])
+    ) {
+        if (drept('plati.telegram', $u)) {
+            fail(
+                'Raportul de bani are chatul lui, altul decât cel al comenzilor. '
+                  . 'Nimic din salvarea asta NU a fost scris.',
+                422,
+                'plati_chat_same'
+            );
+        }
+        fail(
+            'Conversația asta e deja folosită de altă parte a programului, deci anunțurile '
+              . 'comenzilor nu pot merge tot acolo. Alege altă conversație. '
+              . 'Nimic din salvarea asta NU a fost scris.',
+            422,
+            'chat_in_use'
+        );
+    }
+
+    if (!$ale) {
+        return [$incoming, []];
+    }
+
+    return [$incoming, plati_setari_valideaza(plati_setari_din_chei($ale), $chatComenzi)];
+}
 
 /**
  * Cardul „Catalog" (migrarea 028): vederile cu care se deschide magazinul și
@@ -975,7 +1183,7 @@ function guard_hq_coords(array $incoming): array
  */
 function route_settings_test(string $channel): void
 {
-    require_admin();
+    require_drept('setari');
 
     if (!in_array($channel, ['email', 'whatsapp', 'telegram'], true)) {
         fail('Canal necunoscut: ' . $channel, 404, 'unknown_channel');

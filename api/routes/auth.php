@@ -33,6 +33,11 @@ function route_login(): void
         'user'        => public_user($full),
         'csrf'        => $csrf,
         'sessionDays' => session_days_for((string) $full['role'], !empty($full['is_system'])),
+        // Ce are voie contul, cheie cu cheie (matricea din „Acces", migrarea
+        // 033). Pagina întreabă `gp.are('catalog')` și citește de aici, în loc
+        // să ghicească după rol. Vine odată cu intrarea, ca meniul să fie cel
+        // bun de la primul ecran, nu după un drum la `/auth/me`.
+        'drepturi'    => drepturi_cont($full),
         // Codul de recomandare și linkul gata de trimis. Se citește separat, nu
         // din SELECT-ul de mai sus: acela are listă fixă de coloane, iar o
         // coloană adăugată acolo ar cădea cu 1054 pe o instalare pe care
@@ -313,6 +318,12 @@ function route_me(): void
         'user'        => public_user($u),
         'csrf'        => $u['csrf_token'],
         'sessionDays' => session_days_for((string) $u['role'], !empty($u['is_system'])),
+        // Drepturile contului, cheie → da/nu: matricea din „Acces" judecată pe
+        // server (`drepturi_cont()`, api/lib/auth.php). Se trimit la FIECARE
+        // `/auth/me`, deci o bifă mutată de fondator ajunge la om la prima
+        // pagină deschisă, fără să iasă și să intre la loc. Lista e întreagă,
+        // cu „nu"-uri cu tot — pagina nu are a doua judecată.
+        'drepturi'    => drepturi_cont($u),
         // Codul de recomandare al contului. Nu se ia din current_user() —
         // interogarea aceea are listă fixă de coloane și e pe drumul fiecărei
         // cereri; o coloană adăugată acolo ar cădea cu 1054 pe o instalare pe
@@ -436,7 +447,15 @@ function route_panel_login(): void
 
     audit('panel_unlock', 'user', (string) $u['id'], 'Panou deschis cu cod', (int) $u['id'], 'Panou comun');
 
-    json_out(['user' => public_user($u), 'csrf' => $csrf, 'sessionDays' => session_days_panou()]);
+    // `drepturi`: tableta e plafonată la cele patru panouri ale ei, orice ar
+    // avea rolul `angajat` în „Acces" (`GP_DREPT_TABLETA`) — `$u` poartă
+    // `is_system`, deci plafonul se vede de aici.
+    json_out([
+        'user'        => public_user($u),
+        'csrf'        => $csrf,
+        'sessionDays' => session_days_panou(),
+        'drepturi'    => drepturi_cont($u),
+    ]);
 }
 
 /* ------------------------------------------------- parola uitată -- */

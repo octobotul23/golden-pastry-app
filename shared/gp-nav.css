@@ -239,6 +239,22 @@
   to   { transform: translateY(0); opacity: 1 }
 }
 
+/* Bara de derulare a meniului, pe fundalul lui închis.
+   Pe Windows bara e desenată de sistem, deschisă la culoare: lângă panoul
+   cafeniu apărea o dungă albă pe toată înălțimea, de cum avea meniul mai multe
+   intrări decât încap (fondatorul, pe un ecran de 900px). Pe Mac nu se vedea,
+   fiindcă acolo bara plutește și apare numai cât derulezi.
+   `.gp-meniu-derulat` se pune pe cele două cutii ale barei laterale care se
+   pot derula (bara întreagă și lista de intrări); foaia de pe telefon o are
+   de aici. `gp-aici` e semnul mut din rândul paginii deschise — v.
+   shared/gp-api.js. */
+.gp-meniu-derulat,
+.gp-navcard {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .30) transparent;
+}
+gp-aici { display: none; }
+
 /* Pe telefon apare butonul. */
 @media (max-width: 760px) {
   .gp-burger { display: flex }

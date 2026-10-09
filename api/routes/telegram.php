@@ -437,10 +437,27 @@ function telegram_incheie(array $cb, array $texte): void
         $ok ? ($texte['semn'] ?? '') : '');
 }
 
-/** Ce a păţit fapta, scos din răspunsul rutei. */
+/**
+ * Ce a păţit fapta, scos din răspunsul rutei.
+ *
+ * UN SINGUR REFUZ ARE VORBA LUI, alta decât a rutei: `prag_neplatite` (runda
+ * 2.7.0, hotărârea patronului din 4–5 octombrie 2026). Clientul are prea multe
+ * comenzi neplătite, iar acceptarea de sub anunț nu poate trece peste prag —
+ * trecerea cere o confirmare, și un buton de pe telefon n-are unde s-o arate.
+ * Mesajul rutei („… Nu am scris nimic.”) e scris pentru panou, unde lângă el
+ * stă butonul de confirmare; aici ar fi lăsat omul fără pasul următor. Deci i
+ * se spune pe scurt ce e și unde se face.
+ *
+ * Se recunoaște după COD, nu după vorbe: mesajul rutei se poate rescrie, codul
+ * e contractul cu paginile. Iese tot ca fereastră (`show_alert`), ca orice
+ * eșec, iar butoanele rămân sub anunț — cererea e tot „nou”.
+ */
 function telegram_mesaj_eroare(string $corp): string
 {
     $j = json_decode($corp, true);
+    if (is_array($j) && ($j['error']['code'] ?? '') === 'prag_neplatite') {
+        return 'Clientul are comenzi neplătite peste prag. Acceptă cererea din panou.';
+    }
     $m = is_array($j) ? (string) ($j['error']['message'] ?? '') : '';
     return $m !== '' ? $m : 'Nu s-a putut. Intră în panou și verifică.';
 }
@@ -533,6 +550,10 @@ function telegram_toast(array $cb, bool $ok, string $mesaj, string $semn = ''): 
  *
  * Aruncă la eșec, ca `send_telegram()`. Cine cheamă hotărăște dacă o eroare de
  * aici oprește ceva sau se scrie doar în log.
+ *
+ * Adresa nu se scrie aici: o dă `telegram_api_url()` (api/lib/notify.php),
+ * aceeași pentru amândouă drumurile spre Telegram, ca o probă s-o poată muta
+ * pe un ciot local din config.php (runda 2.7.0).
  */
 function telegram_api(string $metoda, array $payload): array
 {
@@ -540,7 +561,7 @@ function telegram_api(string $metoda, array $payload): array
     if ($token === '') {
         throw new RuntimeException('Tokenul de Telegram nu este configurat în Setări.');
     }
-    [$cod, $resp] = http_post_json('https://api.telegram.org/bot' . $token . '/' . $metoda, $payload);
+    [$cod, $resp] = http_post_json(telegram_api_url($token, $metoda), $payload);
     $j = json_decode($resp, true);
     if ($cod < 200 || $cod >= 300) {
         throw new RuntimeException('Telegram a răspuns ' . $cod . ': '

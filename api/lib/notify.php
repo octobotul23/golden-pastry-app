@@ -1104,18 +1104,44 @@ function send_channel(
     // să plece. Cu șase feluri în loc de două, „telegram · a eșuat" nu mai
     // spune nimic. Pe o bază fără migrarea 013 coloana lipsește, iar atunci
     // scriem ca înainte — un anunț fără etichetă e mai bun decât niciun anunț.
-    if ($event !== null && notify_event_column()) {
-        q(
-            'INSERT INTO notifications (channel, event, recipient, subject, payload, order_id, status, attempts)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
-            [$channel, $event, $to ?: null, $subject, $text, $orderId, 'pending']
-        );
-    } else {
-        q(
-            'INSERT INTO notifications (channel, recipient, subject, payload, order_id, status, attempts)
-             VALUES (?, ?, ?, ?, ?, ?, 1)',
-            [$channel, $to ?: null, $subject, $text, $orderId, 'pending']
-        );
+    // COMANDA POATE SĂ NU MAI FIE (runda 2.7.0, 5 oct. 2026). Anunțurile pleacă
+    // DUPĂ răspuns; de când comenzile anulate se pot șterge, între „Anulează”
+    // și rândul de aici comanda poate fi deja plecată. Cu numărul ei, scrierea
+    // se izbea de cheia străină (1452), `notify_event()` înghițea excepția, iar
+    // anunțul „Comandă anulată” nu mai ajungea nici la om, nici în lista de
+    // anunțuri care n-au plecat. O comandă ștearsă își lasă anunțurile cu
+    // legătura pe NULL (ON DELETE SET NULL) — tot așa se scrie și cel
+    // întârziat: a doua oară fără legătură, și numai pentru 1452.
+    //
+    // DE CE E CURAT. Cel mult două scrieri: a doua pleacă deja cu NULL, iar un
+    // NULL n-are cum izbi cheia străină, deci ce mai cade atunci e aruncat mai
+    // departe. 1452 desface numai instrucțiunea căzută, nu și tranzacția — iar
+    // aici nu e nicio tranzacție de desfăcut: fiecare cârlig care ajunge la
+    // funcția asta vine după `json_out_early()`, cu scrierile lui deja comise.
+    // `lastInsertId()` de sub buclă e al scrierii REUȘITE: între ea și el nu
+    // mai pleacă nimic spre bază (`notify_event_column()` se întreabă înaintea
+    // scrierii și își ține minte răspunsul).
+    for ($legatura = $orderId; ; $legatura = null) {
+        try {
+            if ($event !== null && notify_event_column()) {
+                q(
+                    'INSERT INTO notifications (channel, event, recipient, subject, payload, order_id, status, attempts)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, 1)',
+                    [$channel, $event, $to ?: null, $subject, $text, $legatura, 'pending']
+                );
+            } else {
+                q(
+                    'INSERT INTO notifications (channel, recipient, subject, payload, order_id, status, attempts)
+                     VALUES (?, ?, ?, ?, ?, ?, 1)',
+                    [$channel, $to ?: null, $subject, $text, $legatura, 'pending']
+                );
+            }
+            break;
+        } catch (PDOException $e) {
+            if ($legatura === null || (int) ($e->errorInfo[1] ?? 0) !== 1452) {
+                throw $e;
+            }
+        }
     }
     $id = (int) db()->lastInsertId();
 
@@ -1315,16 +1341,16 @@ function send_telegram(string $chatId, string $text, array $butoane = []): void
     if ($token === '') {
         throw new RuntimeException('Tokenul de Telegram nu este configurat în Setări.');
     }
-    $url     = 'https://api.telegram.org/bot' . $token . '/sendMessage';
+    $url     = telegram_api_url($token, 'sendMessage');
     $payload = ['chat_id' => $chatId, 'text' => telegram_text_taiat($text)];
 
-    // Butoanele se pun NUMAI dacă botul are pe unde să audă apăsarea. Fără
-    // webhook legat, Telegram desenează butonul frumos, omul îl apasă, și nu se
-    // întâmplă nimic — nici măcar o rotiță. Un buton mort e mai rău decât
-    // niciun buton: îl apeși din nou, crezi că n-ai nimerit, și pierzi minutele
-    // în care puteai să intri în panou.
-    if ($butoane && telegram_buttons_live()) {
-        $payload['reply_markup'] = ['inline_keyboard' => $butoane];
+    // Butoanele trec printr-o sită (`telegram_butoane_de_trimis()`), fiindcă
+    // sunt de două feluri și fiecare are pricina lui de a lipsi: cel care cere
+    // o faptă se pune numai dacă botul are pe unde să audă apăsarea, iar cel
+    // care deschide o pagină numai dacă adresa se poate deschide de pe telefon.
+    $tastatura = telegram_butoane_de_trimis($butoane);
+    if ($tastatura) {
+        $payload['reply_markup'] = ['inline_keyboard' => $tastatura];
     }
 
     [$code, $resp] = http_post_json($url, $payload);
@@ -1333,6 +1359,174 @@ function send_telegram(string $chatId, string $text, array $butoane = []): void
         $msg = json_decode($resp, true)['description'] ?? substr($resp, 0, 300);
         throw new RuntimeException('Telegram a răspuns ' . $code . ': ' . $msg);
     }
+}
+
+/**
+ * Adresa unei metode din API-ul Telegram, cu tot cu token.
+ *
+ * SINGURUL LOC din program care știe unde stă Telegram. Până la runda 2.7.0
+ * adresa era scrisă de două ori, cu mâna — aici și în `telegram_api()`
+ * (api/routes/telegram.php) —, deci o probă nu avea cum să trimită un mesaj
+ * fără ca el să plece în lume. Cât timp singurele mesaje erau anunțurile de
+ * comandă, probele se descurcau golind tokenul. Raportul de bani nu se poate
+ * proba așa: trebuie văzut CE s-a trimis și DE CÂTE ORI, deci trebuie un
+ * primitor. Cheia `telegram_api_base` din config.php îl mută pe un ciot local.
+ *
+ * ÎN CONFIG, NU ÎN SETĂRI, dinadins: tot ce stă în `settings` se poate schimba
+ * dintr-un panou, de către oricine are dreptul lui. Adresa asta primește
+ * TOKENUL botului în fiecare cerere — cine ar putea-o schimba dintr-un ecran
+ * ar putea să-și trimită sieși tokenul, iar cu el toate conversațiile botului.
+ * config.php îl scrie numai cine are deja serverul în mână.
+ *
+ * Cheia lipsă ori goală înseamnă adresa adevărată: așa e pe site, unde n-o
+ * pune nimeni. O cheie STRICATĂ nu cade pe adresa adevărată, ci aruncă — o
+ * cădere tăcută ar fi tocmai drumul pe care un mesaj de probă ajunge pe
+ * telefonul patronului. Și `http://` se primește numai spre calculatorul
+ * însuși: pe orice alt drum tokenul ar călători nepecetluit.
+ */
+function telegram_api_url(string $token, string $metoda): string
+{
+    $baza = config('telegram_api_base');
+    if ($baza === null || $baza === '') {
+        return 'https://api.telegram.org/bot' . $token . '/' . $metoda;
+    }
+    $baza = is_string($baza) ? rtrim(trim($baza), '/') : '';
+    $buna = preg_match('#^https://[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?(?::\d{1,5})?(?:/[A-Za-z0-9._~-]+)*$#i', $baza) === 1
+        || preg_match('#^http://(?:127\.0\.0\.1|localhost|\[::1\])(?::\d{1,5})?$#i', $baza) === 1;
+    if (!$buna) {
+        // Fără valoarea cheii în mesaj: textul ăsta ajunge în `notifications`
+        // și de acolo pe ecran, iar config.php nu se povestește pe ecrane.
+        throw new RuntimeException(
+            'Adresa pentru Telegram din config.php (telegram_api_base) nu e o adresă bună. '
+            . 'Scoate cheia ca să se folosească adresa adevărată.'
+        );
+    }
+    return $baza . '/bot' . $token . '/' . $metoda;
+}
+
+/**
+ * Ținta spre care pleacă mesajele, fără token: gazda și, dacă are, portul.
+ *
+ * Pentru locurile care trebuie să poată spune pe față „mesajele de aici NU
+ * merg spre Telegramul adevărat" — rândul tipărit de ceasul rapoartelor și
+ * pagina de verificare. Numai gazda, niciodată adresa întreagă: adresa
+ * întreagă cuprinde tokenul.
+ */
+function telegram_api_tinta(): string
+{
+    $p = parse_url(telegram_api_url('', ''));
+    $gazda = is_array($p) ? (string) ($p['host'] ?? '') : '';
+    return $gazda . (is_array($p) && isset($p['port']) ? ':' . $p['port'] : '');
+}
+
+/**
+ * Butoanele care chiar pot fi puse sub un mesaj.
+ *
+ * DOUĂ FELURI, DOUĂ PRICINI DE A LIPSI.
+ *
+ * Butonul de FAPTĂ (`callback_data`: „Acceptă", „Respinge") se pune NUMAI dacă
+ * botul are pe unde să audă apăsarea. Fără webhook legat, Telegram desenează
+ * butonul frumos, omul îl apasă, și nu se întâmplă nimic — nici măcar o
+ * rotiță. Un buton mort e mai rău decât niciun buton: îl apeși din nou, crezi
+ * că n-ai nimerit, și pierzi minutele în care puteai să intri în panou.
+ *
+ * Butonul de ADRESĂ (`url`: „Deschide Încasări", din runda 2.7.0) nu are
+ * nevoie de webhook — îl deschide telefonul, nu botul —, deci NU trece prin
+ * `telegram_buttons_live()`: raportul de bani are buton și la patronul care
+ * n-a legat niciodată butoanele cererilor. Are în schimb pricina lui: adresa
+ * trebuie să fie una care se deschide de pe un telefon (`telegram_url_de_buton()`).
+ *
+ * Butonul care nu trece se LASĂ AFARĂ, iar mesajul pleacă fără el. Rândul
+ * rămas gol se scoate și el: Telegram refuză o tastatură cu un rând gol.
+ */
+function telegram_butoane_de_trimis(array $butoane): array
+{
+    $viu = null;
+    $out = [];
+    foreach ($butoane as $rand) {
+        $bune = [];
+        foreach (is_array($rand) ? $rand : [] as $b) {
+            if (!is_array($b) || trim((string) ($b['text'] ?? '')) === '') {
+                continue;
+            }
+            if (array_key_exists('url', $b)) {
+                if (telegram_url_de_buton((string) $b['url'])) {
+                    $bune[] = ['text' => (string) $b['text'], 'url' => (string) $b['url']];
+                }
+                continue;
+            }
+            $viu ??= telegram_buttons_live();
+            if ($viu) {
+                $bune[] = $b;
+            }
+        }
+        if ($bune) {
+            $out[] = $bune;
+        }
+    }
+    return $out;
+}
+
+/**
+ * Se poate pune adresa asta pe un buton?
+ *
+ * Numai `https://` și numai spre o gazdă din lume. Două pricini, amândouă
+ * văzute pe viu:
+ *
+ *   · Telegram REFUZĂ TOT MESAJUL, nu doar butonul, când adresa nu-i place
+ *     („BUTTON_URL_INVALID" — `localhost`, o gazdă fără punct). Un raport de
+ *     bani care nu pleacă deloc din pricina unui buton e pe dos față de ce
+ *     trebuie: cifrele sunt mesajul, butonul e o scurtătură.
+ *   · O adresă din rețeaua casei (192.168.…, 10.…) trece de Telegram, dar pe
+ *     telefonul patronului, ieșit din laborator, duce nicăieri — ori, mai rău,
+ *     la alt aparat care poartă întâmplător aceeași adresă în altă rețea.
+ *
+ * `panel_base_url` e pus de om, din Setări, și pe calculatorul de lucru arată
+ * spre `localhost`: acolo raportul pleacă fără buton, nu rămâne netrimis.
+ */
+function telegram_url_de_buton(string $url): bool
+{
+    if (strlen($url) > 2000 || preg_match('/[\s<>"\\\\]/', $url) === 1) {
+        return false;
+    }
+    $p = parse_url($url);
+    if (!is_array($p) || strtolower((string) ($p['scheme'] ?? '')) !== 'https') {
+        return false;
+    }
+    // Un nume și o parolă în adresă n-au ce căuta pe un buton: sunt felul în
+    // care o adresă e făcută să pară a altcuiva.
+    if (isset($p['user']) || isset($p['pass'])) {
+        return false;
+    }
+    $gazda = strtolower(trim((string) ($p['host'] ?? ''), '[]'));
+    if ($gazda === '') {
+        return false;
+    }
+    if (filter_var($gazda, FILTER_VALIDATE_IP) !== false) {
+        // O adresă în cifre: bună numai dacă e din lume, nu din rețeaua casei,
+        // nu a calculatorului însuși și nu dintre cele puse deoparte.
+        return filter_var(
+            $gazda,
+            FILTER_VALIDATE_IP,
+            FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE
+        ) !== false;
+    }
+    if (preg_match('/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/', $gazda) !== 1 || !str_contains($gazda, '.')) {
+        return false;
+    }
+    $coada = substr($gazda, (int) strrpos($gazda, '.') + 1);
+    // COADA E DIN LITERE. Un nume din lume se termină într-o coadă de litere
+    // (`.ro`, `.com`) ori, pentru alfabetele de pe alte tastaturi, în `xn--…`.
+    // O coadă din cifre nu e un nume: e o adresă în cifre scrisă pe scurt —
+    // `127.1`, `10.1`, `0x7f.0.0.1` —, pe care PHP n-o socotește adresă (deci
+    // sărea de ramura de mai sus), dar telefonul o citește drept 127.0.0.1 ori
+    // 10.0.0.1, adică tocmai ce oprește ramura aceea. Văzut la citirea rundei,
+    // pe 9 oct. 2026: `https://127.1` trecea de sită.
+    if (preg_match('/^(?:[a-z]{2,63}|xn--[a-z0-9-]{1,59})$/', $coada) !== 1) {
+        return false;
+    }
+    // Cozile care nu există în lume: nume de rețea de casă și de probă.
+    return !in_array($coada, ['local', 'localhost', 'test', 'internal', 'lan', 'home', 'invalid', 'example'], true);
 }
 
 /**

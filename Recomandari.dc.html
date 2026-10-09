@@ -78,7 +78,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -207,26 +207,26 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ contDeschis }}" hint-placeholder-val="{{ false }}">
 <div style="display:flex;flex-direction:column;gap:10px">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele omului
-<input autoFocus="{{ true }}" class="h-input" value="{{ contNume }}" onChange="{{ onContNume }}" placeholder="ex. Maria Ionescu" style="height:46px;font-size:16px">
+<input autoFocus="{{ true }}" class="h-input" value="{{ contNume }}" onChange="{{ onContNume }}" disabled="{{ contOff }}" placeholder="ex. Maria Ionescu" style="height:46px;font-size:16px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Numele firmei, dacă are
-<input class="h-input" value="{{ contFirma }}" onChange="{{ onContFirma }}" placeholder="ex. Cofetăria Belvedere" style="height:46px;font-size:16px">
+<input class="h-input" value="{{ contFirma }}" onChange="{{ onContFirma }}" disabled="{{ contOff }}" placeholder="ex. Cofetăria Belvedere" style="height:46px;font-size:16px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Utilizator
-<input class="h-input" value="{{ contUser }}" onChange="{{ onContUser }}" placeholder="litere mici, cifre, punct sau minus" style="height:46px;font-size:16px">
+<input class="h-input" value="{{ contUser }}" onChange="{{ onContUser }}" disabled="{{ contOff }}" placeholder="litere mici, cifre, punct sau minus" style="height:46px;font-size:16px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Parola de început
-<input class="h-input" value="{{ contParola }}" onChange="{{ onContParola }}" placeholder="cel puțin 8 caractere" style="height:46px;font-size:16px">
+<input class="h-input" value="{{ contParola }}" onChange="{{ onContParola }}" disabled="{{ contOff }}" placeholder="cel puțin 8 caractere" style="height:46px;font-size:16px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Telefon, dacă îl dă
-<input class="h-input" value="{{ contTel }}" onChange="{{ onContTel }}" placeholder="ex. 0722 123 456" style="height:46px;font-size:16px">
+<input class="h-input" value="{{ contTel }}" onChange="{{ onContTel }}" disabled="{{ contOff }}" placeholder="ex. 0722 123 456" style="height:46px;font-size:16px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Adresa firmei, dacă o știi
-<input class="h-input" value="{{ contAdresa }}" onChange="{{ onContAdresa }}" placeholder="ex. Calea Victoriei 63, et. 2" style="height:46px;font-size:16px">
+<input class="h-input" value="{{ contAdresa }}" onChange="{{ onContAdresa }}" disabled="{{ contOff }}" placeholder="ex. Calea Victoriei 63, et. 2" style="height:46px;font-size:16px">
 </label>
 <sc-if value="{{ zoneReady }}" hint-placeholder-val="{{ true }}">
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Zona
-<select class="h-input" value="{{ contZona }}" onChange="{{ onContZona }}" style="height:46px;font-size:16px">
+<select class="h-input" value="{{ contZona }}" onChange="{{ onContZona }}" disabled="{{ contOff }}" style="height:46px;font-size:16px">
 <sc-for list="{{ zoneOpts }}" as="z" hint-placeholder-count="9">
 <option value="{{ z.v }}">{{ z.l }}</option>
 </sc-for>
@@ -398,7 +398,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-if>
 <sc-if value="{{ c.scoateOff }}">
-<p style="margin:0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">{{ c.scoateDeCe }}</p>
+<p style="margin:0;font-size:13px;line-height:1.5;color:var(--h-fg-subtle);text-wrap:pretty">{{ c.scoateDeCe }}{{ dupaHotarare }}</p>
 </sc-if>
 </div>
 </sc-for>
@@ -615,19 +615,20 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 /**
  * Recomandări — codul, câștigurile, plata.
  *
- * O pagină, două fețe după rol:
+ * O pagină, două fețe după DREPT (din pornire, a doua e a administratorului):
  *
  *   oricine        — codul propriu, linkul, cele trei plăci, rezumatul pe
  *                    cumpărător (asta vede distribuitorul: numele firmei și cât
  *                    a câștigat de la ea) și istoricul pe comenzi;
- *   administrator  — în plus: conflictele de rezolvat, PRIMELE, și lista
- *                    tuturor recomandanților, cu căutare, sortare și bifa de
- *                    plată pe fiecare rând.
+ *   `recomandari`  — în plus: conflictele de rezolvat, PRIMELE, și lista
+ *                    tuturor recomandanților, cu căutare și sortare. Bifa de
+ *                    plată de pe fiecare rând și îndreptarea comisioanelor cer
+ *                    încă un drept, `recomandari.bani`.
  *
  * Cele două fețe vin din DOUĂ RUTE DEOSEBITE, nu din aceeași cu un `if` în
  * pagină: `GET /referrals` scoate numai rândurile celui conectat și nici măcar
  * nu conține cheile din care s-ar afla totalul comenzii; `GET /referrals/all`
- * cere rol de administrator. Confidențialitatea e apărată în `WHERE`, pe
+ * cere dreptul `recomandari`. Confidențialitatea e apărată în `WHERE`, pe
  * server — pagina doar desenează ce a primit.
  *
  * Sortarea și căutarea se fac AICI, nu pe server, dinadins: lista unei
@@ -760,6 +761,13 @@ class Component extends DCLogic {
 
   componentDidMount() {
     document.documentElement.setAttribute("data-theme", "light");
+    // Paza formularului nesalvat (runda 2.7.0, hotărârea patronului din
+    // 4 octombrie 2026): cât cartonașul „Fă un cont de cumpărător” e pe ecran
+    // și are ceva scris, legăturile, ieșirea din cont și fila închisă întreabă
+    // întâi. Paza citește starea de fiecare dată, prin `ciornaDeschisa()`. Dacă
+    // motorul aprinde `componentDidMount` din nou, paza nouă o scoate singură
+    // pe cea veche.
+    this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
 
     // Zonele de livrare, pentru contul de cumpărător făcut de aici. Căderea se
     // înghite: fără liste, caseta de zonă nu se desenează, dar contul se face
@@ -804,6 +812,66 @@ class Component extends DCLogic {
 
   componentWillUnmount() {
     if (this.stopRuta) this.stopRuta();
+    // Numai curățenie: metoda asta poate să nu ruleze niciodată în paginile
+    // .dc.html, deci paza nu se sprijină pe ea.
+    if (typeof this.__scoatePaza === "function") this.__scoatePaza();
+  }
+
+  /* ─── paza formularului nesalvat (runda 2.7.0, 4–5 octombrie 2026) ─── */
+
+  /**
+   * Ce are cartonașul „Fă un cont de cumpărător” scris și nefăcut cont: `null`
+   * când nu e nimic de pierdut, altfel vorbele întrebării.
+   *
+   * Pe 4 octombrie 2026 patronul a pierdut un formular scris pe jumătate
+   * dintr-un clic alături; de atunci, fiecare formular al casei întreabă
+   * înainte să arunce ce s-a scris în el. Aici întreabă NUMAI plecarea din
+   * pagină (o legătură din meniu, ieșirea din cont, fila închisă): agentul
+   * scrie contul pe telefon, cu omul în față, iar o atingere greșită a
+   * meniului îi arunca toate cele șapte câmpuri.
+   *
+   * „Renunț” nu întreabă și nu trece pe aici: el doar ascunde cartonașul, iar
+   * ce era scris rămâne în stare și se vede din nou la redeschidere. Din
+   * aceeași pricină „scris” se măsoară față de formularul GOL, nu față de o
+   * poză luată la deschidere, cum fac celelalte pagini: o poză luată la
+   * redeschidere ar ține drept „neatins” tocmai textul care n-a fost salvat
+   * niciodată.
+   *
+   * „Scris” e legat de cartonașul DESENAT, nu de casete. Ascuns, cartonașul nu
+   * ține pagina, deși casetele lui sunt pline. Nici cel rămas deschis în stare
+   * la un om care nu-l mai are pe ecran: după „Încearcă din nou”, pagina poate
+   * afla că omul nu mai e în cont ori că nu mai are voie să facă conturi, iar
+   * atunci șablonul nu mai desenează cartonașul și omul n-ar ști despre ce e
+   * întrebat. Condiția de mai jos e aceeași cu `potFaceCont` din
+   * `renderVals()`; cine o schimbă pe una o schimbă și pe cealaltă
+   * (`check-ciorna-recomandari.mjs` le ține laolaltă, pe șapte feluri de om).
+   *
+   * Parola de început e unul din cele șapte câmpuri: se compară, dar nu se
+   * scrie nicăieri (nici în vorbele întrebării, nici în consolă).
+   */
+  ciornaDeschisa() {
+    const S = this.state || {};
+    const c = S.cont || {};
+    const a = S.auth;
+    if (!c.open) return null;
+    if (!a || !(a.role === "agent_vanzari" || (S.cod && gp.are("conturi", a)))) return null;
+    const scris = { nume: c.nume, firma: c.firma, user: c.user, parola: c.parola, tel: c.tel, adresa: c.adresa, zona: c.zona };
+    // `gp.ciornaDiferita`, nu o comparație de mână: ea ține spațiile goale
+    // drept nimic, la fel ca pe toate celelalte formulare ale casei.
+    if (!gp.ciornaDiferita({}, scris)) return null;
+    // Cât „Fă contul” e pe drum spre server, plecarea întreabă cu ALTE vorbe:
+    // „contul nu s-a făcut” ar fi o minciună despre un cont care tocmai se
+    // face, iar agentul care o crede l-ar face a doua oară și ar primi
+    // „există deja un cont cu acest utilizator”, cu omul încă în față.
+    if (c.busy) return {
+      titlu: "Pleci înainte să afli dacă s-a făcut contul?", text: "Contul e pe drum spre server. Dacă pleci acum, nu mai vezi dacă s-a făcut.",
+      nu: "Rămân în formular", da: "Ies fără să salvez",
+    };
+    return {
+      titlu: "Ieși fără să faci contul de cumpărător?",
+      text: "Contul de cumpărător nu s-a făcut, iar ce ai scris pentru el se pierde dacă ieși.",
+      nu: "Rămân în formular", da: "Ies fără să salvez"
+    };
   }
 
   /**
@@ -876,10 +944,15 @@ class Component extends DCLogic {
   /**
    * Cele două cereri.
    *
-   * Ruta de administrator se cheamă NUMAI dacă omul e administrator — nu ca să
+   * Ruta cu toate codurile se cheamă NUMAI dacă omul are dreptul ei — nu ca să
    * ascundem un buton, ci fiindcă altfel fiecare deschidere a paginii ar lăsa
    * în jurnalul serverului un 403 pentru fiecare agent, iar un 403 adevărat
    * s-ar pierde printre ele.
+   *
+   * Dreptul e `recomandari`, același pe care îl cere ruta
+   * (`require_drept('recomandari')`), nu rangul de administrator: de la runda
+   * 2.7.0 fondatorul îl dă și îl ia din „Acces". `user` vine din `gp.me()` și
+   * poartă `drepturi`, deci răspunsul e al serverului.
    */
   incarca(user) {
     gp.referrals()
@@ -901,7 +974,7 @@ class Component extends DCLogic {
         else this.setState({ eroareMine: gp.motiv(e, "recomandările") });
       });
 
-    if (gp.eAdmin(user)) {
+    if (gp.are("recomandari", user)) {
       gp.referralsAll(this.state.luna)
         .then((d) => this.setState({ all: d, eroareLista: "" }))
         .catch((e) => {
@@ -1176,7 +1249,15 @@ class Component extends DCLogic {
     const c = S.cont;
     const setC = (p) => this.setState((s) => ({ cont: Object.assign({}, s.cont, p) }));
     const a = S.auth;
-    const eAdmin = !!a && gp.eAdmin(a);
+    // CELE DOUĂ DREPTURI ALE PĂRȚII DE JOS (runda 2.7.0). Până acum era o
+    // singură întrebare de rang — „e administrator?" —, fiindcă toate rutele
+    // ei erau `require_admin()`. Acum serverul întreabă două drepturi, date din
+    // „Acces", iar pagina le oglindește pe fiecare unde îi e locul:
+    //   `recomandari`      — lista tuturor, conflictele, scosul din socoteală;
+    //   `recomandari.bani` — bifa de plată și îndreptarea comisioanelor.
+    // Se întreabă contul (`S.auth`, care poartă `drepturi`), nu rolul lui.
+    const vedeTot = !!a && gp.are("recomandari", a);
+    const platesteBani = !!a && gp.are("recomandari.bani", a);
     const mine = S.mine || {};
     const tot = mine.totals || { earned: 0, paid: 0, due: 0, paidCancelled: 0 };
 
@@ -1230,6 +1311,14 @@ class Component extends DCLogic {
         // comenzile de acum înainte. Fraza de până la recitirea rundei 2.6.0
         // îl îndemna pe patron spre alegerea asta fără s-o spună. Unde contul
         // e deja al celui plătit, hotărârea nu-l mută, deci fraza tace.
+        //
+        // COADA FRAZEI NU E AICI. Ce urmează după hotărâre („rândul trece în
+        // lista de mai jos…”) nu ține de rând, ci de dreptul celui care
+        // citește: stă în `dupaHotarare`, lângă `conflicte`, iar șablonul le
+        // scrie una după alta. Lista asta nu întreabă drepturi — și nici n-ar
+        // avea cum fără să strice ceva: `.claude/check-panouri.mjs` o rulează
+        // scoasă din pagină, cu `S`, `bani`, `ziRo` și `alegereRefuzata` la
+        // îndemână și nimic altceva.
         scoateDeCe: "Comisionul e deja bifat ca plătit"
           + (r.referrer_label ? " lui „" + r.referrer_label + "”" : "")
           + ", deci nu se mai scoate din socoteală și nu trece pe alt om: aici se poate alege numai "
@@ -1238,8 +1327,7 @@ class Component extends DCLogic {
             ? " Alegerea mută și contul clientului la "
               + (r.referrer_label ? "„" + r.referrer_label + "”" : "el")
               + ", pentru comenzile de acum înainte."
-            : "")
-          + " Hotărât, rândul trece în lista de mai jos, unde îi poți scoate bifa de plată.",
+            : ""),
         taiat: r.dismissed ? "line-through" : "none",
         scosEt: r.dismissed ? "Adu înapoi în socoteală" : "Scoate din socoteală",
         onScos: () => this.scoate(r.id, !r.dismissed),
@@ -1304,7 +1392,7 @@ class Component extends DCLogic {
     const procentZero = S.money !== false && !!S.mine && rataMea === 0;
 
     /* ------------------------------------------------- lista pe oameni -- */
-    const oameni = (eAdmin && !S.conf) ? this.peOameni().map((o) => {
+    const oameni = (vedeTot && !S.conf) ? this.peOameni().map((o) => {
       const deschis = !!S.deschise[o.cheie];
       // „Bifează tot ce e neplătit" nu le ia și pe cele scoase: serverul le-ar
       // refuza oricum în tăcere, iar numărul de pe buton ar minți.
@@ -1329,7 +1417,11 @@ class Component extends DCLogic {
         // are ce bifa, altfel rândul de text „Nimic neplătit” din marcaj.
         // Înainte eticheta aceea stătea pe butonul însuși, care se apăsa și
         // nu făcea nimic — iar serverul ar fi răspuns oricum 422 `no_ids`.
-        areNeplatite: neplatiteIds.length > 0,
+        //
+        // Butonul e o PLATĂ (`POST /referrals/pay`), deci cere și dreptul
+        // `recomandari.bani`, nu doar lista. Cine vede lista fără el n-are
+        // butonul; „Nimic neplătit” rămâne numai unde chiar nu e nimic.
+        areNeplatite: platesteBani && neplatiteIds.length > 0,
         nimicNeplatit: neplatiteIds.length === 0,
         payAllLabel: "Bifează tot ce e neplătit (" + neplatiteIds.length + ")",
         onPayAll: () => this.plateste(neplatiteIds, true),
@@ -1354,8 +1446,13 @@ class Component extends DCLogic {
             scosEt: r.dismissed ? "Adu înapoi" : "Scoate",
             scosTitlu: r.dismissed
               ? "Adu comisionul înapoi în socoteală"
+              // Drumul, nu doar refuzul — dar numai cui îl are. „Scoate întâi
+              // bifa de plată” îl trimite pe cel care vede lista fără dreptul
+              // `recomandari.bani` la o bifă care lui nu i se apasă.
               : (r.paid
-                ? "Scoate întâi bifa de plată: banii au ieșit deja din casă"
+                ? (platesteBani
+                  ? "Scoate întâi bifa de plată: banii au ieșit deja din casă"
+                  : "Comisionul e plătit, deci nu se mai scoate din socoteală. Bifa de plată o scoate cine ține banii recomandărilor.")
                 : "Scoate comisionul din socoteală, fără să-l ștergi"),
             // Două steaguri pereche, ca pe cardul de conflict (`scoateOff` /
             // `scoateViu`): sub „Viu” stă butonul, sub „Off” eticheta punctată
@@ -1381,15 +1478,34 @@ class Component extends DCLogic {
             // stare). Pe comanda anulată și neplătită (409
             // `commission_not_payable`) și pe rândul scos rămâne pătratul
             // punctat, care nu se apasă.
-            bifaOff: (!activ && !r.paid) || !!r.dismissed,
-            bifaVie: (activ || !!r.paid) && !r.dismissed,
+            //
+            // ȘI NUMAI CUI PLĂTEȘTE (runda 2.7.0). Bifa e `POST /referrals/pay`,
+            // care cere dreptul `recomandari.bani`; lista o vede și cine are
+            // numai `recomandari`. Aceluia îi rămâne pătratul punctat pe fiecare
+            // rând: starea se citește, dar nu se apasă — iar titlul nu-l mai
+            // îndeamnă să apese.
+            bifaOff: !platesteBani || (!activ && !r.paid) || !!r.dismissed,
+            bifaVie: platesteBani && (activ || !!r.paid) && !r.dismissed,
+            // ȘI PE RÂNDUL SCOS titlul întreabă dreptul (runda 2.7.0). „Adu-l
+            // întâi înapoi” e un drum în doi pași: adusul înapoi, apoi bifa. Cine
+            // vede lista fără `recomandari.bani` îl are numai pe cel dintâi („Adu
+            // înapoi” ține de `recomandari`): urmând îndemnul, urca suma datorată
+            // spre o bifă care lui nu i se apasă. Lui i se spune starea, ca pe
+            // celelalte ramuri; drumul îl citește numai cine îl duce la capăt.
             bifaTitlu: r.dismissed
-              ? "Comisionul e scos din socoteală: adu-l întâi înapoi"
+              ? (platesteBani
+                ? "Comisionul e scos din socoteală: adu-l întâi înapoi"
+                : "Comisionul e scos din socoteală")
               : (r.paid
-                ? "Plătit — apasă ca să scoți bifa"
+                ? (platesteBani ? "Plătit — apasă ca să scoți bifa" : "Plătit")
                 : (activ
-                  ? "Bifează ca plătit"
-                  : "Comanda e " + st.et + ": comisionul nu se mai datorează")),
+                  ? (platesteBani ? "Bifează ca plătit" : "Neplătit")
+                  // Fraza se scrie ÎNTREAGĂ, nu lipită din eticheta stării. Eticheta
+                  // („anulat”) e a comisionului, iar fraza vorbește despre comandă:
+                  // lipite, dădeau „Comanda e anulat”. Pe ramura asta ajunge numai
+                  // comanda anulată — rândurile „în așteptare” stau în cardurile de
+                  // conflict, nu în listă.
+                  : "Comanda e anulată: comisionul nu se mai datorează")),
             bifaBg: r.paid ? "rgba(34,150,83,.16)" : "var(--h-bg-surface)",
             bifaFg: r.paid ? "#1B7A43" : "var(--h-fg-subtle)",
             bifaLine: r.paid ? "rgba(34,150,83,.45)" : "var(--h-line)",
@@ -1549,9 +1665,9 @@ class Component extends DCLogic {
       // răspunde oricum „n-ar avea cum să fie legat de tine" (409), iar un
       // buton care duce numai la un refuz e mai rău decât niciun buton.
       //
-      // Și rolul se cere, nu doar „nu e client". `POST /users` e
-      // `require_staff()` cu o poartă îngustă imediat dedesubt: cine nu e
-      // administrator sau fondator TREBUIE să fie agent de vânzări, altfel 403
+      // Și dreptul se cere, nu doar „nu e client". `POST /users` e
+      // `require_personal()` cu o poartă îngustă imediat dedesubt: cine n-are
+      // dreptul `conturi` TREBUIE să fie agent de vânzări, altfel 403
       // `not_allowed` (api/routes/users.php · `route_users_create()`).
       // „a.role !== 'client'" lăsa deci butonul și managerului și angajatului
       // cu cod — amândoi îl apăsau și primeau refuzul. De când „Recomandări"
@@ -1559,28 +1675,40 @@ class Component extends DCLogic {
       // amândoi ajung chiar în pagina asta, deci butonul nu mai e o
       // închipuire.
       //
+      // „Are Conturi" e un drept dat din „Acces" (runda 2.7.0), nu rangul de
+      // administrator: ruta întreabă `drept('conturi')`, deci aceeași cheie se
+      // întreabă și aici, pe cont. Agentul rămâne numit pe rol, ca pe server —
+      // colțul lui din rută nu e o bifă.
+      //
       // AGENTUL NU MAI ARE NEVOIE DE COD CA SĂ VADĂ BUTONUL (runda 2.2.1).
-      // `S.cod` rămâne cerut pentru ADMINISTRATOR, fiindcă pentru el serverul
-      // chiar refuză fără cod — codul lui se dă de mână, din „Conturi". Pentru
-      // agent, serverul și-l face singur la primul cont adus
+      // `S.cod` rămâne cerut pentru CINE ARE „CONTURI", fiindcă pentru el
+      // serverul chiar refuză fără cod — codul lui se dă de mână, din
+      // „Conturi". Pentru agent, serverul și-l face singur la primul cont adus
       // (`route_users_create()`), deci butonul ascuns în spatele codului era
       // singurul lucru care-l oprea: un agent proaspăt nu-l vedea niciodată, și
       // nimic de pe ecran nu-i spunea că-i lipsește un pas pe care putea să-l
       // facă singur.
-      potFaceCont: !!(a && (a.role === "agent_vanzari" || (S.cod && gp.eAdmin(a)))),
+      potFaceCont: !!(a && (a.role === "agent_vanzari" || (S.cod && gp.are("conturi", a)))),
       contDeschis: !!c.open,
       contToggleEt: c.open ? "Renunț" : "Fă un cont de cumpărător",
       onContToggle: () => setC({ open: !c.open, err: "", gata: "", atentie: "" }),
       contNume: c.nume, contFirma: c.firma, contUser: c.user,
       contParola: c.parola, contTel: c.tel,
       contAdresa: c.adresa, contZona: c.zona,
-      onContNume: (e) => setC({ nume: e.target.value }),
-      onContFirma: (e) => setC({ firma: e.target.value }),
-      onContUser: (e) => setC({ user: e.target.value }),
-      onContParola: (e) => setC({ parola: e.target.value }),
-      onContTel: (e) => setC({ tel: e.target.value }),
-      onContAdresa: (e) => setC({ adresa: e.target.value }),
-      onContZona: (e) => setC({ zona: e.target.value }),
+      // CÂT „FĂ CONTUL” E PE DRUM spre server nu se mai scrie nimic în cartonaș
+      // (runda 2.7.0). Ce s-ar scrie acum n-a plecat cu cererea, iar reușita
+      // golește și ascunde cartonașul: agentul ar crede că telefonul ori adresa
+      // adăugate în răstimp au intrat în cont. Casetele sunt și stinse în
+      // șablon (`disabled`, pe același steag ca butonul), dar mânerele tac și
+      // singure, ca paza să nu atârne de un atribut. La refuz steagul se stinge
+      // și se poate scrie din nou.
+      onContNume: (e) => { if (!this.state.cont.busy) setC({ nume: e.target.value }); },
+      onContFirma: (e) => { if (!this.state.cont.busy) setC({ firma: e.target.value }); },
+      onContUser: (e) => { if (!this.state.cont.busy) setC({ user: e.target.value }); },
+      onContParola: (e) => { if (!this.state.cont.busy) setC({ parola: e.target.value }); },
+      onContTel: (e) => { if (!this.state.cont.busy) setC({ tel: e.target.value }); },
+      onContAdresa: (e) => { if (!this.state.cont.busy) setC({ adresa: e.target.value }); },
+      onContZona: (e) => { if (!this.state.cont.busy) setC({ zona: e.target.value }); },
       zoneReady: S.zoneReady,
       zoneOpts: [{ v: "", l: "Alege zona (nu e obligatoriu)" }]
         .concat(gp.zones().map((z) => ({ v: z, l: z }))),
@@ -1679,8 +1807,12 @@ class Component extends DCLogic {
       // care scrie de ce toate comisioanele ies 0,00 RON — n-are unde altundeva
       // să stea. Cele trei zerouri nu mai sunt atunci 310px de nimic: sunt
       // chiar dovada frazei de dedesubt.
+      //
+      // „Administratorul" de mai sus e, din runda 2.7.0, cine are dreptul
+      // `recomandari`: plăcile goale se strâng pentru cel care are dedesubt
+      // lista tuturor, iar lista aceea o dă dreptul, nu rangul.
       areBani: S.money !== false && !!S.mine
-        && ((mine.rows || []).length > 0 || !eAdmin || procentZero),
+        && ((mine.rows || []).length > 0 || !vedeTot || procentZero),
 
       /* ------------------------------------- procentul de azi e zero -- */
       // Rândul care lipsea: comisioanele se scriau, se legau, se numărau — și
@@ -1753,7 +1885,11 @@ class Component extends DCLogic {
       }),
 
       /* --------------------------------------------- administratorul -- */
-      eAdmin: eAdmin,
+      // Numele din șablon rămâne `eAdmin`, dar răspunsul nu mai e rangul: e
+      // dreptul `recomandari`, același pe care îl cere `GET /referrals/all`.
+      // Altfel partea de jos s-ar desena goală pentru un administrator căruia
+      // fondatorul i-a scos bifa, și ar lipsi celui căruia i-a dat-o.
+      eAdmin: vedeTot,
       areConflicte: conflicte.length > 0,
       // Numărul de rezolvat le numără numai pe cele care CHIAR au ce se
       // rezolva. Cele scoase rămân desenate mai jos, dar nu mai cer nimic de
@@ -1763,17 +1899,29 @@ class Component extends DCLogic {
         return c + (c === 1 ? " comision" : " comisioane");
       })(),
       conflicte: conflicte,
+      // CINE SCOATE BIFA (runda 2.7.0). Coada frazei de pe conflictul plătit
+      // (`scoateDeCe`), aceeași pentru orice rând. Până acum le spunea tuturor
+      // „unde îi poți scoate bifa de plată”. De când lista și banii sunt două
+      // drepturi, cardul îl citește și cine vede recomandările fără
+      // `recomandari.bani`: hotăra conflictul, căuta bifa în lista de mai jos
+      // și găsea un pătrat punctat. Lui i se spune cine o scoate, cu vorba de
+      // pe rândul plătit (`scosTitlu`); cine are dreptul citește ce citea.
+      dupaHotarare: platesteBani
+        ? " Hotărât, rândul trece în lista de mai jos, unde îi poți scoate bifa de plată."
+        : " Hotărât, rândul trece în lista de mai jos. Bifa de plată o scoate cine ține banii recomandărilor.",
 
       /* ------------------------- îndreptarea comisioanelor de la 0% -- */
-      // Butonul se desenează NUMAI când chiar are ce îndrepta, și numai
-      // patronului. Amândouă porțile sunt adevărate, nu de politețe: `eAdmin`
-      // ține cardul departe de ecranul agentului, iar lista goală îl ține
-      // departe de un server sănătos — pe care, dacă s-ar desena, ar fi un
+      // Butonul se desenează NUMAI când chiar are ce îndrepta, și numai celui
+      // care umblă la bani. Amândouă porțile sunt adevărate, nu de politețe:
+      // dreptul ține cardul departe de ecranul agentului, iar lista goală îl
+      // ține departe de un server sănătos — pe care, dacă s-ar desena, ar fi un
       // buton care nu face nimic, adică încă un fel de tăcere.
       //
-      // Serverul păzește oricum: ruta e `require_admin()`. Rândul de aici
-      // hotărăște doar dacă se DESENEAZĂ ceva.
-      areIndreptat: eAdmin && fixRanduri.length > 0,
+      // Serverul păzește oricum: `POST /referrals/rate-fix` cere dreptul
+      // `recomandari.bani` (îndreptarea rescrie sume, deci e treabă de bani,
+      // nu de listă), și tot pe el se întreabă aici. Rândul de aici hotărăște
+      // doar dacă se DESENEAZĂ ceva.
+      areIndreptat: platesteBani && fixRanduri.length > 0,
       indreptatTitlu: fixRanduri.length === 1
         ? "Un comision s-a născut la 0%"
         : fixRanduri.length + " comisioane s-au născut la 0%",
@@ -1825,7 +1973,7 @@ class Component extends DCLogic {
       // Tot pe `eroareLista`: „Încă niciun comision" e o afirmație despre
       // lista TUTUROR. Cu lacătul pe amândouă mesajele, un refuz al
       // câștigurilor mele ascundea un carton ADEVĂRAT.
-      listaGoala: eAdmin && !!S.all && oameni.length === 0 && !S.eroareLista,
+      listaGoala: vedeTot && !!S.all && oameni.length === 0 && !S.eroareLista,
       golText: S.conf
         ? "Vezi doar conflictele. Scoate filtrul ca să revii la listă."
         : (S.q || S.nepl || S.luna || S.refId
@@ -1869,7 +2017,7 @@ class Component extends DCLogic {
       // Venit de pe eticheta violetă a unei comenzi. Se spune pe față pe cine
       // s-a strâns lista și cum se lărgește la loc — altfel „lipsesc oameni"
       // arată exact ca un defect.
-      areRef: eAdmin && !!S.refId,
+      areRef: vedeTot && !!S.refId,
       refNume: refNume,
       onRefClear: () => set({ refId: "" }),
 

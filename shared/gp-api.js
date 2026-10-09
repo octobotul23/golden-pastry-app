@@ -275,60 +275,247 @@
     return data;
   }
 
-  /* ------------------------------------------------------------ roluri -- */
+  /* ---------------------------------------------------------- drepturi -- */
 
   /**
-   * Ce panouri are fiecare rol.
+   * Cine are fiecare drept DIN PORNIRE (fără fondator, care le are pe toate).
    *
-   * Lista asta NU e o pază. Paza stă pe server, în `require_staff()` și
-   * `require_admin()` din api/lib/auth.php, și rămâne acolo. Lista de aici e
-   * OGLINDA ei: un buton care nu apare e un buton care ar fi dus la un refuz.
+   * OGLINDA lui `GP_DREPT_IMPLICIT` din api/lib/auth.php, cheie cu cheie și
+   * rol cu rol, în aceeași ordine: întâi panourile, apoi faptele.
+   * `.claude/check-acces-echivalent.mjs` le pune una lângă alta și oprește
+   * suita la prima deosebire.
    *
-   * Până acum meniul n-avea nicio noțiune de rol — le arăta pe toate zece
-   * oricui ajungea la el, iar jumătate răspundeau „nu ai voie". Managerul și
-   * agentul de vânzări nici măcar nu ajungeau: intrarea trimitea tot ce nu e
-   * client la Administrare Comenzi, care îi refuza. Două roluri care existau
-   * în baza de date și nu duceau nicăieri.
+   * Până la runda 2.7.0 aici stătea o listă de panouri pe rol, scrisă de mână.
+   * Patronul a cerut un meniu „Acces", de unde să hotărască el cine vede ce —
+   * deci „ce are rolul" nu mai e un fapt al codului, e un fapt al bazei, iar
+   * pagina îl află de la server (`drepturi`, v. `are()` mai jos). Lista de aici
+   * e numai ce răspunde când serverul n-a spus nimic.
    *
-   * Regula când se schimbă ceva: aici se scrie DUPĂ ce s-a deschis poarta de
-   * pe server, niciodată înainte. Serverul mai strâmt decât meniul e doar un
-   * buton care dă un refuz; meniul mai larg decât serverul e chiar defectul
-   * de dinainte.
+   * Regula când se schimbă ceva: aici se scrie DUPĂ ce s-a schimbat pe server,
+   * niciodată înainte. Serverul mai strâmt decât meniul e doar un buton care dă
+   * un refuz; meniul mai larg decât serverul e o ușă desenată pe un perete.
    */
-  const PANOURI_TOT = ['Comenzi', 'Laborator', 'Rută', 'Depozit', 'Pontaj', 'Catalog',
-    'Conturi', 'Recomandări', 'Jurnal', 'Setări', 'Parola mea'];
-
-  const PANOURI_ROL = {
-    admin: PANOURI_TOT,
-    // Lista administratorului PLUS una, nu o copie a ei cu un rând în plus:
-    // fondatorul e administrator plus ceva (GP_ADMIN_ROLES pe server), iar
-    // două liste care trebuie să fie egale se despart întotdeauna, mai
-    // devreme sau mai târziu.
-    //
-    // „Ceva"-ul acela are acum două fețe. Una veche: dreptul asupra
-    // administratorilor și a celorlalți fondatori. Una nouă: Statistici —
-    // singurul panou din casă pe care administratorul NU-l are. Oglinda de pe
-    // server e `GP_STATS_ROLES` (api/lib/auth.php), singura listă de roluri
-    // mai strâmtă decât `GP_ADMIN_ROLES`; motivul e scris acolo.
-    fondator: [...PANOURI_TOT, 'Statistici'],
-    manager: ['Comenzi', 'Laborator', 'Rută', 'Depozit', 'Pontaj', 'Parola mea'],
-    agent_vanzari: ['Comenzi', 'Recomandări', 'Parola mea'],
-    angajat: ['Laborator', 'Rută', 'Depozit', 'Pontaj', 'Parola mea'],
-    // Omul de laborator: EXACT o ușă, cea pentru care i s-a făcut contul.
-    //
-    // Rolul ăsta a stat în baza de date din migrarea 009 fără să ducă nicăieri
-    // — n-avea nicio intrare aici, deci cine intra cu el capăta un sertar gol
-    // și era trimis la „Parola mea" de scurtătura de la sfârșitul lui
-    // `primaPagina()`. Pontajul e rostul lui; oglinda de pe server e
-    // `GP_CLOCK_ROLES` (api/lib/auth.php), care îi deschide tableta și atât —
-    // nici depozitul, nici laboratorul, nici foaia de drum.
-    //
-    // În fața tabletei din laborator nu are nevoie de rândul ăsta: acolo nu
-    // intră el cu parolă, ci apasă pe numele lui pe ecranul deschis de tură.
-    // Rândul e pentru ziua în care își deschide singur pagina, de pe telefon.
-    utilizator_lab: ['Pontaj', 'Parola mea'],
-    client: ['Comanda mea', 'Recomandări', 'Parola mea'],
+  const DREPT_IMPLICIT = {
+    comenzi: ['admin', 'manager', 'agent_vanzari'],
+    laborator: ['admin', 'manager', 'angajat'],
+    ruta: ['admin', 'manager', 'angajat'],
+    depozit: ['admin', 'manager', 'angajat'],
+    // Omul de laborator are EXACT ușa asta, cea pentru care i s-a făcut contul
+    // — și pe server celula lui e fixă (`GP_DREPT_LACATE`), nu se poate lua.
+    pontaj: ['admin', 'manager', 'angajat', 'utilizator_lab'],
+    catalog: ['admin'],
+    conturi: ['admin'],
+    recomandari: ['admin'],
+    jurnal: ['admin'],
+    setari: ['admin'],
+    // Cele două panouri pe care administratorul NU le are din pornire: el ține
+    // patiseria în mână zi de zi, dar cifrele și banii sunt ai proprietarului.
+    statistici: [],
+    incasari: [],
+    'comenzi.scrie': ['admin', 'manager'],
+    'comenzi.sterge': ['admin'],
+    conduce_tura: ['admin', 'manager'],
+    'pontaj.corectura': ['admin'],
+    'ruta.ordine': ['admin'],
+    'recomandari.bani': ['admin'],
+    'plati.stare': [],
+    'plati.telegram': [],
+    'plati.prag': [],
+    'plati.ocoleste': [],
+    preturi: [],
+    costuri: [],
   };
+
+  /**
+   * De ce panou atârnă fiecare faptă (ORICARE din cele date) — oglinda lui
+   * `GP_DREPT_CERE`. Fără panou, bifa nu ajută: omul n-ar avea de unde apăsa.
+   */
+  const DREPT_CERE = {
+    'comenzi.scrie': ['comenzi'],
+    'comenzi.sterge': ['comenzi'],
+    conduce_tura: ['pontaj', 'laborator'],
+    'pontaj.corectura': ['pontaj'],
+    'ruta.ordine': ['ruta'],
+    'recomandari.bani': ['recomandari'],
+    'plati.stare': ['incasari'],
+    'plati.telegram': ['incasari'],
+    'plati.prag': ['conturi'],
+    'plati.ocoleste': ['comenzi'],
+    preturi: ['depozit'],
+  };
+
+  /** Rolurile de RANG — oglinda lui `GP_ADMIN_ROLES`. V. `gp.eAdmin()`. */
+  const ROLURI_ADMIN = ['admin', 'fondator'];
+
+  /** Toate rolurile casei. Un rol din afara listei n-are niciun meniu. */
+  const ROLURI_CASA = ['fondator', 'admin', 'manager', 'agent_vanzari', 'angajat', 'utilizator_lab', 'client'];
+
+  /**
+   * Numele rolului, cum se scrie sub numele omului în bara laterală.
+   *
+   * Până la runda 2.7.0 cuvântul era scris fix în marcajul fiecărei pagini
+   * („administrator” în Catalog, Jurnal și Setări, „fondator” în Statistici),
+   * fiindcă în pagina aceea intra un singur rang. De când panourile se dau
+   * din „Acces”, în Catalog poate sta și un manager — iar fondatorului
+   * pastila îi spunea „administrator” de la bun început.
+   */
+  const ROL_NUME = {
+    fondator: 'fondator',
+    admin: 'administrator',
+    manager: 'manager',
+    agent_vanzari: 'agent de vânzări',
+    angajat: 'angajat',
+    utilizator_lab: 'om de laborator',
+    client: 'client',
+  };
+
+  /**
+   * Paginile țin când obiectul contului (`S.auth`), când numai șirul cu rolul
+   * (`S.role`); fiecare întrebare de mai jos le primește pe amândouă.
+   */
+  const rolulLui = (cine) => (typeof cine === 'string' ? cine : (cine && cine.role) || '');
+
+  /**
+   * Contul sesiunii, cum l-a dat ultima oară serverul. Îl țin minte `me()`,
+   * `login()` și `panelUnlock()`, ca `gp.are('catalog')` să poată fi întrebat
+   * și fără al doilea argument. Gol până la primul răspuns — și atunci
+   * răspunsul e „nu", ca la orice cont necunoscut.
+   */
+  let contulSesiunii = null;
+
+  /**
+   * „Are contul ăsta dreptul ăsta?" — întrebarea pe care o pune orice pagină
+   * înainte să deseneze un panou ori un buton.
+   *
+   * RĂSPUNSUL E AL SERVERULUI. La `/auth/me` (și la intrare) vine `drepturi`,
+   * cheie → da/nu, cu tot ce a schimbat fondatorul în „Acces"; `gp.auth()` îl
+   * poartă pe cont, iar funcția asta îl citește — și un „da", și un „nu". Pagina
+   * nu judecă a doua oară.
+   *
+   * IMPLICITUL ROLULUI răspunde numai unde serverul n-a spus nimic:
+   *   · `cine` e un șir cu rolul (probele, și locurile care știu numai rolul);
+   *   · serverul e de dinaintea rundei 2.7.0 și nu trimite `drepturi` — în
+   *     fereastra de urcare, paginile noi peste API-ul vechi trebuie să arate
+   *     meniul de ieri, nu unul gol;
+   *   · cheia e mai nouă decât serverul.
+   *
+   * O cheie necunoscută răspunde „nu" ORICUI, și fondatorului — ca pe server:
+   * o greșeală de tipar într-o pagină trebuie să ascundă butonul, nu să-l arate.
+   *
+   * NU E O PAZĂ. Paza e `require_drept()` din api/lib/auth.php. Asta hotărăște
+   * numai ce se desenează: un buton care nu apare e un buton care ar fi dus la
+   * un refuz.
+   */
+  function are(cheie, cine) {
+    if (!Object.prototype.hasOwnProperty.call(DREPT_IMPLICIT, cheie)) return false;
+    if (cine === undefined) cine = contulSesiunii;
+    const rol = rolulLui(cine);
+    if (rol === 'fondator') return true;
+    const d = cine && typeof cine === 'object' ? cine.drepturi : null;
+    if (d && typeof d[cheie] === 'boolean') return d[cheie];
+    if (DREPT_IMPLICIT[cheie].indexOf(rol) === -1) return false;
+    // Fapta fără panoul ei nu ajută. Panoul se întreabă tot prin `are()`, deci
+    // tot la server întâi: dacă el a luat Depozitul, cade și „Prețuri".
+    const cere = DREPT_CERE[cheie];
+    return !cere || cere.some((panou) => are(panou, cine));
+  }
+
+  /**
+   * Intrările meniului, în ordinea în care se desenează.
+   *
+   * Sertarul de pe telefon și bara laterală se desenează amândouă de aici, deci
+   * adresa unei pagini stă o singură dată. Adresele se scriu codificat („%20"),
+   * ca în HTML: `build-deploy.mjs` le rescrie pe amândouă formele, iar fișierul
+   * ăsta trece prin aceeași rescriere ca paginile (vezi `rescrieFolder`). O
+   * pagină care nu e încă în `PAGES` n-are ce căuta aici — rescrierea ar lăsa-o
+   * neatinsă și legătura ar duce în gol tocmai pe serverul adevărat.
+   *
+   * CINE VEDE O INTRARE se spune pe rândul ei, într-unul din patru feluri:
+   *   `cheie`          cine are dreptul acela (`gp.are`) — panourile casei;
+   *   `siRol`          pe lângă cheie, rolurile care o au oricum;
+   *   `numaiFondator`  fondatorul, și nimeni altcineva, orice s-ar bifa;
+   *   `numaiClient`    cumpărătorul;
+   *   `oricine`        orice cont.
+   */
+  const MENIU = [
+    { et: 'Comenzi', href: 'Administrare%20Comenzi.dc.html', cheie: 'comenzi' },
+    { et: 'Laborator', href: 'Panou%20Laborator.dc.html', cheie: 'laborator' },
+    { et: 'Rută', href: 'Ruta%20Sofer.dc.html', cheie: 'ruta' },
+    { et: 'Depozit', href: 'Depozit.dc.html', cheie: 'depozit' },
+    // Lângă celelalte panouri de tabletă, fiindcă de pe aceleași tablete se
+    // deschide: ceasul de pontaj sus, raportul dedesubt — dar raportul numai
+    // pentru cine conduce tura (`conduce_tura`).
+    { et: 'Pontaj', href: 'Pontaj.dc.html', cheie: 'pontaj' },
+    { et: 'Catalog', href: 'Produse.dc.html', cheie: 'catalog' },
+    { et: 'Conturi', href: 'Conturi.dc.html', cheie: 'conturi' },
+    // Dreptul `recomandari` e „toate codurile", adică vederea biroului. Pagina
+    // însă e și a agentului de vânzări — acolo își face codul și își vede
+    // comisioanele — și a clientului care recomandă; de aceea `siRol`. Regula
+    // codului („clientul numai dacă are unul") stă în `gp.meniu()`.
+    { et: 'Recomandări', href: 'Recomandari.dc.html', cheie: 'recomandari', siRol: ['agent_vanzari', 'client'] },
+    { et: 'Jurnal', href: 'Jurnal.dc.html', cheie: 'jurnal' },
+    // Între Jurnal și Statistici, fiindcă banii intrați stau lângă ce s-a
+    // vândut: Statisticile spun cât s-a vândut, Încasările spun cât din asta a
+    // și ajuns în casă. Din pornire e numai a fondatorului (cheia `incasari`
+    // n-are niciun rol în `DREPT_IMPLICIT`); cui i-o mai dă hotărăște tot el,
+    // din „Acces” — de aceea o cheie, nu `numaiFondator`.
+    { et: 'Încasări', href: 'Incasari.dc.html', cheie: 'incasari' },
+    // Lângă Jurnal, fiindcă amândouă se uită înapoi: unul la ce a făcut
+    // fiecare, celălalt la ce a ieșit din toate. Din pornire, numai a
+    // fondatorului.
+    { et: 'Statistici', href: 'Statistici.dc.html', cheie: 'statistici' },
+    { et: 'Setări', href: 'Setari.dc.html', cheie: 'setari' },
+    // Pagina de unde se dau toate celelalte. `numaiFondator`, nu o cheie: un
+    // drept de a da drepturi, dat altcuiva, și-ar deschide singur lacătul
+    // (`require_acces()` pe server).
+    { et: 'Acces', href: 'Acces.dc.html', numaiFondator: true },
+    // Pagina clientului. Stă în aceeași listă cu panourile fiindcă e tot o
+    // intrare de meniu, chiar dacă n-o vede decât un rol: altfel clientul ar
+    // fi avut al doilea meniu, scris în alt loc, care s-ar fi depărtat de
+    // ăsta la prima schimbare.
+    { et: 'Comanda mea', href: 'Client.dc.html', numaiClient: true },
+    // Istoricul comenzilor (runda 2.7.0). Patronul a cerut pe 4 octombrie 2026
+    // o pagină de istoric cu buton de „comandă din nou”, iar pe 5 a hotărât a
+    // cui e: a clienților și a celor din casă care SCRIU comenzi. De aceea
+    // cheia e fapta `comenzi.scrie` din „Acces” (din pornire managerul și
+    // administratorul; fondatorul mereu), nu panoul `comenzi`: angajatul căruia
+    // i s-a dat panoul numai de citit n-are ce istoric să aibă. Agentul scrie
+    // prin cereri și n-are cheia, de aceea `siRol`; clientul, la fel.
+    //
+    // Stă aici, lângă lucrurile „mele”, nu lângă panouri — și nu lângă
+    // „Jurnal”, cu care s-ar încurca. Regula codului din `gp.meniu()` e a
+    // „Recomandărilor” și numai a lor (e legată de etichetă): clientul vede
+    // „Istoric” și fără cod.
+    { et: 'Istoric', href: 'Istoric.dc.html', cheie: 'comenzi.scrie', siRol: ['agent_vanzari', 'client'] },
+    { et: 'Parola mea', href: 'Parola.dc.html', oricine: true },
+  ];
+
+  /**
+   * Are contul intrarea asta de meniu? Fără regula codului de recomandare, pe
+   * care o pune `gp.meniu()` deasupra.
+   */
+  function areIntrarea(x, cine) {
+    const rol = rolulLui(cine);
+    if (x.numaiFondator) return rol === 'fondator';
+    if (x.numaiClient) return rol === 'client';
+    if (x.oricine) return ROLURI_CASA.indexOf(rol) !== -1;
+    return are(x.cheie, cine) || (!!x.siRol && x.siRol.indexOf(rol) !== -1);
+  }
+
+  /**
+   * Meniul fiecărui rol DIN PORNIRE, adică înainte ca fondatorul să mute vreo
+   * bifă. Nu mai e scris de mână: iese din `MENIU` și din `DREPT_IMPLICIT`,
+   * deci nu se poate despărți de ele.
+   *
+   * Paginile NU mai întreabă lista asta — întreabă `gp.are('ruta', S.auth)`,
+   * care știe și ce a schimbat fondatorul. Rămâne pentru probe: e felul în
+   * care `.claude/check-acces-echivalent.mjs` pune meniul din pornire lângă
+   * poza lui 2.6.0.
+   */
+  const PANOURI_ROL = {};
+  ROLURI_CASA.forEach((rol) => {
+    PANOURI_ROL[rol] = MENIU.filter((x) => areIntrarea(x, rol)).map((x) => x.et);
+  });
 
   /**
    * Unde cade fiecare rol după ce a scris parola.
@@ -374,7 +561,7 @@
    * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
    * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
    */
-  const VERSIUNE = '2.6.0';
+  const VERSIUNE = '2.7.0';
 
   /**
    * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo
@@ -424,6 +611,12 @@
       const out = await request('POST', '/auth/login', { username, password });
       setCsrf(out.csrf);
       if (out && out.sessionDays) sessionDays = out.sessionDays;
+      // Drepturile vin lângă `user`, nu pe el; se lipesc aici, ca
+      // `gp.primaPagina(user)` să trimită omul pe un panou pe care chiar îl are
+      // — altfel managerul căruia fondatorul i-a luat „Comenzi" ar cădea, după
+      // parola corectă, tocmai pe ecranul de refuz. V. `me()`.
+      if (out && out.user && out.drepturi) out.user.drepturi = out.drepturi;
+      contulSesiunii = gp.auth(out.user);
       return out.user;
     },
 
@@ -432,6 +625,7 @@
         await request('POST', '/auth/logout');
       } finally {
         setCsrf('');
+        contulSesiunii = null;
       }
     },
 
@@ -610,6 +804,132 @@
     },
 
     /**
+     * Sita prin care trece numărul unei comenzi înainte să intre într-o adresă
+     * (`&din=`) și după ce e citit din ea. Întoarce ref-ul curat ori `''`.
+     *
+     * Se scoate un singur `#` din față („#1003” → „1003”); ce rămâne trebuie
+     * să fie numai litere fără diacritice, cifre și liniuță, cel mult 16. Un
+     * ref scris de mână, cu spații ori diacritice, NU se codează și NU se
+     * trunchiază: lipsește. Jumătate de număr ar fi arătat în magazin altă
+     * comandă decât cea din care s-a umplut coșul, iar o codare ar fi deschis
+     * ușa prin care intră într-o adresă orice text — și un nume de om.
+     *
+     * Aceeași sită la scris și la citit, dintr-un singur loc: adresa poate fi
+     * și bătută de mână, deci magazinul nu are de ce crede ce găsește în ea.
+     */
+    reiaRef(ref) {
+      const s = String(ref == null ? '' : ref).replace(/^#/, '');
+      return /^[0-9A-Za-z-]{1,16}$/.test(s) ? s : '';
+    },
+
+    /**
+     * Tot ce îi trebuie unui buton „Comandă din nou” spre magazin: codul,
+     * coada de adresă și lămurirea de sub buton (runda 2.7.0).
+     *
+     * DE CE AICI. Pagina clientului își făcea nota singură, într-o funcție a ei
+     * (`reluare`, în `Client.dc.html`). Pagina „Istoric” are nevoie de aceeași
+     * socoteală, iar două copii s-ar fi despărțit la prima corectură: un
+     * produs scos din magazin ar fi fost spus într-o pagină și tăcut în
+     * cealaltă. Din 5 oct. 2026 copia din `Client.dc.html` nu mai e: amândouă
+     * paginile cheamă funcția asta. Propozițiile ei stau înghețate, literă cu
+     * literă, în `.claude/check-istoric.mjs`, care păzește și ca pagina
+     * clientului să nu și le scrie iar singură.
+     *
+     *   `cod`    codul lui `reia()` — `''` când nimic nu poate intra în coș;
+     *   `coada`  `?reia=<cod>`, plus `&din=<ref>` când ref-ul trece de sită —
+     *            `''` când `cod` e gol;
+     *   `poate`  se poate desena butonul;
+     *   `are`    e ceva de arătat: buton ori lămurire;
+     *   `nota`   ce n-a intrat în cod, spus omului.
+     *
+     * NUMELE PAGINII NU SE SCRIE AICI, de aceea `coada` începe cu `?`. Pagina
+     * care face legătura scrie ea, dintr-o bucată,
+     * `"Site%20Public.dc.html" + r.coada`: `build-deploy.mjs` rescrie numele
+     * paginilor căutând exact textul acela, iar magazinul stă în producție pe
+     * ALTĂ gazdă decât pagina clientului (v. lămurirea de la `reia()`).
+     *
+     * ÎN ADRESĂ CĂLĂTOREȘTE NUMAI REF-UL, ca magazinul să poată spune „Am pus
+     * în coș produsele din comanda #1003”. Niciodată un nume, un telefon ori o
+     * adresă: adresele de pagină rămân în istoricul browserului, în jurnalele
+     * serverului și în orice mesaj în care sunt lipite.
+     */
+    reiaComanda(items, ref) {
+      const r = gp.reia(items);
+      const nota = (r.cod
+        ? [
+          r.scoase.length ? 'Nu intră în coș, fiindcă nu sunt în magazin: ' + r.scoase.join(', ') + '.' : '',
+          r.rotunjit ? 'Cantitățile cu zecimale intră rotunjite în sus, la bucăți întregi.' : '',
+          r.taiat ? 'Dintr-un produs intră în coș cel mult 9999 de bucăți.' : '',
+        ]
+        : [r.scoase.length ? 'Nu se poate reface din magazin: produsele ei nu mai sunt acolo.' : '']
+      ).filter(Boolean).join(' ');
+      const din = r.cod ? gp.reiaRef(ref) : '';
+      return {
+        cod: r.cod,
+        coada: r.cod ? '?reia=' + r.cod + (din ? '&din=' + din : '') : '',
+        poate: !!r.cod,
+        are: !!r.cod || !!nota,
+        nota,
+      };
+    },
+
+    /**
+     * Vorbele butonului „Comandă din nou” STINS, pentru clientul oprit la
+     * numărul maxim de comenzi neplătite (runda 2.7.0, hotărârea din 5 oct.
+     * 2026). Primește răspunsul lui `GET /plati/mine`, așa cum îl ține pagina,
+     * și întoarce `null` când omul NU e oprit.
+     *
+     * DE CE AICI. Butonul stă în două pagini, „Comanda mea” și „Istoric”.
+     * Fiecare cu vorbele ei, s-ar fi despărțit la prima corectură: una i-ar fi
+     * spus omului că are de plătit, cealaltă că are de așteptat. „Istoric” ia
+     * de aici și judecata „e oprit?”. „Comanda mea” o avea dinainte pe a ei
+     * (`platiBlocat`, pe același răspuns) și ia de aici numai vorbele: că cele
+     * două judecăți spun la fel o păzește `.claude/check-reluare-client.mjs`,
+     * care pune paginile față în față pe aceleași comenzi.
+     *
+     * SE CREDE NUMAI `activ: true` cu `stare: "blocat"`, literă cu literă. Un
+     * răspuns lipsă, unul picat, un server fără plăți (`activ: false`), un
+     * client doar prevenit (`"avertizare"`) ori o stare pe care pagina n-o
+     * știe lasă butonul APRINS: o citire nereușită nu are voie să oprească pe
+     * nimeni. Cel care refuză comanda rămâne serverul, la trimitere.
+     *
+     * DOUĂ FELURI DE OPRIT. Cel cu sold are de plătit. Cel cu sold zero a
+     * atins numărul numai din cereri trimise și încă neacceptate: „după plata
+     * comenzilor” i-ar fi cerut bani pe care nu-i datorează.
+     *
+     *   `cuSold`   are ceva de plătit;
+     *   `sus`      vorba pentru pagina care are soldul chiar pe ea, deasupra
+     *              istoricului („Comanda mea”);
+     *   `inainte`, `legatura`, `dupa`
+     *              vorba pentru pagina care NU are soldul pe ea („Istoric”),
+     *              tăiată în trei: `legatura` e numele paginii clientului, cum
+     *              îl vede omul în meniu, iar pagina îl îmbracă într-o legătură.
+     *
+     * ADRESA LEGĂTURII NU SE SCRIE AICI, din același motiv ca la `reiaComanda`:
+     * `build-deploy.mjs` rescrie numele paginilor căutându-le, dintr-o bucată,
+     * în pagina care face legătura.
+     */
+    reiaOprire(plati) {
+      if (!plati || plati.activ !== true || plati.stare !== 'blocat') return null;
+      const sold = Number(plati.sold);
+      return Number.isFinite(sold) && sold > 0
+        ? {
+          cuSold: true,
+          sus: 'Se poate din nou după plata comenzilor de mai sus.',
+          inainte: 'Se poate din nou după plata comenzilor neplătite. Soldul îl vezi în „',
+          legatura: 'Comanda mea',
+          dupa: '”.',
+        }
+        : {
+          cuSold: false,
+          sus: 'Se poate din nou după ce se lămuresc cererile trimise, de mai sus.',
+          inainte: 'Se poate din nou după ce se lămuresc cererile trimise. Le vezi în „',
+          legatura: 'Comanda mea',
+          dupa: '”.',
+        };
+    },
+
+    /**
      * Codul lui `reia()`, citit înapoi în cheile coșului din magazin
      * (`frozen:12`, `baked:9`). Strict: o bucată care nu arată exact ca una
      * scrisă de `reia()` se sare, nu se ghicește — adresa poate fi tăiată de un
@@ -643,12 +963,39 @@
      * istoric scriibil lasă parametrul pe loc, dar reluarea tot se citește.
      */
     reiaDinAdresa() {
+      // De la runda 2.7.0 citirea e una singură, cea de mai jos: de-acum se
+      // scoate din adresă și `din`, pe care altfel `duLa()` l-ar fi purtat pe
+      // toate paginile magazinului.
+      const r = gp.reiaDinAdresaTot();
+      return r ? r.chei : null;
+    },
+
+    /**
+     * Sora lui `reiaDinAdresa()`, cu tot cu numărul comenzii din care vine
+     * coșul: `{ chei, din }` (runda 2.7.0).
+     *
+     * `chei` e ce dă `reiaCitire()`; `din` e ref-ul pus de `reiaComanda()`,
+     * trecut încă o dată prin `reiaRef()` — adresa poate fi scrisă și de mână,
+     * iar ce nu trece de sită iese `''`, nu ajunge pe ecran.
+     *
+     * Le citește pe amândouă O SINGURĂ DATĂ și le scoate într-un singur
+     * `replaceState`: două scrieri ar fi lăsat, între ele, o adresă cu
+     * jumătate din parametri, iar butonul „înapoi” al unor browsere o ține
+     * minte. Restul adresei rămâne neatins, ca mai sus.
+     *
+     * `null` când `reia` lipsește. Un `din` rătăcit, fără `reia`, se scoate și
+     * el din adresă — altfel ar fi călătorit prin tot magazinul fără să
+     * însemne nimic —, dar nu întoarce nimic. Nu aruncă niciodată.
+     */
+    reiaDinAdresaTot() {
       try {
         const loc = global.location;
         const q = new global.URLSearchParams(loc.search || '');
         const v = q.get('reia');
-        if (v === null) return null;
+        const d = q.get('din');
+        if (v === null && d === null) return null;
         q.delete('reia');
+        q.delete('din');
         const coada = q.toString();
         try {
           global.history.replaceState(
@@ -657,7 +1004,8 @@
             loc.pathname + (coada ? '?' + coada : '') + (loc.hash || '')
           );
         } catch (e) { /* istoric nescriibil: adresa rămâne, coșul se umple oricum */ }
-        return gp.reiaCitire(v);
+        if (v === null) return null;
+        return { chei: gp.reiaCitire(v), din: gp.reiaRef(d) };
       } catch (e) {
         return null;
       }
@@ -672,6 +1020,8 @@
     async panelUnlock(code) {
       const out = await request('POST', '/auth/panel', { code });
       setCsrf(out.csrf);
+      if (out && out.user && out.drepturi) out.user.drepturi = out.drepturi;
+      contulSesiunii = gp.auth(out.user);
       return out.user;
     },
 
@@ -742,6 +1092,15 @@
       if (user && out && 'poateConfirmaLivrarea' in out) {
         user.poateConfirmaLivrarea = out.poateConfirmaLivrarea === true;
       }
+      // Drepturile contului (runda 2.7.0, pagina „Acces"): cheie → da/nu,
+      // judecate pe server. A TREIA oară pe aceeași țeavă, deci cu lecția
+      // învățată: se copiază NUMAI dacă serverul a trimis câmpul. Lipsa lui
+      // rămâne nedefinită, iar `gp.are()` cade atunci pe implicitul rolului —
+      // adică pe meniul de ieri, cât timp API-ul e încă cel de ieri.
+      if (user && out && out.drepturi && typeof out.drepturi === 'object') {
+        user.drepturi = out.drepturi;
+      }
+      contulSesiunii = user ? gp.auth(user) : null;
       return user;
     },
 
@@ -947,31 +1306,35 @@
      * ar duce în gol tocmai pe serverul adevărat, nu pe calculatorul de acasă.
      */
     /**
-     * Are contul ăsta drepturi depline? („admin" sau „fondator")
+     * E contul de RANG — administrator ori fondator?
      *
-     * Perechea din pagină a lui GP_ADMIN_ROLES / require_admin() din
+     * Perechea din pagină a lui GP_ADMIN_ROLES / e_admin() din
      * api/lib/auth.php. Serverul păzește; rândurile astea doar hotărăsc ce se
      * desenează — dar dacă ele rămân la `role === "admin"`, un fondator vede
      * o aplicație care îl refuză peste tot, în timp ce API-ul îi răspunde la
      * orice. Nu e o gaură de securitate, e mai rău de trăit: aplicația pare
      * stricată exact pentru omul cu cele mai multe drepturi.
      *
-     * Zece porți în opt pagini, deci scrisă o dată. Când mâine apare încă un
-     * rol cu drepturi depline, se adaugă aici — nu se caută prin pagini.
+     * DE LA RUNDA 2.7.0 NU MAI E ÎNTREBAREA PANOURILOR. „Vede Catalogul?",
+     * „intră în Setări?" se întreabă cu `gp.are('catalog', …)`: fondatorul le
+     * poate da și unui manager, din „Acces", iar un `eAdmin` rămas pe o
+     * asemenea ușă ar ține-o închisă orice ar bifa el. Aici rămâne numai ce nu
+     * e o bifă: cine se atinge de un cont de conducere, cine ia jos anunțul
+     * altuia, cine confirmă o livrare fără semn.
      *
      * Primește ori obiectul contului, ori direct șirul cu rolul, fiindcă
      * paginile țin când una, când alta (S.auth în unele, S.role în altele).
      */
     eAdmin(cine) {
-      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
-      return rol === 'admin' || rol === 'fondator';
+      return ROLURI_ADMIN.indexOf(rolulLui(cine)) !== -1;
     },
 
     /**
-     * „Vede raportul de pontaj?" — administrator, fondator sau manager.
+     * „Vede raportul de pontaj?" — din pornire: administrator, fondator sau
+     * manager.
      *
-     * Perechea din pagină a lui `GP_SHIFTS_ROLES` / `require_shifts()` din
-     * api/lib/auth.php. Serverul păzește; rândul ăsta hotărăște doar dacă
+     * Perechea din pagină a lui `leads_shifts()` din api/lib/auth.php: dreptul
+     * `conduce_tura`. Serverul păzește; rândul ăsta hotărăște doar dacă
      * jumătatea de jos a paginii de Pontaj se DESENEAZĂ.
      *
      * DE CE ÎNTREBAREA SE PUNE AICI, și nu se află din răspunsul serverului, ca
@@ -981,20 +1344,19 @@
      * ștearsă după ce vine refuzul clipește pe ecranul unui angajat cu orele
      * colegilor lui în ea. Mai bine o întrebare pusă înainte.
      *
-     * DE CE NU `GP_OPS_ROLES`, adică de ce nu și angajatul: raportul arată
-     * orele TUTUROR, iar ale lui sunt printre ele. O foaie de salarii deschisă
-     * întregii ture nu mai e o unealtă de plată, e o listă de comparat.
+     * DE CE NU ȘI ANGAJATUL, din pornire: raportul arată orele TUTUROR, iar
+     * ale lui sunt printre ele. O foaie de salarii deschisă întregii ture nu
+     * mai e o unealtă de plată, e o listă de comparat.
      */
     eRaportPontaj(cine) {
-      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
-      return rol === 'admin' || rol === 'fondator' || rol === 'manager';
+      return are('conduce_tura', cine);
     },
 
     /**
      * „Scrie comanda de-a dreptul, sau trimite o cerere?"
      *
-     * Perechea din pagină a lui `GP_ORDER_CREATE_ROLES` / `writes_orders()`
-     * din api/lib/auth.php. Serverul păzește — `POST /orders` răspunde 403
+     * Perechea din pagină a lui `writes_orders()` din api/lib/auth.php: dreptul
+     * `comenzi.scrie`. Serverul păzește — `POST /orders` răspunde 403
      * celorlalți —, iar rândul ăsta hotărăște numai pe ce ușă pleacă
      * formularul la salvare și dacă fila „Cereri de pe site" se desenează.
      *
@@ -1008,13 +1370,12 @@
      * DE CE NU `eRaportPontaj`, care azi întoarce exact același răspuns pentru
      * exact aceleași trei roluri. Fiindcă întrebările sunt deosebite — „citește
      * statul de plată" și „răspunde de ce intră în laborator" — și se despart
-     * la primul rol nou. Aceeași pricină, scrisă pe larg, stă lângă
-     * `GP_ORDER_CREATE_ROLES`: două liste care se nimeresc la fel nu sunt
-     * aceeași listă.
+     * la prima bifă mutată în „Acces". De aceea sunt două rânduri în matrice
+     * (`comenzi.scrie`, `conduce_tura`), nu unul: două liste care se nimeresc
+     * la fel nu sunt aceeași listă.
      */
     eScrieComenzi(cine) {
-      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
-      return rol === 'admin' || rol === 'fondator' || rol === 'manager';
+      return are('comenzi.scrie', cine);
     },
 
     /**
@@ -1034,71 +1395,47 @@
      * DE CE NU `eScrieComenzi`, care azi întoarce același răspuns pentru trei
      * din cele patru. Fiindcă întrebările sunt deosebite — „naște comanda" și
      * „știe pentru cine o naște" — iar agentul le desparte chiar acum: el nu
-     * scrie comenzi, dar își caută clienții. Aceeași pricină, scrisă pe larg,
-     * stă lângă `GP_ORDER_CREATE_ROLES` în api/lib/auth.php.
+     * scrie comenzi, dar își caută clienții.
      *
      * Managerul a intrat pe 19 septembrie 2026, la cererea patronului: „când
      * scrii numele clientului să ai o căutare prin istoricul clienților și
      * să-i poți alege".
      */
     eCautaClienti(cine) {
-      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
-      return rol === 'admin' || rol === 'fondator' || rol === 'manager'
-        || rol === 'agent_vanzari';
+      // Cele două ogrăzi din `client_scope_for()`: cine scrie comenzi caută
+      // printre toți; agentul, printre ai lui.
+      return are('comenzi.scrie', cine) || rolulLui(cine) === 'agent_vanzari';
     },
 
     /**
-     * „Vede cifrele casei?" — deocamdată numai fondatorul.
+     * „Vede cifrele casei?" — din pornire, numai fondatorul.
      *
-     * Perechea din pagină a lui `GP_STATS_ROLES` / `require_stats()` din
-     * api/lib/auth.php. Serverul păzește; rândul ăsta hotărăște doar dacă
-     * pagina se DESENEAZĂ sau arată ecranul de refuz.
+     * Perechea din pagină a rutei `GET /stats`: dreptul `statistici`. Serverul
+     * păzește; rândul ăsta hotărăște doar dacă pagina se DESENEAZĂ sau arată
+     * ecranul de refuz.
      *
-     * DE CE O FUNCȚIE PENTRU UN SINGUR ROL, și nu `role === "fondator"` scris
-     * în pagină. Fiindcă întrebarea nu e „e fondator?", ci „are voie la
-     * statistici?" — iar cele două vor rămâne același lucru doar până când
-     * cineva hotărăște altfel. Scrisă pe rol, schimbarea aia ar trebui găsită
-     * prin pagini; scrisă aici, se face într-un rând, lângă oglinda ei de pe
-     * server.
+     * DE CE O FUNCȚIE, și nu `role === "fondator"` scris în pagină. Fiindcă
+     * întrebarea n-a fost niciodată „e fondator?", ci „are voie la
+     * statistici?" — iar de la runda 2.7.0 cele două chiar s-au despărțit:
+     * fondatorul poate da Statisticile, din „Acces", cui vrea el.
      *
-     * DE CE NU `eAdmin`, adică de ce administratorul NU intră. E singura ușă
-     * din casă mai îngustă decât drepturile depline, și e îngustă dinadins:
-     * administratorul ține patiseria în mână zi de zi, dar banii sunt ai
-     * proprietarului. Peste tot în rest cele două roluri trec prin aceleași
-     * uși — aici nu. `.claude/check-meniu.mjs` se plânge dacă se apropie iar,
-     * și dacă rândul ăsta nu mai spune ce spune PANOURI_ROL (secțiunea G).
+     * DE CE NU `eAdmin`, adică de ce administratorul NU intră din pornire. E
+     * îngustă dinadins: administratorul ține patiseria în mână zi de zi, dar
+     * banii sunt ai proprietarului. `.claude/check-meniu.mjs` se plânge dacă
+     * rândul ăsta nu mai spune ce spune meniul (secțiunea G).
      */
     eStats(cine) {
-      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
-      return rol === 'fondator';
+      return are('statistici', cine);
     },
 
-    MENIU: [
-      { et: 'Comenzi', href: 'Administrare%20Comenzi.dc.html' },
-      { et: 'Laborator', href: 'Panou%20Laborator.dc.html' },
-      { et: 'Rută', href: 'Ruta%20Sofer.dc.html' },
-      { et: 'Depozit', href: 'Depozit.dc.html' },
-      // Lângă celelalte panouri de tabletă, fiindcă de pe aceleași tablete se
-      // deschide: ceasul de pontaj sus, raportul dedesubt — dar raportul numai
-      // pentru cine are voie să-l vadă (GP_SHIFTS_ROLES pe server).
-      { et: 'Pontaj', href: 'Pontaj.dc.html' },
-      { et: 'Catalog', href: 'Produse.dc.html' },
-      { et: 'Conturi', href: 'Conturi.dc.html' },
-      { et: 'Recomandări', href: 'Recomandari.dc.html' },
-      { et: 'Jurnal', href: 'Jurnal.dc.html' },
-      // Lângă Jurnal, fiindcă amândouă se uită înapoi: unul la ce a făcut
-      // fiecare, celălalt la ce a ieșit din toate. Singura intrare pe care
-      // administratorul n-o are — vezi PANOURI_ROL mai jos.
-      { et: 'Statistici', href: 'Statistici.dc.html' },
-      { et: 'Setări', href: 'Setari.dc.html' },
-      // Pagina clientului. Stă în aceeași listă cu panourile fiindcă e tot o
-      // intrare de meniu, chiar dacă n-o vede decât un rol: altfel clientul ar
-      // fi avut al doilea meniu, scris în alt loc, care s-ar fi depărtat de
-      // ăsta la prima schimbare.
-      { et: 'Comanda mea', href: 'Client.dc.html' },
-      { et: 'Parola mea', href: 'Parola.dc.html' },
-    ],
+    // Întrebarea de drept și oglinzile matricei — v. „drepturi", sus.
+    are: are,
+    /** „administrator”, „om de laborator”… — v. `ROL_NUME`. Gol pentru un rol necunoscut. */
+    numeRol: (cine) => ROL_NUME[rolulLui(cine)] || '',
+    DREPT_IMPLICIT: DREPT_IMPLICIT,
+    DREPT_CERE: DREPT_CERE,
 
+    MENIU,
     PANOURI_ROL,
     ACASA_ROL,
 
@@ -1147,6 +1484,10 @@
         // deschisă ca pe server. Cu `=== true`, actualizarea paginilor înaintea
         // celei a API-ului ar fi stins butonul șoferului pe toate telefoanele.
         poateConfirmaLivrarea: user.poateConfirmaLivrarea !== false,
+        // Ce are voie contul, cheie → da/nu, cum a judecat serverul (pagina
+        // „Acces"). `null` pe un server de dinaintea rundei 2.7.0: atunci
+        // `gp.are()` răspunde din implicitul rolului.
+        drepturi: user.drepturi && typeof user.drepturi === 'object' ? user.drepturi : null,
       };
     },
 
@@ -1158,8 +1499,17 @@
      * de vânzări asta însemna un ecran de refuz imediat după parola corectă.
      */
     primaPagina(cine) {
-      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
-      return ACASA_ROL[rol] || 'Parola.dc.html';
+      const acasa = ACASA_ROL[rolulLui(cine)];
+      if (!acasa) return 'Parola.dc.html';
+      // De când panourile se dau și se iau din „Acces", „acasa" rolului poate
+      // să nu mai fie a omului: managerul fără „Comenzi" ar cădea, după parola
+      // corectă, pe un ecran de refuz — defectul de mai sus, întors pe altă
+      // ușă. Atunci merge pe primul panou pe care îl are; fără niciunul, la
+      // singura pagină care e a oricărui cont.
+      const lista = gp.meniu('', cine);
+      if (lista.some((x) => x.href === acasa)) return acasa;
+      const primul = lista.filter((x) => x.et !== 'Parola mea')[0];
+      return primul ? primul.href : 'Parola.dc.html';
     },
 
     /**
@@ -1180,8 +1530,7 @@
      * culoare scrisă aici ar fi greșită într-una dintre ele.
      */
     meniu(activ, cine) {
-      const rol = typeof cine === 'string' ? cine : (cine && cine.role) || '';
-      const permise = PANOURI_ROL[rol] || [];
+      const rol = rolulLui(cine);
       const obiect = !!cine && typeof cine === 'object';
       const areCod = obiect && !!cine.referralCode;
       const eSistem = obiect && cine.isSystem === true;
@@ -1219,13 +1568,14 @@
           // nu-și poate face singur un cod — deci ar fi o intrare care nu
           // duce nicăieri. (Paza: .claude/check-meniu.mjs.)
           if (rol === 'client') return areCod;
-          // Restul: din matricea rolului SAU cu un cod pe cont. Agentul de
-          // vânzări o păstrează și fără cod, fiindcă își poate face unul
-          // chiar de acolo (`canMake`, GET /referrals).
-          return permise.indexOf('Recomandări') >= 0 || areCod;
+          // Restul: cine are intrarea (dreptul „toate codurile", ori rolul de
+          // agent) SAU are un cod pe cont. Agentul de vânzări o păstrează și
+          // fără cod, fiindcă își poate face unul chiar de acolo (`canMake`,
+          // GET /referrals).
+          return areIntrarea(x, cine) || areCod;
         }
 
-        if (permise.indexOf(x.et) < 0) return false;
+        if (!areIntrarea(x, cine)) return false;
         // Contul comun al tabletelor n-are parolă a lui: e a întregii ture.
         // Cine ar schimba-o de acolo ar închide panoul tuturor, fără să vrea.
         if (x.et === 'Parola mea' && eSistem) return false;
@@ -2316,6 +2666,92 @@
     });
   }
 
+  /* --------------------------- „ești aici": rândul paginii, la vedere -- */
+
+  /**
+   * `<gp-aici></gp-aici>` — pus ÎN rândul de meniu al paginii deschise. Nu
+   * desenează nimic: când ajunge în pagină, derulează meniul până i se vede
+   * rândul.
+   *
+   * DE CE. Meniul din stânga se derulează în el însuși (capul și piciorul
+   * barei stau pe loc), iar foaia de pe telefon la fel. Cât fondatorul avea
+   * zece intrări, încăpeau. Cu „Acces" a ajuns la treisprezece: pe un ecran
+   * de 900px înălțime ultimele cădeau sub marginea de jos, iar pagina deschisă
+   * din ele — „Setări", „Acces" — nu mai avea niciun rând aprins la vedere.
+   * Omul vedea un meniu în care nu era nicăieri.
+   *
+   * DE CE UN ELEMENT: din pricina lui `<gp-versiune>` de mai sus — un rând
+   * fără niciun cuvânt, același în toate paginile, în loc de o metodă pe care
+   * fiecare pagină ar fi trebuit să și-o cheme singură după desenare (și pe
+   * care paginile astea nici n-au unde s-o cheme la timp: meniul se desenează
+   * abia după ce răspunde `/auth/me`).
+   *
+   * Derulează NUMAI cutia meniului, niciodată pagina: `scrollIntoView()` ar fi
+   * mișcat și fereastra, dacă bara ar fi stat mai jos de marginea ei.
+   */
+  gp.aduLaVedere = (rand) => {
+    if (!rand || typeof rand.getBoundingClientRect !== 'function' || typeof getComputedStyle !== 'function') return false;
+    let cutie = rand.parentElement;
+    while (cutie && cutie !== global.document.body) {
+      const o = getComputedStyle(cutie).overflowY;
+      if ((o === 'auto' || o === 'scroll') && cutie.scrollHeight > cutie.clientHeight + 1) break;
+      cutie = cutie.parentElement;
+    }
+    if (!cutie || cutie === global.document.body) return false;
+    const c = cutie.getBoundingClientRect();
+    const r = rand.getBoundingClientRect();
+    if (r.top >= c.top && r.bottom <= c.bottom) return false;
+    // La mijlocul cutiei, nu lipit de margine: se văd și vecinii lui, deci se
+    // vede că meniul continuă în amândouă părțile.
+    cutie.scrollTop += (r.top + r.height / 2) - (c.top + c.height / 2);
+    return true;
+  };
+
+  if (typeof customElements !== 'undefined' && typeof HTMLElement !== 'undefined'
+    && !customElements.get('gp-aici')) {
+    customElements.define('gp-aici', class extends HTMLElement {
+      connectedCallback() {
+        // În șablon (`<x-dc>` e DOM viu, ascuns numai cu CSS) nu e nimic de derulat.
+        if (this.closest('x-dc')) return;
+        if (!this.hasAttribute('aria-hidden')) this.setAttribute('aria-hidden', 'true');
+        const arata = () => gp.aduLaVedere(this.parentElement);
+        // La legare, rândurile de DUPĂ el încă nu sunt în pagină, deci cutia
+        // nu are încă ce derula. Două cadre: unul pentru restul meniului, unul
+        // pentru așezare.
+        const cadru = global.requestAnimationFrame || ((f) => setTimeout(f, 16));
+        cadru(() => cadru(arata));
+        // CELE DOUĂ CADRE NU AJUNG. Măsurat la 1440x900: o rulare din două
+        // rândul rămânea ascuns, fiindcă la al doilea cadru piciorul barei
+        // încă nu-și primise pastila cu numele (vine după `/auth/me`) — lista
+        // era mai înaltă, rândul se vedea, deci nu era nimic de derulat. Abia
+        // apoi piciorul creștea și îl împingea sub margine. De-asta se
+        // privește CUTIA: de câte ori i se schimbă înălțimea (piciorul care
+        // crește, fereastra făcută mai scundă), rândul e adus iar la vedere.
+        // Omul care derulează singur nu e tras înapoi: derularea nu schimbă
+        // mărimea cutiei.
+        let cutie = this.parentElement && this.parentElement.parentElement;
+        while (cutie && cutie !== global.document.body) {
+          const o = getComputedStyle(cutie).overflowY;
+          if (o === 'auto' || o === 'scroll') break;
+          cutie = cutie.parentElement;
+        }
+        if (cutie && cutie !== global.document.body && typeof ResizeObserver !== 'undefined') {
+          this.__ochi = new ResizeObserver(arata);
+          this.__ochi.observe(cutie);
+        } else {
+          this.__laMarime = arata;
+          global.addEventListener('resize', arata);
+        }
+      }
+      disconnectedCallback() {
+        if (this.__ochi) this.__ochi.disconnect();
+        if (this.__laMarime) global.removeEventListener('resize', this.__laMarime);
+        this.__ochi = null;
+        this.__laMarime = null;
+      }
+    });
+  }
+
   /* ------------------------------ semnul laturii: fulgul și flacăra -- */
 
   /**
@@ -2584,15 +3020,22 @@
   gp.literaTreptei = (t) => ['A', 'B', 'C'][Number(t) - 1] || 'A';
 
   /**
-   * Setările catalogului, din `/lists`, cu implicitul migrării 028 când
-   * serverul e mai vechi decât pagina: un pas înapoi la „unul pe rând" pe
-   * telefon și „patru pe ecran" pe calculator, fără prag precompletat.
+   * Setările catalogului, din `/lists`, cu valoarea de rezervă când serverul
+   * e mai vechi decât pagina ori răspunsul n-a sosit încă: „patru pe ecran" pe
+   * amândouă ecranele, fără prag precompletat.
+   *
+   * Pe telefon rezerva a fost „unul pe rând" până la 2.7.0. Patronul a cerut pe
+   * 9 octombrie 2026 ca magazinul să se deschidă peste tot pe „patru"; rândul
+   * din bază îl mută `sql/032_plati_si_prag.sql`. Rezerva de aici trebuie să
+   * spună același lucru ca baza: e ce desenează magazinul unui om venit întâia
+   * oară, în clipa dintre pagină și `/lists` — altfel ar vedea un produs pe
+   * rând și, o clipă mai târziu, patru.
    */
   gp.catalogImplicit = () => {
     const c = (gp.__lists && gp.__lists.catalog) || {};
     const vederi = ['unu', 'patru', 'sase'];
     return {
-      vedereTelefon: vederi.includes(c.vedereTelefon) ? c.vedereTelefon : 'unu',
+      vedereTelefon: vederi.includes(c.vedereTelefon) ? c.vedereTelefon : 'patru',
       vedereCalculator: vederi.includes(c.vedereCalculator) ? c.vedereCalculator : 'patru',
       pragB: Number.isInteger(c.pragB) ? c.pragB : null,
       pragC: Number.isInteger(c.pragC) ? c.pragC : null,
@@ -2785,6 +3228,729 @@
     for (const n of l) for (const alt of ocupat.get(n)) mutari[alt] = n + pas;
     return mutari;
   };
+
+  /* --------------------------------------------- formularele nesalvate -- */
+
+  /*
+   * UNELTELE PENTRU UN SINGUR LUCRU (runda 2.7.0): un formular în care omul
+   * a scris ceva nu se închide fără să întrebe. Patronul a pierdut așa un
+   * produs nou — un clic alături de formular, pe fundalul întunecat.
+   *
+   * Patru sunt ale paginilor:
+   *
+   *   gp.ciornaDiferita(a, b)   — s-a schimbat ceva față de cum s-a deschis?
+   *   gp.intreabaRenunta({…})   — întrebarea, în pagină, cu „Rămân” din pornire;
+   *   gp.inchideCiorna(v, f)    — închide PE LOC ce e curat, întreabă ce nu e;
+   *   gp.pazaCiornei(murdar)    — păzește ieșirile din PAGINĂ (o legătură din
+   *                               meniu, ieșirea din cont, fila închisă).
+   *
+   * Două sunt uși ale pazei, pentru o ieșire pe care o face CODUL paginii:
+   *
+   *   gp.ciornaLasaIesirea(v)   — întreabă înaintea unei plecări silite;
+   *   gp.ciornaOClipa(fn)       — un `tel:` ori `mailto:` pornit din cod.
+   *
+   * Trei sunt ținute pentru bibliotecă (paginile nu le cheamă):
+   * `gp.intrebareDeschisa`, `gp.ciornaRetrage` și `gp.ciornaMurdara`. Cine ce
+   * are voie să cheme scrie în contractul rundei și e ținut de proba de pe tot
+   * dosarul (`.claude/check-ciorna-pagini.mjs`).
+   *
+   * Ieșirile din FORMULAR (×, „Renunță”, fundalul, Escape, Înapoi) le păzește
+   * fiecare pagină, prin `gp.inchideCiorna`: numai ea știe care îi sunt.
+   * Salvarea, ștergerea și anularea închid fără întrebare — acolo omul a spus
+   * deja ce vrea.
+   *
+   * PE PAGINĂ E O SINGURĂ METODĂ care știe ce înseamnă „scris”:
+   * `ciornaDeschisa()`. Întoarce `null` cât nu e nimic de pierdut, altfel
+   * VORBELE întrebării (`{ titlu, text, da, nu }`). Aceeași valoare slujește
+   * și de „e murdar?” (orice în afară de gol), și de text:
+   *
+   *   gp.pazaCiornei(() => this.ciornaDeschisa());                  // la pornire
+   *   gp.inchideCiorna(this.ciornaDeschisa(), () => this.set(…));   // pe ×
+   *
+   * Două locuri care ar socoti fiecare „murdar” pe limba lui ar ajunge să nu
+   * mai fie de acord: ×-ul ar întreba și meniul nu, ori pe dos.
+   */
+
+  /**
+   * Forma „la fel” a unei valori de formular. Ce nu deosebește omul nu
+   * deosebește nici ea: spațiile de la capete; o casetă golită față de una
+   * neatinsă (`""`, `null`, lipsă, `[]`, `{}`, bifa nepusă); `"2"` față de `2`;
+   * un rând gol adăugat la coada unei liste. Cheile care încep cu `_` sunt ale
+   * paginii (steaguri de desen, „se încarcă”), nu ale omului.
+   *
+   * `0` NU e gol: prețul zero e un preț. Un fișier ales (File) e la fel numai
+   * cu el însuși — o poză pusă în formular e mereu o schimbare.
+   *
+   * NUMERELE SE CITESC CA NUMERE. Formularele își țin casetele ca text, iar
+   * serverul le dă înapoi numere: prețul `2.5` e desenat „2,50”, deci omul care
+   * deschide și închide un produs fără să atingă nimic ar fi întrebat de
+   * fiecare dată. „2,5”, „2.5”, „2.50” și `2.5` sunt același lucru. Se lucrează
+   * numai pe TEXT (fără `Number()`): un cod lung de cifre nu are voie să-și
+   * piardă coada într-o rotunjire. Ce începe cu zero și mai are cifre după
+   * („07”, un telefon) nu e număr aici și rămâne literă cu literă.
+   */
+  const NUMAR_SCRIS = /^(?:0|[1-9]\d*)(?:[.,]\d+)?$/;
+  const formaNumarului = (s) => {
+    const virgula = s.search(/[.,]/);
+    if (virgula < 0) return s;
+    const zecimale = s.slice(virgula + 1).replace(/0+$/, '');
+    return s.slice(0, virgula) + (zecimale ? '.' + zecimale : '');
+  };
+  const formaCiornei = (v) => {
+    if (v === null || v === undefined || v === false) return null;
+    if (v === true) return true;
+    if (typeof v === 'string') {
+      const s = v.trim();
+      if (s === '') return null;
+      return NUMAR_SCRIS.test(s) ? formaNumarului(s) : s;
+    }
+    if (typeof v === 'number') return Number.isFinite(v) ? String(v) : null;
+    if (Array.isArray(v)) {
+      const a = v.map(formaCiornei);
+      while (a.length && a[a.length - 1] === null) a.pop();
+      return a.length ? a : null;
+    }
+    if (typeof v === 'object') {
+      if (v instanceof Date) return 'data:' + v.getTime();
+      const p = Object.getPrototypeOf(v);
+      if (p !== Object.prototype && p !== null) return v;
+      const o = {};
+      let n = 0;
+      for (const k of Object.keys(v)) {
+        if (k.charAt(0) === '_') continue;
+        const x = formaCiornei(v[k]);
+        if (x === null) continue;
+        o[k] = x;
+        n++;
+      }
+      return n ? o : null;
+    }
+    return v;
+  };
+
+  const laFelCiorna = (a, b) => {
+    if (a === b) return true;
+    if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object') return false;
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+    if (Array.isArray(a)) return a.length === b.length && a.every((x, i) => laFelCiorna(x, b[i]));
+    // Un obiect care nu e „simplu” (File, Blob) a trecut neschimbat prin
+    // `formaCiornei`: e la fel numai cu el însuși, iar asta s-a văzut mai sus.
+    const pa = Object.getPrototypeOf(a);
+    const pb = Object.getPrototypeOf(b);
+    if ((pa !== Object.prototype && pa !== null) || (pb !== Object.prototype && pb !== null)) return false;
+    const ka = Object.keys(a);
+    return ka.length === Object.keys(b).length
+      && ka.every((k) => Object.prototype.hasOwnProperty.call(b, k) && laFelCiorna(a[k], b[k]));
+  };
+
+  /**
+   * S-a schimbat formularul față de cum s-a deschis? `a` e instantaneul luat
+   * la deschidere, `b` e starea de acum (ordinea nu contează).
+   */
+  gp.ciornaDiferita = (a, b) => !laFelCiorna(formaCiornei(a), formaCiornei(b));
+
+  // Întrebarea de pe ecran, cât e una. A doua chemare primește ACEEAȘI
+  // promisiune: două întrebări una peste alta ar lăsa-o pe cea de dedesubt
+  // fără răspuns, cu formularul nici închis, nici deschis.
+  let intrebareDeschisa = null;
+  let intrebareNr = 0;
+  // Ce trebuie să știe despre întrebarea de pe ecran și cine NU a pus-o: cum
+  // se retrage, ce vorbe arată și cine poate spune dacă mai sunt adevărate
+  // (v. `gp.ciornaRetrage`). Gol cât nu e nicio întrebare.
+  let intrebareVie = null;
+
+  // Cele patru vorbe ale unei întrebări, cu cele din pornire puse unde lipsesc.
+  // Într-un singur loc, fiindcă le citesc doi: desenul întrebării și
+  // retragerea ei, care pune ce e pe ecran lângă ce ar spune pagina ACUM.
+  // Scrise de două ori, cele două liste s-ar despărți la prima vorbă schimbată
+  // și o întrebare cu vorbele din pornire ar fi retrasă pe loc, de fiecare dată.
+  const fataIntrebarii = (o) => [
+    o.titlu || 'Ieși fără să salvezi?',
+    o.text || 'Ce ai scris aici nu e salvat și se pierde dacă ieși.',
+    o.nu || 'Rămân',
+    o.da || 'Ies fără să salvez',
+  ];
+
+  // POATE LUMEA ASTA SĂ ARATE O ÎNTREBARE și să-i asculte răspunsul? Într-un
+  // browser, mereu. Ferestrele pe care și le fac probele cu mâna sunt însă
+  // adesea pe jumătate: un `body` care primește copii, dar noduri care nu
+  // ascultă nimic. Acolo întrebarea s-ar strica la jumătatea desenului, DUPĂ
+  // ce a fost trecută drept deschisă: promisiunea ar ieși respinsă, iar
+  // `gp.intrebareDeschisa()` ar rămâne „da” pe veci — orice ușă apăsată după
+  // aceea ar primi aceeași respingere. Se caută deci dinainte tot ce cere
+  // desenul: cine ascultă tastele, unde se agață stratul, și un nod de probă.
+  const poateArata = (doc, peCine) => {
+    if (typeof peCine.addEventListener !== 'function' || typeof peCine.removeEventListener !== 'function') return false;
+    if (typeof doc.body.appendChild !== 'function') return false;
+    let nod = null;
+    try { nod = doc.createElement('div'); } catch (e) { return false; }
+    return !!nod && !!nod.style
+      && ['addEventListener', 'setAttribute', 'appendChild'].every((n) => typeof nod[n] === 'function');
+  };
+
+  /**
+   * „Ieși fără să salvezi?” — în pagină, nu `confirm()`: fereastra browserului
+   * nu poate spune CE se pierde, pe telefon arată ca o eroare, iar într-o
+   * pagină pusă în ramă nu se mai deschide deloc și răspunde singură „nu”.
+   *
+   * Răspunde `true` numai la apăsarea pe „Ies”. Tot restul înseamnă „rămân”:
+   * Escape, clicul pe fundal, butonul din stânga — și tot acolo stă focusul
+   * din pornire, deci un Enter apăsat din obișnuință nu aruncă nimic.
+   *
+   * `titlu` e chiar întrebarea, scurtă; `text` spune CE se pierde („Numele și
+   * prețurile scrise aici se pierd.”). Un „ai schimbări nesalvate” spus la fel
+   * peste tot nu ajută pe nimeni să aleagă.
+   *
+   * Unde nu e pagină (probele care dau numai `gp`) ori pagina nu poate arăta
+   * întrebarea (ferestrele făcute pe jumătate ale probelor — v. `poateArata`),
+   * răspunsul e „rămân”, ca promisiune ÎMPLINITĂ: ce nu se poate întreba nu
+   * se aruncă.
+   *
+   * `maiSpune` (al doilea, la alegere) e funcția care spune, ORICÂND mai
+   * târziu, ce ar întreba acum cel care a întrebat: gol = nu mai e nimic de
+   * întrebat, `true` = tot ce era, vorbe = întrebarea de acum. Cu ea,
+   * întrebarea se retrage singură când nu mai e adevărată (v.
+   * `gp.ciornaRetrage`); fără ea, stă pe ecran până răspunde omul, ca înainte.
+   */
+  gp.intreabaRenunta = (ce, maiSpune) => {
+    if (intrebareDeschisa) return intrebareDeschisa;
+    // Vorbele pot veni și de la `ciornaDeschisa()` a unei pagini care n-are
+    // nimic de spus în plus (`true`): atunci rămân cele din pornire.
+    const o = ce && typeof ce === 'object' ? ce : {};
+    const fata = fataIntrebarii(o);
+    const doc = global.document;
+    if (!doc || !doc.body || typeof doc.createElement !== 'function') return Promise.resolve(false);
+    // Tastele se ascultă pe FEREASTRĂ, în captură: acolo trec înaintea
+    // ascultătorilor pe care pagina i-a pus pe `document` ori pe nodurile ei,
+    // oricând i-ar fi pus. Unul pus tot pe fereastră, tot în captură, ÎNAINTEA
+    // întrebării (Laboratorul își dezgheață așa ecranul) rulează totuși primul:
+    // de aceea o pagină își întreabă `gp.intrebareDeschisa()` înainte să-și
+    // închidă formularul pe un Escape.
+    const peCine = typeof global.addEventListener === 'function' ? global : doc;
+    if (!poateArata(doc, peCine)) return Promise.resolve(false);
+    const nr = ++intrebareNr;
+    intrebareDeschisa = new Promise((gata) => {
+      const inapoiLa = doc.activeElement;
+      const pune = (tag, cls, css, text) => {
+        const e = doc.createElement(tag);
+        if (cls) e.className = cls;
+        if (css) e.style.cssText = css;
+        if (text !== undefined) e.textContent = text;
+        return e;
+      };
+      // 400: peste orice strat al vreunei pagini (cel mai înalt e 300, porțile
+      // de pornire din Laborator și din Rută). Agățat de `body`, în afara lui
+      // `#dc-root`, nu e prins în niciun context de stivuire al paginii.
+      const fundal = pune('div', '', 'position:fixed;left:0;right:0;top:0;bottom:0;z-index:400;display:flex;'
+        + 'align-items:center;justify-content:center;padding:16px;background:rgba(24,16,10,.6)');
+      fundal.setAttribute('data-gp-intrebare', '');
+      const cutie = pune('div', 'h-card', 'width:min(30rem,100%);max-height:100%;overflow-y:auto;padding:20px 22px;'
+        + 'border-radius:18px;display:flex;flex-direction:column;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.35)');
+      cutie.setAttribute('role', 'alertdialog');
+      cutie.setAttribute('aria-modal', 'true');
+      cutie.setAttribute('aria-labelledby', 'gp-intrebare-t' + nr);
+      cutie.setAttribute('aria-describedby', 'gp-intrebare-p' + nr);
+      const titlu = pune('span', '', 'font-family:var(--h-font-display);font-size:20px;font-weight:600;line-height:1.25;text-wrap:balance',
+        fata[0]);
+      titlu.id = 'gp-intrebare-t' + nr;
+      const text = pune('p', '', 'margin:0;font-size:15px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty',
+        fata[1]);
+      text.id = 'gp-intrebare-p' + nr;
+      const rand = pune('div', '', 'display:flex;gap:10px;flex-wrap:wrap');
+      const nu = pune('button', 'h-btn h-btn--secondary', 'min-height:44px;font-size:15px;font-weight:700;flex:1 1 150px', fata[2]);
+      const da = pune('button', 'h-btn h-btn--danger', 'min-height:44px;font-size:15px;flex:1 1 150px', fata[3]);
+      nu.type = 'button';
+      da.type = 'button';
+      nu.setAttribute('data-gp-intrebare-nu', '');
+      da.setAttribute('data-gp-intrebare-da', '');
+      rand.appendChild(nu);
+      rand.appendChild(da);
+      cutie.appendChild(titlu);
+      cutie.appendChild(text);
+      cutie.appendChild(rand);
+      fundal.appendChild(cutie);
+
+      const laLoc = (e) => {
+        try { e.focus({ preventScroll: true }); } catch (x) { /* un element scos între timp */ }
+      };
+      // Pânda paginii, cât stă întrebarea (v. mai jos, unde se pune).
+      let panda = null;
+      const inchide = (raspuns) => {
+        peCine.removeEventListener('keydown', laTasta, true);
+        // Pânda se oprește ÎNAINTE ca stratul să fie scos: scoaterea lui e și
+        // ea o schimbare a paginii, iar pânda ar mai judeca o dată o întrebare
+        // care tocmai se închide.
+        if (panda) panda.disconnect();
+        intrebareVie = null;
+        if (fundal.parentNode) fundal.parentNode.removeChild(fundal);
+        intrebareDeschisa = null;
+        // Focusul se întoarce de unde a plecat — pe ×-ul apăsat, de obicei —,
+        // dacă locul acela mai e în pagină (la „Ies”, formularul s-a dus).
+        if (inapoiLa && inapoiLa.focus && inapoiLa.isConnected) laLoc(inapoiLa);
+        gata(raspuns);
+      };
+      // În CAPTURĂ și cu propagarea oprită: Escape închide întrebarea, nu și
+      // formularul de sub ea (paginile își ascultă și ele Escape-ul).
+      const laTasta = (ev) => {
+        if (ev.key === 'Escape') {
+          ev.preventDefault();
+          ev.stopImmediatePropagation();
+          inchide(false);
+          return;
+        }
+        if (ev.key !== 'Tab') return;
+        // Două butoane, deci Tab le schimbă între ele și nu iese din cutie.
+        ev.preventDefault();
+        ev.stopImmediatePropagation();
+        laLoc(doc.activeElement === nu ? da : nu);
+      };
+      peCine.addEventListener('keydown', laTasta, true);
+      fundal.addEventListener('mousedown', (ev) => { if (ev.target === fundal) inchide(false); });
+      nu.addEventListener('click', () => inchide(false));
+      da.addEventListener('click', () => inchide(true));
+      doc.body.appendChild(fundal);
+      intrebareVie = {
+        retrage: () => inchide(false),
+        fata,
+        maiSpune: typeof maiSpune === 'function' ? maiSpune : null,
+      };
+      // PÂNDA. Întrebarea stă peste pagină cât vrea omul — și minute —, iar
+      // pagina de sub ea nu stă: răspunsul unei salvări plecate dinainte
+      // închide formularul, ori îl refuză. Pagina nu are de unde ști că peste
+      // ea e o întrebare (poate nici n-a pus-o ea: legătura din meniu o pune
+      // paza), deci nu ea o retrage. Orice schimbare a stării ajunge însă în
+      // desen: cât e o întrebare cu `maiSpune`, fiecare schimbare a paginii o
+      // judecă din nou. Pusă DUPĂ ce stratul întrebării e în pagină, ca
+      // agățarea lui să nu fie prima schimbare văzută. Unde nu e
+      // `MutationObserver` (probele cu fereastră de mucava), rămâne chemarea
+      // cu mâna a lui `gp.ciornaRetrage()`.
+      if (intrebareVie.maiSpune && typeof global.MutationObserver === 'function') {
+        try {
+          panda = new global.MutationObserver(() => { gp.ciornaRetrage(); });
+          panda.observe(doc.body, { childList: true, subtree: true, characterData: true, attributes: true });
+        } catch (e) {
+          panda = null;
+        }
+      }
+      laLoc(nu);
+    });
+    return intrebareDeschisa;
+  };
+
+  /** E o întrebare pe ecran? Paginile o întreabă ca să nu-și închidă formularul pe un Escape care nu era al lor. */
+  gp.intrebareDeschisa = () => !!intrebareDeschisa;
+
+  /**
+   * RETRAGE întrebarea de pe ecran dacă vorbele ei nu mai sunt adevărate.
+   *
+   * Cazul din care a ieșit: produs nou, „Adaugă în catalog” (cererea e pe
+   * drum), o legătură din meniu → „Pleci cât se salvează produsul?”. Sosește
+   * răspunsul: formularul se închide, mesajul de izbândă e în pagină, iar
+   * întrebarea rămânea pe ecran cu „Salvarea e pe drum” — despre un formular
+   * care nu mai era. „Rămân” nu mai avea la ce rămâne.
+   *
+   * RETRASĂ ÎNSEAMNĂ „RĂMÂN”: nimeni nu pleacă, nu iese din cont și nu închide
+   * nimic în urma unei întrebări la care omul n-a apucat să răspundă. Dacă tot
+   * vrea să plece, apasă încă o dată — și primește întrebarea de ACUM, ori
+   * niciuna, dacă pagina a rămas curată.
+   *
+   * Judecă numai cel care a întrebat, prin `maiSpune` dat la întrebare; nicio
+   * pagină nu poate retrage întrebarea altcuiva (pe a ieșirii din cont, de
+   * pildă) numai fiindcă și-a închis ea un formular. O întrebare fără
+   * `maiSpune` nu se retrage. Una al cărei `maiSpune` aruncă rămâne: e mai
+   * bine o întrebare în plus decât una luată din fața omului pe o eroare.
+   *
+   * Se cheamă singură la fiecare schimbare a paginii (v. pânda din
+   * `gp.intreabaRenunta`). Întoarce `true` dacă a retras-o.
+   *
+   * PAGINILE NU O CHEAMĂ (contractul, la „Unelte ținute pentru bibliotecă”).
+   * Pânda recitește la un DESEN, deci adevărul pazei se ține în STAREA paginii
+   * (`this.state`): schimbarea lui aduce desenul, iar desenul, recitirea. Un
+   * adevăr ținut într-un câmp al instanței se schimbă fără niciun desen și
+   * lasă pe ecran o întrebare veche — pățit în Depozit pe 9 oct. 2026, cu
+   * numărătoarea mișcărilor aflate pe drum; s-a îndreptat mutând-o în stare,
+   * nu chemând retragerea din pagină.
+   */
+  gp.ciornaRetrage = () => {
+    const vie = intrebareVie;
+    if (!vie || !vie.maiSpune) return false;
+    let acum;
+    try { acum = vie.maiSpune(); } catch (e) { return false; }
+    if (acum) {
+      // „Tot ce era”, fără vorbe de pus alături.
+      if (typeof acum !== 'object') return false;
+      // Aceleași vorbe ca pe ecran: întrebarea e încă a ei.
+      if (fataIntrebarii(acum).every((vorba, i) => vorba === vie.fata[i])) return false;
+    }
+    vie.retrage();
+    return true;
+  };
+
+  /**
+   * Închide un formular: PE LOC dacă e curat (`murdar` fals), cu întrebare
+   * dacă nu. Orice ×, „Renunță”, fundal, Escape ori Înapoi al unui formular
+   * trece pe aici.
+   *
+   * Calea curată rămâne SINCRONĂ dinadins: un formular deschis și închis fără
+   * nimic scris nu are de ce să aștepte o promisiune, iar regulile care apasă
+   * un mâner și citesc starea în același rând rămân adevărate.
+   *
+   * Întoarce `true` dacă a închis pe loc; altfel promisiunea răspunsului
+   * (`true` = a ieșit, `false` = a rămas).
+   *
+   * `murdar` e chiar ce întoarce `ciornaDeschisa()` a paginii: gol = curat,
+   * altfel vorbele întrebării. `vorbe` (al treilea) e pentru pagina care vrea
+   * alt text pe o anume ușă; poate fi și funcție, citită abia când se întreabă.
+   *
+   * Dată ca FUNCȚIE, `vorbe` e și cea care spune mai târziu dacă întrebarea
+   * mai e adevărată (v. `gp.ciornaRetrage`): ușa formularului de comandă, care
+   * după zece secunde de salvare fără răspuns întreabă „Ieși fără să aștepți
+   * salvarea?”, își retrage așa întrebarea când răspunsul sosește. Fără
+   * funcție, judecă paza paginii (v. `recitireaUsii`).
+   */
+  let inchidereaIntrebata = null;
+  gp.inchideCiorna = (murdar, inchide, vorbe) => {
+    if (!murdar) {
+      inchide();
+      return true;
+    }
+    // CU O ÎNTREBARE DEJA PE ECRAN nu se mai leagă o a doua închidere de
+    // același răspuns. `gp.intreabaRenunta` ar da înapoi promisiunea celei
+    // deschise, iar un „Ies” ar închide de două ori: pe paginile cu Înapoi,
+    // a doua închidere e un `history.back()` în plus, care scoate omul din
+    // pagină. Se întâmplă la un dublu-clic pe × și la Înapoi apăsat peste
+    // întrebare. A doua chemare primește răspunsul celei dintâi (ori „am
+    // rămas”, dacă întrebarea de pe ecran e a altcuiva) și nu închide nimic.
+    if (intrebareDeschisa) return inchidereaIntrebata || intrebareDeschisa.then(() => false);
+    const v = vorbe !== undefined ? vorbe : murdar;
+    const asta = gp.intreabaRenunta(typeof v === 'function' ? v() : v, recitireaUsii(v)).then((ies) => {
+      if (inchidereaIntrebata === asta) inchidereaIntrebata = null;
+      if (ies) inchide();
+      return ies;
+    });
+    inchidereaIntrebata = asta;
+    return asta;
+  };
+
+  // Paza paginii, cât e una. O pagină are UNA singură: `componentDidMount`
+  // poate rula a doua oară (motorul paginilor îl re-aprinde), iar două paze ar
+  // însemna două întrebări pe același clic.
+  let pazaPaginii = null;
+
+  // „Am întrebat, lasă-l să plece” — spus pazei de ACUM, nu celei de la
+  // întrebare. Cât stă întrebarea pe ecran (și poate sta minute), pagina își
+  // poate pune paza din nou; cea veche nu mai ține nimic, iar cea nouă ar
+  // întreba a doua oară, ori ar lăsa fereastra browserului peste un „Ies”
+  // deja spus.
+  const ridicaPaza = () => {
+    if (pazaPaginii) pazaPaginii.scoate.lasaSaTreaca();
+  };
+
+  // CINE SPUNE, MAI TÂRZIU, DACĂ O ÎNTREBARE MAI E ADEVĂRATĂ (v.
+  // `gp.ciornaRetrage`). Trei feluri de întrebări, trei răspunsuri.
+  //
+  // 1. Întrebarea PAZEI (o legătură apăsată, ieșirea din cont): ce ar întreba
+  //    paza de ACUM — gol dacă pagina a rămas curată, altfel vorbele ei, care
+  //    se pun lângă cele de pe ecran. Paza de acum, nu cea de la întrebare,
+  //    din aceeași pricină ca la `ridicaPaza`. Fără nicio pază (pagina și-a
+  //    scos-o cât stătea întrebarea) nu mai are cine răspunde: întrebarea
+  //    rămâne cum e.
+  const recitireaPazei = () => {
+    if (!pazaPaginii) return true;
+    return pazaPaginii.eMurdar() ? pazaPaginii.vorbele() : null;
+  };
+  // 2. Ieșirea făcută de cod, cu vorbele EI (`gp.ciornaLasaIesirea(vorbe)`):
+  //    vorbele nu se schimbă, deci se judecă numai dacă mai e ceva scris.
+  const recitireaIesirii = (vorbe) => (vorbe ? () => (recitireaPazei() ? vorbe : null) : recitireaPazei);
+  // 3. UȘA unui formular (`gp.inchideCiorna`). Dacă pagina a dat vorbele ca
+  //    funcție, ea e și recitirea. Altfel ușa a venit cu un răspuns gata citit
+  //    (`this.ciornaDeschisa()`), pe care nu-l mai poate întreba nimeni a doua
+  //    oară; rămâne paza paginii, care știe măcar atât: mai e CEVA scris în
+  //    pagină? Când nu mai e, formularul întrebării s-a închis ori s-a salvat
+  //    sub ea. Vorbele nu se pun alături: paza le spune pe ale primului
+  //    formular scris, care poate fi altul decât cel al ușii.
+  //
+  //    NUMAI dacă paza spunea „scris” și când s-a întrebat. O pagină a cărei
+  //    pază nu-i vede un formular ar răspunde „curat” din prima clipă, iar
+  //    întrebarea ușii ar pieri la prima schimbare a paginii — omul n-ar mai
+  //    putea închide formularul acela nicicum. Acolo întrebarea rămâne cum era
+  //    până acum: stă până răspunde omul.
+  const recitireaUsii = (v) => {
+    if (typeof v === 'function') return v;
+    if (!pazaPaginii || !pazaPaginii.eMurdar()) return null;
+    return () => !pazaPaginii || pazaPaginii.eMurdar();
+  };
+
+  /**
+   * Păzește ieșirile din PAGINĂ cât `murdar()` răspunde „da”: o legătură
+   * apăsată (meniul, „Vezi comanda”) întreabă în pagină; închiderea filei și
+   * reîncărcarea întreabă cu fereastra browserului, singura care se poate
+   * acolo. Ieșirea din cont întreabă din `gp.logout()`, care se uită aici.
+   *
+   * `murdar` e chemat la fiecare gest și trebuie să citească starea VIE a
+   * paginii (`this.state`), nu una prinsă la un desen mai vechi. De obicei e
+   * `() => this.ciornaDeschisa()`: gol cât pagina e curată, altfel vorbele
+   * întrebării — aceleași pe care le pune și ×-ul formularului. `o` (vorbele
+   * date aparte, ori o funcție care le dă) e numai pentru pagina care vrea alt
+   * text la plecare decât la închidere.
+   *
+   * Întoarce funcția care scoate paza. O a doua chemare o înlocuiește pe
+   * prima.
+   *
+   * `beforeunload` SE PUNE ȘI SE SCOATE SINGUR, după fiecare gest al omului.
+   * Lăsat mereu, ar scoate pagina din memoria de „Înapoi” a browserului
+   * (bfcache) și pentru cine n-a scris nimic — adică pentru aproape toată
+   * lumea, aproape tot timpul.
+   *
+   * MARGINEA ACESTEI ALEGERI: potrivirea se face după un GEST (clic, scris,
+   * alegere). O pagină care devine „scrisă” dintr-un răspuns sosit singur
+   * (un refuz al serverului care lasă numele în casete) nu e ținută la
+   * închiderea filei până la gestul următor. De aceea o pagină rămâne
+   * „scrisă”, cu vorbe de drum, CÂT CEREREA EI E PE DRUM (cum face Produse la
+   * „Grupă nouă”): atunci refuzul nu mai schimbă nimic din ce știe paza.
+   */
+  gp.pazaCiornei = (murdar, o) => {
+    if (pazaPaginii) pazaPaginii.scoate();
+    const doc = global.document;
+    // Fără fereastră adevărată (probele care dau numai `gp`) nu e ce păzi. Tot
+    // așa într-una fără ceas: paza își potrivește `beforeunload` DUPĂ fiecare
+    // gest, cu `setTimeout`, deci acolo s-ar arma și ar arunca la primul clic
+    // ori la primul `gp.ciornaOClipa()`, înainte să-și cheme funcția.
+    if (!doc || typeof global.addEventListener !== 'function' || typeof global.setTimeout !== 'function') {
+      const nimic = () => {};
+      nimic.lasaSaTreaca = () => {};
+      return nimic;
+    }
+    let trece = false;      // omul a zis „ies”: plecarea lui nu mai întreabă nimic
+    let pus = false;
+    let clipe = 0;          // câte „o clipă fără `beforeunload`” sunt în curs (v. `oClipa`)
+    let scoasa = false;     // paza a fost scoasă: nimic întârziat n-o mai pune la loc
+    // Ce spune pagina ACUM: gol = curat, altfel vorbele întrebării (ori `true`).
+    //
+    // O CITIRE CARE ARUNCĂ ÎNSEAMNĂ „SCRIS”, nu „curat”. Aruncă o metodă dată
+    // dezlegată (`gp.pazaCiornei(this.ciornaDeschisa)`, fără săgeată) ori una
+    // rămasă în urma paginii (un câmp de stare care nu mai e). Luată drept
+    // „curat”, eroarea ar scoate paza fără niciun semn: omul ar pleca fără
+    // întrebare și ar pierde ce a scris — paguba din 4 octombrie, de data asta
+    // fără nimic în consolă. Aceeași alegere ca la `maiSpune` (v.
+    // `gp.ciornaRetrage`): mai bine o întrebare în plus, cu vorbele din
+    // pornire, decât una luată din fața omului pe o eroare. Eroarea se spune
+    // în consolă O DATĂ, nu la fiecare gest.
+    let strigat = false;
+    const ceSpune = () => {
+      try { return murdar() || null; } catch (e) {
+        if (!strigat) {
+          strigat = true;
+          if (global.console && typeof global.console.error === 'function') {
+            global.console.error('gp.pazaCiornei: citirea paginii a aruncat, deci pagina e socotită scrisă.', e);
+          }
+        }
+        return true;   // „scris”, cu vorbele din pornire
+      }
+    };
+    const eMurdar = () => !trece && !!ceSpune();
+    const vorbele = () => {
+      let v = o;
+      if (typeof o === 'function') {
+        try { v = o(); } catch (e) { v = null; }
+      }
+      if (v === undefined || v === null) v = ceSpune();
+      return v && typeof v === 'object' ? v : {};
+    };
+    const laPlecare = (ev) => {
+      if (!eMurdar()) return;
+      ev.preventDefault();
+      ev.returnValue = '';
+    };
+    // `!scoasa`: potrivirea e chemată și cu întârziere (după fiecare gest, la
+    // o secundă după un `tel:`). Ajunsă după ce paza a fost scoasă, ar pune
+    // un `beforeunload` pe care nu l-ar mai scoate nimeni — fereastra
+    // browserului la fiecare plecare, și după ce formularul a fost salvat.
+    const potriveste = () => {
+      const vrea = !scoasa && clipe === 0 && eMurdar();
+      if (vrea === pus) return;
+      pus = vrea;
+      if (vrea) global.addEventListener('beforeunload', laPlecare);
+      else global.removeEventListener('beforeunload', laPlecare);
+    };
+    // După gest, nu în el: starea paginii se schimbă în urma evenimentului.
+    const dupaGest = () => global.setTimeout(potriveste, 0);
+    // O CLIPĂ FĂRĂ `beforeunload`. Un `tel:` și un `mailto:` nu scot pe
+    // nimeni din pagină, dar browserul îi ia drept plecare și, cu
+    // `beforeunload` pus, ridică „Părăsești site-ul?” (văzut în Chromium,
+    // 5 oct. 2026 — și la o legătură apăsată, și la `location.href = "mailto:…"`
+    // făcut din cod). Omul care voia să sune un client din Încasări ar citi că
+    // își pierde ce a scris. O secundă e destul pentru plecarea aceea falsă;
+    // o filă închisă chiar în secunda asta scapă neîntrebată.
+    const oClipa = () => {
+      clipe++;
+      potriveste();
+      global.setTimeout(() => { clipe--; potriveste(); }, 1000);
+    };
+    const laClic = (ev) => {
+      dupaGest();
+      // Lăsate să treacă: ce a oprit deja altcineva, ce nu scoate omul din
+      // pagină (filă nouă, o ancoră) și legăturile pe care le duce aplicația
+      // fără plecare (`data-spa`, în magazin).
+      if (ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.altKey) return;
+      const a = ev.target && ev.target.closest ? ev.target.closest('a[href]') : null;
+      if (!a) return;
+      const scris = a.getAttribute('href') || '';
+      if (/^(?:mailto|tel|sms):/i.test(scris)) {
+        oClipa();
+        return;
+      }
+      if (a.getAttribute('target') || a.hasAttribute('data-spa')) return;
+      if (scris === '' || scris.charAt(0) === '#' || /^javascript:/i.test(scris)) return;
+      if (!eMurdar()) return;
+      // Pe FEREASTRĂ, în captură, și cu propagarea oprită de tot: paginile
+      // își au ascultătorul lor de legături pe `document` (cel care duce `?…`
+      // mai departe), pus mai devreme — fără oprirea asta ar pleca el primul.
+      ev.preventDefault();
+      ev.stopImmediatePropagation();
+      const tinta = a.href;
+      gp.intreabaRenunta(vorbele(), recitireaPazei).then((ies) => {
+        if (!ies) return;
+        ridicaPaza();
+        // Legătura se apasă DIN NOU, nu se navighează de aici: a doua oară
+        // paza o lasă să treacă și pagina își face singură treaba cu ea (`?…`
+        // dus mai departe). Scrisă aici a doua oară, regula aceea ar rămâne în
+        // urmă la prima schimbare.
+        if (a.isConnected && typeof a.click === 'function') a.click();
+        else global.location.href = tinta;
+      });
+    };
+    global.addEventListener('click', laClic, true);
+    global.addEventListener('input', dupaGest, true);
+    global.addEventListener('change', dupaGest, true);
+    potriveste();
+    const scoate = () => {
+      global.removeEventListener('click', laClic, true);
+      global.removeEventListener('input', dupaGest, true);
+      global.removeEventListener('change', dupaGest, true);
+      scoasa = true;
+      potriveste();
+      if (pazaPaginii && pazaPaginii.scoate === scoate) pazaPaginii = null;
+    };
+    // Pentru o ieșire pe care o face codul după ce a întrebat el (ieșirea din
+    // cont): „am întrebat eu, lasă-l să plece”.
+    scoate.lasaSaTreaca = () => { trece = true; potriveste(); };
+    pazaPaginii = { scoate, eMurdar, vorbele, oClipa };
+    return scoate;
+  };
+
+  /** Are pagina ceva scris și nesalvat, după paza ei? Fără pază, răspunsul e „nu”. */
+  gp.ciornaMurdara = () => !!pazaPaginii && pazaPaginii.eMurdar();
+
+  // Întrebarea pusă de o ieșire a codului, cât e ea cea de pe ecran (v. mai jos).
+  let intrebareaIesirii = null;
+
+  /**
+   * Întrebarea dinaintea unei ieșiri pe care o face CODUL (ieșirea din cont,
+   * plecarea silită spre „Parola mea”): `true` pe loc dacă pagina e curată;
+   * altfel promisiunea răspunsului, iar la „ies” paza e ridicată, ca plecarea
+   * să nu mai întrebe a doua oară. `vorbe` e pentru ieșirea care are altceva
+   * de spus decât formularul; fără ele, întrebarea e cea a paginii.
+   *
+   * CU ÎNTREBAREA ALTCUIVA PE ECRAN (omul tocmai își închide un formular),
+   * ieșirea își așteaptă rândul, ca plecarea spre intrare de mai jos.
+   * `gp.intreabaRenunta` ar da înapoi promisiunea celei deschise, iar „Ies
+   * fără să salvez” spus FORMULARULUI ar fi închis și sesiunea (ori ar fi dus
+   * omul la „Parola mea”), cu paza ridicată peste ce mai era scris în pagină
+   * și fără ca vorbele ieșirii să fi ajuns vreodată pe ecran. După răspunsul
+   * acela se judecă DIN NOU: pagina rămasă curată lasă ieșirea să treacă, cea
+   * încă scrisă primește întrebarea ieșirii.
+   *
+   * Întrebarea de pe ecran poate fi însă chiar A IEȘIRII (cerută de două ori
+   * la rând): atunci a doua chemare primește răspunsul celei dintâi. Pusă să
+   * aștepte, ar aduce aceeași întrebare încă o dată, pe loc, după „Rămân”.
+   */
+  gp.ciornaLasaIesirea = (vorbe) => {
+    if (!gp.ciornaMurdara()) return true;
+    if (intrebareDeschisa && intrebareDeschisa !== intrebareaIesirii) {
+      return intrebareDeschisa.then(() => gp.ciornaLasaIesirea(vorbe));
+    }
+    const intrebarea = gp.intreabaRenunta(vorbe || pazaPaginii.vorbele(), recitireaIesirii(vorbe));
+    intrebareaIesirii = intrebarea;
+    return intrebarea.then((ies) => {
+      if (ies) ridicaPaza();
+      return ies;
+    });
+  };
+
+  /**
+   * Rulează `fn` — un `location.href = "mailto:…"`, un `tel:` pornit din cod —
+   * fără ca browserul să ridice „Părăsești site-ul?” peste un formular scris.
+   * Legăturile apăsate (`<a href="tel:…">`) n-au nevoie: le vede paza singură.
+   */
+  gp.ciornaOClipa = (fn) => {
+    if (pazaPaginii) pazaPaginii.oClipa();
+    return fn();
+  };
+
+  /*
+   * IEȘIREA DIN CONT ÎNTREABĂ ÎNAINTE SĂ ÎNCHIDĂ SESIUNEA. Paginile scriu toate
+   * `gp.logout().finally(() => gp.toLogin())`: întrebarea pusă abia la plecare
+   * ar veni după ce sesiunea e deja închisă, când „Rămân” nu mai poate salva
+   * nimic. La „Rămân”, promisiunea nu se mai împlinește (ca la `requireUser`):
+   * `.finally`-ul paginii nu rulează, deci nimeni nu pleacă și nimic nu se
+   * golește. Pagina curată iese ca până acum, fără nicio întrebare.
+   */
+  const iesireaDinCont = gp.logout;
+  gp.logout = () => {
+    const lasat = gp.ciornaLasaIesirea();
+    if (lasat === true) return iesireaDinCont.call(gp);
+    return lasat.then((ies) => (ies ? iesireaDinCont.call(gp) : new Promise(() => {})));
+  };
+  // ÎNVELIȘUL ÎȘI ARATĂ MIEZUL. Auditul scrierilor (`.claude/check-vede-poate.mjs`)
+  // citește sursa fiecărei funcții a lui `gp` ca să afle care scriu pe server.
+  // Prin învelișul de mai sus n-ar mai vedea `POST /auth/logout` — miezul e
+  // ținut într-o variabilă, nu scris în el —, iar „Ieși din cont” ar fi ieșit
+  // din toate tabelele lui fără ca cineva să fi hotărât asta. Orice înveliș pus
+  // peste o funcție a lui `gp` face la fel; proba cere rândul ăsta.
+  gp.logout.peste = iesireaDinCont;
+
+  /*
+   * PLECAREA SPRE INTRARE (sesiunea a expirat: un 401 la orice cerere) NU
+   * ARUNCĂ FORMULARUL FĂRĂ SĂ SPUNĂ. Salvarea nu mai e cu putință până la o
+   * nouă intrare, deci singurul lucru de oferit e răgazul de a copia ce e
+   * scris. Se întreabă O DATĂ: paginile care se împrospătează singure ar
+   * ridica altfel aceeași întrebare la fiecare jumătate de minut. După „Rămân
+   * să copiez”, chemările următoare nu fac nimic cât pagina are ceva scris;
+   * când formularul se închide, prima cerere refuzată duce la intrare.
+   *
+   * Cu ALTĂ întrebare pe ecran (omul tocmai își închide formularul), a noastră
+   * așteaptă răspunsul la aceea: legată de promisiunea ei, „Ies fără să
+   * salvez” spus formularului ar fi dus omul și la intrare.
+   */
+  const laIntrare = gp.toLogin;
+  let aRamasSaCopieze = false;
+  let intrareaAsteapta = false;
+  gp.toLogin = () => {
+    if (!gp.ciornaMurdara()) return laIntrare.call(gp);
+    if (aRamasSaCopieze || intrareaAsteapta) return undefined;
+    if (intrebareDeschisa) {
+      intrareaAsteapta = true;
+      intrebareDeschisa.then(() => {
+        intrareaAsteapta = false;
+        gp.toLogin();
+      });
+      return undefined;
+    }
+    aRamasSaCopieze = true;
+    gp.intreabaRenunta({
+      titlu: 'Pleci fără ce ai scris?',
+      text: 'Nu mai ești în cont, iar până nu intri din nou nu se poate salva nimic. Poți rămâne ca să copiezi ce ai scris.',
+      nu: 'Rămân să copiez',
+      da: 'Merg la intrare',
+    }).then((ies) => {
+      if (!ies) return;
+      ridicaPaza();
+      laIntrare.call(gp);
+    });
+    return undefined;
+  };
+  gp.toLogin.peste = laIntrare;   // v. `gp.logout.peste`
 
   global.gp = gp;
 })(window);

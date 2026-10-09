@@ -54,16 +54,22 @@ require __DIR__ . '/lib/db.php';
 require __DIR__ . '/lib/auth.php';
 require __DIR__ . '/lib/settings.php';
 require __DIR__ . '/lib/orders.php';
+require __DIR__ . '/lib/plati.php';
 require __DIR__ . '/lib/laturi.php';
 require __DIR__ . '/lib/poze.php';
 require __DIR__ . '/lib/fise.php';
 require __DIR__ . '/lib/catalog.php';
 require __DIR__ . '/lib/notify.php';
+require __DIR__ . '/lib/plati-raport.php';
 require __DIR__ . '/lib/referral.php';
 require __DIR__ . '/lib/promo.php';
 require __DIR__ . '/lib/firma.php';
 require __DIR__ . '/lib/telegram-legaturi.php';
 require __DIR__ . '/lib/productie.php';
+// Socoteala costurilor (runda 2.7.0). Bibliotecă, nu rută: o cheamă și rețeta
+// din Catalog, și Statisticile, și rutele prețurilor — iar un fișier de rute
+// se încarcă numai pentru ruta lui.
+require __DIR__ . '/lib/costuri.php';
 
 cors((array) config('allowed_origins', []));
 
@@ -157,6 +163,11 @@ $routes = [
     ['POST',   '/orders/quote',      'orders',   'route_orders_quote'],
     ['GET',    '/orders/#',          'orders',   'route_orders_get'],
     ['PATCH',  '/orders/#',          'orders',   'route_orders_update'],
+    // Ștergerea adevărată, numai a unei comenzi deja anulate (runda 2.7.0, 4 oct.
+    // 2026). „Anulează" rămâne PATCH-ul de deasupra, pe etapa de anulare; ruta
+    // asta e pasul al doilea, cu poarta ei (`comenzi.sterge`) și cu poza comenzii
+    // lăsată în `orders_deleted`.
+    ['DELETE', '/orders/#',          'orders',   'route_orders_delete'],
 
     // Câte bucăți s-au făcut, raportat din laborator. Rută proprie, nu un câmp
     // în plus la PATCH: acolo angajatul are voie doar la etapă
@@ -168,6 +179,13 @@ $routes = [
     // cine are voie să scrie pe comanda aceea. Cu un singur drum, poarta s-ar
     // fi ales dintr-un câmp din corp.
     ['POST',   '/orders/#/quote',    'orders',   'route_orders_quote_edit'],
+
+    // Starea de plată a unei comenzi (runda 2.7.0). Rută proprie, nu un câmp în
+    // plus la PATCH /orders/#: acolo trece și contul de tură, cu etapa, iar
+    // plata are alt stăpân (`plati.stare`) și nu atinge nimic din comandă.
+    // Trei segmente, deci nu se poate ciocni cu PATCH /orders/# (două), iar pe
+    // PATCH nu mai există niciun /orders/#/… care s-o înghită.
+    ['PATCH',  '/orders/#/plata',    'plati',    'route_order_plata'],
 
     ['GET',    '/routes',            'orders',   'route_driver_routes'],
     // Numărul de opriri pe mai multe zile deodată. Meniul de zile al șoferului
@@ -186,6 +204,24 @@ $routes = [
 
     ['GET',    '/stock/items',       'stock',    'route_items_list'],
     ['POST',   '/stock/items',       'stock',    'route_items_create'],
+    // Prețurile ingredientelor (runda 2.7.0, cererea patronului din 4 oct.
+    // 2026). Patru rute, toate pe cheia `preturi` — numai fondatorul, din
+    // pornire —, într-un fișier al lor: `GET /stock/items` îl deschid și
+    // angajatul, și tableta din laborator, iar prețul n-are voie să plece pe
+    // ușa aceea. Vezi antetul lui api/routes/costuri.php.
+    //
+    // Stau ÎNAINTEA rândurilor cu `#` de mai jos, ca toate segmentele fixe din
+    // tabelă. Azi nu s-ar încurca nici puse după: `match_route()` cere același
+    // număr de segmente și potrivire literă cu literă pe cele fixe, deci
+    // `/stock/prices` (două segmente) nu poate fi luat drept `/stock/items/#`
+    // (trei), `/stock/prices/#` are alt al doilea segment, iar
+    // `/stock/items/#/prices` are patru. Ordinea e pentru rândul scris MÂINE:
+    // un `/stock/#` adăugat deasupra ar prinde „prices" drept număr de articol
+    // și ar răspunde „Articolul nu există" la lista de prețuri.
+    ['GET',    '/stock/prices',         'costuri', 'route_prices_list'],
+    ['DELETE', '/stock/prices/#',       'costuri', 'route_prices_delete'],
+    ['GET',    '/stock/items/#/prices', 'costuri', 'route_item_prices_list'],
+    ['POST',   '/stock/items/#/prices', 'costuri', 'route_item_prices_add'],
     ['PATCH',  '/stock/items/#',     'stock',    'route_items_update'],
     // Scoaterea unui articol din depozit. Șterge de-a binelea doar articolul
     // fără nicio urmă; pe cel cu istoric îl scoate din listă, ca registrul să
@@ -299,10 +335,33 @@ $routes = [
 
     ['GET',    '/log',               'log',      'route_log_list'],
 
-    // Cifrele casei. Singura rută din tabelul ăsta care NU se deschide
-    // administratorului: `require_stats()` o ține numai pentru fondator
-    // (api/lib/auth.php · GP_STATS_ROLES).
+    // Cifrele casei. Din pornire, singurul panou care NU se deschide
+    // administratorului: dreptul `statistici` îl are numai fondatorul
+    // (api/lib/auth.php · GP_DREPT_IMPLICIT), până nu-l dă el altcuiva.
     ['GET',    '/stats',             'stats',    'route_stats_get'],
+
+    // „Acces": cine intră pe ce panou și cine face ce faptă (migrarea 033).
+    // Toate trei sunt ale fondatorului, și asta nu e o bifă — `require_acces()`.
+    ['GET',    '/acces',             'acces',    'route_acces_get'],
+    ['PUT',    '/acces',             'acces',    'route_acces_save'],
+    ['DELETE', '/acces',             'acces',    'route_acces_reset'],
+
+    // Plățile (runda 2.7.0, migrarea 032): registrul „Încasări”, situația unui
+    // client și setările raportului de bani. Fiecare cu poarta ei — vezi
+    // antetul lui api/routes/plati.php.
+    //
+    // ORDINEA: segmentele fixe (`mine`, `setari`) stau ÎNAINTEA lui
+    // /plati/client/#. Azi nu s-ar ciocni — `#` e pe al treilea segment, iar
+    // cele fixe au două —, dar regula nu se cuvine să atârne de ce NU există
+    // încă: un /plati/# adăugat mâine ar înghiți „mine” ca număr de client.
+    ['GET',    '/plati/mine',        'plati',    'route_plati_mine'],
+    ['GET',    '/plati/setari',      'plati',    'route_plati_setari_get'],
+    ['PUT',    '/plati/setari',      'plati',    'route_plati_setari_save'],
+    // Raportul de bani trimis ACUM, de probă (dreptul `plati.telegram`). Cel
+    // de la oră nu are rută: îl pornește ceasul serverului, api/cron/plati.php.
+    ['POST',   '/plati/raport-proba', 'plati',   'route_plati_raport_proba'],
+    ['GET',    '/plati/client/#',    'plati',    'route_plati_client'],
+    ['GET',    '/plati',             'plati',    'route_plati_list'],
 
     ['GET',    '/settings',          'settings', 'route_settings_get'],
     ['PUT',    '/settings',          'settings', 'route_settings_save'],

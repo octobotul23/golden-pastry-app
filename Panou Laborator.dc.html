@@ -173,7 +173,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </helmet>
 
 <!-- POARTA DE ROL A PANOULUI, ÎN PAGINĂ.
-     Serverul o ține de la început (rutele de aici sunt `require_ops()`), dar
+     Serverul o ține de la început (rutele de aici cer dreptul `laborator`), dar
      pagina nu întreba nimic: cine tasta adresa capătă panoul întreg, cu o
      casetă roșie de refuz în fiecare colț și nicio propoziție care să spună
      de ce. Ecranul ăsta o spune, și trimite omul unde are ce face.
@@ -265,7 +265,7 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -359,14 +359,14 @@ a{color:#F7C46B}a:hover{color:#F2A63B}
 </div>
 <div style="display:flex;flex-direction:column;gap:6px">
 <span class="h-eyebrow" style="font-size:12px">Ce ai de spus</span>
-<textarea autoFocus="{{ true }}" class="h-textarea" value="{{ anuntText }}" onChange="{{ onAnuntText }}" rows="3" placeholder="Mâine vine făina la șase — lăsați loc lângă ușă." style="font-size:16px"></textarea>
+<textarea autoFocus="{{ true }}" class="h-textarea" value="{{ anuntText }}" onChange="{{ onAnuntText }}" disabled="{{ anuntLucru }}" rows="3" placeholder="Mâine vine făina la șase — lăsați loc lângă ușă." style="font-size:16px"></textarea>
 <span style="font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">{{ anuntRamase }}</span>
 </div>
 <div style="display:flex;flex-direction:column;gap:6px">
 <span class="h-eyebrow" style="font-size:12px">Ține până la</span>
 <div style="display:flex;gap:10px;flex-wrap:wrap">
-<input class="h-input" type="date" value="{{ anuntZi }}" onChange="{{ onAnuntZi }}" style="flex:1 1 150px;height:48px;font-size:16px">
-<input class="h-input h-numeric" type="time" value="{{ anuntOra }}" onChange="{{ onAnuntOra }}" style="flex:1 1 130px;height:48px;font-size:16px">
+<input class="h-input" type="date" value="{{ anuntZi }}" onChange="{{ onAnuntZi }}" disabled="{{ anuntLucru }}" style="flex:1 1 150px;height:48px;font-size:16px">
+<input class="h-input h-numeric" type="time" value="{{ anuntOra }}" onChange="{{ onAnuntOra }}" disabled="{{ anuntLucru }}" style="flex:1 1 130px;height:48px;font-size:16px">
 </div>
 <span style="font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Lasă-le goale dacă anunțul stă până îl ia cineva jos. Ziua fără oră înseamnă până la miezul nopții.</span>
 </div>
@@ -871,19 +871,20 @@ const refreshDays = () => {
 /**
  * Cine are voie să DESCHIDĂ panoul.
  *
- * Serverul a ținut poarta de la început: rutele de aici sunt `require_ops()`,
- * iar `GP_OPS_ROLES` nu are nici `client`, nici `agent_vanzari`. Pagina însă
- * nu întreba nimic, deci cine tasta adresa capătă panoul întreg, plin de
- * refuzuri, fără să afle că nu e al lui.
+ * Serverul a ținut poarta de la început: rutele de aici cer dreptul
+ * `laborator` (`require_drept('laborator')`), pe care din pornire nu-l are
+ * nici `client`, nici `agent_vanzari`. Pagina însă nu întreba nimic, deci cine
+ * tasta adresa capătă panoul întreg, plin de refuzuri, fără să afle că nu e
+ * al lui.
  *
- * Răspunsul se citește din matricea meniului, nu se scrie a doua oară: dacă
- * mâine „Laborator" iese din meniul unui rol, poarta se închide singură.
- * Aceeași regulă și aceleași cuvinte ca în „Administrare Comenzi" ·
- * `vedeComenzi`.
+ * Întrebarea e un DREPT, nu o listă de roluri (runda 2.7.0): panoul se dă și
+ * se ia din „Acces", iar răspunsul vine de la server, pe cont (`drepturi`).
+ * De aceea se întreabă CONTUL, nu rolul lui — rolul singur ar răspunde din
+ * implicit și n-ar ști ce a bifat fondatorul. Aceeași regulă și aceleași
+ * cuvinte ca în „Administrare Comenzi" · `vedeComenzi`.
  */
-const PANOUL = "Laborator";
 const CE_PANOU = "panoul din laborator";
-const vedePanoul = (a) => (gp.PANOURI_ROL[(a && a.role) || ""] || []).indexOf(PANOUL) >= 0;
+const vedePanoul = (a) => gp.are("laborator", a);
 
 /* ─────────────────────── comanda care tocmai a picat ───────────────────── */
 
@@ -1073,12 +1074,55 @@ class Component extends DCLogic {
     // Fără sesiune, cererea cade cu 401 — nu e o eroare aici: panoul merge
     // mai departe anonim, cum a mers dintotdeauna.
     gp.me().then((user) => this.setState({ auth: gp.auth(user) })).catch(() => {});
+    // `componentDidMount` se poate aprinde din nou pe aceeași instanță, iar
+    // ascultătorul de dinainte se scoate întâi (runda 2.7.0). Cu doi, un singur
+    // „Înapoi” peste anunțul scris era auzit de două ori și punea DOUĂ trepte
+    // la loc în istoric: după „Ies fără să salvez” rămânea una de prisos, un
+    // „Înapoi” care nu mai făcea nimic.
+    if (this.__gpBack) window.removeEventListener("popstate", this.__gpBack);
     this.__gpBack = () => {
       if (this.__gpSkip) { this.__gpSkip = false; return; }
       const st = this.state || {};
+      // FOAIA DE ANUNȚ LA „ÎNAPOI” (runda 2.7.0, paza formularelor nesalvate;
+      // hotărârea patronului din 4–5 oct. 2026). Până acum foaia nu era ținută
+      // drept „deschisă” (v. `__gpSync`), deci Înapoi scotea omul de-a dreptul
+      // din pagină, cu anunțul scris cu tot.
+      //
+      // Când ajunge aici, browserul a coborât DEJA treapta foii. Dacă foaia are
+      // ceva scris, treapta se pune la loc ÎNAINTE de orice: altfel un al
+      // doilea Înapoi, apăsat cât stă întrebarea pe ecran, ar pleca din pagină
+      // pe lângă ea. `__gpOvWas` rămâne adevărat, deci `__gpSync` nu mai pune a
+      // doua treaptă. La „Ies fără să salvez” foaia se închide, iar `__gpSync`
+      // scoate singur treapta pusă aici.
+      //
+      // Cu întrebarea deja pe ecran, `gp.inchideCiorna` nu mai întreabă a doua
+      // oară și nu închide nimic: rămân treapta pusă la loc și întrebarea. Iar
+      // cât anunțul e pe drum spre server (o foaie pe drum e mereu una scrisă)
+      // Înapoi găsește la ușă ce găsesc și fundalul și „Renunță” — v.
+      // `laUsaAnuntului()`: nimic în primele zece secunde, apoi întrebarea
+      // supapei (încheierea rundei 2.7.0; până atunci tăcea cât ținea cererea).
+      if (st.anuntFoaie) {
+        const scris = this.ciornaDeschisa();
+        if (scris) {
+          try { history.pushState({ gpOv: 1 }, ""); } catch (e) {}
+          this.prinUsaAnuntului(() => this.setState({ anuntFoaie: false, anuntEroare: "" }));
+          return;
+        }
+        // Neatinsă, se închide pe loc, ca sertarul și vederea rapidă de mai jos.
+        this.setState({ anuntFoaie: false, anuntEroare: "" });
+      }
       if (st.menu || st.sel) this.setState({ menu: false, sel: null });
     };
     window.addEventListener("popstate", this.__gpBack);
+    // PAZA PAGINII (runda 2.7.0). Cât foaia de anunț are ceva scris, o legătură
+    // apăsată întreabă înainte să plece, iar fila închisă e ținută de fereastra
+    // browserului. Paza ascultă pe fereastră, în faza de captare, deci înaintea
+    // lui `__gpNav` de mai jos. Nu are nevoie de o pază a ei împotriva dublării:
+    // `componentDidMount` se poate aprinde din nou, iar paza nouă o scoate
+    // singură pe cea veche. Ieșirea din cont și sesiunea pierdută nu se ating
+    // aici: `gp.logout()` și `gp.toLogin()` întreabă singure cât paza spune că
+    // e ceva scris.
+    this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
     if (!window.__gpNav) {
       window.__gpNav = 1;
       document.addEventListener("click", (e) => {
@@ -1365,6 +1409,9 @@ class Component extends DCLogic {
     if (typeof this.pollAnunturi === "function") this.pollAnunturi();
     window.removeEventListener("storage", this.onStore);
     window.removeEventListener("popstate", this.__gpBack);
+    // Paza formularelor își ia înapoi ascultătorii. Nu se sprijină nimic pe
+    // rândul ăsta (metoda poate să nu ruleze niciodată): e numai curățenie.
+    if (typeof this.__scoatePaza === "function") this.__scoatePaza();
     window.removeEventListener("pointerdown", this.__atingere, true);
     window.removeEventListener("keydown", this.__atingere, true);
     window.removeEventListener("pointerdown", this.__tragJos, true);
@@ -2040,7 +2087,9 @@ class Component extends DCLogic {
 
   __gpSync() {
     const st = this.state || {};
-    const now = !!(st.menu || st.sel);
+    // Foaia de anunț e și ea „ceva deschis” (runda 2.7.0): are treapta ei în
+    // istoric, ca Înapoi s-o închidă pe ea, nu să scoată omul din pagină.
+    const now = !!(st.menu || st.sel || st.anuntFoaie);
     if (now === this.__gpOvWas) return;
     this.__gpOvWas = now;
     try {
@@ -2050,6 +2099,167 @@ class Component extends DCLogic {
   }
 
   /* ───────────────────────────────── tabla de anunțuri ──────────────── */
+
+  /**
+   * E ceva scris și nepus pe ecran în foaia de anunț? `null` când nu; altfel
+   * vorbele întrebării. Singurul loc din pagină care știe ce înseamnă „scris”:
+   * îl întreabă ușile foii, „Înapoi” și paza paginii (v. `componentDidMount`).
+   *
+   * Runda 2.7.0, hotărârea patronului din 4–5 oct. 2026: după un produs pierdut
+   * dintr-un clic alături de formular, nicio foaie scrisă nu se mai închide
+   * fără întrebare. Foaia asta pierdea anunțul întreg la o atingere a
+   * fundalului întunecat — pe o tabletă atinsă cu mâinile pline.
+   *
+   * LEGAT DE FOAIA DESENATĂ, nu de casete. Închiderea lasă `anuntText`,
+   * `anuntZi` și `anuntOra` în stare (se golesc abia la deschiderea următoare),
+   * deci „e ceva în casete” ar fi ținut pagina pe loc pentru un anunț la care
+   * omul a renunțat de mult.
+   *
+   * COMPARAT CU POZA DE LA DESCHIDERE (`__anuntPoza`), cu `gp.ciornaDiferita`:
+   * numai spații, ori scris și șters la loc, nu e „scris”. Fără poză (pagina
+   * abia încărcată) comparația e cu nimic, adică tot cu foaia goală.
+   */
+  ciornaDeschisa() {
+    const S = this.state || {};
+    if (!S.anuntFoaie) return null;
+    if (!gp.ciornaDiferita(this.__anuntPoza, { text: S.anuntText, zi: S.anuntZi, ora: S.anuntOra })) return null;
+    // CÂT ANUNȚUL E PE DRUM spre server, întrebarea spune altceva: „nu a ajuns
+    // pe ecran și se pierde” ar fi o minciună despre ceva ce tocmai se pune,
+    // iar omul care o crede l-ar scrie a doua oară. Vorbele astea le vede numai
+    // cine pleacă din PAGINĂ (o legătură, ieșirea din cont): ușile foii și
+    // „Înapoi” au vorbele lor pentru anunțul pe drum (v. `laUsaAnuntului()`).
+    if (S.anuntLucru) return {
+      titlu: "Pleci înainte să afli dacă anunțul a ajuns pe ecran?", text: "Anunțul e pe drum spre server. Dacă pleci acum, nu mai vezi dacă a ajuns pe ecranul laboratorului.",
+      nu: "Rămân în formular", da: "Ies fără să salvez",
+    };
+    return {
+      titlu: "Ieși fără să pui anunțul pe ecran?",
+      text: "Anunțul pe care l-ai scris nu a ajuns pe ecranul laboratorului și se pierde dacă ieși.",
+      nu: "Rămân în formular",
+      da: "Ies fără să salvez",
+    };
+  }
+
+  /**
+   * CE GĂSEȘTE O UȘĂ A FOII DE ANUNȚ: fundalul, „Renunță”, „Înapoi” și butonul
+   * „Pune un anunț pe ecran” apăsat peste ea. Trei răspunsuri, ca la
+   * formularul de comandă (`laUsaFormei()` din „Administrare Comenzi”),
+   * fiindcă ușa are trei purtări:
+   *   - `undefined`: anunțul e pe drum — ușa NU FACE NIMIC, nici nu închide,
+   *     nici nu întreabă;
+   *   - `null`: nimic de pierdut — ușa lasă să treacă pe loc;
+   *   - vorbele unei întrebări: ale foii scrise (`ciornaDeschisa()`) ori ale
+   *     SUPAPEI de mai jos.
+   *
+   * SUPAPA (încheierea rundei 2.7.0). `gp` nu pune nicio limită de timp
+   * cererilor, iar laboratorul are semnalul cel mai slab din casă: un „Pune
+   * pe ecran” rămas fără răspuns ținea foaia înghețată cât ținea cererea — nu
+   * se scrie, butonul nu mai pleacă, ușile tac —, iar singura ieșire era
+   * reîncărcarea paginii, pe o tabletă atinsă cu mâinile pline. Până la runda
+   * 2.7.0 fundalul închidea și atunci; paza i-a luat-o cu temei (foaia închisă
+   * și redeschisă era golită de răspunsul celei dintâi), dar fără nimic în
+   * loc. De aceea, după ZECE SECUNDE de la plecarea anunțului, ușa nu mai
+   * tace: întreabă. „Rămân în formular” așteaptă mai departe; „Ies fără să
+   * aștept” trece, iar răspunsul, când vine, nu-și mai găsește foaia și se
+   * spune sus, în mesajul paginii (`coadaAnuntului`) — de aceea întrebarea nu
+   * promite nici „pus”, nici „pierdut”.
+   *
+   * Clipa plecării (`__anuntDe`) se scrie în `puneAnuntul()`, singurul loc
+   * care aprinde steagul, în rândul de deasupra lui: un steag aprins fără
+   * clipa lui ar moșteni-o pe a anunțului de dinainte, iar ușa ar întreba din
+   * prima secundă.
+   *
+   * Foaia ÎNCHISĂ cu steagul rămas aprins (după „Ies fără să aștept” steagul
+   * îl stinge coada, când sosește) nu e o foaie pe drum: butonul care o
+   * deschide trebuie să meargă pe loc, ca până acum.
+   */
+  laUsaAnuntului() {
+    const S = this.state || {};
+    if (!S.anuntFoaie || !S.anuntLucru) return this.ciornaDeschisa();
+    const de = this.__anuntDe;
+    if (typeof de !== "number" || this.ceasulAnuntului() - de < 10000) return undefined;
+    return {
+      titlu: "Ieși fără să aștepți răspunsul?",
+      text: "Anunțul a plecat, dar serverul n-a răspuns încă. Dacă ieși, răspunsul apare sus, în pagină, când vine. Înainte să-l scrii din nou, uită-te printre anunțurile de pe ecran: poate a ajuns.",
+      nu: "Rămân în formular", da: "Ies fără să aștept"
+    };
+  }
+
+  /**
+   * TRECEREA PRINTR-O UȘĂ A FOII, una pentru toate ușile: `treci` e ce face
+   * ușa odată lăsată să treacă (fundalul și Înapoi închid, butonul de
+   * deschidere golește foaia). Foaia neatinsă trece pe loc, în aceeași clipă;
+   * cea scrisă întreabă întâi; cât anunțul e pe drum nu se întâmplă nimic
+   * zece secunde, apoi întreabă supapa (v. `laUsaAnuntului()`).
+   *
+   * Capcana supapei: răspunsul poate sosi CÂT ÎNTREBAREA EI E PE ECRAN. „Ies
+   * fără să aștept” apăsat atunci ar fi închis o foaie tocmai refuzată, cu
+   * pricina refuzului scrisă în ea — fără întrebarea foii scrise. De aceea un
+   * „Ies” dat supapei nu mai face nimic dacă steagul s-a stins între timp.
+   *
+   * De obicei omul nici nu mai ajunge să apese: ușa îi dă întrebării, pe
+   * lângă vorbe, și felul de a le citi din nou (al treilea argument al lui
+   * `gp.inchideCiorna`). Când pagina se schimbă sub întrebare și ușa ar spune
+   * acum altceva — anunțul a ajuns și foaia s-a închis, ori a fost refuzat și
+   * ușa ar întreba de foaie, nu de așteptare — biblioteca retrage singură
+   * întrebarea rămasă fără rost. Paza `dinMers` e pentru clipa dintre răspuns
+   * și desen.
+   */
+  prinUsaAnuntului(treci) {
+    const usa = this.laUsaAnuntului();
+    if (usa === undefined) return undefined;
+    const dinMers = !!(this.state.anuntFoaie && this.state.anuntLucru);
+    return gp.inchideCiorna(usa, () => {
+      if (dinMers && !this.state.anuntLucru) return;
+      treci();
+    }, usa ? () => this.laUsaAnuntului() : undefined);
+  }
+
+  /**
+   * Ceasul supapei de mai sus, în milisecunde. `performance.now()` merge numai
+   * înainte: ora tabletei potrivită în mijlocul unei cereri n-are voie să
+   * deschidă ușa înainte de vreme, nici s-o țină închisă o oră. `Date.now()`
+   * rămâne numai pentru o lume fără el.
+   */
+  ceasulAnuntului() {
+    return (typeof performance !== "undefined" && performance && typeof performance.now === "function")
+      ? performance.now() : Date.now();
+  }
+
+  /**
+   * Deschide foaia de anunț și îi ia poza. `goleste` e `setState`-ul din
+   * `renderVals()` (v. `onAnuntNou`), lăsat acolo unde a fost dintotdeauna.
+   *
+   * PESTE O FOAIE DEJA DESCHISĂ ȘI SCRISĂ ÎNTREABĂ. Butonul „Pune un anunț pe
+   * ecran” stă sub fundalul foii, dar foaia nu ține focusul închis în ea: cu
+   * Tab se ajunge la el, iar Enter golea casetele fără un cuvânt. Foaia
+   * închisă ori neatinsă se deschide pe loc, ca până acum (`gp.inchideCiorna`
+   * cu „nimic scris” cheamă funcția în aceeași suflare).
+   *
+   * CÂT ANUNȚUL E PE DRUM spre server găsește la ușă ce găsesc și celelalte
+   * uși ale foii (v. `laUsaAnuntului()`): nimic zece secunde, apoi întrebarea
+   * supapei, iar la „Ies fără să aștept” foaia se golește pentru alt anunț.
+   *
+   * POZA SE IA DIN STARE, IMEDIAT DUPĂ `setState` (motorul pune starea pe loc;
+   * numai desenul vine mai târziu), nu din ce i s-a dat lui `setState`: așa
+   * rămâne adevărată și în ziua în care foaia se va deschide cu ceva gata
+   * scris în ea. Luată ÎNAINTE de golire, ar fi prins casetele rămase de la un
+   * anunț părăsit, iar foaia goală de acum ar fi trecut drept „scrisă”.
+   *
+   * NUMĂRUL DESCHIDERII (`__anuntNr`, încheierea rundei 2.7.0) crește aici,
+   * singurul loc care deschide foaia. Anunțul plecat îl ține minte, iar coada
+   * lui se uită dacă foaia de pe ecran mai e a lui (v. `puneAnuntul`): de
+   * când ușa are supapă, o foaie se poate închide și redeschide cât anunțul
+   * celei dintâi e încă pe drum.
+   */
+  deschideAnuntul(goleste) {
+    this.prinUsaAnuntului(() => {
+      goleste();
+      const S = this.state;
+      this.__anuntPoza = { text: S.anuntText, zi: S.anuntZi, ora: S.anuntOra };
+      this.__anuntNr = (this.__anuntNr || 0) + 1;
+    });
+  }
 
   /**
    * Anunțurile care mai țin acum, de la server.
@@ -2088,22 +2298,77 @@ class Component extends DCLogic {
    */
   puneAnuntul() {
     const S = this.state;
+    // A DOUA APĂSARE CÂT PRIMA E PE DRUM NU TRIMITE NIMIC (încheierea rundei
+    // 2.7.0). Butonul e stins în șablon (`disabled`), dar un atribut nu e o
+    // pază: o atingere dublă pe tabletă ori Enter ținut apăsat ajung aici
+    // înaintea desenului care îl stinge, iar al doilea POST punea pe ecran
+    // același anunț de două ori. Starea se citește vie: motorul o pune pe loc.
+    if (S.anuntLucru) return;
     const text = String(S.anuntText || "").trim();
     if (!text) return this.setState({ anuntEroare: "Scrie ce ai de spus." });
     if (S.anuntOra && !S.anuntZi) {
       return this.setState({ anuntEroare: "Ai scris ora, dar nu și ziua până la care ține anunțul." });
     }
     const until = S.anuntZi ? S.anuntZi + " " + (S.anuntOra || "23:59") : "";
+    // COADA ÎȘI ȚINE MINTE FOAIA (încheierea rundei 2.7.0). Anunțul pleacă
+    // din deschiderea `nr` a foii; răspunsul lui e „acasă” numai cât foaia
+    // aceea e încă pe ecran. Închisă între timp (omul a ieșit prin supapă)
+    // ori închisă și deschisă din nou pentru alt anunț, răspunsul nu se mai
+    // atinge de ce e pe ecran: se spune sus, v. `coadaAnuntului`. `zbor`
+    // numără plecările, ca o coadă veche să nu stingă steagul uneia mai noi.
+    const nr = this.__anuntNr;
+    this.__anuntZbor = (this.__anuntZbor || 0) + 1;
+    const zbor = this.__anuntZbor;
+    const acasa = () => !!this.state.anuntFoaie && this.__anuntNr === nr;
+    // Clipa plecării, pentru supapa ușii (`laUsaAnuntului`): după zece
+    // secunde fără răspuns, ușile foii nu mai tac.
+    this.__anuntDe = this.ceasulAnuntului();
     this.setState({ anuntLucru: true, anuntEroare: "" });
     return gp.post("/lab/messages", { body: text, until })
       .then(() => {
+        if (!acasa()) { this.coadaAnuntului(zbor, "Anunțul trimis mai devreme a ajuns pe ecran."); this.pullAnunturi(); return; }
+        // Anunțul pus NU întreabă nimic: foaia se închide de-a dreptul, nu
+        // prin ușa ei (`onAnuntRenunta`), care ar fi văzut-o încă „scrisă”.
         this.setState({ anuntFoaie: false, anuntLucru: false, anuntText: "", anuntZi: "", anuntOra: "" });
         this.pullAnunturi();
       })
       .catch((e) => {
-        if (e.isAuth) gp.toLogin();
+        if (!acasa()) {
+          this.coadaAnuntului(zbor, "Anunțul trimis mai devreme nu a ajuns pe ecran. "
+            + (e.isAuth ? "Nu mai ești în cont." : gp.motiv(e, "anunțul")));
+          if (e.isAuth) gp.toLogin();
+          return;
+        }
+        // Steagul de salvare se stinge ÎNAINTE de plecarea spre intrare (runda
+        // 2.7.0). Cu ceva scris, `gp.toLogin()` întreabă întâi, iar omul poate
+        // rămâne ca să-și copieze anunțul: cu steagul rămas aprins, ușile foii
+        // ar fi stat moarte și „Pune pe ecran” s-ar fi învârtit la nesfârșit.
+        //
+        // PRICINA SE SCRIE ȘI ÎN FOAIE (încheierea rundei 2.7.0). `gp.toLogin()`
+        // întreabă o singură dată; după „Rămân să copiez” nu mai întreabă și
+        // nu mai pleacă. Fără rândul de mai jos, a doua apăsare pe „Pune pe
+        // ecran” se învârtea o clipă și se oprea fără un cuvânt: omul nu avea
+        // de unde ști că anunțul n-a ajuns, nici de ce.
+        if (e.isAuth) { this.setState({ anuntLucru: false, anuntEroare: "Nu mai ești în cont, iar până nu intri din nou nu se poate salva nimic." }); gp.toLogin(); }
         else this.setState({ anuntLucru: false, anuntEroare: gp.motiv(e, "anunțul") });
       });
+  }
+
+  /**
+   * COADA UNUI ANUNȚ CARE NU-ȘI MAI GĂSEȘTE FOAIA (încheierea rundei 2.7.0).
+   * Foaia din care a plecat s-a închis între timp — omul a ieșit prin supapă
+   * („Ies fără să aștept”) — ori s-a deschis din nou, pentru alt anunț.
+   * Răspunsul nu are voie să se atingă de ce e ACUM pe ecran: reușita ar
+   * închide și ar goli o foaie în care se scrie altceva, iar refuzul și-ar
+   * pune vorbele sub un text care nu e al lui. Se spune sus, în mesajul
+   * paginii, cel care exista deja (`toast`), și atât.
+   *
+   * Steagul se stinge numai dacă e încă al plecării ăsteia (`__anuntZbor`):
+   * foaia nouă poate avea deja anunțul EI pe drum, iar un steag stins de
+   * coada celui vechi i-ar dezgheța casetele și butonul în mijlocul cererii.
+   */
+  coadaAnuntului(zbor, veste) {
+    this.setState(Object.assign({ toast: veste }, this.__anuntZbor === zbor ? { anuntLucru: false } : {}));
   }
 
   /**
@@ -2654,15 +2919,37 @@ class Component extends DCLogic {
         if (n > max) return "Cu " + (n - max) + " caractere peste — scurtează-l.";
         return n + " din " + max + " de caractere.";
       })(),
-      onAnuntNou: () => set({
+      onAnuntNou: () => this.deschideAnuntul(() => set({
         anuntFoaie: true, anuntText: "", anuntZi: "", anuntOra: "",
         anuntEroare: "", anuntLucru: false, anuntArm: 0,
-      }),
+      })),
       onAnuntKeep: (e) => e.stopPropagation(),
-      onAnuntRenunta: () => set({ anuntFoaie: false, anuntEroare: "" }),
-      onAnuntText: (e) => set({ anuntText: e.target.value }),
-      onAnuntZi: (e) => set({ anuntZi: e.target.value }),
-      onAnuntOra: (e) => set({ anuntOra: e.target.value }),
+      // UȘA FOII: fundalul și „Renunță” (runda 2.7.0, paza formularelor
+      // nesalvate). Neatinsă, foaia se închide pe loc, ca până acum; cu ceva
+      // scris, `gp.inchideCiorna` întreabă întâi și închide numai la „Ies fără
+      // să salvez”. Starea se citește VIE (`this.state`), nu din `S`-ul
+      // desenului: între două desene poate fi deja alta.
+      //
+      // CÂT ANUNȚUL E PE DRUM spre server ușa nu face nimic, nici măcar nu
+      // întreabă. „Ieși fără să pui anunțul?” ar fi fost o minciună — anunțul
+      // tocmai se pune —, iar o foaie închisă aici și redeschisă pe loc ar fi
+      // fost golită, cu ce s-a scris în ea, de răspunsul celei dintâi.
+      //
+      // DUPĂ ZECE SECUNDE FĂRĂ RĂSPUNS ușa întreabă totuși, cu vorbele ei
+      // (încheierea rundei 2.7.0, v. `laUsaAnuntului()`): o cerere înțepenită
+      // nu mai ține omul închis în foaie. Golirea de care se temea rândul de
+      // mai sus n-o mai poate face nimeni: coada anunțului își ține minte
+      // foaia (`puneAnuntul`).
+      onAnuntRenunta: () => this.prinUsaAnuntului(() => set({ anuntFoaie: false, anuntEroare: "" })),
+      // CÂT ANUNȚUL E PE DRUM spre server nu se mai scrie nimic în foaie (runda
+      // 2.7.0). Ce s-ar scrie acum n-a plecat cu cererea, iar reușita închide
+      // foaia și îi golește casetele: s-ar pierde fără un cuvânt, tocmai ce
+      // paza formularelor are de oprit. Casetele sunt și stinse în șablon
+      // (`disabled`), dar mânerele tac și singure, ca paza să nu atârne de un
+      // atribut. La refuz steagul se stinge și se poate scrie din nou.
+      onAnuntText: (e) => { if (!this.state.anuntLucru) set({ anuntText: e.target.value }); },
+      onAnuntZi: (e) => { if (!this.state.anuntLucru) set({ anuntZi: e.target.value }); },
+      onAnuntOra: (e) => { if (!this.state.anuntLucru) set({ anuntOra: e.target.value }); },
       onAnuntPune: () => this.puneAnuntul(),
       menuOpen: S.menu,
       onMenuOpen: () => set({ menu: true }),

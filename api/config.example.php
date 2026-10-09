@@ -176,6 +176,23 @@ return [
     // site-ul. Folderul trebuie să permită scrierea (drepturi 755).
     'photo_dir' => '',
 
+    // --- adresa Telegramului --------------------------------------------
+    // PE SERVER RĂMÂNE GOALĂ. Goală (ori lipsă) înseamnă Telegramul adevărat,
+    // https://api.telegram.org — singura valoare bună pentru site.
+    //
+    // Cheia există pentru probe: pe calculatorul de lucru se pune aici adresa
+    // unui primitor local (de pildă 'http://127.0.0.1:8107'), ca rapoartele de
+    // încasări și anunțurile trimise de probe să poată fi numărate fără să
+    // ajungă pe telefonul nimănui.
+    //
+    // De ce stă aici și nu în Setări: la adresa asta pleacă, în fiecare cerere,
+    // tokenul botului. Ce stă în Setări se schimbă dintr-un ecran; ce stă aici,
+    // numai de către cine are deja serverul în mână. Se primește `https://`
+    // oriunde și `http://` numai spre calculatorul însuși (127.0.0.1,
+    // localhost); o valoare stricată oprește trimiterile cu o eroare spusă pe
+    // nume — nu cade în tăcere pe adresa adevărată.
+    'telegram_api_base' => '',
+
     // 'dev' arată mesaje de eroare detaliate. Pe server pune 'prod'.
     'env' => 'dev',
 ];

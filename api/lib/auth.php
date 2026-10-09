@@ -184,297 +184,580 @@ function require_role(string ...$roles): array
 /**
  * Rolurile care înseamnă „personal", adică oricine lucrează în firmă.
  *
- * Ținute într-o constantă, nu scrise în require_staff(): lista a crescut o dată
- * și va mai crește, iar un rol nou trebuie adăugat într-un singur loc, nu
+ * Ținute într-o constantă, nu scrise în require_personal(): lista a crescut o
+ * dată și va mai crește, iar un rol nou trebuie adăugat într-un singur loc, nu
  * căutat prin cod. `client` NU e pe listă și nu are ce căuta pe ea.
  *
- * Atenție: „personal" nu înseamnă „administrator". Rutele care cer drepturi
- * depline — conturi, catalog, setări, jurnal, ordinea opririlor pe rută —
- * folosesc mai departe require_admin() și rămân închise pentru manager și
- * pentru agentul de vânzări, exact cum sunt pentru angajat.
- *
- * Iar de la 18 septembrie 2026 „personal" nu mai înseamnă nici „scrie
- * comenzi": nașterea unei comenzi — `POST /orders` și acceptarea unei cereri —
- * are lista ei, `GP_ORDER_CREATE_ROLES`, mai largă decât administratorii
- * (intră și managerul) și mai strâmtă decât personalul (ies agentul de vânzări
- * și angajatul). Ce le rămâne celor doi prin ușa asta e restul: lista de
- * comenzi, cotația, mutarea prin etape.
- *
- * Singura excepție e `fondator`, adăugat la coadă odată cu migrarea 009: el
- * e personal ȘI administrator (vezi GP_ADMIN_ROLES mai jos). Restul listei
- * a rămas exact cum era — nimic din ce era permis până acum nu s-a lărgit.
+ * „Personal" nu înseamnă „administrator" și nu înseamnă „scrie comenzi": cine
+ * intră pe ce panou și cine face ce faptă se hotărăște în matricea de mai jos
+ * (`GP_DREPT_IMPLICIT`), nu aici. Lista asta răspunde numai la „e omul casei
+ * ori e cumpărător?".
  */
 const GP_STAFF_ROLES = ['admin', 'angajat', 'manager', 'agent_vanzari', 'fondator'];
 
-/** Scurtătură pentru personalul intern. */
-function require_staff(): array
-{
-    return require_role(...GP_STAFF_ROLES);
-}
-
 /**
- * Rolurile care ating marfa: depozitul, laboratorul, ruta.
+ * E omul ăsta „din casă"? Întrebarea care NU oprește cererea.
  *
- * `GP_STAFF_ROLES` fără `agent_vanzari`. Agentul aduce clienți și își vede
- * comisionul; nu face intrări în depozit, nu raportează bucăți din laborator
- * și nu citește foaia de drum a șoferului. Meniul lui spune deja asta
- * (`shared/gp-api.js` · `PANOURI_ROL.agent_vanzari` = Comenzi, Recomandări,
- * Parola mea), dar serverul îi răspundea 200 pe toate — deci meniul era o
- * politețe, nu o poartă: cine cunoștea adresa intra oricum.
- *
- * De ce contează, dacă oricum nu are butonul: pe un panou lipsește butonul, pe
- * un API lipsește numai bunăvoința. Un cont de agent furat, sau agentul însuși
- * cu instrumentele browserului, putea scădea stocul firmei. Iar fără poarta
- * asta orice pagină nouă care se bizuie pe meniu ca pe o pază moștenește
- * golul, fără să-l vadă cineva.
- *
- * `client` nu e pe listă din același motiv pentru care nu e nici pe
- * `GP_STAFF_ROLES`.
+ * Rolurile din `GP_STAFF_ROLES` — oricând. Oricine altcineva — numai dacă a
+ * primit din „Acces" una din cheile date. Azi „altcineva" e omul de laborator
+ * (`utilizator_lab`): e coloană în matrice, deci fondatorul îi poate da un
+ * panou, dar nu e pe lista de mai sus. Cumpărătorul nu trece niciodată:
+ * `drept()` îi răspunde „nu" la orice cheie.
  */
-const GP_OPS_ROLES = ['admin', 'angajat', 'manager', 'fondator'];
-
-/** Scurtătură pentru depozit, laborator și rută. Vezi GP_OPS_ROLES. */
-function require_ops(): array
+function e_personal(array $cine, string ...$sauCuDrept): bool
 {
-    return require_role(...GP_OPS_ROLES);
+    return in_array((string) ($cine['role'] ?? ''), GP_STAFF_ROLES, true)
+        || drept_oricare($sauCuDrept, $cine);
 }
 
 /**
- * Rolurile cu drepturi depline: conturi, catalog, setări, jurnal, recomandări.
+ * Poarta „e din casă" — fostul `require_staff()`.
  *
- * Fondatorul e administrator plus atât — „plus" fiind numai puterea asupra
+ * SINGURA POARTĂ DE RUTĂ CARE MAI ÎNCEPE DE LA ROLURI SCRISE, dinadins. Cele
+ * două rute care trec pe aici — căutarea de clienți și contul nou de
+ * cumpărător — au sub poartă un drum care e al unui ROL, nu al unui panou:
+ * agentul de vânzări caută numai printre cumpărătorii aduși de el și face
+ * numai conturi de cumpărător, fără să aibă nici „scrie comenzi", nici
+ * „Conturi". O cheie din „Acces" pusă singură la intrare l-ar fi lăsat pe
+ * dinafară. De aceea poarta de aici spune „e din casă", iar ruta întreabă
+ * imediat dedesubt, pe matrice și pe rol, ce anume are voie omul
+ * (`client_scope_for()`, `drept('conturi')`).
+ *
+ * CHEILE DINTRE PARANTEZE (runda 2.7.0). Scrisă numai pe roluri, poarta îl
+ * oprea pe omul de laborator și după ce fondatorul îi dăduse, din „Acces",
+ * Conturile: meniul i se deschidea, lista i se încărca, iar butonul de pe
+ * ecran primea 403 de aici, de la o poartă care nu se uita în matrice. De
+ * aceea fiecare rută spune între paranteze cheia pe care o întreabă imediat
+ * dedesubt; cine a primit-o trece, oricare i-ar fi rolul. Din pornire omul de
+ * laborator n-o are, deci cu tabelul `role_rights` gol răspunsurile sunt cele
+ * din 2.6.0, literă cu literă.
+ *
+ * Cotația și scrisul pe o comandă au trecut tot pe aici până în aceeași rundă,
+ * cu aceeași hibă (Laboratorul dat omului de laborator îi arăta comenzile și
+ * nu-l lăsa să le mute). Acolo nu e niciun drum de rol sub poartă, deci poarta
+ * lor e de-acum chiar întrebarea registrului: `require_drept(...GP_DREPT_REGISTRU)`.
+ *
+ * Refuzul e cel al lui `require_role()`: același cod, aceeași vorbă.
+ */
+function require_personal(string ...$sauCuDrept): array
+{
+    $u = require_auth();
+    if (!e_personal($u, ...$sauCuDrept)) {
+        fail('Nu ai dreptul să accesezi această resursă.', 403, 'forbidden');
+    }
+    return $u;
+}
+
+/**
+ * Rolurile de RANG: administratorul și fondatorul.
+ *
+ * Fondatorul e administrator plus atât — „plus" fiind puterea asupra
  * administratorilor și a celorlalți fondatori (vezi api/routes/users.php).
- * Peste tot în rest, cele două roluri trebuie să treacă prin aceleași uși.
  *
- * De ce o constantă și o scurtătură, și nu `require_role('admin', 'fondator')`
- * scris de 31 de ori: exact motivul pentru care există GP_STAFF_ROLES deasupra.
- * Ușile astea se înmulțesc — fiecare rută nouă de administrator e încă una —
- * iar dacă lista se scrie la fiecare, atunci ruta scrisă mâine din obișnuință
- * cu `require_role('admin')` închide fondatorul pe dinafară fără ca cineva
- * să observe: pagina merge, dar numai pentru unii. Așa, un rol nou se adaugă
- * într-un singur loc. Proba din .claude/check-php.mjs păzește obiceiul.
+ * De la migrarea 033 lista asta NU mai hotărăște cine intră pe un panou: aceea
+ * e treaba matricei („Acces"), unde fondatorul poate lua Catalogul unui
+ * administrator ori da Depozitul unui agent. Aici au rămas numai întrebările de
+ * rang, care nu se pot da cu o bifă: cine e ultimul administrator, cine se
+ * atinge de contul unui șef, al cui cuvânt îl poartă botul de Telegram, cine
+ * confirmă o livrare fără semn. `require_admin()` și `e_admin()` se cheamă
+ * numai din locurile acelea, iar .claude/check-acces-echivalent.mjs le numără.
  */
 const GP_ADMIN_ROLES = ['admin', 'fondator'];
 
-/** Scurtătură pentru drepturile depline. Vezi GP_ADMIN_ROLES. */
+/** Scurtătură pentru rolurile de rang. Vezi GP_ADMIN_ROLES. */
 function require_admin(): array
 {
     return require_role(...GP_ADMIN_ROLES);
 }
 
 /**
- * Cine conduce tura: raportul de pontaj și tabla de anunțuri din laborator.
+ * Pagina „Acces" e numai a fondatorului, și asta nu se poate schimba din ea.
  *
- * DOUĂ DREPTURI, O SINGURĂ LISTĂ, fiindcă sunt aceiași oameni. Lista s-a
- * născut pentru raportul de ore (migrarea 014) și a primit al doilea drept
- * odată cu tabla de anunțuri (migrarea 015): cine scrie pe ecranul
- * laboratorului „mâine vine făina la șase" e chiar cel care răspunde de tura
- * de mâine. Scrisă a doua oară, sub alt nume, lista s-ar fi depărtat de asta
- * la primul rol nou — și atunci un om ar fi citit orele fără să poată spune o
- * vorbă, sau invers, fără ca nimeni să fi hotărât asta.
- *
- * `GP_ADMIN_ROLES` plus managerul, și e singura listă din casă croită așa.
- * Managerul conduce tura: el știe cine a venit la cinci și cine la șapte, deci
- * raportul nu-i spune nimic ce n-a văzut cu ochii lui — îi spune doar adunat.
- * Restul panourilor de administrator (conturi, setări, jurnal, catalog) rămân
- * închise pentru el, neatinse.
- *
- * DE CE O LISTĂ NOUĂ ȘI NU `GP_OPS_ROLES`. Acolo e și `angajat` — adică
- * oamenii al căror pontaj e chiar ăsta. Un raport care le arată tuturor orele
- * tuturor transformă o unealtă de plată într-o listă de comparat între colegi,
- * și nimeni n-a cerut asta. Omul își vede propria venire pe tabletă, în clipa
- * în care pontează; atât îi trebuie ca să știe că s-a scris.
- *
- * A TREIA POARTĂ, mai strâmtă, nu e aici: corectura unui rând uitat deschis
- * cere `require_admin()` (api/routes/lab.php · `route_lab_shift_update()`).
- * Managerul citește statul de plată, nu îl scrie.
+ * O bifă care ar da altcuiva dreptul de a pune bife ar fi o cheie care își
+ * deschide singură lacătul: primul administrator primit aici și-ar da restul.
  */
-const GP_SHIFTS_ROLES = ['admin', 'fondator', 'manager'];
-
-/** Scurtătură pentru cine conduce tura. Vezi GP_SHIFTS_ROLES. */
-function require_shifts(): array
+function require_acces(): array
 {
-    return require_role(...GP_SHIFTS_ROLES);
+    return require_role('fondator');
+}
+
+/* ===================================================================== *
+ *  „ACCES" — cine intră pe ce panou și cine face ce faptă (migrarea 033)
+ * ===================================================================== *
+ *
+ * PÂNĂ LA RUNDA 2.7.0 erau șapte liste de roluri scrise aici, fiecare cu
+ * scurtătura ei (`require_ops()`, `require_shifts()`, `require_stats()`…), iar
+ * o rută își alegea lista. Patronul a cerut „un meniu Acces unde să pot pune
+ * nivelul de acces pentru orice": cu liste scrise, fiecare dorință de felul
+ * „să vadă și managerul Catalogul" era o schimbare de cod și un plasture.
+ *
+ * ACUM o rută cere un DREPT — `require_drept('catalog')` —, iar cine îl are se
+ * citește din matrice: implicitul de mai jos, peste care se așază ce a schimbat
+ * fondatorul (tabelul `role_rights`, care ține NUMAI celulele schimbate).
+ *
+ * REGULA DE AUR: cu tabelul gol, ori lipsă, fiecare rută răspunde exact ca în
+ * 2.6.0. Implicitele de mai jos sunt vechile liste, mutate rând cu rând, iar
+ * .claude/check-acces-echivalent.mjs le pune lângă poza lui 2.6.0
+ * (.claude/acces-260.json) și oprește suita la prima rută care s-a mișcat.
+ *
+ * CONSTANTELE SUNT SCRISE PLAT — șiruri și liste, nicio chemare de funcție,
+ * nicio altă constantă întinsă cu `...` — fiindcă proba le citește ca text,
+ * fără interpretor. Tot de aceea oglinda lor din pagini (`DREPT_IMPLICIT`,
+ * `DREPT_CERE` în shared/gp-api.js) se poate ține la zi cu ochiul și cu proba.
+ */
+
+/**
+ * Coloanele matricei: rolurile cărora li se poate da ori lua ceva.
+ *
+ * `fondator` nu e coloană: are mereu tot, și nimeni nu i-o poate lua (altfel
+ * s-ar putea încuia singur pe dinafară, cu pagina „Acces" cu tot). `client` nu
+ * e coloană: cumpărătorul n-are ce căuta pe niciun panou al casei, iar ce vede
+ * din comenzile lui se hotărăște în rute, după al cui e rândul, nu după o bifă.
+ */
+const GP_DREPT_COLOANE = ['admin', 'manager', 'agent_vanzari', 'angajat', 'utilizator_lab'];
+
+/**
+ * Cine are fiecare drept DIN PORNIRE (fără fondator, care le are pe toate).
+ *
+ * Întâi panourile — un rând pentru fiecare intrare din meniu —, apoi faptele.
+ * De unde vine fiecare rând, pentru cine caută vechile nume:
+ *
+ *   laborator, ruta, depozit  = fostul `GP_OPS_ROLES`: cine atinge marfa.
+ *       Agentul de vânzări NU e aici: aduce clienți, nu face intrări în depozit
+ *       și nu citește foaia de drum. Pe un panou lipsește butonul, pe un API
+ *       lipsește numai bunăvoința — de aceea e poartă, nu doar meniu.
+ *   pontaj                    = fostul `GP_CLOCK_ROLES`: aceiași, plus omul de
+ *       laborator, care are exact ușa asta și niciuna alta. Poarta nu se uită
+ *       de UNDE vine cererea; ce oprește e pontatul în locul altuia, fiindcă la
+ *       fiecare apăsare se cere codul personal.
+ *   catalog, conturi, recomandari, jurnal, setari = fostul `require_admin()`.
+ *   statistici                = fostul `GP_STATS_ROLES`: NUMAI fondatorul.
+ *       Singurul panou unde administratorul nu intră din pornire: el conduce
+ *       patiseria zi de zi, fondatorul e cel ale cărui sunt cifrele.
+ *   comenzi                   = cine are „Comenzi" în meniu. Registrul de
+ *       comenzi se citește și din Laborator, și de pe Rută (v. `orders_readable()`).
+ *   comenzi.scrie             = fostul `GP_ORDER_CREATE_ROLES`. Hotărârea
+ *       patronului din 18 sept. 2026: comanda intră direct în sistem numai de la
+ *       admin, manager și fondator; a celorlalți ajunge la ei ca cerere.
+ *   conduce_tura              = fostul `GP_SHIFTS_ROLES`: raportul de ore și
+ *       tabla de anunțuri. Aceiași trei oameni ca la `comenzi.scrie`, și totuși
+ *       alt rând: una răspunde la „cine citește statul de plată", cealaltă la
+ *       „cine răspunde de ce intră în laborator". Angajatul lipsește dinadins —
+ *       raportul le-ar arăta tuturor orele tuturor.
+ *   pontaj.corectura, ruta.ordine, recomandari.bani = erau `require_admin()`
+ *       pe câte o rută din panouri deschise și altora.
+ *   incasari, plati.*, preturi, costuri, comenzi.sterge = ale rundei 2.7.0.
+ *       Tot ce ține de bani e, din pornire, numai al fondatorului.
+ */
+const GP_DREPT_IMPLICIT = [
+    'comenzi'          => ['admin', 'manager', 'agent_vanzari'],
+    'laborator'        => ['admin', 'manager', 'angajat'],
+    'ruta'             => ['admin', 'manager', 'angajat'],
+    'depozit'          => ['admin', 'manager', 'angajat'],
+    'pontaj'           => ['admin', 'manager', 'angajat', 'utilizator_lab'],
+    'catalog'          => ['admin'],
+    'conturi'          => ['admin'],
+    'recomandari'      => ['admin'],
+    'jurnal'           => ['admin'],
+    'setari'           => ['admin'],
+    'statistici'       => [],
+    'incasari'         => [],
+    'comenzi.scrie'    => ['admin', 'manager'],
+    'comenzi.sterge'   => ['admin'],
+    'conduce_tura'     => ['admin', 'manager'],
+    'pontaj.corectura' => ['admin'],
+    'ruta.ordine'      => ['admin'],
+    'recomandari.bani' => ['admin'],
+    'plati.stare'      => [],
+    'plati.telegram'   => [],
+    'plati.prag'       => [],
+    'plati.ocoleste'   => [],
+    'preturi'          => [],
+    'costuri'          => [],
+];
+
+/**
+ * Care din cheile de mai sus sunt PANOURI — o intrare de meniu, o pagină. Restul
+ * sunt fapte: un buton ori o coloană dintr-un panou.
+ *
+ * Scrisă pe nume, nu ghicită după punct: `conduce_tura`, `preturi` și `costuri`
+ * sunt fapte fără punct în nume. Pagina „Acces" desparte după ea cele două
+ * grupe de rânduri, iar o faptă poate atârna numai de un panou de aici.
+ */
+const GP_DREPT_PANOURI = ['comenzi', 'laborator', 'ruta', 'depozit', 'pontaj', 'catalog', 'conturi',
+    'recomandari', 'jurnal', 'setari', 'statistici', 'incasari'];
+
+/**
+ * Cele trei panouri care deschid registrul de comenzi, fiecare cu felia lui.
+ *
+ * Scrise o singură dată, fiindcă le întreabă două locuri care trebuie să spună
+ * mereu același lucru: `orders_readable()` („are ce căuta în registru?") și
+ * poarta rutelor care lucrează pe o comandă (`require_drept(...)`, la cotație
+ * și la mutarea prin etape). Despărțite, al patrulea panou cu comenzi ar fi
+ * fost adăugat într-unul și uitat în celălalt.
+ */
+const GP_DREPT_REGISTRU = ['comenzi', 'laborator', 'ruta'];
+
+/**
+ * De ce are nevoie o faptă ca bifa ei să ajute: ORICARE din panourile date.
+ *
+ * „Pune ordinea opririlor" fără panoul Rută e o bifă fără ușă: omul n-ar avea
+ * de unde apăsa, iar ruta din spate tot i-ar răspunde. Dependența se cere pe
+ * server, nu numai în pagină, ca luarea unui panou să ia cu ea și faptele lui —
+ * fondatorul debifează „Depozit" și nu trebuie să-și amintească de „Prețuri".
+ */
+const GP_DREPT_CERE = [
+    'comenzi.scrie'    => ['comenzi'],
+    'comenzi.sterge'   => ['comenzi'],
+    'conduce_tura'     => ['pontaj', 'laborator'],
+    'pontaj.corectura' => ['pontaj'],
+    'ruta.ordine'      => ['ruta'],
+    'recomandari.bani' => ['recomandari'],
+    'plati.stare'      => ['incasari'],
+    'plati.telegram'   => ['incasari'],
+    'plati.prag'       => ['conturi'],
+    'plati.ocoleste'   => ['comenzi'],
+    'preturi'          => ['depozit'],
+];
+
+/**
+ * Celulele care nu se pot schimba, cu valoarea lor.
+ *
+ * `pontaj` × `utilizator_lab` rămâne DA: e singura pagină a rolului. Luată,
+ * contul n-ar mai avea unde intra, iar omul n-ar mai putea ponta.
+ *
+ * `comenzi.scrie` × `agent_vanzari` rămâne NU: comenzile agentului trec pe la
+ * birou, ca cereri. Nu e o alegere de meniu, e drumul banilor lui — codul de
+ * recomandare și comisionul se leagă la acceptare, iar formularul îi ascunde
+ * câmpurile pe care le-ar scrie o comandă directă (runda 2.6.0).
+ */
+const GP_DREPT_LACATE = [
+    'pontaj'        => ['utilizator_lab' => true],
+    'comenzi.scrie' => ['agent_vanzari' => false],
+];
+
+/** De ce e fixă fiecare celulă de mai sus — vorba arătată în pagina „Acces". */
+const GP_DREPT_LACATE_MOTIV = [
+    'pontaj'        => ['utilizator_lab' => 'E singura pagină a omului de laborator.'],
+    'comenzi.scrie' => ['agent_vanzari' => 'Comenzile agentului trec pe la birou, ca cereri.'],
+];
+
+/**
+ * Plafonul contului de sistem („panou", tableta din laborator).
+ *
+ * Contul acela are rolul `angajat`, dar nu e un om: se deschide cu un cod
+ * comun, de pe o tabletă la care ajunge oricine intră în laborator. Orice i-ar
+ * da fondatorul rolului `angajat` — Catalogul, Conturile —, tableta rămâne cu
+ * cele patru panouri pentru care a fost făcută.
+ */
+const GP_DREPT_TABLETA = ['laborator', 'ruta', 'depozit', 'pontaj'];
+
+/** Numele fiecărui drept, cum se citește în pagina „Acces" și în Jurnal. */
+const GP_DREPT_ETICHETE = [
+    'comenzi'          => 'Comenzi',
+    'laborator'        => 'Laborator',
+    'ruta'             => 'Rută',
+    'depozit'          => 'Depozit',
+    'pontaj'           => 'Pontaj',
+    'catalog'          => 'Catalog',
+    'conturi'          => 'Conturi',
+    'recomandari'      => 'Recomandări (toate codurile)',
+    'jurnal'           => 'Jurnal',
+    'setari'           => 'Setări',
+    'statistici'       => 'Statistici',
+    'incasari'         => 'Încasări',
+    'comenzi.scrie'    => 'Scrie comenzi și acceptă cereri',
+    'comenzi.sterge'   => 'Șterge comenzile anulate',
+    'conduce_tura'     => 'Conduce tura (raportul de ore, anunțurile)',
+    'pontaj.corectura' => 'Corectează pontajul',
+    'ruta.ordine'      => 'Pune ordinea opririlor',
+    'recomandari.bani' => 'Plătește comisioane',
+    'plati.stare'      => 'Schimbă starea plății',
+    'plati.telegram'   => 'Raportul de bani pe Telegram',
+    'plati.prag'       => 'Pragul de neplătite al unui client',
+    'plati.ocoleste'   => 'Trece peste prag',
+    'preturi'          => 'Prețurile ingredientelor',
+    'costuri'          => 'Costul produselor și profitul',
+];
+
+/**
+ * Are baza tabelul matricei? (migrarea 033)
+ *
+ * Aceeași poartă ca `founder_supported()`, cu o deosebire de fond: aici „nu"
+ * nu închide nimic. Fără tabel nu există nicio celulă schimbată, deci răspunde
+ * implicitul — adică aplicația de până ieri. Numai pagina „Acces" află de
+ * lipsă, și o spune (503 `acces_unavailable` la salvare).
+ */
+function acces_supported(): bool
+{
+    static $ok = null;
+    if ($ok !== null) {
+        return $ok;
+    }
+    try {
+        return $ok = (int) scalar(
+            "SELECT COUNT(*) FROM information_schema.TABLES
+              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'role_rights'"
+        ) === 1;
+    } catch (Throwable $e) {
+        error_log('[gp] acces_supported: ' . $e->getMessage());
+        return $ok = false;
+    }
+}
+
+/**
+ * Celulele schimbate de fondator: cheie → rol → da/nu. Ținute minte pe cerere.
+ *
+ * CITIREA NU STĂ ÎN try/catch, dinadins. Dacă tabelul există și nu se poate
+ * citi, nu știm ce a ÎNCHIS fondatorul — iar a răspunde atunci cu implicitul ar
+ * redeschide tocmai ușile pe care le-a încuiat el. Eroarea urcă până la
+ * router, care răspunde 500; o cerere refuzată cu „eroare" e mai cinstită decât
+ * una primită pe un drept care fusese luat.
+ *
+ * `$proaspat` golește memoria: îl cheamă `PUT /acces` după ce a scris, ca
+ * răspunsul lui să arate matricea de DUPĂ salvare.
+ */
+function drepturi_matrice(bool $proaspat = false): array
+{
+    static $m = null;
+    if ($m !== null && !$proaspat) {
+        return $m;
+    }
+    $m = [];
+    if (!acces_supported()) {
+        return $m;
+    }
+    foreach (all('SELECT cheie, rol, permis FROM role_rights') as $r) {
+        $m[(string) $r['cheie']][(string) $r['rol']] = (int) $r['permis'] === 1;
+    }
+    return $m;
+}
+
+/**
+ * O celulă a matricei, fără dependențe: lacătul, apoi ce a scris fondatorul,
+ * apoi implicitul.
+ *
+ * Lacătul stă ÎNAINTEA tabelului: un rând scris cu mâna în bază peste o celulă
+ * fixă nu o deschide.
+ */
+function drept_celula(string $cheie, string $rol): bool
+{
+    if (isset(GP_DREPT_LACATE[$cheie][$rol])) {
+        return GP_DREPT_LACATE[$cheie][$rol];
+    }
+    $m = drepturi_matrice();
+    if (isset($m[$cheie][$rol])) {
+        return $m[$cheie][$rol];
+    }
+    return in_array($rol, GP_DREPT_IMPLICIT[$cheie], true);
+}
+
+/**
+ * Judecata întreagă pentru un rol: rangul, plafonul tabletei, celula, și
+ * panoul de care atârnă fapta. `$vazute` oprește un cerc de dependențe scris
+ * din greșeală în `GP_DREPT_CERE` — azi nu e niciunul.
+ */
+function drept_rol(string $cheie, string $rol, bool $sistem, array $vazute = []): bool
+{
+    if ($rol === 'fondator') {
+        return true;
+    }
+    if (!in_array($rol, GP_DREPT_COLOANE, true)) {
+        return false;
+    }
+    if ($sistem && !in_array($cheie, GP_DREPT_TABLETA, true)) {
+        return false;
+    }
+    if (!drept_celula($cheie, $rol)) {
+        return false;
+    }
+    $cere = GP_DREPT_CERE[$cheie] ?? [];
+    if (!$cere) {
+        return true;
+    }
+    foreach ($cere as $p) {
+        if (!in_array($p, $vazute, true) && drept_rol($p, $rol, $sistem, [...$vazute, $cheie])) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Are contul ăsta dreptul ăsta? Întrebarea care NU oprește cererea.
+ *
+ * `$cine` e rândul de cont (atunci se vede și dacă e contul tabletei), ori
+ * numai rolul, ori nimic — și atunci se întreabă de cel care a făcut cererea.
+ * O cheie necunoscută răspunde „nu" pentru oricine, și pentru fondator: o
+ * greșeală de tipar într-o rută trebuie să închidă ușa, nu s-o deschidă.
+ */
+function drept(string $cheie, $cine = null): bool
+{
+    if (!isset(GP_DREPT_IMPLICIT[$cheie])) {
+        return false;
+    }
+    if ($cine === null) {
+        $cine = current_user();
+        if ($cine === null) {
+            return false;
+        }
+    }
+    if (is_array($cine)) {
+        return drept_rol($cheie, (string) ($cine['role'] ?? ''), (int) ($cine['is_system'] ?? 0) === 1);
+    }
+    return drept_rol($cheie, (string) $cine, false);
+}
+
+/** Are contul măcar unul din drepturile date? */
+function drept_oricare(array $chei, $cine = null): bool
+{
+    foreach ($chei as $cheie) {
+        if (drept((string) $cheie, $cine)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Cere ORICARE din drepturile date, altfel 403. Poarta rutelor de panou.
+ *
+ * Mai multe chei = ruta slujește mai multe panouri: lista de articole o cere
+ * și Depozitul, și rețeta din Catalog (`require_drept('depozit', 'catalog')`).
+ *
+ * Refuzul e cel al lui `require_role()`, literă cu literă: pentru pagină și
+ * pentru probe, „n-ai dreptul" e același răspuns, oricum s-a hotărât.
+ */
+function require_drept(string ...$chei): array
+{
+    $u = require_auth();
+    if (!drept_oricare($chei, $u)) {
+        fail('Nu ai dreptul să accesezi această resursă.', 403, 'forbidden');
+    }
+    return $u;
+}
+
+/**
+ * Toate drepturile unui cont, cheie → da/nu: ce primește pagina lângă `user`
+ * la `/auth/me`, `/auth/login` și `/auth/panel`.
+ *
+ * Pagina nu ține o a doua judecată: întreabă `gp.are('catalog')` și citește de
+ * aici. Lista e întreagă (și cheile cu „nu"), ca o cheie nouă pe care pagina o
+ * cunoaște și serverul încă nu s-o poată deosebi de una refuzată.
+ */
+function drepturi_cont(array $u): array
+{
+    $out = [];
+    foreach (array_keys(GP_DREPT_IMPLICIT) as $cheie) {
+        $out[$cheie] = drept($cheie, $u);
+    }
+    return $out;
+}
+
+/**
+ * Ce are fiecare ROL acum, cheie → da/nu, cu bifele din „Acces" cu tot.
+ *
+ * Pentru pagina „Conturi": lângă lista de roluri stă un rând care spune ce
+ * deschide rolul ales, iar rândul acela repovestea drepturile DIN PORNIRE. După
+ * prima bifă mutată ar fi mințit tocmai omului care împarte rolurile — „Manager
+ * · comenzi, laborator, rută, depozit, pontaj", cu Catalogul deja dat.
+ *
+ * Numai coloanele matricei: fondatorul are mereu tot, clientul nimic. Judecata
+ * e cea a unui om cu rolul acela (`drept_rol`, cu dependențe), nu celula goală;
+ * plafonul tabletei nu intră, fiindcă întrebarea e despre rol, nu despre contul
+ * de sistem.
+ *
+ * NU e matricea de editat: aceea, cu lacăte și cu „din pornire", o dă numai
+ * `GET /acces`, fondatorului. Aici pleacă răspunsul gata judecat, către cine
+ * ține panoul „Conturi" — adică tocmai către cine dă rolurile.
+ */
+function drepturi_pe_roluri(): array
+{
+    $out = [];
+    foreach (GP_DREPT_COLOANE as $rol) {
+        $out[$rol] = [];
+        foreach (array_keys(GP_DREPT_IMPLICIT) as $cheie) {
+            $out[$rol][$cheie] = drept_rol($cheie, $rol, false);
+        }
+    }
+    return $out;
 }
 
 /**
  * Conduce omul ăsta tura? Întrebarea care NU oprește cererea.
  *
- * Perechea lui `e_admin()`, și din același motiv: `require_shifts()` e pentru
- * ușile închise — cine n-are voie primește 403 — iar asta e pentru butoanele
- * care nici nu se desenează. Panoul Laborator o întreabă o dată, la citirea
- * anunțurilor, și primește răspunsul ca `canPost`. Așa pagina nu ține o a doua
- * copie a listei de roluri, care s-ar depărta de asta în tăcere, iar brutarul
- * din fața tabletei nu vede un buton care i-ar răspunde „n-ai voie".
+ * Perechea lui `require_drept('conduce_tura')`: aceea e pentru ușile închise,
+ * asta pentru butoanele care nici nu se desenează. Panoul Laborator o întreabă
+ * la citirea anunțurilor și primește răspunsul ca `canPost`, deci brutarul din
+ * fața tabletei nu vede un buton care i-ar răspunde „n-ai voie".
  */
 function leads_shifts($cine): bool
 {
-    $rol = is_array($cine) ? (string) ($cine['role'] ?? '') : (string) $cine;
-    return in_array($rol, GP_SHIFTS_ROLES, true);
-}
-
-/**
- * Cine poate scrie o comandă DIRECT în sistem, fără ca altcineva s-o
- * încuviințeze.
- *
- * HOTĂRÂREA PATRONULUI, 18 septembrie 2026: „comenzile nu apar direct în
- * sistem decât când sunt adăugate de admin/manager/fondator — restul apar ca
- * și cereri pentru ei". Până azi ușa era `require_staff()`, adică toți cei
- * din `GP_STAFF_ROLES`: agentul de vânzări scria o comandă care intra pe loc
- * în laborator, fără ca cineva s-o fi încuviințat — iar `angajat` putea face
- * același lucru prin API, deși meniul lui nici n-are Comenzi (`PANOURI_ROL`,
- * shared/gp-api.js). Așa se închide și gaura aceea, care nu se vedea de
- * nicăieri din aplicație.
- *
- * ACEIAȘI OAMENI CA `GP_SHIFTS_ROLES`, ȘI TOTUȘI ALTĂ LISTĂ. Azi cele două au
- * exact aceleași trei roluri, deci un alias ar fi mers — și ar fi fost o
- * capcană. Una răspunde la „cine citește statul de plată", cealaltă la „cine
- * răspunde de ce intră în laborator": două întrebări deosebite, care se despart
- * la primul rol nou. Un „șef de tură" care numără orele fără să comande, sau un
- * „dispecer" care scrie comenzi fără să vadă salariile colegilor — cu o listă
- * împărțită, oricare din cei doi ar fi căpătat dintr-o mișcare și dreptul
- * celălalt, fără ca nimeni să fi cerut asta. Două liste care se nimeresc la fel
- * nu sunt aceeași listă.
- *
- * CE NU ÎNCHIDE, spus pe față: numai NAȘTEREA comenzii. Mutarea prin stadii,
- * cotația și editarea rămân pe `require_staff()`, fiindcă omul din laborator
- * trebuie să poată duce mai departe o comandă pe care n-avea voie s-o scrie.
- * Poarta stă pe fapta de a crea, nu pe registru.
- *
- * CELE DOUĂ UȘI PE CARE SE NAȘTE O COMANDĂ sunt `route_orders_create()` și
- * `route_requests_accept()` — atât, iar `.claude/test-comanda-peste-tot.mjs` le
- * numără tocmai ca să rămână atât. Amândouă trec de-acum prin lista asta, deci
- * „cererile pot fi aprobate doar de admin/manager/fondator" și „comanda se
- * scrie doar de ei" sunt o singură regulă, scrisă o singură dată.
- */
-const GP_ORDER_CREATE_ROLES = ['admin', 'fondator', 'manager'];
-
-/** Scurtătură pentru cine scrie comenzi de-a dreptul. Vezi GP_ORDER_CREATE_ROLES. */
-function require_order_create(): array
-{
-    return require_role(...GP_ORDER_CREATE_ROLES);
+    return drept('conduce_tura', $cine);
 }
 
 /**
  * Scrie omul ăsta comenzi de-a dreptul? Întrebarea care NU oprește cererea.
  *
- * Perechea lui `require_order_create()`, cum e `e_admin()` pentru
- * `require_admin()`. Formularul de comandă rămâne ACELAȘI pentru toți cei care
- * îl pot deschide; se schimbă numai ușa pe care pleacă la salvare: `POST
- * /orders` pentru cine e în listă, `POST /requests` pentru ceilalți. O
- * întrebare, nu o poartă, fiindcă agentul de vânzări n-a greșit cu nimic —
- * cererea lui e drumul cuvenit, nu un refuz, și n-are de ce să afle asta
- * dintr-un 403 după ce a scris toată comanda.
+ * Formularul de comandă rămâne ACELAȘI pentru toți cei care îl pot deschide;
+ * se schimbă numai ușa pe care pleacă la salvare: `POST /orders` pentru cine
+ * are dreptul, `POST /requests` pentru ceilalți. O întrebare, nu o poartă,
+ * fiindcă agentul de vânzări n-a greșit cu nimic — cererea lui e drumul
+ * cuvenit, nu un refuz, și n-are de ce să afle asta dintr-un 403 după ce a
+ * scris toată comanda.
+ *
+ * CE NU ÎNCHIDE dreptul ăsta: numai NAȘTEREA comenzii (`route_orders_create()`
+ * și `route_requests_accept()`, pe care .claude/test-comanda-peste-tot.mjs le
+ * numără). Mutarea prin etape și cotația rămân ale oricui are registrul
+ * deschis, fiindcă omul din laborator trebuie să poată duce mai departe o
+ * comandă pe care n-avea voie s-o scrie.
  *
  * Oglinda ei din pagină e `gp.eScrieComenzi()` (shared/gp-api.js).
  */
 function writes_orders($cine): bool
 {
-    $rol = is_array($cine) ? (string) ($cine['role'] ?? '') : (string) $cine;
-    return in_array($rol, GP_ORDER_CREATE_ROLES, true);
+    return drept('comenzi.scrie', $cine);
 }
 
 /**
- * Cine poate sta în fața tabletei de pontaj: `GP_OPS_ROLES` plus omul de
- * laborator.
+ * Îi e deschis registrul de comenzi, fie și o singură felie din el?
  *
- * DE CE O A PATRA LISTĂ, și nu `GP_OPS_ROLES` lărgită. Rolul
- * `utilizator_lab` e al omului care PONTEAZĂ, atât. Băgat în `GP_OPS_ROLES`,
- * ar fi căpătat odată cu tableta și depozitul, și laboratorul, și foaia de drum
- * a șoferului — trei uși pe care nimeni n-a cerut să i le deschidă. Așa capătă
- * exact una.
+ * Comenzile nu sunt un singur panou, sunt un registru pe care fiecare îl vede
+ * altfel: clientul pe ale lui, agentul pe ale cumpărătorilor aduși de el,
+ * Laboratorul și Ruta pe toate, ca să aibă ce coace și ce duce. Cât cuprinde
+ * fiecare se hotărăște în `orders_visibility_filter()` (api/routes/orders.php);
+ * aici e întrebarea dinainte — „are omul ăsta ce căuta în registru?".
  *
- * DE CE SE SPRIJINĂ PE `GP_OPS_ROLES` ÎN LOC SĂ-ȘI SCRIE NUMELE. Cine stă la
- * tabletele din laborator e aceeași lume cu cine deschide Laboratorul, Ruta și
- * Depozitul — sunt aceleași tablete, pe aceleași mese. Scrisă din nou, lista ar
- * fi rămas în urmă la primul rol nou.
+ * De aceea TREI chei, nu una: luarea panoului „Comenzi" unui manager nu-i
+ * poate lua și comenzile de pe ecranul laboratorului. Cine n-are niciunul din
+ * cele trei panouri nu vede nimic — azi, omul de laborator, care are numai
+ * pontajul. Rolul de mâine nu vede nimic până nu-i dă cineva un panou.
  *
- * CE NU FACE POARTA ASTA, spus pe față: nu se uită de UNDE vine cererea.
- * Aplicația n-are nicăieri o îngrădire după loc, iar pontajul n-o aduce el cel
- * dintâi. Cine are cont și cod își poate ponta venirea și de acasă, de pe
- * telefon. Ce oprește poarta e ALTCEVA, și e lucrul cerut: nimeni nu poate
- * ponta ÎN LOCUL ALTUIA, fiindcă la fiecare apăsare se cere codul personal.
+ * STĂ ÎN `lib/auth.php` și nu în `routes/orders.php` fiindcă router-ul încarcă
+ * un singur fișier de rute pe cerere, iar marginea asta o cere și `/requests`.
  */
-const GP_CLOCK_ROLES = [...GP_OPS_ROLES, 'utilizator_lab'];
-
-/** Scurtătură pentru tableta de pontaj. Vezi GP_CLOCK_ROLES. */
-function require_clock(): array
-{
-    return require_role(...GP_CLOCK_ROLES);
-}
-
-/**
- * Cine vede cifrele casei: NUMAI fondatorul.
- *
- * Singura listă din casă mai strâmtă decât `GP_ADMIN_ROLES`, și singura în
- * care `admin` nu intră. Restul ușilor merg în cealaltă direcție — fondatorul
- * e administrator PLUS ceva — iar aici e pe dos, dinadins: administratorul
- * conduce patiseria zi de zi, fondatorul e cel ale cărui sunt banii. Cât a
- * încasat firma într-o lună, cine sunt clienții care aduc cel mai mult și cât
- * scoate fiecare produs nu sunt cifre de care are nevoie cineva ca să-și facă
- * treaba; sunt cifrele proprietarului. Hotărârea e a patronului, scrisă aici
- * ca s-o poată schimba dintr-un singur loc.
- *
- * DE CE O LISTĂ, DACĂ E UN SINGUR ROL ȘI O SINGURĂ UȘĂ. Din același motiv ca
- * `GP_ADMIN_ROLES`: ziua în care patronul spune „să vadă și contabilul" e o
- * schimbare de un cuvânt aici, nu o căutare prin rute. Iar oglinda de pe
- * pagină — `PANOURI_ROL` din shared/gp-api.js — are, așa, un nume la care să
- * trimită, nu un rol scris din nou.
- *
- * `require_role('fondator')` scris de mână NU e semnalat de .claude/check-php.mjs
- * (vezi explicația de acolo: regula cere ca `admin` să fie în listă). Deci paza
- * obiceiului ăstuia nu vine de la ea, ci de la proba din .claude/test-statistici.mjs,
- * care cere ca fiecare din celelalte roluri să ia 403 pe ușa asta.
- */
-const GP_STATS_ROLES = ['fondator'];
-
-/** Scurtătură pentru cifrele casei. Vezi GP_STATS_ROLES. */
-function require_stats(): array
-{
-    return require_role(...GP_STATS_ROLES);
-}
-
-/**
- * Cui îi sunt deschise comenzile, fie și o singură felie din ele.
- *
- * A CINCEA LISTĂ, și prima care cuprinde și clientul. Comenzile nu sunt un
- * panou, sunt un registru pe care fiecare îl vede altfel: clientul pe ale lui,
- * agentul pe ale cumpărătorilor aduși de el, personalul de operațiuni pe toate.
- * Cât cuprinde fiecare se hotărăște în `orders_visibility_filter()`
- * (api/routes/orders.php); lista de aici răspunde la întrebarea dinainte —
- * „are omul ăsta ce căuta în registru, oricât de puțin?".
- *
- * DE CE E NEVOIE DE ÎNTREBAREA ASTA SEPARAT. Filtrul avea până acum două
- * îngustări și o cădere: clientul, agentul, iar restul — tot. Cât timp „restul"
- * era personalul, regula era dreaptă și nimeni n-avea ce scrie. Rolul
- * `utilizator_lab` din migrarea 014 nu e niciunul din cele trei, și a moștenit
- * în tăcere registrul întreg: nume, telefoane, adrese și sume, pe o sesiune
- * deschisă de pe tableta din laborator. Nimeni n-a scris asta; a picat din
- * formă. Numită pe față, forma nu mai poate face daruri — rolul de mâine nu
- * vede nimic până nu-l trece cineva aici.
- *
- * DE CE STĂ ÎN `lib/auth.php` ȘI NU ÎN `routes/orders.php`. Router-ul încarcă
- * un singur fișier de rute pe cerere (api/index.php), iar marginea asta o cere
- * și `/requests` — o cerere are tot nume, telefon și adresă.
- */
-const GP_ORDERS_ROLES = [...GP_OPS_ROLES, 'client', 'agent_vanzari'];
-
-/** Îi e deschis registrul de comenzi? Vezi GP_ORDERS_ROLES. */
 function orders_readable($cine): bool
 {
     $rol = is_array($cine) ? (string) ($cine['role'] ?? '') : (string) $cine;
-    return in_array($rol, GP_ORDERS_ROLES, true);
+    if ($rol === 'client') {
+        return true;
+    }
+    return drept_oricare(GP_DREPT_REGISTRU, $cine);
 }
 
 /**
- * Are contul drepturi depline? Întrebarea care NU oprește cererea.
+ * E contul de RANG — administrator ori fondator? Întrebarea care NU oprește
+ * cererea.
  *
- * `require_admin()` e pentru ușile închise: cine n-are voie primește 403 și
- * gata. Dar sunt și locuri unde răspunsul doar se îngustează — `?all=1` din
- * catalog, unde pentru restul lumii înseamnă „fără produsele scoase", nu un
- * refuz. Acolo trebuia o întrebare, nu o poartă, și fiindcă nu exista, cele
- * trei locuri au ajuns să scrie `$u['role'] === 'admin'` de mână — adică
- * fix greșeala pe care GP_ADMIN_ROLES o previne: fondatorul rămânea afară.
+ * Perechea lui `require_admin()`, și de la migrarea 033 la fel de rară ca ea.
+ * Se întreabă numai unde răspunsul nu se poate da cu o bifă din „Acces": cine
+ * confirmă o livrare fără semn, cine ia jos anunțul altuia, cine se poate
+ * atinge de un cont de conducere. „Vede Catalogul întreg?", „face conturi din
+ * Conturi?" NU mai sunt întrebări de rang — acelea sunt `drept('catalog')`,
+ * `drept('conturi')`, și le poate primi și un manager.
+ *
+ * De ce o listă și nu `$u['role'] === 'admin'` scris de mână: fix greșeala pe
+ * care GP_ADMIN_ROLES o previne — fondatorul rămânea afară.
  *
  * Oglinda lui `gp.eAdmin()` din shared/gp-api.js, până și la ce primește:
  * rolul singur sau rândul întreg, ca apelantul să nu scrie de fiecare dată

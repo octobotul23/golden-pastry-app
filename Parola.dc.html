@@ -45,7 +45,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 <sc-for list="{{ meniu }}" as="m" hint-placeholder-count="9">
 <sc-if value="{{ m.activ }}" hint-placeholder-val="{{ false }}">
-<span class="gp-navrow gp-navrow--on">{{ m.et }}</span>
+<span class="gp-navrow gp-navrow--on" aria-current="page">{{ m.et }}<gp-aici></gp-aici></span>
 </sc-if>
 <sc-if value="{{ m.link }}" hint-placeholder-val="{{ true }}">
 <a class="gp-navrow" href="{{ m.href }}">{{ m.et }}</a>
@@ -414,8 +414,8 @@ class Component extends DCLogic {
       fondShown: !!(a && a.gata) && !provizorie && !eSistem,
       fondCap: eFondator ? "Ești fondator" : "Contul de fondator",
       fondText: eFondator
-        ? "Poți face și desface administratori și alți fondatori, din pagina Conturi. E singurul lucru pe care un administrator nu-l poate face."
-        : "Fondatorul e administrator, plus singurul care dă și ia rolurile de administrator și de fondator. Nu ți-l poți da singur: dacă ceri, pleacă un e-mail cu un link de confirmare către adresa firmei, iar cine deschide cutia aceea hotărăște.",
+        ? "Poți face și desface administratori și alți fondatori, din pagina Conturi, și hotărăști din pagina „Acces” cine ce vede în aplicație."
+        : "Fondatorul are tot ce are un administrator și, în plus, dă și ia rolurile de administrator și de fondator și hotărăște cine ce vede în aplicație. Nu ți-l poți da singur: dacă ceri, pleacă un e-mail cu un link de confirmare către adresa firmei, iar cine deschide cutia aceea hotărăște.",
       fondButon: !eFondator && !S.fondGata,
       fondLabel: S.fondCer ? "Se trimite…" : "Cere drept de fondator",
       fondErr: S.fondErr,
