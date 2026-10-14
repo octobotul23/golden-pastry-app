@@ -193,6 +193,24 @@ return [
     // nume — nu cade în tăcere pe adresa adevărată.
     'telegram_api_base' => '',
 
+    // --- certificatul de probă al căsuței de e-mail -----------------------
+    // PE SERVER RĂMÂNE GOALĂ. Goală (ori lipsă) înseamnă că certificatul
+    // serverului de e-mail se verifică după certificatele sistemului — singura
+    // valoare bună pentru site.
+    //
+    // Cheia există pentru probe: pe calculatorul de lucru se pune aici calea
+    // certificatului unui server de e-mail local (.claude/ciot-smtp.mjs îl face
+    // pe loc), ca e-mailurile trimise de probe prin „căsuță” să poată fi
+    // numărate fără să plece nicăieri.
+    //
+    // De ce stă aici și nu în Setări: un certificat de încredere pus dintr-un
+    // ecran ar lăsa pe oricine are ecranul să dea parola căsuței unui server
+    // străin. Și nici de aici nu poate face asta: cheia e ascultată NUMAI când
+    // gazda căsuței din Setări e calculatorul însuși (127.0.0.1, localhost);
+    // pentru orice altă gazdă e ca și cum n-ar fi. Nu oprește verificarea —
+    // adaugă un singur certificat de încredere; numele se verifică mai departe.
+    'smtp_ca_file' => '',
+
     // 'dev' arată mesaje de eroare detaliate. Pe server pune 'prod'.
     'env' => 'dev',
 ];

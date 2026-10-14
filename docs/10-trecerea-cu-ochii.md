@@ -5,13 +5,13 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **două sute șaisprezece minute** cu totul. Nu trebuie făcută dintr-o
-bucată: fiecare din cele douăzeci și două de plimbări stă singură și își spune
-la început cât ține. Cifra de sus e suma minutelor scrise acolo, plus cele ale
-bucăților care au minutele lor: 4.4, 7.7 și 7.8 — dacă se mai adaugă o
-plimbare, se adună și aici.
+Durează **două sute treizeci și cinci de minute** cu totul. Nu trebuie făcută
+dintr-o bucată: fiecare din cele douăzeci și trei de plimbări stă singură și
+își spune la început cât ține. Cifra de sus e suma minutelor scrise acolo,
+plus cele ale bucăților care au minutele lor: 4.4, 7.7 și 7.8 — dacă se mai
+adaugă o plimbare, se adună și aici.
 
-Cele douăzeci și două, în ordinea în care se fac cel mai ușor:
+Cele douăzeci și trei, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -86,9 +86,15 @@ Cele douăzeci și două, în ordinea în care se fac cel mai ușor:
     (21.4), formularul din „Comenzi" care întreabă la „înapoi" (21.5), copia
     cu ziua goală, din „Istoric" (21.6) și întrebarea din Catalog, la clicul
     pe lângă formular (21.7).
-22. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+22. **Runda 2.7.5** — raportul de bani, și din Setări (22.1), cartonașul
+    „E-mail" cu calea spusă pe față și testul lui (22.2), „Ți-ai uitat
+    parola?" cu urma din Jurnal (22.3), casetele de Telegram, la fondator și
+    la administrator (22.4), parola care se poate dicta (22.5), codul de
+    recomandare căutat după nume (22.6) și bara de jos a telefonului, pe un
+    rând (22.7).
+23. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A douăzeci și doua se face la capăt dinadins: prinde într-o singură trecere
+A douăzeci și treia se face la capăt dinadins: prinde într-o singură trecere
 tot ce ai deschis mai devreme.
 
 ---
@@ -814,7 +820,8 @@ telefon. Dacă adresa nu răspunde, pornește
 
 **Apeși:** `testadmin` → `/lab/setari.html` → fila **„Notificări"**. Cartonașul
 **E-mail** trebuie să fie pornit și să aibă o adresă în „Adresa care primește
-anunțul" (oricare: nu pleacă nimic). Sus, în **„Ce anunțuri primești, și pe
+anunțul" (oricare: nu pleacă nimic, cât caseta „Server SMTP", adusă de 2.7.5
+mai jos în cartonaș, e goală — 22.2). Sus, în **„Ce anunțuri primești, și pe
 unde"**, bifezi **E-mail** pe rândul **„Comandă anulată"** și îl lași nebifat pe
 **„Comandă livrată"** → **„Salvează"**. Notează-ți cum erau bifele când ai
 venit: la capăt le pui la loc.
@@ -1189,13 +1196,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.7.0 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.7.5 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.7.0` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.7.5` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1384,7 +1391,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.7.0 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.7.5 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -1899,7 +1906,8 @@ Comanda nouă pornește pe un mod care pleacă cu mașina și **fără zonă**, 
 zonă nu se salvează (*„Alege zona: fără ea, oprirea nu apare corect pe ruta
 șoferului."*); așa că la **„Zonă"** alegi una din oraș, oricare. Jos, caseta
 **„Cod de recomandare"** vine cu codul tău scris în ea, dacă ai unul: o golești,
-ca o comandă de probă să nu scrie comision pe numele nimănui.
+ca o comandă de probă să nu scrie comision pe numele nimănui. (De la 2.7.5,
+caseta caută și după nume — 22.6.)
 Pe poziție alegi întâi varianta **„Congelate"**, apoi scrii cantitatea
 **150** și, la nume, „plimbare".
 
@@ -2332,7 +2340,8 @@ nouă"**.
   și butonul **„Adaugă comanda"**.
 
 Golește caseta codului, dacă e ceva în ea: comanda de probă n-are voie să scrie
-comision pe numele nimănui.
+comision pe numele nimănui. De la 2.7.5, în caseta goală scrie șters *„cod ori
+nume, ex. Octavian"*: caută și după numele omului (22.6).
 
 **Apeși „Adaugă comanda"**, cu formularul gol. **Trebuie să vezi:** *„Scrie
 numele clientului."* Scrii la „Client" `Plimbare 2.6.0 livrare` și apeși iar.
@@ -2351,7 +2360,8 @@ salvat nimic.
   nicio poziție."*;
 - jos, **„Nicio poziție"** și butonul **„Gata"**;
 - căsuța de căutare **fără** cursor în ea: pe telefon, tastatura ar acoperi
-  tocmai cardurile.
+  tocmai cardurile. De la 2.7.5, cât scrii în ea pe telefon, piciorul cu
+  „Gata" se dă la o parte și se întoarce când închizi tastatura (22.7).
 
 **Apeși „+"** pe cardul unui produs.
 
@@ -3193,7 +3203,9 @@ pentru «Plimbare 2.7.0 bani» e acum cel general."*, pastila **„Avertizare
 
 ### 19.6 „Raport pe Telegram": ce are, și cum îl vezi fără să plece
 
-**Trebuie să vezi**, pe aceeași pagină, cartonașul **„Raport pe Telegram"**:
+**Trebuie să vezi**, pe aceeași pagină, cartonașul **„Raport pe Telegram"**
+(de la 2.7.5, aceleași setări se văd și se salvează și din Setări → fila
+„Notificări" → „Telegram" — 22.1):
 - *„De două ori pe zi, în grupul ales: cât e de încasat, cât s-a încasat și ce
   amânări au trecut de termen."*;
 - **„Chat ID"** — gol din pornire, iar cât e gol raportul nu pleacă nicăieri.
@@ -3271,8 +3283,8 @@ Fiecare răspuns începe cu `plati` și cu clipa. Tot răspunsuri bune sunt:
 - `uscat · oprit: Botul de Telegram nu are token. Pune-l în Setări, la
   Telegram.` — pe calculatorul ăsta botul nu e legat, deci textul raportului
   nu se poate vedea de aici;
-- `uscat · oprit: Raportul de bani nu are chat. Pune numărul chatului în
-  Încasări › Raport pe Telegram.` — n-ai salvat „Chat ID";
+- `uscat · oprit: Raportul de bani nu are chat. Pune numărul chatului la
+  „Raport pe Telegram” și salvează.` — n-ai salvat „Chat ID";
 - `uscat · nimic de trimis` — ora de la `--acum` nu cade în cele două ore de
   după „Ora 1" ori „Ora 2", ori raportul acelei ore a plecat deja în ziua
   scrisă.
@@ -3707,7 +3719,7 @@ marginea de jos. Clientul și cine scrie comenzi din panou își găsesc comenzi
 vechi într-o pagină de istoric, cu **„Comandă din nou"** pe fiecare. Iar ce a
 scris omul într-un formular nu se mai pierde fără o întrebare — pe 4 octombrie
 ai pierdut chiar tu un produs nou, scris pe jumătate, apăsând alături de
-formular. Tot pe pachetul construit (8101), pe calculator (1440). Plimbarea 22
+formular. Tot pe pachetul construit (8101), pe calculator (1440). Plimbarea 23
 trece prin toate ecranele, la cele trei lățimi; aici vezi numai ce a adus runda.
 
 **Pregătești**, în fereastra obișnuită: `http://127.0.0.1:8101/lab/index.html`
@@ -4022,7 +4034,395 @@ face nimic. Vorbele sunt ale fiecărei pagini: „produsul" aici, „comanda nou
 
 ---
 
-## 22 · Telefon, tabletă, calculator
+## 22 · Runda 2.7.5: raportul de bani în Setări, e-mailul care pleacă, casetele de Telegram, parola de dictat, codul după nume, bara de pe telefon
+
+*Nouăsprezece minute. Cele șase lucruri cerute pe 10 octombrie 2026, fiecare
+văzut cu ochii: raportul de bani și din Setări, cartonașul „E-mail" și linkul
+de la „Ți-ai uitat parola?", casetele de Telegram, parola care se poate dicta,
+codul de recomandare căutat după nume și bara de jos a telefonului. Făcută cum
+scrie, plimbarea nu salvează nicio comandă și nu trimite nimic în lume:
+e-mailurile ei cad în Mailpit.*
+
+Pe 10 octombrie 2026, după ce 2.7.0 a urcat pe site, ai cerut șase lucruri.
+Setările raportului de bani să stea și în Setări, lângă celelalte ale
+Telegramului. E-mailul de la „Ți-ai uitat parola?" să plece iar. Parolele
+propuse de panou să se poată dicta la telefon. Codul de recomandare să se
+găsească după numele omului. O apăsare din grupul de pe Telegram să poarte
+numele celui care a apăsat, nu al altcuiva. Iar pe telefon, barele de jos să nu
+mai acopere formularul cât scrii. Tot pe pachetul construit (8101), pe
+calculator (1440), afară de 22.7. Plimbarea 23 trece prin toate ecranele, la
+cele trei lățimi; aici vezi numai ce a adus runda.
+
+**Trei lucruri nu se văd de pe calculatorul tău**, iar plimbarea nu se preface
+că le arată:
+
+- **apăsarea adevărată din grup.** Telegram nu leagă un bot de un server de
+  acasă, deci aici nu apasă nimeni nimic. Vezi casetele (22.4); apăsarea, cu
+  numele tău și cu „cont nelegat", se face pe site, după urcare, cum scrie în
+  `docs/09-actualizare-vps.md`, la „Ziua actualizării la 2.7.5";
+- **e-mailul plecat în lume.** Aici orice e-mail cade în Mailpit. Dacă serverul
+  are un program de poștă și dacă mesajul trimis prin căsuța firmei ajunge în
+  Inbox se vede numai pe site, la aceiași pași;
+- **tastatura telefonului.** Unealta din F12 strânge pagina cât un telefon, dar
+  nu deschide nicio tastatură. Bara pe un rând se vede aici (22.7); bara
+  desprinsă cât scrii, numai pe un telefon adevărat, pe site.
+
+**Pregătești**, cu `demo-fondator`, două lucruri:
+
+- `/lab/conturi.html` → **„+ Cont nou"**. La **„Nume afișat"** scrii
+  `Plimbare 2.7.5`, la **„Utilizator"** `plimbare-275`, la **„Parolă"** orice,
+  de cel puțin 8 caractere, la **„E-mail de recuperare"**
+  `plimbare-275@example.com` — o adresă care nu e a nimănui —, iar la
+  **„Acces"** alegi **„Client"**. Casetele clientului, apărute acum, le lași
+  goale → **„Adaugă contul"**. Sus trebuie să scrie *„Contul «Plimbare 2.7.5» a
+  fost creat ca client."* Pe contul ăsta ceri linkul de parolă (22.3) și
+  încerci parolele (22.5); la capăt îl ștergi;
+- deschizi, în altă filă, Mailpit (`http://127.0.0.1:8025`): acolo cade tot ce
+  trimite plimbarea. Dacă adresa nu răspunde, îl pornești ca la 7.5 — fără el,
+  22.2 și 22.3 n-au ce arăta.
+
+### 22.1 Raportul de bani, și din Setări
+
+**Apeși:** `/lab/setari.html` → fila **„Notificări"** → cartonașul
+**„Telegram"**, până la capătul lui.
+
+**Trebuie să vezi** ultima casetă din cartonaș, **„Raport de bani pe
+Telegram"**:
+- *„De două ori pe zi, în grupul ales: cât e de încasat, cât s-a încasat și ce
+  amânări au trecut de termen."*;
+- *„Raportul pleacă și când anunțurile de mai sus sunt oprite: îi trebuie
+  tokenul botului și chatul lui, scris mai jos la „Chat ID"."* Cât „Chat ID" e
+  gol, raportul nu pleacă nicăieri (19.6);
+- aceleași casete ca în „Încasări": **„Chat ID"**, **„Ora 1"** și **„Ora 2"**,
+  fiecare cu **„Oprește"**, **„Amintiri la Amânate"**, **„Adresa panoului"** și
+  **„Ultimele trimiteri"**;
+- butonul ei, **„Salvează"**, stins cât n-ai schimbat nimic, și **„Trimite acum
+  un raport de probă"**;
+- rândul *„Aceleași setări sunt și în Încasări › Raport pe Telegram. Se
+  salvează cu butonul de aici, nu cu «Salvează» de sus."*
+
+Până la 2.7.5 setările astea se găseau numai în „Încasări". Caseta o vede cine
+are raportul de bani: din pornire, numai fondatorul.
+
+> **„Trimite acum un raport de probă" TRIMITE de-adevăratelea** și de aici, ca
+> din „Încasări" (19.6). Plimbarea **nu** îți cere s-o apeși.
+
+**Apeși:** îți notezi ce scrie la **„Ora 2"** și o muți cu o jumătate de oră —
+din 18:00 în 18:30, de pildă.
+
+**Trebuie să vezi** butonul **„Salvează"** al casetei aprins și, sus, **nicio**
+bară „Ai modificări nesalvate": caseta se salvează singură, nu odată cu
+Setările.
+
+**Apeși „Comenzi"**, în bara din stânga, înainte să salvezi. **Trebuie să
+vezi** că nu pleci nicăieri: **„Ieși fără să salvezi raportul de pe
+Telegram?"**, cu *„Ce ai schimbat la raportul de pe Telegram nu s-a salvat și
+se pierde dacă ieși."* și butoanele **„Rămân în formular"** și **„Ies fără să
+salvez"**. Apeși **„Rămân în formular"**, apoi **„Salvează"**, cel din casetă.
+**Trebuie să vezi:** *„Setările raportului sunt salvate."*
+
+**Apeși:** pe **„Încasări"**, în rândul de sub butoane (ori din meniu).
+**Trebuie să vezi**, la **„Raport pe Telegram"**, „Ora 2" cu ora pusă adineauri
+și rândul-pereche: *„Aceleași setări sunt și în Setări › Notificări ›
+Telegram."* Sunt aceleași setări, văzute din două locuri, nu două rânduri de
+setări. Pui aici **„Ora 2"** cum ai notat-o → **„Salvează"** → *„Setările
+raportului sunt salvate."* Te întorci în Setări, la fila „Notificări": caseta
+arată iar ora veche.
+
+### 22.2 Cartonașul „E-mail": pe ce cale pleacă, spus pe față
+
+**Apeși:** tot în fila „Notificări", cartonașul **„E-mail"**.
+
+**Trebuie să vezi**, sub titlu, un rând care spune pe ce cale pleacă e-mailul
+acum. Pe calculatorul tău e galben și începe cu „Trimite direct de pe server":
+*„Trimite direct de pe server. Fără o căsuță în spate, mesajele pot ajunge în
+Spam ori deloc. Completează căsuța de mai jos ca să fie sigur."* Până la 2.7.5
+cartonașul spunea *„Funcționează fără niciun cont extern. Bun ca rezervă."*,
+fără să știe dacă serverul are cu ce trimite.
+
+Dedesubt: *„Comutatorul oprește doar anunțurile de comenzi. Linkurile de la
+«Ți-ai uitat parola?» pleacă oricum, pe aceeași cale."* Apoi **„Adresa care
+primește anunțul"**, **„Adresa expeditor"** și partea nouă, **„Căsuța prin care
+se trimite (SMTP)"**, cu **„Server SMTP"**, **„Port"**, **„Utilizator"**,
+**„Criptare"** și **„Parola căsuței"**. Dacă în locul casetelor scrie *„Căsuța
+nu se poate completa încă: pe server lipsesc rândurile ei, fiindcă migrarea
+sql/037_posta_smtp.sql n-a intrat. …"*, baza de pe calculatorul tău n-a primit
+migrările rundei: oprește-te aici, plimbarea n-are ce arăta.
+
+> **Dacă rândul e verde** — *„Trimite prin căsuța …"* —, pe calculatorul ăsta e
+> salvată o căsuță adevărată, iar testul de mai jos și linkul de la 22.3 ar
+> pleca prin ea, în lume. Golește întâi **„Server SMTP"** → **„Salvează"**,
+> vezi rândul galben, și abia apoi mergi mai departe. Căsuța firmei se
+> completează pe site, nu aici.
+
+Dacă rândul e roșu — *„Serverul nu are niciun program de poștă: acum NU pleacă
+niciun e-mail. Completează căsuța de mai jos."* —, serverul de pe calculatorul
+tău n-are prin ce trimite nici măcar spre Mailpit: testul de mai jos și 22.3
+n-au ce arăta. Treci la 22.4 și scrie ce ai văzut, cum spune „Dacă ceva iese
+altfel".
+
+**Apeși:** în **„Server SMTP"** scrii `mail.exemplu.ro`. **Nu salvezi.**
+
+**Trebuie să vezi**, pe loc:
+- avertizarea *„Căsuța e completată pe jumătate: lipsesc utilizatorul și
+  parola. Cât «Server SMTP» e completat, e-mailul pleacă numai prin căsuță, iar
+  pe jumătate nu pleacă deloc — nici anunțurile, nici linkurile de la «Ți-ai
+  uitat parola?». Completează ce lipsește ori golește «Server SMTP»."*;
+- butonul de test, pe care acum scrie **„Salvează întâi, apoi testează"**;
+- sus, bara **„Ai modificări nesalvate"**, cu **„Renunță"** și **„Salvează"**.
+
+**Apeși „Renunță"** → **„Arunci schimbările nesalvate?"** → **„Le arunc"**.
+**Trebuie să vezi** „Server SMTP" iar gol, bara de sus plecată și butonul de
+test cu numele lui, **„Trimite e-mail de test"**. O căsuță pe jumătate nu se
+salvează nici de probă: cu ea salvată, de pe calculatorul ăsta n-ar mai pleca
+niciun e-mail, nici măcar spre Mailpit.
+
+**Apeși „Trimite e-mail de test".** **Trebuie să vezi**, lângă buton, pe
+galben: *„Serverul a predat mesajul programului lui de poștă. Asta nu înseamnă
+că a și ajuns: caută-l la …, în Inbox și în Spam."*, cu adresa de la „Adresa
+care primește anunțul" în locul punctelor. În Mailpit e un mesaj nou, **„Test
+notificare Golden Pastry"**, iar în Jurnal (`/lab/jurnal.html`) rândul
+*„settings_test · Test predat programului de poștă al serverului (nu se știe
+dacă a ajuns)"*. Până la 2.7.5 pagina scria aici *„Mesajul de test a plecat."*
+— mai mult decât știa: serverul numai îl predase.
+
+Dacă în loc de asta scrie *„Testul a eșuat: Destinatarul nu este configurat în
+Setări."*, caseta „Adresa care primește anunțul" e goală pe calculatorul tău:
+nu e defect. Scrii în ea `plimbare-275@example.com` → **„Salvează"** → apeși
+iar testul, iar la capăt o golești la loc.
+
+### 22.3 „Ți-ai uitat parola?": același răspuns oricui, și urma din Jurnal
+
+**Apeși:** într-o fereastră **privată** (`Ctrl+Shift+N`) — în cea obișnuită ai
+o sesiune deschisă, iar pagina de intrare nu-ți mai arată formularul —,
+`http://127.0.0.1:8101/lab/index.html` → sub butonul de intrare, **„Ți-ai uitat
+parola?"**.
+
+**Trebuie să vezi** cardul **„Ți-ai uitat parola"**: *„Scrie utilizatorul sau
+adresa de e-mail de pe cont. Îți trimitem un link."*, caseta **„Utilizator sau
+e-mail"**, butonul **„Trimite-mi linkul"** și **„← Înapoi la autentificare"**.
+
+**Scrii** `plimbare-275` → **„Trimite-mi linkul"**. **Trebuie să vezi:** *„Dacă
+există un cont cu datele astea, am trimis un e-mail cu instrucțiuni. Dacă nu
+primești nimic în câteva minute, sună-ne: se poate ca pe cont să nu fie trecută
+o adresă."*
+
+**Mai ceri o dată**, pentru un utilizator care nu există: te întorci la card
+(cu **„← Înapoi la autentificare"** și iar **„Ți-ai uitat parola?"**, dacă s-a
+închis), scrii `nimeni-275` → **„Trimite-mi linkul"**. **Trebuie să vezi
+același răspuns, literă cu literă.** Așa trebuie: pagina nu spune nimănui dacă
+un cont există ori nu.
+
+**Deschizi Mailpit.** **Trebuie să vezi un singur mesaj nou** de la cele două
+cereri: **„Parolă nouă pentru contul tău Golden Pastry"**, către
+`plimbare-275@example.com`. Începe cu *„Bună, Plimbare 2.7.5,"*, are un link,
+apoi *„Linkul este valabil … de minute și poate fi folosit o singură dată."* și
+se încheie cu *„Dacă nu ai cerut tu asta, nu trebuie să faci nimic: parola
+rămâne cea veche."* Pentru `nimeni-275` n-a plecat nimic. **Linkul nu-l
+deschizi**: adresa din el e cea trecută în configurarea serverului, care pe
+calculatorul tău poate fi a site-ului adevărat.
+
+**Apeși:** în fereastra obișnuită, `/lab/jurnal.html`. **Trebuie să vezi**, sus
+în listă, un rând pe numele contului „Plimbare 2.7.5": *„password_forgot ·
+Cerere de parolă nouă — e-mailul a fost predat programului de poștă al
+serverului; nu se știe dacă a ajuns"*. Pentru `nimeni-275` nu e niciun rând.
+
+Rândul spune de fiecare dată ce s-a întâmplat cu e-mailul, și asta e noutatea.
+Pe site, cu căsuța completată, se încheie cu *„— e-mailul a fost luat în
+primire de căsuța de e-mail"*; la un cont fără adresă, cu *„— pe cont nu e
+trecută nicio adresă de e-mail, deci nu s-a trimis nimic"*; iar când nu pleacă,
+cu *„— e-mailul NU a plecat: …"* și pricina, și atunci apare și în Setări, în
+caseta roșie de deasupra filelor, *„Parolă uitată — linkul n-a plecat (vezi
+Jurnalul)"*. Până la 2.7.5 rândul scria numai *„Cerere de parolă nouă"*, și
+când nu plecase nimic: din panou nu se vedea că e-mailul nu pleacă.
+
+### 22.4 Casetele de Telegram: contul tău și oamenii din grup
+
+O apăsare adevărată nu se poate face de aici. Vezi, în schimb, că panoul spune
+pe față al cui nume îl poartă o apăsare făcută de pe un cont nelegat.
+
+**Apeși:** cu `demo-fondator`, `/lab/setari.html` → fila **„Notificări"** →
+cartonașul **„Telegram"**.
+
+**Trebuie să vezi:**
+- la **„Butoane sub anunț"**: *„Cât timp botul nu e legat, anunțurile pleacă
+  fără butoane. Legarea se face de pe adresa publică, pe https — Telegram nu
+  acceptă un server de acasă, deci butonul funcționează abia după
+  publicare. …"*;
+- caseta **„Contul meu de Telegram"**, cu semnul **„Nelegat"** și cu *„Cât timp
+  contul tău nu e legat, ce apeși de pe telefon apare cu numele tău de pe
+  Telegram și cu «cont nelegat», pe drepturile contului care a legat botul."*
+  Butonul **„Leagă-mi contul"** e stins; cu săgeata ținută pe el scrie *„Leagă
+  întâi botul, mai sus: butonul tău pleacă tot prin el."*;
+- caseta **„Oameni din grup"**: *„Cine a apăsat un buton sub un anunț, în
+  grupul de pe Telegram. Leagă-l de contul lui din aplicație, ca hotărârile
+  luate de pe telefon să-i poarte numele; nelegat, apare cu numele de pe
+  Telegram și cu «cont nelegat»."*, pe galben *„Numele de pe Telegram și-l pune
+  fiecare singur. Leagă numai un om pe care îl recunoști."*, apoi *„Încă n-a
+  apăsat nimeni un buton în grup."* și butonul **„Reîncarcă lista"**.
+
+Dacă în listă sunt totuși oameni, au rămas de la probele automate: nu legi pe
+niciunul. Dacă în locul listei scrie *„Lista «Oameni din grup» n-are încă
+tabelul ei: rulează întâi sql/036_telegram_oameni.sql."*, baza de pe
+calculatorul tău n-a primit migrările rundei.
+
+**Apeși:** ieși și intri cu `testadmin` → `/lab/setari.html` → „Notificări" →
+cartonașul „Telegram".
+
+**Trebuie să vezi:** din caseta „Oameni din grup", numai titlul și *„Pe oamenii
+din grup îi leagă de conturi numai fondatorul."* — fără listă, fără butoane —,
+și **nicio** casetă „Raport de bani pe Telegram". Cine leagă un om de un cont
+hotărăște al cui nume se scrie sub o cerere acceptată; de aceea o face numai
+fondatorul. Ieși și intri iar cu `demo-fondator`.
+
+Până la 2.7.5, o apăsare din grup făcută de cineva fără cont legat se scria pe
+numele contului care legase botul, oricine ar fi apăsat, și fără niciun semn.
+
+### 22.5 Parola care se poate dicta
+
+**Apeși:** `/lab/conturi.html` → placa **„Plimbare 2.7.5"** → în fișa lui, pe
+rândul **„Parola"**, **„Generează"**.
+
+> **„Generează" schimbă parola pe loc**, fără altă întrebare. De aceea o
+> încerci numai pe contul de aruncat — niciodată pe al unui om adevărat și nici
+> pe cele șapte conturi din tabelul de sus: celelalte plimbări intră cu
+> parolele lor.
+
+**Trebuie să vezi:**
+- sus, *„Parolă nouă pentru «Plimbare 2.7.5». Notează-o acum — nu mai poate fi
+  afișată."*;
+- în fișă, *„Notează parola acum: … — nu mai poate fi afișată după ce pleci de
+  pe pagină."*, cu parola scrisă gros în locul punctelor;
+- parola: **un cuvânt din bucătărie, fără diacritice, și patru cifre lipite de
+  el**, de felul `caramel4821`. Fără liniuță, fără majuscule, fără alte semne,
+  iar cifra de după cuvânt nu e niciodată 0 ori 1, care lângă litere se iau
+  drept „o" și „l". Se poate dicta la telefon dintr-o suflare.
+
+Până la 2.7.5 propunerea avea liniuță între cuvânt și număr și putea avea
+diacritice — „brioșă-1047". Dacă vezi mai mult de patru cifre, lungimea cerută
+a parolei a fost ridicată peste cele 8 caractere din pornire: cifrele în plus
+o completează.
+
+**Apeși:** tot în fișa lui, **„Schimbă parola"** → **„Propune o parolă"**.
+
+**Trebuie să vezi** o parolă de același fel, **aceeași în amândouă casetele** —
+**„Parolă nouă"** și **„Confirmă parola"** —, scrisă la vedere, nu cu buline.
+Apeși încă o dată: alta, tot în amândouă. Nimic nu s-a salvat: propunerea se
+salvează numai cu **„Salvează parola"**. Apeși **„Renunță"**.
+
+La fel propune și pagina **„Parola mea"**, a fiecărui cont, din butonul
+**„Propune o parolă"**.
+
+### 22.6 Codul de recomandare, căutat după nume
+
+Caseta îi găsește numai pe cei care **au** un cod. Pe baza de probă îl are
+clientul `demo-cumparator` — codul `cumparator` —; numele lui afișat îl citești
+în `/lab/conturi.html`, pe placa lui.
+
+**Apeși:** `/lab/comenzi.html` → **„+ Comandă nouă"** → jos, caseta **„Cod de
+recomandare"**. O golești, dacă a venit cu codul tău în ea.
+
+**Trebuie să vezi** în caseta goală, scris șters: *„cod ori nume, ex.
+Octavian"*.
+
+**Scrii o singură literă** din numele lui. **Trebuie să vezi**, sub casetă:
+*„Scrie cel puțin două litere: codul ori numele celui care a trimis-o."*
+
+**Scrii primele trei sau patru litere din nume** — din nume, nu din cod.
+**Trebuie să vezi:**
+- sub casetă, o listă de cel mult cinci rânduri, fiecare cu numele întâi, apoi
+  cu felul omului și cu codul: rândul lui se încheie cu **„· client · cod
+  cumparator"**. La un agent scrie „agent", la un om al casei „din casă";
+- sub listă: *„Alege un rând de mai sus, ca în casetă să intre codul omului. Ce
+  ai scris nu e codul nimănui: salvat așa, nu aduce comision prin el însuși."*
+  (cu mai mult de cinci potriviri începe cu *„Sunt mai mulți decât încap în
+  listă. Scrie mai mult din nume ori alege un rând de mai sus."*). Vorba asta
+  apără comisionul: cine scrie numele și apasă „Salvează" fără să aleagă e
+  oprit la prima apăsare, cu lista deschisă la loc; numai a doua apăsare
+  trimite numele drept cod (fișa 674, din 2.7.5).
+
+**Apeși pe rândul lui** (ori săgeată-jos și `Enter`). **Trebuie să vezi** în
+casetă **codul**, `cumparator`, nu numele; lista închisă; iar dedesubt *„Cod
+cumparator — …, client."*, cu numele lui în locul punctelor.
+
+**Ștergi și scrii** `zzzz`. **Trebuie să vezi**, fără nicio listă: *„Niciun cod
+și niciun nume nu seamănă cu ce ai scris. Poți salva și așa: un cod pe care
+nu-l are nimeni nu aduce comision prin el însuși. Comisionul merge atunci la
+cine l-a adus pe cumpărător, dacă l-a adus cineva."*
+
+Până la 2.7.5 caseta nu căuta nimic: codul trebuia știut pe dinafară. Numele de
+utilizator nu se caută, dinadins — cu el se intră în cont. Agentul n-are caseta
+(16.3), deci nici căutarea.
+
+**Apeși ×**, din colțul formularului; dacă întreabă **„Ieși fără să salvezi
+comanda nouă?"**, **„Ies fără să salvez"**. Nu s-a salvat nicio comandă.
+
+### 22.7 Pe telefon: bara de jos, pe un rând
+
+**Apeși:** `F12` → butonul cu telefon și tabletă → lățimea **390** (ca la
+plimbarea 23) → `/lab/comenzi.html` → **„+ Comandă nouă"**.
+
+**Trebuie să vezi**, jos, bara formularului pe **un singur rând**:
+**„Închide"**, mic, în stânga, și **„Adaugă comanda"** pe tot restul. Până la
+2.7.5 fiecare buton stătea pe rândul lui, iar bara lua 130 px din ecran; acum
+are 66 px, la orice lățime de telefon, de la 320 la 760.
+
+**Apeși „Închide"** — n-ai scris nimic, deci nu întreabă —, apoi, pe o comandă
+din listă, **„Vezi produsele"** → **„Editează comanda"**.
+
+**Trebuie să vezi** jos tot un rând, **„Închide"** și **„Salvează
+modificările"**, iar **„Anulează comanda"** nu în bară, ci în formular,
+deasupra ei, la capătul foii. Pe o comandă anulată, tot acolo stau **„Reface
+comanda"** și **„Șterge definitiv"**. Cu ele în bară, cea veche avea 188 px pe
+o comandă vie și 246 pe una anulată. Apeși **„Închide"**, fără să schimbi
+nimic.
+
+**Apeși:** din meniu, **„Catalog"** → **„+ Produs nou"**. **Trebuie să vezi**
+bara de jos tot pe un rând, cu **„Renunță"** și **„Adaugă în catalog"** — 66 px,
+unde erau 128. Apeși **„Renunță"**.
+
+Pe un rând au ajuns și subsolul foii de mișcare din Depozit (50 px, unde erau
+110) și cel al formularului „Cont nou" din Conturi (46 px, unde erau 100). Pe
+calculator nu s-a schimbat nimic: de la 761 px în sus, bara formularului de
+comandă e cea din 2.7.0, de 70 px. Închizi unealta cu `F12`.
+
+**Ce nu poți vedea aici.** Jumătatea a doua a cererii tale — bara care nu mai
+stă lipită peste câmpuri cât scrii — ține de tastatura telefonului, iar unealta
+din F12 nu deschide niciuna. A fost măsurată pe 10 octombrie 2026 cu o
+tastatură jucată și cu date închipuite, nu pe un telefon adevărat: la 390, cu
+tastatura deschisă, din formularul comenzii rămân la vedere 478 px, unde
+rămâneau 348 pe o comandă nouă, 290 pe una vie și 232 pe una anulată. Cu ochii
+tăi o vezi numai pe site, după urcare, de pe telefon:
+
+- deschizi o comandă nouă. Jos e un singur rând: „Închide", mic, în stânga, și
+  „Adaugă comanda" pe tot restul;
+- apeși în caseta **„Telefon"**. Bara nu mai stă lipită peste câmpuri: o
+  găsești la capătul foii, derulând;
+- închizi tastatura. Bara se întoarce jos, tot pe un rând. Ieși cu „Închide",
+  fără să salvezi.
+
+La fel se dau la o parte, cât scrii: bara de sus a Setărilor („Ai modificări
+nesalvate"), bara de jos din Depozit, cât cauți, bara coșului din magazin, cât
+scrii în „Caută în catalog", și piciorul cu „Gata" al ferestrei „Din catalog"
+(16.2). Două margini rămase, la 320, sunt scrise la „Ce NU e defect aici".
+
+**Pui totul la loc:**
+- **contul de aruncat**: `/lab/conturi.html` → placa **„Plimbare 2.7.5"** →
+  **„Șterge contul"**, apoi **„Apasă din nou: șterg definitiv contul"**. Sus
+  scrie *„Contul «Plimbare 2.7.5» a fost șters."* Cu el pleacă și parola
+  generată la 22.5;
+- **„Ora 2"** e deja cea notată, de la 22.1, iar „Adresa care primește
+  anunțul" o golești la loc → **„Salvează"**, dacă ai scris-o tu la 22.2;
+- **restul n-are ce desface**: din „Comenzi", din Catalog și din căsuța de
+  e-mail nu s-a salvat nimic.
+
+Rămân, și nu se pot șterge, rândurile din Jurnal — contul făcut și șters,
+cererea de parolă, testul de e-mail, parola schimbată, setările raportului —
+și mesajele din Mailpit, pe care le poți șterge de acolo.
+
+---
+
+## 23 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -4149,6 +4549,18 @@ Ca să nu cauți ce nu s-a stricat:
 - **„Comandă livrată" pleacă și pentru o ridicare.** Capul mesajului e numele
   bifei din Setări; ce deosebește ridicarea e rândul *„Onorare: Ridicare — vine
   clientul după marfă"* (16.4, 17.4).
+- **De pe calculatorul tău, „Leagă-mi contul" e stins și niciun e-mail nu
+  pleacă în lume.** Telegram nu leagă un bot de un server de acasă, iar poșta
+  de aici cade în Mailpit. Amândouă se probează pe site, după urcare (22.2,
+  22.3 și 22.4).
+- **Pe telefon, la 320, două bare au rămas înalte, și se știu**: piciorul de
+  la „Schimbă parola", din Conturi, are tot trei rânduri (154 px; de la 360 în
+  sus are două), iar bara „Ai modificări nesalvate" din Setări ia tot 148 px,
+  pe trei rânduri. Sunt trecute la defectele deschise, pentru runda viitoare:
+  nu le scrie ca defecte noi.
+- **În Jurnal, rândurile rundei încep cu numele faptei din bază** —
+  „password_forgot", „settings_test" —, ca aproape toate celelalte. Și asta e
+  trecută la defectele deschise.
 
 ---
 
@@ -4167,7 +4579,7 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele douăzeci și două ies, proba automată se mai trece o dată pe
+Când toate cele douăzeci și trei ies, proba automată se mai trece o dată pe
 deasupra:
 
 ```bash
@@ -4175,4 +4587,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.7.0`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.7.5`.

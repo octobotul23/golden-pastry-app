@@ -99,17 +99,21 @@ function json_out_early($data, int $status = 200): void
     }
     flush();
 
-    // Pe PHP-FPM și pe LiteSpeed — cazul obișnuit pe cPanel — conexiunea se
-    // închide chiar aici, iar procesul rămâne singur cu treaba lui.
+    // Pe PHP-FPM și pe LiteSpeed conexiunea se închide chiar aici, iar procesul
+    // rămâne singur cu treaba lui.
     if (function_exists('fastcgi_finish_request')) {
         fastcgi_finish_request();
     } elseif (function_exists('litespeed_finish_request')) {
         litespeed_finish_request();
     }
 
-    // Fără niciuna dintre ele (mod_php), conexiunea rămâne deschisă până la
-    // sfârșitul scriptului, dar browserul are deja corpul întreg și lungimea
-    // lui, deci nu mai așteaptă. Bufferul de aici înghite orice s-ar mai
+    // Fără niciuna dintre ele — mod_php, adică serverul de azi (pachetul
+    // „libapache2-mod-php” din instaleaza-vps.sh) — conexiunea rămâne deschisă
+    // până la sfârșitul scriptului. Browserul are deja corpul întreg și
+    // lungimea lui, deci nu mai așteaptă; dar cine măsoară CLIPA în care se
+    // închide conexiunea află cât a mai lucrat scriptul după răspuns. De aici
+    // nu se poate ascunde asta: numai cu PHP-FPM ori cu o coadă golită de
+    // cron. Bufferul de aici înghite orice s-ar mai
     // scrie, ca un mesaj scăpat de la spate să nu strice răspunsul trimis.
     ob_start(static function (): string {
         return '';

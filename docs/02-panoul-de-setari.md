@@ -29,13 +29,122 @@ Trei canale independente. Poți ține pornite oricâte.
 
 | Canal | Ce cere | Cât costă |
 |---|---|---|
-| **E-mail** | nimic, merge din prima zi | gratuit |
+| **E-mail** | o căsuță de e-mail a firmei, de la furnizorul domeniului, trecută în cartonașul „E-mail”; fără ea, mesajele pleacă direct de pe server și ajung des în Spam | gratuit, dacă ai deja căsuța |
 | **WhatsApp** | cont Meta Business, număr dedicat, șablon aprobat | per mesaj |
 | **Telegram** | un bot creat în 5 minute | gratuit |
 
-Recomandarea mea: pornește pe **e-mail** azi, adaugă **Telegram** dacă vrei
-ceva instant pe telefon, și treci pe **WhatsApp** după ce Meta îți aprobă
-numărul — aprobarea durează, iar până atunci n-ai vrea să rămâi fără anunțuri.
+Recomandarea mea: pornește pe **Telegram**, care merge în cinci minute;
+completează căsuța de **e-mail** de îndată ce ai datele ei de la furnizor — de
+ea țin și linkurile de la „Ți-ai uitat parola?”; și treci pe **WhatsApp** după
+ce Meta îți aprobă numărul — aprobarea durează, iar până atunci n-ai vrea să
+rămâi fără anunțuri.
+
+Până la 2.7.5 rândul e-mailului spunea aici că nu-ți trebuie nimic și că merge
+de la bun început. Era adevărat pe găzduirea veche, care își ținea singură
+programul de poștă; pe serverul de azi n-a mai fost.
+
+### E-mailul: căsuța firmei și drumul direct
+
+Până la 2.7.5 cartonașul **„E-mail”** din fila Notificări afirma că e-mailul
+merge fără niciun cont din afară. De la mutarea de pe găzduirea veche nu mai
+pleca însă niciun e-mail — nici anunțurile, nici linkurile de la „Ți-ai uitat
+parola?” —, iar ecranul spunea mai departe că merge. De la 2.7.5 e-mailul are
+două drumuri, iar cartonașul scrie, chiar sub titlu, pe care pleacă acum.
+
+**Drumul de nădejde: căsuța firmei.** O căsuță de e-mail obișnuită, pe domeniul
+tău, de la furnizorul domeniului — una ca „comenzi@goldenpastry.ro”. Aplicația
+intră în ea cum ar intra un program de e-mail și trimite prin ea. Se
+completează în partea **„Căsuța prin care se trimite (SMTP)”** a cartonașului:
+
+| Caseta | Ce scrii |
+|---|---|
+| **„Server SMTP”** | numele serverului, cum îl dă furnizorul: „fără „https://” și fără port. Lăsat gol, căsuța nu e folosită.” |
+| **„Port”** | „De obicei 465 ori 587. Lăsat gol înseamnă 465.” |
+| **„Utilizator”** | „De obicei chiar adresa căsuței” |
+| **„Criptare”** | una din trei: „Automat (după port)”, „SSL/TLS — de obicei portul 465”, „STARTTLS — de obicei portul 587”. „Lasă „Automat” dacă furnizorul nu spune altceva.” |
+| **„Parola căsuței”** | parola căsuței, scrisă de tine |
+
+Numele serverului, portul și felul criptării **le citești din contul tău de la
+furnizorul domeniului**, la setările căsuței. Ghidul nu le scrie: le hotărăște
+furnizorul și le poate schimba. La **„Adresa expeditor”**, mai sus în
+cartonaș, scrie chiar adresa căsuței; multe căsuțe refuză să trimită în numele
+altei adrese, iar pagina te atenționează când cele două nu se potrivesc. Totul
+se salvează cu „Salvează” din bara de sus.
+
+**Parola o scrii tu, aici, și n-o spui nimănui** — nici celui care îți
+îngrijește aplicația. Se păstrează criptată, iar serverul nu o mai trimite
+înapoi niciodată, nici măcar ultimele ei semne: după salvare caseta rămâne
+goală, cu „Parolă salvată — lasă gol ca s-o păstrezi”. Scrii alta numai ca s-o
+înlocuiești. „Șterge parola” o scoate la următorul „Salvează”; dacă te-ai
+răzgândit înainte, apeși „Renunță”. Cât o scrii, parola se vede pe ecran —
+caseta e una de text, ca browserul să nu pună în ea parola contului tău —, deci
+scrie-o când nu-ți stă nimeni peste umăr.
+
+**Schimbi serverul? Scrii și parola din nou.** Dacă schimbi „Server SMTP” cât
+e o parolă salvată, „Salvează” cere în aceeași salvare și parola căsuței (ori
+„Șterge parola”); caseta ți-o spune dinainte: „Ai schimbat serverul: scrie
+parola din nou”. Parola salvată e a serverului de dinainte și nu pleacă spre
+altul. Golirea lui „Server SMTP”, care întoarce e-mailul pe drumul direct, nu
+cere nimic.
+
+**Drumul direct: de pe server.** Cât „Server SMTP” e gol, mesajele pleacă
+direct de pe server, printr-un program de poștă pe care îl pun, de la 2.7.5,
+`instaleaza-vps.sh` și `actualizeaza-vps.sh`. Pleacă, dar fără nicio
+făgăduială: un asemenea mesaj nu poartă semnătura domeniului, iar căsuțele mari
+îl trec des în Spam ori nu-l primesc deloc. E o plasă, nu drumul de bază.
+
+**Cele două drumuri nu se amestecă.** Cât „Server SMTP” e completat, e-mailul
+pleacă numai prin căsuță. Dacă îi lipsește utilizatorul ori parola, nu pleacă
+**nimic**, nici direct: serverul nu ocolește pe tăcute o căsuță completată pe
+jumătate. Ca să te întorci la drumul direct, golești „Server SMTP” și salvezi.
+
+**Rândul de stare**, de sub titlul „E-mail”, spune ce face serverul acum, după
+ce e salvat, nu după ce e scris pe ecran și încă neplecat:
+
+| Ce scrie | Cum arată | Ce înseamnă |
+|---|---|---|
+| „Trimite prin căsuța …”, cu adresa, serverul și portul ei | verde | drumul de nădejde |
+| „Trimite direct de pe server. Fără o căsuță în spate, mesajele pot ajunge în Spam ori deloc. Completează căsuța de mai jos ca să fie sigur.” | pe fond galben | pleacă, fără făgăduială |
+| „Serverul nu are niciun program de poștă: acum NU pleacă niciun e-mail. Completează căsuța de mai jos.” | roșu | nu pleacă nimic |
+| „Căsuța e completată pe jumătate: acum NU pleacă niciun e-mail. Completează mai jos ce lipsește.” | roșu | nu pleacă nimic |
+| „Nu se știe încă pe ce cale pleacă e-mailul: serverul n-a spus.” | șters | setările n-au sosit; reîncarcă pagina |
+
+**Comutatorul „Pornit / Oprit”** al cartonașului oprește numai anunțurile de
+comenzi. O spune rândul de sub el: „Linkurile de la „Ți-ai uitat parola?”
+pleacă oricum, pe aceeași cale.”
+
+**Butonul „Trimite e-mail de test”** trimite un mesaj la „Adresa care primește
+anunțul”, cu datele **salvate**; cât ai modificări nesalvate scrie „Salvează
+întâi, apoi testează”. Poate ține până la o jumătate de minut. Răspunsul apare
+lângă buton și spune pe ce drum a plecat mesajul:
+
+- „Căsuța … a luat în primire mesajul de test pentru … De aici îl duce
+  furnizorul căsuței: caută-l în Inbox, iar dacă nu e acolo, în Spam.” —
+  serverul căsuței a răspuns că are mesajul;
+- „Serverul a predat mesajul programului lui de poștă. Asta nu înseamnă că a și
+  ajuns: caută-l la …, în Inbox și în Spam.” — drumul direct.
+
+**Ce nu dovedește testul.** Pe drumul direct, „predat” nu înseamnă „ajuns”:
+serverul află numai că programul lui de poștă a primit mesajul. Nici pe drumul
+căsuței testul nu vede în Inboxul tău. Singura dovadă e mesajul găsit acolo —
+de aceea, după primul test, uită-te și în Spam. Un test picat își scrie pricina
+tot lângă buton, cu vorbele serverului și cu ce ai de făcut: „Serverul de
+e-mail a refuzat utilizatorul ori parola căsuței. Scrie parola din nou în
+Setări → Notificări → E-mail și apasă iar butonul de test.”, ori îndemnul de a
+încerca celălalt fel de criptare, când legătura criptată n-a pornit.
+
+**Când nu pleacă un link de parolă** afli din două locuri: caseta roșie de
+deasupra filelor, cu rândul „Parolă uitată — linkul n-a plecat (vezi
+Jurnalul)”, și Jurnalul, cu pricina. Titlul casetei roșii spune și despre un
+asemenea link „Un anunț nu a plecat.”: rândul de sub el e cel care lămurește.
+Ce citește vizitatorul și ce rămâne în Jurnal scrie în
+`docs/05-conturile-de-client.md`, la „Dacă și-a uitat parola”.
+
+**Pe un server fără migrarea 037** casetele căsuței stau închise, cu rândul
+„Căsuța nu se poate completa încă: pe server lipsesc rândurile ei, fiindcă
+migrarea sql/037_posta_smtp.sql n-a intrat. Rulează actualizarea (sudo bash
+actualizeaza-vps.sh), apoi reîncarcă pagina.” Până atunci e-mailul are numai
+drumul direct.
 
 ### WhatsApp — ce trebuie să faci tu
 
@@ -73,9 +182,16 @@ Din asta decurg două reguli:
   tokenul la fiecare salvare.
 - **Ștergerea se face explicit**, cu butonul „Șterge tokenul”.
 
-Dacă schimbi `encryption_key` din `config.php`, tokenurile deja salvate devin
-ilizibile și trebuie reintroduse. Aplicația continuă să funcționeze, dar
-notificările pe canalul respectiv se opresc până le pui la loc.
+**Parola căsuței de e-mail** (de la 2.7.5) se păstrează la fel, criptată cu
+aceeași cheie, cu o deosebire: din ea nu vezi nici ultimele semne. Un token e
+un șir scos de o mașină; parola o alege un om, iar coada ei spune ceva despre
+ea. Caseta stă deci goală, cu „Parolă salvată — lasă gol ca s-o păstrezi”, iar
+ștergerea se face cu „Șterge parola”.
+
+Dacă schimbi `encryption_key` din `config.php`, tokenurile și parola căsuței
+deja salvate devin ilizibile și trebuie reintroduse. Aplicația continuă să
+funcționeze, dar notificările pe canalul respectiv se opresc până le pui la
+loc.
 
 ### Ce anunțuri primești, și ce scrie în ele
 
@@ -113,7 +229,7 @@ comanda, al cui e clientul, unde merge marfa și pe ce latură e fiecare produs:
 |---|---|
 | „Comandă nouă #1042 — …” | primul rând, neschimbat: după el cauți comanda în panou |
 | „Scrisă de: … (agent de vânzări)” | omul din casă care a scris-o; la cererea venită de pe site, „Trimisă de client, de pe site” |
-| „Acceptată de: … (administrator)” | cine a acceptat cererea din care s-a născut comanda; cu „, de pe Telegram” când s-a apăsat butonul de acolo. Lipsește când a acceptat-o chiar cel care a scris-o |
+| „Acceptată de: … (administrator)” | cine a acceptat cererea din care s-a născut comanda; cu „, de pe Telegram” când s-a apăsat butonul de acolo. Lipsește când a acceptat-o chiar cel care a scris-o. De la 2.7.5, când a apăsat în grup un om cu contul nelegat, rândul se pune întotdeauna și poartă numele lui de pe Telegram, fără rol: „Acceptată de: Ion Pop, de pe Telegram (cont nelegat)” — v. „Telegram: cine apare când apeși un buton din grup”, mai jos |
 | „Client adus de: …” | recomandantul clientului; „nimeni (client al casei)” când n-are. Când cel care a scris comanda e chiar cel care a adus clientul, rândul „Scrisă de” **nu se mai pune**, iar omul e numit o singură dată, aici: „Client adus de: … — tot cine a scris comanda” (la o cerere, „— tot cine a scris cererea”) |
 | „Atenție: …” | numai când a scris-o un agent de vânzări, v. mai jos |
 | „Pentru: 2026-10-03, ora 08:00” | ziua, cu ora din câmpul „Interval”; în coada rândului, „(oră fixă)” când butonul de sub „Interval”, în formularul comenzii, scrie „Ora se afișează pe panouri” |
@@ -169,6 +285,100 @@ deci unul care tot trece de 4000 pleacă tăiat, cu ultimul rând *„… (mesaj
 singur șir, iar șirul se taie la 1000 de semne: la o comandă lungă se pierd
 ultimele produse și totalul. Tăietura e veche; cu rândurile noi, se ajunge la
 ea mai devreme.
+
+### Telegram: cine apare când apeși un buton din grup
+
+Sub anunțul unei cereri noi, botul pune două butoane: „Acceptă” și „Respinge”.
+Cutia **„Butoane sub anunț”**, din cartonașul „Telegram”, le pornește și le
+oprește și ține legătura botului cu serverul: „Leagă botul” (după aceea,
+„Leagă din nou”) și „Dezleagă botul”, pe care le are numai conducerea — un
+administrator ori un fondator. Apăsarea de pe telefon face exact ce ar fi făcut
+apăsarea din panou și se scrie la fel în Jurnal. Anunțul de comandă nouă pleacă
+fără butoane.
+
+Botul stă într-un grup, iar în grup stă toată tura. Până la 2.7.5, oricine ar
+fi apăsat „Acceptă”, mesajul, panoul și Jurnalul spuneau că a acceptat cel care
+legase botul — de obicei patronul. De la 2.7.5 (hotărârea patronului) o apăsare
+poartă numele celui care a apăsat și **niciodată numele altcuiva**. Ce se
+întâmplă atârnă de un singur lucru: dacă Telegramul celui care a apăsat e legat
+de contul lui din aplicație.
+
+| Cine a apăsat | Ce se întâmplă | Cu ce nume apare |
+|---|---|---|
+| un om cu contul **legat**, pornit și cu dreptul de a scrie comenzi | hotărârea se scrie | numele contului lui: „✅ Acceptată de Maria Ionescu, de pe Telegram” |
+| un om cu contul legat, dar **oprit** ori fără dreptul acela | **nimic**; pe telefon citește „Contul tău e legat de Telegram, dar e oprit ori nu are dreptul de a scrie comenzi. Nu am scris nimic. Cere dreptul din pagina „Acces”, apoi apasă din nou.” | — |
+| un om cu contul **nelegat** | hotărârea se scrie, pe drepturile contului care a legat botul | numele lui de pe Telegram și vorba „cont nelegat”: „✅ Acceptată de Ion Pop, de pe Telegram (cont nelegat)” |
+| oricine cu contul nelegat, când contul care a legat botul a fost oprit ori nu mai e de administrator | **nimic**; pe telefon citește că botul nu e legat de niciun cont de administrator și că se leagă din Setări → Notificări, cu „Leagă botul” | — |
+
+Numele omului nelegat e același peste tot, mereu cu vorba lângă el: sub mesajul
+din grup; în anunțul comenzii născute din cerere („Acceptată de: Ion Pop, de pe
+Telegram (cont nelegat)”); în panou, pe cererea hotărâtă și, când cererea a
+venit de pe site, la „Creat de” al comenzii născute din ea („Ion Pop —
+Telegram, cont nelegat”); și în Jurnal, unde rândul scrie „Ion Pop (Telegram,
+cont nelegat)”, fără niciun rol lângă nume. Cine n-are un nume pe Telegram
+apare cu numele lui de utilizator de acolo, cu „@” în față, iar în lipsa lui,
+cu „Telegram #” și numărul lui.
+
+**Numele de pe Telegram și-l pune fiecare singur.** Un om nelegat își poate
+scrie acolo orice nume, iar hotărârea lui se scrie totuși, pe drepturile
+contului care a legat botul. De aceea „cont nelegat” stă mereu lângă nume: e
+semnul că aplicația nu știe cine e omul, numai cum își spune. Leacul e legarea,
+care se face în două feluri.
+
+**„Contul meu de Telegram”** — fiecare își leagă singur contul, în trei pași.
+Apeși „Leagă-mi contul”, iar botul trimite în grup un buton pentru tine:
+„Butonul a plecat în grupul de pe Telegram. Apasă-l de pe telefonul tău, apoi
+întoarce-te aici și încuviințează.” Îl apeși de pe telefon. Te întorci în
+Setări și **reîncarci pagina** — cutia își citește starea numai la deschidere,
+deci fără reîncărcare rămâne pe „Butonul e în grup”. Reîncărcată, scrie „A
+apăsat: …”, cu numele de pe Telegram al celui care a apăsat, și apeși „Da, eu
+am apăsat” — **numai dacă ai apăsat chiar tu**:
+de-atunci încolo, apăsările omului aceluia îți poartă numele. Butonul trimis
+ține o jumătate de oră; „Trimite alt buton” îl înlocuiește. „Dezleagă-mi
+contul” desface legătura. Cutia cere botul legat: fără el, butonul ei stă stins
+și spune „Leagă întâi botul, mai sus: butonul tău pleacă tot prin el.”
+
+**„Oameni din grup”** (nouă în 2.7.5) — fondatorul îi leagă pe ceilalți, fără
+ca ei să aibă pagina Setări. Cutia ține minte pe oricine a apăsat un buton sub
+un anunț: numele lui de pe Telegram, „@”-ul dacă are, „ultima apăsare” și câte
+apăsări a făcut, cu insigna „Nelegat” ori „Legat de …”. Pe rândul unui om
+nelegat alegi din „Alege contul…” contul lui din aplicație și apeși „Leagă”;
+pagina răspunde „Legat. De-acum, ce apasă de pe telefon se scrie pe numele
+contului.” Pe rândul unui om legat stă „Dezleagă”. Cutia nu trece prin
+„Salvează” din bara de sus: fiecare apăsare lucrează pe loc.
+
+- **Numai fondatorul.** Legătura hotărăște al cui nume se scrie sub o cerere
+  acceptată. Cine are Setările fără să fie fondator citește, în locul listei,
+  „Pe oamenii din grup îi leagă de conturi numai fondatorul.”
+- **„Leagă numai un om pe care îl recunoști.”** Numele din listă e cel pe care
+  și l-a pus omul pe Telegram, nu unul verificat de cineva. Dacă nu ești sigur
+  cine e, roagă-l să mai apese o dată un buton cât ești lângă el și apasă
+  „Reîncarcă lista”: rândul lui e cel la care se mișcă „ultima apăsare”.
+- **Lista se umple din apăsări**, nu din membrii grupului: un coleg care n-a
+  apăsat niciodată un buton nu apare. Până apasă cineva, cutia scrie „Încă n-a
+  apăsat nimeni un buton în grup.” Lista nu se împrospătează singură — pentru
+  asta e „Reîncarcă lista” — și arată cei mai noi cincizeci de oameni.
+- **În lista de conturi** intră numai conturile pornite ale casei care n-au
+  deja un Telegram legat. Unul care nu poate hotărî cereri rămâne în listă, cu
+  coada „— nu poate hotărî cereri”: legat de el, omul apasă și e refuzat. La
+  fel, sub un om legat de un cont oprit scrie „Contul e oprit: ce apasă omul de
+  pe telefon e refuzat până îl pornești ori îl dezlegi.”
+- **Cum desfaci:** „Dezleagă”, pe rândul omului. Pagina răspunde „Dezlegat.
+  De-acum, ce apasă apare cu numele de pe Telegram și cu „cont nelegat”.” Ce a
+  hotărât cât a fost legat rămâne scris pe numele contului.
+- **Conturi legate fără rând în listă.** Un cont poate avea Telegram legat fără
+  ca omul lui să fi apăsat ceva în grup de când se ține lista — de pildă unul
+  legat prin „Contul meu de Telegram” înainte de 2.7.5. Sub listă, cutia le
+  arată separat, sub „Conturi legate care n-au mai apăsat nimic în grup”, cu
+  numele și rolul contului („· oprit” la unul oprit) și cu „Dezleagă” pe fiecare
+  rând. Dacă nu știi al cui e telefonul legat acolo, dezleagă contul (fișa 710).
+  Numărul de Telegram nu se arată nici aici.
+
+**Ce nu s-a schimbat.** Runda n-a rescris nimic din ce era în bază: o cerere
+hotărâtă de pe telefon înainte de 2.7.5 poartă mai departe numele pus atunci.
+Pe un server pe care n-a intrat încă migrarea 036, apăsarea unui om nelegat e
+refuzată, cu numele fișierului (`sql/036_telegram_oameni.sql`), în loc să se
+scrie pe numele altcuiva; apăsările celor legați merg ca înainte.
 
 ---
 
@@ -622,7 +832,9 @@ Comutatorul **Activ / Dezactivat** închide complet accesul cu cod, fără să
 De la 2.7.0 fiecare comandă își ține și plata, iar pagina **„Încasări”**
 (`lab.goldenpastry.ro/incasari`) e locul din care se bifează. Stă aici, lângă
 setări, fiindcă tot de acolo se configurează două lucruri ale casei: raportul
-de bani de pe Telegram și pragul general de neplătite.
+de bani de pe Telegram și pragul general de neplătite. Raportul se pune la
+punct, de la 2.7.5, și din Setări → Notificări — v. „Raportul de bani pe
+Telegram”, mai jos.
 
 **Cine o deschide.** Din pornire, numai fondatorul: pagina e banii casei.
 Rândul „Încasări” din „Acces” o dă și altui rol, iar trei fapte, tot de acolo,
@@ -739,6 +951,15 @@ Cardul **„Raport pe Telegram”**, de sub listă, îl vede numai cine are fapt
 grupul ales: cât e de încasat, cât s-a încasat și ce amânări au trecut de
 termen.”
 
+**De la 2.7.5 raportul se pune la punct din două locuri**, cu aceleași
+casete: din cardul acesta și din **Setări → Notificări**, unde cutia
+**„Raport de bani pe Telegram”** stă ultima în cartonașul „Telegram”. Sunt
+aceleași setări, nu două rânduri de setări: ce salvezi într-un loc găsești în
+celălalt. Fiecare trimite la celălalt — în Încasări scrie „Aceleași setări sunt
+și în Setări › Notificări › Telegram.”, în Setări „Aceleași setări sunt și în
+Încasări › Raport pe Telegram.” Cutia din Setări o vede tot numai cine are
+fapta; celorlalți nu li se desenează.
+
 | Caseta | La pornire | Ce hotărăște |
 |---|---|---|
 | **„Chat ID”** | goală | grupul în care pleacă raportul. Cât e goală, nu pleacă niciun raport |
@@ -754,9 +975,26 @@ peste cel al banilor (hotărârea patronului din 4–5 octombrie 2026). Cele dou
 ore nu pot fi nici ele aceeași: „Cele două rapoarte nu pot pleca la aceeași
 oră. Lasă gol locul pe care nu-l vrei.”
 
-Cardul se salvează cu butonul lui, „Salvează” — nu cu al altei pagini. **Cum
+Cardul se salvează cu butonul lui, „Salvează” — nu cu al altei pagini. La fel
+cutia din Setări: are „Salvează” al ei, iar sub el scrie „Se salvează cu
+butonul de aici, nu cu „Salvează” de sus.” Bara de sus a Setărilor nu salvează
+raportul, iar „Salvează” al raportului nu salvează restul filei. Nici
+„Renunță” de sus nu-l atinge: dacă ai scris și în cutie, întrebarea lui spune
+la coadă „Cutia „Raport de bani pe Telegram” rămâne cum ai scris-o: are
+„Salvează” al ei.” Când pleci din pagină, în schimb, se pierde și ce ai scris
+în cutie: pagina te întreabă întâi, ca la orice text nesalvat. **Cum
 desfaci:** scrii la loc ce era și salvezi; ca să oprești raportul cu totul,
 golește „Chat ID” ori amândouă orele.
+
+**Ce îi trebuie raportului ca să plece:** tokenul botului, salvat în cartonașul
+„Telegram”, și chatul **lui**, scris la „Chat ID”-ul raportului. Întrerupătorul
+„Pornit / Oprit” al cartonașului „Telegram” oprește numai anunțurile de
+comenzi; raportul pleacă și cu el oprit. Cutia din Setări le spune pe
+amândouă — „îi trebuie tokenul botului și chatul lui, scris mai jos la „Chat
+ID”” (până la 2.7.5 numea numai tokenul). Fără chat, raportul nu pleacă, iar
+proba e refuzată, cu pricina scrisă sub casetă:
+„Raportul de bani nu are chat. Pune numărul chatului la „Raport pe Telegram” și
+salvează.”
 
 **Ce scrie în raport.** Patru lucruri, pe rânduri:
 
@@ -824,7 +1062,9 @@ din „Acces”. Celorlalți butonul nu li se desenează.
 - butonul din coada rândului unei comenzi anulate, care scrie **„Șterge”** (pe
   o comandă vie, același buton scrie „Anulează”);
 - butonul **„Șterge definitiv”**, din josul formularului unei comenzi anulate,
-  lângă „Reface comanda”.
+  lângă „Reface comanda”. Pe telefon, de la 2.7.5, amândouă stau într-un rând
+  al formularului, chiar deasupra barei de jos; bara ține acolo numai „Închide”
+  și butonul de salvare, pe un singur rând.
 
 **Sunt doi pași, dinadins.** Întâi anulezi comanda, apoi o ștergi: o comandă
 vie nu se poate șterge de-a dreptul. La al doilea pas pagina întreabă „Ștergi
@@ -910,6 +1150,39 @@ unde coșul se ține minte singur.
 
 ---
 
+## Barele de salvare, pe telefon
+
+Plângerea patronului, la o comandă nouă scrisă de pe telefon: „Închide” și
+„Salvează” luau prea mult din ecran. Aveau de ce. Fiecare buton stătea pe câte
+un rând, iar bara lipită de jos ajungea, cu patru butoane, la 246 de pixeli —
+pe un ecran din care tastatura ia și ea o bună parte. Runda 2.7.5 a schimbat
+două lucruri, amândouă numai pe telefon.
+
+**Bara de jos e un singur rând scund.** În formularul comenzii și în cel al
+produsului, bara ține pe telefon numai butonul care închide și pe cel care
+salvează, unul lângă altul; cel de salvare ia tot locul rămas. Butoanele rare
+ale comenzii — „Anulează comanda”, „Reface comanda”, „Șterge definitiv” — nu
+mai stau în bară: sunt în formular, pe un rând chiar deasupra ei, cu aceleași
+vorbe. Pe calculator nu s-a schimbat nimic.
+
+**Cât scrii, barele se desprind.** Cu tastatura telefonului deschisă, bara de
+jos a celor două formulare și bara de sus din Setări și din „Acces” („Ai
+modificări nesalvate”) nu mai stau lipite de marginea ecranului: rămân la locul
+lor din pagină și se derulează odată cu ea, ca să nu acopere caseta în care
+scrii. Închizi tastatura și se lipesc la loc. Tot cât scrii se sting bara cu „+
+Intrare”, „− Ieșire” și „+ Articol” din Depozit, piciorul cu „Gata” al
+ferestrei din care alegi produse pentru o comandă și bara coșului din magazin.
+Nu s-a pierdut niciun buton: îl găsești derulând ori închizând tastatura.
+
+**Ce a rămas.** Trei locuri sunt scrise ca fișe deschise în
+`docs/06-defecte-de-reparat.md`: la telefoanele cele mai înguste (320 de
+pixeli), bara cu „Schimbă parola” din Conturi și bara de sus din Setări își
+țin butoanele tot unul sub altul; iar pe o tabletă îngustă, ținută în picioare,
+caseta în care scrii în josul formularului comenzii poate rămâne sub tastatură
+până derulezi cu mâna.
+
+---
+
 ## Ce NU se configurează de aici
 
 `api/config.php`, pe server, ține lucrurile care nu au ce căuta într-o pagină
@@ -927,8 +1200,21 @@ la fiecare mesaj, tokenul botului; de aceea stă în fișier, unde scrie numai
 cine are deja serverul în mână, și nu într-o casetă din Setări. Pe site cheia
 lipsește, iar mesajele pleacă la Telegram.
 
+De la 2.7.5 mai e una de același fel, `smtp_ca_file`: un certificat de probă
+pentru căsuța de e-mail, luat în seamă numai când căsuța e chiar pe calculatorul
+de lucru. Pe site rămâne goală. Dacă nu e, pagina de verificare a serverului
+o arată la rândul „Certificatul de probă al căsuței de e-mail”, cu „! de
+rezolvat” — un lucru de golit, nu unul care oprește site-ul.
+
+**Programul de poștă al serverului** — drumul direct al e-mailului — nu e nici
+el o setare din panou. Îl pun `instaleaza-vps.sh` și `actualizeaza-vps.sh`,
+dacă serverul n-are deja unul; cine nu-l vrea rulează scriptul cu
+„--fara-posta”. Din panou alegi numai căsuța firmei, în cartonașul „E-mail”
+(v. „E-mailul: căsuța firmei și drumul direct”, mai sus).
+
 **Ceasul raportului de bani** nu e nici el o setare din panou. Orele le alegi
-din „Încasări”, dar cel care se uită la ceas e un rând de pe server,
+din „Încasări” ori din Setări → Notificări, dar cel care se uită la ceas e un
+rând de pe server,
 `/etc/cron.d/goldenpastry-plati`, care rulează din cinci în cinci minute
 `api/cron/plati.php`. Îl scriu `instaleaza-vps.sh` și `actualizeaza-vps.sh`;
 fără el nu pleacă niciun raport, orice ai salva în pagină. Dacă întorci
@@ -937,12 +1223,15 @@ mâna (`rm -f /etc/cron.d/goldenpastry-plati`): arhiva veche se despachetează
 peste dosar și nu șterge nimic, deci ceasul ar rula mai departe. Pe larg, în
 `docs/09-actualizare-vps.md`, la „Ceasul plăților”.
 
-Trei lucruri **se** configurează din panou, dar nu din pagina Setări:
+Două lucruri **se** configurează din panou, dar nu din pagina Setări:
 
 - **cine ce vede** — din „Acces”, pagina fondatorului (v.
   `docs/05-conturile-de-client.md`, la „Pagina „Acces””);
-- **pragul unui singur client** — din Conturi, din fișa lui;
-- **raportul de bani** — din „Încasări”.
+- **pragul unui singur client** — din Conturi, din fișa lui.
+
+**Raportul de bani** era, până la 2.7.5, al treilea: se făcea numai din pagina
+„Încasări”. Acum se face și de acolo, și din Setări → Notificări, cu aceleași
+setări în amândouă locurile.
 
 Restul — WhatsApp, e-mail, Telegram, liste, pragul general, codul tabletelor —
 se face din Setări.

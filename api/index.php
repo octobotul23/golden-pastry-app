@@ -59,6 +59,7 @@ require __DIR__ . '/lib/laturi.php';
 require __DIR__ . '/lib/poze.php';
 require __DIR__ . '/lib/fise.php';
 require __DIR__ . '/lib/catalog.php';
+require __DIR__ . '/lib/smtp.php';
 require __DIR__ . '/lib/notify.php';
 require __DIR__ . '/lib/plati-raport.php';
 require __DIR__ . '/lib/referral.php';
@@ -308,6 +309,11 @@ $routes = [
     // stea în `WHERE` și să nu poată fi ocolită dintr-un parametru.
     ['GET',    '/referrals',         'referrals', 'route_referrals_mine'],
     ['POST',   '/referrals/code',    'referrals', 'route_referrals_make_code'],
+    // Codul cuiva, căutat după nume din formularul comenzii (runda 2.7.5). E a
+    // celui care SCRIE comenzi, nu a panoului „Recomandări”, și nu dă niciun
+    // ban. Segment fix: stă deasupra rândurilor cu `#` de mai jos, ca un
+    // `/referrals/#` să nu-l poată lua vreodată drept numărul unui rând.
+    ['GET',    '/referrals/coduri',  'referrals', 'route_referrals_coduri'],
     ['GET',    '/referrals/all',     'referrals', 'route_referrals_all'],
     ['POST',   '/referrals/pay',     'referrals', 'route_referrals_pay'],
     // Comisioanele născute la procentul zero, îndreptate la apăsarea patronului.
@@ -381,12 +387,23 @@ $routes = [
     ['POST',   '/telegram/unlink',   'telegram', 'route_telegram_unlink'],
     // Telegramul OMULUI, nu al botului. Toate au segmente fixe, deci ordinea
     // între ele e liberă; stau lângă cele de sus fiindcă se citesc împreună.
-    // Pe „/telegram/" nu există niciun tipar cu „#", deci nu e nimic de pus
-    // înainte ca să nu fie înghițite.
     ['GET',    '/telegram/me',       'telegram', 'route_telegram_me'],
     ['POST',   '/telegram/me/link',  'telegram', 'route_telegram_me_link'],
     ['POST',   '/telegram/me/confirm', 'telegram', 'route_telegram_me_confirm'],
     ['DELETE', '/telegram/me/link',  'telegram', 'route_telegram_me_unlink'],
+    // „Oameni din grup” (runda 2.7.5): fondatorul leagă de conturi pe cei care
+    // au apăsat în grup. De aici încolo „/telegram/" ARE tipare cu „#" — până
+    // acum n-avea niciunul. Nu se înghit cu nimic de mai sus, și nu din
+    // ordine: o rută se potrivește numai cu același număr de segmente și cu
+    // bucățile fixe literă cu literă. „/telegram/oameni/#/leaga" are patru
+    // (nimic altceva sub „/telegram/" n-are), iar „/telegram/conturi/#" are
+    // trei ca „/telegram/me/link" și „/telegram/me/confirm", dar al doilea
+    // segment e altul. O rută nouă cu „#" pe locul al doilea („/telegram/#/…")
+    // le-ar înghiți pe cele de aceeași lungime dacă ar sta deasupra lor: aceea
+    // se pune SUB ele.
+    ['GET',    '/telegram/oameni',   'telegram', 'route_telegram_oameni'],
+    ['POST',   '/telegram/oameni/#/leaga', 'telegram', 'route_telegram_oameni_leaga'],
+    ['DELETE', '/telegram/conturi/#', 'telegram', 'route_telegram_conturi_dezleaga'],
 ];
 
 /** Potrivește ruta și extrage segmentele variabile. */

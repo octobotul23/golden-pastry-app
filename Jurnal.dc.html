@@ -274,8 +274,12 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
      fiindcă pe el se sprijină rearanjarea de pe telefon (foaia de sus, :24). -->
 <button type="button" data-jr="row" onClick="{{ r.onOpen }}" title="{{ r.titlu }}" style="display:grid;grid-template-columns:74px 190px 132px minmax(0,1fr);gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--h-line);width:100%;box-sizing:border-box;text-align:left;font:inherit;color:inherit;background:none;border-left:0;border-right:0;border-top:0;cursor:pointer">
 <span class="h-numeric" style="font-size:14px;color:var(--h-fg-subtle)">{{ r.time }}</span>
+<!-- Numele se rupe pe rândul următor, nu se taie (fișa 656, 2.7.5): coada
+     „ (Telegram, cont nelegat)” e tocmai vorba care contează, iar tăiat la
+     „cont ne…” pe telefon ori la „Telegram, c…” în coloana de 190px, rândul
+     îl lăsa pe patron să ghicească. -->
 <div data-jr="who" style="display:flex;align-items:center;gap:8px;min-width:0">
-<span style="font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span>
+<span data-jr="nume" style="font-size:15px;font-weight:600;line-height:1.35;min-width:0;overflow-wrap:anywhere">{{ r.name }}</span>
 <span class="{{ r.roleCls }}" style="font-size:10px;flex:none">{{ r.role }}</span>
 </div>
 <span class="{{ r.pageCls }}" style="font-size:11px;justify-self:start">{{ r.page }}</span>
@@ -574,9 +578,33 @@ const MON = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iuli
 // `hasOwnProperty`, nu `FAPTE[cod]` gol: numele faptei vine de la server, iar
 // un obiect simplu răspunde și la „constructor” ori „toString”, cu o funcție
 // în loc de nume.
-const FAPTE = { order_delete: "Comandă ștearsă", pret_nou: "Preț de ingredient scris", pret_sters: "Preț de ingredient șters" };
+//
+// `telegram_om_legat` și `telegram_om_dezlegat` (runda 2.7.5) sunt cele două
+// fapte ale cutiei „Oameni din grup” din Setări: fondatorul leagă un om văzut
+// în grupul de Telegram de contul lui, ori îl dezleagă. Cine și de care cont
+// stă în amănunt, scris de server; numărul de Telegram nu e nicăieri.
+const FAPTE = { order_delete: "Comandă ștearsă", pret_nou: "Preț de ingredient scris", pret_sters: "Preț de ingredient șters",
+  telegram_om_legat: "Om din grup legat de un cont", telegram_om_dezlegat: "Om din grup dezlegat de cont" };
 const dinLista = (lista, cheie) => (typeof cheie === "string" && Object.prototype.hasOwnProperty.call(lista, cheie)) ? lista[cheie] : "";
 const numeFapta = (cod) => dinLista(FAPTE, cod) || cod || "";
+
+// ---- rolul de lângă „Cine”: al cui e ----
+//
+// Serverul trimite, pentru fiecare rând, rolul CONTULUI de pe el (`user_id`).
+// De la 2.7.5, un om din grupul de Telegram care apasă un buton fără să aibă
+// contul legat lucrează pe drepturile contului care a legat botul: pe rând
+// stă contul acela, iar la „Cine” numele OMULUI, cu vorba „cont nelegat”
+// (`jurnal_eticheta()`, api/lib/auth.php). Rolul desenat lângă el era deci al
+// altcuiva — „Ion Pop (Telegram, cont nelegat) · fondator” —, adică tocmai
+// rangul pe care omul acela nu-l are.
+//
+// Pe un asemenea rând rolul nu se arată (rămâne liniuța, ca la „Sistem”).
+// Omul se recunoaște după coada pe care i-o scrie serverul la nume, literă cu
+// literă; proba `.claude/check-telegram-apasator.mjs` ia eticheta scrisă de
+// server și o dă funcției de mai jos, deci cele două nu se pot depărta pe
+// tăcute. Pe ale cui drepturi a lucrat omul scrie în amănuntul rândului.
+const COADA_NELEGAT = " (Telegram, cont nelegat)";
+const rolulRandului = (cine, rol) => (typeof cine === "string" && cine.endsWith(COADA_NELEGAT)) ? "" : (rol || "");
 
 // ---- „Ce era în comandă”: cum se scrie o lipsă ----
 //
@@ -821,7 +849,8 @@ class Component extends DCLogic {
           at: gp.utc(e.createdAt),
           u: e.user || '—',
           name: e.user || 'Sistem',
-          role: e.role || '',
+          // Al contului de pe rând — nu și când la „Cine” stă alt om (v. `rolulRandului`).
+          role: rolulRandului(e.user, e.role),
           page: e.entity || '',
           action: e.action,
           detail: e.detail || '',

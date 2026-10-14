@@ -6,6 +6,7 @@
  *
  *   GET  /referrals            — ale mele. Oricine e conectat.
  *   POST /referrals/code       — fă-mi un cod. Oricine e conectat.
+ *   GET  /referrals/coduri     — codul cuiva, căutat după nume. Cine scrie comenzi.
  *   GET  /referrals/all        — toate, cu tot cu conflicte. Numai administratorul.
  *   POST /referrals/pay        — bifa „i-am dat banii". Numai administratorul.
  *   POST /referrals/#/resolve  — conflictul, hotărât. Numai administratorul.
@@ -112,6 +113,162 @@ function route_referrals_make_code(): void
     }
     audit('referral_self_code', 'user', (string) $u['id'], $u['name'] . ' → ' . $cod);
     json_out(['code' => $cod, 'link' => referral_link($cod)]);
+}
+
+/* ------------------------------------------------- codul, după nume -- */
+
+/** Câte rânduri pleacă spre caseta din formular, și de la câte litere se caută. */
+const GP_COD_SEARCH_LIMIT = 5;
+const GP_COD_SEARCH_MIN = 2;
+
+/**
+ * Codul de recomandare, căutat după NUMELE celui care a trimis clientul.
+ *
+ * Patronul (runda 2.7.5): cine scrie o comandă știe cine i-a trimis omul, nu
+ * codul lui. Scrie „octav” în caseta codului și vrea să găsească „ples”. Până
+ * acum caseta era oarbă: codul trebuia știut pe dinafară ori căutat în altă
+ * pagină, cu formularul comenzii pe jumătate scris.
+ *
+ * POARTA e `comenzi.scrie`, nu `recomandari`: ruta stă lângă celelalte ale
+ * recomandărilor fiindcă vorbește despre coduri, dar o cheamă FORMULARUL DE
+ * COMANDĂ, iar caseta lui se desenează exact celui care scrie comenzi. O
+ * poartă pe panoul „Recomandări” i-ar fi dat managerului o casetă care
+ * răspunde 403 la fiecare literă. Agentul nu trece: el n-are caseta (cererea
+ * lui pleacă singură cu codul lui), deci n-are ce căuta aici — și nici nu
+ * trebuie să poată afla, literă cu literă, cine mai are cod în casă.
+ *
+ * CE PLEACĂ, și mai ales ce NU. Fiecare rând are exact trei chei: `code`,
+ * `name` și `kind` („agent”, „client” ori „casa”). Niciun număr de cont, niciun
+ * telefon, niciun e-mail, niciun procent și niciun ban: cine scrie comenzi nu
+ * are neapărat panoul „Recomandări”, iar ruta asta nu e o ușă din dos spre el.
+ * Din aceeași pricină `GET /clients` rămâne cum era, fără nicio cheie de
+ * recomandare: acolo se caută CUMPĂRĂTORUL, aici cel care l-a trimis.
+ *
+ * CINE SE GĂSEȘTE: numai conturile pe care le-ar primi și `referral_owner()`
+ * (active, nu de sistem), și numai cele care au un cod. Un cont oprit găsit
+ * aici ar fi fost o capcană: omul îi alege codul, comanda se salvează, iar
+ * comisionul nu se naște, fiindcă la salvare codul „nu duce nicăieri”.
+ *
+ * ORDINEA: întâi contul al cărui cod e chiar ce s-a scris (cine tastează
+ * „ples” vrea să vadă al cui e, nu pe toți cei cu „ples” în nume), apoi
+ * oamenii casei înaintea clienților (ei aduc cele mai multe comenzi), apoi
+ * după nume. Diacriticele nu se scriu: tabelele sunt `utf8mb4_unicode_ci`,
+ * deci „stefanescu” îl găsește pe „Ștefănescu”.
+ *
+ * Pe o bază fără coloanele migrării 007 se răspunde 200 cu lista goală, nu
+ * 503: caseta e un ajutor, iar codul se poate scrie de mână ca până acum. Un
+ * refuz la fiecare literă, în fereastra dintre urcarea fișierelor și importul
+ * SQL, ar fi umplut formularul de comandă cu o eroare despre altceva.
+ */
+function route_referrals_coduri(): void
+{
+    require_drept('comenzi.scrie');
+
+    $q = trim((string) ($_GET['q'] ?? ''));
+
+    // Ca la căutarea de clienți: un șir prea scurt nu e o greșeală, caseta
+    // întreabă la fiecare literă. Lista goală și `short`, ca pagina să spună
+    // de ce nu vede nimic.
+    if (mb_strlen($q) < GP_COD_SEARCH_MIN) {
+        json_out([
+            'rows'  => [],
+            'short' => true,
+            'more'  => false,
+            'min'   => GP_COD_SEARCH_MIN,
+            'exact' => false,
+        ]);
+    }
+
+    if (!referral_supported()) {
+        json_out([
+            'rows'  => [],
+            'short' => false,
+            'more'  => false,
+            'min'   => GP_COD_SEARCH_MIN,
+            'exact' => false,
+        ]);
+    }
+
+    // `%` și `_` se taie, ca în `api/routes/clients.php`: cine scrie „100%”
+    // caută „100%”, nu toată lista de coduri a casei.
+    $like = '%' . addcslashes($q, '\\%_') . '%';
+
+    // Codul scris ÎNTOCMAI, curățat cum îl curăță salvarea comenzii, ca „Ples”
+    // și „ ples ” să urce în capul listei același cont ca „ples”. Ce nu poate
+    // fi un cod (numai semne, ori prea lung) iese șir gol și nu se potrivește
+    // cu nimeni: conturile fără cod sunt deja scoase din `WHERE`.
+    $intocmai = referral_normalize_code($q);
+
+    // CONTUL CU CODUL ÎNTOCMAI SE GĂSEȘTE ȘI CÂND `LIKE` NU-L VEDE (recitirea
+    // din 10 octombrie 2026) — de aceea `u.referral_code = ?` stă și în
+    // `WHERE`, nu numai la ordine. Salvarea scoate din cod toate spațiile și
+    // toate semnele; `LIKE` caută textul cum a fost scris. „ples 7” nu semăna
+    // deci cu nimeni, pagina spunea „niciun cod și niciun nume”, iar comanda
+    // salvată așa aducea totuși comisionul celui cu „ples7”. De la legătura
+    // asta încolo, `exact` fals înseamnă pe față: salvat cum e scris, textul
+    // nu e codul niciunui cont care ar lua comision.
+    //
+    // NUMELE DE UTILIZATOR NU SE CAUTĂ, deși planul rundei îl pomenea. Cu el
+    // se intră în cont, iar lista lui e a celui cu „Conturi”
+    // (`route_users_list()`, api/routes/users.php). Poarta de aici e
+    // `comenzi.scrie`, pe care managerul o are fără „Conturi”: căutat și
+    // `username`, ar fi putut afla literă cu literă cum se cheamă contul
+    // oricui are cod — „prob” dă un rând, „probx” niciunul —, adică tocmai
+    // jumătatea care lipsește ca să încerci o parolă. Omul se caută după
+    // numele lui, după firmă ori după cod.
+    $randuri = all(
+        'SELECT u.name, u.customer_name, u.role, u.referral_code'
+        . ' FROM users u'
+        . ' WHERE u.active = 1 AND u.is_system = 0'
+        . " AND u.referral_code IS NOT NULL AND u.referral_code <> ''"
+        . ' AND (u.name LIKE ? OR u.customer_name LIKE ?'
+        . ' OR u.referral_code LIKE ? OR u.referral_code = ?)'
+        . ' ORDER BY (u.referral_code = ?) DESC,'
+        . " (u.role = 'client') ASC,"
+        . " COALESCE(NULLIF(u.name, ''), u.customer_name), u.id"
+        // Unul peste plafon, ca să se știe dacă mai sunt și alții (v. căutarea
+        // de clienți): o listă plină ar arăta la fel cu una care se termină
+        // exact acolo.
+        . ' LIMIT ' . (GP_COD_SEARCH_LIMIT + 1),
+        [$like, $like, $like, $intocmai, $intocmai]
+    );
+
+    $more = count($randuri) > GP_COD_SEARCH_LIMIT;
+    if ($more) {
+        array_pop($randuri);
+    }
+
+    $rows = array_map(static function (array $r): array {
+        $nume  = trim((string) ($r['name'] ?? ''));
+        $firma = trim((string) ($r['customer_name'] ?? ''));
+        $rol   = (string) ($r['role'] ?? '');
+        $fel   = $rol === 'agent_vanzari' ? 'agent' : ($rol === 'client' ? 'client' : 'casa');
+
+        // Clientul e cunoscut în casă după firmă, dar se caută și după omul
+        // din spatele ei: amândouă numele, ca rândul găsit după „ana” să nu
+        // arate numai „Cofetăria Belvedere” și să pară o potrivire greșită.
+        if ($fel === 'client' && $firma !== '' && $firma !== $nume) {
+            $nume = $nume !== '' ? $firma . ' (' . $nume . ')' : $firma;
+        }
+
+        // Trei chei și atât — v. capul funcției. O a patra pusă aici „fiindcă
+        // tot o avem” e exact ușa din dos pe care ruta n-are voie s-o fie.
+        return [
+            'code' => (string) $r['referral_code'],
+            'name' => $nume,
+            'kind' => $fel,
+        ];
+    }, $randuri);
+
+    json_out([
+        'rows'  => $rows,
+        'short' => false,
+        'more'  => $more,
+        'min'   => GP_COD_SEARCH_MIN,
+        // „Ce ai scris e chiar codul cuiva”: pagina spune atunci al cui e, fără
+        // să mai ceară o alegere din listă. Contul acela e primul rând.
+        'exact' => $intocmai !== '' && $rows !== [] && $rows[0]['code'] === $intocmai,
+    ]);
 }
 
 /* --------------------------------------------------------- administrator -- */

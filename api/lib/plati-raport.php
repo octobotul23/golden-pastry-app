@@ -373,15 +373,31 @@ function plati_fara_token(string $text): string
  * pe altă cale decât pagina (o bază adusă de altundeva, un rând scris cu
  * mâna), raportul tace: regula de la salvare nu poate păzi ce n-a trecut pe la
  * ea, deci se mai întreabă o dată aici, înaintea fiecărei trimiteri.
+ *
+ * VORBELE NU NUMESC O PAGINĂ (runda 2.7.5). Chatul raportului se pune de acum
+ * din două locuri — cartonașul „Raport pe Telegram” din Încasări și cutia
+ * „Raport de bani pe Telegram” din Setări › Notificări › Telegram —, iar
+ * refuzul se citește în oricare din ele, chiar în cutie: lângă caseta
+ * chatului (`plati_chat_missing`) ori sub butonul de probă (celelalte).
+ * „Pune-l în Încasări”, citit în Setări, ar fi trimis omul în altă pagină
+ * după o casetă pe care o are sub ochi. Vorba spune deci „Raport pe Telegram”
+ * și atât: e titlul întreg al cartonașului din Încasări; în Setări cutia
+ * poartă un nume mai lung („Raport de bani pe Telegram”), dar refuzul e scris
+ * ÎN ea, deci nu e loc de căutat. Și amândouă se termină cu „și salvează”:
+ * proba pleacă după ce e pe server, nu după ce scrie în casetă.
+ *
+ * Tokenul botului e altceva: se pune dintr-un singur loc, deci refuzul lui
+ * are voie să spună unde. Vorbele le ține `RAPORT_REFUZ_SERVER`, din
+ * `.claude/check-plati-conturi.mjs`.
  */
 function plati_trimite_piedica(): ?array
 {
     $chat = trim(setting('plati_telegram_chat_id'));
     if ($chat === '') {
-        return ['plati_chat_missing', 'Raportul de bani nu are chat. Pune numărul chatului în Încasări › Raport pe Telegram.'];
+        return ['plati_chat_missing', 'Raportul de bani nu are chat. Pune numărul chatului la „Raport pe Telegram” și salvează.'];
     }
     if (plati_chat_acelasi($chat, setting('notify_telegram_chat_id'))) {
-        return ['plati_chat_same', 'Chatul raportului de bani e același cu al comenzilor. Raportul are chatul lui: schimbă-l în Încasări.'];
+        return ['plati_chat_same', 'Chatul raportului de bani e același cu al comenzilor. Raportul are chatul lui: schimbă-l la „Raport pe Telegram” și salvează.'];
     }
     if (setting('notify_telegram_token') === '') {
         return ['plati_token_missing', 'Botul de Telegram nu are token. Pune-l în Setări, la Telegram.'];

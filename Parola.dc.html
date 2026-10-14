@@ -223,7 +223,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 // Se publică pe amândouă subdomeniile — clientul și personalul intră pe
 // adrese diferite, dar au aceeași nevoie.
 
-const WORDS = ["croissant", "vanilie", "migdale", "caramel", "foietaj", "brioșă", "zmeură", "cuptor", "tavă", "scorțișoară"];
+// Cuvintele parolei propuse. Aceeași listă ca în `Conturi.dc.html`, în aceeași
+// ordine — acolo scrie și de ce arată așa (litere mici fără diacritice, ca să
+// se poată dicta). Până la runda 2.7.5 cele două liste ajunseseră să difere:
+// aici era „scorțișoară”, acolo „unt”. Le ține egale `.claude/check-panouri.mjs`,
+// care citește rândul de mai jos cu `JSON.parse`: lista rămâne pe UN rând, cu
+// ghilimele duble.
+const WORDS = ["caramel", "vanilie", "migdale", "cuptor", "cozonac", "covrig", "biscuit", "aluat", "miere", "lapte", "fistic", "alune", "ecler", "fursec", "drojdie", "stafide", "portocale", "castron", "desert", "cofetar"];
 // Serverul refuză orice parolă sub 8 caractere (route_change_password).
 // Pragul de aici nu are voie să fie mai mic: altfel caseta promite ceva ce
 // salvarea refuză, iar omul crede că aplicația e stricată.
@@ -268,9 +274,18 @@ class Component extends DCLogic {
     document.removeEventListener("keydown", this.peTasta);
   }
 
-  /** O parolă lizibilă, destul de lungă ca serverul s-o accepte din prima. */
+  /**
+   * O parolă ușor de citit și de dictat, destul de lungă ca serverul s-o
+   * accepte din prima: un cuvânt din WORDS lipit de patru cifre, „caramel4821”.
+   *
+   * Aceeași formă ca în `Conturi.dc.html` (acolo sunt și pricinile): fără
+   * liniuță, iar numărul merge de la 2000 la 9999, ca cifra de după cuvânt să
+   * nu fie niciodată 0 ori 1. Completarea cu cifre de la coadă n-are azi ce
+   * completa (cuvântul cel mai scurt are cinci litere, deci ies cel puțin nouă
+   * caractere); rămâne pentru ziua în care MIN urcă.
+   */
   propune() {
-    let p = WORDS[Math.floor(Math.random() * WORDS.length)] + "-" + (1000 + Math.floor(Math.random() * 9000));
+    let p = WORDS[Math.floor(Math.random() * WORDS.length)] + (2000 + Math.floor(Math.random() * 8000));
     while (p.length < MIN) p += Math.floor(Math.random() * 10);
     return p;
   }

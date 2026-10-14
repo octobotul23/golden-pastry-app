@@ -1256,6 +1256,78 @@ function autor_comanda(?int $contId, array $autori): ?string
     return $autori[$contId] ?? null;
 }
 
+/**
+ * Omul care a hotărât de pe Telegram FĂRĂ cont legat, cum se scrie în panou:
+ *
+ *   Ion Pop — Telegram, cont nelegat
+ *
+ * `null` pentru un nume gol, adică pentru orice hârtie pe care n-a hotărât-o
+ * un asemenea om — și atunci cine cheamă cade pe `autor_comanda()`.
+ *
+ * DE CE ARE VORBA LIPITĂ DE NUME, și nu o cheie a ei în JSON (runda 2.7.5).
+ * Pagina desenează „Creat de …” dintr-un singur șir (`gp.creatDe`,
+ * shared/gp-api.js). Un steag despărțit ar fi trebuit dus până la fiecare loc
+ * care arată un autor, iar primul loc uitat ar fi scris „Creat de Ion Pop”, ca
+ * despre un cont al casei care nu există. Lipită aici, vorba nu se poate
+ * pierde pe drum: numele unui om nelegat nu apare NICĂIERI fără ea.
+ *
+ * `$nume` vine din `order_requests.handled_tg_name`, scris de server deja
+ * curățat și tăiat (`telegram_nume_curat()`, api/lib/telegram-legaturi.php).
+ *
+ * @param mixed $nume
+ */
+function autor_apasator($nume): ?string
+{
+    $nume = is_string($nume) ? trim($nume) : '';
+    return $nume === '' ? null : $nume . ' — Telegram, cont nelegat';
+}
+
+/**
+ * Cererile din lot hotărâte, de pe Telegram, de un om cu contul nelegat —
+ * pentru „Creat de” al comenzii născute din ele.
+ *
+ * DE CE E NEVOIE. Comanda născută dintr-o cerere DE PE SITE își ia
+ * `created_by` de la contul care a acceptat-o (`route_requests_accept()`).
+ * Pentru omul nelegat, contul acela e al botului — purtătorul de drepturi —,
+ * deci fără lotul ăsta panoul ar scrie pe comandă „Creat de Octavian” pentru
+ * o apăsare a oricui din grup: chiar numele pe care runda 2.7.5 îl scoate.
+ *
+ * NUMAI cererile fără autor. Cea scrisă de un om al casei își dă autorul și
+ * comenzii (`created_by` = cine a scris cererea), iar acela rămâne adevărul
+ * despre „cine a creat-o”, oricine ar fi apăsat pe „Acceptă”. `r.*` și
+ * `?? 0`, fiindcă `created_by` de pe cerere vine cu migrarea 022.
+ *
+ * O SINGURĂ interogare pe lot, pe cheia primară (`orders.request_id` e pe
+ * rândul comenzii), și NICIUNA când lotul n-are comenzi născute din cereri ori
+ * baza n-are migrarea 036 — atunci nu există niciun asemenea om de arătat.
+ * Paza întreabă NUMAI de coloane (`true`): numele de citit stă în ele, iar o
+ * bază rămasă fără tabelul `telegram_oameni` are încă nume scrise pe cereri —
+ * necitite, panoul ar fi arătat în locul lor contul botului.
+ *
+ * @param array<int, int|null> $cereri  `orders.request_id` al fiecărei comenzi
+ * @return array<int, string>  id de cerere => „Ion Pop — Telegram, cont nelegat”
+ */
+function apasatorii_comenzilor(array $cereri): array
+{
+    $cereri = array_values(array_unique(array_filter(array_map('intval', $cereri))));
+    if (!$cereri || !telegram_apasatori_suportati(true)) {
+        return [];
+    }
+
+    $ph  = implode(',', array_fill(0, count($cereri), '?'));
+    $out = [];
+    foreach (all("SELECT r.* FROM order_requests r WHERE r.id IN ($ph) AND r.handled_tg_name IS NOT NULL", $cereri) as $r) {
+        if ((int) ($r['created_by'] ?? 0) > 0) {
+            continue;
+        }
+        $eticheta = autor_apasator($r['handled_tg_name']);
+        if ($eticheta !== null) {
+            $out[(int) $r['id']] = $eticheta;
+        }
+    }
+    return $out;
+}
+
 /* ------------------------------------- jetonul cererii de pe site -- */
 
 /**
@@ -1678,6 +1750,18 @@ function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor 
         ))
         : [];
 
+    // Și cine a APĂSAT, când comanda s-a născut dintr-o cerere acceptată de pe
+    // Telegram de un om cu contul nelegat: `created_by` e atunci contul
+    // botului, iar numele lui n-are ce căuta pe comandă — v.
+    // `apasatorii_comenzilor()`. Sub același steag ca autorul: e tot numele
+    // unui om din casă, pe care cumpărătorul n-are de ce să-l afle.
+    $apasatori = $cuAutor
+        ? apasatorii_comenzilor(array_map(
+            static fn($o) => isset($o['request_id']) && $o['request_id'] !== null ? (int) $o['request_id'] : 0,
+            $orders
+        ))
+        : [];
+
     // Plata — v. `@param $plata` din antet. Orice alt cuvânt decât cele două
     // înseamnă „nimic”: un apelant care greșește argumentul nu are voie să
     // deschidă din greșeală sertarul cu scadențe.
@@ -1690,7 +1774,7 @@ function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor 
     $toataPlata = $cuPlata && $plata === 'tot';
     $anulata    = $cuPlata ? status_cancelled() : '';
 
-    return array_map(static function (array $o) use ($byOrder, $cuRecomandare, $cuAutor, $primele, $autori, $cuPlata, $toataPlata, $anulata) {
+    return array_map(static function (array $o) use ($byOrder, $cuRecomandare, $cuAutor, $primele, $autori, $apasatori, $cuPlata, $toataPlata, $anulata) {
         $rand = [
             'id'           => (int) $o['id'],
             'seq'          => (int) $o['seq'],
@@ -1709,11 +1793,13 @@ function attach_items(array $orders, bool $cuRecomandare = false, bool $cuAutor 
                 $primele
             ),
             // Cine a scris-o. Null pentru cine nu e din casă — v. steagul de sus.
+            // Omul nelegat care a acceptat cererea de pe Telegram trece
+            // ÎNAINTEA contului: altfel aici ar scrie numele contului botului.
             'creatDe'      => $cuAutor
-                ? autor_comanda(
+                ? ($apasatori[(int) ($o['request_id'] ?? 0)] ?? autor_comanda(
                     isset($o['created_by']) && $o['created_by'] !== null ? (int) $o['created_by'] : null,
                     $autori
-                )
+                ))
                 : null,
             'customerName' => $o['customer_name'],
             'phone'        => $o['phone'],
@@ -2192,6 +2278,17 @@ function comanda_stearsa_poza(
     array $cont,
     string $clipa
 ): string {
+    // „SCRISĂ DE” SE HOTĂRĂȘTE CA „CREAT DE” DIN PANOU (runda 2.7.5). Comanda
+    // născută dintr-o cerere de pe site, acceptată de pe Telegram de un om cu
+    // contul nelegat, are în `created_by` contul botului — purtătorul de
+    // drepturi. Ruta își socotește numele din `created_by`, deci poza ar fi
+    // scris „Scrisă de Octavian” despre apăsarea oricui din grup, și ar fi
+    // scris-o pentru totdeauna: după ștergere nu mai e nimic de recitit.
+    // Aceeași întâietate ca în `attach_items()`: omul nelegat, apoi contul.
+    // Aici, și nu în rută, fiindcă poza se face într-un singur loc.
+    $cerereId = (int) ($o['request_id'] ?? 0);
+    $scrisaDe = apasatorii_comenzilor([$cerereId])[$cerereId] ?? $scrisaDe;
+
     $poza = json_encode([
         'v'         => GP_POZA_COMANDA_V,
         'comanda'   => $o,

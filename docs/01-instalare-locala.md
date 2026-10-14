@@ -58,9 +58,9 @@ notificare).
 ### Restul folderului `sql/` — migrările
 
 Cele două fișiere de mai sus **nu sunt tot**. `001_schema.sql` face 17 tabele,
-iar aplicația de azi cere 28. Ce lipsește se naște abia în migrări:
+iar aplicația de azi cere 29. Ce lipsește se naște abia în migrări:
 `referral_commissions` din `008`, `founder_invites` din `009`, `lab_shifts` din
-`014`, `lab_messages` din `015` și încă șapte după ele — plus nouă coloane din `users`, între ele
+`014`, `lab_messages` din `015` și încă opt după ele — plus nouă coloane din `users`, între ele
 `referral_code`, `referred_by` și `referred_at`, care vin din `007`. O bază
 oprită la `002` arată întreagă și nu se plânge la import: se plânge pagina, mai
 târziu, cu „lipsește migrarea".
@@ -86,20 +86,20 @@ Se rulează de câte ori vrei: fiecare migrare se uită întâi în
 **Cum verifici.** Ultimele rânduri ale uneltei sunt chiar verificarea:
 
 ```
-Tabele în gp_dev: 28
+Tabele în gp_dev: 29
 audit_log, founder_invites, lab_messages, lab_production, lab_shifts, ...
 Produse în catalog: 22
 
 GATA — baza e pregătită.
 ```
 
-**28 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
+**29 de tabele**, iar `products` cu **22 de rânduri**. Dacă ies mai puține,
 numele care lipsește îți spune care migrare n-a intrat: `referral_commissions`
 e din `008`, `founder_invites` din `009`, `lab_shifts` din `014`,
 `lab_messages` din `015`, `request_claims` din `019`, `telegram_links` și
 `lab_production` din `021`, `schema_migrations` din `025`, iar
-`role_rights` din `033`, `stock_item_prices` din `034` și `orders_deleted` din
-`035`. `schema_migrations` e registrul migrărilor: dacă el lipsește, uită-te
+`role_rights` din `033`, `stock_item_prices` din `034`, `orders_deleted` din
+`035` și `telegram_oameni` din `036`. `schema_migrations` e registrul migrărilor: dacă el lipsește, uită-te
 dacă nu cumva lipsesc și altele — e singurul care poate răspunde singur la
 întrebarea asta, cu
 `SELECT fisier FROM schema_migrations`. Fără primul, „Recomandări" nu-ți arată banii; fără
@@ -107,10 +107,13 @@ dacă nu cumva lipsesc și altele — e singurul care poate răspunde singur la
 Laborator răspund lămurit că lipsește migrarea. Cele două din `021` tac în schimb:
 fără `telegram_links` butonul de legare a Telegramului nu pornește, iar fără
 `lab_production` raportul de producție pe tură iese **gol**, nu cu eroare. Cele
-trei de la urmă nu opresc nimic din ce mergea: fără `role_rights` fiecare rol
+trei din `033`–`035` nu opresc nimic din ce mergea: fără `role_rights` fiecare rol
 intră unde intra și până acum, numai bifele mutate în „Acces" n-au unde se
 scrie; fără `stock_item_prices` n-au unde se scrie prețurile de cumpărare; iar
-fără `orders_deleted` n-are unde se ține ce era într-o comandă ștearsă. Și dacă în dreptul vreunui fișier scrie un număr
+fără `orders_deleted` n-are unde se ține ce era într-o comandă ștearsă. Cel mai
+nou, `telegram_oameni`, nu e de felul lor: fără migrarea lui, apăsarea din
+grupul de Telegram a unui om care nu și-a legat contul e refuzată, cu numele
+fișierului scris pe telefon. Și dacă în dreptul vreunui fișier scrie un număr
 de erori, nu trece peste: eroarea e tipărită dedesubt, cu instrucțiunea lângă
 ea.
 
@@ -135,7 +138,7 @@ tabelul în care fiecare migrare își scrie numele, la coada ei. În ordinea
 numelui, `025` ar veni după `003`–`024` — iar atunci acelea ar trece pe lângă un
 tabel care încă nu există, n-ar avea unde-și scrie numele, și o bază instalată
 **întreagă** ar ieși cu un registru de **un rând**. Pagina de verificare citește
-registrul și ar spune atunci „1 din 23", adică ar da alarma tocmai pe instalarea
+registrul și ar spune atunci „1 din 35", adică ar da alarma tocmai pe instalarea
 bună. Așa că se rulează întâi, iar bucla îl sare ca pe `001` și `002` — a intrat
 deja. Unealta din pasul de mai sus, `.claude/instalare-local.php`, face aceeași
 mutare singură; aici o scrii cu mâna fiindcă `mysql` gol nu știe de ea.

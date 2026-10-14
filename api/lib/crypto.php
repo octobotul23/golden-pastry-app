@@ -110,6 +110,20 @@ function mask_secret(?string $plain): string
         : str_repeat('•', 8) . substr($plain, -4);
 }
 
+/**
+ * Masca ÎNTREAGĂ: opt buline, oricât de lung ar fi secretul.
+ *
+ * Pentru secretele alese de om — parola căsuței de e-mail (runda 2.7.5). Un
+ * token de API e lung și scos din întâmplare, deci coada lui de 4 semne nu
+ * spune nimic; o parolă e scurtă și gândită de cineva, iar ultimele ei patru
+ * semne („…2024”, „…ana1”) sunt uneori jumătate din ea. `mask_secret()` le-ar
+ * arăta la orice parolă de la 12 semne în sus.
+ */
+function mask_secret_intreg(?string $plain): string
+{
+    return $plain === null || $plain === '' ? '' : str_repeat('•', 8);
+}
+
 /** Token aleator, sigur criptografic (pentru sesiuni și resetări de parolă). */
 function random_token(int $bytes = 32): string
 {

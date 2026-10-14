@@ -131,7 +131,7 @@
         + var(--gp-bara-litera) * var(--gp-bara-linie)
         + var(--gp-bara-margine) * 2 + var(--gp-bara-dunga)
         + env(safe-area-inset-bottom));
-    }
+    } html[data-gp-tastatura] [data-gp-fixa] { opacity: 0 !important; pointer-events: none !important; } /* Runda 2.7.5: cât se scrie pe telefon (steagul îl pune shared/gp-api.js pe <html>), bara fixă a coșului se ascunde — unde tastatura strânge pagina ar fi stat chiar deasupra ei, peste câmpul în care se scrie. STINSĂ cu `opacity` și `pointer-events`, nu cu `visibility` ori `display`: nu se vede și nu primește apăsări, dar rămâne măsurabilă (`masoaraPastila` îi citește marginea de sus) și, mai ales, „Finalizare” din ea poate primi focusul. Steagul mai ține 300 ms după ce focusul a ieșit din câmp, iar fereastra de finalizare închisă direct dintr-un câmp își întoarce focusul chiar pe butonul ăsta (`tineFocusul`, `asazaFocusul`): pe un buton cu `visibility: hidden`, `focus()` nu face nimic și nu aruncă, deci focusul rămânea pe corpul paginii. Regula stă pe rândul ăsta dinadins, ca nimic de mai jos să nu-și mute numărul. */
     @media (max-width: 400px) { .h-badge[data-insigna-lunga] { width: min-content; line-height: 1.45; align-items: flex-start; } [data-insigna-lunga] > .h-badge__dot { flex: none; margin-top: calc((1lh - 6px) / 2); } [data-insigna-punct] { display: none; } } /* Insigna de deasupra titlului are 297px pe un rând: sub 400px nu mai încape în coloană. Acolo se rupe numai între „ce” și „unde” (spațiile din „ce” sunt nedespărțitoare), iar pastila se strânge pe textul ei; fără `min-content` rămânea cât coloana, cu jumătate goală. Bulina nu se turtește (pastila strânsă e cât textul, iar flexul îi lua și bulinei din lățime: o cutie goală n-are un minim al ei) și stă pe mijlocul primului rând, ca semnul laturii de lângă o vorbă ruptă; centrată pe toată pastila, plutea între rânduri. Un browser fără `lh` o lasă lipită sus, tot pe primul rând. Rândurile mai strânse tot numai aici: pe un rând, insigna păstrează înălțimea de dinainte. Rândul ăsta era gol: scris aici, nu sub el, ca să nu mute numerele de rând ale paginii. Regula: check-site-public, „insignele lungi”. */
     /* ANTETUL DE CALCULATOR: ÎNTREG, ORI STRÂNS CÂND NU ÎNCAPE.
 
@@ -1305,7 +1305,7 @@
   </sc-if>
 
   <sc-if value="{{ mobBar }}">
-    <div ref="{{ baraRef }}" style="position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;flex-wrap:wrap;align-items:center;column-gap:0.75rem;row-gap:0;padding:var(--gp-bara-margine) clamp(1rem,4vw,1.5rem) calc(var(--gp-bara-margine) + env(safe-area-inset-bottom));background:var(--h-bg-raised);border-top:var(--gp-bara-dunga) solid var(--h-line);box-shadow:0 -8px 24px rgba(0,0,0,0.18)">
+    <div ref="{{ baraRef }}" style="position:fixed;left:0;right:0;bottom:0;z-index:120;display:flex;flex-wrap:wrap;align-items:center;column-gap:0.75rem;row-gap:0;padding:var(--gp-bara-margine) clamp(1rem,4vw,1.5rem) calc(var(--gp-bara-margine) + env(safe-area-inset-bottom));background:var(--h-bg-raised);border-top:var(--gp-bara-dunga) solid var(--h-line);box-shadow:0 -8px 24px rgba(0,0,0,0.18)" data-gp-fixa="jos">
       <!-- FIRUL PRAGULUI, lipit de muchia de sus a barei.
 
            Dunga stătea până azi pe rândul de jos, cu `margin:0.3rem 0 0` și

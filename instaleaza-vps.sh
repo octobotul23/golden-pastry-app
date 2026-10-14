@@ -11,6 +11,9 @@
 # Se poate rula de câte ori vrei: a doua oară e o actualizare — nu atinge
 # api/config.php, nu șterge pozele urcate din panou și nu reimportă baza.
 #
+# Pune și un program de poștă (postfix, numai de trimis), ca e-mailul să poată
+# pleca și fără căsuța din Setări; cu --fara-posta îl sare.
+#
 set -euo pipefail
 
 DOMAIN=""
@@ -21,6 +24,7 @@ DB_NAME="gp"
 DB_USER="gp"
 DB_ROOT_PASS=""
 FARA_SSL=0
+FARA_POSTA=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -32,8 +36,9 @@ while [[ $# -gt 0 ]]; do
     --db-user)  DB_USER="${2:-}"; shift 2 ;;
     --db-root-pass) DB_ROOT_PASS="${2:-}"; shift 2 ;;
     --no-ssl)   FARA_SSL=1; shift ;;
+    --fara-posta) FARA_POSTA=1; shift ;;
     -h|--help)
-      sed -n '2,12p' "$0" | sed 's/^# \?//'
+      sed -n '2,15p' "$0" | sed 's/^# \?//'
       exit 0 ;;
     *) echo "Argument necunoscut: $1"; exit 2 ;;
   esac
@@ -395,6 +400,134 @@ if [[ -f "$CRON_FISIER" ]]; then
   fi
 fi
 
+# -------------------------------------------------------- programul de poștă --
+
+# >>> posta-directa >>>
+# ACELAȘI text, literă cu literă, în instaleaza-vps.sh și în actualizeaza-vps.sh
+# (le compară .claude/test-posta-vps.mjs). Blocul e numai funcția; fiecare script
+# o cheamă la locul lui, după ce a pus POSTA_DOMENIU (domeniul gol, fără „www.")
+# și FARA_POSTA (0 ori 1). Se sprijină numai pe ajutoarele info și galben.
+#
+# DE CE EXISTĂ. Aplicația trimite e-mail pe două căi: prin căsuța (SMTP) din
+# Setări → Notificări → E-mail, când e completată, ori — altfel — prin mail() din
+# PHP. mail() nu trimite nimic el însuși: predă mesajul unui program de pe server
+# (/usr/sbin/sendmail). Pe un VPS pus de instaleaza-vps.sh programul acela n-a
+# existat niciodată (pe găzduirea de dinainte îl ținea gazda), deci linkul de la
+# „Ți-ai uitat parola?" nu pleca și nimic nu spunea de ce.
+#
+# CE PUNE: postfix NUMAI DE TRIMIS. Ascultă doar pe 127.0.0.1 (din afară nu-l
+# poate folosi nimeni), trimite numai pe IPv4 (adresa pe care o acoperă regula
+# SPF a domeniului) și NU se socotește gazda domeniului: Debian trece din oficiu
+# domeniul în `mydestination`, iar atunci un mesaj către o adresă a casei
+# (cineva@domeniu) ar fi predat unui utilizator local care nu există, în loc să
+# plece la căsuțele adevărate.
+#
+# NICIODATĂ `mor`, niciodată o ieșire cu eroare: e un pas de la coada unei
+# lucrări care a reușit deja. Orice piedică e un rând galben, cu comanda de dat
+# de mână. Un program de poștă găsit gata pus NU se atinge.
+pune_posta() {
+  local domeniu="${POSTA_DOMENIU:-}" prog="" mx="" dest="" pus=0
+  # Ultima bucată numai din litere: un IP ori „localhost" nu e domeniu de poștă.
+  local tipar='^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$'
+  domeniu="${domeniu,,}"
+
+  if (( ${FARA_POSTA:-0} )); then
+    info "Sărit (--fara-posta). E-mailul pleacă numai prin căsuța (SMTP) din Setări → Notificări → E-mail."
+    return 0
+  fi
+
+  if [[ -x /usr/sbin/sendmail ]]; then prog="/usr/sbin/sendmail"
+  else prog="$(command -v sendmail 2>/dev/null || true)"; fi
+
+  if [[ -n "$prog" ]]; then
+    info "serverul are deja un program de poștă ($prog) — nu-l ating"
+  elif [[ ! "$domeniu" =~ $tipar ]]; then
+    galben "  Nu am putut citi domeniul site-ului, deci NU am pus programul de poștă."
+    info "Până atunci e-mailul pleacă numai prin căsuța (SMTP) din Setări → Notificări → E-mail."
+    return 0
+  elif ! command -v apt-get >/dev/null 2>&1 || ! command -v debconf-set-selections >/dev/null 2>&1; then
+    galben "  Serverul nu are apt: programul de poștă NU a fost pus."
+    info "Pune unul de mână (postfix, numai de trimis) ori completează căsuța (SMTP) din Setări → Notificări → E-mail."
+    return 0
+  else
+    info "instalez postfix, numai de trimis (poate ține un minut)…"
+    # Răspunsurile la cele două întrebări ale instalării se dau dinainte: fără
+    # ele, apt s-ar opri la un ecran albastru pe care, prin ssh, nu-l vede nimeni.
+    printf 'postfix postfix/main_mailer_type select Internet Site\npostfix postfix/mailname string %s\n' "$domeniu" \
+      | debconf-set-selections >/dev/null 2>&1 || true
+    apt-get update -qq >/dev/null 2>&1 || true
+    if DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postfix >/dev/null 2>&1 \
+       && command -v postconf >/dev/null 2>&1; then
+      if postconf -e 'inet_interfaces = loopback-only' 'inet_protocols = ipv4' \
+                     'mydestination = localhost.localdomain, localhost' >/dev/null 2>&1; then
+        systemctl enable postfix >/dev/null 2>&1 || true
+        systemctl restart postfix >/dev/null 2>&1 || service postfix restart >/dev/null 2>&1 || true
+        info "postfix — pus: ascultă numai pe 127.0.0.1, trimite ca @$domeniu"
+        pus=1
+      else
+        galben "  postfix s-a instalat, dar nu l-am putut așeza (postconf a refuzat)."
+        info "Până e așezat, nu te bizui pe el: completează căsuța (SMTP) din Setări → Notificări → E-mail."
+      fi
+    else
+      galben "  Programul de poștă NU s-a putut instala (apt a refuzat ori n-are legătură)."
+      info "Restul lucrării e întreg. Ori completezi căsuța (SMTP) din Setări → Notificări → E-mail, ori dai de mână, mai târziu, AMÂNDOUĂ rândurile:"
+      info "    DEBIAN_FRONTEND=noninteractive apt-get install -y postfix"
+      info "    postconf -e 'inet_interfaces = loopback-only' 'inet_protocols = ipv4' 'mydestination = localhost.localdomain, localhost' && systemctl restart postfix"
+      return 0
+    fi
+  fi
+
+  # De aici încolo se numai CITEȘTE, fie că programul e al nostru, fie că era.
+  if command -v postconf >/dev/null 2>&1; then
+    # -x desface $myhostname; un postfix prea vechi ca să-l știe răspunde fără el.
+    dest="$(postconf -hx mydestination 2>/dev/null || postconf -h mydestination 2>/dev/null || true)"
+    dest=" ${dest//,/ } "
+    if [[ -n "$domeniu" && "${dest,,}" == *" $domeniu "* ]]; then
+      galben "  Programul de poștă se socotește gazda lui $domeniu (mydestination)."
+      info "Un mesaj către o adresă @$domeniu NU pleacă la căsuța adevărată: rămâne pe server."
+      info "Se îndreaptă cu:"
+      info "    postconf -e 'mydestination = localhost.localdomain, localhost' && systemctl restart postfix"
+    fi
+    if ! (systemctl is-active --quiet postfix 2>/dev/null || pgrep -x master >/dev/null 2>&1); then
+      galben "  Programul de poștă e instalat, dar oprit: pe calea directă NU pleacă nimic."
+      info "Pornește-l cu:  systemctl enable --now postfix   și vezi de ce:  systemctl status postfix"
+    elif (( ! pus )); then
+      info "serviciul postfix merge"
+    fi
+  fi
+
+  # Portul 25 spre lume. Multe găzduiri de VPS îl țin închis din oficiu; atunci
+  # programul de poștă primește mesajul, zice „luat" și îl ține în coadă zile
+  # întregi. Se încearcă o singură legătură, către serverul care primește poșta
+  # domeniului, fără să se trimită nimic.
+  if [[ -n "$domeniu" ]] && command -v php >/dev/null 2>&1 && command -v timeout >/dev/null 2>&1; then
+    mx="$(php -r '$g = []; $p = []; if (@getmxrr($argv[1], $g, $p) && $g) { array_multisort($p, $g); echo $g[0]; }' "$domeniu" 2>/dev/null || true)"
+    if [[ ! "$mx" =~ ^[A-Za-z0-9.-]+$ ]]; then
+      info "portul 25 nu l-am putut încerca (n-am aflat cine primește poșta lui ${domeniu})"
+    elif timeout 8 bash -c 'exec 3<>"/dev/tcp/$0/25"' "$mx" >/dev/null 2>&1; then
+      info "portul 25 spre lume e deschis (am ajuns la $mx)"
+    else
+      galben "  Portul 25 pare închis de găzduire (n-am ajuns la $mx)."
+      info "Pe calea directă mesajele rămân atunci în coadă și NU pleacă, fără nicio eroare în panou."
+      info "Leacul nu e pe server: completează căsuța (SMTP) din Setări → Notificări → E-mail."
+    fi
+  fi
+
+  info "Calea de nădejde rămâne căsuța (SMTP): ce pleacă direct de pe server ajunge des în Spam."
+  info "Proba adevărată: butonul „Trimite e-mail de test” din Setări → Notificări → E-mail."
+  if [[ -f /var/log/mail.log ]]; then
+    info "Ce n-a plecat:  mailq      De ce:  tail -30 /var/log/mail.log"
+  else
+    info "Ce n-a plecat:  mailq      De ce:  journalctl -u 'postfix*' -n 30 --no-pager"
+  fi
+  return 0
+}
+# <<< posta-directa <<<
+
+pas "Programul de poștă"
+POSTA_DOMENIU="${DOMAIN#www.}"
+pune_posta
+
 # ------------------------------------------------------------ gazde virtuale --
 
 pas "Gazdele virtuale Apache"
@@ -506,6 +639,8 @@ cat <<RAPORT
        (primul câmp e codul de instalare de mai sus)
        apoi:  rm ${DIR}/api/setup.php
     3. https://lab.$DOMAIN                — intri cu contul creat
+    4. Setări → Notificări → E-mail       — completează căsuța (SMTP) și apasă
+       „Trimite e-mail de test”: pe ea se bizuie linkurile de parolă uitată
 
   Actualizări: urci noul deploy/ și rulezi din nou exact aceeași comandă.
   Copie de siguranță: mysqldump -uroot ${DB_NAME} > ~/gp-\$(date +%F).sql

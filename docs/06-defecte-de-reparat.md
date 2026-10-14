@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**637 de defecte confirmate** — 10 critice, 131 grave, 263 medii, 233 mici.
-**599 reparate**, 38 rămase.
+**711 de defecte confirmate** — 11 critice, 134 grave, 281 medii, 285 mici.
+**658 reparate**, 53 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-429 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+503 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -28,14 +28,14 @@ Aceeași listă, cu filtre și căutare:
 
 | Gravitate | Reparate | Rămase | Total |
 |---|---|---|---|
-| Critice | 10 | 0 | 10 |
-| Grave | 131 | 0 | 131 |
-| Medii | 260 | 3 | 263 |
-| Mici | 198 | 35 | 233 |
+| Critice | 11 | 0 | 11 |
+| Grave | 134 | 0 | 134 |
+| Medii | 277 | 4 | 281 |
+| Mici | 236 | 49 | 285 |
 
 ---
 
-## Ce e reparat — 599
+## Ce e reparat — 658
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -55,6 +55,10 @@ reparația la loc și văzând-o picând.
 - [x] **POST /orders nu cere autentificare: oricine poate băga comenzi direct în laborator, ocolind treapta de cerere**
   `api/routes/orders.php:84` · *critic*
   Ruta se deschide acum cu `require_staff()`. Un vizitator anonim primește 401, un client autentificat 403; comenzile directe rămân doar pentru panou. Probe: „comandă direct în laborator, fără cont → 401" și „nici clientul autentificat nu bagă comenzi direct → 403".
+
+- [x] **Parola căsuței de e-mail pleca spre orice server scris în „Server SMTP”**
+  `api/routes/settings.php:659` · *critic*
+  422 `smtp_parola_din_nou`, cu mesaj pe înțeles, când gazda nouă vine fără parola scrisă sau ștearsă în aceeași salvare. Ruta întreabă numai `smtp_parola_pusa()`, deci parola rămâne citită dintr-un singur loc. Probat static (check-posta 440 · 0) și viu (test-posta 127 · 0).
 
 - [x] **Două apăsări simultane pe „Scade din stoc” scad aceleași comenzi de două ori**
   `api/routes/stock.php:246` · *critic*
@@ -284,6 +288,10 @@ reparația la loc și văzând-o picând.
   `api/routes/auth.php:238` · *grav*
   route_reset() taie parola de spații, ca toate celelalte drumuri, și șterge încercările eșuate ale contului (clear_attempts), fiindcă blocarea se numără acum din ele. Pagina Intrare taie și ea (Intrare.dc.html). Probe: test-parola.mjs „se intră cu parola fără spații, cum o taie și autentificarea" și „după resetare se intră imediat" — pică amândouă dacă scot trim-ul, respectiv clear_attempts.
 
+- [x] **„Ți-ai uitat parola?” spunea „am trimis un e-mail” și când e-mailul nu pleca, iar căderea nu ajungea nicăieri**
+  `api/routes/auth.php:703` · *grav*
+  Fiecare încercare își scrie rândul. Căderea apare în caseta roșie de deasupra filelor din Setări („Parolă uitată — linkul n-a plecat (vezi Jurnalul)”), în Jurnal cu pricina ei („Cerere de parolă nouă — e-mailul NU a plecat: …”) și în jurnalul de erori al serverului. Reușita se scrie și ea, deosebit pe cele două drumuri: „luat în primire de căsuța de e-mail” ori „predat programului de poștă al serverului; nu se știe dacă a ajuns”. Vizitatorul citește același răspuns ca înainte, orice s-ar fi întâmplat. Probă: `.claude/check-posta.mjs`; `.claude/test-posta.mjs`, secțiunea D.
+
 - [x] **Catalogul nu verifica lungimea textelor: un nume de 300 de caractere ieșea ca „Eroare internă"**
   `api/routes/catalog.php:34` · *grav*
   Toate cele patru locuri trec acum prin text_field(), cu lățimile coloanelor scrise o singură dată în capul fișierului (CAT_NUME_MAX, CAT_NOTA_MAX, PROD_NUME_MAX, PROD_DESC_MAX). Adresa scrisă cu mâna se refuză dacă nu încape; cea făcută din nume se scurtează singură pe ultima cratimă, cu slug_scurt() — deci un nume lung dar legitim intră în catalog, cu numele întreg și o adresă citibilă. Probe: .claude/test-reparat-lungimi-si-zile.mjs (măsurată dând reparația înapoi: 23 de verificări pică cu 500 db_error).
@@ -412,6 +420,10 @@ reparația la loc și văzând-o picând.
   `api/routes/telegram.php:377` · *grav*
   Hotărârea patronului: „Urma întâi, în `try`-ul ei". Două blocuri neatârnate, cu `editMessageText` PRIMUL: urma e cea care rămâne a doua zi și singura care scoate butoanele, deci nu are voie să atârne de o curtoazie cu termen. Toastul rămâne obligatoriu, dar e al doilea și, dacă pică, pică singur — pierderea e o rotiță, nu o hotărâre. Fiecare bloc își scrie propriul rând în logul serverului, cu text deosebit, tocmai fiindcă asta e singura urmă a unei căderi care nu se vede nicăieri altundeva. Prețul, plătit dinadins și scris în comentariu: toastul întârzie cu o chemare de rețea. Cinci reguli noi în `.claude/test-defect-hotarare-de-pe-telefon.mjs`, secțiunea D, dintre care trei sunt VII, nu statice: `telegram_toast()` se cheamă de-a dreptul din PHP, cu tokenul golit de chinga probei, și se numără rândurile din log. Dovedită cu trei stricăciuni: codul de dinainte, varianta cu două blocuri dar toastul tot primul (cea pe care patronul n-a ales-o), și ordinea bună lăsată totuși într-un singur `try` — ultima arată că regula de ordine singură n-ar fi fost de ajuns.
 
+- [x] **Oricine apăsa „Acceptă” ori „Respinge” în grupul de Telegram apărea cu numele patronului: în mesaj, în panou și în Jurnal**
+  `api/routes/telegram.php:353` · *grav*
+  Contul care a legat botul rămâne numai purtătorul de DREPTURI. Numele e al omului care a apăsat: cine are contul legat apare cu numele contului; cine nu, cu numele lui de pe Telegram și cu vorba „cont nelegat” — pe cerere (coloanele noi `handled_tg_id` și `handled_tg_name`, migrarea 036), în panou, în anunț și în Jurnal, unde amănuntul rândului spune și pe ale cui drepturi s-a lucrat. Omul legat de un cont oprit ori fără dreptul de a scrie comenzi e refuzat, cu vorba lui; fără migrarea 036, apăsarea celui nelegat e refuzată, nu scrisă pe alt nume. Probă: `.claude/check-telegram-apasator.mjs`; `.claude/test-telegram-oameni.mjs`, secțiunile 1 și 5.
+
 - [x] **Resetarea parolei nu protejează contul de sistem „panou" și deconectează toate tabletele**
   `api/routes/users.php:158` · *grav*
   route_users_password() refuză contul de sistem (422 system_account), route_users_list() întoarce isSystem, iar pagina Conturi ascunde pentru el Generează / Trimite pe mail / Schimbă parola și pune în loc trimiterea la Setări → Acces. În plus resetarea cheamă clear_attempts(), fiindcă blocarea se numără din login_attempts. Probe: test-api.mjs „lista spune care cont e de sistem" și „contul de sistem nu primește parolă → 422"; test-parola.mjs „se intră imediat cu parola dată de administrator".
@@ -463,6 +475,10 @@ reparația la loc și văzând-o picând.
 - [x] **Plimbarea 7.7 cerea o cursă imposibilă: panoul se împrospătează chiar la întoarcerea pe filă, deci cardul cerut piere înainte de apăsare**
   `docs/10-trecerea-cu-ochii.md:805` · *grav*
   7.7 e împărțită în două. Partea întâi probează chiar paza panoului: cardul comenzii anulate TREBUIE să dispară în clipa întoarcerii pe filă (iese întotdeauna, și pică dacă rămâne pe ecran). Partea a doua taie împrospătarea cu mâna — F12 → Network → „Offline” în fila panoului, anulare din fila a doua, întoarcere, „No throttling” și apăsare îndată, cu cel mult patru secunde la dispoziție — iar documentul spune limpede de ce e nevoie de șiretlic: nu fiindcă paza ar fi slabă, ci fiindcă panoul e prea harnic. Pentru cine pierde cursa de fiecare dată e scrisă varianta fără cursă: se blochează numai cererea listei (`orders?day=…`), nu toată rețeaua, fiindcă apăsarea de pe card merge pe altă adresă. Minutele plimbării au fost adunate cu mâna și duse în toate cele trei locuri (capul documentului, 7.7, `README.md`): 52 → 54. [16 septembrie 2026]
+
+- [x] **Serverul pus cu scriptul de instalare n-avea niciun program de poștă: niciun e-mail al casei nu pleca**
+  `instaleaza-vps.sh:529` · *grav*
+  Două drumuri de-acum. Cel de nădejde: căsuța de e-mail a firmei, completată în Setări › Notificări › E-mail (migrarea 037); cât „Server SMTP” e completat, e-mailul pleacă numai prin ea. Celălalt, direct de pe server: `instaleaza-vps.sh` și `actualizeaza-vps.sh` pun un program de poștă numai de trimis (postfix, care ascultă doar pe calculatorul însuși), dacă serverul n-are deja unul; `--fara-posta` îl sare. Scriptul nu se oprește niciodată din pricina poștei: orice piedică e un rând galben, iar la capăt încearcă o dată portul 25 și spune ce a văzut. Margine: un mesaj plecat direct n-are semnătura domeniului, deci ajunge des în Spam. Probă: `.claude/test-posta-vps.mjs`, `.claude/check-posta.mjs`.
 
 - [x] **Linkul de resetare a parolei nu afișează formularul dacă dispozitivul are deja o sesiune deschisă**
   `Intrare.dc.html:579` · *grav*
@@ -832,6 +848,10 @@ reparația la loc și văzând-o picând.
   `actualizeaza-vps.sh:482` · *mediu*
   Chemarea a fost legată de o condiție: `if ! REG_ERA="$(inRegistru ... 2>/tmp/gp-mig.err)"; then` — cu mesajul roșu al casei, primele opt rânduri de eroare și propoziția despre fișiere. Iar `registruExista` se cheamă acum cu `|| echo 0`, ca o citire căzută să nu se dea drept „nu e niciun registru".
 
+- [x] **După un apt căzut, sfatul de pe ecran lasă programul de poștă pus de mână neașezat: la rularea de după, scriptul îl găsește și spune „nu-l ating”**
+  `actualizeaza-vps.sh:1140` · *mediu*
+  Sfatul de după un apt căzut dă acum, pe lângă instalare, și rândul de așezare cu repornirea: „postconf -e 'inet_interfaces = loopback-only' 'inet_protocols = ipv4' 'mydestination = localhost.localdomain, localhost' && systemctl restart postfix”, iar „și rulează din nou scriptul” a ieșit (rularea de după nu l-ar fi așezat). Același bloc, literă cu literă, în `instaleaza-vps.sh`; niciun rând mutat. Docs/08 și docs/09 („După o instalare picată”) spun la fel. Probă: `.claude/test-posta-vps.mjs` — „după un apt căzut, sfatul dă și așezarea”, cu stricarea ei (39 trecute).
+
 - [x] **Filtrul „Refuzate” din panoul de cereri nu găsește niciodată nimic**
   `Administrare Comenzi.dc.html:1426` · *mediu*
   Filtrul cere acum starea reală din baza de date, „respinsa", nu „refuzata" — valoare care nu exista. Probă: .claude/test-editare.mjs, „cererea refuzată apare pe filtrul respinsa"; verificat în browser: contorul „Refuzate" arată 2, nu 0.
@@ -940,6 +960,14 @@ reparația la loc și văzând-o picând.
   `Administrare Comenzi.dc.html:4913` · *mediu*
   Ascultătorul de Înapoi întreabă întâi ușa formularului: `if (hotarat !== true && this.inapoiOprit()) return;` (`Administrare Comenzi.dc.html:3564`). `inapoiOprit()` (r. 4913–4922) lasă formularul neatins să se închidă ca înainte; pe cel scris îl ține pe ecran, pune la loc treapta de istoric pe care browserul tocmai a scos-o și aduce întrebarea formularului, cu „Rămân în formular” și „Ies fără să salvez”; cât merge o salvare, Înapoi nu face nimic. Păzit de `.claude/check-ciorna-comenzi.mjs`: „Înapoi cu formularul scris: vine întrebarea formularului, formularul rămâne, iar treapta lui e pusă la loc (istoricul la fel de lung)”, văzută roșie prin stricarea dinadins „s2 · Înapoi închide iar de-a dreptul, fără să întrebe”, și „Înapoi cu formularul neatins (nou și vechi) îl închide ca până acum: fără întrebare, o treaptă mai jos, fără să plece din pagină”, văzută roșie prin „s6 · poza luată greșit: formularul abia deschis iese „scris””. Proba rulează pagina pe o fereastră de carton: ce face un telefon adevărat cu gestul de tras de la margine rămâne de văzut în browser.
 
+- [x] **Pe telefon, bara de jos a formularului de comandă lua până la 246 px din ecran: fiecare buton stătea pe rândul lui**
+  `Administrare Comenzi.dc.html:1391` · *mediu*
+  Pe telefon bara e UN rând de 66 px: „Închide” cât vorba lui, butonul de salvat pe tot restul. Butoanele rare — „Anulează comanda”, „Reface comanda”, „Șterge definitiv” — stau într-un rând al formularului (`data-adm=modalrare`), chiar deasupra barei, cu aceleași drepturi. Subsolurile din Depozit sunt un rând (50 px), bara din Produse are 66 px, piciorul „Cont nou” are 46 px. Pe calculator bara e cea din 2.7.0 (70 px), neatinsă. Rămase: „Schimbă parola” la 320 px și bara de sus din Setări la 320 px, fiecare cu fișa ei deschisă. Probă: `.claude/check-tastatura.mjs` (regulile „Comenzi, pe telefon: …”, „gp-bara.css, pe telefon: …”, „Depozit, pe telefon: …”, „Conturi, pe telefon: …”, „Comenzi, pe calculator: …”) și `.claude/check-sterse-comenzi.mjs` (regulile „subsol: …”).
+
+- [x] **Codul de recomandare se putea pune pe o comandă numai știindu-l pe de rost; un cod greșit cu o literă se salva fără nicio vorbă**
+  `Administrare Comenzi.dc.html:1281` · *mediu*
+  Aceeași casetă caută și după nume. De la două litere, sub ea apar cel mult cinci oameni cu cod — „Octavian Pleș · agent · cod ples” —, rândul apăsat scrie codul în casetă, iar vorba de dedesubt spune al cui e codul („Cod ples — Octavian Pleș, agent.”), și când e scris de mână întocmai. Se caută în numele omului, în numele firmei și în cod; numele de utilizator nu se caută (abatere de la planul rundei, cu fișa ei). Se găsesc numai conturile active care au un cod. Margini știute: la 320×568 se văd patru din cele cinci rânduri, al cincilea derulând; pe o comandă nouă caseta pornește cu codul celui care scrie. Probă: `.claude/check-panouri.mjs`, secțiunea „codul de recomandare, căutat după nume”; `.claude/test-coduri-recomandare.mjs`.
+
 - [x] **Pachetul spunea, în două locuri deodată și amândouă scrise în ziua aceea, că VPS-ul casei merge pe nginx — pe un server instalat anume cu Apache, unde scriptul de instalare se oprește cu totul dacă portul 80 e al altcuiva**
   `api/.user.ini:10` · *mediu*
   Cele două comentarii s-au întors pe față: `.user.ini` spune acum că pe VPS-ul casei lucrează `.htaccess`-ul și că el însuși e pentru ziua în care PHP s-ar muta pe FPM, iar `build-deploy.mjs` spune că blocul pe care-l scrie e cel care lucrează, cu partea despre nginx ținută condiționat. Mesajul de 413 din `shared/gp-api.js` nu mai numește nginx ca pe serverul casei — trimite la rândul „Plafonul serverului web" din `verifica.php`, care citește `SERVER_SOFTWARE` și tace când n-are ce spune. Peste ele, șase reguli în `test-doc-actualizari.mjs`: scriptul de instalare pune **un singur** server web (el e izvorul), iar titlul ghidului, paza portului 80 și pachetul de certbot trebuie să-l numească pe acela; plus plimbarea prin tot dosarul care cere ca nimic din casă să nu spună că serverul casei e celălalt, cu un prag pe câte fișiere a cântărit — regula trece verde găsind NIMIC, deci trebuie să poată dovedi că a și căutat undeva.
@@ -1012,6 +1040,22 @@ reparația la loc și văzând-o picând.
   `api/lib/settings.php:377` · *mediu*
   Hotărârea patronului: „Rândurile, ȘI un refuz lămurit". Partea aceasta e refuzul. `continue`-ul tăcut a ajuns `fail(..., 422, 'unknown_setting')`, cu un mesaj care numește cheia pe nume, spune că pricina cea mai deasă e o migrare lipsă din `sql/` și trimite la `docs/09-actualizare-vps.md`. Se refuză ÎNTREG, ca toate celelalte verificări de acolo: formularul de Setări se trimite dintr-o bucată, deci n-are rost să scriem jumătate din el și să ne plângem după — de-aia refuzul stă în prima trecere, cea care cântărește, nu în a doua, cea care scrie. Plasa panoului („cheile căzute") rămâne la locul ei: ea prinde orice altă tăcere care ar mai apărea între panou și server.
 
+- [x] **Rânduri lipite de răspunsul de la STARTTLS erau citite, după pornirea criptării, drept răspunsurile serverului de e-mail**
+  `api/lib/smtp.php:597` · *mediu*
+  Tamponul de citire e al casei și e cercetat înainte să pornească criptarea; dacă nu e gol, convorbirea se oprește înaintea parolei, cu vorba „a trimis ceva pe lângă răspunsul lui, înainte să pornească criptarea…”. Probă: `.claude/check-posta.mjs`; `.claude/test-posta.mjs`.
+
+- [x] **Un server de e-mail care răspunde picurat ținea o cerere 54 de secunde, peste amândouă plafoanele**
+  `api/lib/smtp.php:526` · *mediu*
+  Termenul e al răspunsului întreg: zece secunde, oricâți octeți ar sosi între timp, sub plafonul de 25 de secunde care cuprinde și legarea. Probă: `.claude/check-posta.mjs`; `.claude/test-posta.mjs`.
+
+- [x] **Un prenume de pe Telegram scris „Maria Ionescu @maria” arăta la fel cu omul adevărat @maria: legătura putea fi făcută pe omul greșit**
+  `api/lib/telegram-legaturi.php:485` · *mediu*
+  „@” se scoate din prenume și din nume; îl poartă numai numele de utilizator dat de Telegram. Cutia „Oameni din grup” spune și ea, deasupra listei: „Numele de pe Telegram și-l pune fiecare singur. Leagă numai un om pe care îl recunoști.” Probă: `.claude/check-telegram-apasator.mjs`, regula `R_SEMN_AT`.
+
+- [x] **„Da, eu am apăsat” putea strica legătura pusă chiar atunci de fondator din „Oameni din grup”**
+  `api/lib/telegram-legaturi.php:323` · *mediu*
+  Scriere păzită (`WHERE id = ? AND telegram_user_id IS NULL`, după `rowCount()`), 1062 → 409 `taken` cu numele contului, 0 rânduri → 409 `already` sau `account_has_telegram` cu text nou, `used_at` numai după legare. Probat static (R_I_CURSA, 348 · 0).
+
 - [x] **Oricine poate bloca de la distanță deschiderea tuturor tabletelor din laborator**
   `api/routes/auth.php:75` · *mediu*
   Codul tabletelor se numără acum pe conexiune: panel_rate_limited() din api/lib/auth.php contorizează pe IP ȘI pe pseudo-utilizatorul „panou”, iar record_attempt() nu mai șterge global greșelile lui la o intrare reușită. Cine ghicește codul își blochează doar propria conexiune, iar tableta din laborator deschide mai departe. Probe în .claude/test-api.mjs: 20 de greșeli de pe o adresă → 429 pentru ea, 200 pentru tabletă, iar intrarea bună a tabletei nu deblochează conexiunea care ghicește.
@@ -1019,6 +1063,10 @@ reparația la loc și văzând-o picând.
 - [x] **Tableta din laborator se deconecta singură la șapte zile: lua durata de sesiune a personalului, deși nu e dispozitivul niciunui om**
   `api/routes/auth.php:368` · *mediu*
   Trei bucăți. (1) `session_days_panou()` în `api/lib/auth.php` — un termen al tabletei, un an, cu valoarea implicită scrisă ÎN COD, fiindcă `api/config.php` de pe server nu se suprascrie niciodată la actualizare, deci cheia nouă nu apare acolo singură. `session_days_for()` capătă un al doilea parametru, `$sistem`, ca și `do_login()` să dea durata bună dacă vreodată se intră altfel. (2) `prelungeste_sesiunea_panoului()`, chemată din `current_user()` numai când `is_system = 1`: la fiecare cerere venită de pe tabletă, dacă a trecut o zi de la ultima împrospătare, termenul se pune din nou întreg — și în rând, și în cookie. Asta e miezul: un număr mare de zile NU ajunge, fiindcă browserele taie durata unui cookie la 400 de zile (Chrome 104 și urmașele, după RFC 6265bis), deci rândul ar fi trăit un an iar tableta ar fi pierdut cookie-ul oricum. Panourile întreabă serverul la 15-20 de secunde, deci o tabletă folosită nu ajunge niciodată la capăt. (3) Pragul de-o zi, ca să nu se scrie în tabelă de patru mii de ori pe zi de fiecare tabletă. Reparația e îngustă dinadins: sesiunea unui OM nu se împinge înainte, iar ștergerea de la schimbarea codului (`api/lib/settings.php`) rămâne neatinsă — e acum singura cale prin care se închide o tabletă.
+
+- [x] **La „Ți-ai uitat parola?”, un cont adevărat se putea deosebi de unul închipuit după cât dura răspunsul**
+  `api/routes/auth.php:569` · *mediu*
+  Un singur punct de răspuns, înaintea oricărei căutări; contul, linkul și e-mailul vin după. Contul adevărat, cel închipuit și cererea goală primesc aceiași octeți și aceleași antete, la fel de repede. A rămas clipa în care se ÎNCHIDE legătura — are fișa ei, deschisă. Probă: `.claude/check-posta.mjs`; `.claude/test-posta.mjs`.
 
 - [x] **Un preț scris cu litere e salvat tăcut ca 0,00 lei, iar comanda se înregistrează cu 0 lei**
   `api/routes/catalog.php:449` · *mediu*
@@ -1080,6 +1128,10 @@ reparația la loc și văzând-o picând.
   `api/routes/products.php:69` · *mediu*
   Reprodus întâi pe serverul viu: PUT /settings {hq_lat:"44,39235"} -> 200 "changed":["hq_lat"], iar GET /lists întorcea {"lat":44,...} (depozitul cu ~43 km mai la sud); cu "n/a" -> lat 0 (Golful Guineei). Am pus setările la loc imediat. Cauza (lipsa validării la salvare) — api/routes/settings.php: am adăugat guard_hq_coords(), chemată în route_settings_save() imediat după guard_zone_coords().
 
+- [x] **Prin caseta codului de recomandare, managerul putea afla literă cu literă numele de utilizator al oricui are cod**
+  `api/routes/referrals.php:224` · *mediu*
+  Numele de utilizator nu se mai caută; rămân numele omului, firma și codul. E o abatere de la planul rundei, de încuviințat de patron: dacă îl vrea înapoi, se pune la loc o condiție în interogare și se întorc două reguli, cu prețul de mai sus. Probă: `.claude/check-recomandari-drepturi.mjs` (`CODURI`); `.claude/test-coduri-recomandare.mjs`.
+
 - [x] **Zona nu e validată la acceptare, iar panoul trimite „Centru”, o zonă care nu există în Setări**
   `api/routes/requests.php:206` · *mediu*
   Acceptarea validează zona față de lista din Setări și răspunde 422 la una necunoscută; panoul nu mai trimite „Centru", ci cere o zonă explicită la livrare. Probă: .claude/test-editare.mjs, secțiunea „acceptarea refuză o zonă care nu există".
@@ -1115,6 +1167,10 @@ reparația la loc și văzând-o picând.
 - [x] **Pragul minim implicit din Setări intră fără nicio verificare: „0,5” devine 0, iar un număr prea mare dă „Eroare internă”**
   `api/routes/stock.php:127` · *mediu*
   Pragul minim implicit se verifică acolo unde se SCRIE, nu unde se citește: „0,5" e refuzat pe loc, iar un număr prea mare iese ca refuz lămurit, nu ca „Eroare internă". Probă: `.claude/test-defect-depozit-nume-prag.mjs`.
+
+- [x] **Când baza nu putea spune dacă apăsătorul e legat de un cont, omul era socotit nelegat și lucra pe drepturile contului botului**
+  `api/routes/telegram.php:372` · *mediu*
+  „N-am putut afla” e refuz, cu vorba lui: „Nu pot afla acum dacă Telegramul tău e legat de un cont, deci nu am scris nimic. Apasă din nou peste un minut.” Nu se scrie nimic. Probă: `.claude/check-telegram-apasator.mjs`, regulile `R_NESTIUT` și `R_TOAST`.
 
 - [x] **PATCH /users/{id} salvează orice e-mail, fără validare — recuperarea parolei eșuează în tăcere**
   `api/routes/users.php:100` · *mediu*
@@ -1212,6 +1268,10 @@ reparația la loc și văzând-o picând.
   `Conturi.dc.html:1351` · *mediu*
   `deschideCerutul()` (Conturi.dc.html:1351) deschide fișa contului cerut și pagina coboară la ea, în orice vedere. Păzit de check-conturi-vederi.mjs, regula CERUT_FISA; văzută roșie întâi.
 
+- [x] **Parola propusă de panou nu se putea dicta la telefon: „brioșă-4821” avea diacritice, liniuță și, uneori, un număr care începea cu 1**
+  `Conturi.dc.html:1801` · *mediu*
+  Parola propusă e un cuvânt din litere mici fără diacritice, de cinci până la nouă litere, lipit de un număr de la 2000 la 9999: „caramel4821”. Nicio liniuță, niciun alt semn; numărul nu începe cu 0 ori cu 1, care lângă litere se iau drept „o” și „l”. Cel mai scurt cuvânt are cinci litere, deci parola are cel puțin nouă semne; într-o casă cu pragul pus mai sus se completează numai cu cifre la coadă. Toate cele patru butoane dau mai departe parola generatorului, neatinsă. Probă: `.claude/check-panouri.mjs`, secțiunea „parola propusă · „Conturi” și „Parola”, aceeași parolă”.
+
 - [x] **Comenzile anulate continuă să blocheze („rezervă”) stoc pe pagina Depozit**
   `Depozit.dc.html:597` · *mediu*
   Comanda anulată nu mai rezervă marfă: „Disponibil” nu mai scade și eticheta „Lipsă” nu mai apare degeaba.
@@ -1268,6 +1328,10 @@ reparația la loc și văzând-o picând.
   `Depozit.dc.html:1308` · *mediu*
   Serverul spune pe fiecare articol dacă intră într-o rețetă (api/routes/stock.php:57, subinterogarea `in_recipe`; :126 `inRecipe`); pagina desenează „Șterge” numai sub `r.poateSterge` (Depozit.dc.html:1308, :336, :397), iar în locul lui scrie „în rețetă”. Refuzul, dacă tot apare, spune „din Catalog” administratorului și „Cere-i unui administrator să-l scoată întâi din rețetă, din Catalog.” celorlalți (stock.php:483–484). Păzit de check-vede-poate.mjs (cazurile „articolul intră într-o rețetă” pentru manager și administrator, „articolul din afara rețetelor rămâne cu butonul”) și de test-defect-depozit.mjs („articolul dintr-o rețetă nu mai are „Șterge”: are „în rețetă””, „serverul trimite `inRecipe` în lista de articole…”, „refuzul `in_recipe` spune „Catalog”, iar cui nu e administrator îi spune cui să ceară”); văzute roșii întâi. Pe baza de date adevărată nu s-a probat (MySQL oprit).
 
+- [x] **Întors la 2.7.0, panoul arată ultimele patru semne ale parolei căsuței de e-mail**
+  `docs/09-actualizare-vps.md:552` · *mediu*
+  Paragraful „Dacă întorci codul la 2.7.0 și ai completat căsuța de e-mail.” stă acum în docs/09, după r. 552: înainte să întorci codul, „Șterge parola” și „Salvează”; dacă l-ai întors deja, schimbi parola la furnizor. Probă: `.claude/check-vorbe-indreptate.mjs` — „docs/09: drumul înapoi la 2.7.0 spune să ștergi parola căsuței întâi”, cu stricăciunile ei (46 trecute; pe casa 2.7.0 se înroșește).
+
 - [x] **7.7 spunea „Confirmi.” la anularea din fișă, unde nu se deschide nicio casetă — iar 7.1, în același document, spunea pe bună dreptate altceva**
   `docs/10-trecerea-cu-ochii.md:801` · *mediu*
   „Confirmi.” e scos din amândouă locurile unde 7.7 anula din fișă. În locul lui, pasul spune că merge direct, fără casetă, și trimite la 7.1 pentru regula întreagă: caseta se deschide numai la ieșirea din „Anulată”. [16 septembrie 2026]
@@ -1283,6 +1347,10 @@ reparația la loc și văzând-o picând.
 - [x] **Pe site, Tab-ul se oprea de două ori pe fiecare poză, pe butoanele „Replace” și „Edit” din umbra lui `image-slot`, care pe o pagină needitabilă nu se văd — 46 de opriri moarte în catalog, anunțate în engleză de un cititor de ecran**
   `image-slot.js:1119` · *mediu*
   În `_render`, lângă `data-editable`: `this._ctl.inert = !editable;` (rândul 1119), deci se pune și se scoate la fiecare randare, odată cu atributul, iar pe o pagină editabilă `.ctl` rămâne exact ca înainte. E un PETEC LOCAL într-un fișier venit din Claude Design; comentariul de deasupra (rândurile 1110–1118) spune de ce și că trebuie repus după un reimport. Dacă dispare, `test-defect-slot-tab` se înroșește: proba scoate blocul din `_render` și îl rulează, cu și fără `window.omelette.writeFile`, și numără ce primește focus în marcajul umbrei.
+
+- [x] **În „Încasări”, „Salvează” de la „Raport pe Telegram” punea la loc ce schimbase între timp alt om**
+  `Incasari.dc.html:972` · *mediu*
+  Cartonașul scris se reface câmp cu câmp (`ciornaRecitita`): ce a scris omul rămâne, ce n-a atins ia valoarea nouă de pe server, iar „Salvează” trimite numai câmpul schimbat. La fel lucrează cutia nouă „Raport de bani pe Telegram” din Setări. Probă: `.claude/check-plati-incasari.mjs` — „cartonașul scris se recitește câmp cu câmp, iar „Salvează” nu pune la loc ce a schimbat altcineva între timp”; `.claude/check-plati-conturi.mjs` — `SET_RAPORT_USA_LUI`.
 
 - [x] **După deschiderea panourilor cu codul tabletei, toate cardurile arată „—" și scrie „cere autentificare"**
   `Intrare.dc.html:383` · *mediu*
@@ -1512,6 +1580,18 @@ reparația la loc și văzând-o picând.
   `Setari.dc.html:585` · *mediu*
   Titlul e „Comanda este încheiată (livrată) când ajunge la”; ajutorul spune cine pune etapa finală și că etapa dinaintea ei e ultima a laboratorului; lămurirea listei spune unde se oprește butonul laboratorului; semnul din listă scrie „livrată” (tot atâtea litere cât „anulare”, ca rândul să nu se lățească pe telefon). Păzit de `.claude/check-plafon-laborator.mjs`: „Setările numesc etapa finală „încheiată (livrată)”, nu „gata””, „ajutorul de sub ea spune că etapa dinainte e ultima a laboratorului”, „lista de etape din Setări spune unde se oprește butonul laboratorului” și „în lista de etape, semnul etapei finale spune „livrată”, nu „gata””.
 
+- [x] **Oamenii casei fără pagina „Setări” nu aveau cum fi legați de contul lor de Telegram: apăsările lor rămâneau pentru totdeauna fără cont**
+  `Setari.dc.html:715` · *mediu*
+  Fondatorul are în Setări › Notificări › Telegram cutia „Oameni din grup”: cine a apăsat vreodată un buton în grup (cei mai de curând văzuți 50), cu numele de pe Telegram, câte apăsări și de ce cont e legat. Alege contul, apasă „Leagă”, iar de la apăsarea următoare omul lucrează pe contul lui, cu numele contului; „Dezleagă” îl întoarce la „cont nelegat”. Ce s-a scris înainte rămâne cum a fost scris. Numai fondatorul: ceilalți primesc 403 și citesc „Pe oamenii din grup îi leagă de conturi numai fondatorul.” Numărul de Telegram nu pleacă spre pagină și nu se scrie în Jurnal. Probă: `.claude/check-telegram-apasator.mjs`, `.claude/check-ciorna-setari.mjs` (grupa „oameni”), `.claude/test-telegram-oameni.mjs` (secțiunea 8).
+
+- [x] **Cartonașul „E-mail” din Setări spunea „Funcționează fără niciun cont extern” pe un server de pe care nu pleca niciun e-mail**
+  `Setari.dc.html:1380` · *mediu*
+  Rândul de stare al cartonașului se scrie numai din ce răspunde serverul și din ce e salvat: „Trimite prin căsuța …” (verde), „Trimite direct de pe server. Fără o căsuță în spate, mesajele pot ajunge în Spam ori deloc…” (galben), „… acum NU pleacă niciun e-mail…” (roșu: fără program de poștă, ori cu căsuța pe jumătate), ori „Nu se știe încă pe ce cale pleacă e-mailul: serverul n-a spus.” Nicio afirmație din casetele nesalvate. Probă: `.claude/check-setari.mjs`, regulile rândului de stare.
+
+- [x] **Butonul de test de e-mail scria „Mesajul de test a plecat” la orice răspuns bun al serverului, și când mesajul fusese numai predat programului de poștă**
+  `Setari.dc.html:1412` · *mediu*
+  Pentru e-mail pagina citește din răspuns calea: „Căsuța … a luat în primire mesajul de test pentru … De aici îl duce furnizorul căsuței: caută-l în Inbox, iar dacă nu e acolo, în Spam.” ori „Serverul a predat mesajul programului lui de poștă. Asta nu înseamnă că a și ajuns…”; fără cale nu laudă niciun drum. Răspunsul stă și lângă buton, iar testul picat își scrie acolo pricina, cu vorbele serverului. Sub buton stau marginile: testul poate ține până la o jumătate de minut, iar „predat” nu înseamnă „ajuns”. Probă: `.claude/check-setari.mjs`, regulile butonului de test.
+
 - [x] **Bani câștigați și nevăzuți: managerul sau angajatul cu cod de recomandare chiar încasa comision, dar meniul nu-i dădea niciodată „Recomandări"**
   `shared/gp-api.js:799` · *mediu*
   „Recomandări" se hotărăște acum după cod, nu după rol, iar regula stă ÎNAINTEA matricei în filtrul lui `gp.meniu(activ, cine)`: clientul FĂRĂ cod n-o vede (ar deschide o pagină goală, și nu-și poate face singur un cod), iar oricine ALTCINEVA o vede dacă e în matricea rolului lui SAU dacă are un cod pe cont. Agentul de vânzări o păstrează și fără cod, fiindcă își poate face unul chiar de acolo. Păzit din două părți: `.claude/check-meniu.mjs` (matricea rol → panouri) și grupul B3 din `.claude/test-roluri.mjs`, care plimbă codul pe drumul lui adevărat, de la `GET /auth/me` prin `gp.auth()` până în sertar.
@@ -1519,6 +1599,10 @@ reparația la loc și văzând-o picând.
 - [x] **Un „413" venit de la serverul web cădea mut, cu „Eroare 413." în chenarul roșu — tocmai la singura cădere de mărime despre care aplicația nu poate spune de ce, fiindcă mesajul ei se scrie în PHP, iar PHP n-a rulat**
   `shared/gp-api.js:253` · *mediu*
   O ramură nouă în `request()`, geamăna celei pentru 404 fără corp, care spune trei lucruri deodată: că fișierul a fost oprit de serverul web înainte să ajungă la aplicație, că limita nu e a aplicației și nu se poate ridica din panou, și unde scrie exact ce e de făcut — rândul „Plafonul serverului web" din `verifica.php`, adăugat în aceeași rundă, care numește serverul și dă cifra. Codul erorii e `server_prea_mare`, ca o pagină să se poată lega de el fără să citească textul.
+
+- [x] **Nicio pagină nu știa că tastatura telefonului e deschisă: barele lipite de jos rămâneau peste ce se scria**
+  `shared/gp-api.js:2829` · *mediu*
+  `shared/gp-api.js` pune pe `<html>`, numai pe aparate cu atingere, steagul `data-gp-tastatura` și variabila `--gp-tastatura-inalt` cât tastatura e deschisă (prag 120 px, răgaz 300 ms la închidere). Sub steag barele casei se desprind și se derulează cu pagina, bara fixă din Depozit dispare, bara coșului din magazin se stinge, iar formularul comenzii își lungește capătul; tastatura închisă, se lipesc la loc. Un inventar numărat din pagini cere ca orice bară lipită de jos să aibă regula ei ori o scutire pe nume. Margini știute: un telefon cu șoarece ori o tabletă cu trackpad se poartă ca în 2.7.0; formularul comenzii la 761 px are fișa lui deschisă. Probă: `.claude/check-tastatura.mjs` (regulile detectorului, „inventar: …”, „gp-bara.css, sub steag: …”, „Comenzi, sub steag: …”).
 
 - [x] **`class=` scris pe o etichetă cu cratimă nu ajunge niciodată `class` în pagină, ci `classname`: pastila cu versiunea a stat în 21 de locuri îmbrăcată cu o clasă care nu se potrivea cu nimic, fără nicio eroare nicăieri**
   `shared/gp-nav.css:297` · *mediu*
@@ -1684,6 +1768,10 @@ reparația la loc și văzând-o picând.
   `.claude/check-php.mjs:187` · *mic*
   Punctele de intrare se recunosc după loc: ce stă de-a dreptul în `api/` ori în `api/cron/`. Pentru fiecare, afară de ruter, unealta citește din cod ce își încarcă și cere ca tot ce cheamă să fie acolo; la cele din `api/cron/` judecă și apelurile fiecărui fișier încărcat, și semnalează o funcție încărcată de două ori. Rămâne o margine știută: `api/verifica.php` își cere două biblioteci prin variabile și nu se judecă. Probă: `.claude/test-defect-unelte.mjs`, secțiunea „check-php: ceasul din api/cron/ se judecă după ce își încarcă el”.
 
+- [x] **Curățenia de după probe nu punea la loc tabelul oamenilor de pe Telegram rămas ascuns de o probă oprită la mijloc**
+  `.claude/curata-probe.mjs:386` · *mic*
+  Curățenia pune tabelul la loc înainte să-și alcătuiască lista și o spune; cu amândouă tabelele în bază nu atinge niciunul și cere să te uiți cu mâna. Probă: `.claude/check-telegram-apasator.mjs`, regula `R_CURATA`.
+
 - [x] **Serverul pachetului dădea configurarea numai rutelor, nu și celor două unelte ale instalatorului — deci proba pe pachet se purta altfel decât serverul adevărat, tocmai acolo unde trebuia să semene**
   `.claude/deploy-server.php:43` · *mic*
   Rândul `putenv('GP_CONFIG=…')` s-a mutat ÎNAINTEA ramurii care servește fișiere reale, cu un comentariu care spune de ce ordinea contează și care sunt cele două pagini în joc. Nimic altceva nu s-a schimbat: ramura, oprirea la `config.php` și restul dispecerului au rămas cum erau.
@@ -1760,6 +1848,10 @@ reparația la loc și văzând-o picând.
   `actualizeaza-vps.sh:679` · *mic*
   Rândul casei nu mai spune ce a făcut rularea, ci ce știe: valoarea și a cui e — «Procentul de recomandare: 5% — semănat de casă, nu l-a hotărât nimeni din Setări.», «Adresa publică: … — semănată de casă, n-a scris-o nimeni din Setări.», «Programul de lucru: … — semănat de casă, nu l-a scris nimeni din Setări.». E adevărat la prima urcare și la oricare după ea. Culoarea rămâne verde, fiindcă valoarea casei e o stare bună; ramurile galbene și cea a omului rămân neatinse; iar „semănat de casă” e chiar vorba cu care scriptul și foaia numeau deja zeroul lui `008`. Foaia plasturelui spune la fel, în cele două locuri care explicau rândurile.
 
+- [x] **Scriptul de actualizare îi tipărea omului comenzi de bază care cer parola bazei de date, pe care patronul n-o știe**
+  `actualizeaza-vps.sh:554` · *mic*
+  Cele trei rânduri spun acum „sudo mysql …”, fără parolă, iar scriptul pune el numele bazei și al copiei în rândul tipărit: omul n-are nimic de completat. Probă: `.claude/test-posta-vps.mjs` — „nicio îndrumare tipărită nu cere parola bazei”.
+
 - [x] **Pe ecranul de refuz din patru panouri, „← Alege panoul” era o legătură de scris de 26px, la 8px sub „Ieși din cont”**
   `Administrare Comenzi.dc.html:148` · *mic*
   Pe același rând, în toate cele patru pagini: legătura primește tiparul casei, `display:flex;align-items:center;justify-content:center;min-height:44px`, fără `padding-top:4px`, care n-ar mai fi avut rost. Se întinde pe lățimea coloanei, ca butoanele de deasupra. Niciun rând nou, deci nicio trimitere cu număr de linie nu s-a mutat. Proba caută ecranul întreg, poarta cu porțile din ea, și cere în el o singură legătură „← Alege panoul” spre Intrare, de cel puțin 44px.
@@ -1832,6 +1924,30 @@ reparația la loc și văzând-o picând.
   `Administrare Comenzi.dc.html:4819` · *mic*
   `fail(e, gazda)` (`Administrare Comenzi.dc.html:4819–4822`) întreabă întâi dacă formularul din care a plecat cererea mai e pe ecran (`gazdaPeEcran`, r. 3208). Dacă nu mai e, refuzul nu se mai scrie în nimic din ce e deschis: se spune în banda de sus a paginii, ca refuz, cu numele comenzii și cu vorbele serverului („Comanda … nu s-a salvat: …”, prin `coadaFaraGazda`, r. 3224). Pe deasupra, cât merge salvarea, „×”, „Închide” și Înapoi nu mai închid formularul; abia după zece secunde fără răspuns ușa întreabă „Ieși fără să aștepți salvarea?” (`laUsaFormei`, r. 4570), iar cine iese află răspunsul din bandă. Păzit de `.claude/check-ciorna-comenzi.mjs`: „R3: comanda nouă, refuzul salvării sosit peste alt formular, deschis și scris între timp: nu-i scrie eroarea, iar refuzul ajunge în bandă” și „supapa: refuzul sosit după ieșire se spune în banda de sus, ca refuz, cu vorbele serverului”, văzute roșii prin stricarea dinadins „s15 · `fail` nu mai întreabă al cui e refuzul”; „R4: cât merge salvarea, × și „Închide” nu fac nimic: nu închid și nu întreabă”, văzută roșie prin „s29 · ușile formularului lucrează și cât merge salvarea”; și „fiecare coadă de cerere care închide formularul ori scrie în el spune din ce formular a plecat (`commit` și `fail` cu gazdă); fără gazdă rămân numai cele trei chemări numărate”, văzută roșie prin „s34 · o coadă de cerere își pierde gazda (acceptarea cererii)”.
 
+- [x] **Cu un nume scris în caseta codului și niciun rând ales, formularul nu spunea nimic: comanda pleca având numele drept cod**
+  `Administrare Comenzi.dc.html:6833` · *mic*
+  Sub listă scrie: „Alege un rând de mai sus, ca în casetă să intre codul omului. Ce ai scris nu e codul nimănui: salvat așa, nu aduce comision prin el însuși.” Salvarea nu e oprită. Probă: `.claude/check-panouri.mjs`, regula `neales`.
+
+- [x] **„Salvează” cu un nume rămas în caseta codului de recomandare salvează numele ca pe un cod: nota o spune, salvarea nu întreabă**
+  `Administrare Comenzi.dc.html:6259` · *mic*
+  La prima apăsare pe „Salvează”, un text din caseta codului care nu e codul găsit nu pleacă cât căutarea încă merge ori a găsit oameni pe care nu i-ai ales: formularul redeschide lista și spune „„octav” nu e un cod ales din listă. … apasă încă o dată „Salvează”…”; a doua apăsare, pe același text, salvează. Codul ales din listă, căutarea fără nimeni găsit ori căutarea căzută salvează din prima. Hotărârea „să întrebe, nu să oprească de tot” e a mea, ușor de întors. Docs/05 și docs/10 spun la fel. Probă: `.claude/check-ciorna-comenzi.mjs` — „un nume scris în caseta codului și neales din listă nu pleacă la prima apăsare…”, cu două stricăciuni.
+
+- [x] **Lista de coduri se deschidea peste formularul comenzii în timpul salvării, cu rânduri pe care apăsarea nu făcea nimic**
+  `Administrare Comenzi.dc.html:3751` · *mic*
+  Răspunsul sosit cât merge salvarea ține lista închisă; după un refuz, focusul întors în casetă o arată, fără altă cerere. Probă: `.claude/check-ciorna-comenzi.mjs`, regula R4.
+
+- [x] **„Sunt mai mulți decât încap în listă” rămânea sub caseta codului și după ce lista fusese închisă**
+  `Administrare Comenzi.dc.html:6831` · *mic*
+  Vorba se alege după rândurile desenate: jumătatea care trimite la listă se spune numai cât lista se vede. Probă: `.claude/check-panouri.mjs`, regula `multi`.
+
+- [x] **În lista codurilor de recomandare, la un nume lung se tăia tocmai codul: „· client · c…”**
+  `Administrare Comenzi.dc.html:1293` · *mic*
+  Coada rândului nu se mai strânge; se strânge numele, cu „…”, iar întreg se citește ținând degetul ori săgeata pe rând. Probă: `.claude/check-panouri.mjs`, regula `coadaIntreaga`.
+
+- [x] **Sub caseta codului de recomandare, la o comandă nouă, scria „Scris al tău.” și când codul din casetă era al altcuiva**
+  `Administrare Comenzi.dc.html:8104` · *mic*
+  „Scris al tău.” se spune numai cât codul din casetă e chiar al celui care scrie. Restul notei a rămas literă cu literă. Probă: `.claude/check-vorbe-indreptate.mjs`.
+
 - [x] **API-ul își anunță versiunea de PHP în fiecare răspuns**
   `api/index.php:62` · *mic*
   header_remove('X-Powered-By') în api/index.php, ca să nu depindă de expose_php din configurarea serverului. Probă: test-api.mjs „răspunsul nu mai anunță versiunea de PHP" (plus „antetele de securitate sunt la locul lor", ca să nu se piardă celelalte).
@@ -1860,13 +1976,45 @@ reparația la loc și văzând-o picând.
   `api/lib/notify.php:1319` · *mic*
   `send_telegram()` trimite `telegram_text_taiat($text)` (api/lib/notify.php:1319, funcția la :1363): peste 4000 de unități taie și pune coada „… (mesaj tăiat — vezi în panou)”; numără în unități UTF-16, ca Telegram, și nu rupe un semn de două unități. Probă: `.claude/check-anunturi.mjs` — „comanda cu nume lungi, client de 160 și adresă de 255 trece de limita lui Telegram”, „tăiată, încape, își păstrează capul și rândurile despre oameni și își spune tăietura pe ultimul rând” și celelalte reguli ale lungimii (scenele lungaGrea, lungaCuSemne, lungaCuSemneDecalata).
 
+- [x] **Rândul „Acceptată de:” lipsea din anunț tocmai când altcineva apăsase în locul celui care scrisese cererea**
+  `api/lib/notify.php:933` · *mic*
+  Rândul omului cu contul nelegat se scrie întotdeauna, cu numele lui: „Acceptată de: Ion Pop, de pe Telegram (cont nelegat)”. Pentru un cont al casei regula a rămas: rândul lipsește numai când a acceptat chiar cel care a scris cererea. Probă: `.claude/check-anunturi.mjs` și `.claude/check-telegram-apasator.mjs`.
+
 - [x] **Tarifarea lipea rândurile aceluiași produs fără să rotunjească: 20,4 + 46,3 + 33,3 bucăți ieșeau 99,99999999999999**
   `api/lib/orders.php:1001` · *mic*
   Suma rândurilor lipite se rotunjește la două zecimale, ca și coloana din bază, deci tarifarea și comanda salvată spun aceeași cantitate.
 
+- [x] **O comandă născută din apăsarea unui om nelegat, apoi ștearsă, rămânea în arhivă cu „Scrisă de” numele contului botului**
+  `api/lib/orders.php:1279` · *mic*
+  Poza își ia întâi omul care a apăsat — „Ion Pop — Telegram, cont nelegat” —, ca „Creat de” din panou. Probă: `.claude/check-telegram-apasator.mjs`, regula `R_POZA`.
+
 - [x] **O listă trimisă ca tablou JSON este validată corect, dar salvată ca textul „Array”**
   `api/lib/settings.php:238` · *mic*
   settings_save() encodează acum tabloul cu json_encode(JSON_UNESCAPED_UNICODE) în loc de (string), deci o listă trimisă ca tablou JSON — curl, Postman, un script de import — ajunge în baza de date ca listă, nu ca textul „Array”. Probă în .claude/test-settings.mjs: delivery_slots trimis ca tablou se regăsește identic în /lists.
+
+- [x] **Vorba de eroare a unui e-mail neplecat îl trimitea pe om la „Setări → General”, unde nu e nimic de îndreptat pentru e-mail**
+  `api/lib/smtp.php:334` · *mic*
+  Toate vorbele care cer o îndreptare trimit la „Setări → Notificări → E-mail”, iar fiecare treaptă a convorbirii cu căsuța are propoziția ei. Probă: `.claude/check-posta.mjs` — „vorbele care cer o îndreptare trimit la Setări → Notificări → E-mail”.
+
+- [x] **Răspunsul stricat al unui server de e-mail era citit drept unul bun: un rând peste 2048 de octeți ori un răspuns de peste 64 de rânduri**
+  `api/lib/smtp.php:513` · *mic*
+  Amândouă opresc convorbirea, fiecare cu vorba ei („un rând mai lung decât poate avea un răspuns”, „un răspuns fără capăt”), și trimit la serverul și portul din Setări. Probă: `.claude/check-posta.mjs`.
+
+- [x] **O adresă ori un nume de server cu un salt de linie la coadă trecea de trei paze încheiate cu „$”**
+  `api/lib/smtp.php:328` · *mic*
+  Cele trei tipare se încheie cu „\z”; adresele otrăvite sunt refuzate înaintea oricărei legături, cu „are semne care nu pot călători prin căsuța de e-mail”. Probă: `.claude/check-posta.mjs`.
+
+- [x] **Urma scrisă sub mesajul din grup după o apăsare nu spunea cine a hotărât**
+  `api/lib/telegram-legaturi.php:641` · *mic*
+  Urma poartă numele: „Acceptată de Maria Ionescu, de pe Telegram” pentru cine are contul legat și „Acceptată de Ion Pop, de pe Telegram (cont nelegat)” pentru cine nu; la fel la „Respinsă de …”. Mesajele vechi nu se rescriu. Probă: `.claude/check-telegram-apasator.mjs`.
+
+- [x] **Un nume de pe Telegram putea fi o literă cu zeci de accente suprapuse, revărsate peste rândurile vecine**
+  `api/lib/telegram-legaturi.php:414` · *mic*
+  Rămân cel mult trei semne de îmbinare la rând; cele fără literă sub ele pleacă, iar numele făcut numai din ele cade pe numele de rezervă („@utilizator” ori „Telegram #număr”). Probă: `.claude/check-telegram-apasator.mjs`, regula `R_STIVA`.
+
+- [x] **Conturile legate de Telegram înainte de 2.7.5 nu apar în „Oameni din grup” și fondatorul nu le poate dezlega de acolo**
+  `api/lib/telegram-legaturi.php:755` · *mic*
+  `GET /telegram/oameni` aduce și `legatiNevazuti` (`telegram_legati_nevazuti()`, `api/lib/telegram-legaturi.php`): conturile cu Telegram legat care n-au rând în listă, cu numele, rolul și dacă sunt pornite — fără numărul de Telegram. Sub listă, Setări le arată la „Conturi legate care n-au mai apăsat nimic în grup”, fiecare cu „Dezleagă”. Docs/02 și docs/09 spun la fel. Probe: `.claude/check-telegram-apasator.mjs`, `.claude/check-ciorna-setari.mjs`, `.claude/test-telegram-oameni.mjs` (pe bază vie), `.claude/check-vede-poate.mjs`.
 
 - [x] **Două conturi pot avea același e-mail, iar „am uitat parola” schimbă parola altui cont**
   `api/routes/auth.php:194` · *mic*
@@ -1879,6 +2027,10 @@ reparația la loc și văzând-o picând.
 - [x] **Mesajul serverului despre folderul de poze fără drept de scriere închidea ghilimeaua românească cu una dreaptă: „products"**
   `api/routes/catalog.php:803` · *mic*
   „products” cu ghilimeaua casei (api/routes/catalog.php:803); `php -l` curat. Probă: `.claude/check-fise-tehnice.mjs` — „niciun mesaj din api/routes/catalog.php nu rămâne cu ghilimea dreaptă la coadă”.
+
+- [x] **Ruta Jurnalului trimite spre pagină rolul contului botului și pe rândurile omului cu „cont nelegat”**
+  `api/routes/log.php:194` · *mic*
+  Ruta Jurnalului (`api/routes/log.php`) trimite rolul prin `log_rol_randului()`: pe rândul unui apăsător nelegat — cel a cărui etichetă se încheie cu „ (Telegram, cont nelegat)” — trimite `null`, ca la „Sistem”, nu rolul contului botului. Probă: `.claude/check-telegram-apasator.mjs` ține eticheta lui `jurnal_eticheta()`, funcția și pagina la aceeași vorbă, cu stricăciunile ei.
 
 - [x] **Crearea comenzii așteaptă notificările: cu furnizorul picat, răspunsul întârzie ~30 s sau moare**
   `api/routes/orders.php:203` · *mic*
@@ -1908,6 +2060,14 @@ reparația la loc și văzând-o picând.
   `api/routes/orders.php:1859` · *mic*
   Toate cele nouă întreabă acum `inTransaction()` înainte de `rollBack()`. Pe drumul obișnuit nu se schimbă nimic: după o cheie unică izbită ori un impas, tranzacția e încă deschisă din punctul de vedere al legăturii, deci se dă înapoi ca înainte și încercarea se reia. Probă: `.claude/check-plati.mjs` — „orice catch din api/ care dă tranzacția înapoi întreabă întâi dacă mai e una deschisă (poarta o închide ea, iar un rollBack() pe nimic ascunde eroarea adevărată)”.
 
+- [x] **Căutarea codului și salvarea comenzii se contraziceau la un cod scris cu spații: „ples 7” nu semăna cu nimeni, dar aducea comisionul celui cu „ples7”**
+  `api/routes/referrals.php:200` · *mic*
+  Codul curățat ca la salvare e căutat și întocmai; `exact` fals înseamnă pe față că textul, salvat cum e scris, nu e codul niciunui cont care ar lua comision. Probă: `.claude/check-recomandari-drepturi.mjs` (`CODURI`); `.claude/test-coduri-recomandare.mjs`.
+
+- [x] **O cerere respinsă de pe telefon, redeschisă și acceptată din panou ar fi rămas cu numele omului care o respinsese**
+  `api/routes/requests.php:1884` · *mic*
+  Redeschiderea golește amândouă coloanele în tranzacția ei, iar golirea și citirea numelui atârnă numai de cele două coloane, nu și de tabelul oamenilor. Acceptată apoi din panou, cererea poartă numele celui care a acceptat-o. Probă: `.claude/check-telegram-apasator.mjs`.
+
 - [x] **O listă cu valori imbricate trece de validare și ajunge în baza de date ca textul „Array”**
   `api/routes/settings.php:158` · *mic*
   validate_lists() respinge acum cu 422 orice element de listă care nu e text simplu, cu numele cheii în mesaj, iar setting_list() sare peste el la citire, pentru rândurile scrise înainte de verificare. Probe în .claude/test-settings.mjs: un tablou imbricat și un obiect strecurate în delivery_slots sunt refuzate, iar intervalele salvate rămân neatinse — niciunul nu devine „Array”.
@@ -1928,6 +2088,10 @@ reparația la loc și văzând-o picând.
   `api/routes/settings.php:627` · *mic*
   Paza judecă rolul și după loc, numai când salvarea chiar îl mută (api/routes/settings.php:584-638): 422 `bad_special_status` dacă „încheiată” și „anulată” sunt aceeași etapă (:615), și 422 `bad_special_status` dacă noua „încheiată” nu e ultima din fluxul de după salvare, cu etapa de anulare scoasă (`$loc < count($drum) - 1`, :627). Mesajul numește etapa, ce mai urmează după ea și ce e de făcut. Setari.dc.html arată refuzul în cardul „Etapele cu rol special”, deasupra celor două liste, cu vorbele serverului (`etapeRefuz`). Probă: `.claude/check-etape-setari.mjs` — „o etapă din mijlocul listei nu poate fi aleasă drept încheiată”, „aceeași etapă nu poate și încheia, și anula comanda”, „refuzul serverului se arată lângă etapele cu rol special, cu vorbele lui”; viu, `.claude/test-defect-etapa-anulare.mjs`, secțiunea F (nerulată aici).
 
+- [x] **E-mailul de probă spune ora în UTC**
+  `api/routes/settings.php:1306` · *mic*
+  E-mailul de probă spune ora României: „Trimis la AAAA-LL-ZZ HH:MM (ora României).”, din `now_local()` (`api/routes/settings.php`). Probă: `.claude/check-posta.mjs`, cu stricăciunea ei.
+
 - [x] **Socoteala „după ziua în care s-a comandat" tăia zilele pe ceasul UTC, nu pe ceasul patiseriei: comenzile luate între miezul nopții și 3 dimineața cădeau în ziua de ieri**
   `api/routes/stats.php:103` · *mic*
   Ajutorul nou `zi_locala_sql()` (api/lib/http.php) scrie expresia SQL care dă ziua LOCALĂ a unei coloane de clipe UTC: cere fusului, în PHP, schimbările de oră din fereastra cerută și face din ele un `CASE` care mută fiecare clipă cu decalajul valabil ATUNCI — deci e drept și vara, și iarna, și în intervalul care le cuprinde pe amândouă. Nu cheamă `CONVERT_TZ`, din aceeași pricină pentru care nu-l cheamă nici anunțurile din laborator (api/routes/lab.php:463): pe o instalare fără tabelele de fusuri încărcate în MySQL acela întoarce NULL, adică o zi lipsă în tăcere. `stats.php` îl cheamă cu fereastra întreagă, de la perioada de comparat până la sfârșitul celei cerute, fiindcă și aceea se numără cu aceeași coloană. Nimic din expresie nu vine de la om: numele coloanei e scris de noi, iar orele ies din `DateTimeZone`.
@@ -1943,6 +2107,10 @@ reparația la loc și văzând-o picând.
 - [x] **Doi care adaugă același articol de depozit (sau același cont) în aceeași clipă: „Eroare BD" 500 în loc de refuzul lămurit**
   `api/routes/stock.php:70` · *mic*
   Ajutorul `q_unique()` (api/lib/db.php) prinde chiar căderea pe indexul unic și o întoarce în refuzul pe care cererea l-ar fi primit dacă venea o clipă mai târziu: 409 `name_taken` la articolele de depozit (creare și redenumire) și 409 `username_taken` la conturi. Verificarea din memorie rămâne unde era — ea dă mesajul bun în cazul obișnuit; asta e a doua poartă, cea pe care o ține baza, pentru clipa dintre „SELECT 1 … WHERE name = ?" și INSERT. Se prinde numai 1062 (rând duplicat): restul lui 23000, o cheie străină ruptă de pildă, e o defecțiune adevărată și trebuie să rămână una. Probă: grupa a patra din .claude/test-reparat-depozit-refuzuri.mjs — ciocnirea nu se poate stârni prin `php -S`, care are un singur proces și așază cererile la rând, deci se cere direct de la bază, prin .claude/proba-unicitate.php. Dată înapoi reparația, proba arată exact dovada din fișă: „1062 Duplicate entry … for key 'stock_items.uq_stock_items_name'".
+
+- [x] **Numărul de Telegram al unui om ajungea în jurnalul de erori al serverului**
+  `api/routes/telegram.php:417` · *mic*
+  Mesajul din jurnal nu mai poartă numărul; pricina se citește întreagă și fără el. Probă: `.claude/check-telegram-apasator.mjs`, regula `R_LOG`.
 
 - [x] **Steagul „trebuie să-și schimbe parola" se pune, dar nu-l citește nimeni niciodată**
   `api/routes/users.php:172` · *mic*
@@ -1967,6 +2135,10 @@ reparația la loc și văzând-o picând.
 - [x] **Comentariul din pagina de verificare a instalării număra „celelalte douăzeci și una de intrări” ale hărții de migrări, care avea optsprezece**
   `api/verifica.php:946` · *mic*
   Comentariul spune acum „iar celelalte intrări”, fără cifră, deci nu mai are ce să rămână în urmă. Nicio probă nu-l păzește și nici n-are de ce: nu mai e nicio cifră de ținut la zi.
+
+- [x] **Pagina de verificare a serverului arăta verde „Funcția mail(): disponibilă” pe un server care nu putea trimite niciun e-mail**
+  `api/verifica.php:1352` · *mic*
+  Pagina spune pe ce drum pleacă e-mailul (căsuță ori direct), caută programul de poștă cu aceeași funcție ca aplicația, e roșie la căsuța completată pe jumătate și la serverul fără program de poștă cu căsuța goală, și scrie pe față: „Verificarea asta nu poate dovedi că un mesaj ajunge; folosește butonul de test.” Probă: `.claude/check-posta.mjs`.
 
 - [x] **Numele celor două sigle erau exact pe dos: `logo-alb.png` era aurie, `logo-auriu.png` era albă — iar toate cele 37 de trimiteri din pagini cereau „alb” ca să capete aur**
   `assets/logo-alb.png:1` · *mic*
@@ -2064,9 +2236,17 @@ reparația la loc și văzând-o picând.
   `Depozit.dc.html:1688` · *mic*
   Rândul se scrie din logică, `noLogLine` (Depozit.dc.html:468, :1688), cu trei pricini; „pe filtrul ales” numai când `areFiltreLog` (:1417), socotit din aceleași filtre ca registrul, e aprins. Păzit de test-defect-depozit.mjs („registrul fără nicio mișcare nu vorbește despre un filtru pe care nu l-a ales nimeni”, „registrul golit de căutare ori de pastilă spune că e vorba de filtru, nu că e gol”, „șablonul: rândul registrului gol se scrie din logică, nu fix”). Recititorul a văzut roșie regula despre filtru pe o formă greșită a propriei reparații, nu pe pagina veche.
 
+- [x] **În Depozit, eticheta „Cantitate (buc)” se desena pe trei rânduri — „Cantitate (”, „buc”, „)” —, la fel „Prag minim (kg)”**
+  `Depozit.dc.html:722` · *mic*
+  Numele și unitatea stau într-un singur `<span>`, deci eticheta e iar un rând: „Cantitate (buc)”, „Prag minim (kg)”. Probă: `.claude/check-panouri.mjs`, secțiunea „etichetele-coloană” — „nicio etichetă-coloană nu-și ține numele lângă o valoare dintre acolade ca text gol (ar ieși pe trei rânduri)”.
+
 - [x] **Ghidul Setărilor spunea că „Comandă refăcută” ajunge la CLIENT: anunțul pleacă numai spre echipă, pe canalele bifate la „Comandă anulată”**
   `docs/02-panoul-de-setari.md:153` · *mic*
   Două cuvinte, în `docs/02-panoul-de-setari.md`. Rândul 153: „iar clientul primea «Comandă refăcută»” a devenit „iar echipa primea «Comandă refăcută»” — paguba rămâne aceeași (un mesaj mincinos despre o comandă pe care nimeni n-a refăcut-o), dar pleacă unde chiar pleacă. Rândul 162: „nici vreun anunț către client” → „nici vreun anunț către echipă”, schimbare de aceeași lungime, ca rândul să nu se rupă și fișierul să nu se reformateze. Restul paginii n-a fost atins: rândul 129 („pagina clientului, când scrie «Gata»”) vorbește despre o pagină, nu despre un anunț, iar rândul 185 despre o oprire de pe rută — amândouă adevărate. Nicio probă nu se sprijină pe textul schimbat: grep peste `.claude/` după „02-panoul-de-setari” dă numai registrul, nu vreun martor. Același neadevăr a fost îndreptat și în registru (titlul și scenariile fișelor „ecranul rămas în urmă”); în comentariile din cod a fost îndreptat tot în ziua aceea, în toate cele șapte locuri: `api/routes/orders.php`, `Panou Laborator.dc.html`, `Ruta Sofer.dc.html`, `Administrare Comenzi.dc.html`, `.claude/test-defect-etapa-veche.mjs`, titlul fișei surori din registru și scenariile ei — toate spun de acum că anunțul pleacă pe canalele casei, spre patron. [16 septembrie 2026]
+
+- [x] **Ghidul Setărilor promitea că e-mailul „merge din prima zi”, fără nimic de pregătit**
+  `docs/02-panoul-de-setari.md:32` · *mic*
+  Rândul spune ce trebuie: o căsuță de e-mail a firmei, de la furnizorul domeniului, trecută în cartonașul „E-mail”. Ghidul are un capitol nou, „E-mailul: căsuța firmei și drumul direct”, cu cele două drumuri, cu rândul de stare, cu ce dovedește și ce nu dovedește butonul de test și cu marginile drumului direct. Probă: `.claude/check-vorbe-indreptate.mjs`.
 
 - [x] **Tabelul „ce se poate reimporta” spunea despre migrarea 013 că e „numai INSERT IGNORE INTO settings”, deși adaugă trei coloane și rescrie o dată anunțurile vechi**
   `docs/07-actualizari.md:223` · *mic*
@@ -2136,6 +2316,14 @@ reparația la loc și văzând-o picând.
   `Jurnal.dc.html:638` · *mic*
   `Jurnal.dc.html` are două ajutoare: `cuDe(n)` (r. 638), care întoarce „de” când numărul e de la 20 în sus și ultimele lui două cifre sunt 00 ori 20–99, și `cate(n, unu, multe)` (r. 644), care lipește numărul de substantiv. Le folosesc antetul zilei (r. 1061, la acțiuni și la conturi), subtitlul (r. 1460–1461) și subsolul (r. 1653). Păzit de `.claude/check-sterse-jurnal.mjs`, cu patru reguli: „subsolul pune „de” după regula numeralului: 19 acțiuni, 20 de acțiuni, 101 acțiuni, 120 de acțiuni”, „antetul zilei pune „de” după regula numeralului, și la acțiuni, și la conturi: „20 de acțiuni · 20 de conturi”, „101 acțiuni · 2 conturi””, „subtitlul jurnalului întreg pune „de” la fel: „120 de acțiuni înregistrate · 120 de conturi”, „299 de acțiuni înregistrate · 101 conturi”” și „subtitlul unei căutări pune „de” la fel: „19 acțiuni găsite”, „20 de acțiuni găsite”, „101 acțiuni găsite”, „299 de acțiuni găsite””. Văzute roșii: aceeași probă își strică singură pagina și cere ca fiecare stricare să iasă roșu — între ele „subsolul nu mai pune „de” niciodată”, „„de” lipsește la suta rotundă”, „„de” e pus de la douăzeci în sus, fără excepția sutei” și „numărul cu substantivul lui se scrie iar fără „de”” — și se încheie cu regula „fiecare regulă de mai sus a fost văzută roșie la măcar o stricare”. Regula veche din `.claude/check-panouri.mjs`, „cu o căutare largă, subtitlul spune câte potriviri are tot jurnalul”, cere acum „299 de acțiuni găsite”, iar lângă ea tabelul `ACORD` încearcă subtitlul unei căutări pentru 1, 19, 20, 101, 120 și 299 de potriviri (regulile „subtitlul unei căutări: serverul găsește N, pagina scrie „…””); proba aceea n-a fost rulată la scrierea fișei.
 
+- [x] **În Jurnal, lângă omul cu „cont nelegat” stătea rolul contului botului: „Ion Pop (Telegram, cont nelegat) · fondator”**
+  `Jurnal.dc.html:603` · *mic*
+  Pe rândul cu „cont nelegat” rolul nu se mai arată (rămâne liniuța, ca la „Sistem”). Serverul trimite încă rolul în răspuns — are fișa lui, deschisă. Probă: `.claude/check-telegram-apasator.mjs`, regula `R_ROL`, care ia eticheta scrisă de server și o dă funcției din pagină.
+
+- [x] **În Jurnal, pe telefon, numele unui apăsător nelegat e tăiat tocmai la vorba care contează: „Ion Pop (Telegram, cont ne…”**
+  `Jurnal.dc.html:278` · *mic*
+  În Jurnal, numele de pe rând se rupe pe rândul următor (`overflow-wrap:anywhere; min-width:0`), nu se mai taie cu „…”: coada „(Telegram, cont nelegat)” se vede întreagă, pe două rânduri dacă nu încape pe unul. Probă: `.claude/check-panouri.mjs`, regula numelui din Jurnal, cu stricăciunea ei.
+
 - [x] **Pe telefon, butonul cel mai însemnat din foaia de detaliu a laboratorului era și cel mai mic: „poziția e gata toată" avea 30×30, între două butoane de 44×44 care fac fiecare un pas de o bucată**
   `Panou Laborator.dc.html:366` · *mic*
   Cele trei butoane au căpătat cârlige (`data-lb="itemdone"`, `data-lb="cardmove"` pe amândouă săgețile), iar banda de telefon (`@media (max-width:900px)`) le duce la 44: caseta 44×44 cu rotunjirea potrivită mărimii noi, săgețile 44 de lat. Regulile sunt `!important`, fiindcă se bat cu stilul scris în marcaj. Pe monitor NU s-a atins nimic — acolo se apasă cu mouse-ul, iar 30px e în regulă; proba cere anume ca regulile să stea în banda de telefon și să NU fie în banda de lat, fiindcă unde stă reparația e chiar rostul ei.
@@ -2175,6 +2363,10 @@ reparația la loc și văzând-o picând.
 - [x] **„Parola mea” îi spunea fondatorului că a face și a desface administratori „e singurul lucru pe care un administrator nu-l poate face”, deși administratorul nu are nici Statisticile**
   `Parola.dc.html:417` · *mic*
   De la runda 2.7.0, fraza spune ce face fondatorul în plus, fără să pretindă că e tot: „Poți face și desface administratori și alți fondatori, din pagina Conturi, și hotărăști din pagina „Acces” cine ce vede în aplicație.” Cartonașul celui care nu e fondator spune același lucru din partea cealaltă.
+
+- [x] **„Conturi” și „Parola mea” propuneau parole din două liste de cuvinte care nu mai erau la fel**
+  `Parola.dc.html:232` · *mic*
+  Amândouă paginile au aceeași listă de douăzeci de cuvinte, în aceeași ordine, și același rând care lipește cuvântul de număr. Au rămas două copii dinadins (un ajutor pus în `shared/` ar pleca și pe site-ul public); le ține egale proba, care mai cere ca nicio a treia pagină să nu-și facă lista ei. Probă: `.claude/check-panouri.mjs` — „lista din „Conturi” și cea din „Parola” sunt aceeași, în aceeași ordine”, „cu aceleași zaruri, „Conturi” și „Parola” propun aceeași parolă…” și „o listă de cuvinte pentru parole țin numai „Conturi” și „Parola””.
 
 - [x] **Cele două cifre despre PACHET scrise în proză s-au despărțit amândouă de el: una plecase cu `2.4.1` spunând „204" într-un pachet de 205, cealaltă a fost mutată de la 94 la 97 fără s-o numere nimeni**
   `plasture-vps 2.4.2/CITESTE-MA.md:5251` · *mic*
@@ -2316,6 +2508,50 @@ reparația la loc și văzând-o picând.
   `Setari.dc.html:2182` · *mic*
   „Renunță” întreabă întâi: `onReset` (rândul 2182) cheamă `gp.inchideCiorna(this.ciornaDeschisa(), …)` și aruncă schimbările numai după răspuns. Întrebarea: „Arunci schimbările nesalvate?” — „Se pierde tot ce ai schimbat în Setări de la ultima salvare, în toate filele.”, cu „Rămân” și „Le arunc”. Cât merge o salvare, butonul nu face nimic. Proba: `.claude/check-ciorna-setari.mjs` (199 trecute · 0 picate la 9 oct. 2026), cu regulile „„Renunță” peste ceva scris întreabă, cu vorbele paginii, și nu aruncă nimic: tot formularul e cum l-a lăsat omul”, „„Rămân” la „Renunță” lasă tot ce s-a scris, în toate cele trei locuri, cu bara de salvare pe ecran” și „„Renunță” peste pagina neatinsă nu întreabă nimic și își face treaba ca până acum”. Văzută roșie: proba își strică singură pagina, în memorie, în 63 de feluri; stricarea „„Renunță” aruncă tot fără să întrebe, ca înainte de pază” iese roșu pe 13 reguli (văzut în rularea din 9 oct. 2026).
 
+- [x] **În Setări, cutiile „Contul meu de Telegram” și „Oameni din grup” nu se împrospătau una pe alta**
+  `Setari.dc.html:2354` · *mic*
+  Fiecare cutie o recitește pe cealaltă după fapta ei, iar lista are butonul „Reîncarcă lista”. Un răspuns de listă plecat înaintea unei fapte e socotit vechi și nu mai e pus pe ecran. Probă: `.claude/check-ciorna-setari.mjs`, scenele grupei „oameni”.
+
+- [x] **„Legat. De-acum, ce apasă de pe telefon se scrie pe numele contului.” se promitea și pentru un cont care nu poate hotărî cereri**
+  `Setari.dc.html:2479` · *mic*
+  Pentru contul oprit ori fără drept vestea e numai „Legat.”; nota de pe rând spune restul. Probă: `.claude/check-ciorna-setari.mjs`, scena `oameni.vesteCinstita`.
+
+- [x] **După refuzul „contul nu e de ales”, lista din „Oameni din grup” rămânea cea veche, iar a doua apăsare primea același refuz**
+  `Setari.dc.html:2492` · *mic*
+  După 422 lista se cere din nou, ca după 404 și 409: contul care nu mai e de ales dispare din ea. Probă: `.claude/check-ciorna-setari.mjs`, scena `oameni.refuz422`.
+
+- [x] **La o cădere a serverului, refuzul unei legări din „Oameni din grup” ieșea „Serverul n-a putut aduce legarea omului”**
+  `Setari.dc.html:1507` · *mic*
+  Cele două fapte ale cutiei au fraza lor: „Serverul n-a putut lega omul (eroarea 500). Motivul îl vede administratorul în jurnalul serverului.” și „Serverul n-a putut dezlega contul …”. Ajutorul comun a rămas cu o singură frază — are fișa lui, deschisă. Probă: `.claude/check-ciorna-setari.mjs`, scena `oameni.refuz5xx`.
+
+- [x] **Cutia „Raport de bani pe Telegram” din Setări spune că raportului „îi trebuie numai tokenul botului”; îi trebuie și chatul lui, altul decât al comenzilor**
+  `Setari.dc.html:797` · *mic*
+  Vorba din cutia „Raport de bani pe Telegram” din Setări spune acum tot ce-i trebuie raportului: „Raportul pleacă și când anunțurile de mai sus sunt oprite: îi trebuie tokenul botului și chatul lui, scris mai jos la „Chat ID”.” Docs/02 și docs/10 spun la fel. Probe: `.claude/check-setari.mjs` și `.claude/check-plati-conturi.mjs`.
+
+- [x] **Casetele cartonașului „E-mail” aveau scris de 15 px: iPhone-ul mărea pagina la atingere**
+  `Setari.dc.html:487` · *mic*
+  Toate cele șapte casete ale cartonașului — cele două vechi, cele patru ale căsuței și alegerea criptării — au 46 px înălțime și scris de 16 px. Probă: `.claude/check-setari.mjs` — „fiecare casetă a cartonașului are 46px înălțime și scris de 16px…”.
+
+- [x] **Caseta roșie din Setări spune „Un anunț nu a plecat.” și despre un link de parolă uitată**
+  `Setari.dc.html:3172` · *mic*
+  Caseta roșie din Setări numește ce n-a plecat după rândurile ei: „Un link de parolă uitată nu a plecat.” când toate sunt linkuri de parolă, „N mesaje nu au plecat.” când sunt amestecate ori nu toate sunt aduse, „anunțuri” numai la anunțurile de comenzi. Probe: `.claude/check-setari.mjs` și `.claude/check-ciorna-setari.mjs`.
+
+- [x] **După „Șterge” la tokenul de Telegram ori de WhatsApp, în casetă apare cuvântul „__clear__”**
+  `Setari.dc.html:3721` · *mic*
+  După „Șterge”, caseta tokenului de Telegram ori de WhatsApp nu mai arată semnul intern `__clear__`: scrie „Se șterge la „Salvează””, iar dedesubt „Tokenul salvat se șterge la „Salvează”. Te-ai răzgândit? Apasă „Renunță” ori scrie altul în casetă.” Probă: `.claude/check-setari.mjs`, cu stricăciunea ei.
+
+- [x] **„Contul meu de Telegram” nu vede apăsarea de pe telefon până la reîncărcarea paginii, deși nota îi spune omului să se întoarcă**
+  `Setari.dc.html:3810` · *mic*
+  Cât o cerere din „Contul meu de Telegram” așteaptă apăsarea de pe telefon, cutia se recitește din 5 în 5 secunde (`gp.poll`) și îndată ce fila redevine vizibilă; altfel ceasul nu cere nimic, iar pagina montată a doua oară oprește întâi ceasul vechi. Probă: `.claude/check-ciorna-setari.mjs`, cu stricăciunile ei.
+
+- [x] **În Setări, „Renunță” spunea că se pierde tot, dar raportul de bani scris rămânea nesalvat în cutie**
+  `Setari.dc.html:2009` · *mic*
+  `ciornaDeschisa(usa)` primește ușa, iar `onReset` cheamă `ciornaDeschisa("renunta")`. Cu `usa === "renunta"` și cutia scrisă, întrebarea adaugă „ Cutia „Raport de bani pe Telegram” rămâne cum ai scris-o: are „Salvează” al ei.”. La plecare nu se schimbă nimic. Dovada e în check-ciorna-setari: 331·0, cu două reguli noi și trei stricări noi.
+
+- [x] **Cu serverul căsuței schimbat, caseta „Parola căsuței” spunea tot „Parolă salvată — lasă gol ca s-o păstrezi”, deși serverul cere acum parola din nou**
+  `Setari.dc.html:3704` · *mic*
+  Cât serverul de pe ecran diferă de cel salvat, parola e salvată și nici scrisă acum, nici de șters, caseta spune „Ai schimbat serverul: scrie parola din nou”, iar lămurirea de sub ea cere parola ori „Șterge parola”. Docs/02 spune la fel („Schimbi serverul? Scrii și parola din nou.”). Probă: `.claude/check-vorbe-indreptate.mjs` — condiția și vorbele se iau din pagină și se rulează pe șase cazuri, cu stricăciunile lor.
+
 - [x] **Geamănul englezesc al motivului întorcea literal „Eroare 429.” sub un titlu englezesc**
   `shared/gp-api.js:986` · *mic*
   Fraza fabricată e deosebită de vorbele serverului printr-o singură comparație, iar pe ea geamănul cade pe propoziția englezească de dedesubt. Compromisul rămâne declarat și e acum fixat în amândouă direcțiile: o probă cere ca vorbele serverului să treacă, alta cere ca fraza fabricată să nu treacă. Dovezi roșu/verde: 118 · 1 și 115 · 4 pe codul stricat, 119 · 0 pe cel reparat.
@@ -2438,9 +2674,15 @@ reparația la loc și văzând-o picând.
 
 ---
 
-## Medii — 3 rămase
+## Medii — 4 rămase
 
 Se văd și încurcă, dar se pot ocoli sau nu apar zilnic.
+
+- [ ] **Pe serverul de azi, clipa în care se închide legătura la „Ți-ai uitat parola?” mai poate deosebi un cont adevărat, cu adresă, de unul închipuit**
+  `api/routes/auth.php:533`
+  **Ce e greșit:** Pe Apache cu mod_php (serverul de azi) și pe serverul de probă, legătura rămâne deschisă până pleacă ori cade e-mailul, deși răspunsul a fost trimis întreg înainte. Pentru un cont adevărat cu adresă asta poate ține până la 25 de secunde, cât vorbește serverul cu căsuța; pentru unul închipuit se închide pe loc. Tot atâta e ținut și un lucrător PHP.
+  **Ce pățește omul:** Cineva care măsoară nu răspunsul, ci închiderea legăturii, află după câteva încercări ce nume de utilizator au un cont cu adresă de e-mail.
+  **Dovada:** `Raportul valului 3: fără probă pe clipa închiderii (n-ar putea sta verde azi). 'test-posta' ține ceasul RĂSPUNSULUI — sub trei secunde cu serverul de e-mail tăcut —, regulă care n-a fost văzută roșie pe o rută stricată; '.claude/check-posta.mjs' are regula „răspunsul devreme își anunță lungimea, se golește și închide legătura unde serverul îl lasă”. Citit de mine pe 14 octombrie 2026: comentariile lui 'route_forgot()' ('api/routes/auth.php', de la r. 494) spun marginea pe față. Pragul de zece cereri pe conexiune ține încercările puține. Închiderea cere PHP-FPM pe server ori o coadă de e-mailuri golită de cron, adică altă formă a bazei.`
 
 - [ ] **În „Încasări”, o stare apăsată din greșeală nu se mai poate lua înapoi cum era: amânarea depășită își pierde termenul, iar plata bifată în altă zi se mută pe ziua îndreptării**
   `api/routes/plati.php:901`
@@ -2462,9 +2704,39 @@ Se văd și încurcă, dar se pot ocoli sau nu apar zilnic.
 
 ---
 
-## Mici — 35 rămase
+## Mici — 49 rămase
 
 Nepotriviri și texte care mint mărunt.
+
+- [ ] **Proba casetelor de eroare are trei stricări nescrise pentru rândul nou „Oameni din grup”, iar patru casete din alte pagini nu sunt declarate deloc**
+  `.claude/check-erori-tacute.mjs:167`
+  **Ce e greșit:** Rândul Setărilor din `.claude/check-erori-tacute.mjs` a primit `oameniGol`, `oameniEroare` și caseta cu „Încearcă din nou”, dar nu și stricările care să le vadă roșii: `oameniGol` fără clauza erorii, `onOameniIar` care doar șterge eroarea în loc să ceară lista, și caseta legată de altă valoare decât `oameniEroare`. Tot acolo, patru casete de cerere deosebită există în pagini și nu sunt declarate în `casete`: `eroareRaport` din Pontaj, `eroareMai` din Jurnal, `cerEroare` și `eroareMai` din Istoric.
+  **Ce pățește omul:** Cineva scoate clauza erorii din `oameniGol`: lista căzută arată „Încă n-a apăsat nimeni un buton în grup.”, iar proba rămâne verde.
+  **Dovada:** `Din rapoartele valurilor 1 și 2. Văzut de mine pe 14 octombrie 2026: rândul Setărilor e la '.claude/check-erori-tacute.mjs:165–167'. Cele trei stricări n-au fost scrise și n-au fost rulate de nimeni; cele patru casete nedeclarate nu le-am numărat din nou.`
+
+- [ ] **Patru stricări ale cartonașului „E-mail” rămân verzi în proba Setărilor**
+  `.claude/check-setari.mjs:406`
+  **Ce e greșit:** Proba nu prinde: butonul de test care nu se mai stinge cât sunt modificări nesalvate (paza din `test()` rămâne); parola scrisă și apoi ștearsă din casetă care pleacă drept ștergere a celei salvate; răspunsul testului care numește căsuța de pe ECRAN, nu pe cea salvată, cu care a plecat mesajul; și caseta parolei care arată masca venită de la server când parola nu e socotită „salvată”.
+  **Ce pățește omul:** O îndreptare viitoare face ca testul să laude căsuța scrisă pe ecran și încă nesalvată. Patronul crede că a încercat căsuța nouă; mesajul a plecat prin cea veche.
+  **Dovada:** `Din harta stricărilor ramurii poștei (valul 3, „S5b”, „S28”, „S29”, „S30”), citită de mine pe 14 octombrie 2026 în însemnările ramurii; stricările n-au fost rulate de mine. Secțiunea cartonașului începe la '.claude/check-setari.mjs:406'.`
+
+- [ ] **Butoanele rare ale comenzii pot fi ascunse pe telefon cu `visibility:hidden` fără ca vreo probă să se înroșească; încă patru stricări ale barelor au rămas verzi**
+  `.claude/check-sterse-comenzi.mjs:1079`
+  **Ce e greșit:** Regula „subsol: „modalrare” e stins pe calculator și se aprinde numai în banda de telefon” se uită la `display`. Un `visibility:hidden` pus pe rândul `data-adm=modalrare` lasă regula verde, iar pe telefon „Anulează comanda”, „Reface comanda” și „Șterge definitiv” n-ar mai fi văzute (stricarea T17 a cititorilor). Tot verzi au rămas: D14 — rândul aprins pe calculator printr-un selector de atribut care nu-i spune pe nume — și trei notate N14, N19 și N21 în rapoartele ramurii, nedescrise în ce mi-a ajuns.
+  **Ce pățește omul:** La o îndreptare de stil, cineva ascunde rândul butoanelor rare cu `visibility:hidden`. Suita trece verde, iar de pe telefon o comandă nu mai poate fi anulată.
+  **Dovada:** `Din raportul reparatorului ramurii „bare” (valul 2, 10 octombrie 2026): „T17 e trei rânduri în regula „subsol: „modalrare” e stins pe calculator…””. Văzut de mine pe 14 octombrie 2026: regula e la '.claude/check-sterse-comenzi.mjs:1079'; stricările n-au fost rulate de mine.`
+
+- [ ] **Unealta care citește porțile rutelor socotește întreagă și o poartă pusă sub un `if`**
+  `.claude/porti-php.mjs:330`
+  **Ce e greșit:** `poartaFunctiei()` ia PRIMA chemare de poartă din corpul unei rute, oriunde ar sta ea. O poartă pusă sub un `if` care nu se împlinește niciodată (ori numai uneori) e citită ca și cum ar păzi toată ruta.
+  **Ce pățește omul:** La o îndreptare, cineva mută `require_drept(…)` într-o ramură. Ruta rămâne deschisă pe cealaltă ramură, iar probele care întreabă unealta „cine intră aici?” rămân verzi.
+  **Dovada:** `Din raportul reparatorului poștei (valul 3). Citit de mine pe 14 octombrie 2026: '.claude/porti-php.mjs:326–368' caută chemările în tot corpul funcției, fără să se uite la ramuri; comentariul din capul ei spune numai despre „o a doua poartă, mai strâmtă, pusă pe o ramură”. Neîncercat cu o stricare.`
+
+- [ ] **Două jumătăți ale numelui de pe Telegram nu sunt jucate pe serverul adevărat: contul legat și oprit care apasă, și același om care apasă a doua oară cu alt nume**
+  `.claude/test-telegram-oameni.mjs:1092`
+  **Ce e greșit:** Proba vie nu joacă: (1) un cont LEGAT cu `active = 0` care apasă — trebuie refuzat, cererea rămâne nouă, nimic în Jurnal; (2) același om care apasă a doua oară cu alt prenume și alt nume de utilizator — rândul lui din „Oameni din grup” trebuie să-și schimbe numele, nu să se facă al doilea.
+  **Ce pățește omul:** O schimbare viitoare în drumul de la apăsare la rută lasă un cont oprit să accepte o cerere; probele statice, care citesc numai funcția, rămân verzi.
+  **Dovada:** `Din raportul reparatorului ramurii „telegram” (10 octombrie 2026): perechile statice sunt regulile numite acolo 'R_OPRIT' și 'R_A_DOUA', a doua văzută roșie pe patru stricări. Proba vie n-a fost rulată de mine.`
 
 - [ ] **În „Acces”, întrebarea „Te întorci la împărțirea din prima zi?” scrie „Se pierd 1 bifă mutată” când o singură bifă e mutată**
   `Acces.dc.html:909`
@@ -2490,6 +2762,12 @@ Nepotriviri și texte care mint mărunt.
   **Ce pățește omul:** Managerul, la calculatorul din birou, primește un telefon: clientul comenzii #1042, deja anulată, o vrea totuși, și repede. O găsește în listă și apasă „Urgentează”. Sus scrie, cu verde, „#1042 a fost marcată URGENT — apare prima în laborator.”, iar rândul se înroșește și urcă în capul listei. Crede că laboratorul a aflat. Laboratorul nu vede nimic: comanda e tot „Anulată”. Butonul de care avea nevoie era „Reface comanda”.
   **Dovada:** `'Administrare Comenzi.dc.html:508': '<button type="button" class="{{ r.urgentCls }}" onClick="{{ r.onUrgent }}" style="height:38px;white-space:nowrap">{{ r.urgentShort }}</button>' — sub '<sc-if value="{{ potEdita }}" …>' (r. 507) și atât; la fel pe cardul de telefon (':604'). ':6232': 'urgentShort: o.urgent ? "Nu e urgent" : "Urgentează",'. ':5852': 'gp.patch('/orders/' + o.id, { urgent: next })'. ':5861': '? o.ref + " a fost marcată URGENT — apare prima în laborator."'. 'api/routes/orders.php:1441–1444': 'foreach (['urgent', 'timed'] as $flag) {' … '$vals[] = $b[$flag] ? 1 : 0;' — fără nicio întrebare despre etapă. 'Panou Laborator.dc.html:1647': '.filter((o) => o.status !== gp.cancelled())'. 'orders.php:232–233': 'if (trim((string) ($_GET['sort'] ?? '')) === 'urgent') {' / '$ordine = 'o.urgent DESC, ' . $ordine;'. În 2.6.0 aceleași rânduri ale paginii stau la 'Administrare Comenzi.dc.html:508', ':586', ':3974', ':3782' și ':3791'. Citit din cod, nerulat.`
 
+- [ ] **Pe o tabletă îngustă (761 px), caseta în care scrii în formularul comenzii rămâne sub tastatură: capătul formularului se lungește numai până la 760 px**
+  `Administrare Comenzi.dc.html:108`
+  **Ce e greșit:** Steagul tastaturii se ridică la orice lățime și bara se desprinde, dar regula care lungește capătul formularului cu înălțimea tastaturii e scrisă în banda de telefon (până la 760 px). La 761 px caseta atinsă nu mai e adusă deasupra tastaturii.
+  **Ce pățește omul:** Pe o tabletă ținută în picioare, managerul atinge „Notă pentru laborator” în josul formularului. Tastatura urcă peste casetă; scrie fără să vadă, până derulează cu mâna.
+  **Dovada:** `Măsurat la 761 px: caseta la 548–594 px, linia tastaturii la 564. La 390 px aceeași casetă e adusă de la 539–585 la 257–303 px (linia la 508). Citit de mine pe 14 octombrie 2026: regulile cu 'html[data-gp-tastatura]' ale formularului stau în banda de telefon a paginii ('Administrare Comenzi.dc.html:108' și 116).`
+
 - [ ] **În „Acces”, bifa „Pragul de neplătite al unui client” dă și pragul pentru toți clienții, fără s-o spună, iar cartonașul acela, deși stă în „Încasări”, atârnă de panoul „Conturi”**
   `api/lib/auth.php:477`
   **Ce e greșit:** Dreptul `plati.prag` păzește două lucruri: pragul unui singur client, din fișa lui din „Conturi” (`api/routes/users.php`), și pragul general, `plati_prag_implicit` (`setare_plati_drept()`, `api/lib/settings.php:401–402`), care se schimbă din cartonașul „Pragul pentru toți clienții” al paginii „Încasări” și, pentru cine are și „Setări”, din cardul „Comenzi neplătite” al Setărilor (caseta „Prag de comenzi neplătite”). Eticheta lui din „Acces” e „Pragul de neplătite al unui client” (`GP_DREPT_ETICHETE`, r. 477) și nu pomenește pragul general. Dreptul ține de panoul „Conturi” (`GP_DREPT_CERE`, r. 418), deci pagina scrie sub el „Ține de Conturi.”; cartonașul pragului general stă însă în „Încasări”, iar cardul lui în „Setări”. Un rol care are „Încasări” și bifa, dar nu și „Conturi”, nu vede cartonașul; unul care le are pe toate trei poate muta pragul tuturor clienților printr-o bifă al cărei nume vorbește de unul singur.
@@ -2514,6 +2792,12 @@ Nepotriviri și texte care mint mărunt.
   **Ce pățește omul:** Patronul a pus pragul unui client la o comandă neplătită. Managera îi scrie totuși o comandă și apasă „Da, scrie comanda”. Patronul citește apoi în Jurnal: „Peste prag pentru „Bistro Nord”: 1 neîncasate, pragul e 1 — comanda #1042”. La altă trecere citește „3 neîncasate” și caută în „Încasări” trei comenzi neplătite ale clientului; găsește două — a treia era o cerere de pe site, încă neconfirmată.
   **Dovada:** `'api/lib/plati.php:614–616': ''Peste prag pentru „' . (string) ($ocolit['client']['nume'] ?? '') . '”: '' / '. $n . ' ' . ro_de($n) . 'neîncasate, pragul e ' . (int) ($ocolit['prag'] ?? 0)' / '. ' — ' . $scris'. ':324': '$n = $nComenzi + $cereri;'. Refuzul, în același fișier, ':586–588': '$ce = $n === 1 ? 'comandă neplătită' : 'comenzi neplătite';' / 'if ((int) $s['cereri'] > 0) {' / '$ce .= ' ori în așteptare';'; la fel în formular ('Administrare Comenzi.dc.html:2036–2037'). Citit din cod, nerulat.`
 
+- [ ] **Parola căsuței cu spații la margini sau care începe cu „•” nu se salvează cum a fost scrisă**
+  `api/lib/settings.php:600`
+  **Ce e greșit:** `settings_save()` taie spațiile oricărei valori (600). La parole, una care începe cu „•” e luată drept mască și sărită fără niciun cuvânt (605).
+  **Ce pățește omul:** Furnizorul dă o parolă cu spațiu la capăt: se salvează fără el, iar căsuța refuză legarea („parola greșită”). O parolă care începe cu „•” nu se salvează deloc, iar „Salvează” spune totuși că a mers.
+  **Dovada:** `api/lib/settings.php:600 '$val = trim((string) $raw);' și 605 'if ($val === '' || str_starts_with($val, '•')) { continue; }'. Pagina face la fel (Setari.dc.html:2923).`
+
 - [ ] **În Jurnal, rândurile despre o comandă făcută, schimbată ori cu plata mutată o numesc „Comandă #3”, cu numărul ei de ordine din zi, nu cu numărul scris pe ea peste tot („#1003”)**
   `api/routes/plati.php:996`
   **Ce e greșit:** Trei fapte scrise în Jurnal își numesc comanda cu numărul ei de ordine din ziua aceea (1, 2, 3…), pe care nu-l arată niciun ecran: facerea comenzii, schimbarea ei și mutarea plății. Numărul pe care îl vede omul — pe rândul din „Comenzi”, în laborator, pe rută, în „Încasări”, în anunțuri — e cu o mie mai mare: a treia comandă a zilei e „#1003”, iar în Jurnal scrie „Comandă #3”. Rândurile de ștergere definitivă și de trecere peste prag scriu numărul văzut, deci același Jurnal poartă două numere pentru o singură comandă. Căutarea din Jurnal după „#1003” găsește ștergerea, dar nu și facerea, schimbările ori plățile comenzii; iar „#3” se potrivește cu a treia comandă a fiecărei zile.
@@ -2537,6 +2821,12 @@ Nepotriviri și texte care mint mărunt.
   **Ce e greșit:** Clientul oprit de pragul de neplătite e îndemnat, din „Comanda mea”, să scrie patiseriei: „Contactează-ne”. Legătura îl duce în magazin, de unde pleacă o cerere de felul „numai mesaj”, fără niciun produs. Întors în „Comanda mea”, își găsește mesajul desenat ca o comandă în așteptare: sub titlul „Comanda trimisă, în așteptare”, cu eticheta „Se confirmă”, cu „Ziua se stabilește la confirmare”, cu rândul „Total … buc.” și cu făgăduiala „Am primit-o. Intră în producție după ce o confirmăm — atunci apare aici cu numărul ei și cu ziua livrării.” Nimic din toate acestea nu se poate întâmpla: o cerere fără produse nu poate deveni comandă, biroul o poate închide numai prin refuz, iar atunci ea apare la client sub „O cerere n-a putut fi onorată”, cu eticheta „Nu s-a putut onora”.
   **Ce pățește omul:** Doamna Popa are trei comenzi neplătite. În „Comanda mea” vede caseta cu soldul și, sub ea, „Contactează-ne”, „pentru mai multe detalii despre situația actuală”. Apasă, scrie că a plătit prin bancă și trimite. Se întoarce în „Comanda mea” și vede „Comanda trimisă, în așteptare”, cu „Se confirmă” și cu „Intră în producție după ce o confirmăm”. Crede că a comandat ceva fără să vrea. După ce biroul îi citește mesajul și îl închide, pe pagina ei scrie „O cerere n-a putut fi onorată”.
   **Dovada:** `'Client.dc.html:1345': 'pendingTitle: cereri.length === 1 ? "Comanda trimisă, în așteptare" : "Comenzi trimise, în așteptare",'. ':963': 'const cereri = toateCererile.filter((c) => c.status !== "respinsa");' — nicio deosebire între cererea cu produse și cea fără. ':299': eticheta „Se confirmă”; ':1348': ': "Ziua se stabilește la confirmare"'; ':309–313': rândul „Total … buc.”; ':1351': 'hint: "Am primit-o. Intră în producție după ce o confirmăm — atunci apare aici cu numărul ei și cu ziua livrării."'. Drumul până acolo: ':189' (legătura „Contactează-ne”), ':1241' ('platiContactHref: "Site%20Public.dc.html?subiect=neplatite",'), 'Site Public.dc.html:7790' (comentariul felului „NUMAI MESAJ”). 'api/routes/requests.php:1137': 'fail('Cererea nu are produse — nu poate deveni comandă.', 422, 'empty_request');'. După refuz: 'Client.dc.html:1355' („O cerere n-a putut fi onorată”) și ':331' („Nu s-a putut onora”). În 2.6.0 desenul e același ('Client.dc.html:1097', ':242', ':1103'). Citit din cod, nerulat.`
+
+- [ ] **În Conturi, la 320 px, piciorul de la „Schimbă parola” are tot 154 px: „Renunță”, „Propune o parolă” și „Salvează parola” stau unul sub altul**
+  `Conturi.dc.html:136`
+  **Ce e greșit:** Rândul `data-ct=editfoot` e de la 2.7.5 un rând care se rupe: două butoane stau pe unul, trei pe două. La 320 px cele trei vorbe nu încap nici câte două, deci rămân trei rânduri, ca în 2.7.0. De la 360 px în sus sunt două rânduri (100 px).
+  **Ce pățește omul:** Pe un telefon de 320 px, administratorul deschide „Schimbă parola” pentru un cont: sub cele două casete stau trei butoane înșirate pe 154 px, iar ca să vadă și caseta, și „Salvează parola”, derulează.
+  **Dovada:** `Măsurat pe casa 2.7.5, date închipuite: 154 px pe trei rânduri la 320; 100 px pe două rânduri la 360–760. Citit de mine pe 14 octombrie 2026: regula e la 'Conturi.dc.html:136–137'. Nicio regulă de probă nu cere azi două rânduri la 320.`
 
 - [ ] **Până vine primul răspuns al serverului, Depozitul se desenează deschis, cu „+ Mișcare” și „+ Articol”, și pentru cine nu are voie**
   `Depozit.dc.html:1426`
@@ -2573,6 +2863,12 @@ Nepotriviri și texte care mint mărunt.
   **Ce e greșit:** Bara din stânga a acestor șapte pagini se termină cu numele contului, legătura „← Alege panoul”, o notă și numărul versiunii; butonul „Ieși” lipsește. Pagina îl are numai în foaia de meniu care se deschide din „☰” („Ieși”, sus, și „Ieși din cont”, la coada listei), iar „☰” se desenează numai pe ecrane de cel mult 760 px lățime. Pe calculator, și pe orice ecran mai lat de atât, din pagina aceea nu se poate ieși din cont. „Comenzi”, „Conturi” și „Depozit” au butonul „Ieși” în aceeași bară, lângă nume.
   **Ce pățește omul:** Fondatorul se uită, de pe calculatorul din birou, în „Încasări” și vrea să iasă din cont înainte să lase calculatorul altcuiva. Caută butonul „Ieși” în bara din stânga, unde îl știe din „Comenzi”: sub numele lui găsește numai „← Alege panoul”, o notă despre plăți și numărul versiunii. Butonul „☰”, în al cărui meniu stă „Ieși”, nu se desenează pe calculator. Ca să iasă, trebuie să ghicească drumul: să apese „← Alege panoul” și să găsească „Ieși” pe pagina de intrare, ori să treacă întâi în „Comenzi”.
   **Dovada:** `'Incasari.dc.html:256–271': piciorul barei ('<div data-inc="sidefoot" …>') cuprinde pastila cu numele, '<a href="Intrare.dc.html" …>← Alege panoul</a>' (r. 268), o notă și '<gp-versiune></gp-versiune>'; niciun 'onLogout'. Singurele 'onClick="{{ onLogout }}"' din marcajul paginii sunt la r. 297 ('<button class="gp-navout" type="button" onClick="{{ onLogout }}">Ieși</button>') și la r. 301 („Ieși din cont”), amândouă în foaia de telefon ('<sc-if value="{{ navOpen }}" …>', de la r. 273), care se deschide din '<button class="gp-burger" type="button" title="Meniu" aria-label="Meniu" onClick="{{ onNavOpen }}">☰</button>' (r. 244). 'shared/gp-nav.css:23–24': '.gp-burger {' cu 'display: none;' și comentariul „pe monitor există bara laterală”; ':259–261': '@media (max-width: 760px) {' cu '.gp-burger { display: flex }'. La fel, cu „Ieși” numai în foaie: 'Acces.dc.html' (r. 169 și 173; piciorul barei la r. 129), 'Jurnal.dc.html' (162 și 166; 118), 'Statistici.dc.html' (728 și 732; 677), 'Setari.dc.html' (155 și 159; 111), 'Produse.dc.html' (315 și 319; 268) și 'Pontaj.dc.html' (128 și 132; 92). Barele care îl au: 'Administrare Comenzi.dc.html:277', 'Conturi.dc.html:229' și 'Depozit.dc.html:186' ('<button type="button" onClick="{{ onLogout }}" …>Ieși</button>'). Pagina de intrare are butonul „Ieși” pentru cine e deja în cont ('Intrare.dc.html:320', sub '<sc-if value="{{ signedIn }}" …>'). În 2.6.0, aceeași lipsă pe 'Jurnal.dc.html' (151 și 155), 'Statistici.dc.html' (560 și 564), 'Setari.dc.html' (155 și 159), 'Produse.dc.html' (298 și 302) și 'Pontaj.dc.html' (128 și 132); 'Incasari.dc.html' și 'Acces.dc.html' nu există acolo. Citit din cod, nevăzut în browser.`
+
+- [ ] **În „Încasări”, răspunsul unei citiri vechi a setărilor raportului poate sosi după salvare și pune pe ecran valorile dinainte**
+  `Incasari.dc.html:1803`
+  **Ce e greșit:** `cereSetari(ce)` din „Încasări” nu-și numără cererile. O citire plecată înaintea salvării cartonașului „Raport pe Telegram” și sosită după ea își scrie răspunsul vechi peste ce tocmai s-a salvat, sub vestea de salvare. În Setări aceeași întrebare e păzită cu un număr de rând (`baniRand`).
+  **Ce pățește omul:** Pe o legătură înceată, patronul salvează ora raportului îndată ce pagina s-a deschis. Vestea spune „salvat”, dar câmpul arată ora veche; pe server e cea nouă.
+  **Dovada:** `Citit din cod, nejucat cu o scenă (raportul valului 1). Văzut de mine pe 14 octombrie 2026: 'cereSetari(ce)' e la 'Incasari.dc.html:1803' și nu poartă niciun număr de rând; în 'Setari.dc.html', 'cereBani(ce)' își ia unul ('baniRand', r. 2527) și îl compară la sosire (r. 2530). Nicio regulă nu ține azi purtarea din „Încasări”.`
 
 - [ ] **Raportul de la capătul instalării pe server spune „Actualizări: urci noul deploy/ și rulezi din nou exact aceeași comandă”, deși a doua rulare a instalării nu aplică migrările și nu face copie de siguranță**
   `instaleaza-vps.sh:510`
@@ -2634,6 +2930,24 @@ Nepotriviri și texte care mint mărunt.
   **Ce pățește omul:** Fondatorul intră în Setări › Notificări să hotărască cine e anunțat când se anulează o comandă și citește sub „Comandă anulată”: „…adică ștearsă din panou. Pe aceleași canale pleacă și „Comandă refăcută”, dacă o aduci înapoi.” Mai demult ștersese definitiv o comandă anulată din greșeală. Rămâne cu două întrebări la care pagina nu răspunde: a plecat atunci vreun anunț, și comanda aceea se mai poate aduce înapoi?
   **Dovada:** `'Setari.dc.html:761' (2.7.0): 'h: "Comanda a fost trecută pe etapa de anulare, adică ștearsă din panou. Pe aceleași canale pleacă și „Comandă refăcută”, dacă o aduci înapoi." },'; eticheta rândului la 760 ('l: "Comandă anulată"'). 'Administrare Comenzi.dc.html' (2.7.0): comentariul „VORBELE BUTOANELOR (runda 2.7.0, hotărârea patronului din 4 oct. 2026)” de la rândurile 1352–1356, care spune că butonul roșu scria „Șterge comanda” și anula, iar de când există și ștergerea adevărată fiecare buton spune ce face; rândul 6244: 'scoateTitlu: eAnulata(o) ? "Șterge definitiv comanda" : "Anulează comanda",'; rândul 1387: butonul cu 'title="Scoate comanda din registru. Ce era în ea rămâne în Jurnal."'. În 2.6.0: 'Setari.dc.html:707', aceeași frază. Citit din cod; nepozat.`
 
+- [ ] **Când „Setări” se deschide direct pe fila Notificări, setările raportului de bani se cer de două ori**
+  `Setari.dc.html:1717`
+  **Ce e greșit:** `GET /plati/setari` pleacă la pornirea paginii (r. 1717), iar când pagina se deschide direct pe fila Notificări pleacă de două ori. De unde pornește a doua n-am urmărit în cod.
+  **Ce pățește omul:** Linkul din „Încasări” („Aceleași setări sunt și în Setări › Notificări › Telegram.”) deschide Setările pe fila Notificări: serverul răspunde de două ori la aceeași întrebare.
+  **Dovada:** `Văzut de cine conduce runda în lista de cereri a browserului de probă. Citit de mine pe 14 octombrie 2026: 'cereBani("nimic")' e chemată la pornire ('Setari.dc.html:1717') și la apăsarea pe fila Notificări (r. 3452); numărul de rând ('baniRand') face ca numai răspunsul celei din urmă să fie pus pe ecran. Neîncercat de mine într-un browser.`
+
+- [ ] **Parola căsuței de e-mail se vede întreagă pe ecran cât o scrii: caseta ei e una de text**
+  `Setari.dc.html:557`
+  **Ce e greșit:** Caseta „Parola căsuței” e `type="text"`, cu completarea automată oprită. Pricina e scrisă lângă ea: o casetă de parolă ar fi umplută de managerul de parole al browserului cu parola contului, ori browserul s-ar oferi s-o țină minte pe a căsuței în locul ei. Prețul: cine stă lângă patron citește parola de pe ecran.
+  **Ce pățește omul:** Patronul scrie parola căsuței la tejghea, cu un coleg lângă el. Parola stă la vedere până apasă „Salvează”.
+  **Dovada:** `Citit de mine pe 14 octombrie 2026: 'Setari.dc.html:548–557'. Nevăzut într-un browser.`
+
+- [ ] **Ora anunțurilor picate din Setări e pe ceasul aparatului, nu pe al patiseriei**
+  `Setari.dc.html:3432`
+  **Ce e greșit:** Caseta anunțurilor picate arată ora cu `new Date(gp.utc(f.createdAt))` + `getHours()`, adică pe fusul aparatului. „Ultimele trimiteri” de pe aceeași filă folosește `gp.laPatiserie`.
+  **Ce pățește omul:** Pe un laptop pus pe UTC (sau pe un telefon aflat în alt fus) pică un anunț, de exemplu linkul de parolă uitată care n-a plecat. În Setări, caseta roșie arată ora cu 2–3 ore în urmă față de ceasul patiseriei, iar pe aceeași filă „Ultimele trimiteri” arată ora patiseriei.
+  **Dovada:** `Setari.dc.html:3432 și 2.7.0 Setari.dc.html:2209 au același cod. Jurnal.dc.html:1094 și 1312 și Conturi.dc.html:1358 folosesc tot ceasul aparatului. api/routes/auth.php:703 scrie rândul „Parolă uitată — linkul n-a plecat (vezi Jurnalul)”.`
+
 - [ ] **Omul cu parolă provizorie care ajunge pe Laborator, Rută, Comenzi ori alt panou primește „cere-i unui administrator să-ți pună rolul potrivit”, nu drumul spre „Parola mea”**
   `shared/gp-api.js:1305`
   **Ce e greșit:** Serverul refuză orice cerere cu 403 `must_change_password` cât parola e provizorie. Paginile de mai sus nu pomenesc codul (2.5.2), deci la 403 scriu ce scrie `gp.motiv()` (shared/gp-api.js:1304–1306): „Contul cu care ești intrat nu are voie să vadă X. Cere-i unui administrator să-ți pună rolul potrivit.” — de pildă Panou Laborator.dc.html:1569, `gp.motiv(e, "comenzile zilei")`, ori Ruta Sofer.dc.html:728, `gp.motiv(e, "ruta zilei")`.
@@ -2645,6 +2959,18 @@ Nepotriviri și texte care mint mărunt.
   **Ce e greșit:** „Adaugă” din Setări → „Liste” → „Etape în laborator” pune etapa nouă la coada listei (Setari.dc.html:1411, `items.concat([t])`), deci după etapa finală. `gp.intraLaProductie()` (shared/gp-api.js:2024–2028) scoate din „de făcut” numai etapa finală și pe cea de anulare, așa că marfa unei comenzi trecute pe etapa de după e numărată iar la „Total de făcut” (Panou Laborator.dc.html:2480, `deFacut`); împărțirea de pe server merge pe aceeași regulă. Pe pagina clientului, `ETAPA_CLIENT` (Client.dc.html:447–453) cunoaște anularea, etapa finală și plafonul laboratorului, iar pe orice altă etapă cade pe `CLIENT_ST[st] || { l: st }`: clientul citește numele de atelier.
   **Ce pățește omul:** Patronul vrea să știe ce comenzi au fost facturate și adaugă în Setări etapa „Facturată”, care ajunge la coada listei. La prânz, administratorul trece pe „Facturată” cele șase comenzi livrate dimineață. Pe tableta laboratorului, „Total de făcut · azi” crește cu marfa lor, deși e de ore bune la clienți, iar „Bistro Nord” vede pe „Comanda mea”, în locul lui „Livrată”, cuvântul „Facturată”.
   **Dovada:** `shared/gp-api.js:2024–2027 'intraLaProductie: (st) => { const anulata = gp.__L.cancelled; const finala = gp.__L.done; return !((anulata && st === anulata) || (finala && st === finala));' · Client.dc.html:453 'return CLIENT_ST[st] || { l: st, c: "h-badge" };' · Setari.dc.html:1411 'self.putList(L.k, items.concat([t]));' · Panou Laborator.dc.html:2480 'const deFacut = flat.filter(o => gp.intraLaProductie(o.status));'`
+
+- [ ] **Fraza casei pentru o eroare de server spune „n-a putut aduce …” și când omul a SALVAT ori a TRIMIS ceva**
+  `shared/gp-api.js:1666`
+  **Ce e greșit:** `gp.motiv(e, ce)` are pentru 5xx o singură frază: „Serverul n-a putut aduce ” + lucrul. E bună pentru o citire. Paginile o cheamă însă și după o faptă: în Setări, salvarea raportului de bani (`spusDeServer(e, "setările raportului")`, r. 2649) și trimiterea raportului de probă (r. 2708 și 2719) ies „Serverul n-a putut aduce setările raportului (eroarea 500)”. Numai legarea din „Oameni din grup” și-a scris fraza ei (`refuzFapta`).
+  **Ce pățește omul:** Patronul apasă „Salvează” în cutia raportului de bani chiar când serverul cade. Citește că serverul „n-a putut aduce setările raportului” și nu știe dacă s-a salvat ori nu.
+  **Dovada:** `Citit de mine pe 14 octombrie 2026, nerulat: 'shared/gp-api.js:1645–1672' (o singură frază pentru 's >= 500') și 'Setari.dc.html:1499', 2649, 2708, 2719. Nu am numărat celelalte pagini care cheamă ajutorul după o faptă.`
+
+- [ ] **În Setări, la 320 px, bara de sus „Ai modificări nesalvate” ia tot 148 px: vorba, „Renunță” și „Salvează” stau pe trei rânduri**
+  `shared/gp-bara.css:111`
+  **Ce e greșit:** Pe telefon, bara de sus se rupe: vorba își ia rândul ei, iar fiecare buton cere 130 px. La 360–760 px cele două butoane încap pe un rând (94 px cu totul); la 320 nu, deci bara are trei rânduri — un sfert din ecran — cât tastatura e închisă.
+  **Ce pățește omul:** Pe un telefon de 320 px, patronul schimbă o bifă în Setări › Notificări. Bara lipită de sus coboară peste un sfert din ecran și stă acolo până salvează.
+  **Dovada:** `Măsurat pe casa 2.7.5: 148 px la 320, 94 px la 360–760. Citit de mine pe 14 octombrie 2026: banda de telefon din 'shared/gp-bara.css' (r. 111–121) dă fiecărui buton al barei 'flex: 1 1 130px'; rândul scund de 66 px e scris numai pentru '.gp-bara--foaie'. '.claude/check-tastatura.mjs' ține clasa 'gp-bara--sus' și oprește 'position' pe element, deci leacul se scrie în foaia de stil, cu regula văzută întâi roșie.`
 
 - [ ] **În magazin, „Golește” șterge tot coșul la o singură atingere, fără întrebare și fără drum înapoi**
   `Site Public.dc.html:7502`

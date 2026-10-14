@@ -37,6 +37,29 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-st=evoff]{background:var(--h-bg-surface);color:var(--h-fg-faint);opacity:.62}
 [data-st=evoff]:hover{opacity:.85}
 [data-st=anuntrand]{background:var(--h-bg-surface)}
+/* Notele din cutia „Raport de bani pe Telegram” (runda 2.7.5): aceleași patru
+   feluri ca în Încasări (`[data-inc=nota]`), ca același refuz să arate la fel
+   în amândouă paginile. */
+[data-st=bani-nota]{font-size:13px;line-height:1.45;color:var(--h-fg-subtle);overflow-wrap:anywhere}
+[data-st=bani-nota][data-fel=pericol]{color:var(--h-danger);font-weight:600}
+[data-st=bani-nota][data-fel=atentie]{padding:6px 10px;border-radius:8px;background:var(--h-warning-soft);color:var(--h-fg)}
+[data-st=bani-nota][data-fel=bine]{color:var(--h-success);font-weight:600}
+/* Cutia „Oameni din grup” (runda 2.7.5): rândul unui om și notele de lângă el,
+   în aceleași trei feluri ca ale raportului de bani. */
+[data-st=oameni-rand]{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--h-bg-sunk);border:1px solid var(--h-line);min-width:0}
+[data-st=oameni-nota]{font-size:13px;line-height:1.45;color:var(--h-fg-subtle);overflow-wrap:anywhere}
+[data-st=oameni-nota][data-fel=pericol]{color:var(--h-danger);font-weight:600}
+[data-st=oameni-nota][data-fel=atentie]{padding:6px 10px;border-radius:8px;background:var(--h-warning-soft);color:var(--h-fg)}
+[data-st=oameni-nota][data-fel=bine]{color:var(--h-success);font-weight:600}
+/* Cartonașul „E-mail” (runda 2.7.5): rândul de stare („pe ce cale pleacă
+   acum”), avertismentele și refuzurile de lângă casete, în aceleași trei
+   feluri ca notele vecine. Fără `data-fel` cunoscut (calea încă necitită),
+   rândul rămâne șters: nu afirmă nimic. */
+[data-st=posta-stare],[data-st=posta-nota]{font-size:13px;line-height:1.5;color:var(--h-fg-subtle);overflow-wrap:anywhere;text-wrap:pretty}
+[data-st=posta-stare][data-fel=pericol],[data-st=posta-nota][data-fel=pericol]{color:var(--h-danger);font-weight:600}
+[data-st=posta-stare][data-fel=atentie],[data-st=posta-nota][data-fel=atentie]{padding:6px 10px;border-radius:8px;background:var(--h-warning-soft);color:var(--h-fg)}
+[data-st=posta-stare][data-fel=bine],[data-st=posta-nota][data-fel=bine]{color:var(--h-success);font-weight:600}
+[data-st=posta-casuta]{display:flex;flex-direction:column;gap:14px;padding:14px;border:1px solid var(--h-line);border-radius:14px;background:var(--h-bg-surface);min-width:0}
 @media (max-width:760px){
 [data-st=shell]{flex-direction:column!important}
 [data-st=side]{width:100%!important;flex:none!important;align-self:stretch!important;box-sizing:border-box!important;position:static!important;height:auto!important;overflow:visible!important;flex-direction:row!important;align-items:center!important;gap:12px!important;padding:9px 14px!important}
@@ -435,27 +458,133 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </div>
 
-<div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
+<!-- E-MAILUL (runda 2.7.5). Are DOUĂ drumuri, iar cartonașul spune pe care
+     pleacă ACUM din ce spune serverul (`posta`, în răspunsul lui
+     `GET /settings` și al lui `PUT /settings`), nu din ce e scris în casete:
+     prin căsuța firmei (SMTP), când „Server SMTP” e salvat, ori direct de pe
+     server. Până la 2.7.5 aici scria „Funcționează fără niciun cont extern”;
+     de la mutarea pe VPS — un server fără program de poștă — nu mai pleca
+     nimic, iar pagina spunea mai departe același lucru.
+
+     Casetele căsuței se salvează cu bara de sus (`PUT /settings`), ca restul
+     filei, deci intră și în paza formularelor nesalvate. Parola se scrie aici
+     și nu se mai întoarce: serverul trimite numai „e una salvată”
+     (`mail_smtp_password_set`). Scrisul de 16px ține iPhone-ul să nu mărească
+     pagina la atingerea unei casete. -->
+<div class="h-card" data-st="posta" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
 <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
-<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:220px">
+<div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:220px">
 <span style="font-family:var(--h-font-display);font-size:19px;font-weight:600">E-mail</span>
-<span style="font-size:13px;color:var(--h-fg-subtle)">Funcționează fără niciun cont extern. Bun ca rezervă.</span>
+<span data-st="posta-stare" data-fel="{{ postaFel }}" role="status">{{ postaStare }}</span>
 </div>
 <label class="h-switch"><input type="checkbox" checked="{{ mailOn }}" onChange="{{ onMailOn }}"><span>{{ mailOnLabel }}</span></label>
 </div>
+<!-- Comutatorul e al anunțurilor, nu al poștei: „Ți-ai uitat parola?” nu
+     întreabă de el (`route_forgot()`, api/routes/auth.php), și nici testul. -->
+<span data-st="posta-comutator" style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">Comutatorul oprește doar anunțurile de comenzi. Linkurile de la „Ți-ai uitat parola?” pleacă oricum, pe aceeași cale.</span>
 <div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
 <label class="h-field">
 <span class="h-label">Adresa care primește anunțul</span>
-<input class="h-input" value="{{ mailTo }}" onChange="{{ onMailTo }}" placeholder="comenzi@goldenpastry.ro" style="height:46px;font-size:15px">
-<span class="h-help">Aici ajung comenzile noi.</span>
+<input class="h-input" value="{{ mailTo }}" onChange="{{ onMailTo }}" placeholder="comenzi@goldenpastry.ro" style="height:46px;font-size:16px">
+<span class="h-help">Aici ajung comenzile noi, și tot aici pleacă e-mailul de test.</span>
 </label>
 <label class="h-field">
 <span class="h-label">Adresa expeditor</span>
-<input class="h-input" value="{{ mailFrom }}" onChange="{{ onMailFrom }}" placeholder="noreply@goldenpastry.ro" style="height:46px;font-size:15px">
-<span class="h-help">Trebuie să fie pe domeniul tău, altfel mesajul ajunge în spam.</span>
+<input class="h-input" value="{{ mailFrom }}" onChange="{{ onMailFrom }}" placeholder="noreply@goldenpastry.ro" style="height:46px;font-size:16px">
+<span class="h-help">Pe domeniul tău, altfel mesajul ajunge în Spam. Cu o căsuță completată mai jos, scrie aici chiar adresa căsuței.</span>
 </label>
 </div>
-<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestMail }}" disabled="{{ testOff }}" title="{{ testHint }}" style="height:46px;font-size:14px;align-self:flex-start">{{ testMailLabel }}</button>
+
+<div data-st="posta-casuta">
+<div style="display:flex;flex-direction:column;gap:5px">
+<span style="font-size:15px;font-weight:600">Căsuța prin care se trimite (SMTP)</span>
+<span style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">O căsuță de e-mail a firmei, de la furnizorul domeniului. Cât „Server SMTP” e completat, e-mailul pleacă numai prin ea: e calea de nădejde. Datele le găsești în contul de la furnizor; se salvează cu „Salvează” din bara de sus.</span>
+</div>
+<!-- Baza fără migrarea 037 n-are rândurile căsuței: casetele stau închise și
+     spun de ce, ca la „Date despre firmă” (`faraRand()`). Deschise, omul ar
+     scrie în ele, iar la „Salvează” serverul ar refuza tot formularul. -->
+<sc-if value="{{ smtpInchisa }}" hint-placeholder-val="{{ false }}">
+<span data-st="posta-nota" data-fel="atentie" role="status">Căsuța nu se poate completa încă: pe server lipsesc rândurile ei, fiindcă migrarea sql/037_posta_smtp.sql n-a intrat. Rulează actualizarea (sudo bash actualizeaza-vps.sh), apoi reîncarcă pagina.</span>
+</sc-if>
+<div data-st="grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+<label class="h-field">
+<span class="h-label">Server SMTP</span>
+<input class="h-input" type="text" inputMode="url" value="{{ smtpHost }}" disabled="{{ smtpInchisa }}" onChange="{{ onSmtpHost }}" placeholder="mail.domeniul-tau.ro" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" style="height:46px;font-size:16px">
+<span class="h-help">Numele serverului, cum îl dă furnizorul: fără „https://” și fără port. Lăsat gol, căsuța nu e folosită.</span>
+<sc-if value="{{ smtpHostRefuz }}" hint-placeholder-val="{{ false }}">
+<span data-st="posta-nota" data-fel="pericol" role="alert">{{ smtpHostRefuz }}</span>
+</sc-if>
+</label>
+<label class="h-field">
+<span class="h-label">Port</span>
+<input class="h-input h-numeric" type="text" inputMode="numeric" value="{{ smtpPort }}" disabled="{{ smtpInchisa }}" onChange="{{ onSmtpPort }}" placeholder="465" autoComplete="off" style="height:46px;font-size:16px">
+<span class="h-help">De obicei 465 ori 587. Lăsat gol înseamnă 465.</span>
+<sc-if value="{{ smtpPortRefuz }}" hint-placeholder-val="{{ false }}">
+<span data-st="posta-nota" data-fel="pericol" role="alert">{{ smtpPortRefuz }}</span>
+</sc-if>
+</label>
+<label class="h-field">
+<span class="h-label">Utilizator</span>
+<input class="h-input" type="text" inputMode="email" value="{{ smtpUser }}" disabled="{{ smtpInchisa }}" onChange="{{ onSmtpUser }}" placeholder="comenzi@goldenpastry.ro" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" style="height:46px;font-size:16px">
+<span class="h-help">De obicei chiar adresa căsuței — aceeași pe care o scrii mai sus, la „Adresa expeditor”.</span>
+<sc-if value="{{ smtpUserRefuz }}" hint-placeholder-val="{{ false }}">
+<span data-st="posta-nota" data-fel="pericol" role="alert">{{ smtpUserRefuz }}</span>
+</sc-if>
+</label>
+<label class="h-field">
+<span class="h-label">Criptare</span>
+<select class="h-select" value="{{ smtpCriptare }}" disabled="{{ smtpInchisa }}" onChange="{{ onSmtpCriptare }}" style="height:46px;font-size:16px">
+<sc-for list="{{ smtpCriptari }}" as="o" hint-placeholder-count="3">
+<option value="{{ o.v }}">{{ o.l }}</option>
+</sc-for>
+</select>
+<span class="h-help">Lasă „Automat” dacă furnizorul nu spune altceva. Parola nu pleacă niciodată pe o legătură necriptată.</span>
+<sc-if value="{{ smtpCriptareRefuz }}" hint-placeholder-val="{{ false }}">
+<span data-st="posta-nota" data-fel="pericol" role="alert">{{ smtpCriptareRefuz }}</span>
+</sc-if>
+</label>
+</div>
+
+<!-- Parola căsuței. Caseta e de text, cu `autoComplete="off"`, ca tokenurile
+     de alături și ca parola din „Conturi”: un câmp `type="password"` pe
+     originea asta îl umple singur managerul de parole, cu parola contului (v.
+     „Token bot”, mai jos), ori se oferă s-o „țină minte” pe a căsuței în
+     locul ei. Goală când e una salvată: valoarea nu vine niciodată de pe
+     server, iar golul înseamnă „păstreaz-o”. -->
+<label class="h-field">
+<span class="h-label">Parola căsuței</span>
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+<input class="h-input" type="text" value="{{ smtpParola }}" disabled="{{ smtpInchisa }}" onChange="{{ onSmtpParola }}" placeholder="{{ smtpParolaHint }}" autoComplete="off" autoCapitalize="none" spellCheck="{{ false }}" style="flex:1;min-width:200px;height:46px;font-size:16px">
+<sc-if value="{{ smtpParolaSet }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onSmtpParolaClear }}" style="min-height:46px;font-size:14px;color:var(--h-danger)">Șterge parola</button>
+</sc-if>
+</div>
+<span class="h-help">{{ smtpParolaHelp }}</span>
+</label>
+
+<!-- Cele două avertismente se socotesc din ce e pe ECRAN (ce va fi după
+     „Salvează”), ca omul să le vadă cât completează, nu după. Ce face
+     serverul ACUM spune rândul de stare, de sus. -->
+<sc-if value="{{ smtpJumatate }}" hint-placeholder-val="{{ false }}">
+<span data-st="posta-nota" data-rost="jumatate" data-fel="atentie" role="status">{{ smtpJumatate }}</span>
+</sc-if>
+<sc-if value="{{ smtpExpeditor }}" hint-placeholder-val="{{ false }}">
+<span data-st="posta-nota" data-rost="expeditor" data-fel="atentie" role="status">{{ smtpExpeditor }}</span>
+</sc-if>
+</div>
+
+<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--h-line)">
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onTestMail }}" disabled="{{ testOff }}" title="{{ testHint }}" style="min-height:46px;font-size:14px;margin-top:14px">{{ testMailLabel }}</button>
+<!-- Marginile drumului direct, spuse lângă butonul care îl încearcă: pe
+     drumul ăsta „a mers” înseamnă numai „predat”. Testul ține și zece-
+     douăzeci de secunde când serverul căsuței tace. -->
+<p data-st="posta-margini" style="margin:14px 0 0;flex:1;min-width:220px;font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">Testul folosește datele salvate și poate ține până la o jumătate de minut. Trimis direct de pe server, un e-mail pleacă fără semnătura domeniului (DKIM), iar regula domeniului pentru expeditori (SPF) e „~all”: e de așteptat să ajungă în Spam. Și „predat” nu înseamnă „ajuns” — serverul află numai că programul lui de poștă a primit mesajul. Calea de nădejde e căsuța.</p>
+</div>
+<!-- Ce a răspuns serverul la test, lângă buton: banda verde de sus nu se vede
+     de aici, de la mijlocul filei. -->
+<sc-if value="{{ postaProbaAre }}" hint-placeholder-val="{{ false }}">
+<span data-st="posta-nota" data-rost="proba" data-fel="{{ postaProbaFel }}" role="status">{{ postaProbaSpus }}</span>
+</sc-if>
 </div>
 
 <div class="h-card" style="padding:20px;border-radius:18px;display:flex;flex-direction:column;gap:16px">
@@ -551,6 +680,224 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <sc-if value="{{ euNelegat }}" hint-placeholder-val="{{ true }}">
 <button type="button" class="h-btn h-btn--secondary" onClick="{{ onEuCere }}" disabled="{{ euCereOff }}" title="{{ euCereHint }}" style="height:46px;font-size:14px">{{ euCereLabel }}</button>
 </sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- OAMENI DIN GRUP (runda 2.7.5, la cererea patronului).
+     Botul stă într-un grup cu oamenii casei, iar cine apasă un buton fără să
+     aibă contul legat apare cu numele de pe Telegram și cu „cont nelegat”.
+     De aici îi leagă FONDATORUL de conturile lor — numai el: ușile sunt
+     `require_acces()` (api/routes/telegram.php), fiindcă legătura hotărăște
+     al cui nume se scrie sub o cerere acceptată. Cui ține Setările fără să
+     fie fondator i se scrie cine o face, iar lista nici nu i se cere.
+     Legarea și dezlegarea au butoanele LOR, pe rândul omului: nu trec prin
+     bara de sus (aceea trimite `PUT /settings`), iar refuzul serverului se
+     scrie lângă rândul lui. Numărul de Telegram nu ajunge în pagină: omul e
+     numit prin rândul lui din listă. Cele trei trepte ale cutiei de deasupra
+     („Leagă-mi contul”) rămân, pentru cine vrea să se lege singur. -->
+<sc-if value="{{ oameniFaraFondator }}" hint-placeholder-val="{{ false }}">
+<div data-st="oameni-grup" style="display:flex;flex-direction:column;gap:5px;padding:14px;border:1px solid var(--h-line);border-radius:14px;background:var(--h-bg-surface)">
+<span style="font-size:15px;font-weight:600">Oameni din grup</span>
+<span data-st="oameni-fondator" style="font-size:13px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty">Pe oamenii din grup îi leagă de conturi numai fondatorul.</span>
+</div>
+</sc-if>
+<sc-if value="{{ oameniEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" data-st="oameni-eroare" style="border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:15px;font-weight:700">Lista oamenilor din grup nu s-a încărcat. Restul filei e întreg.</p>
+<p style="margin:0;font-size:14px;line-height:1.45;overflow-wrap:anywhere">{{ oameniEroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onOameniIar }}" style="min-height:44px;font-size:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+<sc-if value="{{ oameniAre }}" hint-placeholder-val="{{ false }}">
+<div data-st="oameni-grup" style="display:flex;flex-direction:column;gap:12px;padding:14px;border:1px solid var(--h-line);border-radius:14px;background:var(--h-bg-surface);min-width:0">
+<div style="display:flex;flex-direction:column;gap:5px">
+<span style="font-size:15px;font-weight:600">Oameni din grup</span>
+<span style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">Cine a apăsat un buton sub un anunț, în grupul de pe Telegram. Leagă-l de contul lui din aplicație, ca hotărârile luate de pe telefon să-i poarte numele; nelegat, apare cu numele de pe Telegram și cu „cont nelegat”.</span>
+<span data-st="oameni-nota" data-fel="atentie">Numele de pe Telegram și-l pune fiecare singur. Leagă numai un om pe care îl recunoști.</span>
+</div>
+<sc-if value="{{ oameniGol }}" hint-placeholder-val="{{ false }}">
+<span data-st="oameni-gol" style="font-size:14px;line-height:1.5;color:var(--h-fg-muted)">Încă n-a apăsat nimeni un buton în grup.</span>
+</sc-if>
+<sc-for list="{{ oameniRanduri }}" as="om" hint-placeholder-count="3">
+<div data-st="oameni-rand">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
+<span style="font-size:15px;font-weight:600;overflow-wrap:anywhere">{{ om.nume }}</span>
+<sc-if value="{{ om.areUser }}" hint-placeholder-val="{{ true }}">
+<span style="font-size:13px;color:var(--h-fg-muted);overflow-wrap:anywhere">{{ om.user }}</span>
+</sc-if>
+<span class="{{ om.stareCls }}" style="font-size:10px">{{ om.stareEt }}</span>
+</div>
+<span style="font-size:12px;line-height:1.5;color:var(--h-fg-faint)">{{ om.vazut }}</span>
+<sc-if value="{{ om.areNota }}" hint-placeholder-val="{{ false }}">
+<span data-st="oameni-nota" data-fel="atentie">{{ om.nota }}</span>
+</sc-if>
+<sc-if value="{{ om.nelegat }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+<!-- Scrisul de 16px ține iPhone-ul să nu mărească pagina la atingere. -->
+<select class="h-select" value="{{ om.ales }}" disabled="{{ om.stins }}" onChange="{{ om.onAles }}" aria-label="{{ om.alesEt }}" style="flex:1 1 220px;min-width:0;height:46px;font-size:16px">
+<sc-for list="{{ om.optiuni }}" as="c" hint-placeholder-count="3">
+<option value="{{ c.v }}">{{ c.l }}</option>
+</sc-for>
+</select>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ om.onLeaga }}" disabled="{{ om.legaOff }}" style="flex:none;min-height:46px;font-size:14px">{{ om.legaEt }}</button>
+</div>
+</sc-if>
+<sc-if value="{{ om.legat }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ om.onDezleaga }}" disabled="{{ om.stins }}" style="min-height:44px;font-size:14px;color:var(--h-danger)">{{ om.dezleagaEt }}</button>
+</div>
+</sc-if>
+<sc-if value="{{ om.areSpus }}" hint-placeholder-val="{{ false }}">
+<span data-st="oameni-nota" data-fel="{{ om.spusFel }}" role="{{ om.spusRol }}">{{ om.spus }}</span>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{ oameniAreNevazuti }}" hint-placeholder-val="{{ false }}">
+<div data-st="oameni-nevazuti" style="display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--h-line)">
+<span style="font-size:14px;font-weight:600">Conturi legate care n-au mai apăsat nimic în grup</span>
+<span style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">Au un Telegram legat, dar omul lor n-a mai apăsat nimic de când se ține lista de mai sus. Dacă nu știi al cui e telefonul, dezleagă contul.</span>
+<sc-for list="{{ oameniNevazuti }}" as="n" hint-placeholder-count="2">
+<div data-st="oameni-nevazut" style="display:flex;flex-direction:column;gap:4px;min-width:0">
+<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
+<span style="flex:1 1 160px;font-size:14px;overflow-wrap:anywhere">{{ n.et }}</span>
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ n.onDezleaga }}" disabled="{{ n.stins }}" style="flex:none;min-height:44px;font-size:14px;color:var(--h-danger)">{{ n.dezleagaEt }}</button>
+</div>
+<sc-if value="{{ n.areSpus }}" hint-placeholder-val="{{ false }}">
+<span data-st="oameni-nota" data-fel="{{ n.spusFel }}" role="{{ n.spusRol }}">{{ n.spus }}</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ oameniAreSpusJos }}" hint-placeholder-val="{{ false }}">
+<span data-st="oameni-nota" data-fel="pericol" role="alert">{{ oameniSpusJos }}</span>
+</sc-if>
+<!-- Lista nu se împrospătează singură. Cât fondatorul ține fila deschisă, un
+     coleg apasă în grup și trebuie să apară aici — fără reîncărcarea paginii,
+     care ar întreba de tot ce e scris și nesalvat mai sus. -->
+<div style="display:flex">
+<button type="button" class="h-btn h-btn--ghost" onClick="{{ onOameniIar }}" disabled="{{ oameniIarOff }}" style="min-height:44px;font-size:14px">{{ oameniIarEt }}</button>
+</div>
+<sc-if value="{{ oameniTaiata }}" hint-placeholder-val="{{ false }}">
+<span class="h-help">{{ oameniTaiataEt }}</span>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- RAPORTUL DE BANI PE TELEGRAM (runda 2.7.5). Oglinda cartonașului „Raport
+     pe Telegram” din Încasări: aceleași patru setări, aceeași ușă
+     (`/plati/setari`), același drept („plati.telegram” — răspunsul ușii o
+     spune în `poate.telegram`; cine nu-l are nu vede cutia, iar pagina lui
+     nici nu face cererea). Are „Salvează” al EI, nu bara de sus: bara trimite
+     `PUT /settings`, care e totul-ori-nimic — un chat greșit aici ar fi
+     refuzat zece schimbări fără nicio legătură cu el. Fiecare refuz al
+     serverului se scrie lângă câmpul lui. Câmpurile și vorbele sunt ale
+     Încasărilor, literă cu literă (le ține la fel `SET_RAPORT_OGLINDA`, din
+     `.claude/check-plati-conturi.mjs`): ce se schimbă aici se schimbă și
+     acolo. Cutia stă ULTIMA în cartonașul Telegramului. -->
+<sc-if value="{{ baniEroare }}" hint-placeholder-val="{{ false }}">
+<div class="h-alert h-alert--danger" data-st="bani-eroare" style="border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+<p class="h-alert__title" style="margin:0;font-size:15px;font-weight:700">Setările raportului de bani nu s-au încărcat. Restul filei e întreg.</p>
+<p style="margin:0;font-size:14px;line-height:1.45">{{ baniEroare }}</p>
+<button type="button" class="h-btn h-btn--secondary" onClick="{{ onBaniIar }}" style="min-height:44px;font-size:14px">Încearcă din nou</button>
+</div>
+</sc-if>
+<sc-if value="{{ baniAre }}" hint-placeholder-val="{{ false }}">
+<div data-st="raport-bani" style="display:flex;flex-direction:column;gap:14px;padding:14px;border:1px solid var(--h-line);border-radius:14px;background:var(--h-bg-surface);min-width:0">
+<div style="display:flex;flex-direction:column;gap:5px">
+<span style="font-size:15px;font-weight:600">Raport de bani pe Telegram</span>
+<span style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">De două ori pe zi, în grupul ales: cât e de încasat, cât s-a încasat și ce amânări au trecut de termen.</span>
+<!-- Întrerupătorul „Telegram” de sus oprește anunțurile de comenzi, nu și
+     raportul: `plati_trimite_piedica()` (api/lib/plati-raport.php) cere numai
+     chatul lui și tokenul botului. -->
+<span data-st="bani-oprite" style="font-size:12px;line-height:1.55;color:var(--h-fg-faint);text-wrap:pretty">Raportul pleacă și când anunțurile de mai sus sunt oprite: îi trebuie tokenul botului și chatul lui, scris mai jos la „Chat ID”.</span>
+</div>
+
+<label class="h-field" style="max-width:420px">
+<span class="h-label">Chat ID</span>
+<!-- Fără tastatură numerică: id-ul unui grup începe cu minus, iar tastatura
+     de cifre a iPhone-ului nu are semnul. Scrisul de 16px ține iPhone-ul să
+     nu mărească pagina la atingerea casetei. -->
+<input class="h-input h-numeric" type="text" value="{{ baniChat }}" disabled="{{ baniPeDrum }}" onChange="{{ onBaniChat }}" aria-label="Chat ID al grupului pentru raport" style="height:46px;font-size:16px">
+<span class="h-help">alt grup decât cel al comenzilor</span>
+<sc-if value="{{ baniChatAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-st="bani-nota" data-fel="pericol" role="alert">{{ baniChatEroare }}</span>
+</sc-if>
+</label>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<sc-for list="{{ baniOre }}" as="h" hint-placeholder-count="2">
+<div class="h-field" style="flex:0 1 240px;min-width:0">
+<span class="h-label">{{ h.et }}</span>
+<div style="display:flex;gap:6px;align-items:center">
+<!-- `min-width` ține ora întreagă și pe ceasul de 12 ore („09:00 AM”), iar
+     golirea are butonul ei: unele ceasuri de telefon n-au „șterge” deloc. -->
+<input class="h-input h-numeric" type="time" value="{{ h.val }}" disabled="{{ h.stinsa }}" onChange="{{ h.onChange }}" aria-label="{{ h.et }}" style="flex:1 1 0;min-width:7.5rem;height:46px;font-size:16px">
+<sc-if value="{{ h.pusa }}" hint-placeholder-val="{{ true }}">
+<button type="button" class="h-btn h-btn--ghost" disabled="{{ h.stinsa }}" onClick="{{ h.onOpreste }}" style="min-height:44px;font-size:14px">Oprește</button>
+</sc-if>
+</div>
+</div>
+</sc-for>
+</div>
+<span class="h-help">O oră lăsată goală e oprită.</span>
+<sc-if value="{{ baniOreAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-st="bani-nota" data-fel="pericol" role="alert">{{ baniOreEroare }}</span>
+</sc-if>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:2px">
+<label class="h-switch" style="min-height:44px;font-size:15px"><input type="checkbox" checked="{{ baniAmintiri }}" disabled="{{ baniPeDrum }}" onChange="{{ onBaniAmintiri }}"><span>Amintiri la Amânate</span></label>
+<span class="h-help">La primul raport al zilei, un mesaj cu amânările ajunse la termen.</span>
+</div>
+
+<label class="h-field" style="max-width:420px">
+<span class="h-label">Adresa panoului</span>
+<input class="h-input" type="text" inputMode="url" value="{{ baniUrl }}" disabled="{{ baniPeDrum }}" onChange="{{ onBaniUrl }}" aria-label="Adresa panoului" style="height:46px;font-size:16px">
+<!-- Singurul rând care NU e cel din Încasări: acolo scrie „pagina asta gata
+     filtrată”, iar de aici „pagina asta” ar fi Setările. -->
+<span class="h-help">Pe ea se sprijină butonul din raport, care deschide Încasările gata filtrate.</span>
+<sc-if value="{{ baniUrlAreEroare }}" hint-placeholder-val="{{ false }}">
+<span data-st="bani-nota" data-fel="pericol" role="alert">{{ baniUrlEroare }}</span>
+</sc-if>
+</label>
+
+<sc-if value="{{ baniAreRefuz }}" hint-placeholder-val="{{ false }}">
+<span data-st="bani-nota" data-fel="pericol" role="alert">{{ baniRefuz }}</span>
+</sc-if>
+<sc-if value="{{ baniAreSpus }}" hint-placeholder-val="{{ false }}">
+<span data-st="bani-nota" data-fel="bine" role="status">{{ baniSpus }}</span>
+</sc-if>
+
+<!-- Butonul de probă cere 280px, cât îi ține textul pe un rând: unde nu-i are
+     lângă „Salvează”, coboară singur pe rândul lui (ca în Încasări). -->
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button type="button" class="{{ baniSalvCls }}" disabled="{{ baniNeschimbat }}" onClick="{{ onBaniSalveaza }}" style="min-height:44px;font-size:15px;font-weight:700;flex:0 1 160px">Salvează</button>
+<button type="button" class="{{ baniProbaCls }}" onClick="{{ onBaniProba }}" style="min-height:44px;font-size:15px;flex:1 1 280px;white-space:normal;text-align:center">Trimite acum un raport de probă</button>
+</div>
+<sc-if value="{{ baniAreProbaSpus }}" hint-placeholder-val="{{ false }}">
+<span data-st="bani-nota" data-fel="{{ baniProbaFel }}" role="status">{{ baniProbaSpus }}</span>
+</sc-if>
+<!-- Legătura spre Încasări își ia adresa din meniul omului (`gp.meniu`) și
+     se desenează numai dacă pagina e în meniul lui. A doua frază e pentru
+     toți: pe fila asta mai e un „Salvează”, cel din bara de sus, care NU
+     salvează cutia. -->
+<span data-st="bani-usa" style="font-size:13px;line-height:1.5;color:var(--h-fg-muted);text-wrap:pretty"><sc-if value="{{ baniAreIncasari }}" hint-placeholder-val="{{ true }}">Aceleași setări sunt și în <a href="{{ baniIncasariHref }}">Încasări</a> › Raport pe Telegram. </sc-if>Se salvează cu butonul de aici, nu cu „Salvează” de sus.</span>
+
+<div style="display:flex;flex-direction:column;gap:6px;padding-top:12px;border-top:1px solid var(--h-line)">
+<span class="h-label">Ultimele trimiteri</span>
+<sc-if value="{{ baniUltimeleGol }}" hint-placeholder-val="{{ false }}">
+<span style="font-size:14px;color:var(--h-fg-subtle)">Încă nu a plecat niciun raport.</span>
+</sc-if>
+<sc-for list="{{ baniUltimele }}" as="u" hint-placeholder-count="3">
+<div style="display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;font-size:14px;line-height:1.45">
+<span class="h-numeric" style="color:var(--h-fg-muted)">{{ u.cand }}</span>
+<span style="font-weight:600">{{ u.fel }}</span>
+<span data-st="bani-nota" data-fel="{{ u.ton }}" style="font-size:14px">{{ u.stare }}</span>
+</div>
+</sc-for>
 </div>
 </div>
 </sc-if>
@@ -944,8 +1291,12 @@ const PRAG_CHEIE = "plati_prag_implicit";
  *
  * Chatul raportului de bani, orele raportului, amintirile și adresa panoului
  * (`plati_telegram_chat_id`, `plati_raport_ore`, `plati_amintiri`,
- * `panel_base_url`) au casa lor, în pagina plăților, cu ruta ei
- * (`/plati/setari`), cu alt drept („plati.telegram”) și cu alte verificări.
+ * `panel_base_url`) au ușa lor (`/plati/setari`), cu alt drept
+ * („plati.telegram”) și cu alte verificări. De la runda 2.7.5 se scriu și de
+ * aici, din cutia „Raport de bani pe Telegram” a filei „Notificări” — dar tot
+ * pe ușa LOR, cu „Salvează” al cutiei (v. `salveazaBani`), niciodată prin
+ * `PUT /settings`: cutia își ține valorile în `S.bani` și `S.baniT`, nu în
+ * `S.s`, deci `changes()` nici nu le vede.
  * `plati_raport_trimis_*` și `migration_*` nu le scrie nimeni din afară: sunt
  * însemnările serverului. `GET /settings` le poate totuși aduce pe cele dintâi
  * în `S.s`, lângă restul, celui care are dreptul lor — iar `changes()` trimite
@@ -978,6 +1329,249 @@ const pragScris = (brut) => {
   return { gol: false, bun: true, n: Number(t) };
 };
 
+/* ── Poșta: căsuța (SMTP) și drumul direct (runda 2.7.5) ─────────────────
+ *
+ * Cartonașul „E-mail” din fila „Notificări” spune pe ce cale pleacă e-mailul
+ * ACUM. Răspunsul îl dă serverul (`posta_stare()`, api/lib/smtp.php), în
+ * `GET /settings` și în `PUT /settings`, sub cheia `posta`:
+ *
+ *   cale    „smtp” (e salvat „Server SMTP”) ori „direct”;
+ *   direct  are serverul un program de poștă? „da”, „nu” ori „nestiut”;
+ *   casuta  cât din căsuță e completat: „goala”, „jumatate”, „intreaga”.
+ *
+ * Pagina nu ghicește nimic din casete: gazda e comutatorul, dar o gazdă scrisă
+ * pe ecran și nesalvată n-a mutat încă nimic pe server, iar dacă serverul are
+ * ori nu un program de poștă nu se vede din nicio casetă.
+ */
+
+// Refuzurile serverului pentru casetele căsuței (`guard_posta()`,
+// api/routes/settings.php), alese după COD, fiecare cu cheia casetei lângă
+// care se scrie. După cod, nu după text: o frază schimbată pe server n-are
+// voie să mute refuzul de lângă caseta lui.
+const POSTA_REFUZ = {
+  bad_smtp_host: "mail_smtp_host",
+  bad_smtp_port: "mail_smtp_port",
+  bad_smtp_user: "mail_smtp_user",
+  bad_smtp_security: "mail_smtp_security"
+};
+/**
+ * Refuzul unei salvări, dacă e al unei casete a căsuței: `{ cheie, vorba,
+ * scris }`, altfel `null`. `scris` e ce avea caseta când a plecat cererea
+ * (`laPlecare`): refuzul se desenează numai cât ea a rămas așa.
+ */
+const postaRefuzata = (e, laPlecare) => {
+  const cod = e && typeof e.code === "string" ? e.code : "";
+  if (!Object.prototype.hasOwnProperty.call(POSTA_REFUZ, cod)) return null;
+  const cheie = POSTA_REFUZ[cod];
+  return { cheie, vorba: String(e.message || ""), scris: (laPlecare || {})[cheie] };
+};
+
+/**
+ * Ce a spus serverul despre poștă, ori `null` când n-a spus nimic de înțeles
+ * (un server mai vechi, fără cheia `posta`). `null` nu e „direct” și nici
+ * „merge”: rândul de stare rămâne atunci fără nicio afirmație.
+ */
+const postaCitita = (p) => {
+  if (!p || typeof p !== "object" || (p.cale !== "smtp" && p.cale !== "direct")) return null;
+  return { cale: p.cale, direct: String(p.direct || ""), casuta: String(p.casuta || "") };
+};
+
+/**
+ * Rândul de stare al cartonașului: `{ fel, text }`, numai din ce a spus
+ * serverul (`posta`) și din ce e SALVAT (`salvate` = `orig`), nu din ce e
+ * scris pe ecran și încă neplecat.
+ *
+ * Trei feluri de răspuns, fiecare cu culoarea lui:
+ *   · prin căsuță — verde, cu numele ei, ca omul să vadă CARE căsuță;
+ *   · direct de pe server — galben: pleacă, dar fără nicio făgăduială. La fel
+ *     și când serverul nu poate spune dacă are un program de poștă („nestiut”
+ *     nu e „nu”: un „nu” spus din neputință ar speria degeaba);
+ *   · nu pleacă nimic — roșu: serverul n-are program de poștă, ori căsuța e
+ *     pe jumătate (cu „Server SMTP” salvat, serverul nu ocolește pe drumul
+ *     direct: se oprește).
+ *
+ * Fără răspuns (`posta` e `null`: setările n-au sosit) nu se afirmă nimic.
+ * „Trimite direct” scris peste o cerere căzută ar fi o veste despre server
+ * pe care nu ne-a dat-o nimeni.
+ */
+const postaSpune = (posta, salvate) => {
+  if (!posta) return { fel: "necitit", text: "Nu se știe încă pe ce cale pleacă e-mailul: serverul n-a spus." };
+  const d = salvate || {};
+  if (posta.cale === "smtp") {
+    if (posta.casuta === "jumatate") {
+      return { fel: "pericol", text: "Căsuța e completată pe jumătate: acum NU pleacă niciun e-mail. Completează mai jos ce lipsește." };
+    }
+    return {
+      fel: "bine",
+      text: "Trimite prin căsuța " + String(d.mail_smtp_user || "").trim() + " (" + String(d.mail_smtp_host || "").trim() +
+        ", portul " + (String(d.mail_smtp_port || "").trim() || "465") + ")."
+    };
+  }
+  if (posta.direct === "nu") {
+    return { fel: "pericol", text: "Serverul nu are niciun program de poștă: acum NU pleacă niciun e-mail. Completează căsuța de mai jos." };
+  }
+  if (posta.direct === "da") {
+    return { fel: "atentie", text: "Trimite direct de pe server. Fără o căsuță în spate, mesajele pot ajunge în Spam ori deloc. Completează căsuța de mai jos ca să fie sigur." };
+  }
+  return { fel: "atentie", text: "Trimite direct de pe server, iar serverul nu poate spune dacă are un program de poștă: mesajele pot ajunge în Spam ori deloc. Completează căsuța de mai jos ca să fie sigur." };
+};
+
+/**
+ * Ce înseamnă un test de e-mail REUȘIT: `{ fel, text }`, după drumul spus de
+ * server în răspuns (`cale`).
+ *
+ * „A mers” e altceva pe fiecare drum, iar până la 2.7.5 pagina arunca
+ * răspunsul și scria la orice 200 „Mesajul de test a plecat”. Căsuța a LUAT ÎN
+ * PRIMIRE mesajul: serverul ei a răspuns că îl are. Drumul direct numai l-a
+ * PREDAT programului de poștă al serverului; dacă a și ajuns nu se mai află de
+ * aici, deci nu se spune. Fără `cale` în răspuns nu se alege niciuna.
+ */
+const postaProbaSpusa = (r, salvate) => {
+  const d = salvate || {};
+  const catre = String(d.notify_email_to || "").trim();
+  if (r && r.cale === "smtp") {
+    const om = String(d.mail_smtp_user || "").trim();
+    return {
+      fel: "bine",
+      text: "Căsuța " + (om ? om + " " : "") + "a luat în primire mesajul de test" + (catre ? " pentru " + catre : "") +
+        ". De aici îl duce furnizorul căsuței: caută-l în Inbox, iar dacă nu e acolo, în Spam."
+    };
+  }
+  if (r && r.cale === "direct") {
+    return {
+      fel: "atentie",
+      text: "Serverul a predat mesajul programului lui de poștă. Asta nu înseamnă că a și ajuns: caută-l" +
+        (catre ? " la " + catre : "") + ", în Inbox și în Spam."
+    };
+  }
+  return {
+    fel: "atentie",
+    text: "Serverul spune că mesajul de test a plecat, dar nu și pe ce cale: caută-l" +
+      (catre ? " la " + catre : "") + ", în Inbox și în Spam."
+  };
+};
+
+/* ── Raportul de bani pe Telegram (runda 2.7.5) ──────────────────────────
+ *
+ * Cutia din fila „Notificări” e OGLINDA cartonașului „Raport pe Telegram” din
+ * Încasări: aceleași patru setări, aceeași ușă (`/plati/setari`), același
+ * drept. Sunt două copii dinadins, nu o bucată împărțită în `shared/`: fiecare
+ * pagină își ține starea ei, iar cele douăsprezece bucăți de mai jos sunt scrise
+ * LA FEL ca acolo, sub aceleași nume. Le ține la fel regula
+ * `SET_RAPORT_OGLINDA` (`.claude/check-plati-conturi.mjs`), care pune cele
+ * două pagini una lângă alta: ce se schimbă aici se schimbă și în Încasări.
+ */
+
+/** În ce câmp al cartonașului de Telegram se scrie fiecare refuz al serverului. */
+const CAMP_REFUZ = { bad_chat: "chat", plati_chat_same: "chat", plati_chat_missing: "chat", bad_ore: "ore", bad_url: "url" };
+/** Felurile de trimitere din `ultimele`, pe numele lor. */
+const FEL_TRIMITERE = { raport: "Raport", amintire: "Amintire la amânate", proba: "Raport de probă" };
+
+const doua = (x) => (x < 10 ? "0" : "") + x;
+const eZi = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s == null ? "" : s));
+
+/**
+ * Ziua, scrisă pentru om, din forma serverului (an-lună-zi): ziua săptămânii,
+ * ziua și luna, cum le scrie toată casa (`gp.days`). Anul se adaugă numai când
+ * e altul decât cel de azi.
+ */
+const ziOm = (iso, azi) => {
+  if (!eZi(iso)) return "";
+  const eticheta = gp.days(1, String(iso))[0].label;
+  return !eZi(azi) || String(iso).slice(0, 4) === String(azi).slice(0, 4) ? eticheta : eticheta + " " + String(iso).slice(0, 4);
+};
+/** La fel, cu literă mică, pentru mijlocul unei propoziții. */
+const ziMic = (iso, azi) => { const s = ziOm(iso, azi); return s.charAt(0).toLowerCase() + s.slice(1); };
+
+/**
+ * O clipă din bază (UTC), scrisă după ceasul patiseriei: ziua și ora. Gol când
+ * clipa lipsește — „1 ianuarie 1970” nu e un răspuns.
+ */
+const clipaOm = (s, azi) => {
+  const ms = gp.utc(s);
+  if (!ms) return "";
+  const d = gp.laPatiserie(new Date(ms));
+  const iso = d.getFullYear() + "-" + doua(d.getMonth() + 1) + "-" + doua(d.getDate());
+  return ziMic(iso, azi) + ", " + doua(d.getHours()) + ":" + doua(d.getMinutes());
+};
+
+/**
+ * „o apăsare”, „7 apăsări”, „20 de apăsări” — câte butoane a apăsat un om din
+ * grup. Regula lui „de” e a lui `gp.opriri()` (shared/gp-api.js): de la
+ * douăzeci în sus numeralul cere prepoziția, după ULTIMELE două cifre — „101
+ * apăsări”, dar „120 de apăsări”.
+ */
+const apasariOm = (n) => {
+  const k = Math.max(0, Math.round(Number(n) || 0));
+  if (k === 1) return "o apăsare";
+  const r = k % 100;
+  return k + (k >= 20 && (r === 0 || r >= 20) ? " de" : "") + " apăsări";
+};
+
+/**
+ * Refuzul, în cuvintele serverului când le-a scris — el știe de ce a refuzat,
+ * pagina doar ghicește după cod. Fără ele (rețea căzută, pagină de eroare a
+ * găzduirii) rămâne fraza casei pentru felul refuzului.
+ */
+const spusDeServer = (e, ce) => (e && e.detalii && e.detalii.message ? String(e.detalii.message) : gp.motiv(e, ce));
+
+/**
+ * Refuzul unei FAPTE din „Oameni din grup” — legarea (`leg`) ori dezlegarea.
+ * Ca `spusDeServer`, cu o singură deosebire: fraza casei pentru un 5xx fără
+ * vorbe (pagina de eroare a găzduirii) e scrisă pentru ce se ADUCE — „Serverul
+ * n-a putut aduce …” —, iar o legare nu se aduce: se face.
+ */
+const refuzFapta = (e, leg) => {
+  if (e && e.status >= 500 && !(e.detalii && e.detalii.message)) {
+    return "Serverul n-a putut " + (leg ? "lega omul" : "dezlega contul") + " (eroarea " + e.status + "). Motivul îl vede administratorul în jurnalul serverului.";
+  }
+  return spusDeServer(e, leg ? "legarea omului" : "dezlegarea contului");
+};
+
+/**
+ * Ce se scrie lângă o salvare căreia serverul i-a răspuns 401. Plecarea spre
+ * intrare întreabă (paza formularelor nesalvate), deci omul poate rămâne în
+ * pagină, „să copieze”; fără vorbele astea butonul ar clipi și atât.
+ */
+const FARA_CONT = "Nu mai ești în cont, iar până nu intri din nou nu se poate salva nimic.";
+const FARA_CONT_PROBA = "Nu mai ești în cont, iar până nu intri din nou raportul de probă nu poate pleca.";
+const FARA_CONT_OAMENI = "Nu mai ești în cont, iar până nu intri din nou nu se poate lega și nici dezlega nimeni.";
+/**
+ * Ce se scrie sub „Trimite acum un raport de probă” cât tokenul ori chatul
+ * botului, din formularul de deasupra cutiei, sunt scrise și nesalvate
+ * (v. `trimiteProbaBani`). Numai în Setări: Încasările n-au formularul botului.
+ */
+const BOT_NESALVAT = "Ai schimbat botul de mai sus și n-ai salvat. Raportul de probă pleacă prin botul salvat pe server: apasă „Salvează” din bara de sus, apoi trimite proba.";
+
+/** Cartonașul de Telegram, cum e pe server, în forma în care îl ține pagina cât se scrie în el. */
+const ciornaTelegram = (s) => {
+  const ore = s && Array.isArray(s.ore) ? s.ore : [];
+  return {
+    chatId: s && s.chatId != null ? String(s.chatId) : "",
+    ora1: ore[0] ? String(ore[0]).slice(0, 5) : "",
+    ora2: ore[1] ? String(ore[1]).slice(0, 5) : "",
+    amintiri: !!(s && s.amintiri),
+    panelBaseUrl: s && s.panelBaseUrl != null ? String(s.panelBaseUrl) : ""
+  };
+};
+
+/**
+ * Cartonașul SCRIS, după o recitire a setărilor: câmp cu câmp. Ce a schimbat
+ * omul față de răspunsul VECHI rămâne cum l-a scris; ce n-a atins merge după
+ * răspunsul NOU. Ținut întreg, cartonașul scris într-un singur câmp ar fi
+ * păstrat și câmpurile neatinse la valorile vechi, iar „Salvează” le-ar fi
+ * trimis drept schimbări, peste ce a salvat între timp altcineva. Orele se
+ * judecă împreună, fiindcă pleacă împreună.
+ */
+const ciornaRecitita = (veche, scrisa, noua) => {
+  const out = Object.assign({}, noua);
+  if (scrisa.chatId.trim() !== veche.chatId) out.chatId = scrisa.chatId;
+  if (scrisa.ora1 !== veche.ora1 || scrisa.ora2 !== veche.ora2) { out.ora1 = scrisa.ora1; out.ora2 = scrisa.ora2; }
+  if (scrisa.amintiri !== veche.amintiri) out.amintiri = scrisa.amintiri;
+  if (scrisa.panelBaseUrl.trim() !== veche.panelBaseUrl) out.panelBaseUrl = scrisa.panelBaseUrl;
+  return out;
+};
+
 class Component extends DCLogic {
   state = {
     navOpen: false,
@@ -1001,6 +1595,21 @@ class Component extends DCLogic {
     // explicația ei. Îl sting `put()` (de cum se umblă la prag), salvarea
     // următoare și „Renunță”.
     pragRefuz: "",
+    // Poșta (runda 2.7.5). `posta` e ce a spus serverul despre calea pe care
+    // pleacă e-mailul (v. `postaCitita`); `null` = n-a spus încă. O scriu
+    // numai `pull()` și `save()`, din răspuns.
+    //
+    // `postaRefuz` e refuzul serverului pentru o casetă a căsuței, scris lângă
+    // ea: `{ cheie, vorba, scris }`. Se desenează numai cât caseta mai are în
+    // ea ce avea la refuz (`scris`): de cum o atinge omul, ori apasă
+    // „Renunță”, refuzul nu mai e despre ce se vede și dispare singur — fără
+    // ca `put()` ori „Renunță” să știe de el. Îl stinge de tot salvarea
+    // următoare, iar serverul îl spune din nou dacă mai e cazul.
+    //
+    // `postaProba` e ce a răspuns serverul la ultimul „Trimite e-mail de
+    // test”, scris lângă buton: `{ fel, text }`. Îl sting testul următor și
+    // salvarea următoare (vorbea despre ce era salvat atunci).
+    posta: null, postaRefuz: null, postaProba: null,
     // De ce n-au venit datele, spus omului care se uită la ecran. Gol
     // înseamnă „nu s-a întâmplat nimic rău”, niciodată „nu e nimic de
     // arătat”: a doua e o afirmație despre lume, și se face din altă parte.
@@ -1028,7 +1637,34 @@ class Component extends DCLogic {
     // până nu răspunde serverul, ca să nu scrie „nelegat" peste un cont legat.
     eu: null,
     // "" · "cer" · "incuviintez" · "dezleg"
-    euLucru: ""
+    euLucru: "",
+    // Raportul de bani pe Telegram (runda 2.7.5): răspunsul lui
+    // `GET /plati/setari` (`bani`) și ce se scrie în cutia lui până la
+    // „Salvează” al ei (`baniT`). `null` = încă nu se știe, deci cutia nu se
+    // desenează. Sunt câmpurile cartonașului din Încasări (`s`, `t`, `tSalv`,
+    // `tErori`, `tSpus`, `proba…`), sub prefixul `bani`: acolo `s` e al
+    // plăților, aici `s` e al Setărilor. `baniEroare` e al TREILEA motiv al
+    // paginii (v. `eroareCine`): cererea raportului e alta decât a setărilor,
+    // iar reușita uneia n-are dreptul să stingă motivul celeilalte.
+    bani: null, baniEroare: "", baniT: null, baniSalv: false, baniErori: {}, baniSpus: "",
+    baniProbaZbor: false, baniProbaSpus: "", baniProbaFel: "",
+    // „Oameni din grup” (runda 2.7.5): răspunsul lui `GET /telegram/oameni`.
+    // `oameni` e lista (`null` = încă nu se știe, ori omul nu e fondator, deci
+    // cutia nu se desenează), `oameniConturi` conturile de care se mai poate
+    // lega cineva, `oameniTotal` câți oameni ține serverul cu totul (lista se
+    // oprește la cei mai noi 50). `oameniAles` ține contul ales pe rândul
+    // fiecărui om, după `id`-ul rândului. NU e ciornă: nu trece prin bara de
+    // sus și nu ține omul în pagină — alegerea se face a doua oară în două
+    // atingeri, iar ce contează e apăsarea pe „Leagă”. `oameniLucru` e cheia
+    // faptei aflate pe drum („leg:7”, „dezleg:7”; "" = niciuna) și ține TOATE
+    // butoanele cutiei stinse până răspunde serverul; `oameniSpus` e vestea
+    // ori refuzul ultimei fapte, scris lângă rândul omului (`om` = `id`-ul).
+    // `oameniEroare` e al PATRULEA motiv al paginii (v. `eroareCine`), cu
+    // caseta și butonul lui. `oameniCer` e adevărat cât o cerere de listă e
+    // pe drum: atunci „Reîncarcă lista” scrie „Se reîncarcă…” — fără el,
+    // butonul apăsat peste o listă neschimbată n-ar arăta nimic.
+    oameni: null, oameniConturi: [], oameniLegatiJos: [], oameniTotal: 0, oameniEroare: "",
+    oameniAles: {}, oameniLucru: "", oameniSpus: null, oameniCer: false
   };
 
   componentDidMount() {
@@ -1053,6 +1689,14 @@ class Component extends DCLogic {
 
     this.pullTot();
 
+    // „Contul meu de Telegram” (fișa 702, 2.7.5): butonul se apasă de pe
+    // telefon, deci pagina nu află singură. Cât o cerere așteaptă apăsarea,
+    // cutia se recitește din 5 în 5 secunde și îndată ce fila redevine
+    // vizibilă (`gp.poll` stă cât fila e ascunsă); altfel ceasul nu cere nimic.
+    // Montată a doua oară, pagina oprește întâi ceasul vechi.
+    if (this.__opresteEu) this.__opresteEu();
+    this.__opresteEu = gp.poll(() => (this.euAsteaptaApasarea() ? this.euCitesc() : null), 5000);
+
     // Paza plecării (runda 2.7.0; hotărârea patronului din 4 oct. 2026):
     // o legătură din meniu, ieșirea din cont, fila închisă ori „Înapoi” al
     // browserului întreabă întâi dacă e ceva scris și nesalvat. Pagina n-are
@@ -1062,6 +1706,12 @@ class Component extends DCLogic {
     // scoate de aici niciodată — pagina nu pleacă de pe ecran decât odată cu
     // documentul.
     this.__scoatePaza = gp.pazaCiornei(() => this.ciornaDeschisa());
+  }
+
+  componentWillUnmount() {
+    // Numai curățenie: metoda poate să nu ruleze niciodată în paginile
+    // .dc.html. Ceasul fișei 702 oricum nu cere nimic cât n-are ce aștepta.
+    if (this.__opresteEu) this.__opresteEu();
   }
 
   /**
@@ -1090,6 +1740,17 @@ class Component extends DCLogic {
         // `require_admin()` (api/routes/telegram.php), neatins de matrice.
         // Un rol primit la Setări fără să fie de conducere nu o mai cere.
         if (gp.eAdmin(cont)) this.euCitesc();
+        // Raportul de bani (runda 2.7.5) se cere numai cui are dreptul LUI,
+        // „plati.telegram” — nu oricui are Setările: serverul l-ar refuza cu
+        // 403, iar o casetă roșie despre o cutie pe care omul n-are voie s-o
+        // vadă ar fi o alarmă despre nimic. „nimic”: la „Încearcă din nou”,
+        // ce e scris și nesalvat în cutie rămâne (v. `primesteBani`).
+        if (gp.are("plati.telegram", cont)) this.cereBani("nimic");
+        // „Oameni din grup” (runda 2.7.5) se cere numai fondatorului: ușa e
+        // `require_acces()` (api/routes/telegram.php), deci oricui altcuiva
+        // serverul i-ar răspunde 403 — o casetă roșie despre o listă pe care
+        // omul oricum n-are voie s-o vadă. Lui i se scrie cine o face.
+        if (cont.role === "fondator") this.cereOameni();
         return this.pull();
       })
       .catch((e) => {
@@ -1144,6 +1805,9 @@ class Component extends DCLogic {
         this.setState({
           s: Object.assign({}, s, scrise), orig: Object.assign({}, s),
           failed: r.failed || [], failedTotal: r.failedTotal || 0, loaded: true,
+          // Calea pe care pleacă e-mailul, cum o spune serverul ACUM (runda
+          // 2.7.5): din ea se scrie rândul de stare al cartonașului „E-mail”.
+          posta: postaCitita(r.posta),
           // Răspunsul bun stinge caseta, altfel pagina ar minți întoarsă pe
           // dos: „Setările nu s-au încărcat” scris deasupra formularului abia
           // umplut cu setările adevărate, fără × cu care să se închidă.
@@ -1291,19 +1955,32 @@ class Component extends DCLogic {
    * `this.state` pe viu, la fiecare întrebare: o stare prinsă la un desen ar
    * fi a formularului de acum două litere.
    *
-   * „Scris” înseamnă două lucruri:
+   * „Scris” înseamnă trei lucruri:
    *   · `changes()` are ceva, adică exact ce ar pleca la „Salvează”;
    *   · un rând ÎNCEPUT într-o listă (`drafts`) și neadăugat încă. El nu
    *     aprinde bara, fiindcă „Salvează” n-are ce trimite din el, dar se
    *     pierde la plecare la fel ca restul. Schița numelui unei zone
    *     (`"__zn:" + i`, cheia lui `cheiaZona` din `renderVals()`) se pune
    *     numai dacă ar redenumi ceva: goală ori la fel cu numele de acum,
-   *     `incheieZona` o aruncă oricum.
+   *     `incheieZona` o aruncă oricum;
+   *   · cutia „Raport de bani pe Telegram” e altfel decât pe server (runda
+   *     2.7.5, `baniScris()`). Nici ea nu aprinde bara: are butonul ei.
+   *
+   * Contul ales pe rândul unui om din „Oameni din grup” (runda 2.7.5,
+   * `oameniAles`) NU e scris, dinadins: nu e text, se alege a doua oară din
+   * două atingeri, iar până la „Leagă” nu s-a schimbat nimic nicăieri.
+   * Întrebată la plecare, pagina ar vorbi despre „schimbări nesalvate” care
+   * nu sunt. O ține `oameni.alesNuTine`, în `check-ciorna-setari.mjs`.
    *
    * Vorbele spun CÂT se pierde, nu doar că se pierde: „Renunță” stă lipit de
    * „Salvează” și dă înapoi toate filele, nu numai pe cea de pe ecran.
    * Butoanele sunt „Rămân” / „Le arunc”: la „Renunță” omul nu pleacă nicăieri,
    * deci „Ies” n-ar fi avut despre ce vorbi.
+   *
+   * `usa` e `"renunta"` NUMAI când întreabă „Renunță” (recitirea rundei 2.7.5).
+   * Cutia raportului de bani nu e a lui: „Le arunc” o lasă scrisă, deci, când
+   * e scrisă și ea, întrebarea spune că rămâne. La plecare (paza, fără `usa`)
+   * se pierde și cutia, iar „Se pierde tot” e adevărat ca până acum.
    *
    * CÂT „SALVEAZĂ” E PE DRUM, vorbele sunt altele (încheierea rundei 2.7.0).
    * Cererea a plecat și nu mai poate fi oprită de aici: „Le arunc” n-ar arunca
@@ -1316,7 +1993,7 @@ class Component extends DCLogic {
    * sunt aceleași). „Renunță” nu ajunge la vorbele astea: cât merge salvarea
    * nu face nimic.
    */
-  ciornaDeschisa() {
+  ciornaDeschisa(usa) {
     const S = this.state;
     // Legată de formularul DESENAT: sub ecranul de refuz (oglinda lui
     // `blocked` din `renderVals()`) nu e nicio casetă pe ecran, deci ce a
@@ -1329,6 +2006,16 @@ class Component extends DCLogic {
       if (t === "") return false;
       return k.indexOf("__zn:") === 0 ? t !== zone[Number(k.slice(5))] : true;
     });
+    // Raportul de bani (runda 2.7.5) are ușa lui: nu aprinde bara de sus și
+    // nu pleacă cu „Salvează” de acolo, dar la plecare se pierde ca orice
+    // text nesalvat. Când e SINGURUL lucru scris, întrebarea e a lui, cu
+    // vorbele din Încasări. Când mai e ceva scris și în formular, rămân
+    // întrebările de mai jos, care spun deja că se pierde ce s-a schimbat în
+    // Setări. La „Renunță” nu se ajunge cu vorbele lui: butonul acela stă în
+    // bara care se aprinde numai pentru formular. Acolo cutia scrisă lângă
+    // formular își are însă fraza ei, la coada întrebării (v. `usa`).
+    const raport = this.baniScris();
+    if (!schimbat && !schita && raport) return raport;
     if (!schimbat && !schita) return null;
     if (S.saving) {
       return {
@@ -1338,7 +2025,7 @@ class Component extends DCLogic {
         da: "Plec oricum"
       };
     }
-    return {
+    const q = {
       titlu: "Arunci schimbările nesalvate?",
       text: !schita ? "Se pierde tot ce ai schimbat în Setări de la ultima salvare, în toate filele."
         : !schimbat ? "Se pierde ce ai început să scrii la „Liste” și n-a intrat încă în nicio listă."
@@ -1346,6 +2033,12 @@ class Component extends DCLogic {
       nu: "Rămân",
       da: "Le arunc"
     };
+    // „Le arunc” de la „Renunță” lasă cutia raportului cum e (`onReset` nu-i
+    // atinge `baniT`). Fără fraza asta omul citea că a aruncat tot și rămânea
+    // cu chatul scris și nesalvat în cutie. NUMAI la „Renunță”: la plecare
+    // cutia se pierde și ea, iar fraza l-ar minți că raportul îl așteaptă.
+    if (usa === "renunta" && raport) q.text += " Cutia „Raport de bani pe Telegram” rămâne cum ai scris-o: are „Salvează” al ei.";
+    return q;
   }
 
   /**
@@ -1501,6 +2194,9 @@ class Component extends DCLogic {
     // stinge la plecare, ca și cel de lângă etape, iar serverul îl spune din
     // nou dacă mai e cazul.
     this.setState({ pragRefuz: "" });
+    // Tot pe rândul lor: refuzul de lângă o casetă a căsuței de e-mail și
+    // răspunsul ultimului test vorbeau despre ce era salvat până acum.
+    this.setState({ postaRefuz: null, postaProba: null });
     this.setState({ saving: true, err: "", msg: "", etapeRefuz: "" });
     // Poza ecranului la plecare. `s` nu se scrie niciodată pe loc — fiecare
     // literă îi face o copie (`put()`) — deci obiectul ținut aici rămâne cum
@@ -1566,6 +2262,10 @@ class Component extends DCLogic {
           // subtitlul „Ai modificări nesalvate" apare din nou, pe bună dreptate.
           s: Object.assign({}, s, pastrate), orig: Object.assign({}, s),
           saving: false,
+          // Salvarea poate muta calea e-mailului (o gazdă scrisă ori ștearsă,
+          // parola pusă): serverul o spune din nou în răspuns, și de aici o
+          // ia rândul de stare — nu din casetele abia salvate.
+          posta: postaCitita(r.posta),
           msg: rele.length ? "" : (restante.length
             ? "S-au salvat setările trimise. Ce ai scris cât timp se salva a rămas în formular și e încă nesalvat — apasă „Salvează” din nou."
             : "Setările au fost salvate."),
@@ -1594,8 +2294,17 @@ class Component extends DCLogic {
       // deci un `plati_setting_denied` fără prag în `diff` n-ar avea despre ce
       // vorbi lângă caseta lui. Caseta rămâne cum a scris-o omul — `s` nu se
       // atinge aici.
+      //
+      // Și cele patru refuzuri ale căsuței de e-mail (runda 2.7.5:
+      // `bad_smtp_host`, `bad_smtp_port`, `bad_smtp_user`,
+      // `bad_smtp_security` — `guard_posta()`), fiecare lângă caseta lui, cu
+      // vorbele serverului. `scris` e ce avea caseta la plecare: refuzul se
+      // desenează numai cât ea a rămas așa (v. `postaRefuz`, în stare). Un
+      // refuz nu salvează nimic, deci și parola abia scrisă rămâne în casetă,
+      // pentru apăsarea următoare.
       .catch((e) => this.setState({
         saving: false, err: e.message,
+        postaRefuz: postaRefuzata(e, laPlecare),
         pragRefuz: e && (e.code === "bad_prag" || e.code === "plati_setting_denied") &&
           Object.prototype.hasOwnProperty.call(diff, PRAG_CHEIE) ? String(e.message || "") : "",
         etapeRefuz: e && e.code === "bad_special_status" ? String(e.message || "") : ""
@@ -1630,7 +2339,7 @@ class Component extends DCLogic {
       .then((r) => this.setState({
         linking: "",
         msg: ce === "link"
-          ? "Botul e legat. Apăsările de pe telefon se vor scrie în Jurnal pe contul „" + (r.actor || "") + "”."
+          ? "Botul e legat. Cine apasă fără să aibă contul legat de Telegram lucrează pe drepturile contului „" + (r.actor || "") + "”, dar apare cu numele lui de pe Telegram și cu „cont nelegat”."
           : "Botul a fost dezlegat. Anunțurile pleacă mai departe, dar fără butoane sub ele."
       }))
       // Starea, secretul și contul s-au schimbat pe server. `pull()` nu
@@ -1651,6 +2360,17 @@ class Component extends DCLogic {
     return gp.get("/telegram/me")
       .then((r) => this.setState({ eu: r || null }))
       .catch(() => this.setState({ eu: null }));
+  }
+
+  /**
+   * Fișa 702 (2.7.5): numai o cerere vie — nefolosită, neexpirată, încă
+   * neapăsată — are rost să fie recitită. Aceleași trei condiții ca
+   * `euAsteapta` din `renderVals`, plus „încă neapăsată”: după apăsare,
+   * pasul următor e al omului de la calculator, nu al telefonului.
+   */
+  euAsteaptaApasarea() {
+    const c = this.state.eu && this.state.eu.cerere;
+    return !!(c && !c.folosit && !c.apasat && !(c.expiraLa && gp.utc(c.expiraLa) <= Date.now()));
   }
 
   /**
@@ -1677,10 +2397,385 @@ class Component extends DCLogic {
           ? "Butonul a plecat în grupul de pe Telegram. Apasă-l de pe telefonul tău, apoi întoarce-te aici și încuviințează."
           : (ce === "incuviintez"
             ? "Gata. De acum, ce apeși de pe telefon se scrie în Jurnal pe numele tău."
-            : "Contul tău nu mai e legat de Telegram. Apăsările tale se scriu iar pe contul care a legat botul.")
+            : "Contul tău nu mai e legat de Telegram. Ce apeși de-acum apare cu numele tău de pe Telegram și cu „cont nelegat”.")
       }))
-      .then(() => this.euCitesc())
+      .then(() => {
+        // CELE DOUĂ CUTII VORBESC DESPRE ACEEAȘI LEGĂTURĂ (runda 2.7.5). Contul
+        // fondatorului, legat ori dezlegat de aici, e și un rând din „Oameni
+        // din grup”: necerută din nou, lista de dedesubt l-ar fi arătat mai
+        // departe „Nelegat”, cu contul lui printre cele de ales. „cer” nu
+        // schimbă nimic acolo — butonul abia a plecat spre grup.
+        if (ce !== "cer" && this.state.auth && this.state.auth.role === "fondator") this.cereOameni();
+        return this.euCitesc();
+      })
       .catch((e) => this.setState({ euLucru: "", err: e.message }));
+  }
+
+  /* ── Oameni din grup (runda 2.7.5) ──────────────────────────────────────
+   *
+   * Trei metode, pe cele trei uși ale fondatorului din
+   * api/routes/telegram.php: `GET /telegram/oameni`,
+   * `POST /telegram/oameni/#/leaga`, `DELETE /telegram/conturi/#`. Niciuna nu
+   * atinge bara de sus (`msg`, `err`, `saving`) și niciuna nu trece prin
+   * `PUT /settings`: cutia își scrie veștile și refuzurile în ea, lângă
+   * rândul omului. Pagina nu ține și nu trimite niciun număr de Telegram: un
+   * om e `id`-ul rândului lui din listă, un cont e `id`-ul contului.
+   */
+
+  /**
+   * Cere lista oamenilor văzuți în grup și conturile de care se mai pot lega.
+   *
+   * Se cheamă NUMAI pentru fondator (v. `pullTot` și intrarea în filă): ușa e
+   * `require_acces()`, iar altcuiva i s-ar aprinde o casetă roșie despre o
+   * listă pe care n-are voie s-o vadă. Refuzul are caseta LUI, cu butonul ei:
+   * restul filei e întreg și fără listă. Baza fără migrarea 036 răspunde 503
+   * cu numele fișierului de rulat — acolo se scriu vorbele serverului, fiindcă
+   * ele spun ce e de făcut; în rest, fraza casei pentru felul refuzului.
+   *
+   * RĂSPUNSUL RĂMAS ÎN URMĂ SE ARUNCĂ, ca la `cereBani`: cererea pleacă la
+   * fiecare intrare în filă, iar fondatorul leagă fără s-o aștepte. Sosit
+   * după răspunsul legării, răspunsul ei (citit de server înainte) ar desena
+   * omul la loc „Nelegat”, sub vestea că a fost legat. De aceea fiecare
+   * cerere își ia un număr de rând (`oameniRand`, ținut pe pagină), iar
+   * fapta reușită îl mută și ea (v. `oameniFapta`).
+   *
+   * Tot ea e „Reîncarcă lista”, butonul din cutie: cât fondatorul ține fila
+   * deschisă, un coleg apasă în grup și trebuie să apară aici fără
+   * reîncărcarea paginii. `oameniCer` ține butonul pe „Se reîncarcă…” cât
+   * cererea e pe drum și se stinge numai de la cererea cea mai nouă (ori de la
+   * fapta care a întrecut-o): una rămasă în urmă nu mai are ce spune.
+   */
+  cereOameni() {
+    const rand = this.oameniRand = (this.oameniRand || 0) + 1;
+    this.setState({ oameniEroare: "", oameniCer: true });
+    return gp.get("/telegram/oameni")
+      .then((r) => { if (rand === this.oameniRand) { this.primesteOameni(r); this.setState({ oameniCer: false }); } })
+      .catch((e) => {
+        if (rand === this.oameniRand) this.setState({ oameniCer: false });
+        if (e.isAuth) gp.toLogin();
+        else if (rand !== this.oameniRand) return;
+        else this.setState({ oameniEroare: e.code === "telegram_oameni_unavailable" ? spusDeServer(e, "lista oamenilor din grup") : gp.motiv(e, "lista oamenilor din grup") });
+      });
+  }
+
+  /**
+   * Așază lista sosită — de la cerere ori din răspunsul unei legări (ușile de
+   * scriere întorc lista de după faptă, ca pagina să nu mai facă un drum).
+   *
+   * Alegerile de pe rânduri se țin numai cât mai au rost: omul e încă în
+   * listă și nelegat, iar contul ales mai e de ales. Altfel selectul ar
+   * rămâne pe un cont care între timp s-a legat de altcineva, iar „Leagă” ar
+   * trimite o alegere pe care ecranul n-o mai arată.
+   */
+  primesteOameni(r) {
+    const oameni = Array.isArray(r && r.oameni) ? r.oameni : [];
+    const conturi = Array.isArray(r && r.conturi) ? r.conturi : [];
+    const ales = {};
+    Object.keys(this.state.oameniAles).forEach((k) => {
+      const v = this.state.oameniAles[k];
+      const omul = oameni.find((o) => String(o.id) === k);
+      if (omul && !omul.cont && conturi.some((c) => String(c.id) === v)) ales[k] = v;
+    });
+    // Conturile legate care n-au rând în listă (fișa 710): numai de aici se
+    // mai pot dezlega.
+    const nevazuti = Array.isArray(r && r.legatiNevazuti) ? r.legatiNevazuti : [];
+    this.setState({ oameni: oameni, oameniConturi: conturi, oameniLegatiJos: nevazuti, oameniTotal: Number(r && r.total) || oameni.length, oameniAles: ales });
+  }
+
+  /**
+   * Cele două fapte ale cutiei: „leg” (omul de pe rând, de contul ales lângă
+   * el) și „dezleg” (contul de care e legat omul de pe rând).
+   *
+   * O SINGURĂ FAPTĂ PE DRUM. Cât `oameniLucru` e plin, a doua apăsare — pe
+   * același buton ori pe al altui rând — nu pleacă: două legări ale aceluiași
+   * om, plecate una după alta, ar întoarce a doua oară un refuz („e deja
+   * legat”) scris peste vestea bună a celei dintâi. Butoanele se și sting
+   * (v. `stins`, la desenare), dar lacătul e aici: un buton stins se
+   * desenează abia la următoarea trecere, iar degetul e mai iute.
+   *
+   * Refuzul se scrie cu vorbele serverului, lângă rândul omului: el știe de
+   * ce a refuzat (omul legat între timp de alt cont, contul cu alt Telegram).
+   * După un 404, un 409 ori un 422 lista de pe ecran e veche, deci se cere
+   * din nou: omul nu mai e în ea, s-a legat între timp de altcineva, ori
+   * contul ales a fost oprit (ori făcut client) și nu mai e de ales — rămas
+   * în select, a doua apăsare ar fi primit același refuz.
+   *
+   * VESTEA NU PROMITE CE NOTA DE PE RÂND DEZMINTE. Legat de un cont care nu
+   * poate hotărî cereri (ori e oprit), omul e REFUZAT la apăsare, iar rândul
+   * lui o spune (v. `nota`, la desenare). Lângă ea, „ce apasă de pe telefon
+   * se scrie pe numele contului” ar fi fost a doua propoziție, pe dos — deci
+   * acolo vestea e numai „Legat.”.
+   *
+   * După reușită se recitește și „Contul meu de Telegram” (`euCitesc`):
+   * fondatorul își poate lega ori dezlega de aici chiar contul lui, iar cutia
+   * de deasupra ar fi rămas cu „Leagă-mi contul” lângă un rând „Legat de …”.
+   */
+  oameniFapta(ce, om) {
+    if (this.state.oameniLucru) return Promise.resolve();
+    const ales = this.state.oameniAles[om.id] || "";
+    if (ce === "leg" && !ales) {
+      this.setState({ oameniSpus: { om: om.id, fel: "pericol", text: "Alege întâi contul omului." } });
+      return Promise.resolve();
+    }
+    this.setState({ oameniLucru: ce + ":" + om.id, oameniSpus: null });
+    const drum = ce === "leg"
+      ? gp.post("/telegram/oameni/" + om.id + "/leaga", { userId: Number(ales) })
+      : gp.del("/telegram/conturi/" + om.cont.id);
+    return drum
+      .then((r) => {
+        // Răspunsul unei cereri de listă plecate înainte e de-acum vechi.
+        this.oameniRand = (this.oameniRand || 0) + 1;
+        this.primesteOameni(r);
+        const acum = (Array.isArray(r && r.oameni) ? r.oameni : []).find((o) => o.id === om.id);
+        const oprit = !!(acum && acum.cont) && (!acum.cont.activ || !acum.cont.poate);
+        this.setState({
+          oameniLucru: "", oameniEroare: "", oameniCer: false,
+          oameniSpus: {
+            om: om.id, fel: "bine",
+            text: ce === "leg"
+              ? (oprit ? "Legat." : "Legat. De-acum, ce apasă de pe telefon se scrie pe numele contului.")
+              : "Dezlegat. De-acum, ce apasă apare cu numele de pe Telegram și cu „cont nelegat”."
+          }
+        });
+        if (gp.eAdmin(this.state.auth)) this.euCitesc();
+      })
+      .catch((e) => {
+        if (e.isAuth) {
+          this.setState({ oameniLucru: "", oameniSpus: { om: om.id, fel: "pericol", text: FARA_CONT_OAMENI } });
+          gp.toLogin();
+          return;
+        }
+        this.setState({ oameniLucru: "", oameniSpus: { om: om.id, fel: "pericol", text: refuzFapta(e, ce === "leg") } });
+        if (e.status === 404 || e.status === 409 || e.status === 422) this.cereOameni();
+      });
+  }
+
+  /* ── Raportul de bani pe Telegram (runda 2.7.5) ─────────────────────────
+   *
+   * Șapte metode, oglinda celor din Încasări (numele de acolo stă între
+   * paranteze, la fiecare), și una numai a paginii ăsteia (`botNesalvat`:
+   * Încasările n-au formularul botului deasupra). Ușile sunt ale plăților — `GET` și
+   * `PUT /plati/setari`, `POST /plati/raport-proba` —, niciodată
+   * `PUT /settings`. Niciuna nu atinge bara de sus (`msg`, `err`, `saving`):
+   * cutia își scrie veștile și refuzurile în ea, lângă câmpul lor.
+   */
+
+  /**
+   * Cere setările raportului (`cereSetari`). `ce` spune ce se pune la loc din
+   * răspuns peste ciornă: „telegram” după salvarea ei; „nimic” în rest —
+   * atunci ce a scris omul și n-a salvat rămâne neatins.
+   *
+   * Refuzul are caseta LUI, în cartonașul Telegramului, cu butonul ei: restul
+   * filei e întreg și fără raport. Un singur refuz tace: baza fără migrarea
+   * 032 (`plati_unavailable`). Acolo nu există încasări deloc, deci cutia pur
+   * și simplu nu se desenează — ca pragul de pe „General”, desenat după cheie.
+   *
+   * RĂSPUNSUL RĂMAS ÎN URMĂ SE ARUNCĂ. Cererea pleacă la fiecare intrare în
+   * filă, iar omul scrie și salvează fără s-o aștepte: sosit DUPĂ răspunsul
+   * salvării, răspunsul ei (citit de server înainte de salvare) ar pune cutia
+   * la loc pe valorile vechi, sub „Setările raportului sunt salvate.”. De
+   * aceea fiecare cerere își ia un număr de rând (`baniRand`, ținut pe
+   * pagină, nu în stare: nu e nimic de desenat din el), iar răspunsul — bun
+   * ori refuz — se ia în seamă numai cât numărul lui e încă ultimul. Salvarea
+   * reușită mută și ea numărul (v. `salveazaBani`). Sesiunea expirată nu se
+   * aruncă: e adevărată oricând ar sosi.
+   */
+  cereBani(ce) {
+    const rand = this.baniRand = (this.baniRand || 0) + 1;
+    this.setState({ baniEroare: "" });
+    return gp.get("/plati/setari")
+      .then((r) => { if (rand === this.baniRand) this.primesteBani(r, ce); })
+      .catch((e) => {
+        if (e.isAuth) gp.toLogin();
+        else if (rand !== this.baniRand) return;
+        else if (e.code === "plati_unavailable") this.setState({ bani: null, baniT: null });
+        else this.setState({ baniEroare: gp.motiv(e, "setările raportului") });
+      });
+  }
+
+  /**
+   * Așază setările sosite (`primesteSetari`).
+   *
+   * CIORNA NEATINSĂ MERGE DUPĂ SERVER. Setările sosesc și fără ca omul să fi
+   * atins cutia — la intrarea în filă, după raportul de probă —, iar dacă
+   * altcineva a schimbat între timp chatul (din Încasări, de pildă), ciorna
+   * rămasă de dinainte ar trece drept „scrisă”: plecarea ar întreba degeaba,
+   * iar „Salvează” s-ar aprinde gata să pună la loc valoarea veche peste a
+   * celuilalt. De aceea se judecă ÎNAINTE de `setState`, față de răspunsul cel
+   * VECHI: ciorna care îi era întocmai se ia din răspuns; cea în care s-a
+   * scris se reface câmp cu câmp (`ciornaRecitita`) — rămâne ce a scris omul,
+   * iar câmpurile pe care nu le-a atins merg și ele după server. Altfel
+   * „Salvează” ar trimite, lângă chatul scris, și ora ori bifa VECHI, peste
+   * ce a salvat altcineva între timp.
+   */
+  primesteBani(r, ce) {
+    const S = this.state, vechi = S.bani;
+    const x = { bani: r || null, baniEroare: "" };
+    const neatinsa = !vechi || !S.baniT || !gp.ciornaDiferita(ciornaTelegram(vechi), S.baniT);
+    if (!neatinsa) x.baniT = ciornaRecitita(ciornaTelegram(vechi), S.baniT, ciornaTelegram(r));
+    if (ce === "telegram" || neatinsa) x.baniT = ciornaTelegram(r);
+    this.setState(x);
+  }
+
+  /**
+   * Ce s-a schimbat în cutie față de server — și numai atât
+   * (`telegramDeTrimis`).
+   *
+   * Se trimite doar ce s-a mișcat: două pagini deschise deodată (cutia asta și
+   * cartonașul din Încasări, ori doi oameni) nu-și scriu una peste alta
+   * câmpurile neatinse, iar `PUT /plati/setari` e totul-ori-nimic — o salvare
+   * care ar trimite tot ar cădea întreagă din pricina unui câmp pe care omul
+   * nici nu l-a atins. Orele pleacă mereu amândouă, fiindcă serverul le ține
+   * ca pe o pereche. `pragImplicit` nu pleacă NICIODATĂ de aici: e altă
+   * setare, cu alt drept, și are caseta ei pe fila „General”.
+   */
+  baniDeTrimis() {
+    const S = this.state, t = S.baniT, corp = {};
+    if (!t || !S.bani) return corp;
+    const baza = ciornaTelegram(S.bani);
+    if (t.chatId.trim() !== baza.chatId) corp.chatId = t.chatId.trim();
+    if (t.ora1 !== baza.ora1 || t.ora2 !== baza.ora2) corp.ore = [t.ora1, t.ora2];
+    if (t.amintiri !== baza.amintiri) corp.amintiri = t.amintiri;
+    if (t.panelBaseUrl.trim() !== baza.panelBaseUrl) corp.panelBaseUrl = t.panelBaseUrl.trim();
+    return corp;
+  }
+
+  /**
+   * Cutia raportului, dacă e SCRISĂ (`telegramScris`): în casete e altceva
+   * decât are serverul. Întoarce vorbele întrebării de plecare, ori `null`.
+   * Se judecă numai cutia care se poate desena, cu aceleași condiții ca
+   * `baniAre` din `renderVals()`. Pe ce filă e omul nu contează: ce a scris
+   * rămâne în stare și îl așteaptă la întoarcere, ca restul formularului.
+   */
+  baniScris() {
+    const S = this.state || {};
+    if (!S.bani || !S.baniT || !(S.bani.poate && S.bani.poate.telegram)) return null;
+    if (!gp.ciornaDiferita(ciornaTelegram(S.bani), S.baniT)) return null;
+    return {
+      titlu: "Ieși fără să salvezi raportul de pe Telegram?",
+      text: "Ce ai schimbat la raportul de pe Telegram nu s-a salvat și se pierde dacă ieși.",
+      nu: "Rămân în formular",
+      da: "Ies fără să salvez"
+    };
+  }
+
+  /**
+   * Scrie în cutie (`scrieTelegram`). Cât „Salvează” al ei e pe drum NU se mai
+   * scrie nimic: reușita pune în cutie răspunsul serverului, deci ce s-ar
+   * scrie în răstimp ar pieri sub „Setările raportului sunt salvate.”.
+   * Casetele sunt și stinse în marcaj (`baniPeDrum`); rândul de aici ține și
+   * fără el.
+   */
+  scrieBani(x) {
+    const t = this.state.baniT;
+    if (t && !this.state.baniSalv) this.setState({ baniT: Object.assign({}, t, x), baniSpus: "", baniProbaSpus: "", baniProbaFel: "" });
+  }
+
+  /**
+   * „Salvează” al cutiei (`salveazaTelegram`): `PUT /plati/setari`, numai cu
+   * ce s-a schimbat. Refuzul se scrie lângă câmpul lui (`CAMP_REFUZ`); ce a
+   * scris omul rămâne în casete.
+   *
+   * Răspunsul bun mută numărul de rând al citirilor (`baniRand`, v.
+   * `cereBani`): orice citire plecată până atunci — înaintea salvării ori cât
+   * ea era pe drum, când serverul a putut-o servi înaintea ei — nu mai e
+   * luată în seamă oricând ar sosi. Răspunsul salvării e rândul întreg, cu
+   * lista ultimelor trimiteri cu tot, deci nu se pierde nimic. La PLECARE
+   * numărul nu se mută: o citire veche sosită cât salvarea e pe drum nu
+   * strică nimic (ce a scris omul rămâne, v. `primesteBani`), iar după un
+   * refuz al salvării e singura veste proaspătă.
+   */
+  salveazaBani() {
+    const S = this.state;
+    if (S.baniSalv) return null;
+    const corp = this.baniDeTrimis();
+    if (!Object.keys(corp).length) return null;
+    this.setState({ baniSalv: true, baniErori: {}, baniSpus: "", baniProbaSpus: "", baniProbaFel: "" });
+    return gp.put("/plati/setari", corp)
+      .then((r) => {
+        this.baniRand = (this.baniRand || 0) + 1;
+        this.primesteBani(r, "telegram");
+        this.setState({ baniSalv: false, baniSpus: "Setările raportului sunt salvate." });
+      })
+      .catch((e) => {
+        // Steagul se stinge ÎNAINTE de plecarea spre intrare: cu cutia scrisă,
+        // `gp.toLogin()` întreabă, iar cine rămâne să copieze nu are voie să
+        // rămână cu „Salvează” mort. Pricina se scrie sub casete, unde stă
+        // orice refuz fără câmp al lui (v. `FARA_CONT`).
+        if (e.isAuth) { this.setState({ baniSalv: false, baniErori: { general: FARA_CONT } }); gp.toLogin(); return; }
+        this.setState({ baniSalv: false, baniErori: { [CAMP_REFUZ[e.code] || "general"]: spusDeServer(e, "setările raportului") } });
+      });
+  }
+
+  /**
+   * Tokenul ori chatul botului — formularul de DEASUPRA cutiei, salvat de bara
+   * de sus — sunt scrise și nesalvate? Întrebat de `changes()`, adică exact
+   * ce ar pleca la „Salvează”: un token șters la loc nu e o schimbare.
+   */
+  botNesalvat() {
+    const sus = this.changes();
+    return sus.notify_telegram_token !== undefined || sus.notify_telegram_chat_id !== undefined;
+  }
+
+  /**
+   * „Trimite acum un raport de probă.” (`trimiteProba`)
+   *
+   * Pleacă după ce e pe SERVER, nu după ce scrie în casete: cu schimbări
+   * nesalvate, proba ar merge în grupul vechi și omul ar crede că a încercat
+   * grupul nou. De aceea întâi se cere salvarea.
+   *
+   * Când Telegram refuză, serverul răspunde 502 cu motivul într-un câmp pe care
+   * `gp.post` nu-l citește. Motivul nu se pierde: serverul îl scrie și în lista
+   * ultimelor trimiteri, care se cere din nou imediat după.
+   *
+   * NUMAI AICI, nu și în Încasări: deasupra cutiei stă formularul botului
+   * (tokenul și chatul comenzilor), salvat de bara de sus. Proba pleacă prin
+   * botul de pe SERVER și se judecă față de chatul comenzilor de pe server
+   * (`plati_trimite_piedica()`); cu tokenul ori chatul botului scrise și
+   * nesalvate, ar pleca prin botul vechi sub un „a plecat” verde, ori ar fi
+   * refuzată cu „Botul … nu are token” sub un token aflat pe ecran. „Trimite
+   * test” și „Leagă botul”, de deasupra, se sting în aceeași stare
+   * (`testOff`, `tgLegPiedica`); aici se spune de ce, sub buton. Se întreabă
+   * numai cele două chei de care ține proba: telefonul firmei nesalvat n-o
+   * schimbă cu nimic.
+   */
+  trimiteProbaBani() {
+    const S = this.state;
+    if (S.baniProbaZbor) return null;
+    if (Object.keys(this.baniDeTrimis()).length) {
+      this.setState({ baniProbaFel: "atentie", baniProbaSpus: "Salvează întâi schimbările de mai sus. Raportul de probă pleacă după ce e salvat pe server, nu după ce scrie aici." });
+      return null;
+    }
+    if (this.botNesalvat()) {
+      this.setState({ baniProbaFel: "atentie", baniProbaSpus: BOT_NESALVAT });
+      return null;
+    }
+    this.setState({ baniProbaZbor: true, baniProbaSpus: "", baniProbaFel: "", baniErori: {}, baniSpus: "" });
+    return gp.post("/plati/raport-proba")
+      .then((r) => {
+        if (r && r.ok) this.setState({ baniProbaZbor: false, baniProbaFel: "bine", baniProbaSpus: "Raportul de probă a plecat. Uită-te în grupul de pe Telegram." });
+        else this.setState({ baniProbaZbor: false, baniProbaFel: "pericol", baniProbaSpus: "Raportul de probă n-a plecat." + (r && r.motiv ? " " + String(r.motiv) : "") });
+        return this.cereBani("nimic");
+      })
+      .catch((e) => {
+        // Steagul se stinge înaintea plecării spre intrare, iar pricina se
+        // scrie sub buton (v. `FARA_CONT`).
+        if (e.isAuth) { this.setState({ baniProbaZbor: false, baniProbaFel: "pericol", baniProbaSpus: FARA_CONT_PROBA }); gp.toLogin(); return null; }
+        if (e.code === "plati_chat_missing") {
+          this.setState({ baniProbaZbor: false, baniErori: { chat: spusDeServer(e, "raportul de probă") } });
+          return null;
+        }
+        if (e.status === 502) {
+          this.setState({ baniProbaZbor: false, baniProbaFel: "pericol", baniProbaSpus: "Telegram a refuzat raportul de probă. De ce, scrie mai jos, la ultimele trimiteri." });
+          return this.cereBani("nimic");
+        }
+        if (e.status === 404) {
+          this.setState({ baniProbaZbor: false, baniProbaFel: "pericol", baniProbaSpus: "Serverul nu are încă trimiterea de probă. Cel mai probabil actualizarea s-a oprit la jumătate — spune-i administratorului." });
+          return null;
+        }
+        this.setState({ baniProbaZbor: false, baniProbaFel: "pericol", baniProbaSpus: spusDeServer(e, "raportul de probă") });
+        return null;
+      });
   }
 
   test(channel) {
@@ -1699,23 +2794,48 @@ class Component extends DCLogic {
       try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch (e) { /* noop */ }
       return;
     }
+    // E-MAILUL ÎȘI CITEȘTE RĂSPUNSUL (runda 2.7.5). Până acum răspunsul era
+    // aruncat, iar la orice 200 se scria „Mesajul de test a plecat” — adevărat
+    // pe WhatsApp și pe Telegram, unde furnizorul spune pe loc dacă a primit
+    // mesajul, dar nu și pe e-mail, care are două drumuri: căsuța îl ia în
+    // primire, drumul direct numai îl predă programului de poștă al
+    // serverului. Ce a fost îl spune serverul (`cale`), iar vorbele se aleg
+    // după el (`postaProbaSpusa`). Se scriu ȘI lângă buton (`postaProba`):
+    // banda de sus nu se vede de la mijlocul filei. Testul poate ține zece-
+    // douăzeci de secunde (un server de e-mail care tace), timp în care
+    // butonul scrie „Se trimite…” (`testing`).
+    const eMail = channel === "email";
+    // `orig`, nu `s`: testul a plecat cu ce era SALVAT (paza de mai sus), iar
+    // cât e pe drum se poate scrie mai departe în casete.
+    const salvate = this.state.orig;
     this.setState({ testing: channel, err: "", msg: "" });
+    if (eMail) this.setState({ postaProba: null });
     gp.post("/settings/test/" + channel, {})
-      .then(() => this.setState({
-        testing: "",
-        tested: Object.assign({}, this.state.tested, { [channel]: true }),
-        msg: "Mesajul de test a plecat. Verifică pe " + channel + "."
-      }))
+      .then((r) => {
+        const spus = eMail ? postaProbaSpusa(r, salvate) : null;
+        this.setState({
+          testing: "",
+          tested: Object.assign({}, this.state.tested, { [channel]: true }),
+          msg: spus ? spus.text : "Mesajul de test a plecat. Verifică pe " + channel + "."
+        });
+        if (spus) this.setState({ postaProba: spus });
+      })
       // Reîmprospătarea aduce starea WhatsApp scrisă de server chiar în timpul
       // trimiterii, dar rescrie tot formularul. Dacă între timp s-a tastat
       // ceva — trimiterea ține câteva secunde — o sărim: starea canalului se
       // vede la următoarea încărcare, textul omului nu s-ar mai întoarce.
       .then(() => (Object.keys(this.changes()).length ? null : this.pull()))
-      .catch((e) => this.setState({
-        testing: "",
-        tested: Object.assign({}, this.state.tested, { [channel]: false }),
-        err: "Testul a eșuat: " + e.message
-      }));
+      // Pricina vine de la server, cu treapta la care s-a oprit trimiterea
+      // („parola a fost refuzată”, „serverul nu răspunde”). La e-mail se scrie
+      // și lângă buton, ca reușita.
+      .catch((e) => {
+        this.setState({
+          testing: "",
+          tested: Object.assign({}, this.state.tested, { [channel]: false }),
+          err: "Testul a eșuat: " + e.message
+        });
+        if (eMail) this.setState({ postaProba: { fel: "pericol", text: "Testul a eșuat: " + e.message } });
+      });
   }
 
   /**
@@ -1826,7 +2946,72 @@ class Component extends DCLogic {
     const provSchimbat = provider !== provSalvat;
     const waSet = !!S.s.notify_whatsapp_token_set && !provSchimbat;
     const tgSet = !!S.s.notify_telegram_token_set;
+    // „Șterge” pune în formular semnul intern `__clear__`. Caseta nu-l arată
+    // (fișa 700, 2.7.5: omul vedea „__clear__” și scria peste el), ci spune,
+    // ca la parola căsuței, că tokenul se șterge la „Salvează”.
+    const waDeSters = v("notify_whatsapp_token") === "__clear__";
+    const tgDeSters = v("notify_telegram_token") === "__clear__";
+    const DE_STERS = "Se șterge la „Salvează”";
+    const deStersAjutor = "Tokenul salvat se șterge la „Salvează”. Te-ai răzgândit? Apasă „Renunță” ori scrie altul în casetă.";
     const panelSet = !!S.s.panel_code_set;
+
+    /* --- cartonașul „E-mail”: căsuța (SMTP) și drumul direct (2.7.5) --- */
+    // Rândul de stare: din ce a spus serverul, și numai cu setările sosite.
+    // Cu `GET /settings` căzut, un `posta` rămas de la o încărcare mai veche
+    // nu mai e „acum”, deci nu se mai afirmă (v. `stiute`, mai sus).
+    const postaRand = postaSpune(stiute ? S.posta : null, S.orig);
+    // Baza fără migrarea 037: casetele căsuței n-au rând pe server (v.
+    // `faraRand()`); stau închise și cartonașul spune de ce.
+    const smtpInchisa = this.faraRand(["mail_smtp_host"]).length > 0;
+    // Parola căsuței, în trei stări. Valoarea n-o are pagina niciodată: de pe
+    // server vine numai masca și `mail_smtp_password_set`.
+    //   · salvată și neatinsă → caseta goală, vorba că există, „Șterge parola”;
+    //   · „Șterge parola” apăsat → „__clear__” în formular (se șterge la
+    //     „Salvează”), dar NU în casetă: acolo omul ar citi un cuvânt străin;
+    //   · scrisă acum → rămâne în casetă numai până pleacă: răspunsul salvării
+    //     pune masca în locul ei (`s` se rescrie din răspuns, în `save()`).
+    const smtpParolaScrisa = v("mail_smtp_password");
+    const smtpParolaDeSters = smtpParolaScrisa === "__clear__";
+    const smtpParolaTastata = !isMasked(smtpParolaScrisa) && !smtpParolaDeSters && String(smtpParolaScrisa).trim() !== "";
+    const smtpParolaSalvata = !!S.s.mail_smtp_password_set;
+    // Ce va fi pe server după „Salvează”, citit de pe ECRAN: din asta se scriu
+    // cele două avertismente, cât omul încă mai completează.
+    const smtpGazda = String(v("mail_smtp_host")).trim();
+    const smtpOm = String(v("mail_smtp_user")).trim();
+    const smtpAreParola = smtpParolaTastata || (smtpParolaSalvata && !smtpParolaDeSters);
+    // Serverul schimbat pe lângă o parolă salvată: serverul cere parola din nou în
+    // aceeași salvare (`smtp_parola_din_nou`) — parola e a serverului de dinainte și nu
+    // pleacă spre altul. Atunci „lasă gol ca s-o păstrezi” ar minți. Golit, serverul nu
+    // cere nimic: poșta trece pe drumul direct.
+    const smtpParolaDinNou = smtpParolaSalvata && !smtpParolaTastata && !smtpParolaDeSters
+      && smtpGazda !== "" && smtpGazda.toLowerCase() !== String(S.orig.mail_smtp_host || "").trim().toLowerCase();
+    // Căsuța pe jumătate. Gazda e comutatorul (`smtp_configurat()`,
+    // api/lib/smtp.php): cu ea scrisă, e-mailul pleacă NUMAI prin căsuță, iar
+    // fără utilizator ori parolă nu pleacă deloc — serverul nu ocolește pe
+    // drumul direct. Invers, utilizatorul ori parola fără gazdă nu pornesc
+    // nimic: e-mailul merge mai departe direct, iar omul crede că are căsuță.
+    const smtpLipsesc = smtpGazda ? [smtpOm ? "" : "utilizatorul", smtpAreParola ? "" : "parola"].filter((x) => x) : [];
+    const smtpJumatate = smtpInchisa ? ""
+      : smtpLipsesc.length
+        ? "Căsuța e completată pe jumătate: " + (smtpLipsesc.length > 1 ? "lipsesc " : "lipsește ") + smtpLipsesc.join(" și ") +
+          ". Cât „Server SMTP” e completat, e-mailul pleacă numai prin căsuță, iar pe jumătate nu pleacă deloc — nici anunțurile, nici linkurile de la „Ți-ai uitat parola?”. Completează ce lipsește ori golește „Server SMTP”."
+        : (!smtpGazda && (smtpOm || smtpAreParola))
+          ? "Ai completat " + (smtpOm && smtpAreParola ? "utilizatorul și parola" : smtpOm ? "utilizatorul" : "parola") +
+            ", dar nu și „Server SMTP”. Fără el căsuța nu e folosită: e-mailul pleacă mai departe direct de pe server."
+          : "";
+    // Expeditorul care nu e adresa căsuței. Cele mai multe căsuțe nu trimit în
+    // numele altei adrese (ori mesajul iese nesemnat pentru ea și cade în
+    // Spam). Se poate spune numai când utilizatorul E o adresă: unii
+    // furnizori dau un nume de intrare care nu e adresa, iar atunci n-avem cu
+    // ce compara.
+    const smtpDeLa = String(v("notify_email_from")).trim();
+    const smtpExpeditor = !smtpInchisa && smtpGazda && smtpOm.indexOf("@") > 0 && smtpDeLa.toLowerCase() !== smtpOm.toLowerCase()
+      ? "Adresa expeditor (" + (smtpDeLa || "necompletată") + ") nu e adresa căsuței (" + smtpOm +
+        "). Multe căsuțe refuză să trimită în numele altei adrese, iar unde nu refuză, mesajul ajunge ușor în Spam. Scrie la „Adresa expeditor” chiar adresa căsuței."
+      : "";
+    // Refuzul serverului pentru caseta `k`, cât ea mai are ce avea la refuz.
+    const smtpRefuz = (k) => (S.postaRefuz && S.postaRefuz.cheie === k && S.s[k] === S.postaRefuz.scris ? S.postaRefuz.vorba : "");
+
     const waState = v("notify_whatsapp_status", "neconfigurat");
     // „Gata de trimis”: are token, destinatar și identificatorul furnizorului.
     const waReady = waSet && v("notify_whatsapp_to") !== "" && v("notify_whatsapp_phone_id") !== "";
@@ -2053,9 +3238,23 @@ class Component extends DCLogic {
     const areComenzi = S.failed.some((f) => f.orderId);
     const cateFailed = Math.max(S.failedTotal || 0, S.failed.length);
     const restFailed = cateFailed - S.failed.length;
-    const failedTitle = (cateFailed === 1
-        ? "Un anunț nu a plecat."
-        : cateFailed + " anunțuri nu au plecat.")
+    // De la 2.7.5 în listă intră și linkurile de parolă uitată care n-au
+    // plecat: rândul lor n-are comandă și poartă subiectul scris de
+    // `route_forgot()` (api/routes/auth.php). Numite „anunțuri”, trimiteau
+    // omul să caute comenzi neanunțate (fișa 699). Cu rânduri neaduse încă
+    // (`restFailed`), felul lor nu se știe: atunci se spune „mesaje”.
+    const SUBIECT_PAROLA = "Parolă uitată — linkul n-a plecat (vezi Jurnalul)";
+    const cateParola = S.failed.filter((f) => !f.orderId && f.subject === SUBIECT_PAROLA).length;
+    const felFailed = cateParola === 0 ? "anunt"
+      : (cateParola === S.failed.length && restFailed === 0 ? "parola" : "amestec");
+    // „20 de anunțuri”, dar „19 anunțuri”: „de” stă după numerele care se
+    // termină în 00 ori între 20 și 99.
+    const cuDe = (n, ce) => n + (n % 100 >= 20 || (n >= 100 && n % 100 === 0) ? " de " : " ") + ce;
+    const failedTitle = (felFailed === "parola"
+        ? (cateFailed === 1 ? "Un link de parolă uitată nu a plecat." : cuDe(cateFailed, "linkuri de parolă uitată") + " nu au plecat.")
+        : felFailed === "amestec"
+          ? cuDe(cateFailed, "mesaje") + " nu au plecat."
+          : (cateFailed === 1 ? "Un anunț nu a plecat." : cuDe(cateFailed, "anunțuri") + " nu au plecat."))
       + (restFailed > 0
         ? " Aici se văd primele " + S.failed.length + "; apasă „Am văzut” ca să treci la următoarele " + restFailed + "."
         : "")
@@ -2073,6 +3272,119 @@ class Component extends DCLogic {
     const pragRau = pragPeEcran.bun ? ""
       : pragPeEcran.gol ? "Caseta goală nu se salvează: golul nu înseamnă zero. Scrie un număr de la 0 la 99."
       : "Scrie un număr întreg de la 0 la 99.";
+
+    /* ---- raportul de bani pe Telegram (runda 2.7.5; oglinda Încasărilor) ---- */
+    const B = S.bani, bt = S.baniT || ciornaTelegram(null);
+    const baniPoate = B ? (B.poate || {}) : {};
+    const baniNeschimbat = Object.keys(this.baniDeTrimis()).length === 0;
+    const ora = (cheie, et) => ({ et, val: bt[cheie], pusa: !!bt[cheie], stinsa: S.baniSalv,
+      onChange: (e) => this.scrieBani({ [cheie]: String(e.target.value || "").slice(0, 5) }),
+      onOpreste: () => this.scrieBani({ [cheie]: "" }) });
+    // „Azi”, după ceasul patiseriei. Hotărăște un singur lucru: dacă ziua unei
+    // trimiteri își poartă și anul. În Încasări vine cu lista (`D.azi`);
+    // răspunsul lui `GET /plati/setari` nu-l are. Ceasul se întreabă numai
+    // când e o trimitere de scris: fila fără raport (cine n-are dreptul lui,
+    // baza fără migrarea 032) nu-l cere la fiecare desenare.
+    const ceas = B && Array.isArray(B.ultimele) && B.ultimele.length ? gp.acumLaPatiserie() : null;
+    const azi = ceas ? ceas.getFullYear() + "-" + doua(ceas.getMonth() + 1) + "-" + doua(ceas.getDate()) : "";
+    const baniUltimele = B && Array.isArray(B.ultimele) ? B.ultimele.slice(0, 5).map((u) => ({
+      cand: clipaOm(u.la, azi) || String(u.la || ""),
+      fel: FEL_TRIMITERE[u.fel] || "Trimitere",
+      stare: u.stare === "sent" ? "a plecat" : "n-a plecat" + (u.motiv ? ": " + u.motiv : ""),
+      ton: u.stare === "sent" ? "bine" : "pericol"
+    })) : [];
+    // Legătura spre Încasări, luată din MENIUL omului: adresa e a meniului
+    // (la construirea pachetului se preschimbă odată cu el), iar cine n-are
+    // pagina în meniu n-are nici legătura.
+    const baniLeg = gp.meniu("Setări", S.auth).filter((m) => m.et === "Încasări")[0] || null;
+    // Vorba despre botul nesalvat stă sub buton numai cât e adevărată: după
+    // „Salvează” ori „Renunță” din bara de sus n-ar mai spune decât o minciună.
+    const baniProbaSpus = S.baniProbaSpus === BOT_NESALVAT && !this.botNesalvat() ? "" : S.baniProbaSpus;
+
+    /* ---- oamenii din grup (runda 2.7.5) ---- */
+    // Cutia e a fondatorului, ca ușile ei (`require_acces()`). Rangul se
+    // citește de pe cont, cum face „Acces”: nu e un drept din matrice.
+    const eFondator = !!S.auth && S.auth.role === "fondator";
+    const O = eFondator && Array.isArray(S.oameni) ? S.oameni : null;
+    // Ceasul patiseriei hotărăște numai dacă ziua unei apăsări își poartă și
+    // anul; se întreabă numai când e un om de scris.
+    const oameniCeas = O && O.length ? gp.acumLaPatiserie() : null;
+    const oameniAzi = oameniCeas ? oameniCeas.getFullYear() + "-" + doua(oameniCeas.getMonth() + 1) + "-" + doua(oameniCeas.getDate()) : "";
+    // Conturile de ales, cum le dă serverul: pornite, ale casei, fără Telegram
+    // legat. Unul care nu poate hotărî cereri rămâne în listă, cu coada lui:
+    // legat de el, omul apasă și e refuzat (nelegat, lucra pe drepturile
+    // contului care a legat botul) — fondatorul trebuie s-o știe dinainte.
+    const numeCont = (c) => c.nume + " (" + (gp.numeRol(c.rol) || c.rol) + ")";
+    const oameniOptiuni = [{ v: "", l: "Alege contul…" }].concat((S.oameniConturi || []).map((c) => ({
+      v: String(c.id), l: numeCont(c) + (c.poate ? "" : " — nu poate hotărî cereri")
+    })));
+    // O faptă pe drum stinge toate butoanele cutiei, nu numai pe al ei: două
+    // legări plecate deodată s-ar întoarce cu două liste, iar a doua ar șterge
+    // vestea celei dintâi (v. `oameniFapta`).
+    const oameniPeDrum = S.oameniLucru !== "";
+    const oameniRanduri = (O || []).map((om) => {
+      const cont = om.cont || null;
+      const spus = S.oameniSpus && S.oameniSpus.om === om.id ? S.oameniSpus : null;
+      const cand = clipaOm(om.vazutLa, oameniAzi);
+      // Legat de un cont oprit ori fără dreptul de a hotărî cereri, omul e
+      // refuzat la apăsare (`telegram_actor()`, ieșirea a doua): se spune
+      // aici, ca fondatorul să nu afle din grup.
+      const nota = !cont ? ""
+        : !cont.activ ? "Contul e oprit: ce apasă omul de pe telefon e refuzat până îl pornești ori îl dezlegi."
+        : !cont.poate ? "Contul nu poate hotărî cereri: ce apasă omul de pe telefon e refuzat."
+        : "";
+      return {
+        nume: om.nume,
+        areUser: !!om.utilizator,
+        user: om.utilizator ? "@" + om.utilizator : "",
+        stareEt: cont ? "Legat de " + numeCont(cont) : "Nelegat",
+        stareCls: cont ? "h-badge h-badge--success" : "h-badge h-badge--honey",
+        vazut: (cand ? "ultima apăsare: " + cand + " · " : "") + apasariOm(om.apasari),
+        areNota: nota !== "",
+        nota: nota,
+        // `sc-if` nu știe să nege (v. `euNelegat`): perechea se scrie aici.
+        nelegat: !cont,
+        legat: !!cont,
+        ales: S.oameniAles[om.id] || "",
+        alesEt: "Contul lui " + om.nume,
+        optiuni: oameniOptiuni,
+        stins: oameniPeDrum,
+        onAles: (e) => { if (!this.state.oameniLucru) this.setState({ oameniAles: Object.assign({}, this.state.oameniAles, { [om.id]: String(e.target.value || "") }), oameniSpus: null }); },
+        legaEt: S.oameniLucru === "leg:" + om.id ? "Se leagă…" : "Leagă",
+        legaOff: oameniPeDrum,
+        onLeaga: () => this.oameniFapta("leg", om),
+        dezleagaEt: S.oameniLucru === "dezleg:" + om.id ? "Se dezleagă…" : "Dezleagă",
+        onDezleaga: () => this.oameniFapta("dezleg", om),
+        areSpus: !!spus,
+        spus: spus ? spus.text : "",
+        spusFel: spus ? spus.fel : "",
+        // Refuzul se anunță cititorului de ecran pe loc; vestea bună, politicos.
+        spusRol: spus && spus.fel === "pericol" ? "alert" : "status"
+      };
+    });
+    // Conturile legate de un Telegram care n-au rând mai sus (fișa 710):
+    // legate înainte să se țină lista, ori căzute din ea. „Dezleagă” trece
+    // prin aceeași faptă ca pe un rând, cu un om de mucava al cărui `id` nu
+    // poate fi al unui om adevărat (aceia sunt numere).
+    const oameniNevazuti = (O ? S.oameniLegatiJos || [] : []).map((c) => {
+      const om = { id: "cont" + c.id, nume: c.nume, cont: { id: c.id } };
+      const spus = S.oameniSpus && S.oameniSpus.om === om.id ? S.oameniSpus : null;
+      return {
+        et: numeCont(c) + (c.activ ? "" : " · oprit"),
+        dezleagaEt: S.oameniLucru === "dezleg:" + om.id ? "Se dezleagă…" : "Dezleagă",
+        stins: oameniPeDrum,
+        onDezleaga: () => this.oameniFapta("dezleg", om),
+        areSpus: !!spus,
+        spus: spus ? spus.text : "",
+        spusFel: spus ? spus.fel : "",
+        spusRol: spus && spus.fel === "pericol" ? "alert" : "status"
+      };
+    });
+    // Vestea ori refuzul al cărui rând nu mai e în listă (omul șters între
+    // timp de pe server, contul dezlegat de jos): se scrie jos, în cutie, ca
+    // să nu se piardă.
+    const oameniSpusJos = O && S.oameniSpus && !O.some((om) => om.id === S.oameniSpus.om)
+      && !(S.oameniLegatiJos || []).some((c) => "cont" + c.id === S.oameniSpus.om) ? S.oameniSpus.text : "";
 
     return {
       // Meniul, și în bara laterală și în sertarul de pe telefon: aceleași
@@ -2179,7 +3491,9 @@ class Component extends DCLogic {
       // salvarea nu face nimic: schimbările aruncate atunci se întorceau
       // salvate la sosirea răspunsului, deci butonul mințea. Starea se citește
       // pe viu (`this.state`), la răspunsul omului, nu de la desenul ăsta.
-      onReset: () => { if (!this.state.saving) gp.inchideCiorna(this.ciornaDeschisa(), () => this.setState({ s: Object.assign({}, this.state.orig), pragRefuz: "", drafts: {}, msg: "", err: "", etapeRefuz: "" })); },
+      // Cutia raportului de bani nu e a lui: rămâne scrisă, și întrebarea
+      // („renunta”, v. `ciornaDeschisa`) o spune.
+      onReset: () => { if (!this.state.saving) gp.inchideCiorna(this.ciornaDeschisa("renunta"), () => this.setState({ s: Object.assign({}, this.state.orig), pragRefuz: "", drafts: {}, msg: "", err: "", etapeRefuz: "" })); },
 
       msg: S.msg, onMsgClose: () => set({ msg: "" }),
       err: S.err, onErrClose: () => set({ err: "" }),
@@ -2231,7 +3545,19 @@ class Component extends DCLogic {
       tabs: TABS.map((t) => ({
         label: t.l,
         cls: S.tab === t.k ? "h-btn h-btn--primary" : "h-btn h-btn--secondary",
-        onClick: () => set({ tab: t.k })
+        // La INTRAREA în „Notificări” raportul de bani se recitește (runda
+        // 2.7.5): setările lui se schimbă și din Încasări — de altcineva ori
+        // din altă filă a browserului —, iar cutia de aici ar rămâne în urmă.
+        // „nimic”: ce e scris și nesalvat în ea rămâne (v. `primesteBani`).
+        // Cererea pleacă numai cui are dreptul raportului.
+        //
+        // La fel lista „Oameni din grup”, numai pentru fondator: între două
+        // intrări în filă a mai apăsat cineva în grup, iar el aici îl caută.
+        onClick: () => {
+          set({ tab: t.k });
+          if (t.k === "notify" && S.tab !== "notify" && gp.are("plati.telegram", S.auth)) this.cereBani("nimic");
+          if (t.k === "notify" && S.tab !== "notify" && eFondator) this.cereOameni();
+        }
       })),
       isGeneral: S.tab === "general",
       isNotify: S.tab === "notify",
@@ -2369,13 +3695,13 @@ class Component extends DCLogic {
       // isMasked() îl arunca — iar dacă mai schimbase și altceva, pagina
       // spunea „Setările au fost salvate" cu tokenul vechi rămas pe loc. Masca
       // se vede în placeholder; caseta goală înseamnă „păstrează-l".
-      waToken: isMasked(v("notify_whatsapp_token")) ? "" : v("notify_whatsapp_token"),
+      waToken: isMasked(v("notify_whatsapp_token")) || waDeSters ? "" : v("notify_whatsapp_token"),
       onWaToken: field("notify_whatsapp_token"),
-      waTokenSet: waSet,
-      waTokenHint: waSet
+      waTokenSet: waSet && !waDeSters,
+      waTokenHint: waDeSters ? DE_STERS : waSet
         ? "Token salvat (" + v("notify_whatsapp_token") + ") — lasă gol ca să-l păstrezi"
         : (provSchimbat ? "Lipește tokenul de la " + (isTwilio ? "Twilio" : "Meta") : "Lipește tokenul aici"),
-      waTokenHelp: waSet
+      waTokenHelp: waDeSters ? deStersAjutor : waSet
         ? "Tokenul este salvat criptat. Serverul nu îl mai trimite înapoi, de aceea vezi doar ultimele caractere. Scrie altul doar dacă vrei să-l înlocuiești."
         : (provSchimbat
           ? "Ai schimbat furnizorul. Tokenul salvat e al celui dinainte și nu deschide nimic aici — scrie tokenul și "
@@ -2434,6 +3760,54 @@ class Component extends DCLogic {
       onMailFrom: field("notify_email_from"),
       onTestMail: () => this.test("email"),
       testMailLabel: testLabel("email", "Trimite e-mail de test"),
+      // Pe ce cale pleacă e-mailul acum, cum a spus-o serverul (`postaSpune`).
+      postaFel: postaRand.fel,
+      postaStare: postaRand.text,
+      // Căsuța (SMTP). Cele patru casete obișnuite trec prin `put()`, ca tot
+      // formularul: se văd în `changes()`, deci aprind bara de sus și țin
+      // paza formularelor nesalvate.
+      smtpInchisa,
+      smtpHost: v("mail_smtp_host"),
+      onSmtpHost: field("mail_smtp_host"),
+      smtpPort: v("mail_smtp_port"),
+      onSmtpPort: field("mail_smtp_port"),
+      smtpUser: v("mail_smtp_user"),
+      onSmtpUser: field("mail_smtp_user"),
+      smtpCriptare: v("mail_smtp_security", "auto"),
+      onSmtpCriptare: field("mail_smtp_security"),
+      // Aceleași trei feluri ca pe server (`guard_posta()`); „Automat” alege
+      // după port, ca `smtp_date()`.
+      smtpCriptari: [
+        { v: "auto", l: "Automat (după port)" },
+        { v: "ssl", l: "SSL/TLS — de obicei portul 465" },
+        { v: "starttls", l: "STARTTLS — de obicei portul 587" }
+      ],
+      // Masca nu intră în casetă (ca la tokenuri, mai sus), și nici semnul de
+      // ștergere: caseta arată numai ce a tastat omul acum.
+      smtpParola: smtpParolaTastata ? smtpParolaScrisa : "",
+      onSmtpParola: field("mail_smtp_password"),
+      smtpParolaSet: smtpParolaSalvata && !smtpParolaDeSters && !smtpInchisa,
+      smtpParolaHint: smtpParolaDeSters ? "Se șterge la „Salvează”"
+        : smtpParolaDinNou ? "Ai schimbat serverul: scrie parola din nou"
+        : smtpParolaSalvata ? "Parolă salvată — lasă gol ca s-o păstrezi" : "Parola căsuței",
+      smtpParolaHelp: smtpParolaDeSters
+        ? "Parola salvată se șterge la „Salvează”. Te-ai răzgândit? Apasă „Renunță” ori scrie alta în casetă."
+        : smtpParolaDinNou
+          ? "Ai schimbat serverul căsuței: scrie parola ei din nou, ori apasă „Șterge parola”. Parola salvată e a serverului de dinainte și nu pleacă spre altul."
+        : smtpParolaSalvata
+          ? "Parola este salvată criptat. Serverul nu o mai trimite înapoi și nu se poate citi de nicăieri. Scrie alta doar dacă vrei s-o înlocuiești."
+          : "Se salvează criptat. Serverul nu o mai trimite înapoi și nu se poate citi de nicăieri. Scrie-o tu, aici — n-o spune nimănui.",
+      onSmtpParolaClear: () => this.put("mail_smtp_password", "__clear__"),
+      smtpJumatate,
+      smtpExpeditor,
+      smtpHostRefuz: smtpRefuz("mail_smtp_host"),
+      smtpPortRefuz: smtpRefuz("mail_smtp_port"),
+      smtpUserRefuz: smtpRefuz("mail_smtp_user"),
+      smtpCriptareRefuz: smtpRefuz("mail_smtp_security"),
+      // Ce a răspuns serverul la ultimul test de e-mail, lângă buton.
+      postaProbaAre: !!S.postaProba,
+      postaProbaFel: S.postaProba ? S.postaProba.fel : "",
+      postaProbaSpus: S.postaProba ? S.postaProba.text : "",
 
       /* --- Telegram --- */
       tgOn: on("notify_telegram_enabled"),
@@ -2453,11 +3827,11 @@ class Component extends DCLogic {
       // atât, fără mască în placeholder, fără buton de ștergere, fără rândul
       // de ajutor pe care WhatsApp le are pe toate trei. O casetă goală după
       // „Salvează" se citește „n-a ținut" — și exact așa s-a și citit.
-      tgToken: isMasked(v("notify_telegram_token")) ? "" : v("notify_telegram_token"),
+      tgToken: isMasked(v("notify_telegram_token")) || tgDeSters ? "" : v("notify_telegram_token"),
       onTgToken: field("notify_telegram_token"),
-      tgTokenSet: tgSet,
-      tgTokenHint: tgSet ? "Token salvat (" + v("notify_telegram_token") + ") — lasă gol ca să-l păstrezi" : "123456:ABC-DEF…",
-      tgTokenHelp: tgSet
+      tgTokenSet: tgSet && !tgDeSters,
+      tgTokenHint: tgDeSters ? DE_STERS : tgSet ? "Token salvat (" + v("notify_telegram_token") + ") — lasă gol ca să-l păstrezi" : "123456:ABC-DEF…",
+      tgTokenHelp: tgDeSters ? deStersAjutor : tgSet
         ? "Tokenul este salvat criptat. Serverul nu îl mai trimite înapoi, de aceea vezi doar ultimele caractere. Scrie altul doar dacă vrei să-l înlocuiești."
         : "Îl primești de la @BotFather, în Telegram. Se salvează criptat și nu mai poate fi citit din interfață.",
       onTgTokenClear: () => this.put("notify_telegram_token", "__clear__"),
@@ -2507,10 +3881,16 @@ class Component extends DCLogic {
       // Propoziția dinaintea rundei 2.2.1 — „cine apasă lucrează pe contul
       // care a legat botul” — a încetat să fie adevărată în ziua în care
       // `telegram_actor()` a început să caute întâi apăsătorul. A rămas
-      // adevărată numai pentru cine NU și-a legat contul, deci se spune așa,
-      // cu cutia de dedesubt arătată ca ieșire.
+      // adevărată numai pentru cine NU și-a legat contul.
+      //
+      // Iar de la 2.7.5 nici pentru el nu mai e adevărată pe jumătate: contul
+      // care a legat botul îi dă DREPTURILE, nu și numele. Până atunci rândul
+      // spunea „faptele apar în Jurnal pe numele acela” — și chiar așa era:
+      // botul stă într-un grup, iar orice apăsa oricine ieșea pe numele
+      // patronului. Vorba „cont nelegat” e cea scrisă de server peste tot
+      // (sub mesaj, în anunț, în panou, în Jurnal); aici se spune la fel.
       tgLegHelp: tgStare === "legat"
-        ? "Botul ascultă apăsările. Cine nu și-a legat contul de mai jos lucrează pe contul care a legat botul — faptele apar în Jurnal pe numele acela, nu pe „Sistem”."
+        ? "Botul ascultă apăsările. Cine are contul legat apare cu numele contului; cine nu, cu numele lui de pe Telegram și cu „cont nelegat”. Niciodată cu numele altcuiva."
         : (tgStare === "eroare"
           ? "Ultima legare nu a ținut și butoanele nu lucrează. Verifică tokenul și Chat ID-ul, apoi încearcă din nou."
           : "Cât timp botul nu e legat, anunțurile pleacă fără butoane. Legarea se face de pe adresa publică, pe https — "
@@ -2532,12 +3912,12 @@ class Component extends DCLogic {
         ? "h-badge h-badge--success"
         : (euApasat ? "h-badge h-badge--accent" : "h-badge h-badge--honey"),
       euNota: euLegat
-        ? "Ce apeși tu sub anunțuri se scrie în Jurnal pe numele tău, nu pe contul care a legat botul."
+        ? "Ce apeși tu sub anunțuri se scrie pe contul tău, cu numele și cu drepturile tale."
         : (euApasat
           ? "Cineva a apăsat butonul trimis pentru tine. Încuviințează NUMAI dacă ai apăsat tu: de-atunci încolo, apăsările lui îți poartă numele."
           : (euAsteapta
             ? "Butonul te așteaptă în grupul de pe Telegram. Apasă-l de pe telefonul tău, apoi întoarce-te aici."
-            : "Cât timp contul tău nu e legat, ce apeși de pe telefon se scrie pe contul care a legat botul — nu pe al tău.")),
+            : "Cât timp contul tău nu e legat, ce apeși de pe telefon apare cu numele tău de pe Telegram și cu „cont nelegat”, pe drepturile contului care a legat botul.")),
       // Numele vine de pe Telegram, așa cum și l-a pus omul. Se arată tocmai
       // ca să se poată vedea că NU e al tău înainte de a apăsa „Da, eu am
       // apăsat" — ăsta e singurul lucru care stă între grup și identitatea ta.
@@ -2553,6 +3933,78 @@ class Component extends DCLogic {
       euConfirmOff: S.euLucru !== "",
       euDezlegLabel: S.euLucru === "dezleg" ? "Se dezleagă…" : "Dezleagă-mi contul",
       onEuDezleg: () => this.euFapta("dezleg"),
+
+      /* --- oamenii din grup (runda 2.7.5) --- */
+      // Fondatorul vede lista sosită (`oameniAre`) și, deasupra ei, caseta
+      // cererii căzute (`oameniEroare`, cu butonul ei) — amândouă deodată
+      // numai când o listă mai veche a apucat să sosească. Cine ține
+      // Setările fără să fie fondator nu vede niciuna: lui i se scrie cine
+      // leagă oamenii, iar lista nici nu i s-a cerut. Până răspunde serverul
+      // nu se desenează nimic: un „n-a apăsat nimeni” scris peste o listă
+      // nesosită ar fi o afirmație despre ce nu se știe.
+      oameniFaraFondator: !!S.auth && !eFondator,
+      oameniEroare: eFondator ? S.oameniEroare : "",
+      onOameniIar: () => this.cereOameni(),
+      // „Reîncarcă lista”, de sub rânduri. Stins și cât o faptă e pe drum:
+      // răspunsul ei aduce oricum lista de după.
+      oameniIarEt: S.oameniCer ? "Se reîncarcă…" : "Reîncarcă lista",
+      oameniIarOff: S.oameniCer || oameniPeDrum,
+      oameniAre: !!O,
+      oameniGol: !!O && O.length === 0 && !S.oameniEroare,
+      oameniRanduri,
+      oameniAreNevazuti: oameniNevazuti.length > 0,
+      oameniNevazuti,
+      oameniAreSpusJos: oameniSpusJos !== "",
+      oameniSpusJos,
+      // Serverul dă cei mai noi 50; când ține mai mulți, se spune câți.
+      oameniTaiata: !!O && S.oameniTotal > O.length,
+      oameniTaiataEt: O ? "Se văd cei mai noi " + O.length + " din " + S.oameniTotal + ", după ultima apăsare." : "",
+
+      /* --- raportul de bani pe Telegram (runda 2.7.5) --- */
+      // Aceleași chei ca în Încasări (`t…`, `proba…`, `ultimele…`), sub
+      // prefixul `bani`. Caseta roșie are cererea ei: „nimic” lasă neatins ce
+      // e scris și nesalvat, deci reîncercarea nu are ce întreba.
+      baniEroare: S.baniEroare,
+      onBaniIar: () => this.cereBani("nimic"),
+      // Cutia se desenează după ce spune răspunsul UȘII că poate omul, nu
+      // după rol: dreptul se dă din „Acces”, iar serverul e cel care știe cui.
+      baniAre: !!B && !!baniPoate.telegram && !!S.baniT,
+      // Cât „Salvează” al cutiei e pe drum, casetele ei sunt stinse (v.
+      // `scrieBani`): reușita le umple cu răspunsul serverului.
+      baniPeDrum: S.baniSalv,
+      baniChat: bt.chatId,
+      onBaniChat: (e) => this.scrieBani({ chatId: e.target.value }),
+      baniChatEroare: S.baniErori.chat || "",
+      baniChatAreEroare: !!S.baniErori.chat,
+      baniOre: [ora("ora1", "Ora 1"), ora("ora2", "Ora 2")],
+      baniOreEroare: S.baniErori.ore || "",
+      baniOreAreEroare: !!S.baniErori.ore,
+      baniAmintiri: bt.amintiri,
+      onBaniAmintiri: (e) => this.scrieBani({ amintiri: !!e.target.checked }),
+      baniUrl: bt.panelBaseUrl,
+      onBaniUrl: (e) => this.scrieBani({ panelBaseUrl: e.target.value }),
+      baniUrlEroare: S.baniErori.url || "",
+      baniUrlAreEroare: !!S.baniErori.url,
+      baniRefuz: S.baniErori.general || "",
+      baniAreRefuz: !!S.baniErori.general,
+      baniSpus: S.baniSpus,
+      baniAreSpus: !!S.baniSpus,
+      baniNeschimbat: baniNeschimbat || S.baniSalv,
+      baniSalvCls: S.baniSalv ? "h-btn h-btn--primary h-btn--loading" : "h-btn h-btn--primary",
+      onBaniSalveaza: () => this.salveazaBani(),
+      baniProbaCls: S.baniProbaZbor ? "h-btn h-btn--secondary h-btn--loading" : "h-btn h-btn--secondary",
+      onBaniProba: () => this.trimiteProbaBani(),
+      baniAreProbaSpus: !!baniProbaSpus,
+      baniProbaSpus,
+      baniProbaFel: S.baniProbaFel,
+      baniUltimele,
+      // Lista trimiterilor vine cu SETĂRILE raportului, deci lacătul e pe
+      // refuzul lor: cu răspunsul de dinainte pe ecran, „Încă nu a plecat
+      // niciun raport” n-ar mai fi adevărat după primul raport plecat între
+      // timp.
+      baniUltimeleGol: !S.baniEroare && baniUltimele.length === 0,
+      baniAreIncasari: !!baniLeg,
+      baniIncasariHref: baniLeg ? baniLeg.href : "",
 
       /* --- liste --- */
       lists,

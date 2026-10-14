@@ -6,9 +6,11 @@ zilele de după: ai modificat ceva pe calculatorul tău și vrei modificarea pe
 server, fără să pierzi nicio comandă luată până atunci și fără să scoți
 patiseria din priză.
 
-Pe cPanel toate astea se făceau cu mouse-ul, prin File Manager și phpMyAdmin —
-așa e scris `07-actualizari.md`, și așa rămâne pentru cine mai are un cPanel. Pe
-VPS ai linie de comandă, deci ai și un script.
+Pe găzduirea veche, cu cPanel, toate astea se făceau cu mouse-ul, prin File
+Manager și phpMyAdmin. cPanel nu mai e o cale: serverul de azi e un VPS, iar pe
+VPS ai linie de comandă, deci ai și un script. `07-actualizari.md` a rămas
+ghidul regulilor care nu țin de unealtă — ce nu se suprascrie niciodată, ce se
+poate reimporta și ce nu, ce verifici după.
 
 ---
 
@@ -37,7 +39,9 @@ sudo bash /root/actualizeaza-vps.sh
 Atât. Scriptul stă lângă `deploy/` și `sql/` și se descurcă singur mai departe.
 
 La actualizarea care aduce 2.7.0, citește întâi „Ziua actualizării la 2.7.0”,
-mai jos: primul lucru de acolo se face **înainte** să urci.
+mai jos: primul lucru de acolo se face **înainte** să urci. La cea care aduce
+2.7.5 n-ai nimic de făcut înainte, dar ai patru lucruri de făcut **după**, în
+ordine: sunt la „Ziua actualizării la 2.7.5”.
 
 ---
 
@@ -55,7 +59,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.7.0/deploy
+  Pachet: /root/plasture-vps 2.7.5/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -106,7 +110,7 @@ apărut în cod abia odată cu ea. Orice alt număr înseamnă că a urcat.
    comprimată, plus `api/config.php`. Copia se și verifică — se deschide și i se
    citește ultimul rând, fiindcă un fișier rupt la mijloc arată în `ls` exact ca
    unul întreg. Dacă nu iese, scriptul se oprește acolo și nu atinge nimic
-   (`actualizeaza-vps.sh:233`). Tot aici se face și o arhivă a codului de
+   (`actualizeaza-vps.sh:237`). Tot aici se face și o arhivă a codului de
    dinainte — cele patru foldere, fără `config.php` și fără poze —, cu care te
    poți întoarce la versiunea veche fără să atingi baza; comanda ți-o scrie
    raportul, la sfârșit.
@@ -126,7 +130,7 @@ apărut în cod abia odată cu ea. Orice alt număr înseamnă că a urcat.
    Registrul **însemnează, nu oprește**: migrările se rulează toate, la fiecare
    actualizare, exact ca înainte. Pe un `sql/` mai vechi decât `025` scriptul se
    întoarce singur la socoteala dinainte — măsoară schema înainte și după fiecare
-   (`actualizeaza-vps.sh:368`). Aceea e însă o ghicitoare, și se înșela tocmai
+   (`actualizeaza-vps.sh:372`). Aceea e însă o ghicitoare, și se înșela tocmai
    unde doare: `017` nu atinge DELOC schema, deci ieșea „era deja aplicată" chiar
    și la prima rulare — despre singura migrare care face recomandările să aducă
    bani.
@@ -135,10 +139,10 @@ apărut în cod abia odată cu ea. Orice alt număr înseamnă că a urcat.
    datele inițiale. A doua pare inofensivă, fiindcă are numai `INSERT IGNORE` —
    dar `IGNORE` sare peste chei duplicate, iar un produs pe care l-ai **șters**
    din Catalog n-are cu ce se ciocni și s-ar întoarce de la morți la fiecare
-   actualizare (`actualizeaza-vps.sh:526`).
+   actualizare (`actualizeaza-vps.sh:530`).
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
-   și din curățenie (`actualizeaza-vps.sh:886`), iar folderul pozelor e citit din
-   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:816`,
+   și din curățenie (`actualizeaza-vps.sh:890`), iar folderul pozelor e citit din
+   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:820`,
    `api/routes/catalog.php:874`). Folderul fișelor tehnice, `public_html/fise/`,
    **nu** e ocolit: vine cu pachetul și se scrie peste, cu tot cu curățenie, deci
    o fișă care nu mai e în pachet dispare și de pe server. Fișele încărcate din
@@ -160,6 +164,13 @@ apărut în cod abia odată cu ea. Orice alt număr înseamnă că a urcat.
 9. **O cerere adevărată către API**, de pe server către el însuși. Nu contează ce
    răspunde, ci că răspunde: un `500` aici înseamnă că PHP a pornit și s-a
    împiedicat, iar asta e mai bine să afli acum decât de la primul client.
+10. **Programul de poștă**, de la 2.7.5. Dacă serverul n-are niciun program
+    prin care PHP să poată trimite e-mail, pune unul: postfix, numai de trimis.
+    Dacă are deja unul, nu-l atinge. Vine la urmă dinadins: până aici
+    actualizarea a reușit întreagă, iar pasul ăsta nu o mai poate strica —
+    orice ar păți, spune pe galben ce n-a ieșit și merge mai departe. Cu
+    `--fara-posta` îl sare; cu `--doar-baza` nu rulează. Ce pune, de ce, și ce
+    înseamnă fiecare rând galben e la „Programul de poștă”, mai jos.
 
 **Migrările merg înaintea fișierelor.** Toate sunt aditive, deci codul vechi
 trece liniștit peste coloanele noi — nu le cere. Invers însă, codul nou pe o bază
@@ -175,13 +186,15 @@ exact în minutele dintre cele două jumătăți ale actualizării.
 | `api/config.php` | parola bazei, cheia de criptare, codul de instalare. Nu e în pachet și nu se poate reface: cheia aia descuie tokenurile salvate din Setări. |
 | pozele produselor | urcate din panoul Catalog, nu ies din niciun `build-deploy`. Folderul se citește din `photo_dir` și se ocolește. Tot acolo stau și fișele tehnice încărcate din Catalog. Fișele venite cu pachetul, din `fise/`, **nu** sunt în rândul ăsta: ele se scriu peste la fiecare actualizare. |
 | rândurile din bază | toate migrările sunt aditive. Nimic nu se șterge și nimic nu se rescrie. |
-| certificatele, gazdele virtuale, `apt` | treaba instalării, nu a actualizării. De-aia actualizarea ține sub un minut. Tot de-aia nu instalează nici `cron`, dacă serverul nu-l are: îți spune comanda și merge mai departe (vezi „Ceasul plăților”). |
-| orele raportului, chatul lui, pragul, adresa panoului | alese de tine în „Încasări”. Migrarea `032` le scrie numai dacă lipsesc, deci o actualizare de după nu le calcă. |
+| certificatele, gazdele virtuale, pachetele serverului | treaba instalării, nu a actualizării. De-aia actualizarea ține sub un minut. Tot de-aia nu instalează nici `cron`, dacă serverul nu-l are: îți spune comanda și merge mai departe (vezi „Ceasul plăților”). **O singură abatere**, de la 2.7.5: programul de poștă. Dacă serverul n-are niciunul, pasul de la coadă îl instalează (un pachet, o dată; poate ține un minut) — fără el, e-mailul n-ar avea pe unde pleca până completezi căsuța. Cu `--fara-posta` nu-l pune (vezi „Programul de poștă”). |
+| un program de poștă pe care serverul îl are deja | pasul de la coadă îl recunoaște și **nu-i schimbă nimic**, oricare ar fi el. Se uită numai, fără să scrie, dacă merge și dacă e așezat cum trebuie, și îți spune pe galben ce a găsit. |
+| orele raportului, chatul lui, pragul, adresa panoului | alese de tine în „Încasări” ori, de la 2.7.5, în Setări → Notificări. Migrarea `032` le scrie numai dacă lipsesc, deci o actualizare de după nu le calcă. |
+| căsuța de e-mail scrisă în Setări → Notificări | cele cinci rânduri ale ei le pune migrarea `037` cu `INSERT IGNORE`: ce e deja scris rămâne, cu tot cu parola căsuței. |
 
 Fișierele `api/setup.php` și `api/verifica.php` sunt un caz aparte: ghidul de
 instalare cere ștergerea lor, dar amândouă sunt în pachet, deci copierea le-ar
 pune la loc de fiecare dată. Scriptul ține minte care lipseau și le scoate din
-nou (`actualizeaza-vps.sh:835`). Se închid și singure, cu `404`, din clipa în
+nou (`actualizeaza-vps.sh:839`). Se închid și singure, cu `404`, din clipa în
 care instalarea are un administrator activ — dar hotărârea rămâne a ta.
 
 ---
@@ -195,11 +208,20 @@ disc (`df -h`) sau drepturi lipsă pe baza de date.
 
 **O migrare a picat.** Fișierele **nu** au fost copiate — serverul merge mai
 departe cu versiunea veche, întreagă. Îți scrie pe ecran mesajul lui MySQL și
-comanda cu care pui baza la loc, cu calea copiei de azi în ea:
+comanda cu care pui baza la loc. **O copiezi de pe ecran, nu din ghid**:
+scriptul a pus deja în ea calea copiei de azi și numele bazei, deci n-ai nimic
+de completat, iar comanda nu cere nicio parolă. Are forma asta, cu numele tale
+în locul punctelor:
 
-```bash
-gunzip -c /var/backups/golden-pastry/gp-ANUL-LUNA-ZIUA-ORA.sql.gz | mysql -u gp -p --default-character-set=utf8mb4 gp
 ```
+gunzip -c /var/backups/golden-pastry/gp-….sql.gz | sudo mysql --default-character-set=utf8mb4 …
+```
+
+Până la 2.7.5 rândul tipărit cerea parola bazei (`mysql -u … -p`), pe care n-ai
+de unde s-o știi pe de rost: o generează instalarea și stă numai în
+`api/config.php`. Atenție la ce face: duce baza înapoi la clipa copiei și
+**șterge tot ce s-a scris de atunci**. După o migrare picată nu s-a scris încă
+nimic nou, deci aici e chiar leacul.
 
 **API-ul răspunde cu `500` la sfârșit.** Fișierele sunt copiate, deci ceva din
 codul nou nu se împacă cu serverul. Scriptul îți arată ultimele rânduri din
@@ -348,6 +370,14 @@ niciun raport, oricât de bine ar fi ales chatul în „Încasări”, și nimic
 panou nu spune de ce. De aceea scriptul îl pune singur, la pasul „Ceasul
 plăților”, și spune pe față când n-a putut.
 
+**De la 2.7.5, unde scrie mai jos „în „Încasări””, citește „în „Încasări” ori
+în Setări → Notificări”.** Chatul, orele, amintirile și adresa panoului se aleg
+la fel din cutia „Raport de bani pe Telegram”, ultima din cartonașul
+„Telegram”. Sunt aceleași setări, arătate în două pagini: ce salvezi într-un
+loc găsești în celălalt. Cutia are „Salvează” al ei; butonul din bara de sus a
+Setărilor nu salvează raportul. Tot acolo stau „Trimite acum un raport de
+probă” și „Ultimele trimiteri”.
+
 **Ce scrie.** Un singur fișier, `/etc/cron.d/goldenpastry-plati`, al lui
 `root`, cu drepturile `644` și cu exact aceste trei rânduri:
 
@@ -406,8 +436,9 @@ comanda care îl pune:
 apt-get install -y cron
 ```
 
-Actualizarea nu instalează pachete, deci comanda o dai tu, o singură dată în
-viața serverului. După ea nu mai rulezi nimic: `cron` pornește singur, iar
+Actualizarea nu instalează `cron` (singurul pachet pe care îl pune ea, de la
+2.7.5, e programul de poștă), deci comanda o dai tu, o singură dată în viața
+serverului. După ea nu mai rulezi nimic: `cron` pornește singur, iar
 rândul e deja la locul lui. Dacă programul există, scriptul îl pornește, îl
 lasă pornit la fiecare repornire a mașinii și scrie „serviciul cron merge”;
 dacă tot nu merge, scrie „Rândul e scris, dar serviciul cron e oprit: ceasul NU
@@ -494,8 +525,9 @@ trimiteri se văd în „Încasări”, la „Ultimele trimiteri”; cardul în 
 „Raport pe Telegram”, îl vede din pornire numai fondatorul.
 
 **Cum îl oprești.** Dacă nu vrei rapoarte, nu umbla la server: în „Încasări”,
-la cardul „Raport pe Telegram”, apasă „Oprește” la „Ora 1” și la „Ora 2”,
-stinge „Amintiri la Amânate” și apasă „Salvează”. Ceasul bate mai departe, dar
+la cardul „Raport pe Telegram” (ori, de la 2.7.5, în Setări → Notificări, la
+cutia „Raport de bani pe Telegram”), apasă „Oprește” la „Ora 1” și la „Ora 2”,
+stinge „Amintiri la Amânate” și apasă „Salvează”, cel al cardului. Ceasul bate mai departe, dar
 scrie „oprit: nicio oră de raport aleasă, iar amintirile sunt oprite” și nu
 trimite nimic; îl pornești la loc scriind orele înapoi și salvând. Fișierul din
 `/etc/cron.d` se poate și șterge, dar ține numai până la actualizarea
@@ -519,8 +551,144 @@ rm -f /etc/cron.d/goldenpastry-plati
 
 Actualizarea următoare cu un pachet de la 2.7.0 în sus îl pune la loc.
 
+**Dacă întorci codul la 2.7.0 și ai completat căsuța de e-mail.** Codul 2.7.0
+ascunde parola căsuței (`mail_smtp_password`, adusă de migrarea 037) ca pe
+celelalte chei ascunse: cu buline, dar cu ULTIMELE PATRU SEMNE la vedere,
+oricui are dreptul „Setări” (2.7.5 nu trimite din ea nimic). Deci, înainte să
+întorci codul, deschide Setări › Notificări › E-mail, apasă „Șterge parola” și
+„Salvează”. Dacă ai întors deja codul, schimbă parola căsuței la furnizorul de
+e-mail. Când urci din nou 2.7.5, scrii parola nouă în „Parola căsuței”.
+
 Ce ai de făcut în panou în ziua în care urci 2.7.0 — chatul, orele, pragul —
 e mai jos, la „Ziua actualizării la 2.7.0”.
+
+---
+
+## Programul de poștă
+
+Prima actualizare la 2.7.5 se încheie cu un pas nou, „Programul de poștă”.
+De la 2.7.5, e-mailul aplicației — anunțurile de comenzi și linkurile de la
+„Ți-ai uitat parola?” — are două drumuri: **căsuța firmei**, când e completată
+în Setări → Notificări, în cartonașul „E-mail”, și, cât căsuța e goală,
+**drumul direct**, pe care PHP predă mesajul unui program de poștă al mașinii.
+Un server pus cu `instaleaza-vps.sh` înainte de 2.7.5 n-a primit niciodată un
+asemenea program: instalarea nu punea niciunul, iar pe găzduirea veche îl ținea
+gazda. Pe un asemenea server nu pleca niciun e-mail, iar panoul spunea mai
+departe că merge. După toate semnele, așa stă și serverul de azi; sigur ți-o
+spune pasul, la prima rulare.
+
+**Unde stă în lucrare.** La coadă, după cererea de probă către API și înainte
+de „Gata”. Până la el, baza, fișierele și Apache sunt deja la locul lor, iar
+pasul nu are nicio ieșire cu eroare: orice piedică e un rând galben, cu ce ai
+de făcut, într-un raport care se încheie tot cu `Actualizat.` verde. Rulează și
+cu `--doar-fisiere`; cu `--doar-baza` scrie „Sărit (--doar-baza).”.
+
+**Ce pune, dacă serverul n-are niciun program de poștă.** postfix, numai de
+trimis, așezat la fel ca la instalare: ascultă numai pe 127.0.0.1, trimite
+numai pe IPv4, nu se socotește gazda domeniului tău și trimite în numele lui.
+De ce fiecare din cele patru, și aceleași lucruri făcute cu mâna, sunt în
+[08-publicare-vps-hostinger.md](08-publicare-vps-hostinger.md), la pasul 6c.
+Domeniul nu ți-l cere: îl ia din adresa site-ului scrisă în `api/config.php`,
+fără `www.` în față. Instalarea poate ține un minut și se face o singură dată.
+
+**Ce vezi pe o rulare fără piedici**, la actualizarea care îl aduce (în locul
+punctelor stă numele serverului care primește poșta domeniului tău):
+
+```
+▸ Programul de poștă
+  instalez postfix, numai de trimis (poate ține un minut)…
+  postfix — pus: ascultă numai pe 127.0.0.1, trimite ca @goldenpastry.ro
+  portul 25 spre lume e deschis (am ajuns la …)
+  Calea de nădejde rămâne căsuța (SMTP): ce pleacă direct de pe server ajunge des în Spam.
+  Proba adevărată: butonul „Trimite e-mail de test” din Setări → Notificări → E-mail.
+  Ce n-a plecat:  mailq      De ce:  tail -30 /var/log/mail.log
+```
+
+La actualizările de după, primele două rânduri se schimbă în
+`serverul are deja un program de poștă (/usr/sbin/sendmail) — nu-l ating` și
+`serviciul postfix merge`. Nu e alt program: e chiar postfix-ul pus data
+trecută, pe care pasul îl găsește gata și nu-l mai atinge. Tot așa scrie și pe
+un server care avea dinainte un program de poștă al lui, oricare ar fi el.
+
+**Rândurile fără galben, pe scurt.** Cele două de mai sus; cele trei de la
+capăt, care vin de câte ori pasul ajunge până acolo — nu și când l-ai sărit,
+nici când s-a oprit la unul din primele trei rânduri galbene din tabelul de
+mai jos, fiindcă n-a putut pune programul; `Sărit (--fara-posta). …`, când ai
+cerut tu;
+și `portul 25 nu l-am putut încerca (n-am aflat cine primește poșta lui …)`,
+când serverul n-a putut afla la cine să bată — atunci despre port nu știi
+nimic, nici de bine, nici de rău.
+
+**Rândurile galbene.** Niciunul nu oprește actualizarea și niciunul nu
+înseamnă că s-a stricat ceva din ce mergea. Fiecare spune că pe drumul direct
+e-mailul nu pleacă ori nu ajunge, și fiecare are același leac de rezervă:
+căsuța firmei, completată în Setări → Notificări.
+
+| Rândul galben | Ce înseamnă | Ce faci |
+|---|---|---|
+| `Nu am putut citi domeniul site-ului, deci NU am pus programul de poștă.` | în `api/config.php` adresa site-ului lipsește ori nu e un nume de domeniu; fără el, programul n-ar avea în numele cui să trimită | completezi căsuța; pe drumul direct nu pleacă nimic. Rândul vine de obicei împreună cu „Proba de viață a fost sărită”, din aceeași pricină |
+| `Serverul nu are apt: programul de poștă NU a fost pus.` | mașina nu e un Ubuntu ori un Debian, ori îi lipsește unealta cu care se răspunde dinainte la întrebările instalării | completezi căsuța, ori pui tu un program de poștă, numai de trimis |
+| `Programul de poștă NU s-a putut instala (apt a refuzat ori n-are legătură).` | pachetul n-a putut fi adus. Sub el scrie „Restul lucrării e întreg.” și e adevărat: actualizarea a reușit | completezi căsuța. Dacă vrei și drumul direct, vezi „După o instalare picată”, sub tabel |
+| `postfix s-a instalat, dar nu l-am putut așeza (postconf a refuzat).` | pachetul e pe mașină, dar cele trei așezări n-au intrat: nu te bizui pe el | completezi căsuța; așezarea o dai cu mâna, cu rândul de sub tabel |
+| `Programul de poștă se socotește gazda lui … (mydestination).` | programul crede că domeniul tău e al lui: un mesaj către o adresă a domeniului — și tocmai la una merg anunțurile de comenzi — rămâne pe server în loc să plece la căsuța adevărată | dai comanda scrisă sub rând: `postconf -e 'mydestination = localhost.localdomain, localhost' && systemctl restart postfix`. O lași cum e numai dacă serverul chiar ține căsuțele domeniului, ceea ce pe o instalare făcută după ghid nu se întâmplă |
+| `Programul de poștă e instalat, dar oprit: pe calea directă NU pleacă nimic.` | serviciul nu merge | `systemctl enable --now postfix`, iar dacă tot nu pornește, `systemctl status postfix` spune de ce |
+| `Portul 25 pare închis de găzduire (n-am ajuns la …).` | singura legătură încercată spre serverul care primește poșta domeniului n-a ieșit în opt secunde. Dacă portul chiar e închis, mesajele rămân în coadă și nu pleacă, **fără nicio eroare în panou** | completezi căsuța: „Leacul nu e pe server”. „Pare” e spus cu rost — e o singură încercare, iar celălalt server putea fi el ocupat; `mailq`, după un e-mail de test, arată dacă mesajul a rămas pe loc |
+
+Așezarea cu mâna, pentru rândul cu `postconf` și pentru cazul de mai jos:
+
+```bash
+postconf -e 'inet_interfaces = loopback-only' 'inet_protocols = ipv4' 'mydestination = localhost.localdomain, localhost'
+```
+
+```bash
+systemctl restart postfix
+```
+
+**După o instalare picată.** Scriptul îți scrie cele două rânduri de dat mai
+târziu: instalarea, `DEBIAN_FRONTEND=noninteractive apt-get install -y postfix`,
+și așezarea cu repornirea, `postconf -e … && systemctl restart postfix`. Dă-le
+pe AMÂNDOUĂ: la o rulare de după, pasul găsește programul gata pus și, după
+regula lui, **nu-l mai așază** — scrie „nu-l ating” și, cel mult, rândul galben
+cu `mydestination`. Apoi rulează actualizarea încă o dată, cu `--doar-fisiere`,
+ca să vezi ce spune pasul.
+
+**`--fara-posta`.** Sare pasul cu totul:
+
+```bash
+sudo bash /root/actualizeaza-vps.sh --fara-posta
+```
+
+Îl alegi dacă nu vrei pe mașină niciun program de poștă. Nu pierzi drumul de
+nădejde — cu căsuța completată, e-mailul pleacă prin ea și n-are nevoie de
+program —, pierzi numai plasa: cât căsuța e goală, nu pleacă nimic, iar
+cartonașul „E-mail” o scrie pe față. Două lucruri de știut. Opțiunea **nu se
+ține minte**: o dai la fiecare actualizare, altfel prima rulată fără ea pune
+programul. Și nu scoate nimic: pe un server care are deja un program de poștă,
+pasul oricum nu face nimic, cu ea ori fără ea.
+
+**Portul 25, și ce se știe despre el.** Un program de poștă trimite spre lume
+pe portul 25, iar multe găzduiri îl țin închis. După pagina de ajutor a
+găzduirii („Is SMTP port 25 blocked on VPS?”), Hostinger **nu** închide portul
+25 pe VPS-urile lui, dar ține e-mailul trimis la cel mult cinci mesaje pe
+minut. E ce spune găzduirea, nu ceva măsurat de noi pe serverul tău: de aceea
+pasul încearcă el portul, la fiecare rulare, fără să trimită niciun mesaj, și
+spune ce a văzut.
+
+**Ce nu făgăduiește drumul direct**, nici cu portul deschis. Un mesaj plecat
+de pe server n-are semnătura domeniului (DKIM), iar regula domeniului pentru
+expeditori (SPF) e „~all”: e de așteptat să ajungă des în **Spam**. Și „predat”
+nu înseamnă „ajuns”: aplicația află numai că programul de poștă a primit
+mesajul. Ce a rămas în coadă arată `mailq`; de ce, `tail -30 /var/log/mail.log`
+ori, unde fișierul lipsește, `journalctl -u 'postfix*' -n 30 --no-pager` —
+pasul îți scrie la capăt care din două e a serverului tău. De aceea drumul de
+nădejde rămâne căsuța, iar proba adevărată e butonul „Trimite e-mail de test”:
+amândouă sunt la pasul 3 din „Ziua actualizării la 2.7.5”.
+
+**Ce nu s-a încercat.** Pasul a fost probat numai pe un server închipuit — un
+dosar de lucru în care instalarea pachetului și repornirea serviciului sunt
+jucate, nu făcute. Pe o mașină adevărată, și pe VPS-ul de azi, încă nu rulase
+la data scrierii. Dacă la prima rulare scrie altceva decât e aici, crede
+ecranul, nu ghidul, și păstrează rândurile.
 
 ---
 
@@ -536,11 +704,14 @@ e mai jos, la „Ziua actualizării la 2.7.0”.
 | `--doar-baza` | numai copia și migrările |
 | `--doar-fisiere` | numai fișierele, baza rămâne neatinsă |
 | `--fara-copie` | sari peste copie — numai dacă tocmai ai făcut una cu mâna |
+| `--fara-posta` | de la 2.7.5: nu pune programul de poștă (postfix, numai de trimis). E-mailul pleacă atunci numai prin căsuța din Setări → Notificări |
 
 `--doar-baza` și `--doar-fisiere` sunt pentru repornirea unei actualizări care a
 picat la mijloc: repari ce era de reparat și continui de unde a rămas. Ceasul
 plăților ține de fișiere: se pune și cu `--doar-fisiere`, iar cu `--doar-baza`
-nu se atinge.
+nu se atinge. La fel programul de poștă: pasul lui rulează și cu
+`--doar-fisiere`, iar cu `--doar-baza` scrie „Sărit (--doar-baza).” și nu
+face nimic.
 
 ---
 
@@ -553,7 +724,7 @@ nu se atinge.
   de cât de veche e instalarea: pe una lăsată în urmă cu trei versiuni se aprind
   trei, pe una deja la zi niciuna. A doua oară scriu toate „era deja
   aplicată" — e în regulă, asta înseamnă. Cea mai nouă migrare din pachet e
-  `sql/035_comenzi_sterse.sql`;
+  `sql/037_posta_smtp.sql`;
 - **numărul de tabele**, în capul raportului, la „Baza de date”. Scriptul
   numără tabelele o singură dată, **înaintea** migrărilor, deci la rularea care
   aduce tabele noi capul arată încă numărul de dinaintea lor. La actualizarea
@@ -578,7 +749,16 @@ nu se atinge.
   `021` încoace raportul a arătat **24**, iar `025` l-a dus la **25**, unde a
   stat până la `032` — care pune numai coloane, indexuri și setări. `033`,
   `034` și `035` nasc câte un tabel și îl urcă la **28**, cifră pe care capul
-  raportului o scrie abia de la rularea de după cea care le aduce;
+  raportului o scrie abia de la rularea de după cea care le aduce.
+
+  La fel la actualizarea care aduce 2.7.5: pe o instalare ținută la zi capul
+  scrie **28 de tabele**, nu 29. Al douăzeci și nouălea, `telegram_oameni`, îl
+  vezi la „Migrări”, pe rândul verde al lui `036_telegram_oameni.sql`, cu
+  „aplicată acum” și, în paranteză, cu „1 tabel” urmat de numărul coloanelor
+  aduse — ale tabelului și cele două puse pe `order_requests`. Rândul lui
+  `037_posta_smtp.sql` vine fără paranteză: ea nu aduce nici tabel, nici
+  coloană, ci cinci rânduri de setări. **29 de tabele** scrie capul de la
+  rularea următoare încolo;
 - linia **`api.DOMENIU răspunde (200)`**. Cifra din paranteză e codul cu care a
   răspuns API-ul la proba scriptului, făcută ca un vizitator nelogat: pe o
   instalare sănătoasă e 200, iar orice cod care începe cu 2 ori cu 4 e bun. Ce
@@ -590,6 +770,12 @@ nu se atinge.
   „neschimbat” la cele de după — și, sub el, „serviciul cron merge”. Orice
   rând galben de aici înseamnă că rapoartele de încasări nu vor pleca; ce spune
   fiecare e la „Ceasul plăților”, mai sus;
+- de la 2.7.5, la pasul „Programul de poștă”, ori rândul
+  „postfix — pus: ascultă numai pe 127.0.0.1, trimite ca @DOMENIU”, ori
+  „serverul are deja un program de poștă (…) — nu-l ating”. Un rând galben de
+  aici nu oprește nimic și nu strică actualizarea, dar spune că pe drumul
+  direct e-mailul nu pleacă ori nu ajunge; ce înseamnă fiecare e la „Programul
+  de poștă”, mai sus;
 - căile celor două copii — a bazei și a codului.
 
 Apoi, din browser: intră în panou, deschide **Recomandări** și **Catalog**. Dacă
@@ -660,14 +846,14 @@ cineva s-o poată schimba.
 
 Pentru `017` și `018`, raportul face singur privirea asta, după `Bilanț:`:
 citește din bază procentul, adresa și programul și le spune cu valoarea lor
-(`actualizeaza-vps.sh:636`, `:718`). Un rând galben care spune că `017` sau
+(`actualizeaza-vps.sh:640`, `:722`). Un rând galben care spune că `017` sau
 `018` **n-a intrat** e o migrare lipsă — aproape mereu un folder `sql/` urcat
 mai vechi decât pachetul; la procent îl dă și un `0` rămas de la casă, pe care
 `017` l-ar fi urcat la 5. Un rând galben care începe cu **„N-am putut citi…"**,
 cu eroarea lui mysql dedesubt, e altceva: migrările au trecut, a picat numai
 întrebarea de după ele, deci raportul nu știe ce e acolo și nu ghicește. Nu
 rulezi din nou pentru atât; te uiți tu, în Setări. La fel vorbește și rândul
-conturilor făcute pe site pe care nu le-a recunoscut nimeni (`:784`): acolo o
+conturilor făcute pe site pe care nu le-a recunoscut nimeni (`:788`): acolo o
 citire picată tăcea înainte, exact ca „niciun cont", iar acum se aude.
 
 `019_jeton_cerere.sql` se vede în numărul de tabele: e `request_claims`, al
@@ -683,11 +869,14 @@ socoteala lor merge mai încet. Dacă vrei s-o vezi cu ochii:
 
 `021_raspundere.sql` se vede pe jumătate: cele două tabele noi urcă numărul de
 la 22 la **24**, dar coloana și indexul din ea nu se văd nicăieri în raport.
-Ce lipsește dacă lipsesc, pe rând. Fără `telegram_links`, butonul „Leagă
-Telegramul" din „Parola mea" nu pornește. Fără `users.telegram_user_id`, orice
-comandă acceptată dintr-un buton de Telegram iese pe numele celui care a legat
-botul întâia oară — oricine ar fi apăsat, și **fără niciun semn**: codul cade
-înapoi pe felul de dinainte, care avea un singur nume pentru tot grupul. Fără
+Ce lipsește dacă lipsesc, pe rând. Fără `telegram_links`, cutia „Contul meu de
+Telegram” din Setări → Notificări nu se desenează deloc, deci nimeni nu-și
+poate lega contul. Fără `users.telegram_user_id`, serverul nu recunoaște pe
+nimeni din grup. De la 2.7.5 asta nu mai înseamnă un nume greșit, ci unul
+neverificat: orice apăsare se scrie pe drepturile contului care a legat botul,
+dar cu numele de pe Telegram al celui care a apăsat și cu vorba „cont nelegat”
+(v. `036`, mai jos). Până la 2.7.5 ieșea pe numele celui care legase botul,
+oricine ar fi apăsat, și **fără niciun semn**. Fără
 `lab_production`, raportul de producție pe tură din „Pontaj" iese **gol, nu cu
 eroare** — lipsa asta se descoperă la prima plată, nu la actualizare, deci e
 singura din toate care merită privită cu ochii chiar în ziua actualizării:
@@ -972,6 +1161,55 @@ rularea care le aduce, capul raportului scrie încă 25, fiindcă tabelele se
 numără înaintea migrărilor; pe cele trei le vezi pe rândurile lor verzi, de la
 „Migrări”, iar 28 apare în cap de la rularea următoare.
 
+`036_telegram_oameni.sql` se vede și ea în numărul de tabele: e
+`telegram_oameni`, al douăzeci și nouălea. Mai pune două coloane pe
+`order_requests`, `handled_tg_id` și `handled_tg_name`. Tabelul ține minte cine
+a apăsat un buton sub un anunț din grupul de pe Telegram — numele de acolo și
+câte apăsări —, ca fondatorul să-l poată lega de contul lui din cutia „Oameni
+din grup” (Setări → Notificări); coloanele țin, pe cererea hotărâtă, numele
+celui care a apăsat fără să aibă contul legat. Se naște gol: migrarea nu leagă
+și nu dezleagă pe nimeni și nu atinge nicio cerere veche. Cine și-a legat
+contul înainte de actualizare, din cutia „Contul meu de Telegram”, rămâne
+legat. **Toți ceilalți — și tu, dacă nu ți l-ai legat — apar din prima clipă
+cu „cont nelegat”** (vezi „Ziua actualizării la 2.7.5”, mai jos).
+
+În fereastra dintre fișiere și import — fișierele noi pe o bază încă fără
+`036` — cine are contul legat apasă mai departe ca până acum. Apăsarea unui om
+cu contul nelegat e **refuzată**, fără să se scrie ceva: pe telefon citește
+„Contul tău de Telegram nu e legat de niciun cont, iar serverul n-are încă unde
+să-ți scrie numele: lipsește migrarea sql/036_telegram_oameni.sql. Nu am scris
+nimic.” Cutia „Oameni din grup” arată, în locul listei, „Lista „Oameni din
+grup” n-are încă tabelul ei: rulează întâi sql/036_telegram_oameni.sql.” Cum
+scriptul pune migrările înaintea fișierelor, fereastra asta o vezi numai după
+un `--doar-fisiere`.
+
+`037_posta_smtp.sql` **nu se vede în raport** altfel decât pe rândul ei: nici
+tabel, nici coloană, nici index — cinci rânduri în `settings`, cele ale căsuței
+de e-mail a firmei: `mail_smtp_host`, `mail_smtp_port` (din pornire `465`),
+`mail_smtp_user`, `mail_smtp_password` (ținută criptată) și
+`mail_smtp_security` (din pornire `auto`). Le scrie cu `INSERT IGNORE`, deci
+actualizările de după nu calcă nimic din ce ai completat — aceeași lecție ca la
+`028` și `032`. O ceri singur, fără să scoți la vedere parola căsuței:
+
+```sql
+SELECT setting_key FROM settings WHERE setting_key LIKE 'mail_smtp_%';
+```
+
+Trebuie să iasă cinci rânduri. Interogarea cere numai numele rândurilor, nu și
+valorile: una dintre ele e parola.
+
+Căsuța se naște **goală**: migrarea nu știe nici serverul, nici parola ei. Până
+o completezi, e-mailul pleacă pe drumul direct, prin programul de poștă al
+serverului — iar dacă serverul n-are unul, nu pleacă deloc (vezi „Programul de
+poștă”, mai sus). Fără `037`, casetele căsuței din cartonașul „E-mail” stau
+închise, sub rândul „Căsuța nu se poate completa încă: pe server lipsesc
+rândurile ei, fiindcă migrarea sql/037_posta_smtp.sql n-a intrat. Rulează
+actualizarea (sudo bash actualizeaza-vps.sh), apoi reîncarcă pagina.”, și
+rămâne numai drumul direct.
+
+După cele două, baza are **29** de tabele; la rularea care le aduce, capul
+raportului scrie încă 28.
+
 ---
 
 ## Ziua actualizării la 2.7.0
@@ -1176,6 +1414,152 @@ iar cea bună e `api.telegram.org`. Dacă e alta, golești cheia din fișier.
 
 ---
 
+## Ziua actualizării la 2.7.5
+
+Actualizarea la 2.7.5 nu-ți cere nimic **înainte** să urci și nu mută nimic de
+la sine: nicio comandă, niciun preț, niciun drept, nicio parolă. Îți lasă însă
+patru lucruri de făcut **după**, în panou, cu contul de **fondator**. Sunt puse
+în ordinea în care merită făcute, iar primul e contul **tău** de Telegram:
+lipsa lui se vede în grup de la prima cerere pe care o accepți de pe telefon.
+
+**Ce găsești când deschizi panoul.** Întâi îl reîncarci: o pagină rămasă
+deschisă dinaintea actualizării e pagina veche. Apoi:
+
+- **În grupul de pe Telegram**, cine apasă „Acceptă” ori „Respinge” fără să
+  aibă contul legat apare cu numele lui de pe Telegram și cu vorba „cont
+  nelegat” — de pildă „✅ Acceptată de Ion Pop, de pe Telegram (cont nelegat)”.
+  Nu e o eroare, iar hotărârea se scrie ca înainte. Până la 2.7.5 toate
+  apăsările acelea ieșeau, fără niciun semn, pe numele celui care legase
+  botul; acum poartă numele celui care a apăsat și niciodată al altcuiva. Cine
+  și-a legat contul înainte de actualizare rămâne legat.
+- **În Setări → Notificări, cartonașul „E-mail”** scrie, chiar sub titlu, pe
+  ce drum pleacă e-mailul. După o actualizare fără rânduri galbene la
+  „Programul de poștă” e de așteptat rândul de pe fond galben, „Trimite direct
+  de pe server. Fără o căsuță în spate, mesajele pot ajunge în Spam ori deloc.
+  Completează căsuța de mai jos ca să fie sigur.” Dacă pasul n-a putut pune
+  programul, e de așteptat rândul roșu: „Serverul nu are niciun program de
+  poștă: acum NU pleacă niciun e-mail. Completează căsuța de mai jos.”
+- **Raportul de bani** are acum setările și în Setări → Notificări, în cutia
+  „Raport de bani pe Telegram”. Sunt cele din „Încasări”, nu altele: n-ai
+  nimic de ales din nou.
+- **Parolele propuse** de „Generează” și de „Propune o parolă” sunt de felul
+  „caramel4821”. Cele date până acum rămân bune.
+
+**1. Contul tău de Telegram.** În Setări → Notificări, în cartonașul
+„Telegram”, la cutia „Contul meu de Telegram”, uită-te la insigna de lângă
+titlu. Dacă scrie „Legat”, ți l-ai legat înainte și n-ai nimic de făcut. Dacă
+scrie „Nelegat”:
+
+1. apeși „Leagă-mi contul”. Pagina răspunde „Butonul a plecat în grupul de pe
+   Telegram. Apasă-l de pe telefonul tău, apoi întoarce-te aici și
+   încuviințează.”;
+2. pe telefon, în grup, apeși butonul trimis de bot pentru tine;
+3. te întorci în Setări și **reîncarci pagina** — cutia își citește starea
+   numai la deschidere. Acum scrie „A apăsat: …”, cu numele de pe Telegram al
+   celui care a apăsat;
+4. dacă numele e al tău, apeși „Da, eu am apăsat”. Pagina răspunde „Gata. De
+   acum, ce apeși de pe telefon se scrie în Jurnal pe numele tău.”, iar
+   insigna trece pe „Legat”.
+
+Dacă numele **nu** e al tău — un coleg a apăsat butonul trimis pentru tine —,
+nu încuviința: de-atunci încolo apăsările lui ar purta numele tău. Apasă
+„Trimite alt buton” și ia-o de la pasul 2. Butonul ține o jumătate de oră. Se
+desface cu „Dezleagă-mi contul”. Dacă „Leagă-mi contul” stă stins, botul nu e
+legat: apasă întâi „Leagă botul”, în cutia de deasupra.
+
+**2. Colegii, din „Oameni din grup”.** E cutia de dedesubt, iar lista ei o are
+numai fondatorul. Lista se umple din apăsări, nu din membrii grupului, și se
+naște goală: până apasă cineva un buton după actualizare scrie „Încă n-a apăsat
+nimeni un buton în grup.” Nu le cere colegilor să hotărască ceva numai de
+probă — apăsarea unui om nelegat lucrează de-adevăratelea. Lasă să vină de la
+sine: fiecare intră în listă la prima cerere pe care o hotărăște de pe
+telefon. Dacă sub anunțul unei cereri mai vechi, deja hotărâte, au rămas
+butoanele, merge și o apăsare acolo: telefonul îi răspunde că cererea a fost
+deja acceptată ori respinsă, nu se scrie nimic, iar omul intră în listă.
+
+Apoi apeși „Reîncarcă lista”, iar pe rândul omului alegi, din „Alege contul…”,
+contul lui din aplicație și apeși „Leagă”. Pagina răspunde „Legat. De-acum, ce
+apasă de pe telefon se scrie pe numele contului.” Trei lucruri de știut:
+
+- **„Leagă numai un om pe care îl recunoști.”** Numele din listă și-l pune
+  fiecare singur, pe Telegram. Dacă nu ești sigur cine e, roagă-l să mai apese
+  o dată cât ești lângă el și apasă „Reîncarcă lista”: rândul lui e cel la
+  care se mișcă „ultima apăsare”.
+- **Un cont cu coada „— nu poate hotărî cereri”** se poate lega, dar omul
+  legat de el apasă și e refuzat. Nelegat, lucra pe drepturile contului care a
+  legat botul; legat, lucrează pe ale lui. Dă-i întâi dreptul de a scrie
+  comenzi, din pagina „Acces”, ori lasă-l nelegat.
+- **Ce a hotărât cineva înainte de legare rămâne scris cu „cont nelegat”.**
+  Numai apăsările de după poartă numele contului.
+
+Se desface cu „Dezleagă”, pe rândul omului. Un cont legat înainte de 2.7.5
+al cărui om n-a mai apăsat nimic în grup n-are rând în listă: stă dedesubt,
+sub „Conturi legate care n-au mai apăsat nimic în grup”, tot cu „Dezleagă”.
+Dacă nu știi al cui e telefonul legat acolo, dezleagă-l.
+
+**3. Căsuța firmei și e-mailul de test.** E pasul care face din e-mail un
+lucru pe care te poți bizui. La furnizorul domeniului tău alegi ori faci o
+căsuță de e-mail a firmei. Apoi, în Setări → Notificări, în cartonașul
+„E-mail”, la „Căsuța prin care se trimite (SMTP)”:
+
+1. completezi „Server SMTP”, „Port” și „Utilizator”. Numele serverului și
+   portul le citești din contul tău de la furnizor, de la setările căsuței:
+   ghidul nu le scrie, fiindcă le hotărăște furnizorul. „Criptare” rămâne pe
+   „Automat (după port)” dacă furnizorul nu spune altceva;
+2. la „Parola căsuței” tastezi tu parola. **N-o spui nimănui** — nici celui
+   care îți îngrijește aplicația — și n-o scrii în niciun fișier și în niciun
+   mesaj. Cât o scrii se vede pe ecran, deci scrie-o când nu-ți stă nimeni
+   peste umăr;
+3. la „Adresa expeditor”, mai sus în cartonaș, scrii chiar adresa căsuței;
+4. apeși „Salvează”, în bara de sus. Rândul de sub titlul „E-mail” trece pe
+   verde: „Trimite prin căsuța …”, cu utilizatorul, serverul și portul ei;
+5. apeși „Trimite e-mail de test”. Poate ține până la o jumătate de minut.
+   Răspunsul bun e „Căsuța … a luat în primire mesajul de test pentru … De aici
+   îl duce furnizorul căsuței: caută-l în Inbox, iar dacă nu e acolo, în Spam.”;
+6. cauți mesajul la „Adresa care primește anunțul”, **în Inbox și în Spam**.
+   Numai mesajul găsit acolo e dovada; răspunsul paginii spune doar că a
+   plecat.
+
+Un test picat își scrie pricina lângă buton, cu ce ai de făcut. Se desface
+golind „Server SMTP” și salvând: e-mailul se întoarce pe drumul direct. Dacă
+sari pasul ăsta, e-mailul pleacă mai departe direct de pe server, fără nicio
+făgăduială că ajunge. Fiecare casetă, pe larg, e în
+[02-panoul-de-setari.md](02-panoul-de-setari.md), la „E-mailul: căsuța firmei
+și drumul direct”.
+
+**4. „Ți-ai uitat parola?”, cu contul tău.** E drumul întreg, cel de la care a
+pornit runda. Vezi întâi, în „Conturi”, pe fișa contului tău, că la „E-mail de
+recuperare” e trecută o adresă pe care o citești: fără ea nu pleacă nimic.
+Apoi, într-o fereastră privată a browserului, ca să nu ieși din cont, deschizi
+panoul — nelogat, îți arată pagina de intrare —, apeși „Ți-ai uitat parola?”,
+scrii utilizatorul tău și apeși „Trimite-mi linkul”. Pagina răspunde mereu la
+fel, oricui: „Dacă există un cont cu datele astea, am trimis un e-mail cu
+instrucțiuni. Dacă nu primești nimic în câteva minute, sună-ne: se poate ca pe
+cont să nu fie trecută o adresă.”
+
+Cauți e-mailul, în Inbox și în Spam. Apoi deschizi Jurnalul: la contul tău
+trebuie să stea rândul „Cerere de parolă nouă — e-mailul a fost luat în
+primire de căsuța de e-mail”. Dacă ai sărit pasul 3, rândul e altul: „… a fost
+predat programului de poștă al serverului; nu se știe dacă a ajuns” — și chiar
+așa e, nu se știe. Dacă scrie „… e-mailul NU a plecat: …”, pricina e după cele
+două puncte, iar în Setări, în caseta roșie de deasupra filelor, apare și
+„Parolă uitată — linkul n-a plecat (vezi Jurnalul)”.
+
+Linkul din e-mail e adevărat. Dacă îl deschizi și alegi o parolă, parola ta se
+schimbă și se închid toate sesiunile contului, pe toate calculatoarele și
+telefoanele. Dacă ai vrut numai să vezi că ajunge, nu-l deschide: se stinge
+singur într-o oră. Toate rândurile din Jurnal, cu ce înseamnă fiecare, sunt în
+[05-conturile-de-client.md](05-conturile-de-client.md), la „Dacă și-a uitat
+parola”.
+
+Pe server nu mai e nimic de pus pentru toate astea. Programul de poștă l-a pus
+scriptul, iar în `api/config.php` nu se adaugă nicio cheie: exemplul rundei are
+una nouă, `smtp_ca_file`, dar ea e numai pentru probele de pe calculatorul de
+lucru și **pe server nu se pune**. Datele căsuței nu stau în fișier, ci în
+Setări.
+
+---
+
 ## Varianta cu mâna
 
 Dacă vrei să faci pașii unul câte unul, sunt exact aceștia:
@@ -1185,11 +1569,11 @@ mkdir -p /var/backups/golden-pastry
 ```
 
 ```bash
-mysqldump --single-transaction --no-tablespaces --default-character-set=utf8mb4 -u gp -p gp | gzip > /var/backups/golden-pastry/gp-$(date +%F-%H%M%S).sql.gz
+sudo mysqldump --single-transaction --no-tablespaces --default-character-set=utf8mb4 "$(sudo php -r '$c = require "/var/www/gp/api/config.php"; echo $c["db"]["name"];')" | gzip > /var/backups/golden-pastry/gp-$(date +%F-%H%M%S).sql.gz
 ```
 
 ```bash
-for f in /root/sql/[0-9][0-9][0-9]_*.sql; do case "$(basename "$f")" in 001_*|002_*) continue;; esac; mysql --default-character-set=utf8mb4 -u gp -p gp < "$f"; done
+for f in /root/sql/[0-9][0-9][0-9]_*.sql; do case "$(basename "$f")" in 001_*|002_*) continue;; esac; sudo mysql --default-character-set=utf8mb4 "$(sudo php -r '$c = require "/var/www/gp/api/config.php"; echo $c["db"]["name"];')" < "$f"; done
 ```
 
 ```bash
@@ -1208,8 +1592,19 @@ rsync -a --delete --exclude '/config.php' /root/deploy/api/ /var/www/gp/api/
 chown -R www-data:www-data /var/www/gp && chmod -R u=rwX,go=rX /var/www/gp && chmod 640 /var/www/gp/api/config.php && systemctl reload apache2
 ```
 
-Trei lucruri de știut dacă le tastezi singur:
+Cinci lucruri de știut dacă le tastezi singur:
 
+- **Niciuna nu cere parolă și n-ai nimic de completat în ele.** `sudo` intră în
+  MySQL ca `root` al mașinii, iar numele bazei îl scoate PHP din
+  `api/config.php`, de fiecare dată. Până la 2.7.5 cele două comenzi de bază
+  erau scrise cu `-u gp -p gp`, adică cereau parola bazei — pe care o
+  generează instalarea și n-ai de unde s-o știi pe de rost.
+- **Programul de poștă nu se pune singur.** Comenzile de mai sus nu instalează
+  nimic. Pe un server fără program de poștă, e-mailul pleacă atunci numai prin
+  căsuța din Setări → Notificări. Fie rulezi la urmă scriptul cu
+  `--doar-fisiere`, care face și pasul „Programul de poștă”, fie dai cu mâna
+  rândurile de la pasul 6c din
+  [08-publicare-vps-hostinger.md](08-publicare-vps-hostinger.md).
 - **Ceasul plăților nu se pune singur.** Comenzile de mai sus aduc codul lui,
   dar nu scriu nimic în `/etc/cron.d`, iar fără rândul de acolo raportul de
   bani și amintirile de la 2.7.0 nu pleacă niciodată — fără nicio eroare, pur
@@ -1218,8 +1613,10 @@ Trei lucruri de știut dacă le tastezi singur:
   mâna, cu cele trei rânduri de la „Ceasul plăților”.
 - **`--no-tablespaces` nu e de decor.** Pe MySQL 8, `mysqldump` cere dreptul
   global `PROCESS` ca să citească tablespace-urile, iar contul aplicației are
-  drepturi doar pe baza ei. Fără opțiune, copia pică exact pe serverul unde
-  totul e în regulă.
+  drepturi doar pe baza ei. Fără opțiune, o copie făcută cu contul aplicației
+  pică exact pe serverul unde totul e în regulă. Cu `sudo`, ca mai sus, dreptul
+  există, dar opțiunea rămâne: nu strică, și ține comanda bună și pentru cine o
+  dă cu contul aplicației.
 - **`--default-character-set=utf8mb4` la fiecare comandă.** Fără el, diacriticele
   din migrări ajung stricate în bază, iar „Predată” devine un text pe care
   aplicația nu-l mai recunoaște ca etapă.
@@ -1230,7 +1627,7 @@ Trei lucruri de știut dacă le tastezi singur:
 
 `instaleaza-vps.sh` se poate rula de câte ori vrei și a doua oară se poartă ca o
 actualizare — dar una parțială. Nu aplică migrările, dinadins: pe o bază care are
-deja tabele nu importă nimic (`instaleaza-vps.sh:230`). Și nu face copie de
+deja tabele nu importă nimic (`instaleaza-vps.sh:235`). Și nu face copie de
 siguranță înainte, fiindcă la instalare n-are ce copia.
 
 Pe lângă asta, trece de fiecare dată prin `apt`, prin gazdele virtuale și prin

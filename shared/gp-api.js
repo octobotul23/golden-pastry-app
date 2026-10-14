@@ -561,7 +561,7 @@
    * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
    * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
    */
-  const VERSIUNE = '2.7.0';
+  const VERSIUNE = '2.7.5';
 
   /**
    * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo
@@ -2688,8 +2688,17 @@
    *
    * Derulează NUMAI cutia meniului, niciodată pagina: `scrollIntoView()` ar fi
    * mișcat și fereastra, dacă bara ar fi stat mai jos de marginea ei.
+   *
+   * AL DOILEA ARGUMENT (runda 2.7.5): `vazut = { sus, jos }`, fâșia de ecran
+   * care chiar se vede, în aceleași coordonate ca `getBoundingClientRect()`.
+   * Îl dă detectorul tastaturii de mai jos: cu tastatura deschisă, jumătatea
+   * de jos a cutiei stă SUB ea, deci „rândul e în cutie" nu mai înseamnă „se
+   * vede". Cu el, cutia se taie la fâșie și rândul vine la mijlocul a ce a
+   * rămas. FĂRĂ el nu se schimbă nimic — meniul îl cheamă tot cu un singur
+   * argument, iar drumul acela a rămas literă cu literă cel de până acum
+   * (check-tastatura îl pune lângă funcția din 2.7.0, pe aceleași cutii).
    */
-  gp.aduLaVedere = (rand) => {
+  gp.aduLaVedere = (rand, vazut) => {
     if (!rand || typeof rand.getBoundingClientRect !== 'function' || typeof getComputedStyle !== 'function') return false;
     let cutie = rand.parentElement;
     while (cutie && cutie !== global.document.body) {
@@ -2700,6 +2709,15 @@
     if (!cutie || cutie === global.document.body) return false;
     const c = cutie.getBoundingClientRect();
     const r = rand.getBoundingClientRect();
+    if (vazut && typeof vazut.sus === 'number' && typeof vazut.jos === 'number') {
+      const sus = Math.max(c.top, vazut.sus);
+      const jos = Math.min(c.bottom, vazut.jos);
+      // Cutia întreagă sub tastatură: nu e nimic de adus, oricât s-ar derula.
+      if (!(jos > sus)) return false;
+      if (r.top >= sus && r.bottom <= jos) return false;
+      cutie.scrollTop += (r.top + r.height / 2) - (sus + (jos - sus) / 2);
+      return true;
+    }
     if (r.top >= c.top && r.bottom <= c.bottom) return false;
     // La mijlocul cutiei, nu lipit de margine: se văd și vecinii lui, deci se
     // vede că meniul continuă în amândouă părțile.
@@ -2751,6 +2769,252 @@
       }
     });
   }
+
+  /* -------------- tastatura telefonului: barele de jos îi fac loc -- */
+
+  /**
+   * CÂND SCRIE CINEVA PE TELEFON, PAGINA AFLĂ (runda 2.7.5).
+   *
+   * Plângerea patronului, pe o comandă nouă: „Închide" și „Salvează" iau prea
+   * mult, tastatura ia jumătate de ecran, „în toate meniurile". Până acum
+   * nicio pagină nu știa că tastatura e deschisă: bara lipită de jos rămânea
+   * lipită, peste ce a mai rămas din foaie.
+   *
+   * CE FACE. Cât tastatura e deschisă, `<html>` poartă `data-gp-tastatura="1"`
+   * și variabila `--gp-tastatura-inalt`. De steag atârnă numai CSS:
+   * shared/gp-bara.css desprinde barele, iar paginile își ascund barele lor
+   * fixe (`[data-dep=fab]`, `[data-gp-fixa]`). Nicio pagină nu cheamă nimic.
+   *
+   * CELE DOUĂ LUMI. O tastatură fie ACOPERĂ pagina (Chrome, Safari:
+   * `visualViewport` se scurtează, fereastra nu), fie o STRÂNGE (Firefox,
+   * browserul din Telegram: se scurtează fereastra însăși). De-asta nu se
+   * compară două mărimi citite în aceeași clipă — în lumea a doua sunt egale
+   * —, ci înălțimea de acum cu REPERUL: înălțimea de când nu scria nimeni.
+   * Cât nu scrie nimeni și steagul e jos, pe ecran nu e nicio tastatură, deci
+   * reperul URMEAZĂ înălțimea, în sus și în jos (fereastra pusă pe jumătate
+   * de ecran nu e o tastatură care a rămas deschisă). Cât se scrie, numai
+   * crește. NU se ia de la capăt la fiecare câmp atins: focusul pierdut cu
+   * tastatura tot sus (altă aplicație, perdeaua de notificări) se întoarce
+   * pe câmp cu tastatura deja pe ecran, iar reperul luat atunci ar fi fost
+   * chiar înălțimea de sub tastatură.
+   *
+   * TELEFONUL ÎNTORS schimbă lățimea, deci reperul se uită. Unde tastatura
+   * ACOPERĂ, fereastra spune singură și după aceea cât s-a pierdut. Unde
+   * STRÂNGE, nu mai are cu ce compara: steagul ridicat se ȚINE cât focusul
+   * rămâne în câmp și până când înălțimea crește cu o tastatură (s-a închis).
+   *
+   * VARIABILA spune cât din pagină stă SUB tastatură, nu cât s-a pierdut:
+   * în lumea „acoperă" e înălțimea tastaturii, în lumea „strânge" e zero,
+   * fiindcă acolo pagina s-a scurtat deja singură. Foaia care își pune
+   * variabila ca umplutură la capăt iese bine în amândouă; cu „cât s-a
+   * pierdut", în lumea a doua ar fi rămas un gol de o tastatură sub formular.
+   *
+   * PAZA. Se așază NUMAI pe un aparat cu atingere și NUMAI cu DOM. Un
+   * calculator nu primește niciun ascultător, iar probele de carton din Node
+   * (fereastră fără `navigator`) nici atât — și nimic nu aruncă. Numele din
+   * browser se citesc prin `fereastra.`, niciodată goale: în Node, un
+   * `navigator` gol ar fi fost al lui Node, nu al paginii.
+   *
+   * „Cu atingere" nu ajunge: și laptopul cu ecran tactil simte degetul, iar
+   * acolo o fereastră trasă mai scundă cu focusul într-un câmp ar fi fost
+   * luată drept tastatură și ar fi desprins barele pe calculator. Se cere ca
+   * arătătorul DINTÂI să nu fie săgeata (`hover: hover` cu `pointer: fine`).
+   * Un browser fără `matchMedia`, ori cu unul care aruncă, rămâne telefon.
+   *
+   * FĂRĂ ASCULTĂTOR DE DERULARE. Trei ascultători, toți pasivi: `focusin` și
+   * `focusout` pe document, `resize` pe `visualViewport` (ori pe fereastră,
+   * unde el lipsește). Derularea nu schimbă nimic din ce se judecă aici.
+   */
+  const TASTA = {
+    semn: 'data-gp-tastatura',      // steagul de pe <html>; același nume îl citesc gp-bara.css și paginile
+    inalt: '--gp-tastatura-inalt',  // cât din pagină stă sub tastatură, în px
+    prag: 120,                      // sub atât e bara de adrese care se strânge, nu o tastatură
+    ragaz: 300,                     // ms cât mai ține steagul după ce tastatura s-a închis
+  };
+  // Câmpuri `input` care NU ridică tastatura: se aleg, se bifează ori deschid
+  // o fereastră a telefonului. Lista e a celor FĂRĂ, dinadins: un `type` nou
+  // ori necunoscut e text pentru browser, deci e text și aici.
+  const TASTA_FARA = ['checkbox', 'radio', 'date', 'time', 'datetime-local', 'month', 'week',
+    'color', 'file', 'range', 'button', 'submit', 'reset', 'image', 'hidden'];
+
+  /** Se scrie în el cu tastatura? `select`, bifa, data, ora, culoarea, fișierul și butonul: nu. */
+  gp.tastaturaScrie = (el) => {
+    if (!el || typeof el !== 'object') return false;
+    const nume = String(el.tagName || '').toLowerCase();
+    if (nume === 'input' || nume === 'textarea') {
+      if (el.disabled || el.readOnly) return false;
+      const mod = typeof el.getAttribute === 'function' ? el.getAttribute('inputmode') : null;
+      if (String(mod || '').toLowerCase() === 'none') return false;
+      if (nume === 'textarea') return true;
+      return TASTA_FARA.indexOf(String(el.type || 'text').toLowerCase()) < 0;
+    }
+    return el.isContentEditable === true;
+  };
+
+  /**
+   * E deschisă? Da când focusul e într-un câmp de scris ȘI s-au pierdut cel
+   * puțin 120 px din înălțime. Fără măsurătoare (browser care nu dă nicio
+   * înălțime) ajunge focusul: mai bine o bară desprinsă degeaba decât una
+   * rămasă peste câmp. Fără atingere, niciodată.
+   */
+  gp.tastaturaJudeca = (ce) => {
+    const o = ce || {};
+    if (!o.deget || !o.scrie) return false;
+    const inalt = Number(o.inalt), reper = Number(o.reper);
+    if (!(inalt > 0) || !(reper > 0)) return true;
+    return reper - inalt >= TASTA.prag;
+  };
+
+  /**
+   * Fâșia de ecran care se vede acum, pentru `gp.aduLaVedere(rand, vazut)`:
+   * `visualViewport`, unde există (cu `offsetTop`: Safari ridică pagina sub
+   * tastatură), altfel fereastra întreagă. `null` când nu se poate măsura.
+   */
+  gp.tastaturaVazut = (fereastra) => {
+    const f = fereastra || global;
+    const v = f && f.visualViewport;
+    if (v && Number(v.height) > 0) {
+      const sus = Number(v.offsetTop) || 0;
+      return { sus, jos: sus + Number(v.height) };
+    }
+    const n = f ? Number(f.innerHeight) : 0;
+    return n > 0 ? { sus: 0, jos: n } : null;
+  };
+
+  /**
+   * Așază ascultătorii pe `fereastra`. Întoarce `true` când ascultă (acum ori
+   * de la o pornire de dinainte — a doua nu mai leagă nimic), `false` când nu
+   * e cazul: fără DOM, fără atingere, ori pe o fereastră care nu e fereastră.
+   */
+  gp.tastaturaPorneste = (fereastra) => {
+    try {
+      const f = fereastra;
+      const doc = f && f.document;
+      const radacina = doc && doc.documentElement;
+      if (!radacina || typeof doc.addEventListener !== 'function' || typeof f.setTimeout !== 'function') return false;
+      const deget = Number(f.navigator && f.navigator.maxTouchPoints) > 0 || 'ontouchstart' in f;
+      if (!deget) return false;
+      // Laptopul cu ecran tactil: are atingere, dar se lucrează cu săgeata.
+      // Fără `matchMedia`, ori cu unul care aruncă: rămâne telefon.
+      let sageata = false;
+      try {
+        sageata = f.matchMedia('(hover: hover) and (pointer: fine)').matches === true;
+      } catch (e) { sageata = false; }
+      if (sageata) return false;
+      if (f.__gpTastatura) return true;
+      f.__gpTastatura = true;
+
+      const vv = f.visualViewport && typeof f.visualViewport.addEventListener === 'function' ? f.visualViewport : null;
+      let tinta = null;     // câmpul în care se scrie acum
+      let adusa = null;     // câmpul adus deja la vedere, ca să nu fie tras a doua oară
+      let ridicat = false;  // steagul e pe <html>
+      let ceas = 0;         // cronometrul coborârii, unul singur
+      let mare = 0;         // reperul: înălțimea de când nu scria nimeni, la lățimea asta
+      let latime = -1;
+      let subea = 0;        // cât din pagină stătea sub tastatură la ultima ridicare a steagului
+      let tinut = false;    // telefonul întors cu tastatura sus, unde tastatura strânge pagina: steagul se ține
+      let mic = 0;          // cea mai mică înălțime văzută de la întoarcere încoace
+
+      const masoara = () => {
+        const lat = Number(f.innerWidth) || 0;
+        if (lat !== latime) {
+          // Întors cu steagul sus. Unde tastatura acoperă pagina (`subea` e
+          // chiar înălțimea ei), fereastra de după spune singură cât s-a
+          // pierdut. Unde o strânge (`subea` e zero), înălțimea de după e deja
+          // cea scurtată și devine reper: fără ținere, steagul ar cădea în
+          // 300 ms cu tastatura tot pe ecran.
+          if (ridicat && tinta && subea < TASTA.prag) { tinut = true; mic = 0; }
+          latime = lat;
+          mare = 0;
+        }
+        const fer = Number(f.innerHeight) > 0 ? Number(f.innerHeight) : 0;
+        // `height * scale`: o pagină mărită cu două degete are `visualViewport`
+        // mai scund fără nicio tastatură; înmulțit cu scara, iese cât era.
+        // NUMAI mărirea: pagina arătată micșorată (scara sub 1) are
+        // `visualViewport` mai ÎNALT, iar înmulțit ar fi ieșit mai scund decât
+        // fereastra — o tastatură care nu există.
+        const scara = vv && Number(vv.scale) > 1 ? Number(vv.scale) : 1;
+        const inalt = vv && Number(vv.height) > 0 ? Number(vv.height) * scara : fer;
+        // Cât nu scrie nimeni și steagul e jos, înălțimea de ACUM e reperul,
+        // și când a scăzut: ecranul împărțit, fereastra făcută mai scundă.
+        if (inalt > mare || (!tinta && !ridicat)) mare = inalt;
+        return { inalt, reper: Math.max(fer, mare), acoperit: fer > 0 && inalt > 0 ? Math.max(0, Math.round(fer - inalt)) : 0 };
+      };
+
+      const coboara = () => {
+        ceas = 0;
+        ridicat = false;
+        adusa = null;
+        radacina.removeAttribute(TASTA.semn);
+        if (radacina.style && typeof radacina.style.removeProperty === 'function') radacina.style.removeProperty(TASTA.inalt);
+      };
+
+      const judeca = () => {
+        try {
+          // Câmpul scos din pagină cu focusul în el (formularul închis la
+          // salvare) nu mai dă niciun `focusout`.
+          if (tinta && tinta.isConnected === false) tinta = null;
+          const m = masoara();
+          if (tinut) {
+            // Ținerea de după întoarcere se dezleagă singură: focusul a
+            // plecat din câmp, ori înălțimea a crescut cu cel puțin o
+            // tastatură față de cea mai mică văzută de atunci.
+            if (!(mic > 0) || m.inalt < mic) mic = m.inalt;
+            if (!tinta || m.inalt - mic >= TASTA.prag) tinut = false;
+          }
+          if (tinut || gp.tastaturaJudeca({ deget: true, scrie: !!tinta, inalt: m.inalt, reper: m.reper })) {
+            // Saltul din câmp în câmp trece pe aici: cronometrul pornit de
+            // `focusout` se oprește înainte să fi coborât ceva.
+            if (ceas) { f.clearTimeout(ceas); ceas = 0; }
+            const deAdus = !ridicat || adusa !== tinta;
+            ridicat = true;
+            subea = m.acoperit;
+            radacina.setAttribute(TASTA.semn, '1');
+            if (radacina.style && typeof radacina.style.setProperty === 'function') radacina.style.setProperty(TASTA.inalt, m.acoperit + 'px');
+            // DUPĂ steag, nu înainte: steagul desprinde barele și lungește
+            // foaia, deci abia acum câmpul are locul lui adevărat. O dată pe
+            // câmp — cine derulează apoi singur nu e tras înapoi.
+            if (deAdus) { adusa = tinta; gp.aduLaVedere(tinta, gp.tastaturaVazut(f)); }
+          } else if (ridicat && !ceas) {
+            // RĂGAZUL. `focusout` vine la atingere, înaintea `click`-ului: cu
+            // steagul coborât pe loc, bara ar fi sărit din rând înapoi la
+            // marginea ecranului între cele două, iar apăsarea pe „Salvează"
+            // ar fi căzut pe ce a ajuns sub deget. Cronometrul e unul și nu se
+            // repornește: tastatura care se strânge trimite un șir de `resize`.
+            ceas = f.setTimeout(coboara, TASTA.ragaz);
+          }
+        } catch (e) { /* un ajutor care nu merge nu are voie să strice pagina */ }
+      };
+
+      const pasiv = { passive: true };
+      doc.addEventListener('focusin', (e) => {
+        tinta = gp.tastaturaScrie(e && e.target) ? e.target : null;
+        judeca();
+      }, pasiv);
+      doc.addEventListener('focusout', (e) => {
+        // Încotro pleacă focusul: alt câmp de scris ține tastatura deschisă.
+        const u = e && e.relatedTarget;
+        tinta = gp.tastaturaScrie(u) ? u : null;
+        judeca();
+      }, pasiv);
+      const cuMarime = vv || (typeof f.addEventListener === 'function' ? f : null);
+      if (cuMarime) {
+        cuMarime.addEventListener('resize', () => {
+          // Tastatura închisă cu „înapoi" lasă focusul în câmp, iar câmpul
+          // atins din nou o redeschide fără niciun `focusin`: aici se află.
+          const a = doc.activeElement;
+          if (a !== undefined) tinta = gp.tastaturaScrie(a) ? a : null;
+          judeca();
+        }, pasiv);
+      }
+      // Reperul de pornire: înălțimea de dinaintea oricărei tastaturi.
+      masoara();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+  gp.tastaturaPorneste(global);
 
   /* ------------------------------ semnul laturii: fulgul și flacăra -- */
 

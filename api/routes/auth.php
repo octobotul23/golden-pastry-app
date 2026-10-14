@@ -492,6 +492,43 @@ function reset_link(string $token): string
  * Răspunsul este identic indiferent dacă acel cont există, dacă e activ sau
  * dacă are e-mail. Un răspuns diferit ar transforma formularul într-o listă de
  * utilizatori reali, pe care apoi s-ar încerca parole.
+ *
+ * UN SINGUR PUNCT DE RĂSPUNS, ȘI TRIMITEREA DUPĂ EL (runda 2.7.5). „Identic”
+ * însemna până acum același text. Dar răspunsul pleca din două locuri — unul
+ * pentru cererea goală, altul la capăt — iar între ele stătea trimiterea
+ * e-mailului: contul adevărat răspundea după câteva secunde, cel închipuit pe
+ * loc. Ceasul spunea ce ascundea textul. Acum toate cererile ies pe aceeași
+ * ușă (`json_out_early()`: aceiași octeți, aceleași antete), ÎNAINTE să se
+ * caute contul; căutarea, linkul și e-mailul vin după, când vizitatorul are
+ * deja răspunsul.
+ *
+ * CE NU ASCUNDE ÎNCĂ. Octeții răspunsului sosesc la fel de repede pentru
+ * oricine, pe orice server. LEGĂTURA însă se închide devreme numai unde PHP
+ * are cu ce (`fastcgi_finish_request()` pe PHP-FPM, perechea lui pe
+ * LiteSpeed). Pe Apache cu mod_php — cum e VPS-ul azi — și pe `php -S`,
+ * legătura rămâne deschisă până se termină scriptul, adică până pleacă ori
+ * cade e-mailul (până la vreo douăzeci și cinci de secunde). Cine măsoară
+ * clipa ÎNCHIDERII, nu a răspunsului, tot deosebește contul adevărat cu
+ * adresă de rest. Un browser nu vede asta (are `Content-Length` și nu mai
+ * așteaptă); un script scris anume, da. Nu se repară din ruta asta: ori
+ * serverul trece pe PHP-FPM, ori trimiterea se mută într-o coadă golită de
+ * cron. Până atunci, pragul de cereri pe conexiune, de la începutul rutei,
+ * ține încercările puține.
+ *
+ * CE NU MAI ÎNGHITE. Trimiterea căzută se scria numai în jurnalul de erori al
+ * serverului, pe care nu-l citește nimeni: e-mailul n-a mai plecat de la
+ * mutarea pe VPS și n-a aflat nimeni până n-a sunat un client. Acum fiecare
+ * încercare lasă două urme pe care le vede patronul:
+ *
+ *   · un rând în `notifications` (felul `parola_uitata`). Căzut, apare în
+ *     caseta roșie din Setări, „anunțuri care nu au plecat”. În rând NU stau
+ *     linkul, tokenul, adresa ori numele omului: tabelul îl citește oricine
+ *     are Setările, iar linkul e chiar cheia contului;
+ *   · un rând în Jurnal care spune care din trei s-a întâmplat: e-mailul a
+ *     fost luat în primire de căsuță, a fost predat programului de poștă al
+ *     serverului (și atunci nu se știe dacă a ajuns), ori NU a plecat.
+ *
+ * Pentru un cont care nu există nu se scrie nimic, nicăieri.
  */
 function route_forgot(): void
 {
@@ -514,99 +551,172 @@ function route_forgot(): void
             . 'Dacă nu primești nimic în câteva minute, sună-ne: se poate ca pe cont să nu fie trecută o adresă.',
     ];
 
+    // Din prag se consumă numai cu ceva scris în casetă: o cerere cu câmpul gol
+    // nu trimite niciun e-mail și nu scrie nimic, deci n-are de ce să mănânce
+    // din plafonul omului care chiar și-a uitat parola. Se numără ÎNAINTEA
+    // răspunsului, ca un șir de cereri pornite deodată să nu treacă toate de
+    // prag până apucă prima să se scrie.
+    if ($who !== '') {
+        record_attempt($ip, GP_FORGOT_KEY, false);
+    }
+
+    // SINGURUL PUNCT DE RĂSPUNS. Până aici nu s-a căutat niciun cont, deci
+    // cererea goală, contul închipuit și contul adevărat au făcut exact
+    // aceiași pași și primesc aceiași octeți, cu aceleași antete, la fel de
+    // repede. Ce urmează nu mai ajunge la vizitator. (Clipa în care se
+    // ÎNCHIDE legătura e altă poveste, spusă deasupra funcției: pe mod_php
+    // ea tot vine după trimitere.)
+    json_out_early($raspuns);
+
     if ($who === '') {
-        json_out($raspuns);
+        exit;
     }
 
-    // Abia acum se consumă din prag: o cerere cu câmpul gol nu trimite niciun
-    // e-mail și nu scrie nimic, deci n-are de ce să mănânce din plafonul
-    // omului care chiar și-a uitat parola.
-    record_attempt($ip, GP_FORGOT_KEY, false);
-
-    // După utilizator sau după e-mail: omul nu ține minte întotdeauna cu care
-    // dintre ele s-a înscris. Contul de sistem al tabletelor nu are parolă de
-    // recuperat — el se deschide cu codul din Setări.
-    //
-    // Întâi după utilizator, fiindcă e singurul câmp cu index unic: o
-    // potrivire acolo arată contul fără dubiu, oricâte adrese s-ar repeta.
-    $u = one(
-        'SELECT id, name, email, role FROM users
-          WHERE username = ? AND active = 1 AND is_system = 0',
-        [strtolower($who)]
-    );
-
-    if (!$u) {
-        // Abia apoi după adresă — și numai dacă ea duce la un singur cont.
+    // De aici încolo răspunsul a plecat: nimic nu mai are voie să cheme
+    // `fail()` ori `json_out()`. Ce cade se scrie în jurnalul de erori.
+    try {
+        // După utilizator sau după e-mail: omul nu ține minte întotdeauna cu care
+        // dintre ele s-a înscris. Contul de sistem al tabletelor nu are parolă de
+        // recuperat — el se deschide cu codul din Setări.
         //
-        // Varianta veche punea cele două condiții într-un OR cu `LIMIT 1` și
-        // fără ORDER BY: cu aceeași adresă pe două conturi alegea unul dintre
-        // ele la voia bazei, adică mereu pe primul creat. Omul de pe al doilea
-        // cerea parolă nouă, primea în cutia comună un link scris pe numele
-        // colegului și, folosindu-l, îi schimba parola și îi ștergea toate
-        // sesiunile — colegului, care nu ceruse nimic. Al lui rămânea de
-        // neatins oricâte cereri ar fi trimis.
-        //
-        // Scrierile duplicate sunt oprite acum în api/routes/users.php, dar
-        // rândurile de dinainte de acea regulă există în continuare, deci
-        // ambiguitatea trebuie tratată și aici. Nu se poate rezolva ghicind:
-        // când adresa arată spre mai multe conturi nu plecăm cu niciun link,
-        // iar omul are calea sigură la îndemână — numele lui de utilizator,
-        // pe care formularul îl cere oricum („Utilizator sau e-mail").
-        $candidati = all(
+        // Întâi după utilizator, fiindcă e singurul câmp cu index unic: o
+        // potrivire acolo arată contul fără dubiu, oricâte adrese s-ar repeta.
+        $u = one(
             'SELECT id, name, email, role FROM users
-              WHERE email = ? AND active = 1 AND is_system = 0
-              LIMIT 2',
-            [$who]
-        );
-        if (count($candidati) === 1) {
-            $u = $candidati[0];
-        } elseif (count($candidati) > 1) {
-            // Doar id-urile, luate din bază: adresa vine din corpul cererii și
-            // n-are ce căuta netrecută prin nimic în jurnalul serverului.
-            error_log('[gp] „am uitat parola": adresa cerută e trecută pe mai multe conturi ('
-                . implode(', ', array_column($candidati, 'id')) . '); nu trimit niciun link.');
-        }
-    }
-
-    if ($u && trim((string) $u['email']) !== '') {
-        // Cererile nefolosite de dinainte se închid: rămâne valabil un singur
-        // link, cel din urmă e-mail primit.
-        q('UPDATE password_resets SET used_at = UTC_TIMESTAMP() WHERE user_id = ? AND used_at IS NULL', [$u['id']]);
-
-        $token = random_token();
-        q(
-            'INSERT INTO password_resets (user_id, token_hash, expires_at)
-             VALUES (?, ?, UTC_TIMESTAMP() + INTERVAL ? MINUTE)',
-            [$u['id'], token_hash($token), (int) config('reset_minutes', 60)]
+              WHERE username = ? AND active = 1 AND is_system = 0',
+            [strtolower($who)]
         );
 
-        $minute = (int) config('reset_minutes', 60);
-        $text = implode("\n", [
-            'Bună, ' . $u['name'] . ',',
-            '',
-            'Cineva a cerut o parolă nouă pentru contul tău Golden Pastry.',
-            'Deschide adresa de mai jos și scrie parola pe care o vrei:',
-            '',
-            reset_link($token),
-            '',
-            'Linkul este valabil ' . $minute . ' de minute și poate fi folosit o singură dată.',
-            'Dacă nu ai cerut tu asta, nu trebuie să faci nimic: parola rămâne cea veche.',
-            '',
-            'Golden Pastry',
-        ]);
-
-        // Un server de mail căzut nu trebuie să dea altă formă răspunsului:
-        // asta ar spune, indirect, că acel cont există.
-        try {
-            send_email($u['email'], 'Parolă nouă pentru contul tău Golden Pastry', $text);
-        } catch (Throwable $e) {
-            error_log('[gp] e-mail de recuperare eșuat pentru contul ' . $u['id'] . ': ' . $e->getMessage());
+        if (!$u) {
+            // Abia apoi după adresă — și numai dacă ea duce la un singur cont.
+            //
+            // Varianta veche punea cele două condiții într-un OR cu `LIMIT 1` și
+            // fără ORDER BY: cu aceeași adresă pe două conturi alegea unul dintre
+            // ele la voia bazei, adică mereu pe primul creat. Omul de pe al doilea
+            // cerea parolă nouă, primea în cutia comună un link scris pe numele
+            // colegului și, folosindu-l, îi schimba parola și îi ștergea toate
+            // sesiunile — colegului, care nu ceruse nimic. Al lui rămânea de
+            // neatins oricâte cereri ar fi trimis.
+            //
+            // Scrierile duplicate sunt oprite acum în api/routes/users.php, dar
+            // rândurile de dinainte de acea regulă există în continuare, deci
+            // ambiguitatea trebuie tratată și aici. Nu se poate rezolva ghicind:
+            // când adresa arată spre mai multe conturi nu plecăm cu niciun link,
+            // iar omul are calea sigură la îndemână — numele lui de utilizator,
+            // pe care formularul îl cere oricum („Utilizator sau e-mail").
+            $candidati = all(
+                'SELECT id, name, email, role FROM users
+                  WHERE email = ? AND active = 1 AND is_system = 0
+                  LIMIT 2',
+                [$who]
+            );
+            if (count($candidati) === 1) {
+                $u = $candidati[0];
+            } elseif (count($candidati) > 1) {
+                // Doar id-urile, luate din bază: adresa vine din corpul cererii și
+                // n-are ce căuta netrecută prin nimic în jurnalul serverului.
+                error_log('[gp] „am uitat parola": adresa cerută e trecută pe mai multe conturi ('
+                    . implode(', ', array_column($candidati, 'id')) . '); nu trimit niciun link.');
+            }
         }
 
-        audit('password_forgot', 'user', (string) $u['id'], 'Cerere de parolă nouă', (int) $u['id'], (string) $u['name']);
-    }
+        if ($u && trim((string) $u['email']) === '') {
+            // Contul există, dar n-are unde primi linkul. Vizitatorului i s-a spus
+            // deja „sună-ne”; patronul, care răspunde la telefon, trebuie să poată
+            // vedea în Jurnal de ce n-a venit nimic.
+            audit('password_forgot', 'user', (string) $u['id'],
+                'Cerere de parolă nouă — pe cont nu e trecută nicio adresă de e-mail, deci nu s-a trimis nimic',
+                (int) $u['id'], (string) $u['name']);
+        }
 
-    json_out($raspuns);
+        if ($u && trim((string) $u['email']) !== '') {
+            // Cererile nefolosite de dinainte se închid: rămâne valabil un singur
+            // link, cel din urmă e-mail primit.
+            q('UPDATE password_resets SET used_at = UTC_TIMESTAMP() WHERE user_id = ? AND used_at IS NULL', [$u['id']]);
+
+            $token = random_token();
+            q(
+                'INSERT INTO password_resets (user_id, token_hash, expires_at)
+                 VALUES (?, ?, UTC_TIMESTAMP() + INTERVAL ? MINUTE)',
+                [$u['id'], token_hash($token), (int) config('reset_minutes', 60)]
+            );
+
+            $minute = (int) config('reset_minutes', 60);
+            $link   = reset_link($token);
+            $text = implode("\n", [
+                'Bună, ' . $u['name'] . ',',
+                '',
+                'Cineva a cerut o parolă nouă pentru contul tău Golden Pastry.',
+                'Deschide adresa de mai jos și scrie parola pe care o vrei:',
+                '',
+                $link,
+                '',
+                'Linkul este valabil ' . $minute . ' de minute și poate fi folosit o singură dată.',
+                'Dacă nu ai cerut tu asta, nu trebuie să faci nimic: parola rămâne cea veche.',
+                '',
+                'Golden Pastry',
+            ]);
+
+            // RÂNDUL ÎNCERCĂRII, scris înaintea trimiterii, ca un proces oprit la
+            // mijloc să lase măcar un „pending”. În el NU intră textul mesajului
+            // (poartă linkul), nici adresa, nici numele: numai numărul contului.
+            $urma = 'Linkul pentru parolă nouă, contul nr. ' . (int) $u['id']
+                . '. Textul mesajului nu se ține aici: poartă linkul.';
+            if (notify_event_column()) {
+                q(
+                    'INSERT INTO notifications (channel, event, recipient, subject, payload, status, attempts)
+                     VALUES (?, ?, NULL, ?, ?, ?, 1)',
+                    ['email', 'parola_uitata', 'Parolă uitată', $urma, 'pending']
+                );
+            } else {
+                q(
+                    'INSERT INTO notifications (channel, recipient, subject, payload, status, attempts)
+                     VALUES (?, NULL, ?, ?, ?, 1)',
+                    ['email', 'Parolă uitată', $urma, 'pending']
+                );
+            }
+            $rand = (int) db()->lastInsertId();
+
+            try {
+                $cale = send_email($u['email'], 'Parolă nouă pentru contul tău Golden Pastry', $text);
+                q('UPDATE notifications SET status = ?, sent_at = UTC_TIMESTAMP() WHERE id = ?', ['sent', $rand]);
+                // „Luat în primire” și „predat” nu sunt același lucru: căsuța a
+                // răspuns că are mesajul; programul de poștă al serverului numai
+                // l-a luat, iar ce face cu el nu se mai află de aici.
+                $detaliu = $cale === 'smtp'
+                    ? 'Cerere de parolă nouă — e-mailul a fost luat în primire de căsuța de e-mail'
+                    : 'Cerere de parolă nouă — e-mailul a fost predat programului de poștă al serverului; '
+                        . 'nu se știe dacă a ajuns';
+            } catch (Throwable $e) {
+                // Pricina trece în trei locuri pe care le citesc oameni (caseta
+                // roșie din Setări, Jurnalul, jurnalul de erori). Răspunsul unui
+                // server de e-mail repetă adesea adresa refuzată, iar mesajul
+                // nostru de „adresă invalidă” o poartă și el: se scot de aici
+                // adresa, linkul și tokenul, orice ar fi ajuns în text.
+                $pricina = str_ireplace(
+                    [$link, $token, (string) $u['email']],
+                    ['(linkul)', '(tokenul)', '(adresa contului)'],
+                    $e->getMessage()
+                );
+                q(
+                    'UPDATE notifications SET status = ?, subject = ?, error = ? WHERE id = ?',
+                    ['failed', 'Parolă uitată — linkul n-a plecat (vezi Jurnalul)', $pricina, $rand]
+                );
+                error_log('[gp] e-mail de recuperare eșuat pentru contul ' . $u['id'] . ': ' . $pricina);
+                $detaliu = 'Cerere de parolă nouă — e-mailul NU a plecat: ' . $pricina;
+            }
+
+            audit('password_forgot', 'user', (string) $u['id'], $detaliu, (int) $u['id'], (string) $u['name']);
+        }
+    } catch (Throwable $e) {
+        // Numai felul greșelii și locul ei: mesajul unei excepții de bază de
+        // date poate purta ce a scris vizitatorul în casetă.
+        error_log('[gp] „am uitat parola", după răspuns: ' . get_class($e)
+            . ' la ' . basename($e->getFile()) . ':' . $e->getLine());
+    }
+    // Fără oprirea asta, dispecerul din index.php ar chema fail(...) după
+    // rută și ar lipi octeți în plus la un răspuns deja trimis.
+    exit;
 }
 
 /**

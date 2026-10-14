@@ -729,6 +729,13 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </div>
 </sc-for>
 </div>
+<!-- De la runda 2.7.5 aceleași patru setări se scriu și din Setări ›
+     Notificări › Telegram (cutia „Raport de bani pe Telegram”, pe aceeași
+     ușă). Rândul se desenează numai cui are pagina Setărilor, iar adresa
+     legăturii e cea din meniul lui (`gp.meniu`). -->
+<sc-if value="{{ tAreSetari }}" hint-placeholder-val="{{ false }}">
+<span data-inc="nota">Aceleași setări sunt și în <a href="{{ tSetariHref }}">Setări</a> › Notificări › Telegram.</span>
+</sc-if>
 </div>
 </sc-if>
 
@@ -952,6 +959,23 @@ const ciornaTelegram = (s) => {
     amintiri: !!(s && s.amintiri),
     panelBaseUrl: s && s.panelBaseUrl != null ? String(s.panelBaseUrl) : ""
   };
+};
+
+/**
+ * Cartonașul SCRIS, după o recitire a setărilor: câmp cu câmp. Ce a schimbat
+ * omul față de răspunsul VECHI rămâne cum l-a scris; ce n-a atins merge după
+ * răspunsul NOU. Ținut întreg, cartonașul scris într-un singur câmp ar fi
+ * păstrat și câmpurile neatinse la valorile vechi, iar „Salvează” le-ar fi
+ * trimis drept schimbări, peste ce a salvat între timp altcineva. Orele se
+ * judecă împreună, fiindcă pleacă împreună.
+ */
+const ciornaRecitita = (veche, scrisa, noua) => {
+  const out = Object.assign({}, noua);
+  if (scrisa.chatId.trim() !== veche.chatId) out.chatId = scrisa.chatId;
+  if (scrisa.ora1 !== veche.ora1 || scrisa.ora2 !== veche.ora2) { out.ora1 = scrisa.ora1; out.ora2 = scrisa.ora2; }
+  if (scrisa.amintiri !== veche.amintiri) out.amintiri = scrisa.amintiri;
+  if (scrisa.panelBaseUrl.trim() !== veche.panelBaseUrl) out.panelBaseUrl = scrisa.panelBaseUrl;
+  return out;
 };
 
 class Component extends DCLogic {
@@ -1798,13 +1822,21 @@ class Component extends DCLogic {
    * trece drept „scris”: plecarea ar întreba degeaba, iar „Salvează” s-ar
    * aprinde gata să pună la loc valoarea veche peste a celuilalt. De aceea se
    * judecă ÎNAINTE de `setState`, față de `s` cel VECHI: ciorna care îi era
-   * întocmai se ia din răspuns; cea în care s-a scris rămâne cum e.
+   * întocmai se ia din răspuns; cea în care s-a scris se reface câmp cu câmp.
+   *
+   * CARTONAȘUL SCRIS SE RECITEȘTE CÂMP CU CÂMP (runda 2.7.5, `ciornaRecitita`).
+   * Până atunci cartonașul în care se scrisese rămânea ÎNTREG cum era: cu
+   * chatul scris și pragul salvat din cartonașul vecin, `s` cel nou aducea ora
+   * ori bifa schimbate între timp de altcineva (din Setări, de pildă), ciorna
+   * le ținea pe cele vechi, iar „Salvează” le trimitea drept schimbări, peste
+   * ale celuilalt. Acum rămâne numai ce a scris omul; restul merge după server.
    */
   primesteSetari(r, ce) {
     const S = this.state, vechi = S.s;
     const x = { s: r || null, setariEroare: "" };
     const tNeatins = !vechi || !S.t || !gp.ciornaDiferita(ciornaTelegram(vechi), S.t);
     const pgNeatins = !vechi || String(S.pg).trim() === (vechi.pragImplicit != null ? String(vechi.pragImplicit) : "");
+    if (!tNeatins) x.t = ciornaRecitita(ciornaTelegram(vechi), S.t, ciornaTelegram(r));
     if (ce === "tot" || ce === "telegram" || tNeatins) x.t = ciornaTelegram(r);
     if (ce === "tot" || ce === "prag" || pgNeatins) x.pg = r && r.pragImplicit != null ? String(r.pragImplicit) : "";
     this.setState(x);
@@ -2257,6 +2289,10 @@ class Component extends DCLogic {
       ton: u.stare === "sent" ? "bine" : "pericol"
     })) : [];
     const pgPeServer = s && s.pragImplicit != null ? String(s.pragImplicit) : "";
+    // Legătura spre Setări (runda 2.7.5), numai cui are dreptul paginii; adresa
+    // e cea din MENIUL omului, care la construirea pachetului se preschimbă
+    // odată cu el.
+    const setariLeg = gp.are("setari", auth) ? gp.meniu("Încasări", auth).filter((m) => m.et === "Setări")[0] || null : null;
 
     return {
       meniu: gp.meniu("Încasări", S.auth),
@@ -2415,6 +2451,10 @@ class Component extends DCLogic {
       // cu setările de dinainte pe ecran, „Încă nu a plecat niciun raport”
       // n-ar mai fi adevărat după primul raport plecat între timp.
       ultimeleGol: !S.setariEroare && ultimele.length === 0,
+      // Runda 2.7.5: aceleași setări se scriu și din Setări › Notificări ›
+      // Telegram. Rândul care o spune e numai al celui cu pagina Setărilor.
+      tAreSetari: !!setariLeg,
+      tSetariHref: setariLeg ? setariLeg.href : "",
 
       arePragGeneral: !!D && !!s && !!sPoate.prag,
       pgVal: S.pg,

@@ -11,15 +11,42 @@ function route_settings_get(): void
     // `notifications`, în care nu se uita nicio pagină: o comandă care nu a
     // ajuns la laborator rămânea necunoscută până suna clientul să întrebe de
     // ea.
-    json_out([
+    json_out(fara_parola_casutei([
         'settings' => settings_public(),
+        // Pe ce drum pleacă e-mailul acum și dacă drumul direct are cu ce
+        // (runda 2.7.5): cardul „E-mail” spune asta pe față, în loc să lase
+        // omul să afle din e-mailurile care nu mai vin.
+        'posta'       => posta_stare(),
         'failed'      => failed_notifications(),
         // Câte sunt CU ADEVĂRAT, nu câte încap în listă. Titlul casetei roșii
         // se scria din rândurile aduse — cel mult 20 — deci un weekend cu 47
         // de eșecuri se anunța ca „20 anunțuri nu au plecat”. O cifră mai mică
         // decât adevărul, tocmai într-un mesaj de alarmă.
         'failedTotal' => failed_notifications_count(),
-    ]);
+    ]));
+}
+
+/**
+ * Un răspuns al Setărilor, cu parola căsuței de e-mail mascată ÎNTREAGĂ
+ * (runda 2.7.5).
+ *
+ * `settings_public()` maschează secretele cu `mask_secret()`, care lasă la
+ * vedere ultimele 4 semne ale unui secret lung: bun pentru un token, prea mult
+ * pentru o parolă aleasă de om (vezi `mask_secret_intreg()`, api/lib/crypto.php).
+ * De aceea orice răspuns care poartă `settings_public()` trece pe aici înainte
+ * să plece: tabloul în care stă e dat de-a dreptul funcției ăsteia (păzit în
+ * `.claude/check-posta.mjs`, pentru fiecare chemare din `api/`). Semnul „•” din
+ * față rămâne, deci regula salvării („începe cu bulină = las-o cum e”) merge
+ * neschimbată.
+ */
+function fara_parola_casutei(array $raspuns): array
+{
+    foreach (['mail_smtp_password'] as $cheie) {
+        if (isset($raspuns['settings'][$cheie])) {
+            $raspuns['settings'][$cheie] = mask_secret_intreg((string) $raspuns['settings'][$cheie]);
+        }
+    }
+    return $raspuns;
 }
 
 /**
@@ -273,6 +300,7 @@ function route_settings_save(): void
     $incoming = guard_catalog($incoming);
 
     guard_whatsapp_provider($incoming);
+    $incoming = guard_posta($incoming);
 
     validate_lists($incoming);
     $incoming = guard_event_lists($incoming);
@@ -301,7 +329,14 @@ function route_settings_save(): void
     }
 
     // `true` = recitire din baza de date, ca răspunsul să reflecte ce s-a salvat.
-    json_out(['ok' => true, 'changed' => $changed, 'settings' => settings_public(true)]);
+    // `posta` se socotește DUPĂ recitire (ordinea din tablou e ordinea în care
+    // se cheamă): cine tocmai a completat căsuța vede pe loc drumul cel nou.
+    json_out(fara_parola_casutei([
+        'ok'       => true,
+        'changed'  => $changed,
+        'settings' => settings_public(true),
+        'posta'    => posta_stare(),
+    ]));
 }
 
 /* ------------------------------------------------------------- validări -- */
@@ -567,6 +602,111 @@ function guard_whatsapp_provider(array $incoming): void
             'provider_credentials_missing'
         );
     }
+}
+
+/**
+ * Căsuța de e-mail (SMTP), verificată la scriere (runda 2.7.5).
+ *
+ * Patru refuzuri, fiecare cu codul lui: `bad_smtp_host`, `bad_smtp_port`,
+ * `bad_smtp_security`, `bad_smtp_user`. O gazdă scrisă cu „https://” în față ori
+ * cu portul lipit de ea s-ar salva cuminte și ar ieși la iveală abia la primul
+ * e-mail care nu pleacă — poate chiar cel cu parola uitată a cuiva.
+ *
+ * CE NU SE REFUZĂ: căsuța completată pe jumătate. Casetele se scriu pe rând,
+ * iar parola nu se întoarce niciodată spre pagină, deci „jumătate” e o stare
+ * prin care trece orice completare. O spune `posta.casuta` din răspuns, iar
+ * trimiterea se oprește cu vorba ei (`smtp_trimite()`); salvarea trece.
+ *
+ * PAROLA nu se verifică în niciun fel și nu se atinge aici: e secret, o scrie
+ * `settings_save()` criptată, cu regulile tuturor secretelor (gol ori „•” în
+ * față = rămâne cea veche; `__clear__` = se șterge). Se cere numai SĂ FIE
+ * SCRISĂ când se schimbă gazda pe lângă una salvată (`smtp_parola_din_nou`):
+ * altfel parola veche ar pleca spre serverul nou (val5 a rundei 2.7.5).
+ *
+ * Valorile se scriu înapoi în cerere aduse la o singură formă (gazda cu litere
+ * mici, portul fără zerouri în față), ca două salvări cu aceeași căsuță să nu
+ * lase în Jurnal o schimbare care nu e.
+ */
+function guard_posta(array $incoming): array
+{
+    $text = static function (array $incoming, string $cheie, string $mesaj, string $cod): string {
+        if (!is_scalar($incoming[$cheie]) && $incoming[$cheie] !== null) {
+            fail($mesaj, 422, $cod);
+        }
+        return trim((string) $incoming[$cheie]);
+    };
+
+    if (array_key_exists('mail_smtp_host', $incoming)) {
+        $mesaj = 'Gazda căsuței de e-mail nu e un nume de server. Scrie numai numele, cum îl dă '
+            . 'furnizorul (de pildă mail.domeniul-tau.ro): fără „https://”, fără port și fără spații.';
+        $gazda = strtolower($text($incoming, 'mail_smtp_host', $mesaj, 'bad_smtp_host'));
+        if ($gazda !== '' && (strlen($gazda) > 253 || str_contains($gazda, '..')
+            || preg_match('/^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/', $gazda) !== 1)) {
+            fail($mesaj, 422, 'bad_smtp_host');
+        }
+        $incoming['mail_smtp_host'] = $gazda;
+
+        // GAZDA NOUĂ, PAROLA VECHE. Parola salvată e a căsuței de la gazda de
+        // dinainte; lăsată pe loc, ar pleca la primul e-mail (fie și butonul de
+        // test) spre gazda nouă, cu AUTH PLAIN. Iar dreptul „setari” îl poate da
+        // fondatorul și altcuiva decât patronului: cine îl are ar fi scris numai
+        // „Server SMTP” cu serverul lui și ar fi primit parola căsuței firmei.
+        // De aceea gazda nouă cere parola scrisă în aceeași salvare — ori
+        // ștearsă (`__clear__`), care nu trimite nimic nicăieri. Golită, gazda
+        // trece: fără ea poșta merge pe drumul direct și parola nu pleacă.
+        // E regula furnizorului de WhatsApp (`guard_whatsapp_provider()`):
+        // tokenul celui vechi nu deschide nimic la cel nou și nici n-are voie.
+        if ($gazda !== '' && $gazda !== smtp_date()['host'] && smtp_parola_pusa()) {
+            $parola = $incoming['mail_smtp_password'] ?? null;
+            // Ce numește `settings_save()` „necompletat”: gol, numai spații ori
+            // cu „•” în față (bulinele mascate, trimise înapoi de pagină).
+            $scrisa = (is_string($parola) || is_int($parola) || is_float($parola))
+                && trim((string) $parola) !== '' && !str_starts_with(trim((string) $parola), '•');
+            if (!$scrisa) {
+                fail(
+                    'Ai schimbat serverul căsuței de e-mail: scrie și parola căsuței în aceeași salvare '
+                    . '(ori apasă „Șterge parola”). Parola salvată e a serverului de dinainte și nu pleacă spre altul.',
+                    422,
+                    'smtp_parola_din_nou'
+                );
+            }
+        }
+    }
+
+    if (array_key_exists('mail_smtp_port', $incoming)) {
+        $mesaj = 'Portul căsuței de e-mail trebuie să fie un număr între 1 și 65535. '
+            . 'De obicei e 465 ori 587.';
+        $port = $text($incoming, 'mail_smtp_port', $mesaj, 'bad_smtp_port');
+        // Gol = portul din pornire (465): caseta golită nu e o greșeală.
+        if ($port !== '') {
+            if (preg_match('/^[0-9]{1,5}$/', $port) !== 1 || (int) $port < 1 || (int) $port > 65535) {
+                fail($mesaj, 422, 'bad_smtp_port');
+            }
+            $port = (string) (int) $port;
+        }
+        $incoming['mail_smtp_port'] = $port;
+    }
+
+    if (array_key_exists('mail_smtp_security', $incoming)) {
+        $mesaj = 'Felul criptării pentru căsuța de e-mail poate fi numai „auto”, „ssl” ori „starttls”.';
+        $fel   = strtolower($text($incoming, 'mail_smtp_security', $mesaj, 'bad_smtp_security'));
+        if ($fel !== '' && !in_array($fel, ['auto', 'ssl', 'starttls'], true)) {
+            fail($mesaj, 422, 'bad_smtp_security');
+        }
+        $incoming['mail_smtp_security'] = $fel;
+    }
+
+    if (array_key_exists('mail_smtp_user', $incoming)) {
+        $mesaj = 'Utilizatorul căsuței de e-mail nu poate avea salturi de linie ori alte semne '
+            . 'nevăzute și nu poate trece de 190 de semne. De obicei e chiar adresa căsuței.';
+        $om = $text($incoming, 'mail_smtp_user', $mesaj, 'bad_smtp_user');
+        if (strlen($om) > 190 || preg_match('/[\x00-\x1F\x7F]/', $om) === 1 || preg_match('//u', $om) !== 1) {
+            fail($mesaj, 422, 'bad_smtp_user');
+        }
+        $incoming['mail_smtp_user'] = $om;
+    }
+
+    return $incoming;
 }
 
 /**
@@ -1191,7 +1331,10 @@ function route_settings_test(string $channel): void
 
     $text = "Mesaj de test de la Golden Pastry.\n"
         . "Dacă ai primit acest mesaj, notificările pe „" . $channel . "” funcționează.\n"
-        . 'Trimis la ' . gmdate('Y-m-d H:i') . ' UTC.';
+        // Ora patiseriei, ca pe ceasul de pe perete (fișa 705, 2.7.5): cu
+        // `gmdate()` un test trimis la 15:20 spunea „12:20 UTC”, iar patronul
+        // credea că mesajul a stat trei ore pe drum.
+        . 'Trimis la ' . substr(now_local(), 0, 16) . ' (ora României).';
 
     $order = [
         // Ziua în ora patiseriei, ca mesajul de test să arate ce va arăta și
@@ -1214,6 +1357,19 @@ function route_settings_test(string $channel): void
         // „Eroare 502." — tocmai motivul furnizorului, pentru care există
         // ruta asta, nu ajungea niciodată la om.
         fail($last['error'] ?? 'Cauză necunoscută.', 502, 'test_failed');
+    }
+
+    if ($channel === 'email') {
+        // E-mailul are două drumuri, iar „a mers” înseamnă altceva pe fiecare
+        // (runda 2.7.5): căsuța a LUAT ÎN PRIMIRE mesajul — serverul ei a
+        // răspuns că-l are; drumul direct numai l-a PREDAT programului de
+        // poștă al serverului, iar dacă a și ajuns nu se mai află de aici.
+        // Pagina are nevoie de `cale` ca să nu spună „trimis” în al doilea caz.
+        $cale = mail_cale();
+        audit('settings_test', 'settings', $channel, $cale === 'smtp'
+            ? 'Test luat în primire de căsuța de e-mail'
+            : 'Test predat programului de poștă al serverului (nu se știe dacă a ajuns)');
+        json_out(['ok' => true, 'channel' => $channel, 'cale' => $cale]);
     }
 
     audit('settings_test', 'settings', $channel, 'Test trimis cu succes');

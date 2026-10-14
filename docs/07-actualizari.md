@@ -181,7 +181,7 @@ patru subdomeniile odată**.
 
 API-ul e aproape întotdeauna aditiv: rute noi, câmpuri noi, iar paginile vechi
 ignoră ce nu cunosc. Paginile noi, în schimb, cer rute noi. Dacă urci întâi
-paginile, clientul primește pe ecran exact textul de la `api/index.php:437` —
+paginile, clientul primește pe ecran exact textul de la `api/index.php:454` —
 „Rută inexistentă: POST /requests/12/reopen" — iar comanda pur și simplu nu se
 face. Cu ordinea corectă, fereastra e „API nou + pagini vechi", care nu strică
 nimic.
@@ -205,7 +205,7 @@ implicită, un an, stă în cod (`session_days_panou()`, `api/lib/auth.php`) toc
 pentru cazul ăsta — dar copiind-o ai numărul la vedere, acolo unde îl cauți.
 
 Runda 2.7.0 aduce în exemplu o cheie care merge pe dos: **`telegram_api_base`**
-e singura pe care **nu** o copiezi. Ea spune la ce adresă pleacă mesajele de
+e prima pe care **nu** o copiezi. Ea spune la ce adresă pleacă mesajele de
 Telegram, iar pe server trebuie să lipsească ori să rămână goală — atunci
 adresa e cea adevărată, `https://api.telegram.org`. Cheia există numai pentru
 probele de pe calculatorul de lucru, care mută Telegramul pe un primitor local,
@@ -216,6 +216,20 @@ dintr-un ecran, de către oricine are dreptul lui; ce stă în `config.php`, num
 de către cine are deja serverul în mână. O valoare stricată nu cade în tăcere
 pe adresa adevărată, ci oprește trimiterile cu o eroare spusă pe nume, care îți
 cere să scoți cheia.
+
+Runda 2.7.5 aduce a doua cheie de același fel: **`smtp_ca_file`**. Nici pe ea
+n-o copiezi. Pe server lipsește ori rămâne goală — atunci certificatul
+serverului de e-mail se verifică după certificatele sistemului, singura purtare
+bună pentru site. Cheia există numai pentru probele de pe calculatorul de
+lucru, care trimit e-mail printr-o căsuță locală, ca mesajele lor să poată fi
+numărate fără să plece nicăieri, și e ascultată numai când gazda căsuței din
+Setări e calculatorul însuși (`127.0.0.1`, `localhost`); pentru orice altă
+gazdă e ca și cum n-ar fi. Stă în fișier, și nu în Setări, din același motiv ca
+`telegram_api_base`: un certificat de încredere pus dintr-un ecran ar lăsa pe
+oricine are ecranul să dea parola căsuței unui server străin. Datele căsuței
+înseși — serverul, portul, utilizatorul, parola — **nu** stau în `config.php`:
+se scriu din Setări → Notificări, în cartonașul „E-mail”. Deci pentru ca
+e-mailul să plece nu ai nimic de adăugat în fișier.
 
 **Șterge `setup.php` și `verifica.php` de pe server** după urcare.
 
@@ -237,7 +251,8 @@ există rută de export în aplicație. Trei lucruri, în ordinea asta:
    → Compress → descarcă.
 3. **`api/config.php`** — descarcă-l. Baza și `config.php` sunt o **pereche**:
    dacă restaurezi baza peste un `config.php` cu altă cheie de criptare, codul
-   tabletelor și tokenurile de notificare devin ilizibile, tăcut.
+   tabletelor, tokenurile de notificare și, de la 2.7.5, parola căsuței de
+   e-mail devin ilizibile, tăcut.
 
 O restaurare înseamnă că **tot ce a intrat între backup și restaurare dispare** —
 comenzi, cereri de pe site, mișcări de stoc. De-asta o actualizare cu migrare
@@ -253,7 +268,7 @@ peste schema nouă. Codul vechi nu știe de coloana nouă și nu o cere;
 funcționează normal tot intervalul.
 
 **De ce nu invers.** Codul nou cere o coloană care încă nu există → PDO ridică
-excepție → `api/index.php:438-444` întoarce „Eroare internă." Nu e o pagină
+excepție → `api/index.php:455-461` întoarce „Eroare internă." Nu e o pagină
 urâtă, e o **oprire**: formularul de comandă cade la trimitere, panoul nu mai
 încarcă lista. Nu există coadă și nu există reîncercare — comenzile din acel
 interval se pierd.
@@ -298,7 +313,7 @@ după nu.
 | `018_adresa_si_program.sql` | Da — scrie două setări și nimic altceva, cu `INSERT IGNORE`: nicio coloană, niciun tabel, niciun rând de comandă atins. Seamănă rândurile `company_address` și `company_hours`, care n-au existat niciodată, deși panoul Setări avea casetele lor de mult, iar pagina publică le citea. Valorile semănate sunt chiar cele scrise în cod ca temei de rezervă (`api/lib/firma.php`, `GP_FIRMA_ADRESA` și `GP_FIRMA_PROGRAM`), ca site-ul să arate la fel în clipa actualizării. La a doua rulare nu se întâmplă nimic: `INSERT IGNORE` trece pe lângă un rând care există, deci adresa pe care ai scris-o tu din Setări **rămâne a ta**. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază — n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Nu cere nicio migrare anterioară. |
 | `019_jeton_cerere.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând de comandă atins. Tabelul `request_claims` ține amprentele jetoanelor cu care se leagă cererea trimisă de pe site de contul făcut imediat după ea. La a doua rulare nu se întâmplă nimic: `IF NOT EXISTS` sare peste tot ce e înăuntru, chei străine cu tot. Cere `001` (are chei străine spre `order_requests` și `users`). |
 | `020_rang_client.sql` | Da — pune un index pe `orders` și nimic altceva, după ce întreabă `information_schema` dacă nu cumva e deja acolo: niciun tabel, nicio coloană, niciun rând atins. E prima migrare care **se poate uita fără pagubă**: fără ea insignele de client ies la fel, doar mai încet. Cere `001`. |
-| `021_raspundere.sql` | Da — patru bucăți, fiecare cu paza ei: indexul și coloana se uită întâi în `information_schema`, iar cele două tabele intră cu `CREATE TABLE IF NOT EXISTS`. Nu atinge niciun rând existent: coloana nouă `users.telegram_user_id` pornește `NULL` pe toate conturile, iar tabelele se nasc goale. Aduce răspunderea — cine a scris comanda (indexul `ix_orders_autor`, coloana de Telegram, tabelul `telegram_links`) și cine era de tură când s-a făcut (`lab_production`). **Jumătatea care se poate uita fără pagubă e numai indexul**, ca la `020`: fără el lista de comenzi iese la fel, doar mai încet. Celelalte trei nu: fără coloană, faptele apăsate în Telegram ies toate pe numele celui care a legat botul; fără `telegram_links`, legarea Telegramului nu se poate nici măcar porni; fără `lab_production`, raportul de producție pe tură iese **gol, fără eroare** — adică se descoperă la prima plată, nu la actualizare. `UNIQUE`-ul de pe `telegram_user_id` nu poate ciocni la import: în MySQL `NULL` nu se ciocnește cu `NULL`, iar la actualizare toate conturile sunt `NULL`. Cere `001` (chei străine spre `users` și `orders`) și `014` (coloana nouă se pune `AFTER lab_pin`). |
+| `021_raspundere.sql` | Da — patru bucăți, fiecare cu paza ei: indexul și coloana se uită întâi în `information_schema`, iar cele două tabele intră cu `CREATE TABLE IF NOT EXISTS`. Nu atinge niciun rând existent: coloana nouă `users.telegram_user_id` pornește `NULL` pe toate conturile, iar tabelele se nasc goale. Aduce răspunderea — cine a scris comanda (indexul `ix_orders_autor`, coloana de Telegram, tabelul `telegram_links`) și cine era de tură când s-a făcut (`lab_production`). **Jumătatea care se poate uita fără pagubă e numai indexul**, ca la `020`: fără el lista de comenzi iese la fel, doar mai încet. Celelalte trei nu: fără coloană, nimeni nu-și poate lega contul de Telegramul lui, deci fiecare apăsare din grup e a unui om „cu contul nelegat” — până la 2.7.5 ieșea pe numele celui care a legat botul, iar de la 2.7.5 poartă numele lui de pe Telegram și vorba „cont nelegat” (v. `036`); fără `telegram_links`, legarea Telegramului nu se poate nici măcar porni; fără `lab_production`, raportul de producție pe tură iese **gol, fără eroare** — adică se descoperă la prima plată, nu la actualizare. `UNIQUE`-ul de pe `telegram_user_id` nu poate ciocni la import: în MySQL `NULL` nu se ciocnește cu `NULL`, iar la actualizare toate conturile sunt `NULL`. Cere `001` (chei străine spre `users` și `orders`) și `014` (coloana nouă se pune `AFTER lab_pin`). |
 | `022_cerere_de_la_personal.sql` | Da — patru coloane, fiecare cu paza ei în `information_schema`, plus indexul și cheia străină, în ordinea asta (cheia pusă înaintea indexului ar fi făcut MySQL să-și scrie singur un index fără nume ales, iar al nostru ar fi rămas al doilea, nefolosit). Nu atinge niciun rând existent: toate patru sunt `NULL` sau cu implicit, deci o cerere de pe site scrisă înaintea migrării rămâne întreagă. Aduce cererea scrisă de personal — de la hotărârea din 18 septembrie 2026, comanda intră de-a dreptul în sistem numai când o scrie un administrator, un manager sau fondatorul; restul scriu o CERERE. Drumul cererii e cel al site-ului, dar el purta mai puțin decât o comandă, iar ce nu purta se pierdea tăcut între formular și acceptare: **modul de onorare** (agentul alegea „Curier", iar la acceptare `route_requests_accept()` cădea pe `default_fulfillment()`, adică pe altceva), **urgent** și **la oră fixă** (se puteau cere numai la acceptare, deci graba știută de cel care a luat telefonul nu ajungea la cel care hotărăște) și **cine a scris-o** (`created_by`: fără ea, comanda născută din cererea agentului ar fi purtat numele administratorului care a apăsat „Acceptă", iar agentul ar fi dispărut din propria lui muncă). Coloana `created_by` ține două întrebări deodată — „cine" și „de unde": o cerere de pe site n-are autor, deci comanda născută din ea nu mai e însemnată „site" pe nedrept. Cere `001` (cheie străină spre `users`) și se rulează după `021`. |
 | `023_laboratorul_si_livrarea.sql` | Da — două coloane, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie, niciun rând de date. Nu atinge nimic din ce există: `orders.lab_seq` se naște `NULL` („nearanjată"), iar `users.poate_confirma_livrarea` se naște `0`, pentru toți. `lab_seq` mută ordinea de lucru a laboratorului din browserul fiecărei tablete pe server — până acum ea stătea în `localStorage`, deci brutarul care aranja ziua aranja numai pentru el, iar colegul de lângă el vedea altceva; și, fiindcă împărțirea cantităților produse merge DE SUS ÎN JOS pe lista aceea, aceeași apăsare umplea alte comenzi, după tableta de pe care s-a apăsat. E soră cu `route_seq` din `003` și scrisă la fel (`NULL`, nu `0`, fiindcă `0` e o poziție adevărată — cea dintâi), dar nu se poate refolosi aceea: `route_seq` e ordinea OPRIRILOR mașinii, pusă de birou și păzită de `require_admin()`, iar ordinea în care mașina trece pe la clienți n-are nimic de-a face cu ordinea în care laboratorul coace. `poate_confirma_livrarea` e semnul fără de care serverul refuză etapa finală — „Predată" înseamnă *ajunsă la client*, și o punea oricine din personal: laboratorul o apăsa când termina de ambalat, iar comanda apărea livrată înainte să fi urcat în mașină. **Nicio umplere înapoi, dinadins**: toți se nasc fără semn, iar patronul bifează șoferul din „Conturi". O umplere „ca să nu înrăutățim" ar fi pus semnul tocmai pe contul comun al tabletelor — adică pe contul din pricina căruia s-a cerut lucrarea —, iar regula ar fi plecat la drum nefăcând nimic, fără ca nimeni să bage de seamă. Administratorul și fondatorul îl au din cod (`poate_confirma_livrarea()`, `api/lib/auth.php`), deci biroul nu se poate încuia pe dinafară. Cere `001` și se rulează după `022`. |
 | `024_doua_cataloage.sql` | Da — trei coloane pe `products`, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie străină. Are însă și un pas care **scrie date** — umplerea celor două bife —, iar acela e zăvorât cu `@coloane_noi`, numărat ÎNAINTE de `ALTER`-e: la a doua rulare `UPDATE`-ul nici nu se pregătește. Fără zăvor, fiecare actualizare ar fi pus la loc, lună după lună, fiecare latură pe care patronul o stinsese cu mâna — exact pățania lui `016`, și de-aia `.claude/test-migrari-repetate.mjs` o are și pe asta sub ochi. Umplerea e **prudentă dinadins**: `in_frozen = in_baked = (amândouă prețurile scrise)`, deci migrarea **nu mișcă nimic pe vitrină** — cine se vedea înaintea ei se vede și după, cine era ascuns rămâne ascuns. Ce se schimbă e numai vorba cu care panoul îl arată: „nu e în niciun catalog" în loc de „îi lipsește un preț". Forma îndrăzneață (`in_frozen = price_frozen IS NOT NULL`) ar fi ghicit apartenența din preț — tocmai ce a hotărât patronul să nu se facă — și ar fi publicat produse pe jumătate completate în secunda importului, fără niciun ecran între el și site. Nu atinge `photo`, nu atinge `active`, nu adaugă nicio grupă. Cere `001` și se rulează după `023`. |
@@ -309,10 +324,12 @@ după nu.
 | `029_numere_in_catalog.sql` | Da — și, ca `027`, **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Dă o dată fiecărui produs — și celor scoși din catalog, care își păstrează locul pentru când se întorc — numărul din colțul pozei, 1, 2, 3…, în ordinea în care au fost puse (`id`), în coloana `products.sort`, care exista din `001` și ținea până acum pași de zece. Zăvorul e tot în `settings`: `migration_029_numere_catalog`, scris la coada ei, cu data rulării. A doua rulare îl găsește și nu mai renumerotează nimic — fără zăvor, fiecare actualizare ar fi pus la loc numerele de la import și ar fi șters, lună de lună, pe cele alese de patron în fila Produse. Pe o bază din care n-a fost șters niciun produs numerele ies exact cele de dinainte (01 rămâne 01, 19 rămâne 19), deci vitrina nu se mișcă în clipa importului; unde s-a șters unul, cele de după el urcă cu un loc și închid golul. **Ce NU face: nu pune un index unic pe `sort`.** Unicitatea o ține serverul, sub lacăt, la fiecare mutare; un index ar fi făcut orice produs scris cu mâna în bază, fără `sort`, să cadă la import pe un zero dublu. Nu schimbă cheile: coșurile, pozele și comenzile trimit tot la ele. O bază care ia fișierele noi fără migrare nu pățește nimic: magazinul arată cheia bazei, ca înainte, iar fișa produsului refuză lămurit schimbarea numărului (`numbers_unavailable`, cu numele fișierului). Cere `001` și MySQL 8.0 sau mai nou (`ROW_NUMBER()`); registrul (`025`) îl folosește numai dacă îl găsește. |
 | `030_gata_de_livrare.sql` | Da — și, ca `027` și `029`, **nu atinge deloc schema**: nici tabel, nici coloană, nici index. Pune o dată numele „Gata de livrare" în lista ta de etape (`order_statuses`), **chiar înaintea etapei finale** — cea numită în `order_status_done`, oricum s-ar chema ea la tine —, și numai dacă nu e deja acolo. Nu e un `UPDATE` cu lista scrisă în fișier, greșeala lui `003`: celelalte etape rămân cum le-ai lăsat, cu numele și cu ordinea lor. Dacă setarea etapei finale lipsește ori arată spre un nume care nu mai e în listă, locul e cel dinaintea ultimei etape care nu e anularea — aceeași regulă după care serverul își alege singur etapa finală (`status_done()`). Zăvorul e în `settings`: `migration_030_gata_de_livrare`, scris la coada ei, cu data rulării. A doua rulare îl găsește și nu mai atinge lista — fără zăvor, o etapă redenumită ori scoasă de tine din Setări s-ar întoarce sub numele vechi la fiecare actualizare, exact pățania lui `016`. Pe o instalare nouă n-are ce pune: lista din `002` are deja etapa. **Ce NU face: nu mută nicio comandă.** Cele aflate la „La ambalare" în clipa importului rămân acolo; laboratorul mai apasă o dată pe fiecare, și abia atunci se aprinde butonul curierului. Nu atinge `order_status_done` și `order_status_cancelled`, iar pe lângă o listă care nu e JSON trece fără s-o atingă. O bază care ia fișierele noi fără migrare nu pățește nimic: laboratorul se oprește tot la etapa dinaintea celei finale — numai că aceea e atunci ambalarea, deci de la „La ambalare” comanda e a curierului. Cere `001` și funcțiile JSON ale bazei (MySQL 5.7 sau mai nou); registrul (`025`) îl folosește numai dacă îl găsește. |
 | `031_fise_tehnice.sql` | Da — două coloane pe `products`, `sheet_frozen` și `sheet_baked`, fiecare cu paza ei în `information_schema`; niciun index, nicio cheie străină. În ele stă calea fișei tehnice a fiecărei laturi; `NULL` înseamnă „fără fișă", și atunci magazinul nu arată niciun buton. Are și un pas care **scrie date**: leagă o dată, după `slug`, cele 21 de fișe venite cu pachetul de latura congelată a produselor lor, și numai acolo unde coloana e goală. Pasul e zăvorât în `settings` cu `migration_031_fise_tehnice`, scris la coada ei: a doua rulare îl găsește și nu mai leagă nimic — fără zăvor, o fișă scoasă de tine din Catalog s-ar întoarce la fiecare actualizare, fiindcă tocmai „goală" e starea pe care ai ales-o. **Ce NU face: nu scrie nimic în `sheet_baked`.** Coapte împrumută fișa de la congelate cât n-are una a ei, iar împrumutul se face în cod (`latura_fisa()`, `api/lib/laturi.php`), nu în bază — scris în bază, n-ar mai putea fi deosebit de o fișă pusă dinadins. Nu atinge greutatea, prețul ori descrierea niciunui produs și nu mută niciun fișier: scrie numai căi. Un produs pus de tine în Catalog cu altă adresă decât cea din pachet (alt `slug` — de pildă unul făcut din nou sub alt nume) nu e găsit și rămâne fără fișă; i se încarcă una din Catalog. O bază care ia fișierele noi fără migrare nu pățește nimic: magazinul nu arată butonul fișei, iar încărcarea unei fișe e refuzată lămurit (`fise_unavailable`, cu numele fișierului). Cere `001`; registrul (`025`) îl folosește numai dacă îl găsește. |
-| `032_plati_si_prag.sql` | Da — opt coloane, fiecare cu paza ei în `information_schema`: șapte pe `orders` (`plata`, `plata_scadenta`, `plata_la`, `plata_de`, `plata_suma`, `plata_nota`, `plata_amintire_la`) și una pe `users` (`prag_neplatite`); două indexuri pe `orders` (`ix_orders_plata`, `ix_orders_plata_la`), păzite la fel; și șapte setări, cu `INSERT IGNORE`. A doua rulare nu face nimic și nu calcă ce ai ales între timp în „Încasări” — pragul, chatul, cele două ore. Aduce condica banilor: starea plății fiecărei comenzi — neplătită, amânată, plătită ori plătită prin bancă —, cu scadența, clipa, suma și omul care a bifat-o, și pragul de comenzi neplătite: cel general (`plati_prag_implicit`, semănat cu 2) și cel de pe cont (`prag_neplatite`: gol înseamnă „pragul general”, zero înseamnă „fără limită”). Comenzile noi se nasc neplătite, din implicitul coloanei, deci nicio scriere de comandă nu trebuie atinsă. Are și un pas care **scrie date**: trece o dată drept plătite comenzile aflate la etapa finală — cea numită în `order_status_done`, oricum s-ar chema ea la tine — și cu ziua **trecută**, iar la `plata_suma` le scrie totalul lor. Fără judecata asta, în ziua urcării fiecare client vechi ar fi apărut cu tot istoricul lui „de plată”, iar pragul l-ar fi oprit de la prima comandă nouă. Pasul e zăvorât în `settings` cu `migration_032_plati_si_prag`, scris la coada ei: a doua rulare îl găsește și nu mai judecă nimic — fără zăvor, o comandă predată pe care ai trecut-o tu înapoi pe „neplătită” ar fi făcută la loc „plătită” la fiecare actualizare. Sub același zăvor mai face o scriere, singura care nu ține de bani: trece pe `patru` vederea cu care se deschide magazinul pe telefon și tabletă (`catalog_vedere_telefon`), numai dacă mai ținea `unu`, valoarea de pornire a lui `028`; o vedere aleasă de tine din Setări nu e călcată, nici la import, nici la actualizările de după. **Ce NU face: nu scrie `plata_la`.** Nu se știe când s-au plătit comenzile vechi, iar o dată pusă din burtă le-ar fi băgat pe toate în „încasat azi”. O comandă predată chiar în ziua importului rămâne neplătită, la fel și toate cele care n-au ajuns la etapa finală; cele anulate nu se numără oricum. Dacă setarea etapei finale lipsește ori e goală, nu marchează nimic — nu ghicește —, iar semnul se scrie oricum, deci nici mai târziu nu mai marchează. Nu atinge etapa, totalul ori ziua niciunei comenzi, nu pune prag pe niciun cont și nu trimite nimic pe Telegram. Ce nu se potrivește — o comandă predată și neîncasată — se îndreaptă cu mâna, după import, din „Încasări”. O bază care ia fișierele noi fără migrare nu pățește nimic: nicio comandă nu e oprită de prag și nimic nu se numără, iar paginile care au nevoie de plăți sunt refuzate lămurit (`plati_unavailable`, cu numele fișierului). Cere `001`; registrul (`025`) îl folosește numai dacă îl găsește. |
+| `032_plati_si_prag.sql` | Da — opt coloane, fiecare cu paza ei în `information_schema`: șapte pe `orders` (`plata`, `plata_scadenta`, `plata_la`, `plata_de`, `plata_suma`, `plata_nota`, `plata_amintire_la`) și una pe `users` (`prag_neplatite`); două indexuri pe `orders` (`ix_orders_plata`, `ix_orders_plata_la`), păzite la fel; și șapte setări, cu `INSERT IGNORE`. A doua rulare nu face nimic și nu calcă ce ai ales între timp în „Încasări” ori în Setări — pragul, chatul, cele două ore. Aduce condica banilor: starea plății fiecărei comenzi — neplătită, amânată, plătită ori plătită prin bancă —, cu scadența, clipa, suma și omul care a bifat-o, și pragul de comenzi neplătite: cel general (`plati_prag_implicit`, semănat cu 2) și cel de pe cont (`prag_neplatite`: gol înseamnă „pragul general”, zero înseamnă „fără limită”). Comenzile noi se nasc neplătite, din implicitul coloanei, deci nicio scriere de comandă nu trebuie atinsă. Are și un pas care **scrie date**: trece o dată drept plătite comenzile aflate la etapa finală — cea numită în `order_status_done`, oricum s-ar chema ea la tine — și cu ziua **trecută**, iar la `plata_suma` le scrie totalul lor. Fără judecata asta, în ziua urcării fiecare client vechi ar fi apărut cu tot istoricul lui „de plată”, iar pragul l-ar fi oprit de la prima comandă nouă. Pasul e zăvorât în `settings` cu `migration_032_plati_si_prag`, scris la coada ei: a doua rulare îl găsește și nu mai judecă nimic — fără zăvor, o comandă predată pe care ai trecut-o tu înapoi pe „neplătită” ar fi făcută la loc „plătită” la fiecare actualizare. Sub același zăvor mai face o scriere, singura care nu ține de bani: trece pe `patru` vederea cu care se deschide magazinul pe telefon și tabletă (`catalog_vedere_telefon`), numai dacă mai ținea `unu`, valoarea de pornire a lui `028`; o vedere aleasă de tine din Setări nu e călcată, nici la import, nici la actualizările de după. **Ce NU face: nu scrie `plata_la`.** Nu se știe când s-au plătit comenzile vechi, iar o dată pusă din burtă le-ar fi băgat pe toate în „încasat azi”. O comandă predată chiar în ziua importului rămâne neplătită, la fel și toate cele care n-au ajuns la etapa finală; cele anulate nu se numără oricum. Dacă setarea etapei finale lipsește ori e goală, nu marchează nimic — nu ghicește —, iar semnul se scrie oricum, deci nici mai târziu nu mai marchează. Nu atinge etapa, totalul ori ziua niciunei comenzi, nu pune prag pe niciun cont și nu trimite nimic pe Telegram. Ce nu se potrivește — o comandă predată și neîncasată — se îndreaptă cu mâna, după import, din „Încasări”. O bază care ia fișierele noi fără migrare nu pățește nimic: nicio comandă nu e oprită de prag și nimic nu se numără, iar paginile care au nevoie de plăți sunt refuzate lămurit (`plati_unavailable`, cu numele fișierului). Cere `001`; registrul (`025`) îl folosește numai dacă îl găsește. |
 | `033_acces.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând scris, nicio setare. Tabelul `role_rights` ține bifele pe care fondatorul le mută în „Acces” — cine intră pe ce panou și cine face ce faptă —, și **numai** pe cele schimbate față de pornire: cine are ce din pornire stă în cod (`GP_DREPT_IMPLICIT`, `api/lib/auth.php`), nu în bază. De-aceea tabelul se naște gol, iar **gol înseamnă „ca înaintea ei”**: cu migrarea importată și nicio bifă mișcată, fiecare rol intră exact unde intra până la 2.7.0. La a doua rulare nu se întâmplă nimic: `IF NOT EXISTS` sare peste tot ce e înăuntru, deci bifele mutate între timp rămân ale tale. **Ce NU face: nu atinge rolul niciunui cont** — `users.role` rămâne cum e. Și nu are semn în `settings`: nu face nimic „o singură dată”, deci n-are ce ține minte; că a rulat se vede din tabel și din registru. O bază care ia fișierele noi fără migrare nu pățește nimic: fiecare rută judecă după pornire, iar salvarea unei bife e refuzată lămurit (`acces_unavailable`, cu numele fișierului). Cere `001` (cheie străină spre `users`); registrul (`025`) îl folosește numai dacă îl găsește. |
 | `034_costuri.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând scris, nicio setare. Tabelul `stock_item_prices` ține **istoricul** prețurilor de cumpărare ale articolelor din depozit — cât costă făina, ouăle, untul, și din ce zi (`valid_from`) —, nu numai prețul de azi: costul unei zile se socotește cu ultimul preț de dinaintea ei, deci trecutul rămâne cu prețul de atunci. Un singur preț pe zi, pe articol (`uq_item_prices_day`): a doua scriere din aceeași zi e o corectură a primei, nu un al doilea preț. Lângă preț stă unitatea articolului din clipa scrierii, ca un articol trecut mai târziu din kg în g să nu facă fiecare cost să sară de o mie de ori fără să se vadă. Tabelul se naște gol: migrarea nu scrie niciun preț, iar „n-are preț” înseamnă „n-are niciun rând” — zero e un preț adevărat, al unui articol primit pe gratis. La a doua rulare nu se întâmplă nimic, deci prețurile scrise între timp rămân. **Ce NU face: nu atinge articolele, rețetele ori mișcările din depozit.** Nu are semn în `settings`. O bază care ia fișierele noi fără migrare nu pățește nimic: depozitul, rețetele și Statisticile răspund ca înaintea ei, fără costuri, iar citirea și scrierea unui preț sunt refuzate lămurit (`costuri_unavailable`, cu numele fișierului). Cere `001` (chei străine spre `stock_items` și `users`); registrul (`025`) îl folosește numai dacă îl găsește. |
 | `035_comenzi_sterse.sql` | Da — face un tabel nou și nimic altceva, cu `CREATE TABLE IF NOT EXISTS`: nicio coloană adăugată altundeva, niciun rând scris, nicio setare. Tabelul `orders_deleted` e o arhivă: ține **poza** unei comenzi anulate care a fost apoi ștearsă — antetul, fiecare poziție, cine a șters-o și când —, ca ștergerea să se poată citi și după ce rândul a plecat din `orders`. Se naște gol: migrarea **nu șterge și nu mută nicio comandă**. La a doua rulare nu se întâmplă nimic, deci pozele adunate între timp rămân. **N-are nicio cheie străină, dinadins**: comanda pe care o descrie nu mai există, iar clientul ori contul care a șters-o pot dispărea și ei — o cheie străină ar fi șters poza odată cu clientul, ori i-ar fi golit câmpurile. O comandă se șterge o singură dată (`uq_orders_deleted_order`), dar numărul ei se poate refolosi: numerotarea e pe zi, iar ștergerea îl eliberează, deci poza își ține referința ei. Nu are semn în `settings`. O bază care ia fișierele noi fără migrare nu pățește nimic: anularea unei comenzi merge ca înaintea ei, iar ștergerea uneia anulate e refuzată lămurit (`comenzi_sterse_indisponibil`, cu numele fișierului), fără să atingă comanda. Nu cere nimic și se rulează oriunde; registrul (`025`) îl folosește numai dacă îl găsește. |
+| `036_telegram_oameni.sql` | Da — două coloane pe `order_requests` (`handled_tg_id`, `handled_tg_name`), fiecare cu paza ei în `information_schema`, și un tabel nou, `telegram_oameni`, cu `CREATE TABLE IF NOT EXISTS`. Nu scrie și nu schimbă niciun rând: coloanele se nasc `NULL`, iar tabelul se naște gol. Aduce răspunsul la întrebarea „cine a apăsat, cu adevărat, pe Telegram?”. Botul stă într-un grup cu oamenii casei, iar când apăsa „Acceptă” cineva care nu-și legase contul de Telegramul lui, mesajul, panoul și Jurnalul spuneau că a acceptat cel care a legat botul. De la 2.7.5 apăsarea aceea merge mai departe pe drepturile contului care a legat botul, dar poartă **numele celui care a apăsat**, cel de pe Telegram, și vorba „cont nelegat”. Cele două coloane țin numele acela pe cerere — curățat și tăiat de server înainte de a fi scris —, lângă `handled_by`, care rămâne contul pe ale cărui drepturi s-a lucrat. Tabelul ține oamenii văzuți apăsând în grup, un rând de om: din el alege fondatorul, în Setări → Notificări, la „Oameni din grup”, pe cine să lege de ce cont. Legătura însăși rămâne unde e de la `021`, pe `users.telegram_user_id`; tabelul nu are coloană de legătură, dinadins, ca același lucru să nu fie scris în două locuri. **N-are chei străine**: numărul de Telegram nu e al niciunui rând din bază, iar numele de pe cerere trebuie să rămână și după ce omul pleacă din grup. **Ce NU face: nu îndreaptă trecutul.** Hotărârile luate până la ea rămân fără semn — nu se mai poate afla cine a apăsat atunci, iar un nume ghicit ar fi o minciună scrisă în tabel. Nu leagă și nu dezleagă pe nimeni și nu are semn în `settings`. O bază care ia fișierele noi fără migrare **nu se poartă ca înaintea ei**, și e bine de știut dinainte: apăsarea unui om cu contul nelegat e **refuzată**, cu un mesaj pe telefon care numește fișierul, fiindcă numele lui n-ar avea unde se scrie, iar hotărârea ar ieși iar pe numele altcuiva. Cine are contul legat lucrează ca până acum; lista „Oameni din grup” e refuzată și ea lămurit (`telegram_oameni_unavailable`, cu numele fișierului). Cere `001` (coloanele se pun `AFTER handled_at`); legarea unui om de un cont cere și `021`. Registrul (`025`) îl folosește numai dacă îl găsește. |
+| `037_posta_smtp.sql` | Da — scrie cinci setări și nimic altceva, cu `INSERT IGNORE`: nicio coloană, niciun tabel, niciun rând de comandă atins. Seamănă rândurile căsuței de e-mail a firmei: `mail_smtp_host`, `mail_smtp_port`, `mail_smtp_user`, `mail_smtp_password` și `mail_smtp_security`. La a doua rulare nu se întâmplă nimic: `INSERT IGNORE` trece pe lângă un rând care există, deci o căsuță completată de tine din Setări **rămâne a ta, cu parola ei cu tot**. Aduce locul în care se scrie căsuța prin care pleacă e-mailul. De la mutarea pe serverul de azi, e-mailul „Ți-ai uitat parola?” n-a mai ajuns la nimeni: serverul n-avea niciun program de poștă, iar pagina răspundea mai departe că a trimis. Hotărârea rundei 2.7.5 e „amândouă drumurile”: prin căsuța firmei, când e completată în Setări → Notificări, în cartonașul „E-mail”, altfel direct de pe server. Gazda (`mail_smtp_host`) se seamănă **goală**, și ea e comutatorul: cât e goală, e-mailul pleacă direct de pe server, exact ca înaintea migrării — deci importul nu schimbă nimic din ce face site-ul în clipa aceea. Portul pornește pe `465`, iar criptarea pe `auto` (după port); necriptat nu există ca alegere. Parola e însemnată ca secret (`is_secret` = 1): se ține criptată, ca tokenurile, și nu se mai întoarce spre pagină, nici măcar cu ultimele ei semne. **Ce NU face: nu scrie nicio parolă și nu trimite nimic** — căsuța o completezi tu, din Setări, iar parola ei nu trece prin niciun fișier. **Și nu pune programul de poștă al serverului**: pe acela îl pune scriptul de actualizare, la pasul „Programul de poștă” (v. [09-actualizare-vps.md](09-actualizare-vps.md)). O bază care ia fișierele noi fără migrare nu pățește nimic: e-mailul merge pe drumul direct, iar casetele căsuței stau închise în Setări și numesc fișierul sub ele. Cere `001` (tabelul `settings`); registrul (`025`) îl folosește numai dacă îl găsește. |
 
 Dacă o versiune viitoare are nevoie de o **setare** nouă, primești un fișier
 separat care conține doar acel `INSERT IGNORE INTO settings`. Nu reimportul
@@ -321,7 +338,7 @@ seed-ului.
 ### Cum verifici că migrarea a intrat
 
 `api/verifica.php` **nu te ajută**: pe o instalare vie răspunde 404
-(`api/verifica.php:1264-1275`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
+(`api/verifica.php:1458-1469`). phpMyAdmin → fila **SQL** → lipești și apeși Go.
 
 **Întâi întreabă registrul.** Din `025_registru_migrari.sql` încoace, fiecare
 migrare își scrie numele într-un tabel când rulează, deci răspunsul se citește
@@ -338,8 +355,8 @@ unde-și scrie numele. Dacă tabelul însuși lipsește, baza n-a văzut încă 
 ci schema, deci spune adevărul și despre o bază care a trecut prin actualizări
 de dinaintea lui.
 
-Pentru starea de azi — migrările **003 … 035** — trebuie să întoarcă
-**93 de rânduri**:
+Pentru starea de azi — migrările **003 … 037** — trebuie să întoarcă
+**100 de rânduri**:
 
 ```sql
 SELECT TABLE_NAME, COLUMN_NAME
@@ -375,7 +392,8 @@ SELECT TABLE_NAME, COLUMN_NAME
         ('orders','plata_scadenta'), ('orders','plata_la'),
         ('orders','plata_de'), ('orders','plata_suma'),
         ('orders','plata_nota'), ('orders','plata_amintire_la'),
-        ('users','prag_neplatite'))
+        ('users','prag_neplatite'), ('order_requests','handled_tg_id'),
+        ('order_requests','handled_tg_name'))
 UNION ALL
 SELECT TABLE_NAME, '(tabel)'
   FROM information_schema.TABLES
@@ -383,7 +401,7 @@ SELECT TABLE_NAME, '(tabel)'
    AND TABLE_NAME IN ('founder_invites', 'lab_shifts', 'lab_messages',
                       'request_claims', 'telegram_links', 'lab_production',
                       'schema_migrations', 'role_rights', 'stock_item_prices',
-                      'orders_deleted')
+                      'orders_deleted', 'telegram_oameni')
 UNION ALL
 SELECT 'settings', CONCAT(setting_key, ' = ', value)
   FROM settings
@@ -396,7 +414,9 @@ SELECT 'settings', CONCAT(setting_key, ' = ', value)
                        'plati_prag_implicit', 'plati_telegram_chat_id',
                        'plati_raport_ore', 'plati_amintiri',
                        'plati_raport_trimis_1', 'plati_raport_trimis_2',
-                       'panel_base_url', 'migration_032_plati_si_prag')
+                       'panel_base_url', 'migration_032_plati_si_prag',
+                       'mail_smtp_host', 'mail_smtp_port', 'mail_smtp_user',
+                       'mail_smtp_security')
 UNION ALL
 SELECT TABLE_NAME, INDEX_NAME
   FROM information_schema.STATISTICS
@@ -407,7 +427,7 @@ SELECT TABLE_NAME, INDEX_NAME
    AND SEQ_IN_INDEX = 1;
 ```
 
-**Mai puține rânduri decât 93 → citește care lipsesc.** Numele coloanei îți
+**Mai puține rânduri decât 100 → citește care lipsesc.** Numele coloanei îți
 spune singur unde s-a oprit importul: `referral_rate` e din 008, `vouched_at`
 din 010, `promo` din 011, `dismissed_at` din 012, `snoozed_until` din 013,
 `lab_pin` din 014, `zone` din 016, tabelul `request_claims` din 019, indexul
@@ -430,7 +450,10 @@ pe `products` — `sheet_frozen` și `sheet_baked` — împreună cu semnul
 `users`, indexurile `ix_orders_plata` și `ix_orders_plata_la`, cele șapte
 setări ale condicii banilor și semnul `migration_032_plati_si_prag` din 032,
 iar tabelul `role_rights` din 033, `stock_item_prices` din 034 și
-`orders_deleted` din 035.
+`orders_deleted` din 035, iar cele două coloane ale apăsătorului de pe
+`order_requests` — `handled_tg_id` și `handled_tg_name` — împreună cu tabelul
+`telegram_oameni` din 036, iar cele patru rânduri ale căsuței de e-mail, de la
+`mail_smtp_host` la `mail_smtp_security`, din 037.
 
 Rândurile care pot lipsi fără pagubă sunt cele cinci de index: `020`, câte o
 bucată din `021` și din `022`, plus cele două din `032`. Fără ele insignele de
@@ -441,9 +464,11 @@ Celelalte lipsuri sunt lucrări care nu merg.
 `021` e prima migrare care aduce deodată din toate felurile: o coloană
 (`users.telegram_user_id`), două tabele (`telegram_links`, `lab_production`) și
 un index (`ix_orders_autor`) — de-aia urcă numărul cu patru dintr-un foc. Ce se
-pierde fără fiecare: fără coloană, faptele apăsate în Telegram ies toate pe
-seama unui singur om, cel care a legat botul; fără `telegram_links`, legarea nu
-se poate nici măcar porni; fără `lab_production`, raportul de producție pe tură
+pierde fără fiecare: fără coloană, nimeni nu-și poate lega contul de Telegramul
+lui, deci fiecare apăsare din grup rămâne a unui om „cu contul nelegat” (până
+la 2.7.5 ieșeau toate pe seama unui singur om, cel care a legat botul; ce
+pățește azi apăsarea aceea scrie mai jos, la `036`); fără `telegram_links`,
+legarea nu se poate nici măcar porni; fără `lab_production`, raportul de producție pe tură
 iese **gol**, nu dă eroare — adică exact felul de lipsă care se descoperă târziu,
 la prima plată.
 
@@ -492,7 +517,7 @@ nu se schimba nimic. Niciodată. Tăcerea aceea nu mai e cu putință: o cheie f
 rând închide caseta din panou, iar cererea care o poartă totuși — un script, un
 import, o pagină rămasă deschisă dinaintea actualizării — e refuzată întreagă, cu **toate**
 cheile lipsă numite și fără să se scrie nimic din ea
-(`api/lib/settings.php:535-549`, codul `unknown_setting`). De-aceea aici nu
+(`api/lib/settings.php:537-551`, codul `unknown_setting`). De-aceea aici nu
 contează numai că rândurile **există**, ci și **ce scrie în ele**: pe o
 instalare proaspăt migrată trebuie să citești
 `company_address = Șos. Olteniței 103` și
@@ -567,7 +592,9 @@ iar pragul de comenzi neplătite n-are ce număra. Cele șapte setări se văd c
 `plati_amintiri = 1` și `panel_base_url = https://lab.goldenpastry.ro`, iar
 `plati_telegram_chat_id`, `plati_raport_trimis_1` și `plati_raport_trimis_2`
 cu nimic după semnul egal — pornesc goale, adică „niciun chat ales” și „nu s-a
-trimis niciodată”. Altă valoare înseamnă că ai ales-o tu din „Încasări”, ori că
+trimis niciodată”. Altă valoare înseamnă că ai ales-o tu, din „Încasări” ori
+din Setări (de la 2.7.5 chatul și orele raportului se aleg și din Setări →
+Notificări), ori că
 raportul a plecat între timp: în cele două rânduri `plati_raport_trimis_…`
 ceasul serverului își scrie singur **ziua** în care a luat ora aceea — o zi de
 felul `2026-10-12`, nu o oră —, tocmai ca să n-o trimită de două ori în aceeași
@@ -664,6 +691,55 @@ rulează întâi sql/035_comenzi_sterse.sql.” (`comenzi_sterse_indisponibil`) 
 nu atinge comanda — o ștergere fără urmă e tocmai ce n-a vrut casa. Anularea
 merge ca înaintea ei, fiindcă ea e o etapă, nu o ștergere.
 
+`036` urcă numărul cu trei: două coloane pe `order_requests` — `handled_tg_id`
+și `handled_tg_name` — și tabelul `telegram_oameni`. Coloanele spun că numele
+celui care a apăsat pe Telegram are unde se scrie; tabelul spune că lista
+„Oameni din grup” are de unde se umple. Toate trei se nasc goale și așa rămân
+până apasă cineva: migrarea nu scrie nimic despre hotărârile de dinaintea ei,
+fiindcă nu se mai poate afla cine a apăsat atunci. Când scrie un nume nou,
+codul le cere **pe toate trei** (`telegram_apasatori_suportati()`,
+`api/lib/telegram-legaturi.php`): o jumătate lipsă înseamnă că fișierul n-a
+rulat întreg.
+
+Lipsa lui `036` **nu lasă casa ca înaintea ei**, spre deosebire de aproape
+toate celelalte, și e bine de știut dinainte. Până la 2.7.5, omul din grup care
+nu-și legase contul apăsa „Acceptă”, iar hotărârea ieșea pe numele celui care a
+legat botul. Fișierele noi nu mai scriu niciodată numele altcuiva; fără cele
+două coloane n-au însă unde scrie numele adevărat, deci apăsarea e refuzată, iar
+omul citește pe telefon: „Contul tău de Telegram nu e legat de niciun cont, iar
+serverul n-are încă unde să-ți scrie numele: lipsește migrarea
+sql/036_telegram_oameni.sql. Nu am scris nimic.” Cine are contul legat lucrează
+ca până acum, iar cererile se hotărăsc mai departe din panou. În Setări →
+Notificări, cutia „Oameni din grup” arată în locul listei fraza serverului,
+„Lista „Oameni din grup” n-are încă tabelul ei: rulează întâi
+sql/036_telegram_oameni.sql.” (`telegram_oameni_unavailable`). De aceea, la
+pachetul 2.7.5, ordinea de la începutul capitolului — baza întâi, apoi
+fișierele — nu e de sărit: cu fișiere noi peste o bază veche, butoanele din
+grup nu mai lucrează pentru niciun om nelegat. `actualizeaza-vps.sh` ține
+singur ordinea asta.
+
+`037` urcă numărul cu patru, toate rânduri din `settings`, citite cu
+**valoarea** lor, ca la `028`: pe o instalare proaspăt migrată citești
+`mail_smtp_port = 465` și `mail_smtp_security = auto`, iar `mail_smtp_host` și
+`mail_smtp_user` cu nimic după semnul egal — pornesc goale, adică „nicio căsuță
+completată”. Altă valoare înseamnă că ai completat căsuța din Setări →
+Notificări, în cartonașul „E-mail”, iar migrarea a trecut pe lângă un rând care
+exista. Migrarea seamănă **cinci** rânduri, nu patru: al cincilea,
+`mail_smtp_password`, lipsește dinadins din interogare. Interogarea arată
+valori, iar valoarea lui e parola căsuței — ținută criptată, dar tot nu e de
+plimbat pe un ecran ori printr-o poză trimisă cuiva. Că rândul e acolo se vede
+din Setări: caseta „Parola căsuței” e deschisă.
+
+Fără `037`, fișierele noi trimit e-mailul ca înaintea ei, pe drumul direct, de
+pe server; nimic nu cade. În Setări, casetele căsuței stau închise, iar
+deasupra lor scrie: „Căsuța nu se poate completa încă: pe server lipsesc
+rândurile ei, fiindcă migrarea sql/037_posta_smtp.sql n-a intrat. Rulează
+actualizarea (sudo bash actualizeaza-vps.sh), apoi reîncarcă pagina.” Ce **nu**
+dovedește niciun rând de aici e că e-mailul chiar pleacă: rândurile spun numai
+că ai unde scrie căsuța. Dacă pleacă afli din Setări, din rândul de stare al
+cartonașului „E-mail” și cu butonul „Trimite e-mail de test” (v.
+`docs/02-panoul-de-setari.md`, la „E-mailul: căsuța firmei și drumul direct”).
+
 Lista nu se mai ține de mână. `.claude/test-doc-actualizari.mjs` chiar rulează
 interogarea asta pe baza de dezvoltare și numără rândurile, iar pe lângă asta o
 compară cu pazele din `information_schema` scrise în fiecare fișier din `sql/`:
@@ -729,6 +805,26 @@ Vreo trei minute. Fiecare pas prinde altceva.
    din pornire numai fondatorul; cui i-l mai arăți hotărăști din „Acces”. Ce
    faci când raportul n-a plecat scrie în
    [09-actualizare-vps.md](09-actualizare-vps.md), la „Ceasul plăților”.
+10. **E-mailul**, de la 2.7.5. Deschide Setări → Notificări și citește rândul
+    de stare din cartonașul „E-mail”: spune pe ce drum pleacă e-mailul acum —
+    prin căsuța firmei ori direct de pe server. Apasă „Trimite e-mail de test”
+    și caută mesajul în căsuța ta, și în Spam. Programul de poștă al drumului
+    direct nu e în pachet: îl pune `actualizeaza-vps.sh`, la pasul „Programul
+    de poștă”, care scrie în raport dacă l-a pus, dacă serverul avea deja unul
+    și dacă portul 25 pare închis de găzduire. În cazul din urmă mesajele rămân
+    în coada serverului și nu pleacă, fără nicio eroare în panou, iar leacul nu
+    e pe server: completezi căsuța firmei. Dacă scriptul a fost rulat cu
+    `--fara-posta`, programul nu se pune, iar e-mailul pleacă numai prin
+    căsuță. Proba întreagă se face de pe pagina de intrare: „Ți-ai uitat
+    parola?” cu contul tău, apoi rândul din Jurnal (v.
+    `docs/05-conturile-de-client.md`, la „Dacă și-a uitat parola”).
+11. **Butoanele din grupul de Telegram**, de la 2.7.5. Aici nu e nimic de
+    apăsat de probă: uită-te la prima cerere hotărâtă din grup de un om care nu
+    și-a legat contul. Sub mesaj trebuie să scrie numele lui de pe Telegram și
+    vorba „cont nelegat”, nu numele celui care a legat botul. Dacă omul citește
+    în schimb pe telefon că lipsește migrarea `sql/036_telegram_oameni.sql`,
+    fișierele au ajuns pe server înaintea bazei: rulează din nou actualizarea.
+    Cererea lui n-a fost atinsă și se poate hotărî între timp din panou.
 
 ---
 
@@ -800,7 +896,7 @@ Pentru comenzile vechi, singura legătură rămâne însemnarea
 (`„#1042 Restaurant Bistro"`) — dar și referința, și numele clientului se pot
 schimba din formularul comenzii, deci o comandă redenumită de atunci nu se mai
 găsește nici așa. Tocmai de aceea codul reparat nu se mai leagă de însemnare, ci
-citește returul din registru, pe `order_id` (`api/lib/orders.php:1799`).
+citește returul din registru, pe `order_id` (`api/lib/orders.php:1885`).
 
 Ce faci cu ce iese: adaugă în Depozit o mișcare de **intrare** cu diferența
 (`iesit_net - pe_comanda`), pe articolul din registru, cu motivul „Corectură
@@ -962,7 +1058,7 @@ lipește-le înapoi sub blocul generat, după extragere.
 ### 5. Urcare întreruptă la jumătate
 
 `support.js` trunchiat → pagina cu ambele limbi și `{{ }}` pe ecran. Un fișier
-din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:438-444`.
+din `api/` trunchiat → JSON valid cu 500, prins de `api/index.php:455-461`.
 Vestea bună: comenzile și cererile rulează în tranzacții, deci **nu rămân
 comenzi pe jumătate în bază**.
 

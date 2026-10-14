@@ -81,9 +81,9 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-dep=modalwrap]{padding:0!important;align-items:flex-end!important}
 [data-dep=modalcard]{width:100%!important;max-width:none!important;max-height:94vh!important;border-radius:22px 22px 0 0!important;padding:18px 16px!important}
 [data-dep=g2]{grid-template-columns:1fr!important}
-[data-dep=modalfoot]{flex-wrap:wrap!important;gap:8px!important}
-[data-dep=modalfoot]>button{min-width:0!important;margin-left:0!important;flex:1 1 100%!important;min-height:50px!important}
-[data-dep=modalfoot]>[data-dep=btnsave]{order:-2!important}
+[data-dep=modalfoot]{flex-wrap:nowrap!important;gap:8px!important} /* 2.7.5: UN rând, „Renunță” cât vorba lui și salvarea pe tot restul — nu două butoane late unul sub altul (108 px din foaie, cu tastatura deschisă peste jumătate de ecran). Cele trei rânduri țin loc celor trei de dinainte. */
+[data-dep=modalfoot]>button{min-width:0!important;margin-left:0!important;flex:0 0 auto!important;height:48px!important;min-height:48px!important;padding:0 14px!important;white-space:normal!important;line-height:1.15!important;text-align:center}
+[data-dep=modalfoot]>[data-dep=btnsave]{flex:1 1 0%!important}html[data-gp-tastatura] [data-dep=fab]{display:none!important} /* 2.7.5: cât se scrie pe telefon (steagul pus de shared/gp-api.js), bara fixă de jos — „+ Intrare”, „− Ieșire”, „+ Articol” — se stinge: ar sta peste câmpul căutării ori, unde tastatura strânge pagina, chiar deasupra tastaturii. Selectorul cu steag e mai greu decât cel care o aprinde în banda asta, deci câștigă fără să-i pese de ordine. */
 /* Fila „Prețuri” (runda 2.7.0). Rândul unui articol e un flex care se
    înfășoară: pe ecran lat numele, prețul și butoanele au fiecare baza lui și
    stau pe o linie. Aici numele își ia linia întreagă, iar prețul împarte linia
@@ -719,7 +719,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </label>
 
 <div data-dep="g2" style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Cantitate ({{ fU }})
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)"><span>Cantitate ({{ fU }})</span>
 <input class="h-input h-numeric" value="{{ fQ }}" onChange="{{ onFQ }}" inputMode="decimal" placeholder="0" style="height:50px;font-size:17px">
 </label>
 <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Motiv
@@ -794,7 +794,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 </label>
 </div>
 
-<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)">Prag minim ({{ artU }})
+<label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--h-fg-muted)"><span>Prag minim ({{ artU }})</span>
 <input class="h-input h-numeric" value="{{ artMin }}" onChange="{{ onArtMin }}" inputMode="decimal" placeholder="prag implicit din Setări" disabled="{{ artBusy }}" style="height:50px;font-size:17px">
 </label>
 <p style="margin:-6px 0 0;font-size:13px;line-height:1.45;color:var(--h-fg-subtle)">Lăsat gol, articolul ia pragul implicit din Setări. Cu pragul 0 nu apare niciodată în „Sub prag minim”, deci nimeni nu află când s-a terminat.</p>
@@ -815,7 +815,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 <!--
   FOAIA „PREȚ NOU” (runda 2.7.0). Aceeași foaie ca „Articol nou”: aceleași
   cârlige (`modalwrap`, `modalcard`, `g2`, `modalfoot`, `btnsave`), deci pe
-  telefon urcă de jos, cu „Salvează” deasupra lui „Renunță”, fără nicio regulă
+  telefon urcă de jos, cu „Renunță” și „Salvează” pe un rând, fără nicio regulă
   de stil în plus.
 
   Prețul e PRIMUL câmp și cere focusul: foaia se deschide la apăsarea unui

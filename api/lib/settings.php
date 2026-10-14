@@ -469,7 +469,9 @@ function settings_public(bool $fresh = false): array
             }
         }
         if (in_array($k, $secrets, true)) {
-            $out[$k]           = mask_secret($v);
+            // Parola căsuței de e-mail e aleasă de om: masca ÎNTREAGĂ, de la izvor
+            // (vezi `mask_secret_intreg()`), nu numai în `fara_parola_casutei()`.
+            $out[$k]           = $k === 'mail_smtp_password' ? mask_secret_intreg($v) : mask_secret($v);
             $out[$k . '_set'] = $v !== '';
         } else {
             $out[$k] = $v;

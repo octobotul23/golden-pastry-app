@@ -26,6 +26,10 @@
  *                     comandă, formularul de produs). Lipicioasă de jos, adică
  *                     chiar acolo unde butoanele stau deja — nu li se schimbă
  *                     locul, li se ia numai putința de a fugi din ecran.
+ *                     Pe telefon e un singur rând scund (v. banda de 760px).
+ *
+ * Cât tastatura telefonului e deschisă, amândouă se desprind (v. capătul
+ * fișierului): ecranul rămas e prea mic pentru o bară lipită de el.
  *
  * `.claude/build-deploy.mjs` copiază folderul `shared` întreg și trece
  * fișierele .css prin aceeași rescriere de legături ca paginile.
@@ -101,8 +105,9 @@
   .gp-bara--sus { animation: none; }
 }
 
-/* Pe telefon rândul se rupe, iar butoanele se întind pe toată lățimea: două
-   butoane înguste, unul lângă altul, se apasă greșit. */
+/* Pe telefon rândul barei de SUS se rupe, iar butoanele ei se întind pe toată
+   lățimea: vorba „Ai modificări nesalvate" își ia rândul ei, butoanele pe al
+   lor. Bara din FOAIE nu se mai rupe — vezi mai jos. */
 @media (max-width: 760px) {
   .gp-bara {
     flex-wrap: wrap;
@@ -113,4 +118,60 @@
   .gp-bara .h-btn {
     flex: 1 1 130px;
   }
+
+  /* FOAIA, PE TELEFON: UN SINGUR RÂND SCUND (runda 2.7.5).
+
+     Plângerea patronului, pe o comandă nouă: „Închide" și „Salvează" iau prea
+     mult. Aveau de ce: cu regula de mai sus fiecare buton cerea 130px, iar
+     formularul de comandă îi mai și punea pe fiecare pe rândul lui — bara
+     lipită ieșea de 130 px cu două butoane, 188 cu trei și 246 cu patru,
+     dintr-un ecran de 844 din care tastatura ia încă 336.
+
+     Acum e un rând: butonul plin ia tot ce rămâne, celălalt stă cât vorba
+     lui. 1 + 8 + 48 + 8 + 1 = 66 px. Vorba lungă („Salvează modificările", la
+     320 px) se rupe pe două rânduri ÎNĂUNTRUL butonului, care rămâne de 48.
+
+     `!important`, fiindcă paginile au pe elemente `flex-wrap:wrap`, `flex:1`
+     și `min-width:160px`/`190px`, scrise pentru calculator: un `style="…"`
+     bate orice regulă din foaie care n-are el. */
+  .gp-bara--foaie {
+    flex-wrap: nowrap !important;
+    gap: 8px;
+    padding-top: 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+  .gp-bara--foaie .h-btn {
+    /* Nu se strânge: cu `min-width:0` un buton strâns și-ar scoate vorba din
+       el. Se strânge numai cel plin, care are cum — își rupe vorba. */
+    flex: 0 0 auto !important;
+    min-width: 0 !important;
+    height: 48px;
+    min-height: 48px;
+    padding: 0 14px;
+    white-space: normal;
+    line-height: 1.15;
+    text-align: center;
+  }
+  .gp-bara--foaie .h-btn--primary {
+    flex: 1 1 0% !important;
+  }
+}
+
+/* --- cât tastatura telefonului e deschisă (runda 2.7.5) --------------- */
+
+/* `shared/gp-api.js` pune `data-gp-tastatura` pe <html> cât se scrie pe un
+   telefon (v. „tastatura telefonului", acolo). Cu tastatura deschisă rămâne
+   cam jumătate de ecran, iar o bară lipită ia din ea încă un rând, chiar peste
+   câmpul în care se scrie. Cât ține steagul, barele se DESPRIND: stau la locul
+   lor din pagină — bara foii la capătul formularului, bara de sus sub antet —
+   și se derulează cu restul. Tastatura închisă, se lipesc la loc.
+
+   `static` în loc de `sticky` nu mută nimic altceva: o bară lipicioasă își
+   ține oricum locul în rând, deci câmpul în care se scrie nu tresare.
+
+   Numele steagului e scris aici și în gp-api.js; check-tastatura le citește pe
+   amândouă și se înroșește dacă se despart. */
+html[data-gp-tastatura] .gp-bara--foaie,
+html[data-gp-tastatura] .gp-bara--sus {
+  position: static;
 }

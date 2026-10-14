@@ -133,8 +133,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}
 [data-ct=g2]{grid-template-columns:1fr!important}
 [data-ct=cardfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
 [data-ct=cardfoot]>button{width:100%!important;white-space:normal!important;padding-left:4px!important;padding-right:4px!important} /* scrisul lung al piciorului („Apasă din nou: șterg definitiv contul”) se rupe pe două rânduri când nu încape; până la 2.6.0 îl cerea „Nu poți șterge contul cu care ești conectat” (279px într-un buton de 250 la 320), buton care pe contul tău nu se mai desenează */
-[data-ct=editfoot]{flex-direction:column!important;align-items:stretch!important;gap:8px!important}
-[data-ct=editfoot]>button{width:100%!important;margin-left:0!important;min-width:0!important}
+[data-ct=editfoot]{flex-wrap:wrap!important;gap:8px!important} /* 2.7.5: RÂND, nu teanc — două butoane stau pe unul, trei („Renunță”, „Propune o parolă”, „Salvează parola”) pe două, nu pe trei; cu tastatura deschisă, fiecare rând de 46 px e din jumătatea de ecran rămasă */
+[data-ct=editfoot]>button{flex:1 1 auto!important;margin-left:0!important;min-width:0!important;padding-left:12px!important;padding-right:12px!important}[data-ct=editfoot]>button:nth-child(n+3){flex-basis:100%!important} /* se întind cât rândul, deci nu rămâne niciun buton îngust (12px de margine în loc de 20, ca „Renunță” și „Adaugă contul” să încapă pe un rând și la 320); al treilea își ia rândul lui dinadins, altfel ar fi atârnat de lățimea telefonului dacă mai încape sau nu lângă primele două. O vorbă prea lungă pentru rând („Apasă din nou: schimb codul”) coboară singură pe al doilea. */
 [data-ct=cauta]{flex-basis:170px!important}
 [data-ct=cip]{height:40px!important}
 [data-ct=vederi]>button{width:44px!important;height:40px!important}
@@ -1341,7 +1341,15 @@ const authRole = (a) => (a && a.role) || "";
 // din `gp.auth()`, fiindcă drepturile stau pe el: rolul singur ar răspunde cu
 // cele din pornire, nu cu ce a bifat fondatorul în „Acces”.
 const areConturi = (a) => !!a && gp.are("conturi", a);
-const WORDS = ["croissant", "vanilie", "migdale", "caramel", "foietaj", "brioșă", "zmeură", "unt", "cuptor", "tavă"];
+// Cuvintele din care se face parola propusă („caramel4821”, v. `suggest()`).
+// Parola asta se dictează la telefon, deci cuvintele sunt numai din litere
+// mici fără diacritice (lista veche avea „brioșă”, „zmeură”, „tavă”), de cinci
+// până la nouă litere, fiecare o singură dată.
+// Aceeași listă, în aceeași ordine, stă și în `Parola.dc.html`. Sunt două copii
+// dinadins: un ajutor comun în `shared/` ar pleca și pe site-ul public. Le ține
+// egale `.claude/check-panouri.mjs`, care citește rândul de mai jos cu
+// `JSON.parse` — de aceea lista rămâne pe UN rând, cu ghilimele duble.
+const WORDS = ["caramel", "vanilie", "migdale", "cuptor", "cozonac", "covrig", "biscuit", "aluat", "miere", "lapte", "fistic", "alune", "ecler", "fursec", "drojdie", "stafide", "portocale", "castron", "desert", "cofetar"];
 const read = (k, fb) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : fb; } catch (e) { return fb; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 const dataOra = (ms) => {
@@ -1770,13 +1778,27 @@ class Component extends DCLogic {
   }
 
   suggest() {
-    // Lista WORDS are și cuvinte de trei litere („unt"): „unt-123" ieșea de
-    // șapte caractere, sub pragul serverului. Butonul „Generează" trimitea
-    // parola, serverul o refuza, iar refuzul apărea în bannerul de sus — pe
-    // care pagina îl desena verde, ca o confirmare. Adminul rămânea convins
-    // că a schimbat parola.
+    // Parola propusă: un cuvânt din WORDS lipit de patru cifre, „caramel4821”.
+    //
+    // De ce se mai completează cu cifre la coadă. Lista de la început avea și
+    // cuvinte de trei litere („unt”), iar numărul avea trei cifre: „unt-123”
+    // ieșea de șapte caractere, sub pragul serverului. Butonul „Generează”
+    // trimitea parola, serverul o refuza, iar refuzul apărea în bannerul de
+    // sus — pe care pagina îl desena verde, ca o confirmare. Adminul rămânea
+    // convins că a schimbat parola. Azi cel mai scurt cuvânt are cinci litere,
+    // deci parola iese de cel puțin nouă caractere, peste cele opt ale
+    // serverului; completarea rămâne pentru o casă cu pragul pus mai sus
+    // (`minLength`).
+    //
+    // Forma e a patronului (runda 2.7.5), care dictează parola la telefon:
+    //   · fără liniuță între cuvânt și număr — un semn în plus de dictat, pe
+    //     care omul de la celălalt capăt îl poate scrie și „-”, și „_”;
+    //   · numărul merge de la 2000 la 9999, nu de la 1000 — cifra de după cuvânt
+    //     nu e niciodată 0 ori 1, care lângă litere se iau drept „o” și „l”.
+    // `Parola.dc.html` propune la fel („Propune o parolă”); cele două copii
+    // sunt ținute egale de `.claude/check-panouri.mjs`.
     const min = this.minLen();
-    let p = WORDS[Math.floor(Math.random() * WORDS.length)] + "-" + (1000 + Math.floor(Math.random() * 9000));
+    let p = WORDS[Math.floor(Math.random() * WORDS.length)] + (2000 + Math.floor(Math.random() * 8000));
     while (p.length < min) p += Math.floor(Math.random() * 10);
     return p;
   }
@@ -2062,12 +2084,6 @@ class Component extends DCLogic {
     };
 
     /**
-     * Generează o parolă puternică, o salvează pe server și o arată o
-     * singură dată. Înlocuiește vechiul „Arată parola": parolele sunt
-     * stocate ca hash bcrypt, deci nu mai pot fi citite de nimeni, nici de
-     * administrator.
-     */
-    /**
      * Codul și procentul unui cont, scrise dinadins de administrator.
      *
      * Trimite numai ce s-a schimbat cu adevărat. Serverul refuză cu 422
@@ -2155,6 +2171,12 @@ class Component extends DCLogic {
         .catch((e) => set({ pinErr: e.message }));
     };
 
+    /**
+     * „Generează”: cere generatorului o parolă ușor de dictat (v. `suggest`,
+     * sus), o salvează pe server și o arată o singură dată. A înlocuit
+     * vechiul „Arată parola”: parolele sunt ținute ca hash bcrypt, deci nu
+     * le mai poate citi nimeni, nici administratorul.
+     */
     const genPass = (acc) => {
       const pass = this.suggest();
       gp.post("/users/" + acc.id + "/password", { password: pass })

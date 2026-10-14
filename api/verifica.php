@@ -209,8 +209,32 @@ check(
     false
 );
 
-check('Funcția mail()', function_exists('mail'), function_exists('mail') ? 'disponibilă' : 'dezactivată',
-    'Notificările pe e-mail nu vor pleca. WhatsApp și Telegram nu sunt afectate.', false);
+/*
+ * E-MAILUL (runda 2.7.5). Aici stătea un singur rând, „Funcția mail()”, care
+ * spunea „disponibilă” pe orice PHP — și pe VPS-ul fără niciun program de
+ * poștă, unde `mail()` există, dar n-are cui preda mesajul. Rândul era verde
+ * în tot timpul în care „Ți-ai uitat parola?” nu mai trimitea nimic.
+ *
+ * Programul de poștă se caută acum cu ADEVĂRAT, cu aceeași funcție pe care o
+ * folosește aplicația când trimite (`mail_direct_stare()`, api/lib/smtp.php):
+ * o a doua căutare scrisă aici s-ar despărți de cea adevărată. Rândurile se
+ * scriu mai jos, lângă baza de date — abia acolo se știe dacă e-mailul pleacă
+ * prin căsuța din Setări ori direct de pe server, iar un program de poștă
+ * lipsă e o pagubă numai pe al doilea drum. Dacă baza nu răspunde, rămâne
+ * rândul de după ea, numai cu ce se poate ști fără bază.
+ */
+$smtpLib = __DIR__ . '/lib/smtp.php';
+$hasSmtp = is_file($smtpLib);
+if ($hasSmtp) {
+    require_once $smtpLib;
+}
+$postaDirect = $hasSmtp ? mail_direct_stare() : (function_exists('mail') ? 'nestiut' : 'nu');
+$postaSpusa  = false;
+$postaVorba  = [
+    'da'      => 'există',
+    'nu'      => function_exists('mail') ? 'lipsește' : 'funcția mail() e oprită',
+    'nestiut' => 'nu se poate ști (PHP n-are voie să se uite ori nu are un program de căutat)',
+];
 
 /* ------------------------------------------------------------ fișiere -- */
 
@@ -333,6 +357,7 @@ if ($hasConfig) {
             'role_rights'          => '033_acces.sql',
             'stock_item_prices'    => '034_costuri.sql',
             'orders_deleted'       => '035_comenzi_sterse.sql',
+            'telegram_oameni'      => '036_telegram_oameni.sql',
         ];
         $missing = array_values(array_diff(array_keys($need), $tables));
         // Numele lipsă spune singur care fișier n-a intrat, ca în docs/01 și în
@@ -416,6 +441,8 @@ if ($hasConfig) {
             '033_acces.sql',
             '034_costuri.sql',
             '035_comenzi_sterse.sql',
+            '036_telegram_oameni.sql',
+            '037_posta_smtp.sql',
         ];
         $areRegistru = in_array('schema_migrations', $tables, true);
         check(
@@ -741,9 +768,9 @@ if ($hasConfig) {
                 'coloane' => ['users' => ['telegram_user_id']],
                 'setari'  => [],
                 'ce'      => 'Țin trei lucruri deodată. Coloana leagă contul omului de Telegramul '
-                    . 'lui, ca fapta apăsată pe telefon să poarte numele celui care a apăsat, nu '
-                    . 'pe al celui care a legat botul; fără ea, toate faptele venite din Telegram '
-                    . 'ies pe seama unui singur om. Tabelul `telegram_links` ține cererile de '
+                    . 'lui, ca fapta apăsată pe telefon să se scrie pe contul lui, cu drepturile '
+                    . 'lui; fără ea, nimeni nu e legat, deci toate apăsările ies „cont nelegat”, '
+                    . 'pe drepturile contului care a legat botul. Tabelul `telegram_links` ține cererile de '
                     . 'legare cât sunt în așteptare; fără el, legarea nu se poate porni deloc. '
                     . 'Tabelul `lab_production` ține fiecare bucată numărată în laborator cu '
                     . 'clipa ei; fără el, raportul de producție pe tură iese gol — nu dă eroare, '
@@ -961,6 +988,32 @@ if ($hasConfig) {
                 'ce'      => 'Ține poza unei comenzi anulate care a fost apoi ștearsă: antetul, '
                     . 'pozițiile, cine a șters-o și când — ca ștergerea să se poată citi și după ce '
                     . 'rândul a plecat din `orders`. Fără tabelul ei, poza n-are unde se face.',
+            ],
+            // `telegram_oameni` e numărat sus, la tabelele aplicației; aici stau
+            // cele două coloane de pe cerere și lămurirea a ce se pierde.
+            // Migrarea n-are semn în `settings`: nu face nimic „o singură dată”.
+            '036_telegram_oameni.sql' => [
+                'nume'    => 'Cine a apăsat, cu adevărat, pe Telegram (migrarea 036)',
+                'coloane' => ['order_requests' => ['handled_tg_id', 'handled_tg_name']],
+                'setari'  => [],
+                'ce'      => 'Țin numele de pe Telegram al celui care a acceptat ori a respins o '
+                    . 'cerere fără să aibă contul legat, ca mesajul, panoul și Jurnalul să-l '
+                    . 'numească pe el, cu vorba „cont nelegat”, și nu pe cel care a legat botul. '
+                    . 'Tabelul `telegram_oameni` ține oamenii văzuți apăsând în grup, din care '
+                    . 'fondatorul alege, în Setări, pe cine să lege de ce cont. Fără ele, apăsarea unui om '
+                    . 'cu contul nelegat e refuzată, cu un mesaj care numește migrarea — numele '
+                    . 'lui n-ar avea unde se scrie. Cine are contul legat lucrează ca până acum.',
+            ],
+            // Numai rânduri în `settings`: nicio coloană, niciun tabel. Fără
+            // registru, rândurile sunt singurul semn că migrarea a rulat.
+            '037_posta_smtp.sql' => [
+                'nume'    => 'Căsuța de e-mail, SMTP (migrarea 037)',
+                'coloane' => [],
+                'setari'  => ['mail_smtp_host', 'mail_smtp_port', 'mail_smtp_user', 'mail_smtp_password', 'mail_smtp_security'],
+                'ce'      => 'Țin căsuța prin care pleacă e-mailurile: gazda, portul, utilizatorul, parola '
+                    . '(criptată) și felul criptării. Fără rândurile lor, casetele din Setări → Notificări → '
+                    . 'E-mail stau închise și e-mailul poate pleca numai direct de pe server — adică deloc, '
+                    . 'dacă serverul n-are un program de poștă.',
             ],
         ];
 
@@ -1182,6 +1235,122 @@ if ($hasConfig) {
                 false
             );
         }
+
+        /* ------------------------------------------------------- poșta -- */
+        // Pe ce drum pleacă e-mailul, și dacă drumul acela are cu ce. Căsuța se
+        // citește din `settings` de-a dreptul (pagina asta nu încarcă aplicația).
+        // Despre utilizator și parolă baza e întrebată numai DACĂ sunt puse:
+        // valorile lor nu ajung nici măcar în memoria paginii, deci n-au cum
+        // ajunge pe ecran. Se arată gazda și portul.
+        $casuta = ['mail_smtp_host' => '', 'mail_smtp_port' => '', 'mail_smtp_user' => '', 'mail_smtp_password' => ''];
+        if (in_array('settings', $tables, true)) {
+            $randuri = $pdo->query(
+                "SELECT setting_key,
+                        IF(setting_key IN ('mail_smtp_user', 'mail_smtp_password'),
+                           IF(TRIM(COALESCE(value, '')) = '', '', 'pus'), COALESCE(value, ''))
+                   FROM settings WHERE setting_key IN
+                    ('mail_smtp_host', 'mail_smtp_port', 'mail_smtp_user', 'mail_smtp_password')"
+            )->fetchAll(PDO::FETCH_KEY_PAIR);
+            foreach ($randuri as $k => $v) {
+                $casuta[$k] = trim((string) $v);
+            }
+        }
+        $areGazda  = $casuta['mail_smtp_host'] !== '';
+        $areOm     = $casuta['mail_smtp_user'] !== '';
+        $areParola = $casuta['mail_smtp_password'] !== '';
+        $pline     = (int) $areGazda + (int) $areOm + (int) $areParola;
+        $lipsesc   = array_keys(array_filter([
+            'gazda' => !$areGazda, 'utilizatorul' => !$areOm, 'parola' => !$areParola,
+        ]));
+        $postaSpusa = true;
+
+        if ($areGazda) {
+            // Gazda scrisă = e-mailul pleacă prin căsuță, și numai prin ea: o
+            // căsuță care dă greș nu cade pe drumul direct.
+            $portCasuta = $casuta['mail_smtp_port'] !== '' ? $casuta['mail_smtp_port'] : '465';
+            check(
+                'Drumul e-mailului',
+                $pline === 3,
+                'prin căsuța de e-mail (SMTP): ' . $casuta['mail_smtp_host'] . ', portul ' . $portCasuta
+                    . ($pline === 3 ? '' : ' — completată pe jumătate'),
+                'Căsuța din Setări → Notificări → E-mail e completată pe jumătate: '
+                    . (count($lipsesc) === 1 ? 'lipsește ' : 'lipsesc ') . implode(' și ', $lipsesc)
+                    . '. Până o completezi NU pleacă niciun e-mail: nici anunțurile, nici linkul de la '
+                    . '„Ți-ai uitat parola?”. Ca e-mailul să plece direct de pe server, golește gazda.',
+                false
+            );
+            check(
+                'Criptarea pentru căsuța de e-mail (OpenSSL)',
+                extension_loaded('openssl'),
+                extension_loaded('openssl') ? 'se poate' : 'lipsește extensia',
+                'Legătura cu căsuța se criptează, iar parola nu pleacă pe o legătură necriptată: fără '
+                    . 'extensia OpenSSL nu pleacă niciun e-mail prin căsuță.',
+                false
+            );
+            check(
+                'Programul de poștă al serverului',
+                true,
+                $postaVorba[$postaDirect] . ' — nu e nevoie de el cât e-mailul pleacă prin căsuță'
+            );
+        } else {
+            check(
+                'Drumul e-mailului',
+                $postaDirect === 'da' && $pline === 0,
+                'direct de pe server' . ($pline === 0
+                    ? ' (căsuța din Setări e goală)'
+                    : ' — căsuța din Setări e completată pe jumătate: lipsește gazda'),
+                $pline !== 0
+                    ? 'În Setări → Notificări → E-mail e scris utilizatorul ori parola unei căsuțe, dar '
+                        . 'nu și gazda ei. Fără gazdă e-mailul pleacă direct de pe server, nu prin căsuță. '
+                        . 'Scrie gazda (o dă furnizorul căsuței), ori golește celelalte casete.'
+                    : ($postaDirect === 'nu'
+                        ? 'Serverul nu are niciun program de poștă, iar căsuța din Setări e goală: acum NU '
+                            . 'pleacă niciun e-mail — nici anunțurile, nici linkul de la „Ți-ai uitat '
+                            . 'parola?”. Completează căsuța (SMTP) în Setări → Notificări → E-mail, ori '
+                            . 'rulează actualizeaza-vps.sh, care instalează și un program de poștă.'
+                        : 'Căsuța din Setări e goală, deci e-mailul se predă programului de poștă al '
+                            . 'serverului — iar de aici nu se poate ști dacă serverul are unul. Apasă '
+                            . 'butonul de test din Setări → Notificări → E-mail.'),
+                false
+            );
+            check(
+                'Programul de poștă al serverului',
+                $postaDirect === 'da',
+                $postaVorba[$postaDirect],
+                $postaDirect === 'nu'
+                    ? 'Pe drumul direct, PHP predă mesajul unui program de poștă al serverului '
+                        . '(sendmail, postfix). Aici nu e niciunul. Îl instalează actualizeaza-vps.sh; '
+                        . 'ori completează căsuța (SMTP) din Setări → Notificări → E-mail și nu mai e nevoie de el.'
+                    : 'PHP nu se poate uita după programul de poștă (open_basedir ori funcții oprite), '
+                        . 'ori sistemul nu are unul de căutat. Asta nu înseamnă că lipsește: apasă butonul '
+                        . 'de test din Setări → Notificări → E-mail.',
+                false
+            );
+        }
+
+        // Certificatul de probă: pentru o gazdă adevărată nu e ascultat
+        // (`smtp_ca_de_proba()`), dar pe un server n-are ce căuta. Calea nu se
+        // scrie pe ecran.
+        if (trim((string) ($cfg['smtp_ca_file'] ?? '')) !== '') {
+            check(
+                'Certificatul de probă al căsuței de e-mail',
+                false,
+                'pus în config.php (smtp_ca_file)',
+                'În api/config.php, smtp_ca_file trebuie să fie goală pe server (ori să lipsească). '
+                    . 'Cheia e numai pentru probele de pe calculatorul de lucru.',
+                false
+            );
+        }
+
+        // Tot ce e mai sus spune dacă mesajul poate PLECA. Dacă și ajunge —
+        // dacă furnizorul îl primește, dacă nu cade în Spam — nu se vede de pe
+        // nicio pagină de verificare. Se spune pe față, ca un șir de rânduri
+        // verzi să nu fie citit drept „e-mailul merge”.
+        check(
+            'Dacă e-mailul chiar ajunge',
+            true,
+            'Verificarea asta nu poate dovedi că un mesaj ajunge; folosește butonul de test.'
+        );
     } catch (Throwable $e) {
         // Mesajul poate conține numele bazei, dar niciodată parola.
         // Nu îl escapăm aici: șablonul de mai jos escapează tot ce afișează.
@@ -1229,6 +1398,31 @@ if ($hasConfig) {
 
     check('Cookie doar pe HTTPS', !empty($cfg['cookie_secure']), empty($cfg['cookie_secure']) ? 'oprit' : 'pornit',
         'Pe server pune cookie_secure => true, altfel sesiunea poate circula necriptat.', false);
+}
+
+/* ---------------------------------------- poșta, când baza n-a răspuns -- */
+
+// Rândurile poștei se scriu lângă baza de date, fiindcă drumul e-mailului stă în
+// `settings`. Dacă pagina n-a ajuns până acolo (lipsește config.php, baza nu
+// răspunde), nu se știe pe ce drum pleacă e-mailul — dar ce se poate ști fără
+// bază se spune totuși, ca poșta să nu lipsească tocmai de pe pagina cea mai roșie.
+if (!$postaSpusa) {
+    check(
+        'Programul de poștă al serverului',
+        $postaDirect === 'da',
+        $postaVorba[$postaDirect],
+        $postaDirect === 'nu'
+            ? 'Fără un program de poștă pe server, e-mailul poate pleca numai prin căsuța (SMTP) din '
+                . 'Setări → Notificări → E-mail. Dacă e completată nu se poate vedea până nu răspunde baza de date.'
+            : 'PHP nu se poate uita după programul de poștă. Asta nu înseamnă că lipsește; după ce '
+                . 'răspunde baza de date, apasă butonul de test din Setări → Notificări → E-mail.',
+        false
+    );
+    check(
+        'Dacă e-mailul chiar ajunge',
+        true,
+        'Verificarea asta nu poate dovedi că un mesaj ajunge; folosește butonul de test.'
+    );
 }
 
 /* ------------------------------------------------------------- HTTPS -- */

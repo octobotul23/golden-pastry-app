@@ -91,10 +91,10 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 [data-adm=rtop]>select,[data-adm=rbtn]{width:100%!important;flex:1 1 100%!important}
 [data-adm=rside]{position:static!important}
 [data-adm=refbox]>button{flex:1 1 100%!important}
-[data-adm=modalfoot]{flex-wrap:wrap!important;gap:8px!important}
-[data-adm=modalfoot]>button{min-width:0!important;margin-left:0!important;flex:1 1 100%!important;min-height:50px!important}
-[data-adm=modalfoot]>[data-adm=btnsave]{order:-2!important}
-[data-adm=modalfoot]>[data-adm=btncancel]{order:-1!important}
+[data-adm=modalfoot]{flex-wrap:nowrap!important;gap:8px!important} /* 2.7.5: UN rând scund, nu câte un buton pe rând (bara lipită ieșea de 130/188/246 px). Rândul ăsta și cele trei de sub el țin loc celor patru de dinainte, ca nimic de mai jos să nu-și mute numărul. */
+[data-adm=modalfoot]>button{min-width:0!important;margin-left:0!important;height:48px!important;min-height:48px!important;padding:0 14px!important;white-space:normal!important;line-height:1.15!important;text-align:center}
+[data-adm=modalfoot]>[data-adm=btncancel]{flex:1 0 auto!important}[data-adm=modalfoot]>[data-adm=btnsave]{flex:999 1 0%!important} /* „Închide" stă cât vorba lui și nu se strânge; butonul plin ia tot restul și își rupe vorba când nu încape. 1 față de 999, nu 0 față de 1: în vederea rapidă, din contul care nu poate edita, „Închide" e singur și trebuie să umple rândul. */
+[data-adm=modalfoot]>button:not([data-adm=btnsave]):not([data-adm=btncancel]){display:none!important}[data-adm=modalrare]{display:flex!important}[data-adm=modalrare]>button{flex:1 1 auto!important;min-width:0!important} /* Butoanele rare ale barei („Anulează comanda", „Reface comanda", „Șterge definitiv") se sting din ea pe telefon și se aprind în rândul `modalrare`, din formular, deasupra barei: aceleași mânere, aceleași steaguri, aceleași vorbe. */
 [data-adm=additem]{min-height:46px!important}
 [data-adm=modalclose]{min-height:46px!important;width:46px!important}
 [data-adm=side]{width:100%!important;box-sizing:border-box!important;flex-wrap:nowrap!important;padding:9px 14px!important}
@@ -105,7 +105,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 [data-adm=filters]{display:none!important}
 [data-adm=topbar] h1{font-size:20px!important}
 /* FEREASTRA „DIN CATALOG" PE TELEFON: o foaie cât tot ecranul, nu o fereastră. Pagina n-are o stare de lățime (și nici n-ar avea cine s-o țină la zi: metodele de ciclu de viață pot să nu ruleze), deci forma de telefon se scrie AICI, nu cu un steag în logică. Mânerul e îndoit (`modalcard` + `data-cat`) ca să bată rândul 88, care îmbracă orice fereastră: scris cu un singur mâner ar fi atârnat de ordinea rândurilor. `100vh` întâi și `100dvh` după el: cine nu știe de `dvh` îl sare și rămâne cu primul. Caseta de căutat scrie cu 16 px, sub care telefonul apropie singur pagina la prima atingere; țintele de 44 px nu mai sunt aici, ci după bandă, fiindcă nu mai sunt numai ale telefonului. Golurile din laturi sunt de 14 px, nu de 16: cu ele, la 360 px încap două carduri de 9rem pe rând (două coloane și golul dintre ele cer 306 px); la 320 rămâne unul pe rând, fiindcă `−`, cantitatea și `+` de 44 px nu încap într-un card mai îngust de ~150 px. */
-[data-adm=modalcard][data-cat=foaie]{height:100vh!important;height:100dvh!important;max-height:none!important;border-radius:0!important;padding:0!important}
+[data-adm=modalcard][data-cat=foaie]{height:100vh!important;height:100dvh!important;max-height:none!important;border-radius:0!important;padding:0!important}html[data-gp-tastatura] [data-adm=modalcard][data-form=foaie]{padding-bottom:calc(18px + var(--gp-tastatura-inalt,0px))!important}html[data-gp-tastatura] [data-adm=modalcard][data-cat=foaie]{padding-bottom:var(--gp-tastatura-inalt,0px)!important} /* 2.7.5: cât tastatura ACOPERĂ foaia, foaia își lungește capătul cu partea acoperită, ca ultimul câmp să poată fi derulat deasupra tastaturii. Variabila e zero unde tastatura strânge pagina, deci acolo nu se schimbă nimic. 18px e umplutura foii din banda asta (rândul `modalcard` de mai sus); fereastra „Din catalog" n-are niciuna. NUMAI ferestrele în care se scrie, fiecare pe semnul ei (`data-form=foaie` formularul, `data-cat=foaie` catalogul), nu orice `modalcard`: steagul mai ține 300 ms după ce tastatura a plecat, iar caseta de încuviințare deschisă în răgazul ăsta („Anulează comanda", „Șterge definitiv") primea o tastatură de umplutură la capăt și își muta o dată „Nu"/„Da" de sub deget. */
 /* CAPUL FIX E SCURT: titlul cu „×" și comutatorul, atât. Pe 320×568 capul întreg (titlu, notă, comutator, căutare) lua ~215 px și, cu piciorul de ~70, lăsa ~283 px unui card de ~375: nu se vedea niciunul întreg. Nota și căutarea din cap (`data-cat=sus`) se sting, iar copiile lor din mijloc (`catjos`) se aprind și se derulează cu cardurile. Socoteala capului: 5 + 46 („×": 44 scriși pe el, înălțat la 46 de rândul `modalclose` al benzii ăsteia, ca la toate ferestrele) + 6 + ~56 (pastila comutatorului: butoane de 44, 0.3rem de jur împrejur și conturul) + 5 + 1 ≈ 119 px. Titlul se așază pe mijlocul lui „×", că nota de sub el a plecat. */
 [data-adm=catcap]{padding:5px 14px 5px!important;gap:6px!important}
 [data-adm=cattitlu]{align-items:center!important}
@@ -113,7 +113,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 [data-adm=catjos]{display:flex!important}
 [data-adm=catcorp]{padding:12px 14px 16px!important}
 [data-adm=cattext]{padding:10px 10px 12px!important;gap:6px!important}
-[data-adm=catpicior]{padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))!important}
+[data-adm=catpicior]{padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))!important}html[data-gp-tastatura] [data-adm=catpicior]{display:none!important} /* 2.7.5: cât se scrie pe telefon (steagul pus de shared/gp-api.js), piciorul ferestrei se stinge — „Gata" și numărul pozițiilor se întorc odată cu tastatura închisă. */
 [data-adm=catlat]{max-width:none!important}
 /* La 320 px o jumătate de comutator are ~138 px, iar semnul, vorba „Congelate" și cifra pozițiilor cer ~136: se strâng golurile butonului, ca o cifră de două semne să nu-l scoată din pastilă. */
 [data-adm=catlat]>button{min-width:0!important;padding-inline:0.25rem!important;gap:0.3rem!important}
@@ -940,7 +940,7 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 
 <sc-if value="{{ formOpen }}" hint-placeholder-val="{{ false }}">
 <div data-adm="modalwrap" style="position:fixed;inset:0;background:rgba(28,18,11,.55);display:flex;align-items:center;justify-content:center;padding:28px;z-index:40;animation:pf-fade .2s var(--h-ease-out)">
-<div data-adm="modalcard" class="h-card" style="width:760px;max-height:88vh;overflow-y:auto;padding:26px 28px;border-radius:22px;display:flex;flex-direction:column;gap:18px;animation:pf-pop .28s var(--h-ease-spring)">
+<div data-adm="modalcard" data-form="foaie" class="h-card" style="width:760px;max-height:88vh;overflow-y:auto;padding:26px 28px;border-radius:22px;display:flex;flex-direction:column;gap:18px;animation:pf-pop .28s var(--h-ease-spring)">
 <div style="display:flex;align-items:center;gap:12px">
 <h2 class="h-h3" style="margin:0;font-size:22px">{{ formTitle }}</h2>
 <button data-adm="modalclose" type="button" aria-label="Închide formularul comenzii" class="h-btn h-btn--ghost" onClick="{{ onCancel }}" style="margin-left:auto;height:44px;width:44px;padding:0;font-size:20px">×</button>
@@ -1270,9 +1270,34 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
      aceea a căzut pe 19 septembrie 2026, și odată cu ea `readOnly` și culoarea
      stinsă care spunea „aici nu se scrie". Din 2 octombrie 2026 agentul nu
      mai are cutia deloc — nu una blocată, ci niciuna: codul lui pleacă singur,
-     iar el citește rândul `frmCodulMeu` de sub cutie. -->
-<input class="h-input" value="{{ frm.refCode }}" onChange="{{ onRefCode }}" title="{{ frmRefTitlu }}" placeholder="ex. mihai — gol dacă n-a trimis-o nimeni" style="height:46px;font-size:16px">
+     iar el citește rândul `frmCodulMeu` de sub cutie.
+
+     ACEEAȘI CASETĂ E ȘI CĂUTAREA (runda 2.7.5, cererea patronului: scrie
+     „octav” și găsește codul lui, „ples”). Nu s-a pus o a doua casetă: codul
+     se scrie tot aici, de mână, ca până acum, iar ce se scrie e căutat și
+     printre nume. Tastele ei — săgețile, Enter, Escape — umblă numai prin
+     lista de dedesubt; pierderea focusului NU o închide, fiindcă degetul care
+     apasă un rând ia întâi focusul din casetă. -->
+<input class="h-input" value="{{ frm.refCode }}" onChange="{{ onRefCode }}" onKeyDown="{{ onRefKey }}" onFocus="{{ onRefFocus }}" onBlur="{{ onRefBlur }}" title="{{ frmRefTitlu }}" placeholder="cod ori nume, ex. Octavian" style="height:46px;font-size:16px">
 </label>
+<!-- LISTA CODURILOR, în afara etichetei (un buton într-un `label` i-ar da
+     casetei clicul lui). Cel mult cinci rânduri de la `GET /referrals/coduri`,
+     fiecare o țintă de deget (44px): „Octavian Pleș · agent · cod ples”.
+     Apăsat, rândul scrie codul în casetă și lista se închide. `aduLista` o
+     aduce deasupra tastaturii fără să scoată caseta din ecran. -->
+<sc-if value="{{ refAre }}" hint-placeholder-val="{{ false }}">
+<div data-adm="reflista" role="listbox" ref="{{ aduLista }}" style="display:flex;flex-direction:column;gap:2px;padding:4px;border-radius:12px;border:1px solid var(--h-line);background:var(--h-bg-surface);box-shadow:0 6px 18px rgba(0,0,0,.08)">
+<sc-for list="{{ refRanduri }}" as="rc" hint-placeholder-count="3">
+<button type="button" role="option" onClick="{{ rc.onPick }}" title="{{ rc.tot }}" style="display:flex;align-items:center;gap:6px;min-height:44px;padding:0 10px;border:0;border-radius:9px;background:{{ rc.fundal }};color:var(--h-fg);font-family:var(--h-font-body);font-size:14px;text-align:left;cursor:pointer">
+<span style="flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600">{{ rc.nume }}</span>
+<span style="flex:0 0 auto;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:var(--h-fg-muted)">{{ rc.coada }}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ refNota }}" hint-placeholder-val="{{ false }}">
+<span data-adm="refnota" role="status" style="font-size:12px;line-height:1.45;color:var(--h-fg-subtle);text-wrap:pretty">{{ refNota }}</span>
+</sc-if>
 <sc-if value="{{ frmPotLega }}" hint-placeholder-val="{{ false }}">
 <button type="button" onClick="{{ onRefLeaga }}" title="Nebifat, se repară numai comanda asta." style="align-self:flex-start;display:flex;align-items:center;gap:9px;min-height:44px;padding:0 14px;border-radius:12px;border:1px solid {{ frmRefLine }};background:{{ frmRefBg }};color:{{ frmRefFg }};font-family:var(--h-font-body);font-size:14px;font-weight:600;cursor:pointer;text-align:left">
 <span style="flex:none;width:22px;height:22px;border-radius:7px;border:1px solid {{ frmRefLine }};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">{{ frmRefBifa }}</span>
@@ -1342,36 +1367,36 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
 </div>
 </sc-if>
 
-<!-- Rândul de butoane se lipește de marginea de jos a formularului. Comanda
-     cu zece poziții se scria până jos, iar „Salvează" rămânea cu un ecran mai
-     departe; acum stă tot la capăt, dar nu mai fuge. Regulile de telefon de la
-     rândurile 93-96 rămân valabile: `order` mută Salvarea și Închiderea în fața
-     fraților lor, iar `.gp-bara` din shared/gp-bara.css dă numai chenarul,
-     umbra și pragul de deget.
-
-     VORBELE BUTOANELOR (runda 2.7.0, hotărârea patronului din 4 oct. 2026).
-     Butonul roșu scria „Șterge comanda" și ANULA, iar cel de lângă Salvare
-     scria „Anulează" și ÎNCHIDEA formularul: două vorbe mutate cu un loc. De
-     când există și ștergerea adevărată, fiecare buton spune ce face:
-     „Anulează comanda", „Închide", „Șterge definitiv".
-
-     `flex-wrap` e pentru comanda anulată deschisă din contul care o poate
-     șterge: patru butoane, care încap la limită în formularul lat de 760px și
-     nu mai încap când fereastra îl strânge (de la 761px în sus regulile de
-     telefon nu mai lucrează). `.gp-bara .h-btn` are `flex:none`, deci fără
-     el ultimul buton ar fi ieșit din foaie în loc să coboare. Cu
-     `justify-content:flex-end`, Salvarea coborâtă rămâne la dreapta; pe un
-     singur rând nu schimbă nimic, fiindcă `margin-left:auto` de pe „Închide"
-     ia el tot locul liber. -->
+<!-- BUTOANELE RARE, PE TELEFON (runda 2.7.5). Pe telefon bara de mai jos ține numai „Închide" și salvarea,
+     pe UN rând; cele trei rare se sting din ea și se aprind aici, în formular, deasupra ei: același mâner,
+     același steag, aceeași vorbă, același `title`. Pe calculator rândul e stins, iar bara e neschimbată.
+     `data-adm="rar"` îi deosebește de frații din bară; check-tastatura le numără pe amândouă. -->
+<sc-if value="{{ areRare }}" hint-placeholder-val="{{ false }}">
+<div data-adm="modalrare" style="display:none;flex-wrap:wrap;gap:8px">
+<sc-if value="{{ canDelete }}" hint-placeholder-val="{{ false }}">
+<button data-adm="rar" type="button" class="h-btn h-btn--ghost" onClick="{{ onDeleteFromForm }}" style="min-height:48px;font-size:15px;color:var(--h-danger)">Anulează comanda</button>
+</sc-if>
+<sc-if value="{{ potReface }}" hint-placeholder-val="{{ false }}">
+<button data-adm="rar" type="button" class="h-btn h-btn--ghost" onClick="{{ onRefaceFromForm }}" title="{{ refaceTitlu }}" style="min-height:48px;font-size:15px;color:var(--h-success)">Reface comanda</button>
+</sc-if>
+<sc-if value="{{ potStergeDefinitiv }}" hint-placeholder-val="{{ false }}">
+<button data-adm="rar" type="button" class="h-btn h-btn--ghost" onClick="{{ onStergeFromForm }}" title="Scoate comanda din registru. Ce era în ea rămâne în Jurnal." style="min-height:48px;font-size:15px;color:var(--h-danger)">Șterge definitiv</button>
+</sc-if>
+</div>
+</sc-if>
+<!-- BARA, lipită de marginea de jos a formularului, ca „Salvează" să nu fugă pe o comandă lungă. Vorbele sunt
+     din 2.7.0 (4 oct. 2026): „Anulează comanda", „Închide", „Șterge definitiv" — fiecare spune ce face.
+     `flex-wrap` e pentru calculator: patru butoane `flex:none` pe comanda anulată, într-un formular strâns.
+     Pe telefon banda de 760 o ține pe UN rând, iar cât se scrie se desprinde (`data-gp-tastatura`). -->
 <div data-adm="modalfoot" class="gp-bara gp-bara--foaie" style="display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px;margin-top:4px">
 <sc-if value="{{ canDelete }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onDeleteFromForm }}" style="height:48px;font-size:15px;color:var(--h-danger)">Anulează comanda</button>
 </sc-if>
 <!-- Drumul înapoi. Se arată NUMAI pe o comandă anulată, și atunci ia locul
      lui „Anulează comanda": cele două sunt perechi, nu vecini. Butonul n-are
-     `data-adm` dinadins — regulile de telefon (rândurile 93-96) mută după
-     `order` numai butoanele numite, deci ăsta rămâne jos, lângă fratele lui,
-     în loc să sară în fața Salvării. -->
+     `data-adm` dinadins — regulile de telefon (banda de 760) țin în bară
+     numai butoanele numite, `btncancel` și `btnsave`; pe ăsta îl sting și îl
+     arată în rândul `modalrare`, de deasupra barei. -->
 <sc-if value="{{ potReface }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onRefaceFromForm }}" title="{{ refaceTitlu }}" style="height:48px;font-size:15px;color:var(--h-success)">Reface comanda</button>
 </sc-if>
@@ -1380,8 +1405,8 @@ a{color:var(--h-accent-fg)}a:hover{color:var(--h-accent)}[data-adm=autor]{displa
      „Reface comanda" fiindcă sunt cele două ieșiri din „Anulată": înapoi în
      flux ori afară din registru. Roșu ca „Anulează comanda", cu care nu se
      întâlnește niciodată — acela se arată numai pe o comandă vie. Fără
-     `data-adm`, ca fratele lui: pe telefon rămâne sub „Reface comanda", după
-     Salvare și Închidere, pe rândul lui întreg. Nu salvează nimic din
+     `data-adm`, ca fratele lui: pe telefon se stinge din bară și stă lângă
+     „Reface comanda" în rândul `modalrare`. Nu salvează nimic din
      formular; caseta o spune când e ceva de pierdut. -->
 <sc-if value="{{ potStergeDefinitiv }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="h-btn h-btn--ghost" onClick="{{ onStergeFromForm }}" title="Scoate comanda din registru. Ce era în ea rămâne în Jurnal." style="height:48px;font-size:15px;color:var(--h-danger)">Șterge definitiv</button>
@@ -2888,6 +2913,15 @@ const copieRanduri = (c) => [
 
 const PE_PAGINA = 30;
 
+// CĂUTAREA CODULUI DE RECOMANDARE după nume (runda 2.7.5, v. `cautaCoduri`).
+// De la câte litere se caută — aceeași margine ca pe server
+// (`GP_COD_SEARCH_MIN`, api/routes/referrals.php), care oricum răspunde
+// `short` sub ea —, cât se așteaptă după ultima literă, și cum se spune pe
+// ecran felul fiecărui cont găsit (`kind` din răspuns).
+const COD_MIN = 2;
+const COD_ASTEPT_MS = 250;
+const COD_FEL = { agent: "agent", client: "client", casa: "din casă" };
+
 class Component extends DCLogic {
   state = {
     navOpen: false,
@@ -2970,6 +3004,26 @@ class Component extends DCLogic {
     // scrie „n-am putut căuta", și formularul merge exact ca până acum —
     // numele se scrie de mână.
     cliLista: [], cliStare: "", cliDosar: 0, cliAles: null,
+    // CĂUTAREA CODULUI DE RECOMANDARE după nume, sub caseta „Cod de
+    // recomandare” (runda 2.7.5). `null` cât nu s-a scris nimic în casetă;
+    // altfel `{ pe, lista, stare, rand, alCui, inchisa }`:
+    //   · `pe` — numărul DESCHIDERII formularului în care s-a căutat
+    //     (`form.deschidere`). Căutarea e a formularului aceluia și numai a
+    //     lui: desenarea o ia în seamă doar cât pe ecran e aceeași deschidere
+    //     (v. `codurile()`). De aceea deschizătorii nu au nimic de golit aici
+    //     — golirea clientului a lipsit o dată dintr-unul (`openFromReq`,
+    //     5 octombrie 2026), iar o stare care ține de deschidere nu poate fi
+    //     uitată în niciunul;
+    //   · `lista` — rândurile venite de la `GET /referrals/coduri`, fiecare
+    //     `{ code, name, kind }`;
+    //   · `stare` — ca la client: "scurt", "caut", "gata", "multi", "gol",
+    //     "eroare", "ales";
+    //   · `rand` — rândul aprins de săgeți, -1 = niciunul;
+    //   · `alCui` — al cui e codul din casetă, când se știe: rândul ales din
+    //     listă, ori cel pe care serverul l-a găsit ÎNTOCMAI după cod;
+    //   · `inchisa` — lista închisă cu Escape; focusul întors în casetă o
+    //     arată din nou.
+    refCaut: null,
     // PRAGUL DE NEPLĂTITE (runda 2.7.0, hotărârile patronului din 4–5
     // octombrie 2026). Două lucruri, amândouă goale din pornire:
     //
@@ -3426,6 +3480,66 @@ class Component extends DCLogic {
   };
 
   /**
+   * LISTA CODURILOR VINE DEASUPRA TASTATURII, IAR CASETA RĂMÂNE PE ECRAN
+   * (runda 2.7.5). Funcția de `ref` a listei `data-adm="reflista"`.
+   *
+   * DE CE. Lista se deschide sub o casetă în care tocmai se scrie, deci pe
+   * telefon cu tastatura ridicată: caseta codului e spre capătul foii, iar
+   * cele cinci rânduri de sub ea cad sub tastatură. Omul ar fi scris „octav”
+   * și n-ar fi văzut că i s-a răspuns.
+   *
+   * CE FACE. Derulează NUMAI foaia formularului (ca `aduSubOchi`), atât cât
+   * capătul de jos al listei să intre în locul care se vede: fâșia spusă de
+   * detectorul tastaturii (`gp.tastaturaVazut`, din shared/gp-api.js — acolo
+   * unde browserul o dă, tastatura e deja scăzută din ea), tăiată la foaie și,
+   * dedesubt, la bara de butoane lipită jos (`.gp-bara--foaie`).
+   *
+   * ȘI NU MAI MULT DE ATÂT cât eticheta cu caseta ei să rămână întreagă sus:
+   * pe un ecran de 320×568 cu tastatura deschisă, cinci rânduri plus caseta
+   * nu încap toate. Atunci câștigă caseta — în ea se scrie —, iar ultimul rând
+   * se ajunge cu degetul. De aceea nu `gp.aduLaVedere`: acela pune rândul la
+   * MIJLOCUL fâșiei, adică scoate caseta pe sus tocmai când lista e mai înaltă
+   * decât locul.
+   *
+   * Nodul se ține minte (`__nodCoduri`): `ref` vorbește numai când lista
+   * APARE, iar un răspuns care îi schimbă rândurile (două făcute cinci) o
+   * găsește deja desenată — `cautaCoduri` o cheamă atunci cu nodul ținut.
+   * La ieșirea din pagină, `ref(null)` îl uită.
+   */
+  aduLista = (nod) => {
+    this.__nodCoduri = nod || null;
+    if (!nod || typeof window === "undefined") return;
+    // (Nume numai ale ei — `dupaCadru`, `eticheta`, `margineSus`, `catUrca` —,
+    // din pricina spusă la `cautaCoduri`: proba urmărește mânerele pe nume.)
+    const cadru = typeof window.requestAnimationFrame === "function"
+      ? (dupaCadru) => window.requestAnimationFrame(dupaCadru)
+      : (dupaCadru) => setTimeout(dupaCadru, 16);
+    cadru(() => cadru(() => {
+      try {
+        if (!nod.isConnected || typeof window.getComputedStyle !== "function") return;
+        let foaie = nod.parentElement;
+        while (foaie && !/^(auto|scroll)$/.test(String(window.getComputedStyle(foaie).overflowY))) foaie = foaie.parentElement;
+        if (!foaie) return;
+        const cutia = typeof nod.closest === "function" ? nod.closest("[data-adm=refcod]") : null;
+        const eticheta = (cutia && cutia.querySelector("label")) || nod;
+        const loc = foaie.getBoundingClientRect(), l = nod.getBoundingClientRect(), k = eticheta.getBoundingClientRect();
+        const butoane = foaie.querySelector(".gp-bara--foaie");
+        let margineSus = loc.top;
+        let margineJos = butoane ? Math.min(loc.bottom, butoane.getBoundingClientRect().top) : loc.bottom;
+        const vazut = typeof gp.tastaturaVazut === "function" ? gp.tastaturaVazut(window) : null;
+        if (vazut && typeof vazut.sus === "number" && typeof vazut.jos === "number") {
+          margineSus = Math.max(margineSus, vazut.sus);
+          margineJos = Math.min(margineJos, vazut.jos);
+        }
+        let catUrca = l.bottom - (margineJos - 8);
+        if (!(catUrca > 0)) return;
+        catUrca = Math.min(catUrca, Math.max(0, k.top - (margineSus + 8)));
+        if (catUrca > 0) foaie.scrollTop += catUrca;
+      } catch (err) { /* ajutor de derulare: nu are voie să strice formularul */ }
+    }));
+  };
+
+  /**
    * FIECARE REFUZ AL SALVĂRII ADUCE VESTEA SUB OCHI, și cu vestea deja
    * desenată (runda 2.7.0, reluarea din 5 octombrie 2026). Chemată din
    * `onSave`, îndată după `save()`.
@@ -3545,6 +3659,132 @@ class Component extends DCLogic {
     }, 250);
   }
 
+  /**
+   * Căutarea de cod a formularului de ACUM, ori nimic.
+   *
+   * `refCaut` își poartă numărul deschiderii (`pe`). O căutare rămasă în stare
+   * de la formularul de dinainte — închis cu „Anulează”, prin salvare ori cu
+   * „înapoi” — nu e a celui de pe ecran, oricine l-ar fi deschis: lista ei nu
+   * se desenează, vorba ei nu se spune, săgețile nu umblă prin ea.
+   */
+  codurile() {
+    const st = this.state || {};
+    const k = st.refCaut;
+    return k && st.form && k.pe === st.form.deschidere ? k : null;
+  }
+
+  /**
+   * Al cui e codul (`GET /referrals/coduri`): cel care scrie comanda caută
+   * după NUMELE celui care a trimis clientul, nu după un cod pe care ar trebui
+   * să-l știe pe de rost (runda 2.7.5, cererea patronului: scrie „octav”,
+   * găsește „ples”).
+   *
+   * Clădită ca `cautaClienti`, cu aceleași două pânze:
+   *
+   * FIRUL (`COD_ASTEPT_MS`). O cerere după ultima literă, nu una la fiecare.
+   *
+   * NUMĂRUL CERERII (`__refNr`). Crește ÎNAINTE de orice ieșire din metodă,
+   * deci și când nu pleacă nimic (o literă ștearsă, caseta golită): numai
+   * răspunsul celei mai noi căutări are voie să scrie. Un „oc” leneș sosit
+   * după „octav” nu mai pune peste lista bună alți oameni.
+   *
+   * ȘI O A TREIA, a formularului: starea e scrisă cu numărul deschiderii
+   * (`pe`), iar firul, ajuns la capăt, nu mai trimite nimic dacă formularul
+   * acela nu mai e pe ecran. De aici vine și „nicio cerere la deschidere”:
+   * metoda e chemată numai din scrisul în casetă (`onRefCode`), niciodată din
+   * `openForm` — codul tău, pus din pornire în casetă, nu se caută singur.
+   *
+   * CE SE SCRIE DIN RĂSPUNS. Rândurile, cu cel mult cinci (`more` spune că
+   * mai sunt). Când serverul spune `exact` — ce s-a scris E codul cuiva —,
+   * omul acela se ține minte în `alCui`, ca vorba de sub casetă să-i spună
+   * numele și fără nicio alegere; iar dacă e singurul rând, lista nici nu se
+   * mai deschide: n-ar avea ce oferi în afară de codul deja scris.
+   *
+   * Paza adevărată e la server: ruta răspunde 403 cui n-are `comenzi.scrie`
+   * (`route_referrals_coduri()`, api/routes/referrals.php). Rândul cu
+   * `gp.eScrieComenzi` hotărăște doar dacă mai are rost să plece cererea.
+   */
+  cautaCoduri(q) {
+    const text = String(q == null ? "" : q).trim();
+    if (this.__refFir) { clearTimeout(this.__refFir); this.__refFir = null; }
+    const cautarea = this.__refNr = (this.__refNr || 0) + 1;
+    const st = this.state || {};
+    if (!st.form || !gp.eScrieComenzi(st.auth)) return;
+    const pe = st.form.deschidere;
+    // (Numele de aici — `cautarea`, `noteaza`, `gasite`, `alCui` — nu sunt
+    // ale niciunei alte funcții din pagină, dinadins: `check-vede-poate`
+    // urmărește mânerele PE NUME până la scrieri, iar un `scrie` ori un `nr`
+    // de aici l-ar fi dus de la `onRefCode` la `save()`, unde n-ajunge.)
+    const noteaza = (ce) => this.setState({
+      refCaut: Object.assign({ pe, lista: [], stare: "", rand: -1, alCui: null, inchisa: false }, ce)
+    });
+
+    // Orice literă scrisă peste codul ales desface alegerea: caseta rămâne cum
+    // e, dar vorba de sub ea nu mai are voie să spună „e codul omului ăsta”.
+    if (text.length < COD_MIN) { noteaza({ stare: text ? "scurt" : "" }); return; }
+    // Lista de dinainte rămâne pe ecran cât se caută, ca la client: golită la
+    // fiecare literă, ar fi clipit sub degetul celui care scrie.
+    const veche = this.codurile();
+    noteaza({ stare: "caut", lista: veche ? (veche.lista || []) : [] });
+
+    this.__refFir = setTimeout(() => {
+      this.__refFir = null;
+      // Formularul s-a închis ori e altul: cererea nu mai are pentru cine pleca.
+      const peEcran = (this.state || {}).form;
+      if (!peEcran || peEcran.deschidere !== pe) return;
+      // Prin `encodeURIComponent`, nu lipit de mână: „Zahăr & Sare” ar fi
+      // tăiat căutarea în două chiar la `&`.
+      gp.get("/referrals/coduri?q=" + encodeURIComponent(text)).then((r) => {
+        if (cautarea !== this.__refNr) return;
+        const gasite = ((r && r.rows) || []).filter((rd) => rd && rd.code);
+        const intocmai = !!(r && r.exact) && gasite.length > 0;
+        noteaza({
+          lista: intocmai && gasite.length === 1 ? [] : gasite,
+          stare: (r && r.short) ? "scurt" : !gasite.length ? "gol" : (r && r.more) ? "multi" : "gata",
+          alCui: intocmai ? gasite[0] : null,
+          // RĂSPUNSUL SOSIT CÂT MERGE SALVAREA NU DESCHIDE LISTA (recitirea din
+          // 10 octombrie 2026). „octav” scris și „Salvează” apăsat înaintea
+          // celor 250 ms: lista apărea peste formularul care se salva, cu
+          // rânduri care nu făceau nimic la apăsare (`refAlege` iese pe
+          // `__saving`). Rândurile se țin minte, închise ca după Escape: dacă
+          // salvarea e refuzată, focusul întors în casetă le arată.
+          inchisa: !!this.__saving
+        });
+        // Lista deja desenată nu mai primește niciun `ref` (v. `aduLista`).
+        if (this.__nodCoduri) this.aduLista(this.__nodCoduri);
+      }).catch(() => {
+        if (cautarea !== this.__refNr) return;
+        noteaza({ stare: "eroare" });
+      });
+    }, COD_ASTEPT_MS);
+  }
+
+  /**
+   * Codul a fost ales din listă (cu degetul ori cu Enter): lista se închide,
+   * iar omul ales se ține minte pentru vorba de sub casetă.
+   *
+   * Scrisul codului în formular NU e aici, ci la cel care cheamă, prin `setF`
+   * — aceeași ușă ca tastatul, deci aceeași pază (`__saving`) și aceeași
+   * urmare: formularul devine „scris” prin `refCode`, ca până acum.
+   *
+   * Numărul cererii crește și aici: răspunsul unei căutări încă pe drum
+   * („octa”, sosit după ce omul a apăsat deja pe un rând) n-are voie să
+   * redeschidă lista peste alegerea făcută.
+   */
+  codAles(r) {
+    if (this.__refFir) { clearTimeout(this.__refFir); this.__refFir = null; }
+    this.__refNr = (this.__refNr || 0) + 1;
+    const k = this.codurile();
+    if (!k) return;
+    this.setState({ refCaut: { pe: k.pe, lista: [], stare: "ales", rand: -1, alCui: r, inchisa: false } });
+  }
+
+  /** O bucată schimbată din căutarea de pe ecran (rândul aprins, lista închisă cu Escape). */
+  codMuta(ce) {
+    const k = this.codurile();
+    if (k) this.setState({ refCaut: Object.assign({}, k, ce) });
+  }
+
   componentDidMount() {
     // Etapele vin din Setări. „Predată” și „Anulată” nu mai sunt scrise în cod:
     // dacă le redenumești din panou, pagina trebuie să afle de la server.
@@ -3658,6 +3898,9 @@ class Component extends DCLogic {
     if (this.__cliMisca) window.removeEventListener("pointermove", this.__cliMisca, true);
     if (this.__cliFir) { clearTimeout(this.__cliFir); this.__cliFir = null; }
     if (this.__cliLung) { clearTimeout(this.__cliLung); this.__cliLung = null; }
+    // Firul căutării de cod, la fel: ajuns la capăt pe o pagină părăsită, ar
+    // trimite o cerere pentru nimeni.
+    if (this.__refFir) { clearTimeout(this.__refFir); this.__refFir = null; }
   }
 
   /**
@@ -5420,6 +5663,31 @@ class Component extends DCLogic {
       }
       const trimise = linii.map(i => ({ productId: i.productId, qty: i.qty, variant: i.variant }));
 
+      // UN NUME RĂMAS ÎN CASETA CODULUI NU PLEACĂ PE TĂCUTE (fișa 674, 2.7.5).
+      // Caseta e și căutare: „octavian” scris și „Salvează” apăsat în grabă,
+      // înaintea listei, salva numele ca pe un cod, iar comisionul nu se năștea.
+      // Se întreabă numai după ce omul a SCRIS în casetă (`codurile()` e plin
+      // numai atunci) și n-a ales din listă, iar căutarea ori e încă pe drum,
+      // ori a găsit oameni pe care nu i-a ales. Când n-a găsit pe nimeni, nota
+      // de sub casetă a spus deja ce înseamnă („Poți salva și așa”). A doua
+      // apăsare, pe același text, salvează: un cod scris de mână rămâne cu
+      // putință, ca până acum.
+      const codIntrebat = this.codurile();
+      const codScris = String(f.refCode || "").trim();
+      const codGasit = !!(codIntrebat && codIntrebat.alCui
+        && String(codIntrebat.alCui.code || "").toLowerCase() === codScris.toLowerCase());
+      const codNelamurit = !!codIntrebat && ["caut", "gata", "multi"].indexOf(codIntrebat.stare) >= 0;
+      if (casetaIncuviintata !== true && codNelamurit && codScris && !codGasit
+        && this.__codIntrebat !== f.deschidere + "\n" + codScris) {
+        this.__codIntrebat = f.deschidere + "\n" + codScris;
+        if (codIntrebat.inchisa) this.codMuta({ inchisa: false });
+        return set({
+          formErr: "„" + codScris + "” nu e un cod ales din listă. Dacă e numele celui care a trimis comanda, "
+            + "alege-i codul din lista de sub casetă. Ca să salvezi totuși cu „" + codScris + "” la cod, "
+            + "apasă încă o dată „Salvează”: un cod pe care nu-l are nimeni nu aduce comision prin el însuși."
+        });
+      }
+
       // Ziua e deja data întreagă („2026-09-10"), venită de la server sau
       // aleasă din listă. Nu se mai ghicește luna din ziua din lună.
       const antet = {
@@ -6516,6 +6784,79 @@ class Component extends DCLogic {
       : cliStare === "eroare" ? "N-am putut căuta acum. Numele se scrie de mână, ca până acum."
       : "";
 
+    // ------------------------------- codul de recomandare, după nume --
+    //
+    // (runda 2.7.5 · cererea patronului: scrie „octav”, găsește „ples”)
+    //
+    // Ce se desenează sub caseta „Cod de recomandare”: lista celor găsiți și
+    // vorba de sub ea. Căutarea e a formularului de pe ecran ori nu e deloc
+    // (`codurile()`), și numai a celui care scrie comenzi — aceeași întrebare
+    // ca poarta rutei. Unde stă pe ecran hotărăște marcajul: lista e ÎNĂUNTRUL
+    // cutiei de sub `frmPotRecomandare`, deci agentul și acceptarea unei
+    // cereri, care n-au cutia, n-au nici lista.
+    const refCaut = potComenzi ? this.codurile() : null;
+    const refStare = refCaut ? String(refCaut.stare || "") : "";
+    const refFel = (r) => COD_FEL[r && r.kind] || "";
+    // Alegerea unui rând, cu degetul ori cu Enter. Codul intră în formular
+    // prin `setF`, ca o literă tastată: aceeași pază cât merge salvarea (R4)
+    // și același „formular scris” prin `refCode`.
+    const refAlege = (r) => {
+      if (this.__saving || !r || !r.code) return;
+      setF({ refCode: r.code });
+      this.codAles(r);
+    };
+    const refRanduri = (refCaut && !refCaut.inchisa ? (refCaut.lista || []) : []).map((r, i) => {
+      // „Octavian Pleș · agent · cod ples”: numele întâi, fiindcă după el s-a
+      // căutat; codul la coadă, fiindcă el e cel care intră în casetă.
+      const coada = "· " + (refFel(r) ? refFel(r) + " · " : "") + "cod " + r.code;
+      return {
+        nume: r.name || "(fără nume)",
+        coada: coada,
+        tot: (r.name || "(fără nume)") + " " + coada,
+        // Rândul aprins de săgeți, ca rândul de sub deget din lista clienților.
+        fundal: i === refCaut.rand ? "var(--h-bg-sunk)" : "transparent",
+        onPick: () => refAlege(r)
+      };
+    });
+    // Vorba de sub casetă. „Cod ples — Octavian Pleș, agent.” vine și după o
+    // alegere, și când codul scris de mână e ÎNTOCMAI al cuiva: cel care îl
+    // știe pe de rost vede și el, înainte de „Salvează”, al cui e.
+    //
+    // VORBA DE LA „gol” NU PROMITE MAI MULT DECÂT FACE SERVERUL. Un cod pe
+    // care nu-l are nimeni nu se refuză, dar nici nu lasă comanda „fără
+    // comision”: `referral_commission_sync()` (api/lib/referral.php) îl
+    // socotește ca pe un cod care nu duce nicăieri (ramura 2), deci comisionul
+    // merge la recomandantul CONTULUI cumpărătorului, dacă are unul. Iar la o
+    // comandă deja salvată, fără recomandant pe cont, un comision neplătit
+    // rămâne la cel care îl avea (ramura 2bis). De aceea nu „nu aduce comision
+    // nimănui”, ci „nu aduce prin el însuși”, cu urmarea spusă.
+    //
+    // CU RÂNDURI GĂSITE ȘI NICIUNUL ALES, VORBA NU MAI TACE (recitirea din 10
+    // octombrie 2026). Cine scrie „octav”, îl vede pe Octavian în listă și
+    // apasă „Salvează” fără să-l aleagă trimite NUMELE drept cod: comanda se
+    // salvează, iar „octav” nu e codul nimănui. Tocmai aici vorba lipsea — iar
+    // omul plecase convins că a pus codul. Serverul spune `exact` numai când
+    // textul, curățat cum îl curăță salvarea, e codul unui cont care ar lua
+    // comision (`route_referrals_coduri()`); fără `exact`, deci fără `alCui`,
+    // „nu e codul nimănui” e adevărat pe față.
+    //
+    // Jumătatea care trimite la listă („un rând de mai sus”) se spune numai cât
+    // lista SE VEDE: închisă cu Escape, ori ținută închisă de un răspuns sosit
+    // cât mergea salvarea, rămâne numai paguba.
+    const refNeales = "Ce ai scris nu e codul nimănui: salvat așa, nu aduce comision prin el însuși.";
+    const refNota = !refCaut ? ""
+      : refStare === "scurt" ? "Scrie cel puțin două litere: codul ori numele celui care a trimis-o."
+      : refStare === "caut" ? "Caut…"
+      : refStare === "eroare" ? "N-am putut căuta acum. Codul se poate scrie de mână, ca până acum."
+      : refStare === "gol" ? "Niciun cod și niciun nume nu seamănă cu ce ai scris. Poți salva și așa: un cod pe care nu-l are nimeni nu aduce comision prin el însuși. Comisionul merge atunci la cine l-a adus pe cumpărător, dacă l-a adus cineva."
+          + (formEdit ? " Altfel, un comision neplătit de pe comanda asta rămâne la cine îl are." : "")
+      : refCaut.alCui ? "Cod " + refCaut.alCui.code + " — " + (refCaut.alCui.name || "fără nume")
+          + (refFel(refCaut.alCui) ? ", " + refFel(refCaut.alCui) : "") + "."
+      : refStare !== "multi" && refStare !== "gata" ? ""
+      : !refRanduri.length ? refNeales
+      : (refStare === "multi" ? "Sunt mai mulți decât încap în listă. Scrie mai mult din nume ori alege un rând de mai sus. "
+          : "Alege un rând de mai sus, ca în casetă să intre codul omului. ") + refNeales;
+
     // ------------------------------------------- pragul de neplătite --
     //
     // (runda 2.7.0 · hotărârile patronului din 4–5 octombrie 2026)
@@ -7596,6 +7937,14 @@ class Component extends DCLogic {
       // schimbă etape, ștergerea e numai a cui are `comenzi.sterge`.
       // `!!gp.cancelled()` e aceeași plasă ca la `eAnulata`, nu o stare de azi.
       potStergeDefinitiv: !!(S.form && S.form.id) && !!gp.cancelled() && etapaComenzii === gp.cancelled() && potSterge,
+      // RÂNDUL RARELOR, PE TELEFON (2.7.5): se desenează când are măcar un
+      // buton. O comandă salvată îl are mereu — ori e vie („Anulează
+      // comanda"), ori e anulată („Reface comanda") —, iar una nouă niciodată,
+      // deci steagul e chiar întrebarea de sub cele trei de mai sus. Scris
+      // aparte, nu ca un `||` între ele: cheile unui obiect nu se văd una pe
+      // alta. check-sterse-comenzi îl pune lângă cele trei, pe fiecare fel de
+      // comandă, și se înroșește dacă se despart.
+      areRare: !!(S.form && S.form.id),
       // DE CE CONT S-A LIPIT COMANDA.
       //
       // Serverul o spunea de mult (`customerId`), dar nicio pagină nu citea
@@ -7774,9 +8123,58 @@ class Component extends DCLogic {
       frmRefNota: f.refLeaga
         ? "Contul cumpărătorului rămâne legat de codul ăsta: și comenzile lui viitoare vor merge la același om, fără să mai scrie nimeni nimic."
         : formNou
-          ? "Scris al tău. Comanda intră în „Recomandări” ca adusă de cel cu codul din câmp, iar comisionul se calculează din totalul ei — deci dacă a adus-o altcineva, pune codul lui. Nebifat, codul e numai al comenzii ăsteia."
+          // „Scris al tău.” numai cât codul din casetă chiar e al celui care scrie:
+          // din 2.7.5 caseta caută și după nume, deci ajunge ușor să poarte codul
+          // altcuiva, iar vorba ar minți tocmai atunci.
+          ? ((S.auth && S.auth.referralCode
+              && String(f.refCode || "").trim().toLowerCase() === String(S.auth.referralCode).trim().toLowerCase())
+              ? "Scris al tău. " : "")
+            + "Comanda intră în „Recomandări” ca adusă de cel cu codul din câmp, iar comisionul se calculează din totalul ei — deci dacă a adus-o altcineva, pune codul lui. Nebifat, codul e numai al comenzii ăsteia."
           : "Se repară numai comanda asta. Contul cumpărătorului rămâne cum e, deci comenzile lui viitoare nu se schimbă.",
-      onRefCode: (e) => setF({ refCode: e.target.value }),
+      // Fiecare literă scrisă în casetă pornește și căutarea după nume (runda
+      // 2.7.5), ca `onCust` la „Client”. Cât merge salvarea nu se mai scrie și
+      // nici nu se mai caută (R4, v. `setF`).
+      onRefCode: (e) => { const v = e.target.value; if (this.__saving) return; setF({ refCode: v }); this.cautaCoduri(v); },
+      refAre: refRanduri.length > 0,
+      refRanduri: refRanduri,
+      refNota: refNota,
+      // Funcția de `ref` a listei: aceeași de la o desenare la alta (ținută pe
+      // instanță), ca să fie chemată numai când lista apare — v. `aduLista`.
+      aduLista: this.aduLista,
+      // FOCUSUL ÎNTORS ÎN CASETĂ arată din nou lista închisă cu Escape (ori
+      // ținută închisă de un răspuns sosit cât mergea salvarea). Nu cere
+      // nimic serverului: rândurile sunt cele de dinainte, din stare.
+      onRefFocus: () => { const k = this.codurile(); if (k && k.inchisa) this.codMuta({ inchisa: false }); },
+      // PIERDEREA FOCUSULUI NU ÎNCHIDE LISTA. Degetul (ori mausul) care apasă
+      // un rând ia întâi focusul din casetă: lista închisă aici ar fi dispărut
+      // de sub el înainte de clic, iar rândul n-ar mai fi fost ales niciodată.
+      // (Marcajul n-are cum opri asta altfel: motorul paginilor nu duce mai
+      // departe `onMouseDown`.) Se stinge numai rândul aprins de săgeți, care
+      // fără focus în casetă nu mai arată spre nimic.
+      onRefBlur: () => { const k = this.codurile(); if (k && k.rand >= 0) this.codMuta({ rand: -1 }); },
+      // TASTELE CASETEI umblă numai prin listă: săgețile aprind un rând (și
+      // trec de la capăt la capăt), Enter îl alege pe cel aprins, Escape
+      // închide lista — LISTA, nu formularul: pe el nu-l închide nicio tastă.
+      // Fără listă pe ecran nu fac nimic și nu opresc nimic, deci orice altă
+      // tastă, și cele patru când n-au pe ce lucra, rămân ale browserului.
+      onRefKey: (e) => {
+        const tasta = e && e.key;
+        if (tasta !== "ArrowDown" && tasta !== "ArrowUp" && tasta !== "Enter" && tasta !== "Escape") return;
+        const k = this.codurile();
+        const lista = k && !k.inchisa ? (k.lista || []) : [];
+        if (!lista.length) return;
+        if (tasta === "Enter") {
+          // Niciun rând aprins: Enter n-are pe cine alege și rămâne ce era.
+          if (!(k.rand >= 0 && k.rand < lista.length)) return;
+          e.preventDefault();
+          refAlege(lista[k.rand]);
+          return;
+        }
+        e.preventDefault();
+        if (tasta === "Escape") { this.codMuta({ inchisa: true, rand: -1 }); return; }
+        const pas = tasta === "ArrowDown" ? 1 : -1;
+        this.codMuta({ rand: k.rand < 0 ? (pas > 0 ? 0 : lista.length - 1) : (k.rand + pas + lista.length) % lista.length });
+      },
       // Citit din stare, nu din `f`: două apăsări repezi pe aceeași randare ar
       // fi întors amândouă aceeași valoare și bifa ar fi rămas pe loc.
       onRefLeaga: () => this.__saving ? undefined : set(s => ({ form: Object.assign({}, s.form, { refLeaga: !s.form.refLeaga }), formErr: "" })),

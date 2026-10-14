@@ -143,6 +143,7 @@ require $api . '/lib/laturi.php';
 require $api . '/lib/poze.php';
 require $api . '/lib/fise.php';
 require $api . '/lib/catalog.php';
+require $api . '/lib/smtp.php';
 require $api . '/lib/notify.php';
 require $api . '/lib/plati-raport.php';
 require $api . '/lib/referral.php';

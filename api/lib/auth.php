@@ -32,11 +32,20 @@ const GP_COOKIE = 'gp_session';
  * pe telefon ar fi început, într-o zi, să se poarte altfel decât aceeași cerere
  * acceptată din panou — fără ca nimeni să bage de seamă, fiindcă amândouă merg.
  *
- * Contul împrumutat nu e o portiță: `api/routes/telegram.php` îl citește din
- * `notify_telegram_actor_id`, adică din omul care a legat botul cu mâna lui, îl
- * verifică să fie încă activ și administrator, și abia după ce a potrivit
- * secretul din antet cu cel din Setări. Ce se împrumută e IDENTITATEA, nu
- * dreptul: `require_admin()` se execută în continuare, pe contul acela.
+ * Contul împrumutat nu e o portiță: `telegram_actor()` (api/routes/telegram.php)
+ * îl alege abia după ce a potrivit secretul din antet cu cel din Setări și
+ * conversația cu cea configurată. E contul LEGAT de omul care a apăsat, dacă e
+ * încă activ și are dreptul `comenzi.scrie`; ori, pentru un om cu contul
+ * nelegat, cel din `notify_telegram_actor_id` — omul care a legat botul cu
+ * mâna lui —, încă activ și administrator. Ce se împrumută e CONTUL, nu
+ * dreptul: poarta rutei (`require_drept('comenzi.scrie')`) se execută în
+ * continuare, pe contul acela.
+ *
+ * DE LA 2.7.5, CONTUL ÎMPRUMUTAT NU-ȘI MAI DĂ ȘI NUMELE. Pentru omul cu contul
+ * nelegat, rândul poartă cheia `_apasator` — cine a apăsat cu adevărat —, iar
+ * tot ce scrie un NUME (Jurnalul, urma de sub mesaj, anunțul, panoul) îl ia de
+ * acolo: v. `act_as_apasator()` și `jurnal_eticheta()` de mai jos. Contul
+ * rămâne purtătorul de drepturi și atât.
  *
  * `$set` e separat de `$u` dinadins: fără el, `act_as(null)` din interiorul
  * unei citiri ar șterge împrumutul în loc să-l citească.
@@ -48,6 +57,31 @@ function act_as(?array $u = null, bool $set = false): ?array
         $actor = $u;
     }
     return $actor;
+}
+
+/**
+ * Omul care a apăsat pe Telegram FĂRĂ să aibă contul legat, sau `null`.
+ *
+ * `null` înseamnă „numele contului e chiar numele omului”: cererea vine din
+ * panou, ori apăsarea e a cuiva cu contul legat. Altfel, cererea de față
+ * lucrează pe drepturile contului care a legat botul, iar cine a apăsat e
+ * altcineva — ăsta.
+ *
+ * Cheia `_apasator` o pune un singur loc, `telegram_actor()`, din
+ * `telegram_apasator_din()` (api/lib/telegram-legaturi.php): numele ajunge aici
+ * deja curățat și tăiat. De aceea fișierul ăsta nu mai curăță nimic — și nici
+ * n-are cu ce, fiindcă se încarcă și acolo unde stratul de Telegram lipsește.
+ *
+ * @return array{tg:int, nume:string, user:string}|null
+ */
+function act_as_apasator(): ?array
+{
+    $u  = act_as();
+    $ap = is_array($u) ? ($u['_apasator'] ?? null) : null;
+    if (!is_array($ap) || (int) ($ap['tg'] ?? 0) <= 0 || trim((string) ($ap['nume'] ?? '')) === '') {
+        return null;
+    }
+    return ['tg' => (int) $ap['tg'], 'nume' => (string) $ap['nume'], 'user' => (string) ($ap['user'] ?? '')];
 }
 
 /** Utilizatorul curent, sau null dacă nu este autentificat. */
@@ -1572,6 +1606,69 @@ function purge_expired(): void
 /* -------------------------------------------------------------- jurnal -- */
 
 /**
+ * Numele sub care se scrie în Jurnal fapta unui cont: coloana „Cine”.
+ *
+ * Pentru toată lumea e numele contului. Pentru un om care a apăsat pe Telegram
+ * fără să aibă contul legat e NUMELE LUI de acolo, cu vorba „cont nelegat”:
+ *
+ *   Ion Pop (Telegram, cont nelegat)
+ *
+ * PRICINA (runda 2.7.5). `audit_log.user_id` e, pentru el, contul care a legat
+ * botul — pe drepturile lui s-a lucrat, și altul n-are. Cu numele contului pus
+ * și în `user_label`, Jurnalul scria „Octavian a acceptat cererea” despre o
+ * apăsare a oricui din grup: tocmai rândul din care patronul voia să afle cine
+ * a acceptat mințea, și mințea pe numele lui.
+ *
+ * `audit()` își ia eticheta NUMAI de aici, în amândouă locurile în care o
+ * socotește singură (.claude/check-telegram-apasator.mjs le numără). Un al
+ * treilea loc care ar scrie `$u['name']` de-a dreptul ar pune la loc minciuna
+ * fără să se vadă nicăieri.
+ */
+function jurnal_eticheta(?array $u): ?string
+{
+    if ($u === null) {
+        return null;
+    }
+    // Cheia e ACOLO ⇒ contul e numai purtător de drepturi, iar numele lui nu se
+    // mai citește pe ramura asta. Un nume gol nu se poate naște (cine pune
+    // cheia cade pe „Telegram #număr”), dar dacă ar ajunge vreodată aici,
+    // rândul rămâne fără nume — nu cu al altcuiva.
+    if (array_key_exists('_apasator', $u)) {
+        $ap   = $u['_apasator'];
+        $nume = is_array($ap) ? trim((string) ($ap['nume'] ?? '')) : '';
+        return ($nume === '' ? 'Necunoscut' : $nume) . ' (Telegram, cont nelegat)';
+    }
+    return isset($u['name']) ? (string) $u['name'] : null;
+}
+
+/**
+ * Coada pusă la `detail` când fapta e a unui om cu contul nelegat:
+ *
+ *   … · apăsat pe Telegram de Ion Pop (@ionpop), cont nelegat — pe drepturile
+ *   contului „Octavian”
+ *
+ * Coloana „Cine” spune cine; coada spune și CUM, fiindcă rândul trebuie să se
+ * poată citi singur peste un an: de ce a putut accepta o cerere un om fără
+ * cont, și pe al cui cuvânt. E singurul loc din Jurnal în care numele contului
+ * botului mai apare lângă o apăsare străină — numit pe față drept ce e,
+ * purtătorul drepturilor, nu făptașul.
+ *
+ * `@utilizator` nu se mai repetă când numele e chiar el (omul fără prenume).
+ */
+function jurnal_detaliu_apasator(?string $detail, ?array $u): ?string
+{
+    $ap = is_array($u) ? ($u['_apasator'] ?? null) : null;
+    if (!is_array($ap) || trim((string) ($ap['nume'] ?? '')) === '') {
+        return $detail;
+    }
+    $user  = (string) ($ap['user'] ?? '');
+    $coada = 'apăsat pe Telegram de ' . $ap['nume']
+        . ($user !== '' && $ap['nume'] !== '@' . $user ? ' (@' . $user . ')' : '')
+        . ', cont nelegat — pe drepturile contului „' . (string) ($u['name'] ?? '') . '”';
+    return $detail === null || $detail === '' ? $coada : $detail . ' · ' . $coada;
+}
+
+/**
  * Scrie o intrare în jurnal. `user_label` este păstrat ca text, ca jurnalul
  * să rămână lizibil și după ștergerea contului.
  */
@@ -1583,10 +1680,15 @@ function audit(
     ?int $userId = null,
     ?string $userLabel = null
 ): void {
+    // Contul de pe care s-a luat eticheta — numai când a socotit-o funcția
+    // asta. Cine dă și numele cu mâna lui știe ce scrie, iar coada de mai jos
+    // nu i se lipește.
+    $alCui = null;
     if ($userId === null) {
         $u         = current_user();
         $userId    = $u ? (int) $u['id'] : null;
-        $userLabel = $u ? $u['name'] : null;
+        $userLabel = jurnal_eticheta($u ?: null);
+        $alCui     = $u ?: null;
     } elseif ($userLabel === null) {
         // NUMELE LIPSĂ NU E „SISTEM".
         //
@@ -1605,12 +1707,14 @@ function audit(
         // omul care apasă butonul e chiar cel care e autentificat.
         $u = current_user();
         if ($u && (int) $u['id'] === $userId) {
-            $userLabel = (string) $u['name'];
+            $userLabel = jurnal_eticheta($u);
+            $alCui     = $u;
         } else {
             $nume      = scalar('SELECT name FROM users WHERE id = ?', [$userId]);
             $userLabel = $nume === null ? null : (string) $nume;
         }
     }
+    $detail = jurnal_detaliu_apasator($detail, $alCui);
     // Tăiate la lungimea coloanelor (entity_id VARCHAR(64), user_label 128):
     // identificatorul vine uneori direct din adresa cererii, iar un segment
     // lung (/orders/12<70 de caractere>) trecea de (int)-ul din rută, comanda

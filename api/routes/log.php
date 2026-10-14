@@ -191,7 +191,7 @@ function route_log_list(): void
             // există nici contul rămâne gol, iar pagina scrie „Sistem" —
             // atunci chiar e adevărat.
             'user'      => $r['user_label'] ?? $r['user_name'],
-            'role'      => $r['role'],
+            'role'      => log_rol_randului($r),
             'action'    => $r['action'],
             'entity'    => $r['entity'],
             'entityId'  => $r['entity_id'],
@@ -212,6 +212,30 @@ function route_log_list(): void
         // Numai când s-a cerut istoria unui lucru anume; altfel `null`.
         'subject' => $subiect,
     ]);
+}
+
+/**
+ * Rolul de trimis lângă „Cine”, pe un rând din Jurnal.
+ *
+ * Fapta unui om din grup cu contul NELEGAT stă pe contul care a legat botul —
+ * pe drepturile lui s-a lucrat —, deci `users.role` al rândului e rangul
+ * aceluia, nu al omului. Trimis cum e, răspunsul spunea „fondator” lângă
+ * „Ion Pop (Telegram, cont nelegat)”: pagina îl ascundea (`rolulRandului`,
+ * Jurnal.dc.html), dar orice altă pagină ori export scris pe aceeași rută l-ar
+ * fi arătat iar (fișa 655, 2.7.5). De-acum serverul nu-l mai trimite: `null`,
+ * ca la „Sistem”.
+ *
+ * Omul se recunoaște după coada pusă de `jurnal_eticheta()` (api/lib/auth.php),
+ * literă cu literă; .claude/check-telegram-apasator.mjs ține cele trei locuri
+ * — eticheta, funcția asta și pagina — la aceeași vorbă.
+ */
+function log_rol_randului(array $r): ?string
+{
+    $cine = $r['user_label'] ?? $r['user_name'] ?? null;
+    if (is_string($cine) && str_ends_with($cine, ' (Telegram, cont nelegat)')) {
+        return null;
+    }
+    return $r['role'] ?? null;
 }
 
 /**

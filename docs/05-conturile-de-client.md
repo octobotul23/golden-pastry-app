@@ -362,6 +362,65 @@ caseta
 comanda poate fi adusă de un coleg, iar el doar o scrie; dacă n-a adus-o nimeni,
 golește caseta. Cine n-are cod pe cont găsește caseta goală.
 
+**Codul se caută și după nume** (de la 2.7.5). Până acum, cine scria comanda
+trebuia să știe codul pe de rost ori să-l caute în altă pagină, iar un cod
+greșit cu o literă se salva fără nicio vorbă: comanda intra, comisionul nu. În
+aceeași casetă scrii acum fie codul, fie o bucată din numele celui care a
+trimis clientul; caseta goală o spune: „cod ori nume, ex. Octavian”. De la două
+litere, sub ea apar cel mult cinci oameni, câte unul pe rând:
+
+> Octavian Pleș · agent · cod ples
+
+Apeși rândul și în casetă intră codul lui. Sub casetă, un rând spune al cui e
+codul scris — „Cod ples — Octavian Pleș, agent.” —, și când l-ai tastat cu
+mâna, întocmai.
+
+- **În ce se caută:** în numele omului, în numele firmei lui (la clienți,
+  rândul arată firma, cu omul între paranteze) și în cod. Nu e nevoie de
+  diacritice: „stefanescu” îl găsește pe „Ștefănescu”. **Numele de utilizator
+  nu se caută** — altfel, cine scrie comenzi ar putea afla, literă cu literă,
+  cu ce nume intră în cont oricine are un cod.
+- **Cine apare:** numai conturile pornite care au un cod, fiecare cu felul lui
+  — „agent”, „client” ori „din casă”. Întâi codul scris întocmai, apoi oamenii
+  casei, apoi clienții.
+- **Cine are lista:** cine are caseta, adică cine scrie comenzi. Agentul de
+  vânzări n-o are, iar la acceptarea unei cereri nu e casetă deloc (v. mai
+  jos).
+- **Dacă nu găsește pe nimeni,** o spune și nu te oprește: „Niciun cod și
+  niciun nume nu seamănă cu ce ai scris. Poți salva și așa: un cod pe care
+  nu-l are nimeni nu aduce comision prin el însuși. Comisionul merge atunci la
+  cine l-a adus pe cumpărător, dacă l-a adus cineva.” Pe o comandă pe care o
+  corectezi se mai adaugă o propoziție: „Altfel, un comision neplătit de pe
+  comanda asta rămâne la cine îl are.”
+- **Dacă sunt mai mulți de cinci,** scrie „Sunt mai mulți decât încap în
+  listă. Scrie mai mult din nume ori alege un rând de mai sus. Ce ai scris nu
+  e codul nimănui: salvat așa, nu aduce comision prin el însuși.”
+- **Dacă n-a putut căuta:** „N-am putut căuta acum. Codul se poate scrie de
+  mână, ca până acum.”
+
+**Un nume scris nu e cod până nu alegi rândul.** Dacă scrii „octav”, îl vezi
+pe Octavian în listă și apeși „Salvează” fără să-l alegi, comanda **nu** pleacă
+la prima apăsare: formularul se oprește, deschide lista la loc și scrie
+„„octav” nu e un cod ales din listă. Dacă e numele celui care a trimis
+comanda, alege-i codul din lista de sub casetă. Ca să salvezi totuși cu „octav”
+la cod, apasă încă o dată „Salvează”: un cod pe care nu-l are nimeni nu aduce
+comision prin el însuși.” Alegi rândul lui și salvezi — pleacă „ples”, din
+prima. Ori apeși a doua oară „Salvează” și pleacă „octav”, așa cum l-ai scris
+(fișa 674, runda 2.7.5).
+
+- **Întreabă numai când are de ce:** cât încă se caută, ori când căutarea a
+  găsit oameni pe care nu i-ai ales. Când n-a găsit pe nimeni, ori n-a putut
+  căuta, ori ce ai scris e chiar codul găsit, salvează din prima, ca până acum.
+- **A doua apăsare e pentru același text.** Dacă schimbi ce e în casetă după
+  întrebare, prima apăsare întreabă din nou.
+
+**Cum desfaci** o comandă salvată cu un nume la cod: deschizi comanda, alegi
+omul din listă și salvezi din nou.
+
+Pe telefoanele cele mai înguste (320 de pixeli) se văd patru din cele cinci
+rânduri ale listei; la al cincilea ajungi derulând lista. La un nume lung se
+taie numele, cu „…”, nu codul.
+
 **Agentul de vânzări nu mai are casetă** (hotărârea patronului, 2 octombrie
 2026). Codul lui pleacă singur odată cu cererea, exact ca până acum — numai că
 nu-l mai poate schimba în al altcuiva. În locul casetei citește un singur rând:
@@ -552,23 +611,82 @@ Funcționează și pentru contul tău de administrator. Fără asta, dacă îți
 parola rămâneai blocat definitiv: `setup.php` se șterge după instalare, iar
 singura cale înapoi ar fi fost prin phpMyAdmin.
 
-**Merge doar dacă e-mailul chiar pleacă de pe server.** Verifică-l întâi cu
-butonul de test din Setări → Notificări. Și doar dacă pe cont e trecută o
-adresă: fără ea, omul nu primește nimic. Pagina nu spune care dintre cele două
-lipsește — răspunsul e identic și când contul există, și când nu, altfel
-formularul ar fi o listă de utilizatori reali pentru oricine îl încearcă. De
-aceea mesajul îi spune omului să sune dacă nu primește nimic în câteva minute.
+**Merge doar dacă e-mailul chiar pleacă.** De la mutarea pe serverul de azi și
+până la 2.7.5 n-a plecat: serverul n-avea niciun program de poștă, iar pagina
+răspundea mai departe că a trimis. De la 2.7.5 e-mailul are două drumuri —
+căsuța firmei, completată în Setări → Notificări, în cartonașul „E-mail”, și
+drumul direct, de pe server (v. `docs/02-panoul-de-setari.md`, la „E-mailul:
+căsuța firmei și drumul direct”). Încearcă-l întâi cu butonul „Trimite e-mail
+de test” de acolo, apoi cere o parolă nouă pentru contul tău, ca să vezi drumul
+întreg. Și merge doar dacă pe cont e trecută o adresă: fără ea, omul nu
+primește nimic.
+
+**Vizitatorul citește mereu același răspuns:** „Dacă există un cont cu datele
+astea, am trimis un e-mail cu instrucțiuni. Dacă nu primești nimic în câteva
+minute, sună-ne: se poate ca pe cont să nu fie trecută o adresă.” La fel când
+contul există și când nu, când are adresă și când nu, când e-mailul a plecat și
+când a căzut — altfel formularul ar fi o listă de utilizatori reali pentru
+oricine îl încearcă. De la 2.7.5 răspunsul vine și la fel de repede pentru
+toți: pleacă înainte ca serverul să caute contul, iar e-mailul se trimite după
+el. Până atunci, cererea pentru un cont adevărat dura cât trimiterea, iar cea
+pentru unul închipuit se întorcea pe loc.
+
+**Ce afli tu, și de unde.** Până la 2.7.5 un link neplecat nu lăsa nicio urmă
+pe care s-o vezi. Acum fiecare cerere pentru un cont adevărat lasă un rând în
+Jurnal, la contul acela:
+
+| Ce scrie în Jurnal | Ce înseamnă |
+|---|---|
+| „Cerere de parolă nouă — e-mailul a fost luat în primire de căsuța de e-mail” | a plecat prin căsuța firmei |
+| „Cerere de parolă nouă — e-mailul a fost predat programului de poștă al serverului; nu se știe dacă a ajuns” | a plecat pe drumul direct; poate fi în Spam |
+| „Cerere de parolă nouă — e-mailul NU a plecat: …”, cu pricina | n-a plecat |
+| „Cerere de parolă nouă — pe cont nu e trecută nicio adresă de e-mail, deci nu s-a trimis nimic” | contul n-are adresă |
+
+Când e-mailul n-a plecat, în Setări, în caseta roșie de deasupra filelor, apare
+și rândul „Parolă uitată — linkul n-a plecat (vezi Jurnalul)”. Nici în Jurnal,
+nici în casetă nu stau linkul ori adresa omului: linkul e chiar cheia contului.
+Pentru un cont care nu există nu se scrie nimic, nicăieri.
+
+**Când te sună cineva că n-a primit nimic**, îl cauți în Jurnal. Dacă n-are
+adresă pe cont ori e-mailul n-a plecat, îi dai tu o parolă provizorie din
+Conturi, cu „Generează” (v. capitolul următor). Dacă aceeași adresă e
+trecută pe două conturi și omul a scris adresa, nu pleacă niciun link —
+serverul nu ghicește al cui e — și nici în Jurnal nu rămâne vreun rând: e
+singura cerere pentru un cont adevărat pe care n-o găsești acolo. Roagă-l să
+scrie numele de utilizator.
+
+**O margine rămasă.** Pe serverul de azi, cine măsoară nu răspunsul, ci clipa
+în care se închide legătura mai poate deosebi un cont adevărat, cu adresă, de
+unul închipuit. Un om cu un browser nu vede asta; un program scris anume, da.
+Pragul de zece cereri de pe aceeași conexiune ține încercările puține. E
+scrisă, cu ce ar închide-o, ca fișă deschisă în
+`docs/06-defecte-de-reparat.md`.
 
 ---
 
 ## Parola pe care i-o dai tu, și parola lui
 
-Când faci un cont nou, sau când apeși „Parolă nouă” pe un cont existent, parola
-pe care i-o dictezi este **provizorie**. Contul e marcat ca atare: în Conturi
+Când faci un cont nou, sau când îi pui o parolă nouă unui cont existent — din
+fișa lui, cu „Generează” ori cu „Schimbă parola” —, parola pe care i-o dictezi
+este **provizorie**. Contul e marcat ca atare: în Conturi
 placa lui poartă insigna **PAROLĂ PROVIZORIE** (pe o placă îngustă, numai
 **PROVIZORIE**), iar în fișa lui, sub nume, scrie „parolă provizorie, de
 schimbat la prima intrare”. Antetul paginii numără câte conturi sunt în starea
 asta, ca să nu le cauți unul câte unul.
+
+**Parola propusă se dictează ușor (de la 2.7.5).** „Generează”, din fișa
+contului, și „Propune o parolă” — de sub „Schimbă parola” și din pagina
+**Parola mea** — dau o parolă de felul „caramel4821”: un cuvânt din bucătărie,
+scris numai cu litere mici fără diacritice, lipit de patru cifre. Până la 2.7.5
+ieșea „brioșă-4821”: cu „ș” și „ă”, pe care omul de la celălalt capăt al
+telefonului nu le găsește ușor pe tastatură, și cu o liniuță pe care o putea
+scrie și „-”, și „_”. Numărul începe acum cu o cifră de la 2 în sus, ca 0 și 1
+să nu fie luate drept „o” și „l” lângă litere. Cele două butoane nu fac același
+lucru: „Generează” pune parola pe cont pe loc și ți-o arată o singură dată —
+„Notează parola acum: … — nu mai poate fi afișată după ce pleci de pe pagină.”
+—, iar „Propune o parolă” numai o scrie în casete, și se pune abia când apeși
+butonul de salvare. Parolele date până acum, cu liniuță, rămân bune: nimic nu
+s-a schimbat pe conturile care le au.
 
 La prima intrare cu o parolă provizorie, omul e dus direct la pagina
 **Parola mea** și nu ajunge nicăieri altundeva până nu alege. Pagina nu-i mai
@@ -599,7 +717,7 @@ alegere a patronului, luată știind urmarea, și e bine să fie scrisă aici:
 parola pe care ai dictat-o tu la telefon rămâne o parolă care intră în acel
 cont, iar pentru un cont de personal asta înseamnă comenzile, conturile și
 datele celorlalți. Dacă ai dictat parola cu voce tare într-o încăpere plină,
-schimb-o tu însuți din „Conturi” — butonul „Parolă nouă” pune semnul la loc.
+schimb-o tu însuți din „Conturi” — butonul „Generează” pune semnul la loc.
 
 **Păstrarea se scrie în Jurnal** (`password_kept`), lângă schimbările de parolă.
 Deci se poate afla oricând cine a ales să rămână cu parola dictată, și când.
@@ -974,7 +1092,7 @@ Fără niciuna din ele, bifa n-are unde să se vadă.
 | Pune ordinea opririlor | Rută | ordinea în care merge mașina | administratorul |
 | Plătește comisioane | Recomandări | „Bifează ca plătit”, la comisionul unei recomandări | administratorul |
 | Schimbă starea plății | Încasări | comutatorul de pe rândul unei comenzi, în „Încasări” | nimeni |
-| Raportul de bani pe Telegram | Încasări | cardul „Raport pe Telegram”, din „Încasări” | nimeni |
+| Raportul de bani pe Telegram | Încasări | cardul „Raport pe Telegram”, din „Încasări”, și cutia „Raport de bani pe Telegram”, din Setări → Notificări | nimeni |
 | Pragul de neplătite al unui client | Conturi | pragul unui client și pragul general | nimeni |
 | Trece peste prag | Comenzi | comanda scrisă pentru un client oprit la prag, cu confirmare | nimeni |
 | Prețurile ingredientelor | Depozit | prețurile de cumpărare, în Depozit | nimeni |

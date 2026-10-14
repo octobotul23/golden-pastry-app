@@ -1119,8 +1119,9 @@ function route_plati_setari_save(): void
 /**
  * POST /plati/raport-proba — trimite ACUM un raport spre chatul banilor.
  *
- * Butonul „Trimite acum un raport de probă” din „Încasări”: patronul a pus
- * chatul și vrea să vadă că ajunge, fără să aștepte ora nouă.
+ * Butonul „Trimite acum un raport de probă”, din „Încasări” și (din 2.7.5) din
+ * Setări › Notificări › Telegram: patronul a pus chatul și vrea să vadă că
+ * ajunge, fără să aștepte ora nouă.
  *
  * NU ÎNSEAMNĂ NIMIC. Nu ia locul raportului de la oră și nu atinge amintirile
  * — vezi `plati_raport_proba()` (api/lib/plati-raport.php). Apăsat la 08:55,
@@ -1136,7 +1137,7 @@ function route_plati_setari_save(): void
  * care tokenul a fost scos; chatul și textul raportului nu se întorc.
  *
  * Nu scrie în Jurnal: încercarea rămâne în `notifications`, de unde o arată
- * „Încasări” la ultimele trimiteri, cu „probă” lângă ea.
+ * „Încasări” și cutia din „Setări” la ultimele trimiteri, cu „probă” lângă ea.
  */
 function route_plati_raport_proba(): void
 {

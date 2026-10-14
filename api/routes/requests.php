@@ -1021,6 +1021,12 @@ function route_requests_accept(string $id): void
     // schimbare.
     $autorCerere = ((int) ($req['created_by'] ?? 0)) ?: null;
 
+    // CINE A APĂSAT, când apăsarea vine de pe Telegram de la un om cu contul
+    // nelegat (runda 2.7.5). `$u` e atunci contul botului: el dă DREPTURILE și
+    // atât. Numele se ia de aici — v. `act_as_apasator()`, api/lib/auth.php.
+    // `null` pe orice alt drum: din panou, ori de la un om cu contul legat.
+    $apasator = act_as_apasator();
+
     $azi = requests_today_local();
     $day = trim((string) ($b['day'] ?? '')) ?: ($req['day'] ?? $azi);
 
@@ -1394,6 +1400,10 @@ function route_requests_accept(string $id): void
                 $pdo->rollBack();
                 fail('Cererea a fost deja acceptată.', 409, 'already_handled');
             }
+            // Numele celui care a apăsat, ÎN ACEEAȘI TRANZACȚIE cu hotărârea —
+            // v. `requests_scrie_apasator()`. Dacă nu se poate scrie, nu se
+            // naște nici comanda.
+            requests_scrie_apasator($id, $apasator);
             $pdo->commit();
             break;
         } catch (PDOException $e) {
@@ -1497,7 +1507,12 @@ function route_requests_accept(string $id): void
     // Oamenii din jurul comenzii se agață ABIA AICI, după răspuns, ca la
     // nașterea din panou: cine a scris cererea (nimeni, dacă a venit de pe
     // site — `created_by` gol, nu `channel`), cine a acceptat-o și pe unde.
-    $order['anunt'] = ['autorId' => $autorCerere, 'dePeSite' => $autorCerere === null, 'acceptataDe' => (int) $u['id'], 'prin' => requests_decided_via(), 'aducatorId' => $order['commission']['referrer'] ?? null];
+    //
+    // `apasator` e numele omului cu contul nelegat care a apăsat de pe
+    // Telegram, ori `null`. Când e acolo, EL e cel scris la „Acceptată de:” —
+    // `acceptataDe` e atunci contul botului, purtătorul de drepturi, iar numele
+    // lui nu ajunge în anunț (`anunt_randuri_oameni()`, api/lib/notify.php).
+    $order['anunt'] = ['autorId' => $autorCerere, 'dePeSite' => $autorCerere === null, 'acceptataDe' => (int) $u['id'], 'prin' => requests_decided_via(), 'apasator' => $apasator['nume'] ?? null, 'aducatorId' => $order['commission']['referrer'] ?? null];
     try {
         notify_new_order($order);
     } catch (Throwable $e) {
@@ -1577,6 +1592,10 @@ function route_requests_reject(string $id): void
             $pdo->rollBack();
             fail('Cererea a fost deja procesată între timp. Reîncarcă lista de cereri.', 409, 'already_handled');
         }
+        // Ca la acceptare: cine a apăsat se scrie odată cu refuzul, nu după
+        // el. Pentru cererea respinsă ăsta e SINGURUL loc din care panoul mai
+        // află cine a refuzat-o — din ea nu se naște nicio comandă.
+        requests_scrie_apasator($id, act_as_apasator());
         $pdo->commit();
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
@@ -1712,6 +1731,11 @@ function route_requests_reopen(string $id): void
             fail('Cererea nu mai este respinsă — altcineva a apucat s-o schimbe. Reîncarcă lista de cereri.', 409, 'already_handled');
         }
 
+        // Odată cu `handled_by` pleacă și cine a apăsat pe Telegram: rămas pe
+        // cerere, numele lui ar ieși în panou la „hotărâtă de” pentru o cerere
+        // pe care n-a mai hotărât-o nimeni — v. `requests_sterge_apasator()`.
+        requests_sterge_apasator($id);
+
         $pdo->commit();
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {
@@ -1795,6 +1819,69 @@ function requests_mark_decided(int $id, ?string $via): void
     } catch (Throwable $e) {
         error_log('[gp] „pe unde s-a hotărât" nescris pentru cererea ' . $id . ': ' . $e->getMessage());
     }
+}
+
+/**
+ * Scrie pe cerere CINE A APĂSAT, când hotărârea a venit de pe Telegram de la un
+ * om cu contul nelegat (runda 2.7.5, migrarea 036). Fără un asemenea om —
+ * hotărârea din panou, apăsarea unui om cu contul legat — nu face nimic:
+ * acolo `handled_by` spune deja adevărul.
+ *
+ * SE CHEAMĂ ÎNĂUNTRUL TRANZACȚIEI HOTĂRÂRII, după UPDATE-ul care schimbă starea
+ * și ÎNAINTE de `commit()` — altfel decât `requests_mark_decided()`, care stă
+ * dinadins după. Deosebirea e tocmai rostul ei. O însemnare „pe unde s-a
+ * hotărât” pierdută lasă hotărârea adevărată și un gol lângă ea. Un nume
+ * pierdut AICI ar lăsa hotărârea scrisă numai cu `handled_by` — contul botului
+ * —, iar panoul ar spune iar că a hotărât cel care a legat botul: chiar
+ * minciuna pe care o scoate runda. Deci ori se scriu amândouă, ori niciuna.
+ *
+ * DE CE NU ÎNGHITE EROAREA. Din același motiv: o excepție de aici dă înapoi
+ * tranzacția, iar omul vede sub mesaj că nu s-a scris nimic și apasă din nou.
+ * `telegram_actor()` (api/routes/telegram.php) nici nu lasă să se ajungă aici pe
+ * o bază fără 036 — refuză apăsarea cu numele fișierului —, deci o cădere în
+ * locul ăsta e o bază care s-a schimbat între două rânduri, nu drumul obișnuit.
+ *
+ * DE CE UN UPDATE AL EI, și nu două coloane în plus în UPDATE-ul stării: acela
+ * rulează la FIECARE hotărâre, și pe bazele fără 036, unde coloanele nu există.
+ * Lipite de el, ar fi picat cu 1054 toate acceptările din panou ale unui server
+ * rămas în urmă cu o migrare.
+ *
+ * Numele vine deja curățat și tăiat (`telegram_apasator_din()`,
+ * api/lib/telegram-legaturi.php): coloana nu ține niciodată textul brut venit
+ * de la Telegram.
+ *
+ * @param array{tg:int, nume:string, user:string}|null $ap  v. `act_as_apasator()`
+ */
+function requests_scrie_apasator(int $id, ?array $ap): void
+{
+    if ($ap === null) {
+        return;
+    }
+    q('UPDATE order_requests SET handled_tg_id = ?, handled_tg_name = ? WHERE id = ?', [(int) $ap['tg'], (string) $ap['nume'], $id]);
+}
+
+/**
+ * Șterge de pe cerere cine a apăsat pe Telegram. Perechea lui
+ * `requests_scrie_apasator()`, chemată la redeschidere, tot ÎNĂUNTRUL
+ * tranzacției: `handled_by` se golește acolo, iar un nume rămas în urma lui ar
+ * ieși în panou la „hotărâtă de” pentru o cerere pe care n-a mai hotărât-o
+ * nimeni — și ar trece, la următoarea acceptare din panou, drept cel care a
+ * acceptat-o.
+ *
+ * Pe o bază fără migrarea 036 nu face nimic: n-are ce șterge, iar redeschiderea
+ * trebuie să meargă și acolo.
+ *
+ * ÎNTREABĂ NUMAI DE COLOANE (`true`), nu de migrarea întreagă. Numele stă în
+ * cele două coloane; tabelul `telegram_oameni` n-are nicio treabă cu el. Cât
+ * paza îl cerea și pe el, pe o bază rămasă fără tabel redeschiderea lăsa numele
+ * pe cerere — exact urma de care vorbește rândul de mai sus.
+ */
+function requests_sterge_apasator(int $id): void
+{
+    if (!telegram_apasatori_suportati(true)) {
+        return;
+    }
+    q('UPDATE order_requests SET handled_tg_id = NULL, handled_tg_name = NULL WHERE id = ?', [$id]);
 }
 
 /**
@@ -1922,11 +2009,15 @@ function attach_request_items(array $rows, bool $cuAutor = false): array
             'rejectReason' => $r['reject_reason'],
             'createdAt'    => $r['created_at'],
             'handledAt'    => $r['handled_at'],
+            // Omul cu contul nelegat care a apăsat de pe Telegram trece
+            // ÎNAINTEA contului (runda 2.7.5): `handled_by` e atunci contul
+            // botului — al cui drept s-a folosit, nu cine a hotărât. `?? null`,
+            // fiindcă `handled_tg_name` vine cu migrarea 036.
             'hotaratDe'    => $cuAutor
-                ? autor_comanda(
+                ? (autor_apasator($r['handled_tg_name'] ?? null) ?? autor_comanda(
                     isset($r['handled_by']) && $r['handled_by'] !== null ? (int) $r['handled_by'] : null,
                     $numeDinCasa
-                )
+                ))
                 : null,
             // Cele patru ale migrării 022, cu aceeași grijă ca `referral_code`
             // de mai sus: pe o bază nemigrată `SELECT r.*` se întoarce fără

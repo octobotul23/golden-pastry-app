@@ -811,6 +811,8 @@ function anunt_aducator(?int $clientId, ?string $cod, ?int $stiut, bool $dupaNum
  *   dePeSite     a trimis-o clientul, de pe site
  *   acceptataDe  contul care a acceptat cererea din care s-a născut comanda
  *   prin         pe unde a acceptat-o: „panou" ori „telegram"
+ *   apasator     numele de pe Telegram al celui care a apăsat „Acceptă” FĂRĂ
+ *                cont legat (gol în rest) — v. „ACCEPTATĂ DE”, mai jos
  *   aducatorId   recomandantul deja știut — v. `anunt_aducator()`
  *
  * Fără cheie nu se scrie niciun rând: o funcție care ghicește cine a scris
@@ -853,12 +855,26 @@ function anunt_aducator(?int $clientId, ?string $cod, ?int $stiut, bool $dupaNum
  * două conturi cu același nume). „Nimeni" ar fi o afirmație, iar acolo n-avem
  * ce afirma — v. `anunt_client()`.
  *
- * LA „ACCEPTATĂ DE", NUMELE E AL CONTULUI PE CARE S-A LUCRAT. Din panou e chiar
- * omul. De pe butonul din Telegram e contul legat de cel care a apăsat — ori,
- * dacă acela nu și-a legat Telegramul de niciun cont, contul care a legat botul
- * (`telegram_actor()`, api/routes/telegram.php). De aceea rândul spune și „de
- * pe Telegram": cine citește știe atunci că numele e al legăturii, nu neapărat
- * al degetului.
+ * LA „ACCEPTATĂ DE", NUMELE E AL CELUI CARE A HOTĂRÂT — NICIODATĂ AL ALTCUIVA
+ * (runda 2.7.5). Din panou e chiar omul. De pe butonul din Telegram sunt două
+ * feluri de oameni:
+ *
+ *   Acceptată de: Maria Ionescu (manager), de pe Telegram
+ *   Acceptată de: Ion Pop, de pe Telegram (cont nelegat)
+ *
+ * Primul are Telegramul legat de contul lui și e scris cu contul. Al doilea
+ * n-are niciun cont legat: apăsarea lui a mers pe DREPTURILE contului care a
+ * legat botul (`telegram_actor()`, api/routes/telegram.php), dar NUMELE e al
+ * lui, cel de pe Telegram, venit în cheia `apasator`. Până la 2.7.5 rândul
+ * scria atunci numele contului botului — adică patronul apărea că a acceptat
+ * tot ce apăsase oricine din grup. Fără rol în paranteză la al doilea: un om
+ * fără cont n-are niciun rol în casă.
+ *
+ * RÂNDUL OMULUI NELEGAT SE SCRIE ÎNTOTDEAUNA. Regula „nu se mai spune o dată
+ * dacă a acceptat chiar cel care a scris” compară două CONTURI, iar aici
+ * contul nu e al celui care a apăsat. Când cererea a scris-o chiar omul care a
+ * legat botul, cele două conturi ies egale și rândul s-ar sări: tocmai apăsarea
+ * altcuiva ar rămâne nespusă.
  *
  * @param string $hartia  „comanda" ori „cererea", pentru rândul cel scurt
  */
@@ -900,11 +916,25 @@ function anunt_randuri_oameni(array $x, string $hartia = 'comanda'): array
         $out[] = 'Scrisă de: ' . $autor['name'] . ' (' . anunt_rol($autor['role']) . ')';
     }
 
-    // Cine a acceptat cererea — numai dacă e altcineva decât cel care a scris-o
-    // (un manager își poate accepta singur cererea, iar atunci rândul de sus a
-    // spus deja tot).
+    // Cine a acceptat cererea.
+    //
+    // Omul cu contul nelegat, întâi și ÎNTOTDEAUNA: `acceptataDe` e atunci
+    // contul botului, deci nici numele lui, nici comparația cu autorul n-au ce
+    // căuta aici — v. „ACCEPTATĂ DE”, în antet. Numele vine curat de la sursă
+    // (`telegram_apasator_din()`); se mai trece o dată prin aceeași curățenie
+    // fiindcă aici se lipește într-un mesaj care pleacă din casă, iar cheia
+    // `anunt` o poate umple, într-o zi, și altă rută decât cea de azi.
+    $apasator = trim((string) ($a['apasator'] ?? ''));
+    if ($apasator !== '') {
+        $apasator = telegram_nume_curat($apasator);
+    }
     $acceptaId = $id($a['acceptataDe'] ?? null);
-    if ($acceptaId !== null && $acceptaId !== $autorId) {
+    if ($apasator !== '') {
+        $out[] = 'Acceptată de: ' . $apasator . ', de pe Telegram (cont nelegat)';
+    } elseif ($acceptaId !== null && $acceptaId !== $autorId) {
+        // Un cont al casei — numai dacă e altcineva decât cel care a scris-o
+        // (un manager își poate accepta singur cererea, iar atunci rândul de
+        // sus a spus deja tot).
         $om = anunt_om($acceptaId);
         if ($om !== null) {
             $out[] = 'Acceptată de: ' . $om . (($a['prin'] ?? '') === 'telegram' ? ', de pe Telegram' : '');
@@ -1202,7 +1232,28 @@ function email_from_name(): string
         : '"' . $name . '"';
 }
 
-function send_email(string $to, string $subject, string $text): void
+/**
+ * Trimite un e-mail pe drumul ales în Setări și întoarce drumul pe care a
+ * plecat: „smtp” (căsuța firmei l-a luat în primire) ori „direct” (a fost
+ * predat programului de poștă al serverului).
+ *
+ * DOUĂ DRUMURI, UN SINGUR MESAJ (runda 2.7.5). Până la 2.7.5 exista numai
+ * `mail()`, iar pe un server fără program de poștă `mail()` întoarce „nu” fără
+ * niciun cuvânt: „Ți-ai uitat parola?” n-a mai trimis nimic, și nimeni n-a
+ * aflat. Acum:
+ *
+ *   · căsuța completată în Setări → Notificări → E-mail → `smtp_trimite()`;
+ *   · altfel, drumul direct → `mail_direct_trimite()`, care spune pe față când
+ *     serverul n-are niciun program de poștă.
+ *
+ * O căsuță care dă greș NU cade în tăcere pe drumul direct: excepția ei urcă
+ * de aici neatinsă, cu treapta la care s-a oprit. Amândouă stau în
+ * api/lib/smtp.php, lângă `mail_mesaj()`, care face mesajul o singură dată și
+ * trece fiecare antet prin paza de salt de linie (`mail_antet()`).
+ *
+ * Cele două verificări de adresă de mai jos rămân ÎNAINTEA oricărui drum.
+ */
+function send_email(string $to, string $subject, string $text): string
 {
     if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
         throw new RuntimeException('Adresă de e-mail invalidă: ' . $to);
@@ -1219,20 +1270,16 @@ function send_email(string $to, string $subject, string $text): void
         throw new RuntimeException('Adresa expeditor din Setări nu este o adresă validă: ' . $from);
     }
 
-    $headers = implode("\r\n", [
-        'From: ' . email_from_name() . ' <' . $from . '>',
-        'Content-Type: text/plain; charset=UTF-8',
-        'Content-Transfer-Encoding: 8bit',
-        'X-Mailer: golden-pastry',
-    ]);
-    // Subiectul se codifică: diacriticele nu sunt permise brut în anteturi.
-    $encoded = '=?UTF-8?B?' . base64_encode($subject) . '?=';
+    // Subiectul codificat, anteturile și corpul: o singură dată, aceleași pe
+    // amândouă drumurile.
+    $mesaj = mail_mesaj($from, email_from_name(), $to, $subject, $text);
 
-    if (!@mail($to, $encoded, $text, $headers)) {
-        throw new RuntimeException('Funcția mail() a eșuat. Cel mai des, adresa '
-            . 'expeditoare nu e pe domeniul tău și serverul o refuză — schimb-o din '
-            . 'Setări → General și încearcă din nou butonul de test.');
+    if (smtp_configurat()) {
+        smtp_trimite($mesaj);
+        return 'smtp';
     }
+    mail_direct_trimite($mesaj);
+    return 'direct';
 }
 
 /* ------------------------------------------------------------ WhatsApp -- */
@@ -1539,10 +1586,17 @@ function telegram_url_de_buton(string $url): bool
  * tăieturii de 1000 din `send_whatsapp()`.
  *
  * SE TAIE LA 4000, NU LA 4096. Sub mesajul unei cereri, telefonul mai lipește
- * urma hotărârii — „✅ Acceptată de pe telefon", cu două rânduri goale
- * înainte (`telegram_toast()`, api/routes/telegram.php) —, iar
+ * urma hotărârii — „✅ Acceptată de Ion Pop, de pe Telegram (cont nelegat)”, cu
+ * două rânduri goale înainte (`telegram_toast()`, api/routes/telegram.php;
+ * vorbele le dă `telegram_semn()`, api/lib/telegram-legaturi.php) —, iar
  * `editMessageText` are aceeași limită. Un mesaj trimis plin ochi ar fi rămas
  * fără urmă, deci cu hotărârea nescrisă sub el.
+ *
+ * CELE 96 RĂMASE ȚIN URMA CEA MAI LUNGĂ: de la 2.7.5 urma poartă un nume, iar
+ * numele e tăiat la 40 de unități (`GP_TG_NUME_UNITATI`) tocmai ca urma să
+ * încapă — 2 + 86 cu numele cel mai lung. Cine lungește numele ori vorbele
+ * urmei are de recitit socoteala asta; `.claude/check-anunturi.mjs` o reface
+ * rulând `telegram_semn()` cu numele cel mai lung.
  *
  * SE NUMĂRĂ CUM NUMĂRĂ TELEGRAM, în unități UTF-16: un semn din afara planului
  * de bază — un croissant desenat în mențiuni — ține cât două. Numărate cu
