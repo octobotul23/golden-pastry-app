@@ -41,7 +41,10 @@ Atât. Scriptul stă lângă `deploy/` și `sql/` și se descurcă singur mai de
 La actualizarea care aduce 2.7.0, citește întâi „Ziua actualizării la 2.7.0”,
 mai jos: primul lucru de acolo se face **înainte** să urci. La cea care aduce
 2.7.5 n-ai nimic de făcut înainte, dar ai patru lucruri de făcut **după**, în
-ordine: sunt la „Ziua actualizării la 2.7.5”.
+ordine: sunt la „Ziua actualizării la 2.7.5”. Cea care aduce 2.7.6 nu-ți cere
+nimic: micșorează o singură dată pozele mari ale catalogului și le pune
+originalele deoparte. Ce scrie pe ecran și cum le aduci înapoi e la „Ziua
+actualizării la 2.7.6”.
 
 ---
 
@@ -59,7 +62,7 @@ o pune în raport la pasul „Caut pachetul":
 
 ```
 ▸ Caut pachetul
-  Pachet: /root/plasture-vps 2.7.5/deploy
+  Pachet: /root/plasture-vps 2.7.6/deploy
   Făcut la: 2026-09-13 20:15
   Amprenta: gp-api.js?v=ef3f2729
 ```
@@ -110,7 +113,7 @@ apărut în cod abia odată cu ea. Orice alt număr înseamnă că a urcat.
    comprimată, plus `api/config.php`. Copia se și verifică — se deschide și i se
    citește ultimul rând, fiindcă un fișier rupt la mijloc arată în `ls` exact ca
    unul întreg. Dacă nu iese, scriptul se oprește acolo și nu atinge nimic
-   (`actualizeaza-vps.sh:237`). Tot aici se face și o arhivă a codului de
+   (`actualizeaza-vps.sh:243`). Tot aici se face și o arhivă a codului de
    dinainte — cele patru foldere, fără `config.php` și fără poze —, cu care te
    poți întoarce la versiunea veche fără să atingi baza; comanda ți-o scrie
    raportul, la sfârșit.
@@ -130,7 +133,7 @@ apărut în cod abia odată cu ea. Orice alt număr înseamnă că a urcat.
    Registrul **însemnează, nu oprește**: migrările se rulează toate, la fiecare
    actualizare, exact ca înainte. Pe un `sql/` mai vechi decât `025` scriptul se
    întoarce singur la socoteala dinainte — măsoară schema înainte și după fiecare
-   (`actualizeaza-vps.sh:372`). Aceea e însă o ghicitoare, și se înșela tocmai
+   (`actualizeaza-vps.sh:378`). Aceea e însă o ghicitoare, și se înșela tocmai
    unde doare: `017` nu atinge DELOC schema, deci ieșea „era deja aplicată" chiar
    și la prima rulare — despre singura migrare care face recomandările să aducă
    bani.
@@ -139,10 +142,10 @@ apărut în cod abia odată cu ea. Orice alt număr înseamnă că a urcat.
    datele inițiale. A doua pare inofensivă, fiindcă are numai `INSERT IGNORE` —
    dar `IGNORE` sare peste chei duplicate, iar un produs pe care l-ai **șters**
    din Catalog n-are cu ce se ciocni și s-ar întoarce de la morți la fiecare
-   actualizare (`actualizeaza-vps.sh:530`).
+   actualizare (`actualizeaza-vps.sh:536`).
 5. **Fișierele**, în cele patru foldere. `api/config.php` e scos și din copiere,
-   și din curățenie (`actualizeaza-vps.sh:890`), iar folderul pozelor e citit din
-   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:820`,
+   și din curățenie (`actualizeaza-vps.sh:901`), iar folderul pozelor e citit din
+   `photo_dir` și ocolit pe numele lui (`actualizeaza-vps.sh:831`,
    `api/routes/catalog.php:874`). Folderul fișelor tehnice, `public_html/fise/`,
    **nu** e ocolit: vine cu pachetul și se scrie peste, cu tot cu curățenie, deci
    o fișă care nu mai e în pachet dispare și de pe server. Fișele încărcate din
@@ -157,14 +160,22 @@ apărut în cod abia odată cu ea. Orice alt număr înseamnă că a urcat.
    fiindcă rândul cheamă un fișier pe care abia copierea de la pasul 5 l-a
    adus; ce scrie, când tace și ce înseamnă rândurile lui galbene e la „Ceasul
    plăților”, mai jos.
-8. **Apache**: întâi `configtest`, și abia dacă trece, `reload`. O configurație
+8. **Pozele mari**, de la 2.7.6. Pozele de produs mai mari de 1600 de puncte
+   pe latura lungă — cele urcate înainte ca serverul să le micșoreze singur,
+   adică înainte de 2.4.2 — se micșorează pe loc, cu același nume, după ce
+   originalele lor sunt copiate în `/var/backups/golden-pastry/poze-DATA`.
+   Fără copie nu se micșorează nimic. La actualizarea următoare pasul nu mai
+   găsește nimic de făcut: o poză micșorată are 1600 de puncte. Cu
+   `--fara-micsorare` îl sare. Ce scrie și cum pui originalele înapoi e la
+   „Micșorarea pozelor vechi”, mai jos.
+9. **Apache**: întâi `configtest`, și abia dacă trece, `reload`. O configurație
    stricată nu ajunge niciodată să oprească serverul. Tot aici se uită dacă
    `mod_expires` e aprins și, dacă nu e, te avertizează pe galben — nu oprește
    nimic, vezi „Avertismentul galben" mai jos.
-9. **O cerere adevărată către API**, de pe server către el însuși. Nu contează ce
-   răspunde, ci că răspunde: un `500` aici înseamnă că PHP a pornit și s-a
-   împiedicat, iar asta e mai bine să afli acum decât de la primul client.
-10. **Programul de poștă**, de la 2.7.5. Dacă serverul n-are niciun program
+10. **O cerere adevărată către API**, de pe server către el însuși. Nu contează
+    ce răspunde, ci că răspunde: un `500` aici înseamnă că PHP a pornit și s-a
+    împiedicat, iar asta e mai bine să afli acum decât de la primul client.
+11. **Programul de poștă**, de la 2.7.5. Dacă serverul n-are niciun program
     prin care PHP să poată trimite e-mail, pune unul: postfix, numai de trimis.
     Dacă are deja unul, nu-l atinge. Vine la urmă dinadins: până aici
     actualizarea a reușit întreagă, iar pasul ăsta nu o mai poate strica —
@@ -184,7 +195,7 @@ exact în minutele dintre cele două jumătăți ale actualizării.
 | Ce | De ce |
 |---|---|
 | `api/config.php` | parola bazei, cheia de criptare, codul de instalare. Nu e în pachet și nu se poate reface: cheia aia descuie tokenurile salvate din Setări. |
-| pozele produselor | urcate din panoul Catalog, nu ies din niciun `build-deploy`. Folderul se citește din `photo_dir` și se ocolește. Tot acolo stau și fișele tehnice încărcate din Catalog. Fișele venite cu pachetul, din `fise/`, **nu** sunt în rândul ăsta: ele se scriu peste la fiecare actualizare. |
+| pozele produselor | urcate din panoul Catalog, nu ies din niciun `build-deploy`. Folderul se citește din `photo_dir` și se ocolește la copiere și la curățenie: nicio poză nu se șterge, nu se mută și nu se redenumește. **O singură abatere**, de la 2.7.6: pozele mai mari de 1600 de puncte se micșorează o dată, pe loc, după ce originalele lor sunt puse deoparte (vezi „Micșorarea pozelor vechi”). Tot în folderul pozelor stau și fișele tehnice încărcate din Catalog; pe ele micșorarea nu le atinge, fiindcă nu sunt poze. Fișele venite cu pachetul, din `fise/`, **nu** sunt în rândul ăsta: ele se scriu peste la fiecare actualizare. |
 | rândurile din bază | toate migrările sunt aditive. Nimic nu se șterge și nimic nu se rescrie. |
 | certificatele, gazdele virtuale, pachetele serverului | treaba instalării, nu a actualizării. De-aia actualizarea ține sub un minut. Tot de-aia nu instalează nici `cron`, dacă serverul nu-l are: îți spune comanda și merge mai departe (vezi „Ceasul plăților”). **O singură abatere**, de la 2.7.5: programul de poștă. Dacă serverul n-are niciunul, pasul de la coadă îl instalează (un pachet, o dată; poate ține un minut) — fără el, e-mailul n-ar avea pe unde pleca până completezi căsuța. Cu `--fara-posta` nu-l pune (vezi „Programul de poștă”). |
 | un program de poștă pe care serverul îl are deja | pasul de la coadă îl recunoaște și **nu-i schimbă nimic**, oricare ar fi el. Se uită numai, fără să scrie, dacă merge și dacă e așezat cum trebuie, și îți spune pe galben ce a găsit. |
@@ -194,7 +205,7 @@ exact în minutele dintre cele două jumătăți ale actualizării.
 Fișierele `api/setup.php` și `api/verifica.php` sunt un caz aparte: ghidul de
 instalare cere ștergerea lor, dar amândouă sunt în pachet, deci copierea le-ar
 pune la loc de fiecare dată. Scriptul ține minte care lipseau și le scoate din
-nou (`actualizeaza-vps.sh:839`). Se închid și singure, cu `404`, din clipa în
+nou (`actualizeaza-vps.sh:850`). Se închid și singure, cu `404`, din clipa în
 care instalarea are un administrator activ — dar hotărârea rămâne a ta.
 
 ---
@@ -356,6 +367,103 @@ strică: el nu rezervă nimic, doar taie peste o cifră.
 (`08-publicare-vps-hostinger.md`) cere Apache anume, fiindcă rescrierile de
 adrese ale aplicației sunt scrise în `.htaccess`, iar nginx nu-l citește. Pe o
 instalare făcută după el, rândul din `verifica.php` va fi verde de la sine.
+
+---
+
+## Micșorarea pozelor vechi
+
+Micșorarea de la urcare, de mai sus, lucrează numai pentru pozele urcate de la
+2.4.2 încoace. Cele de dinainte au rămas cum le-a făcut telefonul. Pe
+goldenpastry.ro erau 22, de câte 1792×2390 de puncte și 2–3 MB, adică vreo
+55 MB. Pagina catalogului le cerea pe toate deodată, iar pe un telefon cu 4G
+slab poza unui produs apărea abia după vreo 21 de secunde (măsurat pe 17
+oct. 2026). Pasul „Pozele mari”, de la 2.7.6, le trece o dată și pe ele prin
+aceeași micșorare.
+
+**Ce face, în ordine:**
+
+1. Unealta `api/cron/micsoreaza-poze.php` se uită în folderul pozelor — cel din
+   `photo_dir`, adică `/var/www/gp/public_html/products` pe o instalare făcută
+   după ghid — și spune care au latura lungă peste 1600 de puncte. Numai
+   pozele: fișele tehnice care stau tot acolo nu sunt atinse.
+2. Scriptul copiază exact pozele acelea în
+   `/var/backups/golden-pastry/poze-DATA`, lângă copiile bazei. Dacă una
+   singură nu se poate copia, se oprește: **fără copie nu micșorează nimic**.
+3. Abia apoi le micșorează: la 1600 de puncte pe latura lungă, cu aceeași
+   calitate ca la urcarea din Catalog. Fiecare poză nouă se scrie întâi
+   alături și ia locul celei vechi numai când e gata și întreagă, deci un
+   client nu prinde niciodată o poză pe jumătate scrisă. Numele rămâne
+   același, așa că **baza nu se atinge**: produsele țin minte numele pozei,
+   nu mărimea ei.
+
+Unealta rulează ca `www-data`, utilizatorul serverului web, nu ca root. Copia o
+face root. O poză care micșorată ar ieși mai grea decât e rămâne cum era.
+
+**Ce scrie pe ecran.** Așa arată pasul pe o probă cu 22 de poze închipuite, de
+aceeași mărime cu cele de pe site. Numele sunt ale probei: pe server au forma
+`prod-<număr>-<cod>.jpg`.
+
+```
+▸ Pozele mari
+  Originalele (22 de poze, 51M): /var/backups/golden-pastry/poze-2026-10-19-101502
+    prod-1.jpg   1792×2390 · 2,3 MB  →  1200×1600 · 373 KB
+    prod-10.jpg   1792×2390 · 2,4 MB  →  1200×1600 · 395 KB
+    …
+  Micșorate: 22 din 22 de poze (50,1 MB → 8,1 MB cu totul).
+```
+
+Rândul verde de la sfârșit spune atunci „Actualizat. api/config.php a rămas
+neatins; 22 de poze mari au fost micșorate, cu originalele puse deoparte.”, iar
+dedesubt, la copiile de dinainte, stă și comanda cu care le pui înapoi. La
+actualizarea următoare pasul scrie numai „Nicio poză mai mare de 1600 de puncte
+— nimic de micșorat.”
+
+**Dacă vrei pozele mari înapoi.** Copiezi comanda de pe ecran, nu din ghid:
+are deja în ea calea copiei de azi. Are forma asta:
+
+```bash
+cp -a /var/backups/golden-pastry/poze-…/* /var/www/gp/public_html/products/
+```
+
+Steluța de la capăt contează: ea copiază pozele, nu folderul. Cu `/.` în
+locul ei, folderul pozelor de pe site ar fi luat stăpânul și drepturile
+folderului copiei — al lui root, închis pentru oricine altcineva —, iar
+site-ul n-ar mai fi putut arăta nicio poză.
+
+Pozele se întorc cu același nume, peste cele mici, iar baza nu se atinge.
+Actualizările de după le-ar micșora însă din nou: dacă le vrei mari de tot,
+rulează-le cu `--fara-micsorare`.
+
+**Copia nu se șterge singură.** `--pastreaza` curăță numai copiile bazei, ale
+lui `config.php` și ale codului; folderele `poze-…` rămân până le ștergi tu. Pe
+site ar fi vreo 55 MB. Singura dată când scriptul o șterge singur e când n-a
+micșorat nicio poză: atunci copia e geamăna celor de pe site și n-ar ține
+nimic în plus.
+
+**Rândurile galbene.** Niciunul nu oprește actualizarea, iar după oricare
+dintre ele pozele de pe site sunt cum erau — site-ul merge cu ele, doar mai
+încet.
+
+| Rândul | Ce înseamnă |
+|---|---|
+| „Pachetul nu are api/cron/micsoreaza-poze.php (e mai vechi de 2.7.6?). Pozele n-au fost atinse.” | ai urcat un pachet mai vechi decât crezi; vezi „Am urcat și n-a făcut update-ul”, mai sus |
+| „Lipsește runuser (pachetul util-linux), iar ca root nu micșorez. Pozele n-au fost atinse.” | pe Ubuntu `runuser` e mereu acolo; dacă lipsește, ceva e ciudat cu serverul — nu micșorez ca root |
+| „N-am putut afla ce poze sunt de micșorat (…):” | dedesubt stau primele rânduri ale erorii — de pildă „PHP n-are GD (pachetul php-gd)…”. Nu s-a pus nimic deoparte și nu s-a atins nimic |
+| „… mai mari de 1600 de puncte, dar fără copie de siguranță (--fara-copie) nu le micșorez.” | rulează actualizarea o dată fără `--fara-copie` |
+| „N-am putut pune deoparte „…” (discul plin? df -h). Fără copie nu micșorez nimic.” | de obicei discul plin. Ce apucase să copieze rămâne în folderul `poze-…` scris dedesubt; pozele de pe site sunt toate neatinse |
+| „Unele poze n-au putut fi micșorate (rândurile „neatinsă” de mai sus). Au rămas cum erau; site-ul merge cu ele.” | pe rândul fiecărei poze stă pricina, de pildă „fișierul e stricat ori nu e poza care pare”. Celelalte au fost micșorate, cu originalele puse deoparte |
+| „Micșorarea s-a oprit înainte de capăt (vezi rândurile de mai sus). Originalele pozelor listate sunt în …” | PHP s-a oprit la mijloc; rândurile de deasupra spun de ce. Unele poze poate au apucat să fie micșorate, dar originalele tuturor celor listate sunt în folderul scris. Site-ul merge; actualizarea următoare încearcă din nou |
+
+**Cu mâna, fără să schimbi nimic.** Ca să vezi ce ar micșora, înainte de
+actualizare ori oricând:
+
+```bash
+sudo -u www-data php /var/www/gp/api/cron/micsoreaza-poze.php --poze=/var/www/gp/public_html/products --uscat
+```
+
+Rândul ultim e de felul „S-ar micșora 22 de poze (50,1 MB cu totul). N-am atins
+nimic (--uscat).” Unealta nu se poate deschide din browser: folderul `cron/`
+răspunde `403` oricui vine pe web.
 
 ---
 
@@ -705,13 +813,16 @@ ecranul, nu ghidul, și păstrează rândurile.
 | `--doar-fisiere` | numai fișierele, baza rămâne neatinsă |
 | `--fara-copie` | sari peste copie — numai dacă tocmai ai făcut una cu mâna |
 | `--fara-posta` | de la 2.7.5: nu pune programul de poștă (postfix, numai de trimis). E-mailul pleacă atunci numai prin căsuța din Setări → Notificări |
+| `--fara-micsorare` | de la 2.7.6: nu micșora pozele mai mari de 1600 de puncte. Pentru când ai pus înapoi, dinadins, pozele mari |
 
 `--doar-baza` și `--doar-fisiere` sunt pentru repornirea unei actualizări care a
 picat la mijloc: repari ce era de reparat și continui de unde a rămas. Ceasul
 plăților ține de fișiere: se pune și cu `--doar-fisiere`, iar cu `--doar-baza`
 nu se atinge. La fel programul de poștă: pasul lui rulează și cu
 `--doar-fisiere`, iar cu `--doar-baza` scrie „Sărit (--doar-baza).” și nu
-face nimic.
+face nimic. Și pozele mari: pasul lor rulează cu `--doar-fisiere`, cu copia
+lui de poze cu tot, iar cu `--doar-baza` nu apare deloc. Cu `--fara-copie`
+spune câte ar fi de micșorat, dar nu micșorează nimic.
 
 ---
 
@@ -846,14 +957,14 @@ cineva s-o poată schimba.
 
 Pentru `017` și `018`, raportul face singur privirea asta, după `Bilanț:`:
 citește din bază procentul, adresa și programul și le spune cu valoarea lor
-(`actualizeaza-vps.sh:640`, `:722`). Un rând galben care spune că `017` sau
+(`actualizeaza-vps.sh:646`, `:728`). Un rând galben care spune că `017` sau
 `018` **n-a intrat** e o migrare lipsă — aproape mereu un folder `sql/` urcat
 mai vechi decât pachetul; la procent îl dă și un `0` rămas de la casă, pe care
 `017` l-ar fi urcat la 5. Un rând galben care începe cu **„N-am putut citi…"**,
 cu eroarea lui mysql dedesubt, e altceva: migrările au trecut, a picat numai
 întrebarea de după ele, deci raportul nu știe ce e acolo și nu ghicește. Nu
 rulezi din nou pentru atât; te uiți tu, în Setări. La fel vorbește și rândul
-conturilor făcute pe site pe care nu le-a recunoscut nimeni (`:788`): acolo o
+conturilor făcute pe site pe care nu le-a recunoscut nimeni (`:794`): acolo o
 citire picată tăcea înainte, exact ca „niciun cont", iar acum se aude.
 
 `019_jeton_cerere.sql` se vede în numărul de tabele: e `request_claims`, al
@@ -1560,6 +1671,43 @@ Setări.
 
 ---
 
+## Ziua actualizării la 2.7.6
+
+Actualizarea la 2.7.6 nu-ți cere nimic, nici înainte, nici după, și nu
+schimbă nimic în panou. E runda vitezei site-ului și a felului în care îl
+arată Google. Nu are migrări noi: ultima rămâne `037`, de la 2.7.5.
+
+**În raport** apare un pas nou, „Pozele mari”, între „Ceasul plăților” și
+„Apache”. Prima dată micșorează pozele vechi ale catalogului, cu originalele
+puse deoparte. Pe 22 de poze ține câteva secunde. Tot ce scrie și cum le pui
+înapoi e la „Micșorarea pozelor vechi”, mai sus. Rândul verde de la sfârșit
+spune câte poze au fost micșorate.
+
+**Pe site**, după ce reîncarci:
+
+- **Catalogul cere numai pozele de pe ecran.** Celelalte vin pe măsură ce
+  derulezi. Pe un telefon cu internet slab, poza de sus a primei pagini și
+  poza produsului deschis sunt cerute primele.
+- **Pozele vechi sunt mai ușoare**, la aceeași mărime pe ecran. Un telefon
+  care a mai deschis site-ul poate ține minte poza mare până la 30 de zile:
+  nu strică nimic, o are deja.
+- **Descrierea unui produs, în Google**, e scurtată la un cuvânt întreg,
+  cu „…”, ca să încapă după ea prețul și livrarea, de pildă „… Preț en-gros
+  4,50 lei bucata. Din cuptorul nostru, cu livrare în București și Ilfov.”
+  Pe pagina produsului textul rămâne întreg. Google o citește din nou când
+  trece iar pe la pagină — de la câteva zile la câteva săptămâni.
+
+Un martor din cod care spune că pagina publică e cea nouă:
+
+```bash
+grep -c descScurta /var/www/gp/public_html/index.php
+```
+
+Un `0` înseamnă că pagina de pe server e mai veche de 2.7.6. Orice alt număr
+înseamnă că a urcat.
+
+---
+
 ## Varianta cu mâna
 
 Dacă vrei să faci pașii unul câte unul, sunt exact aceștia:
@@ -1592,7 +1740,7 @@ rsync -a --delete --exclude '/config.php' /root/deploy/api/ /var/www/gp/api/
 chown -R www-data:www-data /var/www/gp && chmod -R u=rwX,go=rX /var/www/gp && chmod 640 /var/www/gp/api/config.php && systemctl reload apache2
 ```
 
-Cinci lucruri de știut dacă le tastezi singur:
+Șase lucruri de știut dacă le tastezi singur:
 
 - **Niciuna nu cere parolă și n-ai nimic de completat în ele.** `sudo` intră în
   MySQL ca `root` al mașinii, iar numele bazei îl scoate PHP din
@@ -1611,6 +1759,11 @@ Cinci lucruri de știut dacă le tastezi singur:
   și simplu nu-l pornește nimeni. Fie rulezi la urmă scriptul cu
   `--doar-fisiere`, care îl pune și spune ce a făcut, fie scrii fișierul cu
   mâna, cu cele trei rânduri de la „Ceasul plăților”.
+- **Pozele mari nu se micșorează singure.** `--exclude '/products'` le ocolește,
+  cum trebuie. Ca să le treci și pe ele prin micșorarea de la 2.7.6, rulezi la
+  urmă scriptul cu `--doar-fisiere`, care întâi le pune deoparte. Unealta dată
+  singură, fără `--uscat`, **nu** face nicio copie (vezi „Micșorarea pozelor
+  vechi”).
 - **`--no-tablespaces` nu e de decor.** Pe MySQL 8, `mysqldump` cere dreptul
   global `PROCESS` ca să citească tablespace-urile, iar contul aplicației are
   drepturi doar pe baza ei. Fără opțiune, o copie făcută cu contul aplicației

@@ -4,8 +4,8 @@ Inspecție făcută înainte de publicare, pe codul de atunci: 4.700 de linii de
 PHP, 11.300 de linii de pagini, pachetul de publicare și baza de date. De
 atunci codul a crescut de vreo două ori, iar valurile de mai jos l-au urmat.
 
-**711 de defecte confirmate** — 11 critice, 134 grave, 281 medii, 285 mici.
-**658 reparate**, 53 rămase.
+**717 de defecte confirmate** — 11 critice, 134 grave, 285 medii, 287 mici.
+**664 reparate**, 53 rămase.
 
 Lista s-a strâns în cinci valuri. Inspecția dinaintea publicării a dat 102 fișe:
 din 123 de descoperiri brute au rămas 97 după eliminarea dublurilor, fiecare
@@ -18,7 +18,7 @@ acolo. Tot atunci s-au adăugat cele găsite deschizând fiecare pagină în bro
 cu consola și rețeaua la vedere. Al patrulea val, 45 de fișe, vine dintr-o
 vânătoare făcută peste noapte pe tot codul, cu aceeași regulă a scepticului: din
 ea au rămas în picioare treizeci, niciuna cu vreun vot împotrivă. Restul de
-503 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
+509 s-au adunat pe măsură ce se făceau lucrările cerute de patron, iar
 30 dintre ele sunt valul al cincilea: cititori adverși puși să citească nu
 codul vechi, ci reparațiile scrise cu o zi înainte. Cele marcate **[reprodus]**
 au fost declanșate cu mâna pe aplicația care rulează, nu doar citite din cod.
@@ -30,12 +30,12 @@ Aceeași listă, cu filtre și căutare:
 |---|---|---|---|
 | Critice | 11 | 0 | 11 |
 | Grave | 134 | 0 | 134 |
-| Medii | 277 | 4 | 281 |
-| Mici | 236 | 49 | 285 |
+| Medii | 281 | 4 | 285 |
+| Mici | 238 | 49 | 287 |
 
 ---
 
-## Ce e reparat — 658
+## Ce e reparat — 664
 
 Fiecare cu proba lui de regresie: proba a fost verificată stricând
 reparația la loc și văzând-o picând.
@@ -852,6 +852,14 @@ reparația la loc și văzând-o picând.
   `actualizeaza-vps.sh:1140` · *mediu*
   Sfatul de după un apt căzut dă acum, pe lângă instalare, și rândul de așezare cu repornirea: „postconf -e 'inet_interfaces = loopback-only' 'inet_protocols = ipv4' 'mydestination = localhost.localdomain, localhost' && systemctl restart postfix”, iar „și rulează din nou scriptul” a ieșit (rularea de după nu l-ar fi așezat). Același bloc, literă cu literă, în `instaleaza-vps.sh`; niciun rând mutat. Docs/08 și docs/09 („După o instalare picată”) spun la fel. Probă: `.claude/test-posta-vps.mjs` — „după un apt căzut, sfatul dă și așezarea”, cu stricarea ei (39 trecute).
 
+- [x] **Pozele urcate înainte de 2.4.2 au rămas cât le-a făcut telefonul: 22 de poze de 2–3 MB pe site**
+  `actualizeaza-vps.sh:990` · *mediu*
+  Pas nou în actualizare, „Pozele mari” (`actualizeaza-vps.sh`, blocul `poze-mari`): unealta `api/cron/micsoreaza-poze.php`, rulată ca `www-data`, spune care poze trec de 1600 de puncte; root le copiază în `/var/backups/golden-pastry/poze-DATA`; abia apoi se micșorează pe loc, cu același nume, prin aceeași `poza_micsoreaza()` ca la urcare — deci baza nu se atinge. Fără copie nu se micșorează nimic; `--fara-micsorare` sare pasul. Pe 22 de poze închipuite de aceeași mărime: 50,1 MB → 8,1 MB. Docs/09: „Micșorarea pozelor vechi” și „Ziua actualizării la 2.7.6”. Probă: `.claude/test-poze-mari.mjs` (unealta prin PHP pe poze fabricate, pasul tăiat din script și rulat în bash cu un `runuser` momâie, fiecare regulă văzută roșie).
+
+- [x] **Comanda de întoarcere a pozelor, tipărită de actualizare, ar fi închis folderul pozelor pentru site**
+  `actualizeaza-vps.sh:1328` · *mediu*
+  Comanda e acum `cp -a …/poze-…/* …/products/` — steluța copiază pozele, nu folderul — în `actualizeaza-vps.sh`, în docs/09 și în foaia de urcare, fiecare cu o propoziție care spune de ce. Probă: `.claude/test-poze-mari.mjs` rulează chiar rândul tipărit de pas peste un folder de poze datat dinainte și cere ca pozele să vină înapoi octet cu octet, iar folderul să-și păstreze data; mutantul cu `/.` se înroșește.
+
 - [x] **Filtrul „Refuzate” din panoul de cereri nu găsește niciodată nimic**
   `Administrare Comenzi.dc.html:1426` · *mediu*
   Filtrul cere acum starea reală din baza de date, „respinsa", nu „refuzata" — valoare care nu exista. Probă: .claude/test-editare.mjs, „cererea refuzată apare pe filtrul respinsa"; verificat în browser: contorul „Refuzate" arată 2, nu 0.
@@ -995,6 +1003,10 @@ reparația la loc și văzând-o picând.
 - [x] **Comanda peste hotarul unei laturi era refuzată cu „nu are preț", deși prețul era scris: două stări deosebite ieșeau pe aceeași ușă**
   `api/lib/orders.php:701` · *mediu*
   Poarta cere acum amândouă jumătățile: latura stinsă ȘI prețul scris. Cu prețul gol, cererea trece mai departe și cade unde cădea și ieri, pe `missing_price`. Urmarea ținută dinadins: în fereastra dintre urcarea fișierelor și importul SQL, când coloanele laturilor încă nu există, poarta nu se aprinde niciodată și răspunsul rămâne octet cu octet cel de azi.
+
+- [x] **Cu discul plin la mijlocul scrierii, o poză tăiată lua locul originalului și se număra „micșorată”**
+  `api/lib/poze.php:369` · *mediu*
+  Poza se face întâi în memorie (`ob_start()` + `imagejpeg($dst, null, …)`) și abia apoi se scrie cu `file_put_contents()`, care spune când n-a scris tot; în plus, mărimea fișierului scris trebuie să fie exact cea a octeților din memorie. Altfel `.nou` se șterge, originalul rămâne, iar pricina e `nu_s_a_putut_scrie`. Probă: `.claude/test-poze-micsorare.mjs`, „Discul plin la mijlocul scrierii” (disc plin închipuit, martor cu loc destul, și biblioteca cu scrierea nenumărată văzută roșie).
 
 - [x] **Pagina și serverul socoteau fiecare reducerea, iar `Math.round` și `round()` din PHP nu cad la fel pe jumătatea exactă — la −20% niciodată, deci defectul stătea adormit până la primul procent schimbat**
   `api/lib/promo.php:118` · *mediu*
@@ -1704,6 +1716,10 @@ reparația la loc și văzând-o picând.
   `Site Public.dc.html:2200` · *mediu*
   Stilul are două ramuri, după pragul `FEREASTRA_LA_MIJLOC` (`'(min-width:768px) and (min-height:500px)'`, rândul 2178), întrebat prin `matchMedia` (`eLaMijloc()`, rândul 2182): de la 768×500 în sus fereastra stă la mijloc (`fereastraLaMijloc()`, rândurile 2200–2203: prinsă de cele patru margini, `margin:auto`, înălțime după conținut, cel mult ecranul minus 3rem, toate colțurile rotunjite, chenar); sub prag — telefonul, și telefonul ținut pe lungime — rămâne foaia de jos, literă cu literă. Produsul are 52rem lățime (`pvMainStyle`, rândurile 6867–6869), finalizarea 64rem și stă deasupra lui (`contactMainStyle`, rândurile 6129–6131). Fără `transform`, ca scrisul să nu se încețoșeze. Fereastra are `role="dialog"` (rândurile 1113 și 6871); la deschidere focusul merge la butonul „Închide” și, la închidere, se întoarce de unde a plecat, de pildă pe cartonașul produsului (`tineFocusul()`, rândul 3450).
 
+- [x] **Magazinul cerea toate pozele catalogului deodată, iar poza de sus aștepta după ele pe un telefon cu internet slab**
+  `Site Public.dc.html:843` · *mediu*
+  Pozele de sub ecran au `loading="lazy"` (9 din cele 12 `<image-slot>`), iar poza de sus a primei pagini (`pf-hero`) și poza produsului (`{{ pvSlot }}`) au `fetchpriority="high"`; pachetul de probă (`pf-trial-pack`) rămâne cerut de la început. `image-slot.js` trece cele două atribute pe `<img>` înainte de `src` și le ascultă (`observedAttributes`). În aceeași măsurătoare, după: /catalog cere 12 poze la deschidere (~4,4 MB), iar poza produsului apare la 15,6 s în loc de 30,6 s. Docs/10, plimbarea 23.1. Probă: `.claude/test-poze-lenese.mjs` (petecul rulat pe elemente închipuite, ordinea atributelor din pagină, lista celor trei care rămân grabnice).
+
 - [x] **Adresa publică și programul aveau casete în Setări, dar niciun rând în tabel: patronul scria, apăsa „Salvează", primea „ok", și nu se schimba nimic. Niciodată**
   `sql/002_seed.sql:89` · *mediu*
   Hotărârea patronului: „Rândurile, ȘI un refuz lămurit". Partea aceasta e rândurile. O migrare nouă, `sql/018_adresa_si_program.sql`, le seamănă cu `INSERT IGNORE`, pornind de la chiar valorile scrise azi în cod (`seo/index.php`), ca site-ul să arate la fel în clipa actualizării — se schimbă doar cine ține valoarea: baza, nu fișierul. `INSERT IGNORE`, nu `REPLACE`: migrările se rulează de câte ori e nevoie, iar adresa pe care patronul a scris-o din Setări nu trebuie să se întoarcă la cea din cod la următoarea actualizare. Spre deosebire de `017`, aici nu e nevoie de niciun `UPDATE` cu pază, fiindcă n-a existat o valoare semănată greșit, ci numai un rând care lipsea. Temeiul de rezervă din cod rămâne, dinadins, și e verificat cu `?:`, nu cu `??`: o casetă golită din panou salvează șir gol, deci `??` ar lăsa pagina fără adresă în loc s-o întoarcă pe cea din cod. Cele trei ghiduri (07, 08, 09) spun acum cum se verifică `018`, iar tabelul „Ce se poate reimporta și ce nu" o are pe rândul ei.
@@ -1947,6 +1963,10 @@ reparația la loc și văzând-o picând.
 - [x] **Sub caseta codului de recomandare, la o comandă nouă, scria „Scris al tău.” și când codul din casetă era al altcuiva**
   `Administrare Comenzi.dc.html:8104` · *mic*
   „Scris al tău.” se spune numai cât codul din casetă e chiar al celui care scrie. Restul notei a rămas literă cu literă. Probă: `.claude/check-vorbe-indreptate.mjs`.
+
+- [x] **Fără GD pe server, actualizarea copia degeaba pozele mari și spunea că „unele” n-au putut fi micșorate**
+  `api/cron/micsoreaza-poze.php:168` · *mic*
+  Fără GD, `--lista` nu dă nimic, spune pe ieșirea de erori „PHP n-are GD (pachetul php-gd), deci nu se poate micșora nimic: …” și iese cu 1; pasul tipărește atunci „N-am putut afla ce poze sunt de micșorat”, nu pune nimic deoparte și nu atinge nimic. Când unealta se oprește înaintea socotelii, rândul galben spune „Micșorarea s-a oprit înainte de capăt”, cu locul copiei. Docs/09, tabelul rândurilor galbene. Probă: `.claude/test-poze-mari.mjs` (regula A fără GD, B12, B13, și câte un mutant pentru fiecare, văzut roșu).
 
 - [x] **API-ul își anunță versiunea de PHP în fiecare răspuns**
   `api/index.php:62` · *mic*
@@ -2479,6 +2499,10 @@ reparația la loc și văzând-o picând.
 - [x] **Adresa publică din meta description și din <noscript> vine din `hq_label`, eticheta primei opriri de pe rută**
   `seo/index.php:121` · *mic*
   Reprodus pe pachetul servit la :8101: <meta name="description" content="... Laborator propriu în București, Depozit · Șos. Olteniței 103. Comenzi la +40769493163."> — adică eticheta primei opriri de pe rută, nu adresa firmei.
+
+- [x] **Descrierea unui produs, în Google, se tăia tocmai la preț**
+  `seo/index.php:733` · *mic*
+  `$descScurta` (`seo/index.php`, blocul `descriere-scurta`) scurtează textul produsului la un cuvânt întreg, cu „…”, cât să încapă coada în 155 de semne (măcar 40 din text rămân). Numai `<meta>` și `og:description` iau forma scurtă (`$descMeta`); `<noscript>` și pagina păstrează textul întreg. Local, 8 din 22 de produse ies scurtate și 14 întregi. Docs/10, plimbarea 23.2. Probă: `.claude/test-seo-descriere.mjs` (blocul rulat prin PHP pe 11 cazuri, legăturile din pagină, și fiecare pagină de produs de pe pachet).
 
 - [x] **„Numele firmei” din Setări nu apare în antetul mesajelor, așa cum promite textul de sub câmp**
   `Setari.dc.html:438` · *mic*

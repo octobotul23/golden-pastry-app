@@ -535,7 +535,7 @@
             <p class="h-caption" style="margin:1.25rem 0 0">{{ heroFoot }}</p>
           </div>
           <div style="{{ heroMedia }}">
-            <image-slot id="pf-hero" shape="rect" placeholder="Produs congelat sau cutie de transport" src="assets/img/hero.webp"></image-slot>
+            <image-slot id="pf-hero" fetchpriority="high" shape="rect" placeholder="Produs congelat sau cutie de transport" src="assets/img/hero.webp"></image-slot>
           </div>
         </div>
       </div>
@@ -565,7 +565,7 @@
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(18rem,100%),1fr));gap:1.5rem">
         <article class="h-card h-card--interactive" onClick="{{ goCat }}">
           <div onClick="{{ stopClick }}" style="position:relative;aspect-ratio:16/10;margin:-1.5rem -1.5rem 1.25rem;border-radius:24px 24px 0 0;overflow:hidden;background:var(--h-grad-warm)">
-            <image-slot id="pf-range-1" src="{{ photoRange1 }}" fit="cover" shape="rect" placeholder="Aluat crud congelat"></image-slot>
+            <image-slot id="pf-range-1" loading="lazy" src="{{ photoRange1 }}" fit="cover" shape="rect" placeholder="Aluat crud congelat"></image-slot>
           </div>
           <span class="h-badge h-badge--accent" style="margin-bottom:0.75rem">{{ tagFrozen }}</span>
           <p class="h-card__title">{{ r1t }}</p>
@@ -573,7 +573,7 @@
         </article>
         <article class="h-card h-card--interactive" onClick="{{ goCat }}">
           <div onClick="{{ stopClick }}" style="position:relative;aspect-ratio:16/10;margin:-1.5rem -1.5rem 1.25rem;border-radius:24px 24px 0 0;overflow:hidden;background:var(--h-grad-warm)">
-            <image-slot id="pf-range-2" src="{{ photoRange2 }}" fit="cover" shape="rect" placeholder="Produs ambalat, gata de consum"></image-slot>
+            <image-slot id="pf-range-2" loading="lazy" src="{{ photoRange2 }}" fit="cover" shape="rect" placeholder="Produs ambalat, gata de consum"></image-slot>
           </div>
           <span class="h-badge h-badge--honey" style="margin-bottom:0.75rem">{{ tagRTE }}</span>
           <p class="h-card__title">{{ r2t }}</p>
@@ -581,7 +581,7 @@
         </article>
         <article class="h-card h-card--interactive" onClick="{{ goCat }}">
           <div onClick="{{ stopClick }}" style="position:relative;aspect-ratio:16/10;margin:-1.5rem -1.5rem 1.25rem;border-radius:24px 24px 0 0;overflow:hidden;background:var(--h-grad-warm)">
-            <image-slot id="pf-range-3" shape="rect" placeholder="Ambalaj personalizat" src="assets/img/ambalaj.webp"></image-slot>
+            <image-slot id="pf-range-3" shape="rect" placeholder="Ambalaj personalizat" loading="lazy" src="assets/img/ambalaj.webp"></image-slot>
           </div>
           <span class="h-badge h-badge--jam" style="margin-bottom:0.75rem">{{ tagPL }}</span>
           <p class="h-card__title">{{ r3t }}</p>
@@ -644,7 +644,7 @@
           </div>
         </div>
         <div style="position:relative;aspect-ratio:4/3;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-3);background:var(--h-grad-warm)">
-          <image-slot id="pf-logistics" shape="rect" placeholder="Livrare sau depozit frigorific" src="assets/img/logistica.webp"></image-slot>
+          <image-slot id="pf-logistics" shape="rect" placeholder="Livrare sau depozit frigorific" loading="lazy" src="assets/img/logistica.webp"></image-slot>
         </div>
       </div>
     </section>
@@ -840,7 +840,7 @@
                          fiecare din cele treizeci de carduri, ar fi însemnat
                          treizeci de apăsări de Tab în plus până la coș. -->
                     <div onClick="{{ pr.vezi }}" style="{{ prodMedia }}">
-                      <image-slot id="{{ pr.slot }}" src="{{ pr.photo }}" style="{{ pr.pozaSt }}" fit="cover" shape="rect" placeholder="{{ pr.loc }}"></image-slot>
+                      <image-slot id="{{ pr.slot }}" loading="lazy" src="{{ pr.photo }}" style="{{ pr.pozaSt }}" fit="cover" shape="rect" placeholder="{{ pr.loc }}"></image-slot>
                       <span style="{{ noBadge }}">{{ pr.no }}</span>
                       <sc-if value="{{ pr.special }}">
                         <span class="h-badge" style="{{ cardSpecial }}">{{ tagSpecial }}</span>
@@ -1140,7 +1140,7 @@
       <sc-if value="{{ pvGasit }}" hint-placeholder-val="{{ true }}">
         <div style="{{ pvWrap }}">
           <div onClick="{{ pvGoPoza }}" style="{{ pvMedia }}">
-            <image-slot id="{{ pvSlot }}" src="{{ pvPhoto }}" fit="cover" shape="rect" placeholder="{{ pvName }}"></image-slot>
+            <image-slot id="{{ pvSlot }}" fetchpriority="high" src="{{ pvPhoto }}" fit="cover" shape="rect" placeholder="{{ pvName }}"></image-slot>
             <sc-if value="{{ pvSpecial }}">
               <span class="h-badge" style="{{ specialBadge }}">{{ tagSpecial }}</span>
             </sc-if>
@@ -1475,13 +1475,13 @@
     <section style="max-width:1740px;margin:0 auto;padding:clamp(2rem,5vw,3rem) clamp(1.25rem,4vw,3rem)">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(16rem,100%),1fr));gap:1.25rem">
         <div style="position:relative;aspect-ratio:1;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-2);background:var(--h-grad-warm)">
-          <image-slot id="pf-about-1" shape="rect" placeholder="Linia de producție" src="assets/img/despre-productie.webp"></image-slot>
+          <image-slot id="pf-about-1" shape="rect" placeholder="Linia de producție" loading="lazy" src="assets/img/despre-productie.webp"></image-slot>
         </div>
         <div style="position:relative;aspect-ratio:1;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-2);background:var(--h-grad-warm)">
-          <image-slot id="pf-about-2" shape="rect" placeholder="Ambalare" src="assets/img/despre-ambalare.webp"></image-slot>
+          <image-slot id="pf-about-2" shape="rect" placeholder="Ambalare" loading="lazy" src="assets/img/despre-ambalare.webp"></image-slot>
         </div>
         <div style="position:relative;aspect-ratio:1;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-2);background:var(--h-grad-warm)">
-          <image-slot id="pf-about-3" shape="rect" placeholder="Depozit frigorific" src="assets/img/despre-depozit.webp"></image-slot>
+          <image-slot id="pf-about-3" shape="rect" placeholder="Depozit frigorific" loading="lazy" src="assets/img/despre-depozit.webp"></image-slot>
         </div>
       </div>
     </section>
@@ -1526,7 +1526,7 @@
           <button type="button" class="h-btn h-btn--secondary" onClick="{{ goContact }}">{{ ctaQuoteLong }}</button>
         </div>
         <div style="position:relative;aspect-ratio:4/3;border-radius:24px;overflow:hidden;box-shadow:var(--h-shadow-3);background:var(--h-grad-warm)">
-          <image-slot id="pf-about-4" shape="rect" placeholder="Echipa sau facilitatea" src="assets/img/despre-echipa.webp"></image-slot>
+          <image-slot id="pf-about-4" shape="rect" placeholder="Echipa sau facilitatea" loading="lazy" src="assets/img/despre-echipa.webp"></image-slot>
         </div>
       </div>
     </section>

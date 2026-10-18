@@ -558,8 +558,38 @@ $bani = static fn(float $v): string => $ro
     : number_format($v, 2, '.', ',') . ' RON';
 $lei = static fn(?float $v): string => $v === null ? '' : $bani($v);
 
-$titlu = '';
-$desc  = '';
+// >>> descriere-scurta >>>
+// Google arată din descriere cam 155 de semne și taie restul de la coadă — la
+// produs, tocmai prețul și livrarea, puse la urmă. Pe site-ul viu, la 17 oct.
+// 2026, 7 din cele 24 de produse treceau de 160 (cel mai lung, 258). Se
+// scurtează numai textul produsului: la un cuvânt întreg și cu „…", ca rândul
+// cu prețul să încapă. Textul întreg rămâne în <noscript> și în datele
+// structurate, unde nu e nicio margine.
+$descScurta = static function (string $text, int $max): string {
+    $text = trim((string) preg_replace('/\s+/u', ' ', $text));
+    if ($max < 2 || mb_strlen($text) <= $max) {
+        return $text;
+    }
+    $taiat = mb_substr($text, 0, $max - 1);
+    // Tăietura cade pe ultimul spațiu, dacă nu pierde mai mult de jumătate. Un
+    // cuvânt care se termină fix la margine rămâne întreg; un singur cuvânt
+    // uriaș se taie în mijlocul lui.
+    if (mb_substr($text, $max - 1, 1) !== ' ') {
+        $spatiu = mb_strrpos($taiat, ' ');
+        if ($spatiu !== false && $spatiu >= intdiv($max, 2)) {
+            $taiat = mb_substr($taiat, 0, $spatiu);
+        }
+    }
+
+    // Cu /u, nu cu rtrim(): rtrim() taie octeți, iar „–" și „—" au în ei
+    // octeți care încheie și „À", „Ó" ori „Ô" — ar rupe litera în două.
+    return preg_replace('/[\s,;:.\-–—(]+$/u', '', $taiat) . '…';
+};
+// <<< descriere-scurta <<<
+
+$titlu    = '';
+$desc     = '';
+$descMeta = null; // ce intră în <meta>, când e altceva decât $desc (la produs)
 
 switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
     case 'catalog':
@@ -698,6 +728,10 @@ switch ($ruta['fel'] === 'pagina' ? $ruta['pagina'] : $ruta['fel']) {
             ($g ? $g . ' g. ' : '') . ($pret !== null ? 'Wholesale ' . $lei((float) $pret) . ' each. ' : '')
                 . ($rece ? 'Frozen delivery in Bucharest and Ilfov.' : 'Baked by us, delivered in Bucharest and Ilfov.')
         );
+        // În <meta>, textul produsului cedează locul cozii: prețul e ce
+        // caută cine compară furnizori. Măcar 40 de semne din text rămân.
+        $descMeta = $desc === '' ? $coada
+            : $descScurta($desc, max(40, 155 - mb_strlen($coada) - 1)) . ' ' . $coada;
         $desc = $desc === '' ? $coada : $desc . ' ' . $coada;
         break;
 
@@ -1027,7 +1061,7 @@ $head = "\n"
     // segmente rămâne o pagină albă.
     . '<base href="' . $e($base) . "/\">\n"
     . '<title>' . $e($titlu) . "</title>\n"
-    . '<meta name="description" content="' . $e($desc) . "\">\n"
+    . '<meta name="description" content="' . $e($descMeta ?? $desc) . "\">\n"
     . '<link rel="canonical" href="' . $e($canonic) . "\">\n"
     // Perechea de limbi. „x-default" spune ce se servește cuiva a cărui limbă
     // nu e niciuna din cele două — pentru o firmă din București, româna.
@@ -1038,7 +1072,7 @@ $head = "\n"
     . '<meta property="og:type" content="' . ($ruta['fel'] === 'product' ? 'product' : 'website') . "\">\n"
     . '<meta property="og:site_name" content="' . $e($company) . "\">\n"
     . '<meta property="og:title" content="' . $e($titlu) . "\">\n"
-    . '<meta property="og:description" content="' . $e($desc) . "\">\n"
+    . '<meta property="og:description" content="' . $e($descMeta ?? $desc) . "\">\n"
     . '<meta property="og:url" content="' . $e($canonic) . "\">\n"
     . '<meta property="og:image" content="' . $e($poza) . "\">\n"
     . '<meta property="og:locale" content="' . ($ro ? 'ro_RO' : 'en_GB') . "\">\n"

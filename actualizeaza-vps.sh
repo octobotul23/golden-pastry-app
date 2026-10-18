@@ -8,9 +8,12 @@
 # codului, aplică migrările care lipsesc, copiază pachetul din deploy/ peste
 # cele patru foldere, pune drepturile la loc, repornește Apache. La urmă, dacă
 # serverul n-are niciun program de poștă, pune unul (postfix, numai de trimis).
+# Pe drum micșorează, o singură dată, pozele de produs mai mari de 1600 de
+# puncte (cele urcate înainte de 2.4.2): pe loc, cu același nume, după ce le
+# pune originalele deoparte.
 #
 # Ce NU atinge niciodată: api/config.php (parola bazei, cheia de criptare,
-# codul de instalare) și folderul pozelor urcate din panoul Catalog.
+# codul de instalare). Pozele urcate din Catalog nu se șterg și nu se mută.
 #
 # Se poate rula de câte ori vrei. Pe un server gol nu merge — acolo e
 # instaleaza-vps.sh, care face și Apache, și MySQL, și certificatele.
@@ -25,6 +28,7 @@ PASTREAZA=10
 FARA_COPIE=0
 DOAR=""
 FARA_POSTA=0
+FARA_MICSORARE=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -37,8 +41,9 @@ while [[ $# -gt 0 ]]; do
     --doar-baza)    DOAR="baza"; shift ;;
     --doar-fisiere) DOAR="fisiere"; shift ;;
     --fara-posta)   FARA_POSTA=1; shift ;;
+    --fara-micsorare) FARA_MICSORARE=1; shift ;;
     -h|--help)
-      sed -n '2,16p' "$0" | sed 's/^# \?//'
+      sed -n '2,19p' "$0" | sed 's/^# \?//'
       cat <<'AJUTOR'
 
 Opțiuni:
@@ -52,6 +57,7 @@ Opțiuni:
   --doar-baza          numai copia și migrările, fără fișiere
   --doar-fisiere       numai fișierele, fără să atingi baza
   --fara-posta         nu pune programul de poștă (postfix, numai de trimis)
+  --fara-micsorare     nu micșora pozele mai mari de 1600 de puncte
 AJUTOR
       exit 0 ;;
     *) echo "Argument necunoscut: $1"; exit 2 ;;
@@ -804,6 +810,11 @@ fi
 
 # ------------------------------------------------------------------ fișiere --
 
+# Ce lasă în urmă pasul „Pozele mari", pentru raportul de la „Gata". Se pun aici,
+# nu în pas: la --doar-baza pasul nu rulează, iar `set -u` ar opri raportul.
+POZE_COPIE=""
+POZE_FACUTE=""
+
 pas "Fișiere"
 if [[ "$DOAR" == "baza" ]]; then
   info "Sărite (--doar-baza)."
@@ -974,6 +985,89 @@ else
       fi
     fi
   fi
+
+  # >>> poze-mari >>>
+  pas "Pozele mari"
+  # Pozele urcate înainte de 2.4.2 n-au trecut prin micșorare. Pe goldenpastry.ro
+  # erau 22, de câte 1792×2390 de puncte și 2–3 MB, iar /catalog le cerea pe
+  # toate deodată: 55 MB pe un telefon, poza unui produs abia după 21 de secunde
+  # pe 4G slab (măsurat pe 17 oct. 2026). Urcarea le micșorează pe cele noi de
+  # atunci; pasul ăsta le trece o dată și pe cele vechi prin ACEEAȘI micșorare
+  # (api/lib/poze.php), pe loc și cu același nume — deci baza nu se atinge.
+  #
+  # Ordinea e paza. Unealta spune întâi CE ar atinge (--lista), root copiază
+  # exact pozele acelea deoparte, abia apoi se micșorează. Fără copie nu se
+  # micșorează nimic: nici la --fara-copie, nici când copierea pică la mijloc.
+  # A doua oară nu mai e nimic de făcut — o poză micșorată are 1600 de puncte.
+  #
+  # Unealta rulează ca www-data, nu ca root: folderul pozelor îl poate umple
+  # oricine scrie ca serverul web, iar un root care scrie acolo poate fi dus,
+  # de o legătură simbolică pusă dinadins, oriunde pe disc. Copia o face root,
+  # cu `cp -a`, care copiază o legătură ca legătură, fără s-o urmeze.
+  MICSOREAZA="$DIR/api/cron/micsoreaza-poze.php"
+  if (( FARA_MICSORARE )); then
+    info "Sărit (--fara-micsorare)."
+  elif [[ ! -f "$MICSOREAZA" ]]; then
+    galben "  Pachetul nu are api/cron/micsoreaza-poze.php (e mai vechi de 2.7.6?). Pozele n-au fost atinse."
+  elif ! command -v runuser >/dev/null 2>&1; then
+    galben "  Lipsește runuser (pachetul util-linux), iar ca root nu micșorez. Pozele n-au fost atinse."
+  elif ! POZE_LISTA="$(runuser -u www-data -- php "$MICSOREAZA" --poze="$POZE" --lista 2>/tmp/gp-poze.err)"; then
+    galben "  N-am putut afla ce poze sunt de micșorat ($POZE):"
+    { cat /tmp/gp-poze.err; printf '%s\n' "$POZE_LISTA"; } 2>/dev/null | grep . | sed -n '1,4p' | sed 's/^/    /' || true
+    info "Pozele n-au fost atinse; site-ul merge cu ele cum sunt."
+  elif [[ -z "$POZE_LISTA" ]]; then
+    info "Nicio poză mai mare de 1600 de puncte — nimic de micșorat."
+  else
+    mapfile -t POZE_NUME <<< "$POZE_LISTA"
+    POZE_N=${#POZE_NUME[@]}
+    if (( FARA_COPIE )); then
+      galben "  $(numar "$POZE_N" "poză e mai mare" "poze sunt mai mari") de 1600 de puncte, dar fără copie de siguranță (--fara-copie) nu le micșorez."
+      info "Rulează actualizarea o dată fără --fara-copie: le pune deoparte, apoi le micșorează."
+    else
+      POZE_COPIE="$COPII/poze-$CLIPA"
+      mkdir -p "$POZE_COPIE"
+      chmod 700 "$COPII" "$POZE_COPIE"
+      # Fiecare nume din listă trebuie să fie un fișier adevărat din folder. Un
+      # rând care nu e (un avertisment de PHP ajuns pe ieșire, o poză ștearsă
+      # între timp) înseamnă o listă în care nu se poate avea încredere.
+      COPIATE=0
+      for n in "${POZE_NUME[@]}"; do
+        [[ -f "$POZE/$n" && ! -L "$POZE/$n" ]] || break
+        cp -a -- "$POZE/$n" "$POZE_COPIE/" 2>/tmp/gp-poze.err || break
+        COPIATE=$((COPIATE + 1))
+      done
+      if (( COPIATE < POZE_N )); then
+        galben "  N-am putut pune deoparte „${POZE_NUME[$COPIATE]}” (discul plin? df -h). Fără copie nu micșorez nimic."
+        sed -n '1,2p' /tmp/gp-poze.err 2>/dev/null | sed 's/^/    /' || true
+        info "Pozele n-au fost atinse. Ce apucasem să copiez stă în $POZE_COPIE"
+        POZE_COPIE=""
+      else
+        info "Originalele ($(numar "$POZE_N" poză poze), $(du -sh "$POZE_COPIE" | cut -f1)): $POZE_COPIE"
+        POZE_COD=0
+        POZE_IESIRE="$(runuser -u www-data -- php "$MICSOREAZA" --poze="$POZE" 2>&1)" || POZE_COD=$?
+        printf '%s\n' "$POZE_IESIRE" | sed 's/^/  /'
+        POZE_FACUTE="$(printf '%s\n' "$POZE_IESIRE" | sed -n 's/^Micșorate: \([0-9][0-9]*\) din .*/\1/p' | tail -n 1)"
+        if [[ "$POZE_FACUTE" == "0" ]]; then
+          # Nu s-a înlocuit nicio poză (una se înlocuiește numai când micșorarea
+          # a reușit), deci copia e geamăna celor de pe site. Rămasă, s-ar aduna
+          # câte una la fiecare actualizare: o poză pe care micșorarea n-o face
+          # mai ușoară e găsită „mare" de fiecare dată.
+          rm -rf -- "$POZE_COPIE"
+          POZE_COPIE=""
+        fi
+        if (( POZE_COD != 0 )) && [[ -z "$POZE_FACUTE" ]]; then
+          # Unealta s-a oprit înaintea rândului ei de socoteală (PHP căzut la
+          # mijloc): nu se știe câte poze au apucat să fie înlocuite, deci nu
+          # se pomenește de rânduri „neatinsă” care poate nici nu există, iar
+          # copia rămâne.
+          galben "  Micșorarea s-a oprit înainte de capăt (vezi rândurile de mai sus). Originalele pozelor listate sunt în $POZE_COPIE"
+        elif (( POZE_COD != 0 )); then
+          galben "  Unele poze n-au putut fi micșorate (rândurile „neatinsă” de mai sus). Au rămas cum erau; site-ul merge cu ele."
+        fi
+      fi
+    fi
+  fi
+  # <<< poze-mari <<<
 fi
 
 # ------------------------------------------------------------------- Apache --
@@ -1204,13 +1298,36 @@ fi
 # ------------------------------------------------------------------- raport --
 
 pas "Gata"
-verde "Actualizat. api/config.php și pozele au rămas neatinse."
+# Rândul verde spunea „pozele au rămas neatinse" — adevărat până la 2.7.6. Acum
+# spune ce s-a întâmplat: numărul vine din rândul de la coadă al uneltei, iar
+# când ea s-a oprit înainte de el, nu se pretinde nicio cifră.
+if [[ "$POZE_FACUTE" =~ ^[0-9]+$ ]] && (( POZE_FACUTE > 0 )); then
+  verde "Actualizat. api/config.php a rămas neatins; $(numar "$POZE_FACUTE" "poză mare a fost micșorată" "poze mari au fost micșorate"), cu originalele puse deoparte."
+elif [[ -n "$POZE_COPIE" ]]; then
+  verde "Actualizat. api/config.php a rămas neatins; micșorarea pozelor s-a oprit la mijloc, cu originalele puse deoparte."
+else
+  verde "Actualizat. api/config.php și pozele au rămas neatinse."
+fi
 echo
-if [[ -n "$DUMP" || -n "$ARHIVA_COD" ]]; then
+if [[ -n "$DUMP" || -n "$ARHIVA_COD" || -n "$POZE_COPIE" ]]; then
   echo "  Copiile de dinainte ($CLIPA):"
   [[ -n "$DUMP" ]]       && echo "    baza:   $DUMP"
   [[ -n "$ARHIVA_COD" ]] && echo "    codul:  $ARHIVA_COD"
+  [[ -n "$POZE_COPIE" ]] && echo "    pozele: $POZE_COPIE  (originalele celor micșorate)"
   echo
+  # Pozele se întorc fără să atingă baza: au același nume. Arhiva codului nu le
+  # are (stau în afara ei), deci întoarcerea codului nu le dă înapoi.
+  #
+  # Se copiază FIȘIERELE (`/*`), nu folderul (`/.`). `cp -a copie/. products/`
+  # îi dă și lui products/ ce are folderul copiei — stăpânul root și drepturile
+  # 700 —, iar Apache, care citește ca www-data, n-ar mai fi putut arăta nicio
+  # poză, nici urca alta. Copia n-are fișiere cu punct în față, deci `*` le
+  # prinde pe toate.
+  if [[ -n "$POZE_COPIE" ]]; then
+    echo "  Dacă vrei pozele mari înapoi, cu același nume — baza nu se atinge:"
+    echo "    cp -a $POZE_COPIE/* $POZE/"
+    echo
+  fi
   # Comanda de întoarcere a bazei a stat până acum aici singură, ca și cum ar
   # fi „soluția dacă ceva nu merge". Nu e: ea dă baza înapoi la clipa copiei și
   # ȘTERGE tot ce a scris patiseria de atunci — comenzi luate, etape mutate,

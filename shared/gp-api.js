@@ -561,7 +561,7 @@
    * de cel vechi — pățit la 2.2.4, scris chiar acolo. Versiunea stând CHIAR
    * aici, orice rundă mișcă amprentele de la sine, fără să ne mai gândim.
    */
-  const VERSIUNE = '2.7.5';
+  const VERSIUNE = '2.7.6';
 
   /**
    * Ștampila pachetului servit. Pe serverul de lucru rămâne `local`: acolo

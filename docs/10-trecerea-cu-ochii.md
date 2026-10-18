@@ -5,13 +5,13 @@ O listă scurtă: **ce apeși** și **ce trebuie să vezi**. Nu e un ghid de fol
 server. Dacă toate rândurile de mai jos ies cum scrie aici, plasturele poate
 urca.
 
-Durează **două sute treizeci și cinci de minute** cu totul. Nu trebuie făcută
-dintr-o bucată: fiecare din cele douăzeci și trei de plimbări stă singură și
+Durează **două sute patruzeci de minute** cu totul. Nu trebuie făcută
+dintr-o bucată: fiecare din cele douăzeci și patru de plimbări stă singură și
 își spune la început cât ține. Cifra de sus e suma minutelor scrise acolo,
 plus cele ale bucăților care au minutele lor: 4.4, 7.7 și 7.8 — dacă se mai
 adaugă o plimbare, se adună și aici.
 
-Cele douăzeci și trei, în ordinea în care se fac cel mai ușor:
+Cele douăzeci și patru, în ordinea în care se fac cel mai ușor:
 
 1. **Meniul, după rol** — sertarul, pentru toate cele șapte conturi.
 2. **Pontajul din laborator** — codul, ceasul, raportul, plecarea scrisă de mână.
@@ -92,9 +92,12 @@ Cele douăzeci și trei, în ordinea în care se fac cel mai ușor:
     la administrator (22.4), parola care se poate dicta (22.5), codul de
     recomandare căutat după nume (22.6) și bara de jos a telefonului, pe un
     rând (22.7).
-23. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
+23. **Runda 2.7.6** — catalogul care cere numai pozele de pe ecran (23.1),
+    descrierea produsului cum o vede Google, cu prețul la capăt (23.2), și
+    unealta pozelor mari, rulată în gol (23.3).
+24. **Telefon, tabletă, calculator** — 390, 820, 1440, și degetele de 44 px.
 
-A douăzeci și treia se face la capăt dinadins: prinde într-o singură trecere
+A douăzeci și patra se face la capăt dinadins: prinde într-o singură trecere
 tot ce ai deschis mai devreme.
 
 ---
@@ -1196,13 +1199,13 @@ avut-o nicăieri.
 | **capul sertarului de telefon** | pe 390, butonul cu trei linii — se vede din clipa în care se deschide, sub „Golden Pastry"; toate paginile de panou, laborator și rută între ele |
 | **colțul din stânga-jos al barei laterale** | pe 1440, sub „← Alege panoul" — paginile de calculator |
 
-**Trebuie să scrie** `ver. 2.7.5 · ` și o ștampilă — ziua și ora pachetului, de
+**Trebuie să scrie** `ver. 2.7.6 · ` și o ștampilă — ziua și ora pachetului, de
 pildă `20 sep 14:37`. Pe 8101 ștampila e lipită la construire; pe 8100, unde
 paginile se servesc crude, în locul ei scrie `local`. Dacă pe 8101 vezi
 `local`, pachetul e vechi: `node .claude/build-deploy.mjs`.
 
 Numărul trebuie să fie **același** cu cel din numele folderului
-`plasture-vps 2.7.5` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
+`plasture-vps 2.7.6` și cu cel din `CITESTE-MA.md`. Dacă nu se potrivesc, nu
 urca nimic: o versiune care minte face martorii de pe server de necrezut.
 
 ### 8.5 „Toate produsele" ajunge pe telefon
@@ -1391,7 +1394,7 @@ de operații, pagina ieșea curată de fiecare dată.
 
 Apeși butonul cu trei linii.
 
-**Trebuie să vezi:** pastila `ver. 2.7.5 · ` și ștampila stă **în capul foii**,
+**Trebuie să vezi:** pastila `ver. 2.7.6 · ` și ștampila stă **în capul foii**,
 sub „Golden Pastry" și numele paginii — se vede din clipa în care se deschide
 sertarul, fără nicio derulare. **Nu** la coadă, **nu** lipită de fundul foii.
 
@@ -3719,7 +3722,7 @@ marginea de jos. Clientul și cine scrie comenzi din panou își găsesc comenzi
 vechi într-o pagină de istoric, cu **„Comandă din nou"** pe fiecare. Iar ce a
 scris omul într-un formular nu se mai pierde fără o întrebare — pe 4 octombrie
 ai pierdut chiar tu un produs nou, scris pe jumătate, apăsând alături de
-formular. Tot pe pachetul construit (8101), pe calculator (1440). Plimbarea 23
+formular. Tot pe pachetul construit (8101), pe calculator (1440). Plimbarea 24
 trece prin toate ecranele, la cele trei lățimi; aici vezi numai ce a adus runda.
 
 **Pregătești**, în fereastra obișnuită: `http://127.0.0.1:8101/lab/index.html`
@@ -4050,7 +4053,7 @@ propuse de panou să se poată dicta la telefon. Codul de recomandare să se
 găsească după numele omului. O apăsare din grupul de pe Telegram să poarte
 numele celui care a apăsat, nu al altcuiva. Iar pe telefon, barele de jos să nu
 mai acopere formularul cât scrii. Tot pe pachetul construit (8101), pe
-calculator (1440), afară de 22.7. Plimbarea 23 trece prin toate ecranele, la
+calculator (1440), afară de 22.7. Plimbarea 24 trece prin toate ecranele, la
 cele trei lățimi; aici vezi numai ce a adus runda.
 
 **Trei lucruri nu se văd de pe calculatorul tău**, iar plimbarea nu se preface
@@ -4360,7 +4363,7 @@ comanda nouă?"**, **„Ies fără să salvez"**. Nu s-a salvat nicio comandă.
 ### 22.7 Pe telefon: bara de jos, pe un rând
 
 **Apeși:** `F12` → butonul cu telefon și tabletă → lățimea **390** (ca la
-plimbarea 23) → `/lab/comenzi.html` → **„+ Comandă nouă"**.
+plimbarea 24) → `/lab/comenzi.html` → **„+ Comandă nouă"**.
 
 **Trebuie să vezi**, jos, bara formularului pe **un singur rând**:
 **„Închide"**, mic, în stânga, și **„Adaugă comanda"** pe tot restul. Până la
@@ -4422,7 +4425,67 @@ cererea de parolă, testul de e-mail, parola schimbată, setările raportului �
 
 ---
 
-## 23 · Telefon, tabletă, calculator
+## 23 · Runda 2.7.6: catalogul pe internet slab, descrierea din Google
+
+*Cinci minute. Numai magazinul, fără cont, și o unealtă rulată în gol. Nu
+salvează nimic și nu atinge nicio poză.*
+
+Pe 17 octombrie 2026 ai întrebat de ce nu se găsește goldenpastry.ro. Două
+pricini țineau de cod. Catalogul cerea toate pozele deodată, iar pe site
+pozele vechi aveau cu totul vreo 55 MB. Descrierea unui produs, în Google, se
+tăia tocmai la preț. Tot pe pachetul construit (8101), pe calculator (1440).
+
+Micșorarea pozelor vechi nu se vede de aici: ea se face pe server, la urcare,
+și e scrisă în `docs/09-actualizare-vps.md`, la „Micșorarea pozelor vechi".
+
+### 23.1 Catalogul cere numai pozele de pe ecran
+
+**Apeși:** `http://127.0.0.1:8101/catalog` → `F12` → fila **Network** → bifezi
+**„Disable cache"** → în rândul de filtre alegi **„Img"** → reîncarci pagina
+cu `F5`, fără să derulezi.
+
+**Trebuie să vezi** în listă numai câteva rânduri `prod-….jpg` — pe 1440, cam
+șase —, nu toate douăzeci și două. Derulezi încet până jos: rândurile se adaugă
+pe măsură ce cardurile se apropie de ecran, iar la capăt sunt douăzeci și
+două. Până la 2.7.6 erau toate douăzeci și două din prima clipă, iar pe un
+telefon cu internet slab poza de sus aștepta după ele.
+
+La capăt debifezi **„Disable cache"** și închizi uneltele cu `F12`.
+
+### 23.2 Descrierea produsului, cum o vede Google
+
+**Apeși:** `http://127.0.0.1:8101/produs/rolldog` → `Ctrl+U` (codul paginii) →
+cauți `name="description"`.
+
+**Trebuie să vezi** o descriere ruptă la un cuvânt întreg, cu „…", iar după ea
+gramajul, prețul și livrarea: *„… în jurul unui crenvurști suculent… 100 g.
+Preț en-gros 2,20 lei bucata. Livrare congelată în București și Ilfov."*
+Rândul `og:description`, de dedesubt — ce arată WhatsApp și Facebook când
+trimiți linkul —, e același. Mai jos, în `<noscript>`, textul e întreg: *„…
+suculent și apetisant. 100 g. …"*. Pe ecran, pagina arată textul întreg, ca
+înainte.
+
+**De ce.** Google arată cam 155 de semne și taie restul. Textul produsului
+venea întâi, iar prețul la coadă, deci tocmai prețul cădea. Acum textul face
+loc: prețul rămâne. Un produs cu descriere scurtă, de pildă
+`/produs/covrig-cu-mar`, o are întreagă, fără „…".
+
+### 23.3 Unealta pozelor mari, rulată în gol
+
+Pe calculator, din folderul proiectului:
+
+```bash
+C:\laragon\bin\php\php-8.3.33-Win32-vs16-x64\php.exe api/cron/micsoreaza-poze.php --poze=products --uscat
+```
+
+**Trebuie să vezi** *„Nicio poză mai mare de 1600 de puncte: 22 de poze sunt
+deja mici."* Pozele de pe calculatorul tău sunt deja mici. Pe server, la
+urcare, aceeași unealtă găsește pozele vechi și le micșorează, după ce scriptul
+le pune deoparte. Cu `--uscat` nu atinge nimic, nici aici, nici acolo.
+
+---
+
+## 24 · Telefon, tabletă, calculator
 
 *Trei minute. Se face la capăt, ca să prinzi totul dintr-o trecere.*
 
@@ -4579,7 +4642,7 @@ rândului ajută cel mai mult.
 
 ## După plimbare
 
-Când toate cele douăzeci și trei ies, proba automată se mai trece o dată pe
+Când toate cele douăzeci și patru ies, proba automată se mai trece o dată pe
 deasupra:
 
 ```bash
@@ -4587,4 +4650,4 @@ node .claude/verifica-tot.mjs
 ```
 
 Trebuie să iasă **0 verificări au eșuat**. Abia atunci urcă plasturele pe server,
-după `CITESTE-MA.md` din folderul `plasture-vps 2.7.5`.
+după `CITESTE-MA.md` din folderul `plasture-vps 2.7.6`.

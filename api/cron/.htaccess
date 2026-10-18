@@ -2,7 +2,8 @@
 #
 # Ce stă aici pornește serverul, din linia de comandă, nu un vizitator:
 # /etc/cron.d/goldenpastry-plati rulează api/cron/plati.php din cinci în cinci
-# minute. Prin adresă nu se dă nimic din folderul ăsta.
+# minute, iar actualizeaza-vps.sh rulează o dată micsoreaza-poze.php (2.7.6).
+# Prin adresă nu se dă nimic din folderul ăsta.
 #
 # Al doilea lacăt e în fișierul însuși (primul lui rând refuză orice altceva
 # decât linia de comandă), pentru serverele care nu citesc acest fișier.

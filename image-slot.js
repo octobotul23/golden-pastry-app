@@ -446,7 +446,7 @@
 
   class ImageSlot extends HTMLElement {
     static get observedAttributes() {
-      return ['shape', 'radius', 'mask', 'fit', 'placeholder', 'src', 'id', 'credit', 'credit-href'];
+      return ['shape', 'radius', 'mask', 'fit', 'placeholder', 'src', 'id', 'credit', 'credit-href', 'loading', 'fetchpriority'];
     }
 
     /** Duplicate-slide hook (called by deck-stage, see its
@@ -1161,6 +1161,23 @@
         !credit && !this._userUrl && srcAttr && isUnsplashHost(srcAttr)
       );
       this.toggleAttribute('data-attribution-error', attrError);
+      // PETEC LOCAL (2.7.6; de repus după un reimport din Claude Design).
+      // `loading="lazy"` și `fetchpriority` puse pe <image-slot> ajung la
+      // pozele din umbră, ÎNAINTE ca `src` să fie dat: un `loading` pus după
+      // `src` nu mai oprește cererea pornită. Și la fantomă (poza din
+      // fereastra de reîncadrare): are aceeași adresă și, lăsată grabnică, ar
+      // aduce poza oricum — leneșul de pe poza văzută n-ar fi folosit la
+      // nimic. Fără atribute pe slot, totul rămâne exact ca înainte.
+      // De ce: /catalog cerea toate cele 24 de poze deodată (54,8 MB pe
+      // goldenpastry.ro, 17 oct. 2026), și pe cele de sub ecran.
+      const lenes = (this.getAttribute('loading') || '').toLowerCase() === 'lazy';
+      for (const im of [this._img, this._ghost]) {
+        if (lenes) im.setAttribute('loading', 'lazy');
+        else im.removeAttribute('loading');
+      }
+      const prio = (this.getAttribute('fetchpriority') || '').toLowerCase();
+      if (prio === 'high' || prio === 'low') this._img.setAttribute('fetchpriority', prio);
+      else this._img.removeAttribute('fetchpriority');
       if (url && !attrError) {
         const prev = this._img.getAttribute('src');
         if (prev !== url) {

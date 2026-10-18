@@ -348,17 +348,27 @@ function poza_micsoreaza(string $cale, string $ext): array
 
     imagecopyresampled($dst, $src, 0, 0, 0, 0, $nlat, $ninal, $lat, $inalt);
 
+    // Poza se face întâi în memorie și abia apoi se scrie, cu octeții numărați.
+    // Scrisă drept în fișier, `imagejpeg()` întoarce `true` și când discul se
+    // umple la jumătatea ei: rămânea un `.nou` gol ori tăiat, mai mic decât
+    // originalul — deci bun, după socoteala de mai jos, să-i ia locul. O poză
+    // stricată pe site, numărată „micșorată". `file_put_contents()` spune când
+    // n-a scris tot.
     $langa = $cale . '.nou';
-    $scris = match ($ext) {
-        'jpg'   => @imagejpeg($dst, $langa, POZA_CALITATE),
-        'png'   => @imagepng($dst, $langa, 6),
-        'webp'  => @imagewebp($dst, $langa, POZA_CALITATE),
+    ob_start();
+    $facuta = match ($ext) {
+        'jpg'   => @imagejpeg($dst, null, POZA_CALITATE),
+        'png'   => @imagepng($dst, null, 6),
+        'webp'  => @imagewebp($dst, null, POZA_CALITATE),
         default => false,
     };
+    $octeti = (string) ob_get_clean();
     imagedestroy($src);
     imagedestroy($dst);
 
-    if (!$scris || !is_file($langa)) {
+    $scris = $facuta && $octeti !== '' && @file_put_contents($langa, $octeti) === strlen($octeti);
+    clearstatcache(true, $langa);
+    if (!$scris || !is_file($langa) || (int) filesize($langa) !== strlen($octeti)) {
         @unlink($langa);
         $r['pricina'] = 'nu_s_a_putut_scrie';
         return $r;

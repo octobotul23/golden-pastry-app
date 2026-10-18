@@ -43,7 +43,7 @@ După orice modificare:
 node .claude/verifica-tot.mjs
 ```
 
-Rulează 94 de verificări statice și 102 suite pe serverul
+Rulează 96 de verificări statice și 103 suite pe serverul
 local — peste unsprezece mii de probe. Se poate rula de câte ori
 vrei: la final, `curata-probe` scoate din baza de date produsele, cererile și
 comenzile de probă. Fără el, pagina Catalog se
@@ -149,6 +149,6 @@ de conectare.
 - [docs/09-actualizare-vps.md](docs/09-actualizare-vps.md) — actualizarea VPS-ului cu un singur script
 - [docs/04-catalogul-de-produse.md](docs/04-catalogul-de-produse.md) — produse, grupe, prețuri, ce vede Google
 - [docs/05-conturile-de-client.md](docs/05-conturile-de-client.md) — comanda de pe cont, istoricul, comanda luată la telefon
-- [docs/06-defecte-de-reparat.md](docs/06-defecte-de-reparat.md) — **711 defecte găsite**, 658 reparate, fiecare cu proba ei — 53 lăsate deschise dinadins, scrise acolo cu ce pățește omul
+- [docs/06-defecte-de-reparat.md](docs/06-defecte-de-reparat.md) — **717 defecte găsite**, 664 reparate, fiecare cu proba ei — 53 lăsate deschise dinadins, scrise acolo cu ce pățește omul
 - [docs/07-actualizari.md](docs/07-actualizari.md) — cum publici o modificare **după** ce site-ul merge deja, fără să pierzi date
-- [docs/10-trecerea-cu-ochii.md](docs/10-trecerea-cu-ochii.md) — **proba de dinaintea publicării**: ce apeși și ce trebuie să vezi; douăzeci și trei de plimbări, care țin două sute treizeci și cinci de minute
+- [docs/10-trecerea-cu-ochii.md](docs/10-trecerea-cu-ochii.md) — **proba de dinaintea publicării**: ce apeși și ce trebuie să vezi; douăzeci și patru de plimbări, care țin două sute patruzeci de minute
