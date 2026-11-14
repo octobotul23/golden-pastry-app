@@ -1,5 +1,7 @@
 # Golden Pastry — aplicația de comenzi
 
+> 📄 **Studiu de caz:** [CASE_STUDY.md](CASE_STUDY.md) · [iluz.ro](https://iluz.ro/video/proiect/h-mw8lo682) — 19 versiuni în <2 luni, 664/717 probleme rezolvate.
+
 Aplicație multi-utilizator pentru o patiserie: site public de unde se comandă,
 panou de clienți, și panourile interne — laborator, șofer, depozit,
 administrare, pontaj, setări, și statisticile casei.
